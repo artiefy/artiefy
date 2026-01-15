@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 import { db } from '../../server/db/index';
 import { courses, forums, posts, users } from '../../server/db/schema';
@@ -9,6 +9,8 @@ interface Post {
   userId: {
     id: string;
     name: string | null;
+    email: string | null;
+    role?: string | null;
   };
   content: string;
   createdAt: string | number | Date;
@@ -108,11 +110,14 @@ export async function getForumByCourseId(courseId: number) {
         title: forums.title,
         description: forums.description,
         userId: forums.userId,
+        createdAt: forums.createdAt,
+        updatedAt: forums.updatedAt,
         courseTitle: courses.title,
         courseDescription: courses.description,
         courseInstructor: courses.instructor,
         courseCoverImageKey: courses.coverImageKey,
         userName: users.name, // Unir con la tabla de usuarios para obtener el nombre del usuario
+        userRole: users.role,
       })
       .from(forums)
       .leftJoin(courses, eq(forums.courseId, courses.id)) // Unir con la tabla de cursos
@@ -146,7 +151,10 @@ export async function getForumByCourseId(courseId: number) {
       userId: {
         id: forumData.userId,
         name: forumData.userName ?? '', // Manejar el caso en que el nombre del usuario sea nulo
+        role: forumData.userRole ?? null,
       },
+      createdAt: forumData.createdAt,
+      updatedAt: forumData.updatedAt,
     };
   } catch (error: unknown) {
     console.error(error);
@@ -227,15 +235,20 @@ export async function updateForumById(
 export async function createPost(
   forumId: number,
   userId: string,
-  content: string
+  content: string,
+  imageKey?: string | null
 ) {
-  const nuevoPost = await db.insert(posts).values({
-    forumId,
-    userId,
-    content,
-  }); // Devuelve todos los datos del post recién creado
+  const [nuevoPost] = await db
+    .insert(posts)
+    .values({
+      forumId,
+      userId,
+      content,
+      imageKey: imageKey ?? null,
+    })
+    .returning(); // Devuelve todos los datos del post recién creado
 
-  return nuevoPost;
+  return nuevoPost!;
 }
 
 // Obtener todos los posts de un foro específico
@@ -247,13 +260,17 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
         forumId: posts.forumId,
         userId: posts.userId,
         content: posts.content,
+        imageKey: posts.imageKey,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         userName: users.name, // Seleccionar el nombre del usuario
+        userEmail: users.email,
+        userRole: users.role,
       })
       .from(posts)
       .leftJoin(users, eq(posts.userId, users.id)) // Unir con la tabla de usuarios
-      .where(eq(posts.forumId, forumId));
+      .where(eq(posts.forumId, forumId))
+      .orderBy(desc(posts.createdAt));
 
     const typedPosts: Post[] = postRecords.map((post) => ({
       id: post.id,
@@ -261,8 +278,11 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
       userId: {
         id: post.userId,
         name: post.userName,
+        email: post.userEmail,
+        role: post.userRole ?? null,
       },
       content: post.content,
+      imageKey: post.imageKey,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
     }));

@@ -1,16 +1,29 @@
 import type { MetadataRoute } from 'next';
 
+// Forzamos que robots se genere siempre fresco (evita cache viejo con disallow global)
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default function robots(): MetadataRoute.Robots {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
+
   return {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/estudiantes', '/planes', '/sign-in'],
+        allow: [
+          '/',
+          '/sign-in',
+          '/planes',
+          '/estudiantes',
+          '/_next/',
+          '/favicon.ico',
+          '/robots.txt',
+          '/sitemap.xml',
+        ],
+        // Bloqueos específicos para rutas que no queremos indexar
         disallow: [
           '/private/',
-          '/estudiantes/cursos/',
-          '/estudiantes/programas/',
-          '/estudiantes?category=',
           '/dashboard/',
           '/user-profile/',
           '/sign-up/',
@@ -29,14 +42,15 @@ export default function robots(): MetadataRoute.Robots {
           '/myaccount/',
           '/programas/',
           '/cursos/',
+          '/estudiantes/cursos/',
+          '/estudiantes/programas/',
+          '/estudiantes?category',
           '/not-found',
           '/error',
           '/global-error',
-          '/robots.txt',
-          '/sitemap.xml',
         ],
       },
     ],
-    sitemap: 'https://artiefy.com/sitemap.xml',
+    sitemap: `${baseUrl}/sitemap.xml`,
   };
 }

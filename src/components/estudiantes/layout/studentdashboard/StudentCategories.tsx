@@ -19,6 +19,7 @@ import type { Category } from '~/types';
 
 import './search-input.css';
 import './searchbar-purple.css';
+import '~/styles/search-loader.css';
 
 interface CourseCategoriesProps {
   allCategories: Category[];
@@ -56,6 +57,8 @@ export default function StudentCategories({
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isPressing, setIsPressing] = useState(false);
   const [_isScrolling, setIsScrolling] = useState(false);
+  const [_isSearching, setIsSearching] = useState(false);
+  const [buttonsDisabled, setButtonsDisabled] = useState(false);
   const pressTimerRef = useRef<number | null>(null);
   const _scrollTimeoutRef = useRef<number | null>(null);
   const draggingRef = useRef(false);
@@ -64,6 +67,25 @@ export default function StudentCategories({
   useEffect(() => {
     return () => {
       if (pressTimerRef.current) window.clearTimeout(pressTimerRef.current);
+    };
+  }, []);
+
+  // Listen to search events to disable/enable buttons
+  useEffect(() => {
+    const handleSearchStart = () => {
+      setButtonsDisabled(true);
+    };
+
+    const handleSearchEnd = () => {
+      setButtonsDisabled(false);
+    };
+
+    window.addEventListener('search-start', handleSearchStart);
+    window.addEventListener('search-end', handleSearchEnd);
+
+    return () => {
+      window.removeEventListener('search-start', handleSearchStart);
+      window.removeEventListener('search-end', handleSearchEnd);
     };
   }, []);
 
@@ -120,42 +142,36 @@ export default function StudentCategories({
     start();
     setLoadingCategory(category ?? 'all');
     setSelectedCategory(category);
+    setIsSearching(true);
+    window.dispatchEvent(new Event('search-start'));
     const params = new URLSearchParams();
     if (category) params.set('category', category);
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   const handleSearch = useCallback(() => {
     saveScrollPosition();
     start();
+    setIsSearching(true);
+    window.dispatchEvent(new Event('search-start'));
     const trimmed = searchQuery.trim();
     if (trimmed) {
       const params = new URLSearchParams();
       params.set('query', trimmed);
-      router.push(`${pathname}?${params.toString()}`);
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
     } else {
-      router.push(pathname);
+      router.push(pathname, { scroll: false });
     }
   }, [searchQuery, pathname, router, start]);
 
   useEffect(() => {
     const t = setTimeout(() => {
       setLoadingCategory(null);
+      setIsSearching(false);
+      window.dispatchEvent(new Event('search-end'));
       stop();
 
-      if (searchParams?.has('query')) {
-        const s = setTimeout(() => {
-          const resultsSection = document.getElementById(
-            'courses-list-section'
-          );
-          if (resultsSection)
-            resultsSection.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start',
-            });
-        }, 300);
-        return () => clearTimeout(s);
-      } else if (
+      if (
         searchParams?.has('category') ||
         (!searchParams?.has('query') &&
           !searchParams?.has('category') &&
@@ -191,7 +207,7 @@ export default function StudentCategories({
       <div className="container mx-auto">
         <div className="mt-4 mb-2 ml-0 w-full lg:flex lg:flex-row lg:items-center lg:justify-start lg:gap-2">
           <div className="relative flex w-full flex-row items-center justify-start lg:w-auto lg:justify-start">
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 px-0 sm:px-6">
               <StudentGradientText className="mx-0 justify-start text-left text-2xl whitespace-nowrap sm:text-xl lg:mt-3 lg:text-2xl">
                 Áreas de Conocimiento
               </StudentGradientText>
@@ -202,8 +218,14 @@ export default function StudentCategories({
               <button
                 type="button"
                 className="mt-2 mr-2 h-4 w-4 -translate-y-2 transform text-white"
-                aria-label="Mostrar búsqueda"
-                onClick={() => setShowMobileSearch((v) => !v)}
+                aria-label="Buscar cursos"
+                onClick={() => {
+                  if (showMobileSearch) {
+                    handleSearch();
+                  } else {
+                    setShowMobileSearch(true);
+                  }
+                }}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -231,20 +253,14 @@ export default function StudentCategories({
             </div>
 
             {/* Desktop: keep original searchbar */}
-            <div className="hidden lg:ml-6 lg:block">
+            <div className="hidden lg:-ml-4 lg:block">
               <div className="student-searchbar w-full max-w-[260px]">
                 <button
                   type="button"
                   className="student-searchbar__icon absolute top-[60%] right-6 -translate-y-1/2 text-white"
                   tabIndex={-1}
                   aria-label="Buscar cursos"
-                  onClick={() => {
-                    if (!searchQuery.trim()) {
-                      searchInputRef.current?.focus();
-                      return;
-                    }
-                    handleSearch();
-                  }}
+                  onClick={handleSearch}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -404,7 +420,7 @@ export default function StudentCategories({
               checkScroll();
             }
           }}
-          className="group/categories relative -mb-6 -ml-4 pt-3 sm:-mb-0 sm:-ml-0 sm:pt-0"
+          className="group/categories relative -mb-6 -ml-4 px-0 pt-3 sm:-mb-0 sm:-ml-0 sm:px-3 sm:pt-0"
         >
           {(isPressing || showLeftArrow) && (
             <button
@@ -437,14 +453,19 @@ export default function StudentCategories({
           >
             <button
               onClick={() => {
-                if (!selectedCategory) return;
+                const hasQuery = searchParams?.get('query');
+                if (!selectedCategory && !hasQuery) return;
                 handleCategorySelect(null);
               }}
-              disabled={!selectedCategory}
+              disabled={
+                (!selectedCategory && !searchParams?.get('query')) ||
+                buttonsDisabled
+              }
               className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
-                !selectedCategory
-                  ? 'bg-foreground text-background cursor-not-allowed opacity-60'
-                  : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
+                (!selectedCategory && !searchParams?.get('query')) ||
+                buttonsDisabled
+                  ? 'cursor-not-allowed bg-foreground text-background opacity-60'
+                  : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
               }`}
               aria-label="Mostrar todos los cursos"
             >
@@ -462,10 +483,13 @@ export default function StudentCategories({
               <button
                 key={category.id}
                 onClick={() => handleCategorySelect(category.id.toString())}
+                disabled={buttonsDisabled}
                 className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                   selectedCategory === category.id.toString()
                     ? 'bg-foreground text-background'
-                    : 'border-foreground/30 hover:border-foreground hover:text-foreground border bg-transparent font-medium text-[#94A3B8]'
+                    : buttonsDisabled
+                      ? 'cursor-not-allowed border border-foreground/30 bg-transparent font-medium text-[#94A3B8] opacity-50'
+                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
                 }`}
                 aria-label={`Mostrar cursos de ${category.name}`}
               >

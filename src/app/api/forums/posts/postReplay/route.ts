@@ -1,15 +1,18 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { eq, inArray } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import {
   // createPostReply,
+  createPost,
+  createPostReply,
   deletePostReplyById,
   getPostById,
   getPostRepliesByPostId,
   getPostReplyById,
+  getPostsByForo,
   updatePostReplyById,
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
@@ -30,7 +33,39 @@ export async function GET(req: NextRequest) {
     const replies = await Promise.all(
       idsArray.map((id) => getPostRepliesByPostId(id))
     );
-    return NextResponse.json(replies.flat());
+    const allReplies = replies.flat();
+
+    // Obtener roles de Clerk para cada usuario
+    const repliesWithRoles = await Promise.all(
+      allReplies.map(async (reply) => {
+        try {
+          const client = await clerkClient();
+          const user = await client.users.getUser(reply.userId.id);
+          const existingRole = (reply.userId as { role?: string }).role;
+          const role =
+            (user?.publicMetadata?.role as string) ??
+            existingRole ??
+            'estudiante';
+          return {
+            ...reply,
+            userId: {
+              ...reply.userId,
+              role,
+            },
+          };
+        } catch {
+          return {
+            ...reply,
+            userId: {
+              ...reply.userId,
+              role: (reply.userId as { role?: string }).role ?? 'estudiante',
+            },
+          };
+        }
+      })
+    );
+
+    return NextResponse.json(repliesWithRoles);
   } catch (error) {
     console.error('Error al obtener respuestas:', error);
     return respondWithError('Error al obtener respuestas', 500);
@@ -145,6 +180,46 @@ export async function POST(request: NextRequest) {
     //     videoKey: videoKey,
     //   })
     //   .returning();
+    const body = (await request.json()) as {
+      content: string;
+      postId: number;
+      userId: string;
+      imageKey?: string;
+    };
+
+    // Si el postId es negativo, significa que viene del pseudo-post inicial del foro
+    let targetPostId = postId;
+    if (postId < 0) {
+      const forumId = Math.abs(postId);
+
+      // Buscar foro
+      const foroResult = await db
+        .select({
+          id: forums.id,
+          title: forums.title,
+          description: forums.description,
+          userId: forums.userId,
+        })
+        .from(forums)
+        .where(eq(forums.id, forumId))
+        .execute();
+
+      const foro = foroResult[0];
+      if (!foro) return respondWithError('Foro no encontrado', 404);
+
+      // Reusar un post existente si ya hay posts reales
+      const existingPosts = await getPostsByForo(forumId);
+      if (existingPosts.length > 0) {
+        targetPostId = existingPosts[0].id;
+      } else {
+        // Crear un post real con el título o descripción del foro, asignado al creador del foro
+        const seedContent = foro.title || foro.description || '';
+        const basePost = await createPost(forumId, foro.userId, seedContent);
+        targetPostId = basePost.id;
+      }
+    }
+
+    await createPostReply(targetPostId, userId, content, imageKey ?? null);
 
     console.log('[FORO][REPLY] ✅ Respuesta creada:', {
       postId,
@@ -155,7 +230,7 @@ export async function POST(request: NextRequest) {
     });
 
     try {
-      const post = await getPostById(postId);
+      const post = await getPostById(targetPostId);
       if (!post || typeof post.forumId !== 'number') {
         console.error('[FORO][REPLY] ❌ Post inválido o sin forumId:', post);
         return respondWithError('Post o forumId no válido', 400);

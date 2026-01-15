@@ -127,7 +127,7 @@ Algunas opciones del CLI de npm para optimizar o reaprar tus librerias
 7. `npx tsc`: Ejecuta el compilador TypeScript localmente.
 8. `tsc`: Ejecuta el compilador TypeScript globalmente.
 9. `npm install next@latest react@latest react-dom@latest`: Actualizar Next
-10. `npm install --save-dev eslint typescript-eslint @eslint/js eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-simple-import-sort eslint-config-next globals`: Dependencias para que funcione el archivo eslint.config.mjs
+10. `npm install --save-dev eslint typescript-eslint @eslint/js eslint-plugin-import eslint-config-prettier eslint-plugin-react eslint-plugin-react-hooks eslint-plugin-simple-import-sort eslint-config-next globals prettier-plugin-tailwindcss`: Dependencias para que funcione el archivo eslint.config.mjs
 11. `npx eslint --debug .` : Debugear Eslint para cuando no quiera detectar errores
 12. `npm install eslint --save-dev`: Instala TypeScript localmente en el proyecto como una dependencia de desarrollo.
 13. `Remove-Item -Recurse -Force "C:\Users\Usuario\AppData\Local\npm-cache"` : remover cache npm
@@ -149,13 +149,14 @@ CORREO SOPORTE:
 Colores del manual de marca:
 
 ```css
-#3AF4EF #00BDD8 #01142B #2ecc71
+#22C4D3 #00BDD8 #01142B #2ecc71
 
 #01142B -background //variable de tailwindcss
-#3AF4EF -primary //variable de tailwindcss
+#22C4D3 -primary //variable de tailwindcss
 #00BDD8 -secondary //variable de tailwindcss
 #1e2939 //color de fondo de las tarjetas de cursos
 #00A5C0 //color parecido mas oscuro de -secondary para el hover
+#1d283a border-color de las tarjetas de cursos
 ```
 
 Lik Del Modo Blur:

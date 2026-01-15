@@ -54,15 +54,18 @@ export async function createForum(
   coverImageKey: string,
   documentKey: string
 ) {
-  const newForum = await db.insert(forums).values({
-    courseId,
-    title,
-    description,
-    userId,
-    coverImageKey,
-    documentKey,
-  });
-  return newForum;
+  const [newForum] = await db
+    .insert(forums)
+    .values({
+      courseId,
+      title,
+      description,
+      userId,
+      coverImageKey,
+      documentKey,
+    })
+    .returning();
+  return newForum!;
 }
 
 // Obtener un foro por su id
@@ -127,6 +130,8 @@ export async function getForumByCourseId(courseId: number) {
         title: forums.title,
         description: forums.description,
         userId: forums.userId,
+        createdAt: forums.createdAt,
+        updatedAt: forums.updatedAt,
         courseTitle: courses.title,
         courseDescription: courses.description,
         courseInstructor: courses.instructor,
@@ -139,17 +144,13 @@ export async function getForumByCourseId(courseId: number) {
       .leftJoin(users, eq(forums.userId, users.id)) // Unir con la tabla de usuarios
       .where(eq(forums.courseId, courseId));
 
-    if (!forum) {
-      throw new Error('Foro no encontrado');
-    }
-
-    if (forum.length === 0) {
-      throw new Error('Foro no encontrado');
+    if (!forum || forum.length === 0) {
+      return null;
     }
 
     const forumData = forum[0];
     if (!forumData) {
-      throw new Error('Foro no encontrado');
+      return null;
     }
 
     return {
@@ -168,6 +169,8 @@ export async function getForumByCourseId(courseId: number) {
         name: forumData.userName ?? '', // Manejar el caso en que el nombre del usuario sea nulo
         role: forumData.userRole ?? null,
       },
+      createdAt: forumData.createdAt,
+      updatedAt: forumData.updatedAt,
     };
   } catch (error: unknown) {
     console.error(error);
@@ -307,15 +310,20 @@ export async function updateForumById(
 export async function createPost(
   forumId: number,
   userId: string,
-  content: string
+  content: string,
+  imageKey?: string | null
 ) {
-  const nuevoPost = await db.insert(posts).values({
-    forumId,
-    userId,
-    content,
-  }); // Devuelve todos los datos del post recién creado
+  const [nuevoPost] = await db
+    .insert(posts)
+    .values({
+      forumId,
+      userId,
+      content,
+      imageKey: imageKey ?? null,
+    })
+    .returning(); // Devuelve todos los datos del post recién creado
 
-  return nuevoPost;
+  return nuevoPost!;
 }
 
 // Obtener todos los posts de un foro específico
@@ -398,12 +406,14 @@ export async function getPostById(postId: number) {
 export async function createPostReply(
   postId: number,
   userId: string,
-  content: string
+  content: string,
+  imageKey?: string | null
 ) {
   const newPostReply = await db.insert(postReplies).values({
     postId,
     userId,
     content,
+    imageKey: imageKey ?? null,
   });
 
   return newPostReply;
@@ -475,8 +485,11 @@ export async function getPostReplyById(replyId: number) {
       videoKey: postReplies.videoKey,
       createdAt: postReplies.createdAt,
       updatedAt: postReplies.updatedAt,
+      userName: users.name,
+      userEmail: users.email,
     })
     .from(postReplies)
+    .leftJoin(users, eq(postReplies.userId, users.id))
     .where(eq(postReplies.id, replyId));
 
   return reply[0];

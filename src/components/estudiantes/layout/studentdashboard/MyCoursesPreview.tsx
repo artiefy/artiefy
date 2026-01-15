@@ -99,7 +99,7 @@ export default function MyCoursesPreview() {
                   key={i}
                   className="basis-[280px] px-1 sm:basis-[320px] sm:px-2"
                 >
-                  <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#123055] bg-[#061C37]">
+                  <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-[#061C37]">
                     <Skeleton className="h-40 w-full rounded-none" />
                     <div className="flex-1 space-y-3 p-4">
                       <Skeleton className="h-4 w-3/4" />
@@ -150,7 +150,7 @@ export default function MyCoursesPreview() {
         </div>
         <Link
           href="/estudiantes/myaccount"
-          className="text-primary text-sm no-underline hover:underline"
+          className="text-sm text-primary no-underline hover:underline"
         >
           Ver Todos
         </Link>
@@ -195,7 +195,7 @@ export default function MyCoursesPreview() {
                     href={courseHref}
                     className="group relative flex h-full transform-gpu flex-col overflow-hidden rounded-2xl bg-[#061C37] shadow-none transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform hover:-translate-y-2 hover:shadow-[0_18px_32px_-10px_rgba(0,0,0,0.65)]"
                   >
-                    <div className="relative h-40 w-full overflow-hidden bg-[#061C37] will-change-transform">
+                    <div className="relative h-40 w-full overflow-hidden border-t border-r border-l border-border bg-[#061C37] will-change-transform">
                       <Image
                         src={getImageUrl(course.coverImageKey)}
                         alt={course.title}
@@ -205,8 +205,8 @@ export default function MyCoursesPreview() {
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#061C37] via-[#061C37]/60 to-transparent" />
 
-                      <div className="bg-primary absolute top-3 right-3 rounded-lg px-3 py-1.5 text-[#0b1220] shadow-lg">
-                        <p className="text-xs leading-tight font-semibold text-[#0b1220]">
+                      <div className="absolute top-3 right-3 rounded-2xl bg-primary px-3 py-1.5 text-[#0b1220] shadow-lg">
+                        <p className="mb-1 text-xs leading-tight font-semibold text-[#0b1220]">
                           {badgeHeading}
                         </p>
                         <p
@@ -218,7 +218,7 @@ export default function MyCoursesPreview() {
                       </div>
                     </div>
 
-                    <div className="flex flex-1 flex-col bg-[#061C37] p-4">
+                    <div className="flex flex-1 flex-col border-r border-b border-l border-border bg-[#061C37] p-4">
                       <h4
                         className="mb-1 line-clamp-2 min-h-[38px] text-sm leading-snug font-semibold text-white"
                         title={course.title}
@@ -237,11 +237,11 @@ export default function MyCoursesPreview() {
                       >
                         <div className="h-1 flex-1 overflow-hidden rounded-full bg-[#0f2744]">
                           <div
-                            className="bg-primary h-full rounded-full transition-all duration-500"
+                            className="h-full rounded-full bg-primary transition-all duration-500"
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <span className="text-muted-foreground text-xs font-medium">
+                        <span className="text-xs font-medium text-muted-foreground">
                           {progress}%
                         </span>
                       </div>
@@ -261,7 +261,7 @@ export default function MyCoursesPreview() {
             className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
             aria-label="Anterior"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+            <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
               <IoIosArrowBack className="text-2xl text-white" />
             </div>
           </button>
@@ -271,7 +271,7 @@ export default function MyCoursesPreview() {
           className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
           aria-label="Siguiente"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+          <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
             <IoIosArrowForward className="text-2xl text-white" />
           </div>
         </button>

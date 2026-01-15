@@ -538,7 +538,7 @@ export default async function StudentListCourses({
   return (
     // Add an ID to this section so we can scroll to it
     <div id="courses-list-section">
-      <div className="mt-8 mb-3 flex justify-start px-8 sm:mb-3 lg:px-20">
+      <div className="mt-8 mb-3 flex justify-start px-8 sm:mb-3 lg:px-26">
         <div className="flex items-center gap-2">
           <HiLibrary className="text-xl text-white" />
           <GradientText className="text-2xl sm:text-3xl">
@@ -546,7 +546,7 @@ export default async function StudentListCourses({
           </GradientText>
         </div>
       </div>
-      <div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
+      <div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-26">
         {processedCourses.map(
           ({
             course,
@@ -557,9 +557,9 @@ export default async function StudentListCourses({
           }) => {
             const cardContent = (
               <Card
-                className={`artiefy-course-card zoom-in text-foreground relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 shadow-md transition-all duration-300 ${
+                className={`artiefy-course-card zoom-in relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 text-foreground shadow-md transition-all duration-300 ${
                   course.isActive
-                    ? 'hover:border-primary cursor-pointer hover:-translate-y-1 hover:shadow-xl'
+                    ? 'cursor-pointer hover:-translate-y-1 hover:border-primary hover:shadow-xl'
                     : 'cursor-not-allowed'
                 }`}
               >
@@ -590,7 +590,7 @@ export default async function StudentListCourses({
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs text-[#94A3B8]">
                         Por:{' '}
-                        <span className="text-primary font-medium">
+                        <span className="font-medium text-primary">
                           {course.instructorName ?? 'Educador'}
                         </span>
                       </p>
@@ -636,7 +636,7 @@ export default async function StudentListCourses({
                   <p className="mt-3 flex items-center gap-1.5 text-xs text-[#94A3B8]">
                     Empieza:{' '}
                     {nextLiveClassDate ? (
-                      <span className="text-primary animate-pulse font-medium drop-shadow-[0_0_8px_rgba(58,244,239,0.6)]">
+                      <span className="animate-pulse font-medium text-primary drop-shadow-[0_0_8px_rgba(58,244,239,0.6)]">
                         {formatSpanishDate(nextLiveClassDate)}
                       </span>
                     ) : course.modalidad &&

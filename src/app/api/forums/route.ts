@@ -6,6 +6,7 @@ import nodemailer from 'nodemailer';
 
 import {
   createForum,
+  createPost,
   deleteForumById,
   updateForumById,
 } from '~/models/educatorsModels/forumAndPosts';
@@ -95,6 +96,17 @@ export async function POST(req: Request) {
       documentKey
     );
     console.log('✅ Foro creado:', newForum);
+
+    // Crear post inicial real usando el título del foro (para que estudiantes puedan responder)
+    try {
+      await createPost(newForum.id, userId, title || '');
+      console.log('✅ Post inicial creado para el foro');
+    } catch (createPostError) {
+      console.error(
+        '❌ No se pudo crear el post inicial del foro:',
+        createPostError
+      );
+    }
 
     // Obtener estudiantes inscritos
     const enrolledStudents = await db.query.enrollments.findMany({

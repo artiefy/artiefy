@@ -3,6 +3,7 @@ import { Suspense } from 'react';
 import StudentDetails from '~/app/estudiantes/StudentDetails';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import { CourseListWrapper } from '~/components/estudiantes/layout/studentdashboard/CourseListWrapper';
 import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
 import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
@@ -33,7 +34,7 @@ interface APIResponse {
   searchTerm?: string;
 }
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 12;
 
 // Add this helper function before the fetchData function
 function removeAccents(str: string): string {
@@ -151,33 +152,35 @@ export default async function Page({ searchParams }: PageProps) {
                 allCategories={data.categories}
                 featuredCategories={data.featuredCategories}
               />
-              <Suspense
-                fallback={
-                  <div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-20">
-                    {Array.from({ length: 9 }).map((_, i) => (
-                      <div key={i} className="group relative p-4">
-                        <Skeleton className="relative h-40 w-full md:h-56" />
-                        <div className="mt-3 flex flex-col space-y-2">
-                          <Skeleton className="h-6 w-3/4" />
-                          <Skeleton className="h-4 w-1/2" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-full" />
-                          <Skeleton className="h-4 w-1/2" />
+              <CourseListWrapper>
+                <Suspense
+                  fallback={
+                    <div className="my-8 grid grid-cols-1 gap-6 px-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-20">
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <div key={i} className="group relative p-4">
+                          <Skeleton className="relative h-40 w-full md:h-56" />
+                          <div className="mt-3 flex flex-col space-y-2">
+                            <Skeleton className="h-6 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-1/2" />
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                }
-              >
-                <StudentListCourses
-                  courses={data.courses}
-                  currentPage={data.page}
-                  totalPages={data.totalPages}
-                  totalCourses={data.total}
-                  category={data.categoryId?.toString()}
-                  searchTerm={data.searchTerm}
-                />
-              </Suspense>
+                      ))}
+                    </div>
+                  }
+                >
+                  <StudentListCourses
+                    courses={data.courses}
+                    currentPage={data.page}
+                    totalPages={data.totalPages}
+                    totalCourses={data.total}
+                    category={data.categoryId?.toString()}
+                    searchTerm={data.searchTerm}
+                  />
+                </Suspense>
+              </CourseListWrapper>
             </>
           )}
           <Footer />

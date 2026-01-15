@@ -20,7 +20,6 @@ import {
   AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 
-
 interface ForumsModels {
   id: number;
   title: string;

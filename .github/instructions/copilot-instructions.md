@@ -304,5 +304,45 @@ Usuario: "Crea un issue para rastrear la nueva feature de pagos"
 
 1. **Primero**: Guías internas en `Docs/doc-nextjs16/` y `Docs/`
 2. **Segundo**: MCP tools (Context7, Shadcn, Next-Devtools, Neon)
-3. **Tercero**: Análisis del código existente del proyecto
-4. **Cuarto**: Conocimiento base del modelo
+3. **Tercero**: Agent Skills disponibles en `.github/skills/`
+4. **Cuarto**: Análisis del código existente del proyecto
+5. **Quinto**: Conocimiento base del modelo
+
+## Agent Skills (VS Code 1.108+)
+
+El proyecto utiliza **Agent Skills** de VS Code para especializar las capacidades de GitHub Copilot. Las skills están almacenadas en `.github/skills/` y se activan automáticamente cuando son relevantes para la tarea.
+
+### Skills Disponibles
+
+- **nextjs-development**: Desarrollo con Next.js 16, cache components, server actions
+- **database-management**: Operaciones con Drizzle ORM y Neon PostgreSQL
+- **authentication-clerk**: Autenticación y gestión de usuarios con Clerk
+- **ui-components**: Componentes UI con shadcn/ui y TailwindCSS
+- **ai-integration**: Integración de features de IA con OpenAI
+
+### Cómo Usar Skills
+
+Las skills se cargan automáticamente basadas en el contexto de tu consulta. Para activar manualmente una skill específica, incluye su nombre en la descripción de la tarea.
+
+Ejemplo: "Crea un nuevo componente de formulario usando la skill ui-components"
+
+### Creando Nuevas Skills
+
+Para crear una nueva skill:
+
+1. Crea un directorio en `.github/skills/nombre-skill/`
+2. Crea un archivo `SKILL.md` con frontmatter YAML y contenido
+3. Agrega recursos adicionales (scripts, ejemplos) si es necesario
+
+Formato de SKILL.md:
+
+```markdown
+---
+name: nombre-skill
+description: Descripción de cuándo usar la skill
+---
+
+# Título de la Skill
+
+Contenido detallado con instrucciones, ejemplos y recursos...
+```

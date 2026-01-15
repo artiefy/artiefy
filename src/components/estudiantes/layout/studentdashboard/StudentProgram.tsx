@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { ArrowRightCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 
 import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
-import { Badge } from '~/components/estudiantes/ui/badge';
 import { Button } from '~/components/estudiantes/ui/button';
 import {
   Card,
@@ -24,7 +23,7 @@ interface StudenProgramProps {
 export function StudentProgram({ program }: StudenProgramProps) {
   return (
     <div className="group/card relative m-2 sm:m-2">
-      <div className="animate-gradient absolute -inset-1.5 rounded-2xl bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover/card:opacity-100" />
+      <div className="absolute -inset-1.5 animate-gradient rounded-2xl bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover/card:opacity-100" />
       <Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-[#061C37] text-white">
         <CardHeader className="-mb-2">
           <div className="relative aspect-video overflow-hidden rounded-t-2xl">
@@ -49,7 +48,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
           <div className="flex min-h-[90px] flex-col space-y-2 sm:min-h-[120px] sm:space-y-4">
             <div>
               <h3
-                className="text-primary line-clamp-2 text-xs font-bold sm:-mb-2 sm:text-lg"
+                className="line-clamp-2 text-xs font-bold text-primary sm:-mb-2 sm:text-lg"
                 title={program.title}
               >
                 {program.title}
@@ -67,12 +66,9 @@ export function StudentProgram({ program }: StudenProgramProps) {
 
           <div className="-mt-2 flex items-center justify-between space-y-0 sm:-mt-4">
             <div className="flex items-center space-x-4">
-              <Badge
-                variant="outline"
-                className="border-primary bg-background text-xs sm:text-sm"
-              >
+              <span className="chip chip-categoria-program">
                 {program.category?.name ?? 'Sin categoría'}
-              </Badge>
+              </span>
             </div>
             <div className="flex items-center">
               <div className="hidden sm:flex">
@@ -105,12 +101,12 @@ export function StudentProgram({ program }: StudenProgramProps) {
             <Button asChild className="w-full flex-shrink-0 sm:w-auto">
               <Link
                 href={`/estudiantes/programas/${program.id}`}
-                className="group/button bg-secondary relative inline-flex h-7 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 text-white active:scale-95 sm:h-10 sm:px-4"
+                className="group/button relative inline-flex h-7 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-black active:scale-95 sm:h-10 sm:px-4"
               >
                 <p className="text-sm font-bold whitespace-nowrap sm:text-sm">
                   Ver Programa
                 </p>
-                <ArrowRightCircleIcon className="animate-bounce-right ml-1 size-4 sm:size-5" />
+                <ArrowRightCircleIcon className="ml-1 size-4 animate-bounce-right sm:size-5" />
                 <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
                   <div className="relative h-full w-10 bg-white/30" />
                 </div>

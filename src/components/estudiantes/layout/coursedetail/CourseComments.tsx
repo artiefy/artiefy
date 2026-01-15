@@ -16,9 +16,12 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { Textarea } from '~/components/estudiantes/ui/textarea';
 import {
   addComment,
+  addReply,
   deleteComment,
+  deleteReply,
   editComment,
   getCommentsByCourseId,
+  getRepliesByCommentId,
   likeComment,
 } from '~/server/actions/estudiantes/comment/courseCommentActions';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
@@ -41,6 +44,15 @@ interface Comment {
   hasLiked: boolean; // Añadir esta propiedad
 }
 
+interface Reply {
+  id: string;
+  content: string;
+  createdAt: string;
+  userName: string;
+  userId: string;
+  parentCommentId: string;
+}
+
 export default function CourseComments({
   courseId,
   isEnrolled,
@@ -57,6 +69,13 @@ export default function CourseComments({
   const [editMode, setEditMode] = useState<null | string>(null); // Estado para manejar el modo de edición
   const [deletingComment, setDeletingComment] = useState<null | string>(null); // Estado para manejar la eliminación
   const [likingComment, setLikingComment] = useState<null | string>(null); // Estado para manejar el "me gusta"
+  const [openMenuId, setOpenMenuId] = useState<null | string>(null); // Estado para controlar qué menú está abierto
+  const [replyingTo, setReplyingTo] = useState<null | string>(null); // Estado para controlar a qué comentario se está respondiendo
+  const [replyContent, setReplyContent] = useState(''); // Contenido de la respuesta
+  const [replies, setReplies] = useState<Record<string, Reply[]>>({}); // Respuestas por comentario
+  const [showReplies, setShowReplies] = useState<Record<string, boolean>>({}); // Control de visibilidad de respuestas
+  const [openReplyMenuId, setOpenReplyMenuId] = useState<null | string>(null); // Estado para controlar qué menú de respuesta está abierto
+  const [deletingReply, setDeletingReply] = useState<null | string>(null); // Estado para manejar la eliminación de respuestas
   const { userId, isSignedIn } = useAuth();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -68,6 +87,16 @@ export default function CourseComments({
         onCommentsCountChange?.(
           Array.isArray(response.comments) ? response.comments.length : 0
         );
+
+        // Cargar respuestas para cada comentario
+        const repliesData: Record<string, Reply[]> = {};
+        for (const comment of response.comments) {
+          const commentReplies = await getRepliesByCommentId(comment.id);
+          if (commentReplies.length > 0) {
+            repliesData[comment.id] = commentReplies;
+          }
+        }
+        setReplies(repliesData);
       } catch (error) {
         console.error('Error fetching comments:', error);
       } finally {
@@ -97,6 +126,23 @@ export default function CourseComments({
   useEffect(() => {
     void checkEnrollment();
   }, [checkEnrollment, userId]);
+
+  // Cerrar menú al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (openMenuId) {
+        const target = event.target as HTMLElement;
+        if (!target.closest('.relative')) {
+          setOpenMenuId(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openMenuId]);
 
   const RequirementsMessage = () => {
     if (!isSignedIn) {
@@ -215,6 +261,74 @@ export default function CourseComments({
     setEditMode(null);
   };
 
+  const toggleMenu = (commentId: string) => {
+    setOpenMenuId(openMenuId === commentId ? null : commentId);
+  };
+
+  const handleEditFromMenu = (comment: Comment) => {
+    handleEdit(comment);
+    setOpenMenuId(null);
+  };
+
+  const handleDeleteFromMenu = async (commentId: string) => {
+    setOpenMenuId(null);
+    await handleDelete(commentId);
+  };
+
+  const handleReply = async (commentId: string) => {
+    if (!replyContent.trim()) return;
+
+    try {
+      const response = await addReply(commentId, replyContent);
+      if (response.success) {
+        setReplyContent('');
+        setReplyingTo(null);
+        // Recargar las respuestas para este comentario
+        const updatedReplies = await getRepliesByCommentId(commentId);
+        setReplies((prev) => ({ ...prev, [commentId]: updatedReplies }));
+      }
+      setMessage(response.message);
+    } catch (error) {
+      console.error('Error adding reply:', error);
+    }
+  };
+
+  const loadReplies = async (commentId: string) => {
+    try {
+      const commentReplies = await getRepliesByCommentId(commentId);
+      setReplies((prev) => ({ ...prev, [commentId]: commentReplies }));
+      setShowReplies((prev) => ({ ...prev, [commentId]: true }));
+    } catch (error) {
+      console.error('Error loading replies:', error);
+    }
+  };
+
+  const toggleReplies = (commentId: string) => {
+    if (showReplies[commentId]) {
+      setShowReplies((prev) => ({ ...prev, [commentId]: false }));
+    } else {
+      void loadReplies(commentId);
+    }
+  };
+
+  const handleDeleteReply = async (commentId: string, replyId: string) => {
+    setDeletingReply(replyId);
+    try {
+      const response = await deleteReply(replyId);
+      setMessage(response.message);
+      if (response.success) {
+        // Recargar las respuestas para este comentario
+        const updatedReplies = await getRepliesByCommentId(commentId);
+        setReplies((prev) => ({ ...prev, [commentId]: updatedReplies }));
+      }
+    } catch (error) {
+      console.error('Error deleting reply:', error);
+    } finally {
+      setDeletingReply(null);
+      setOpenReplyMenuId(null);
+    }
+  };
+
   // Agregar función de formateo de fecha consistente
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -229,188 +343,615 @@ export default function CourseComments({
 
   // Remove the skeleton loader section and modify the return statement
   return (
-    <div className="mt-8">
-      <h2 className="mb-4 text-2xl font-bold">Deja un comentario</h2>
+    <>
+      <div className="mb-6">
+        <h3 className="text-xl font-semibold text-slate-100">
+          Opiniones del curso
+        </h3>
+        <p className="text-sm text-slate-300 mt-1">
+          Comparte tu experiencia y lee lo que otros estudiantes opinan
+        </p>
+      </div>
 
       <RequirementsMessage />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit}>
         <div
-          className={
-            !isSignedIn || !localIsEnrolled
-              ? 'pointer-events-none opacity-50'
-              : ''
-          }
+          className={`space-y-3 p-4 rounded-xl border ${
+            !isSignedIn || !localIsEnrolled ? 'pointer-events-none' : ''
+          }`}
+          style={{
+            backgroundColor: '#061c3780',
+            borderColor: 'hsla(217, 33%, 17%, 0.5)',
+          }}
         >
-          <div>
-            <label
-              htmlFor="content"
-              className="text-primary block text-sm font-medium"
-            >
-              Comentario:
-            </label>
-            <Textarea
-              id="content"
-              ref={textareaRef}
-              value={content}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
-                setContent(e.target.value)
-              }
-              onFocus={(e: React.FocusEvent<HTMLTextAreaElement>) =>
-                (e.target.placeholder = '')
-              }
-              onBlur={(e: React.FocusEvent<HTMLTextAreaElement>) =>
-                (e.target.placeholder = 'Escribe tu comentario')
-              }
-              required
-              placeholder="Escribe tu comentario"
-              className="text-primary hover:border-secondary focus:border-secondary mt-1 block w-full border-[1px] transition-colors duration-200 focus:border-[2px]"
-              style={{
-                height: '100px',
-                padding: '10px',
-                caretColor: 'var(--color-primary)',
-              }}
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="rating"
-              className="text-primary m-1 block text-sm font-medium"
-            >
-              Calificación:
-            </label>
-            <div className="mt-1 flex items-center">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <StarIcon
-                  key={star}
-                  className={`size-6 cursor-pointer ${star <= rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                  onClick={() => setRating(star)}
+          {/* Rating with connected stars */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-[#94a3b8]">Tu experiencia:</span>
+            <div className="flex items-center gap-0">
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setRating(1)}
+                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`lucide lucide-star w-5 h-5 transition-all duration-300 ${
+                      1 <= rating
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-[#94a3b8]/40'
+                    }`}
+                  >
+                    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex items-center">
+                <div
+                  className={`h-0.5 transition-all duration-300 w-2 ${
+                    2 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'
+                  }`}
                 />
-              ))}
+                <button
+                  type="button"
+                  onClick={() => setRating(2)}
+                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`lucide lucide-star w-5 h-5 transition-all duration-300 ${
+                      2 <= rating
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-[#94a3b8]/40'
+                    }`}
+                  >
+                    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex items-center">
+                <div
+                  className={`h-0.5 transition-all duration-300 w-2 ${
+                    3 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setRating(3)}
+                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`lucide lucide-star w-5 h-5 transition-all duration-300 ${
+                      3 <= rating
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-[#94a3b8]/40'
+                    }`}
+                  >
+                    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex items-center">
+                <div
+                  className={`h-0.5 transition-all duration-300 w-2 ${
+                    4 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setRating(4)}
+                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`lucide lucide-star w-5 h-5 transition-all duration-300 ${
+                      4 <= rating
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-[#94a3b8]/40'
+                    }`}
+                  >
+                    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex items-center">
+                <div
+                  className={`h-0.5 transition-all duration-300 w-2 ${
+                    5 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setRating(5)}
+                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={`lucide lucide-star w-5 h-5 transition-all duration-300 ${
+                      5 <= rating
+                        ? 'text-yellow-400 fill-yellow-400'
+                        : 'text-[#94a3b8]/40'
+                    }`}
+                  >
+                    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-          <div className="mt-2 flex items-center">
-            <Button
-              type="submit"
-              className="bg-secondary focus:ring-secondary inline-flex items-center justify-center rounded-md border border-transparent text-sm font-medium text-white shadow-xs hover:bg-[#00A5C0] focus:ring-2 focus:ring-offset-2 focus:outline-hidden active:scale-95"
-              style={{ width: '100px', height: '38px' }}
-            >
-              {isSubmitting ? (
-                <div className="flex items-center">
-                  <Icons.spinner
-                    className="text-white"
-                    style={{ width: '20px', height: '20px' }}
-                  />
-                </div>
-              ) : editMode ? (
-                'Editar'
-              ) : (
-                'Enviar'
-              )}
-            </Button>
-            {editMode && (
-              <button
+
+          {/* Textarea */}
+          <Textarea
+            id="content"
+            ref={textareaRef}
+            value={content}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setContent(e.target.value)
+            }
+            required
+            placeholder="Comparte tu opinión sobre el curso..."
+            className="min-h-[80px] resize-none text-slate-100 placeholder:text-slate-400"
+            style={{
+              backgroundColor: '#01152d80',
+              borderColor: 'hsla(217, 33%, 17%, 0.5)',
+            }}
+          />
+
+          {/* Action buttons */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              {/* Placeholder buttons for future features */}
+              <Button
                 type="button"
-                onClick={handleCancelEdit}
-                className="ml-2 inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-xs hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-hidden active:scale-95"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-slate-400 hover:text-slate-100"
               >
-                <XMarkIcon className="size-5" />
+                <Icons.image className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-slate-400 hover:text-slate-100"
+              >
+                <Icons.video className="w-4 h-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-slate-400 hover:text-slate-100"
+              >
+                <Icons.mic className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="inline-flex items-center text-[#080c16] justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 h-9 rounded-[14px] px-3 gap-2"
+                style={{ backgroundColor: '#22c4d3' }}
+              >
+                {isSubmitting ? (
+                  <Icons.spinner className="w-4 h-4" />
+                ) : (
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="lucide lucide-send w-4 h-4"
+                  >
+                    <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 1-.635-.635l-19 6.5a.5.5 0 0 1-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
+                    <path d="m21.854 2.147-10.94 10.939" />
+                  </svg>
+                )}
+                {editMode ? 'Actualizar' : 'Publicar'}
               </button>
-            )}
+              {editMode && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleCancelEdit}
+                >
+                  <XMarkIcon className="w-4 h-4" />
+                  Cancelar
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </form>
+
       {message && <p className="mt-4 text-sm text-green-600">{message}</p>}
-      <div className="mt-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 text-xl font-semibold">
-            Comentarios ({comments.length})
-            {loading && (
-              <div className="text-primary flex items-center gap-2">
-                <Icons.spinner
-                  className="inline-block"
-                  style={{ width: '20px', height: '20px' }}
-                />
-                <span className="text-base text-gray-500">
-                  Cargando comentarios...
-                </span>
-              </div>
-            )}
-          </h3>
-        </div>
+
+      <div className="mt-6">
         <ul className="space-y-4">
           {comments.map((comment) => (
-            <li key={comment.id} className="border-b pb-2">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="flex items-center py-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <StarIcon
-                      key={star}
-                      className={`size-5 ${star <= comment.rating ? 'text-yellow-400' : 'text-gray-300'}`}
-                    />
-                  ))}
-                  <span className="ml-2 text-sm text-gray-600">
-                    {formatDate(comment.createdAt)}
+            <li
+              key={comment.id}
+              className="p-4 rounded-xl border"
+              style={{
+                backgroundColor: '#061c3780',
+                borderColor: 'hsla(217, 33%, 17%, 0.5)',
+              }}
+            >
+              <div className="flex gap-3">
+                {/* Avatar */}
+                <div className="relative flex overflow-hidden rounded-full w-10 h-10 shrink-0">
+                  <span className="flex h-full w-full items-center justify-center rounded-full bg-accent/20 text-accent text-sm font-semibold">
+                    {comment.userName
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .toUpperCase()
+                      .slice(0, 2)}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="flex flex-col items-center">
-                    <span
-                      className={`-mt-6 text-sm ${comment.likes > 0 ? 'text-primary' : 'text-gray-400'}`}
-                    >
-                      {comment.likes.toString()}
-                    </span>{' '}
-                    {/* Convert likes to string */}
+
+                <div className="flex-1 space-y-2">
+                  {/* Header with name, date and rating */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-slate-100">
+                      {comment.userName}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {formatDate(comment.createdAt)}
+                    </span>
+                    <div className="flex items-center gap-0.5 ml-auto">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <StarIcon
+                          key={star}
+                          className={`w-4 h-4 ${
+                            star <= comment.rating
+                              ? 'text-yellow-400 fill-yellow-400'
+                              : 'text-[#94a3b8]'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="flex items-start gap-2 group">
+                    <div className="text-sm text-slate-300 whitespace-pre-wrap flex-1">
+                      {comment.content}
+                    </div>
+                    {userId === comment.userId && (
+                      <div className="relative inline-flex">
+                        <button
+                          onClick={() => toggleMenu(comment.id)}
+                          className="ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700/20 text-slate-400 hover:text-slate-100"
+                          aria-label="Abrir menú"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="lucide lucide-ellipsis w-4 h-4"
+                          >
+                            <circle cx="12" cy="12" r="1"></circle>
+                            <circle cx="19" cy="12" r="1"></circle>
+                            <circle cx="5" cy="12" r="1"></circle>
+                          </svg>
+                        </button>
+
+                        {/* Dropdown Menu */}
+                        {openMenuId === comment.id && (
+                          <div
+                            className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border shadow-lg z-10"
+                            style={{
+                              backgroundColor: '#01152d',
+                              borderColor: 'hsla(217, 33%, 17%, 0.5)',
+                            }}
+                          >
+                            <button
+                              onClick={() => handleEditFromMenu(comment)}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-slate-100 hover:bg-slate-700/20 rounded-t-lg transition-colors"
+                            >
+                              <PencilIcon className="w-4 h-4" />
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => handleDeleteFromMenu(comment.id)}
+                              disabled={deletingComment === comment.id}
+                              className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-red-400 hover:bg-slate-700/20 rounded-b-lg transition-colors"
+                            >
+                              {deletingComment === comment.id ? (
+                                <Icons.spinner className="w-4 h-4" />
+                              ) : (
+                                <TrashIcon className="w-4 h-4" />
+                              )}
+                              Eliminar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-4 pt-1">
                     <button
                       onClick={() => handleLike(comment.id)}
                       disabled={likingComment === comment.id}
+                      className={`flex items-center gap-1.5 text-xs transition-colors ${
+                        comment.hasLiked
+                          ? 'text-cyan-400'
+                          : 'text-slate-400 hover:text-slate-100'
+                      }`}
                     >
                       {likingComment === comment.id ? (
-                        <Icons.spinner
-                          className="text-secondary"
-                          style={{ width: '20px', height: '20px' }}
-                        />
+                        <Icons.spinner className="w-4 h-4" />
                       ) : (
                         <HandThumbUpIcon
-                          className={`-mb-2 size-5 cursor-pointer transition-colors duration-200 ${comment.hasLiked ? 'text-blue-500' : 'text-gray-400'} hover:text-blue-500`}
+                          className={`w-4 h-4 ${comment.hasLiked ? 'fill-current' : ''}`}
                         />
                       )}
+                      {comment.likes}
                     </button>
-                  </div>
-                  {userId === comment.userId && (
-                    <>
-                      <button onClick={() => handleEdit(comment)}>
-                        <PencilIcon className="size-5 cursor-pointer text-gray-500 hover:text-amber-400" />
-                      </button>
+
+                    <button
+                      onClick={() => setReplyingTo(comment.id)}
+                      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-100 transition-colors"
+                    >
+                      <Icons.reply className="w-4 h-4" />
+                      Responder
+                    </button>
+
+                    {replies[comment.id] && replies[comment.id].length > 0 && (
                       <button
-                        onClick={() => handleDelete(comment.id)}
-                        className={
-                          deletingComment === comment.id ? 'text-red-500' : ''
-                        }
-                        disabled={deletingComment === comment.id}
+                        onClick={() => toggleReplies(comment.id)}
+                        className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-100 transition-colors"
                       >
-                        {deletingComment === comment.id ? (
-                          <Icons.spinner
-                            className="text-red-500"
-                            style={{ width: '20px', height: '20px' }}
-                          />
-                        ) : (
-                          <TrashIcon className="size-5 cursor-pointer text-gray-500 hover:text-red-500" />
-                        )}
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={`lucide w-4 h-4 transition-transform ${showReplies[comment.id] ? 'rotate-180' : ''}`}
+                        >
+                          <path d="m18 15-6-6-6 6" />
+                        </svg>
+                        {replies[comment.id].length} respuesta
+                        {replies[comment.id].length > 1 ? 's' : ''}
                       </button>
-                    </>
+                    )}
+                  </div>
+
+                  {/* Reply form */}
+                  {replyingTo === comment.id && (
+                    <div className="mt-3 space-y-2">
+                      <Textarea
+                        value={replyContent}
+                        onChange={(e) => setReplyContent(e.target.value)}
+                        placeholder="Escribe tu respuesta..."
+                        className="min-h-[60px] resize-none text-slate-100 placeholder:text-slate-400"
+                        style={{
+                          backgroundColor: '#01152d80',
+                          borderColor: 'hsla(217, 33%, 17%, 0.5)',
+                        }}
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleReply(comment.id)}
+                          className="inline-flex items-center text-[#080c16] justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 rounded-md px-3 gap-2"
+                          style={{ backgroundColor: '#22c4d3' }}
+                        >
+                          <Icons.send className="w-3 h-3" />
+                          Enviar
+                        </button>
+                        <button
+                          onClick={() => {
+                            setReplyingTo(null);
+                            setReplyContent('');
+                          }}
+                          className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors h-8 rounded-md px-3 text-slate-400 hover:text-slate-100"
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
                   )}
+
+                  {/* Replies section */}
+                  {replies[comment.id] &&
+                    replies[comment.id].length > 0 &&
+                    showReplies[comment.id] && (
+                      <div className="mt-3">
+                        <div className="space-y-3 pl-4 border-l-2 border-slate-700">
+                          {replies[comment.id].map((reply) => (
+                            <div key={reply.id} className="flex gap-2">
+                              <div className="relative flex overflow-hidden rounded-full w-8 h-8 shrink-0">
+                                <span className="flex h-full w-full items-center justify-center rounded-full bg-accent/20 text-accent text-xs font-semibold">
+                                  {reply.userName
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase()
+                                    .slice(0, 2)}
+                                </span>
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-medium text-slate-100">
+                                    {reply.userName}
+                                  </span>
+                                  <span className="text-xs text-slate-400">
+                                    {formatDate(reply.createdAt)}
+                                  </span>
+                                </div>
+                                <div className="flex items-start gap-2 group mt-1">
+                                  <div className="text-sm text-slate-300 flex-1">
+                                    {reply.content}
+                                  </div>
+                                  {userId === reply.userId && (
+                                    <div className="relative inline-flex">
+                                      <button
+                                        onClick={() =>
+                                          setOpenReplyMenuId(
+                                            openReplyMenuId === reply.id
+                                              ? null
+                                              : reply.id
+                                          )
+                                        }
+                                        className="ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700/20 text-slate-400 hover:text-slate-100"
+                                        aria-label="Abrir menú"
+                                      >
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="24"
+                                          height="24"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          className="lucide lucide-ellipsis w-4 h-4"
+                                        >
+                                          <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="1"
+                                          ></circle>
+                                          <circle
+                                            cx="19"
+                                            cy="12"
+                                            r="1"
+                                          ></circle>
+                                          <circle cx="5" cy="12" r="1"></circle>
+                                        </svg>
+                                      </button>
+
+                                      {openReplyMenuId === reply.id && (
+                                        <div
+                                          className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border shadow-lg z-10"
+                                          style={{
+                                            backgroundColor: '#01152d',
+                                            borderColor:
+                                              'hsla(217, 33%, 17%, 0.5)',
+                                          }}
+                                        >
+                                          <button
+                                            onClick={() =>
+                                              handleDeleteReply(
+                                                comment.id,
+                                                reply.id
+                                              )
+                                            }
+                                            disabled={
+                                              deletingReply === reply.id
+                                            }
+                                            className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-red-400 hover:bg-slate-700/20 rounded-lg transition-colors"
+                                          >
+                                            {deletingReply === reply.id ? (
+                                              <Icons.spinner className="w-4 h-4" />
+                                            ) : (
+                                              <TrashIcon className="w-4 h-4" />
+                                            )}
+                                            Eliminar
+                                          </button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
               </div>
-              <p className="text-primary">{comment.content}</p>
-              <p className="text-sm text-gray-500">
-                Por: {comment.userName}
-              </p>{' '}
-              {/* Mostrar el nombre del usuario */}
             </li>
           ))}
         </ul>
+
+        {loading && (
+          <div className="flex items-center justify-center gap-2 p-8">
+            <Icons.spinner className="w-5 h-5 text-slate-400" />
+            <span className="text-sm text-slate-300">
+              Cargando comentarios...
+            </span>
+          </div>
+        )}
+
+        {!loading && comments.length === 0 && (
+          <div
+            className="text-center p-8 rounded-xl border"
+            style={{
+              backgroundColor: '#061c3780',
+              borderColor: 'hsla(217, 33%, 17%, 0.5)',
+            }}
+          >
+            <p className="text-sm text-slate-300">
+              Aún no hay comentarios. ¡Sé el primero en compartir tu opinión!
+            </p>
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }

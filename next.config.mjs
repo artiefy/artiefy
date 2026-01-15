@@ -13,7 +13,7 @@ jiti('./src/env.ts');
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
-  reactCompiler: true,
+  reactCompiler: false,
   cacheComponents: false,
   expireTime: 3600,
   experimental: {

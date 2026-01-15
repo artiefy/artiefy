@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 
+import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
@@ -17,6 +18,10 @@ import { sortLessons } from '~/utils/lessonSorting';
 import LessonDetails from './LessonDetails';
 
 import type { LessonWithProgress } from '~/types';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;

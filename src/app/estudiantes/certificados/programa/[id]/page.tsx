@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 
+import { type Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
@@ -15,6 +16,10 @@ import { db } from '~/server/db';
 import { certificates } from '~/server/db/schema';
 
 import type { Course } from '~/types';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 interface PageProps {
   params: Promise<{ id: string }>;
