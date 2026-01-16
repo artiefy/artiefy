@@ -168,25 +168,7 @@ export async function POST(request: NextRequest) {
       return respondWithError('El contenido y postId son obligatorios', 400);
     }
 
-    // Crear la respuesta con soporte a media
-    // const newReply = await db
-    //   .insert(postReplies)
-    //   .values({
-    //     postId: postId,
-    //     userId: userId,
-    //     content: content,
-    //     imageKey: imageKey,
-    //     audioKey: audioKey,
-    //     videoKey: videoKey,
-    //   })
-    //   .returning();
-    const body = (await request.json()) as {
-      content: string;
-      postId: number;
-      userId: string;
-      imageKey?: string;
-    };
-
+   
     // Si el postId es negativo, significa que viene del pseudo-post inicial del foro
     let targetPostId = postId;
     if (postId < 0) {

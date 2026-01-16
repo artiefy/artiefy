@@ -1682,3 +1682,82 @@ export const accessLogsRelations = relations(accessLogs, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// ✅ Tabla de Tipos de Proyecto
+export const projectTypes = pgTable('project_types', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull().unique(),
+  description: text('description'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ✅ Tabla de Fases del Proyecto
+export const projectPhases = pgTable('project_phases', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull().unique(),
+  description: text('description'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// ✅ Tabla intermedia: Asignación de fases a tipos de proyecto
+export const projectTypePhases = pgTable(
+  'project_type_phases',
+  {
+    id: serial('id').primaryKey(),
+    projectTypeId: integer('project_type_id')
+      .references(() => projectTypes.id, { onDelete: 'cascade' })
+      .notNull(),
+    phaseId: integer('phase_id')
+      .references(() => projectPhases.id, { onDelete: 'cascade' })
+      .notNull(),
+    order: integer('order').notNull().default(1),
+    isRequired: boolean('is_required').default(true).notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique('unique_project_type_phase').on(table.projectTypeId, table.phaseId),
+    unique('unique_project_type_order').on(table.projectTypeId, table.order),
+  ]
+);
+
+// ✅ Relaciones para projectTypes
+export const projectTypesRelations = relations(projectTypes, ({ many }) => ({
+  typePhases: many(projectTypePhases),
+}));
+
+// ✅ Relaciones para projectPhases
+export const projectPhasesRelations = relations(projectPhases, ({ many }) => ({
+  typePhases: many(projectTypePhases),
+}));
+
+// ✅ Relaciones para projectTypePhases
+export const projectTypePhasesRelations = relations(
+  projectTypePhases,
+  ({ one }) => ({
+    projectType: one(projectTypes, {
+      fields: [projectTypePhases.projectTypeId],
+      references: [projectTypes.id],
+    }),
+    phase: one(projectPhases, {
+      fields: [projectTypePhases.phaseId],
+      references: [projectPhases.id],
+    }),
+  })
+);

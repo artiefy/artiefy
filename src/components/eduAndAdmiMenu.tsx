@@ -22,6 +22,7 @@ import {
 } from 'react-icons/fi';
 
 import { TicketNotificationBell } from '~/components/TicketNotificationBell';
+import { useFinancialsSummary } from '~/hooks/useFinancialsSummary';
 import { useTicketsUnread } from '~/hooks/useTicketsUnread';
 import { cn } from '~/lib/utils';
 
@@ -34,6 +35,7 @@ interface ResponsiveSidebarProps {
 const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const { user } = useUser();
   const { totalUnread } = useTicketsUnread(); // ✅ Agregar esto
+  const { totalRecaudado } = useFinancialsSummary(); // ✅ Total recaudado
 
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,6 +44,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const [isCoursesOpen, setIsCoursesOpen] = useState(false);
   const [isProgramsOpen, setIsProgramsOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isFinancesOpen, setIsFinancesOpen] = useState(false);
   const pathname = usePathname();
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
 
@@ -96,6 +99,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       title: 'Control de Accesos',
       id: 'access-control',
       link: '/dashboard/super-admin/subscription',
+    },
+    {
+      icon: <FiFileText size={18} />,
+      title: 'Proyectos',
+      id: 'projects',
+      link: '/dashboard/super-admin/projects',
     },
   ];
 
@@ -431,6 +440,58 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           )}
                         >
                           Soporte
+                        </Link>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+
+                {/* Submenú: Finanzas */}
+                <li>
+                  <button
+                    onClick={() =>
+                      shouldShowText && setIsFinancesOpen(!isFinancesOpen)
+                    }
+                    className={cn(
+                      'hover:bg-secondary flex w-full items-center rounded-lg p-2 text-white transition-all duration-300 hover:text-white',
+                      !shouldShowText && 'justify-center'
+                    )}
+                    title={!shouldShowText ? 'Finanzas' : undefined}
+                  >
+                    <FiFileText size={18} />
+                    {shouldShowText && (
+                      <>
+                        <span className="ml-2.5 flex-1 text-left text-xs font-medium whitespace-nowrap">
+                          Finanzas
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {totalRecaudado > 0 && (
+                            <span className="text-[10px] font-semibold text-green-400 bg-green-500/20 px-1.5 py-0.5 rounded whitespace-nowrap">
+                              ${(totalRecaudado / 1000000).toFixed(1)}M
+                            </span>
+                          )}
+                          {isFinancesOpen ? (
+                            <FiChevronDown size={16} />
+                          ) : (
+                            <FiChevronRight size={16} />
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </button>
+
+                  {isFinancesOpen && shouldShowText && (
+                    <ul className="mt-1 ml-4 space-y-0.5">
+                      <li>
+                        <Link
+                          href="/dashboard/transaction-history"
+                          className={cn(
+                            'hover:bg-secondary block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:text-white',
+                            pathname === '/dashboard/transaction-history' &&
+                              'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          Historial de Transacciones
                         </Link>
                       </li>
                       <li>
