@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useUser } from '@clerk/nextjs';
 
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -85,6 +86,8 @@ interface DetailResponse {
 }
 
 export default function TransactionHistoryPage() {
+  const { user } = useUser();
+
   // Estados de filtros
   const [searchQuery, setSearchQuery] = useState('');
   const [verified, setVerified] = useState<'all' | 'true' | 'false'>('all');
@@ -297,7 +300,7 @@ export default function TransactionHistoryPage() {
   };
 
   const handleUpdateStatus = async (verified: boolean) => {
-    if (!detailData) return;
+    if (!detailData || !user?.id) return;
 
     setUpdatingStatus(true);
     try {
@@ -309,7 +312,7 @@ export default function TransactionHistoryPage() {
           body: JSON.stringify({
             receiptVerified: verified,
             receiptVerifiedAt: verified ? new Date().toISOString() : null,
-            receiptVerifiedBy: verified ? 'Super Admin' : null,
+            receiptVerifiedBy: verified ? user.id : null,
           }),
         }
       );
@@ -403,15 +406,15 @@ export default function TransactionHistoryPage() {
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-[#00BDD8]/30 to-[#00BDD8]/10 border border-[#00BDD8]/30">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-xl border border-[#00BDD8]/30 bg-gradient-to-br from-[#00BDD8]/30 to-[#00BDD8]/10 p-3">
               <TrendingUp className="h-6 w-6 text-[#00BDD8]" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] bg-clip-text text-transparent">
+              <h1 className="bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] bg-clip-text text-2xl font-bold text-transparent sm:text-3xl">
                 Historial de Transacciones
               </h1>
-              <p className="text-sm text-gray-400 mt-1">
+              <p className="mt-1 text-sm text-gray-400">
                 Transacciones registradas en facturas y su historial de
                 verificación
               </p>
@@ -420,32 +423,32 @@ export default function TransactionHistoryPage() {
         </div>
 
         {/* Resumen de Finanzas */}
-        <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {/* Total Recaudado */}
           <div className="rounded-2xl border border-green-500/20 bg-gradient-to-br from-green-500/10 to-green-500/5 p-6 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-semibold text-green-400 uppercase">
                 Total Recaudado
               </span>
-              <div className="p-2 rounded-lg bg-green-500/20">
+              <div className="rounded-lg bg-green-500/20 p-2">
                 <CheckCircle2 className="h-4 w-4 text-green-400" />
               </div>
             </div>
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-gray-400 mb-1">Total</p>
+                <p className="mb-1 text-xs text-gray-400">Total</p>
                 <p className="text-xl font-bold text-white">
                   {formatCurrency(summary.totalRecaudado)}
                 </p>
               </div>
               <div className="border-t border-green-500/10 pt-3">
-                <p className="text-xs text-gray-400 mb-1">Verificado</p>
+                <p className="mb-1 text-xs text-gray-400">Verificado</p>
                 <p className="text-sm font-semibold text-green-300">
                   {formatCurrency(summary.totalRecaudadoVerificado)}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400 mb-1">No Verificado</p>
+                <p className="mb-1 text-xs text-gray-400">No Verificado</p>
                 <p className="text-sm font-semibold text-yellow-300">
                   {formatCurrency(summary.totalRecaudadoNoVerificado)}
                 </p>
@@ -455,29 +458,29 @@ export default function TransactionHistoryPage() {
 
           {/* Total Transacciones */}
           <div className="rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-br from-[#00BDD8]/10 to-[#00BDD8]/5 p-6 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-semibold text-[#00BDD8] uppercase">
                 Total Transacciones
               </span>
-              <div className="p-2 rounded-lg bg-[#00BDD8]/20">
+              <div className="rounded-lg bg-[#00BDD8]/20 p-2">
                 <FileText className="h-4 w-4 text-[#00BDD8]" />
               </div>
             </div>
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-gray-400 mb-1">Total</p>
+                <p className="mb-1 text-xs text-gray-400">Total</p>
                 <p className="text-xl font-bold text-white">
                   {summary.totalTransacciones}
                 </p>
               </div>
               <div className="border-t border-[#00BDD8]/10 pt-3">
-                <p className="text-xs text-gray-400 mb-1">Verificadas</p>
+                <p className="mb-1 text-xs text-gray-400">Verificadas</p>
                 <p className="text-sm font-semibold text-green-300">
                   {summary.totalVerificadas}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400 mb-1">No Verificadas</p>
+                <p className="mb-1 text-xs text-gray-400">No Verificadas</p>
                 <p className="text-sm font-semibold text-yellow-300">
                   {summary.totalPendientes}
                 </p>
@@ -487,29 +490,29 @@ export default function TransactionHistoryPage() {
 
           {/* Resumen */}
           <div className="rounded-2xl border border-yellow-500/20 bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 p-6 backdrop-blur-md">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-semibold text-yellow-400 uppercase">
                 Resumen
               </span>
-              <div className="p-2 rounded-lg bg-yellow-500/20">
+              <div className="rounded-lg bg-yellow-500/20 p-2">
                 <AlertCircle className="h-4 w-4 text-yellow-400" />
               </div>
             </div>
             <div className="space-y-3">
               <div>
-                <p className="text-xs text-gray-400 mb-1">Pendientes</p>
+                <p className="mb-1 text-xs text-gray-400">Pendientes</p>
                 <p className="text-xl font-bold text-white">
                   {summary.totalPendientes}
                 </p>
               </div>
               <div className="border-t border-yellow-500/10 pt-3">
-                <p className="text-xs text-gray-400 mb-1">% Verificado</p>
+                <p className="mb-1 text-xs text-gray-400">% Verificado</p>
                 <p className="text-sm font-semibold text-green-300">
                   {summary.porcentajeVerificado}%
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-400 mb-1">Monto Pendiente</p>
+                <p className="mb-1 text-xs text-gray-400">Monto Pendiente</p>
                 <p className="text-sm font-semibold text-yellow-300">
                   {formatCurrency(summary.totalRecaudadoNoVerificado)}
                 </p>
@@ -519,8 +522,8 @@ export default function TransactionHistoryPage() {
         </div>
 
         {/* Filtros */}
-        <div className="mb-6 rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-br from-[#00BDD8]/5 to-[#00BDD8]/[0.02] backdrop-blur-md p-6 shadow-xl">
-          <div className="flex items-center gap-2 mb-6">
+        <div className="mb-6 rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-br from-[#00BDD8]/5 to-[#00BDD8]/[0.02] p-6 shadow-xl backdrop-blur-md">
+          <div className="mb-6 flex items-center gap-2">
             <Filter className="h-5 w-5 text-[#00BDD8]" />
             <h2 className="text-sm font-semibold text-white">Filtros</h2>
           </div>
@@ -531,13 +534,13 @@ export default function TransactionHistoryPage() {
                 Búsqueda
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#00BDD8]/50" />
+                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#00BDD8]/50" />
                 <input
                   type="text"
                   placeholder="Usuario, email, concepto..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 pl-10 pr-4 py-2.5 text-sm text-white placeholder-gray-500 transition focus:border-[#00BDD8]/70 focus:outline-hidden focus:ring-2 focus:ring-[#00BDD8]/20 backdrop-blur-sm"
+                  className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 py-2.5 pr-4 pl-10 text-sm text-white placeholder-gray-500 backdrop-blur-sm transition focus:border-[#00BDD8]/70 focus:ring-2 focus:ring-[#00BDD8]/20 focus:outline-hidden"
                 />
               </div>
             </div>
@@ -552,7 +555,7 @@ export default function TransactionHistoryPage() {
                 onChange={(e) =>
                   setVerified(e.target.value as 'all' | 'true' | 'false')
                 }
-                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white focus:border-[#00BDD8]/70 focus:outline-hidden focus:ring-2 focus:ring-[#00BDD8]/20 backdrop-blur-sm"
+                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white backdrop-blur-sm focus:border-[#00BDD8]/70 focus:ring-2 focus:ring-[#00BDD8]/20 focus:outline-hidden"
               >
                 <option value="all" className="bg-[#01142B]">
                   Todos
@@ -575,7 +578,7 @@ export default function TransactionHistoryPage() {
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white focus:border-[#00BDD8]/70 focus:outline-hidden focus:ring-2 focus:ring-[#00BDD8]/20 backdrop-blur-sm"
+                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white backdrop-blur-sm focus:border-[#00BDD8]/70 focus:ring-2 focus:ring-[#00BDD8]/20 focus:outline-hidden"
               />
             </div>
 
@@ -588,7 +591,7 @@ export default function TransactionHistoryPage() {
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white focus:border-[#00BDD8]/70 focus:outline-hidden focus:ring-2 focus:ring-[#00BDD8]/20 backdrop-blur-sm"
+                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white backdrop-blur-sm focus:border-[#00BDD8]/70 focus:ring-2 focus:ring-[#00BDD8]/20 focus:outline-hidden"
               />
             </div>
 
@@ -602,7 +605,7 @@ export default function TransactionHistoryPage() {
                 placeholder="Ej: tarjeta, transferencia..."
                 value={method}
                 onChange={(e) => setMethod(e.target.value)}
-                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-[#00BDD8]/70 focus:outline-hidden focus:ring-2 focus:ring-[#00BDD8]/20 backdrop-blur-sm"
+                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 backdrop-blur-sm focus:border-[#00BDD8]/70 focus:ring-2 focus:ring-[#00BDD8]/20 focus:outline-hidden"
               />
             </div>
 
@@ -616,7 +619,7 @@ export default function TransactionHistoryPage() {
                 placeholder="Ej: inscripción..."
                 value={concepto}
                 onChange={(e) => setConcepto(e.target.value)}
-                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-[#00BDD8]/70 focus:outline-hidden focus:ring-2 focus:ring-[#00BDD8]/20 backdrop-blur-sm"
+                className="w-full rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2.5 text-sm text-white placeholder-gray-500 backdrop-blur-sm focus:border-[#00BDD8]/70 focus:ring-2 focus:ring-[#00BDD8]/20 focus:outline-hidden"
               />
             </div>
 
@@ -625,7 +628,7 @@ export default function TransactionHistoryPage() {
               <div className="flex items-end">
                 <button
                   onClick={handleClearFilters}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 transition hover:border-red-500/50 hover:bg-red-500/20 backdrop-blur-sm"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 backdrop-blur-sm transition hover:border-red-500/50 hover:bg-red-500/20"
                 >
                   <X className="h-4 w-4" />
                   Limpiar
@@ -656,7 +659,7 @@ export default function TransactionHistoryPage() {
             </div>
           ) : items.length === 0 ? (
             <div className="py-16 text-center">
-              <div className="mx-auto mb-4 p-4 rounded-xl bg-[#00BDD8]/10 w-fit">
+              <div className="mx-auto mb-4 w-fit rounded-xl bg-[#00BDD8]/10 p-4">
                 <FileText className="mx-auto h-8 w-8 text-[#00BDD8]/50" />
               </div>
               <p className="text-gray-400">No hay transacciones registradas</p>
@@ -696,7 +699,7 @@ export default function TransactionHistoryPage() {
                   {items.map((item) => (
                     <tr
                       key={item.id}
-                      className="transition hover:bg-[#00BDD8]/5 border-0"
+                      className="border-0 transition hover:bg-[#00BDD8]/5"
                     >
                       <td className="px-6 py-4">
                         <span className="font-semibold text-white">
@@ -708,7 +711,7 @@ export default function TransactionHistoryPage() {
                           <span className="font-medium text-white">
                             {item.userName || 'N/A'}
                           </span>
-                          <span className="text-xs text-gray-400 mt-1">
+                          <span className="mt-1 text-xs text-gray-400">
                             {item.userEmail}
                           </span>
                         </div>
@@ -725,12 +728,12 @@ export default function TransactionHistoryPage() {
                       </td>
                       <td className="px-6 py-4 text-center">
                         {item.receiptVerified ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 border border-green-500/30 px-3 py-1 text-xs font-medium text-green-300">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/20 px-3 py-1 text-xs font-medium text-green-300">
                             <CheckCircle2 className="h-3 w-3" />
                             Verificado
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/20 border border-yellow-500/30 px-3 py-1 text-xs font-medium text-yellow-300">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/20 px-3 py-1 text-xs font-medium text-yellow-300">
                             <AlertCircle className="h-3 w-3" />
                             Pendiente
                           </span>
@@ -755,8 +758,8 @@ export default function TransactionHistoryPage() {
 
         {/* Paginación */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-r from-[#00BDD8]/5 to-[#00BDD8]/[0.02] p-4 backdrop-blur-md">
-            <div className="text-xs sm:text-sm text-gray-400">
+          <div className="mt-6 flex flex-col items-center justify-between gap-4 rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-r from-[#00BDD8]/5 to-[#00BDD8]/[0.02] p-4 backdrop-blur-md sm:flex-row">
+            <div className="text-xs text-gray-400 sm:text-sm">
               Página{' '}
               <span className="font-semibold text-[#00BDD8]">
                 {pagination.page}
@@ -775,7 +778,7 @@ export default function TransactionHistoryPage() {
               <button
                 onClick={handlePrevPage}
                 disabled={page === 1}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2 text-sm font-medium text-[#00BDD8] transition disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-[#00BDD8]/70 hover:enabled:bg-[#00BDD8]/10 backdrop-blur-sm"
+                className="inline-flex items-center gap-2 rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2 text-sm font-medium text-[#00BDD8] backdrop-blur-sm transition hover:enabled:border-[#00BDD8]/70 hover:enabled:bg-[#00BDD8]/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Anterior
@@ -783,7 +786,7 @@ export default function TransactionHistoryPage() {
               <button
                 onClick={handleNextPage}
                 disabled={page >= pagination.totalPages}
-                className="inline-flex items-center gap-2 rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2 text-sm font-medium text-[#00BDD8] transition disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-[#00BDD8]/70 hover:enabled:bg-[#00BDD8]/10 backdrop-blur-sm"
+                className="inline-flex items-center gap-2 rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2 text-sm font-medium text-[#00BDD8] backdrop-blur-sm transition hover:enabled:border-[#00BDD8]/70 hover:enabled:bg-[#00BDD8]/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Siguiente
                 <ChevronRight className="h-4 w-4" />
@@ -794,10 +797,10 @@ export default function TransactionHistoryPage() {
 
         {/* Modal de Detalle */}
         {selectedPago && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
-            <div className="w-full max-w-3xl rounded-2xl border border-[#00BDD8]/30 bg-gradient-to-b from-[#01142B] to-[#0a2548] shadow-2xl overflow-hidden">
-              <div className="border-b border-[#00BDD8]/20 bg-gradient-to-r from-[#00BDD8]/10 to-transparent px-6 py-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] bg-clip-text text-transparent">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-md">
+            <div className="w-full max-w-3xl overflow-hidden rounded-2xl border border-[#00BDD8]/30 bg-gradient-to-b from-[#01142B] to-[#0a2548] shadow-2xl">
+              <div className="flex items-center justify-between border-b border-[#00BDD8]/20 bg-gradient-to-r from-[#00BDD8]/10 to-transparent px-6 py-4">
+                <h2 className="bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] bg-clip-text text-lg font-bold text-transparent">
                   Detalles de Transacción #{detailData?.pago.nroPago}
                 </h2>
                 <button
@@ -819,7 +822,7 @@ export default function TransactionHistoryPage() {
                     <p className="text-sm">{detailError}</p>
                   </div>
                 ) : detailData ? (
-                  <div className="p-6 space-y-6">
+                  <div className="space-y-6 p-6">
                     {/* Resumen */}
                     <div>
                       <h3 className="mb-4 text-sm font-semibold text-[#00BDD8]">
@@ -828,7 +831,7 @@ export default function TransactionHistoryPage() {
                       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                         <div className="rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5 p-4 backdrop-blur-sm">
                           <p className="text-xs text-gray-400">Concepto</p>
-                          <p className="mt-2 font-semibold text-white break-words">
+                          <p className="mt-2 font-semibold break-words text-white">
                             {detailData.pago.concepto}
                           </p>
                         </div>
@@ -858,7 +861,7 @@ export default function TransactionHistoryPage() {
                         </div>
                         <div className="rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5 p-4 backdrop-blur-sm">
                           <p className="text-xs text-gray-400">Email</p>
-                          <p className="mt-2 font-semibold text-white text-xs break-all">
+                          <p className="mt-2 text-xs font-semibold break-all text-white">
                             {detailData.pago.user.email}
                           </p>
                         </div>
@@ -870,16 +873,16 @@ export default function TransactionHistoryPage() {
                       <h3 className="mb-4 text-sm font-semibold text-[#00BDD8]">
                         Comprobante de Pago
                       </h3>
-                      <div className="rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5 p-5 space-y-4 backdrop-blur-sm">
+                      <div className="space-y-4 rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5 p-5 backdrop-blur-sm">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-300">Estado:</span>
                           {detailData.pago.receiptVerified ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-green-500/20 border border-green-500/30 px-3 py-1 text-xs font-medium text-green-300">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/20 px-3 py-1 text-xs font-medium text-green-300">
                               <CheckCircle2 className="h-3 w-3" />
                               Verificado
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-yellow-500/20 border border-yellow-500/30 px-3 py-1 text-xs font-medium text-yellow-300">
+                            <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/20 px-3 py-1 text-xs font-medium text-yellow-300">
                               <AlertCircle className="h-3 w-3" />
                               Pendiente
                             </span>
@@ -893,12 +896,12 @@ export default function TransactionHistoryPage() {
                             disabled={
                               updatingStatus || detailData.pago.receiptVerified
                             }
-                            className="flex-1 rounded-lg bg-green-500/20 border border-green-500/30 px-3 py-2 text-xs font-semibold text-green-300 transition disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-green-500/30"
+                            className="flex-1 rounded-lg border border-green-500/30 bg-green-500/20 px-3 py-2 text-xs font-semibold text-green-300 transition hover:enabled:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {updatingStatus ? (
-                              <Loader2 className="h-3 w-3 animate-spin inline mr-1" />
+                              <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
                             ) : (
-                              <CheckCircle2 className="h-3 w-3 inline mr-1" />
+                              <CheckCircle2 className="mr-1 inline h-3 w-3" />
                             )}
                             Verificar
                           </button>
@@ -907,12 +910,12 @@ export default function TransactionHistoryPage() {
                             disabled={
                               updatingStatus || !detailData.pago.receiptVerified
                             }
-                            className="flex-1 rounded-lg bg-red-500/20 border border-red-500/30 px-3 py-2 text-xs font-semibold text-red-300 transition disabled:opacity-50 disabled:cursor-not-allowed hover:enabled:bg-red-500/30"
+                            className="flex-1 rounded-lg border border-red-500/30 bg-red-500/20 px-3 py-2 text-xs font-semibold text-red-300 transition hover:enabled:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {updatingStatus ? (
-                              <Loader2 className="h-3 w-3 animate-spin inline mr-1" />
+                              <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
                             ) : (
-                              <X className="h-3 w-3 inline mr-1" />
+                              <X className="mr-1 inline h-3 w-3" />
                             )}
                             Rechazar
                           </button>
@@ -938,7 +941,7 @@ export default function TransactionHistoryPage() {
                                 href={detailData.pago.receiptUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#00BDD8]/20 border border-[#00BDD8]/30 px-3 py-1.5 text-xs font-medium text-[#00BDD8] hover:bg-[#00BDD8]/30 transition"
+                                className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#00BDD8]/30 bg-[#00BDD8]/20 px-3 py-1.5 text-xs font-medium text-[#00BDD8] transition hover:bg-[#00BDD8]/30"
                               >
                                 <Download className="h-3.5 w-3.5" />
                                 Descargar
@@ -979,7 +982,7 @@ export default function TransactionHistoryPage() {
                               href={detailData.pago.verifiedReceiptUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="mt-3 inline-flex items-center gap-2 rounded-lg bg-green-500/20 border border-green-500/30 px-3 py-1.5 text-xs font-medium text-green-300 hover:bg-green-500/30 transition"
+                              className="mt-3 inline-flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/20 px-3 py-1.5 text-xs font-medium text-green-300 transition hover:bg-green-500/30"
                             >
                               <Download className="h-3.5 w-3.5" />
                               Descargar
@@ -1038,7 +1041,7 @@ export default function TransactionHistoryPage() {
                                         href={v.fileUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1 text-[#00BDD8] hover:text-[#00d9ff] transition"
+                                        className="inline-flex items-center gap-1 text-[#00BDD8] transition hover:text-[#00d9ff]"
                                       >
                                         <Download className="h-3 w-3" />
                                         {v.fileName || 'Archivo'}
@@ -1058,10 +1061,10 @@ export default function TransactionHistoryPage() {
                 ) : null}
               </div>
 
-              <div className="border-t border-[#00BDD8]/20 bg-gradient-to-r from-[#00BDD8]/5 to-transparent px-6 py-4 flex justify-end">
+              <div className="flex justify-end border-t border-[#00BDD8]/20 bg-gradient-to-r from-[#00BDD8]/5 to-transparent px-6 py-4">
                 <button
                   onClick={handleCloseDetail}
-                  className="rounded-lg bg-gradient-to-r from-[#00BDD8]/30 to-[#00BDD8]/10 border border-[#00BDD8]/30 px-6 py-2 text-sm font-semibold text-[#00BDD8] transition hover:from-[#00BDD8]/40 hover:to-[#00BDD8]/20"
+                  className="rounded-lg border border-[#00BDD8]/30 bg-gradient-to-r from-[#00BDD8]/30 to-[#00BDD8]/10 px-6 py-2 text-sm font-semibold text-[#00BDD8] transition hover:from-[#00BDD8]/40 hover:to-[#00BDD8]/20"
                 >
                   Cerrar
                 </button>
