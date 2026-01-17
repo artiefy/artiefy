@@ -31,6 +31,8 @@ const getDashboardRoute = (role?: string) => {
       return '/estudiantes';
   }
 };
+const getUserRole = (role: unknown): string | undefined =>
+  typeof role === 'string' ? role : undefined;
 
 export default function HomePage() {
   const { user } = useUser();
@@ -64,7 +66,9 @@ export default function HomePage() {
     setShowChatbot(false);
   }, []);
 
-  const dashboardRoute = getDashboardRoute(user?.publicMetadata?.role);
+  const dashboardRoute = getDashboardRoute(
+    getUserRole(user?.publicMetadata?.role)
+  );
 
   useEffect(() => {
     const fetchAnuncioActivo = async (userId: string) => {
@@ -128,7 +132,7 @@ export default function HomePage() {
     if (postAuthAction !== 'dashboard') return;
     setPostAuthAction(null);
     setLoading(true);
-    router.push(getDashboardRoute(user?.publicMetadata?.role));
+    router.push(getDashboardRoute(getUserRole(user?.publicMetadata?.role)));
   }, [postAuthAction, router, user?.publicMetadata?.role]);
 
   const handleStartNowClick = useCallback(() => {
