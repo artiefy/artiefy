@@ -198,21 +198,9 @@ export default function MiniSignUpModal({
     const absoluteRedirectUrlComplete = redirectUrl.startsWith('http')
       ? redirectUrl
       : `${baseUrl}${redirectUrl}`;
-    const shouldUseAccountPortalRedirect =
-      process.env.NODE_ENV === 'production';
-
     try {
       setLoadingProvider(strategy);
       setErrors(undefined);
-
-      if (shouldUseAccountPortalRedirect) {
-        await signUp.authenticateWithRedirect({
-          strategy,
-          redirectUrl: absoluteRedirectUrlFallback,
-          redirectUrlComplete: absoluteRedirectUrlComplete,
-        });
-        return;
-      }
 
       const width = 500;
       const height = 650;

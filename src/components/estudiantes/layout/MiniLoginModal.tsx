@@ -124,20 +124,9 @@ export default function MiniLoginModal({
           ? redirectUrl
           : `${baseUrl}${redirectUrl}`
         : `${baseUrl}${window.location.pathname}${window.location.search}`;
-    const shouldUseRedirectInProd = process.env.NODE_ENV === 'production';
-
     try {
       setLoadingProvider(strategy);
       setErrors(undefined);
-
-      if (shouldUseRedirectInProd) {
-        await signIn.authenticateWithRedirect({
-          strategy,
-          redirectUrl: absoluteRedirectUrlFallback,
-          redirectUrlComplete: absoluteRedirectUrlComplete,
-        });
-        return;
-      }
 
       const width = 600;
       const height = 650;

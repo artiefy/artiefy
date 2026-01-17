@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
@@ -20,6 +19,19 @@ import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
+const getDashboardRoute = (role?: string) => {
+  switch (role) {
+    case 'super-admin':
+      return '/dashboard/super-admin';
+    case 'admin':
+      return '/dashboard/admin';
+    case 'educador':
+      return '/dashboard/educadores';
+    default:
+      return '/estudiantes';
+  }
+};
+
 export default function HomePage() {
   const { user } = useUser();
   const router = useRouter();
@@ -30,7 +42,7 @@ export default function HomePage() {
   const [showChatbot, setShowChatbot] = useState<boolean>(false);
   const [lastSearchQuery] = useState<string>('');
   void showAnuncio;
-  const { isSignedIn: _isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth();
   const [anuncios, setAnuncios] = useState<
     {
       titulo: string;
@@ -44,19 +56,15 @@ export default function HomePage() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [postAuthAction, setPostAuthAction] = useState<'dashboard' | null>(
+    null
+  );
 
   const handleSearchComplete = useCallback(() => {
     setShowChatbot(false);
   }, []);
 
-  const dashboardRoute =
-    user?.publicMetadata?.role === 'super-admin'
-      ? '/dashboard/super-admin'
-      : user?.publicMetadata?.role === 'admin'
-        ? '/dashboard/admin'
-        : user?.publicMetadata?.role === 'educador'
-          ? '/dashboard/educadores'
-          : '/estudiantes';
+  const dashboardRoute = getDashboardRoute(user?.publicMetadata?.role);
 
   useEffect(() => {
     const fetchAnuncioActivo = async (userId: string) => {
@@ -116,6 +124,24 @@ export default function HomePage() {
     setMounted(true);
   }, []);
 
+  const handlePostAuthAction = useCallback(() => {
+    if (postAuthAction !== 'dashboard') return;
+    setPostAuthAction(null);
+    setLoading(true);
+    router.push(getDashboardRoute(user?.publicMetadata?.role));
+  }, [postAuthAction, router, user?.publicMetadata?.role]);
+
+  const handleStartNowClick = useCallback(() => {
+    if (!isSignedIn) {
+      setLoading(false);
+      setPostAuthAction('dashboard');
+      setShowLoginModal(true);
+      return;
+    }
+    setLoading(true);
+    router.push(dashboardRoute);
+  }, [dashboardRoute, isSignedIn, router]);
+
   // Listener para cerrar completamente el chatbot desde dentro (evento global)
   useEffect(() => {
     const handleCloseChatbot = () => {
@@ -149,31 +175,26 @@ export default function HomePage() {
             </p>
             <div>
               <Button
-                asChild
                 className="join-button relative skew-x-[-20deg] rounded-none border border-primary bg-primary py-8 text-2xl font-semibold text-background italic hover:border-primary hover:bg-transparent hover:text-primary active:scale-95"
                 style={{
                   boxShadow: '6px 6px 0 black',
                   transition: '0.5s',
                   width: '250px',
                 }}
-                onClick={() => setLoading(true)}
+                onClick={handleStartNowClick}
               >
-                <Link href={dashboardRoute}>
-                  <div className="flex w-full items-center justify-center">
-                    {loading ? (
-                      <Icons.spinner
-                        style={{ width: '35px', height: '35px' }}
-                      />
-                    ) : (
-                      <>
-                        <span className="inline-block skew-x-[15deg]">
-                          COMIENZA YA
-                        </span>
-                        <FaArrowRight className="ml-2 inline-block skew-x-[15deg] animate-bounce-right transition-transform duration-500" />
-                      </>
-                    )}
-                  </div>
-                </Link>
+                <div className="flex w-full items-center justify-center">
+                  {loading ? (
+                    <Icons.spinner style={{ width: '35px', height: '35px' }} />
+                  ) : (
+                    <>
+                      <span className="inline-block skew-x-[15deg]">
+                        COMIENZA YA
+                      </span>
+                      <FaArrowRight className="ml-2 inline-block skew-x-[15deg] animate-bounce-right transition-transform duration-500" />
+                    </>
+                  )}
+                </div>
               </Button>
             </div>
           </section>
@@ -202,10 +223,13 @@ export default function HomePage() {
         onClose={() => {
           setShowLoginModal(false);
           setOauthError(null);
+          setPostAuthAction(null);
+          setLoading(false);
         }}
         onLoginSuccess={() => {
           setShowLoginModal(false);
           setOauthError(null);
+          handlePostAuthAction();
         }}
         redirectUrl="/"
         onSwitchToSignUp={() => {
@@ -216,9 +240,14 @@ export default function HomePage() {
       />
       <MiniSignUpModal
         isOpen={showSignUpModal}
-        onClose={() => setShowSignUpModal(false)}
+        onClose={() => {
+          setShowSignUpModal(false);
+          setPostAuthAction(null);
+          setLoading(false);
+        }}
         onSignUpSuccess={() => {
           setShowSignUpModal(false);
+          handlePostAuthAction();
         }}
         redirectUrl="/"
         onSwitchToLogin={() => {
