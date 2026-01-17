@@ -702,6 +702,14 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
     fields: [courses.certificationTypeId],
     references: [certificationTypes.id],
   }),
+  scheduleOption: one(scheduleOptions, {
+    fields: [courses.scheduleOptionId],
+    references: [scheduleOptions.id],
+  }),
+  spaceOption: one(spaceOptions, {
+    fields: [courses.spaceOptionId],
+    references: [spaceOptions.id],
+  }),
 }));
 
 // Tabla de notas

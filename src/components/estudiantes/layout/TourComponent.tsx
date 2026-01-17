@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 
+import { usePathname } from 'next/navigation';
+
 import { LuInfo } from 'react-icons/lu';
 
 import { useExtras } from '~/app/estudiantes/StudentContext';
@@ -16,6 +18,8 @@ export const TourComponent = () => {
   const [showAnim, setShowAnim] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const ANIMATION_DURATION = 350;
+  const pathname = usePathname();
+  const isClassRoute = pathname?.startsWith('/estudiantes/clases/') ?? false;
 
   useEffect(() => {
     // Solo se ejecuta en el cliente: actualizar on resize (no establecer sincronamente)
@@ -78,7 +82,7 @@ export const TourComponent = () => {
     <>
       {!hideButton && (isDesktop ? showAnim : true) && (
         <div
-          className={`fixed z-10 translate-x-0 ${isDesktop ? 'right-24 bottom-9' : 'right-24 bottom-9.5'}`}
+          className={`fixed z-50 translate-x-0 ${isDesktop ? (isClassRoute ? 'bottom-9 left-24' : 'right-24 bottom-9') : isClassRoute ? 'bottom-9 left-24' : 'right-24 bottom-9'}`}
           onMouseEnter={() =>
             window.dispatchEvent(new Event('extras-hover-enter'))
           }
@@ -108,8 +112,19 @@ export const TourComponent = () => {
                 <span className="hidden font-medium tracking-wide sm:inline">
                   Tour por la Aplicación
                 </span>
-                {/* Triángulo tipo burbuja */}
-                <span className="absolute bottom-[14px] left-1/2 hidden h-0 w-0 translate-x-31 rotate-[270deg] transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-green-500 border-r-transparent border-l-transparent sm:inline" />
+                {/* Triángulo tipo burbuja. Si el botón está en la izquierda, mostrar triángulo apuntando a la derecha */}
+                <span
+                  className={`absolute bottom-[14px] hidden h-0 w-0 sm:inline ${isClassRoute ? 'right-1/2 translate-x-1 rotate-90' : 'left-1/2 -translate-x-1 rotate-[270deg]'} transform border-t-[8px] border-r-[6px] border-l-[6px]`}
+                  style={{
+                    borderTopColor: '#10b981',
+                    borderRightColor: isClassRoute
+                      ? 'transparent'
+                      : 'transparent',
+                    borderLeftColor: isClassRoute
+                      ? 'transparent'
+                      : 'transparent',
+                  }}
+                />
               </>
             )}
           </button>

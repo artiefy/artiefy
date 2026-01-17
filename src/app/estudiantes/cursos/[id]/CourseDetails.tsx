@@ -20,6 +20,7 @@ import { CourseForum } from '~/components/estudiantes/layout/coursedetail/Course
 import { ProjectsSection } from '~/components/estudiantes/layout/coursedetail/ProjectsSection';
 import { ResourcesSection } from '~/components/estudiantes/layout/coursedetail/ResourcesSection';
 import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
+import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import {
@@ -86,6 +87,7 @@ export default function CourseDetails({
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [pendingOpenPayment, setPendingOpenPayment] = useState(false);
   const [seenSections, setSeenSections] = useState<Record<NavKey, boolean>>({
     curso: true,
@@ -233,24 +235,16 @@ export default function CourseDetails({
       curso: 0,
       grabadas: 0,
       proyectos: 0,
-      recursos: 0,
+      recursos: resourcesCount, // Solo mostrar dinámico para recursos
       actividades: 0,
       foro: 0,
     };
-    if (!lastSeenCounts) return result;
-    (Object.keys(unseenCounts) as NavKey[]).forEach((k) => {
-      const prev = lastSeenCounts[k] ?? 0;
-      const cur = unseenCounts[k] ?? 0;
-      const delta = Math.max(0, cur - prev);
-      // Si el usuario ya marcó la sección como vista, ocultar badge
-      result[k] = seenSections[k] ? 0 : delta;
-    });
-    // Solo mostrar badges cuando el usuario esté inscrito
+    // No calcular deltas para otros, solo recursos fijo
     if (!isEnrolled) {
-      (Object.keys(result) as NavKey[]).forEach((k) => (result[k] = 0));
+      result.recursos = 0;
     }
     return result;
-  }, [unseenCounts, lastSeenCounts, seenSections, isEnrolled]);
+  }, [resourcesCount, isEnrolled]);
   const navItems: Array<{ key: NavKey; label: string; helper?: string }> = [
     {
       key: 'curso',
@@ -348,6 +342,27 @@ export default function CourseDetails({
 
     void fetchProjectsCount();
   }, [isSignedIn, userId, course.id]);
+
+  // NOTA: Ya no usamos este useEffect porque abrimos el modal directamente en handleLoginSuccess
+  // Esto evita problemas de timing con el cierre automático del modal
+  /*
+  // Abrir modal de pago después del login si hay pago pendiente
+  useEffect(() => {
+    if (isSignedIn && pendingOpenPayment) {
+      const hasPurchasable = courseTypes.some(
+        (t) => t.isPurchasableIndividually
+      );
+      const isIndividualPurchase =
+        hasPurchasable && course.individualPrice && course.individualPrice > 0;
+
+      if (isIndividualPurchase) {
+        console.log('✅ Abriendo modal de pago después del login');
+        setPendingOpenPayment(false);
+        setShowPaymentModal(true);
+      }
+    }
+  }, [isSignedIn, pendingOpenPayment, courseTypes, course.individualPrice]);
+  */
 
   useEffect(() => {
     if (initialCourse.isActive === false) {
@@ -465,23 +480,63 @@ export default function CourseDetails({
     course.title,
   ]);
 
+  const loginRedirectUrl = '';
+
   const handleLoginSuccess = () => {
     setShowLoginModal(false);
 
-    // Solo abrir modal de pago si el curso requiere pago individual
+    // Detectar si el curso es purchasable individually
     const hasPurchasable = courseTypes.some((t) => t.isPurchasableIndividually);
     const isIndividualPurchase =
       hasPurchasable && course.individualPrice && course.individualPrice > 0;
 
+    console.log('🔍 handleLoginSuccess - Debug:', {
+      pendingOpenPayment,
+      hasPurchasable,
+      isIndividualPurchase,
+      courseId: course.id,
+      individualPrice: course.individualPrice,
+    });
+
+    // Si hay un pago pendiente Y el curso es de compra individual, abrir modal de pago
     if (pendingOpenPayment && isIndividualPurchase) {
+      console.log('✅ Abriendo modal de pago después del login');
       setPendingOpenPayment(false);
-      setShowPaymentModal(true);
+      // Usar setTimeout para asegurar que el modal de login se cierre primero
+      setTimeout(() => {
+        setShowPaymentModal(true);
+      }, 100);
       return;
     }
 
     // Si no hay pago pendiente o no es curso individual, continuar flujo normal
+    console.log('ℹ️ Continuando flujo normal de inscripción');
     setPendingOpenPayment(false);
     void handleStartNow();
+  };
+
+  // Funciones para cambiar entre modales de login y signup
+  const handleSwitchToSignUp = () => {
+    setShowLoginModal(false);
+    setShowSignUpModal(true);
+  };
+
+  const handleSwitchToLogin = () => {
+    setShowSignUpModal(false);
+    setShowLoginModal(true);
+  };
+
+  // Handler para cuando se completa el signup
+  const handleSignUpSuccess = () => {
+    console.log('✅ Registro completado, continuando flujo...');
+    setShowSignUpModal(false);
+
+    if (pendingOpenPayment) {
+      setShowPaymentModal(true);
+      setPendingOpenPayment(false);
+    } else {
+      void handleStartNow();
+    }
   };
 
   const handleStartNow = async () => {
@@ -498,12 +553,21 @@ export default function CourseDetails({
           _hasPro &&
           (normalizedPlan === 'pro' || normalizedPlan === 'premium')));
 
-    const shouldOpenPayment = _hasFree
-      ? false
-      : !hasPlanAccess && (hasPurchasable || !_hasActiveSubscription);
+    // Simplificar la lógica: si el curso es purchasable individually, debe pagar
+    // a menos que ya tenga acceso por suscripción
+    const isIndividualPurchaseRequired =
+      hasPurchasable &&
+      course.individualPrice &&
+      course.individualPrice > 0 &&
+      !hasPlanAccess;
+
+    const shouldOpenPayment =
+      isIndividualPurchaseRequired ||
+      (_hasFree ? false : !hasPlanAccess && !_hasActiveSubscription);
 
     if (!isSignedIn) {
-      setPendingOpenPayment(shouldOpenPayment);
+      // Establecer pendingOpenPayment basado en si el curso requiere pago individual
+      setPendingOpenPayment(!!isIndividualPurchaseRequired);
       setShowLoginModal(true);
       return;
     }
@@ -1198,16 +1262,38 @@ export default function CourseDetails({
                                 : course.modalidad.name}
                             </span>
                           )}
-                          {/* Badge de horario al lado derecho de modalidad (solo si existe) */}
-                          {course.horario && (
+                          {course.scheduleOption?.name || course.horario ? (
                             <span
                               style={{ backgroundColor: '#1A2333' }}
                               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
                             >
                               <AiOutlineCalendar className="h-3 w-3" />
-                              {course.horario}
+                              {course.scheduleOption?.name || course.horario}
                             </span>
-                          )}
+                          ) : null}
+                          {course.spaceOption?.name || course.espacios ? (
+                            <span
+                              style={{ backgroundColor: '#1A2333' }}
+                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-3 w-3"
+                              >
+                                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                                <circle cx="12" cy="10" r="3"></circle>
+                              </svg>
+                              {course.spaceOption?.name || course.espacios}
+                            </span>
+                          ) : null}
                         </div>
 
                         {/* Descripción */}
@@ -1768,7 +1854,7 @@ export default function CourseDetails({
               <PaymentForm
                 selectedProduct={courseProduct}
                 requireAuthOnSubmit={!isSignedIn}
-                redirectUrlOnAuth={`/estudiantes/cursos/${course.id}`}
+                redirectUrlOnAuth=""
               />
             </div>
           </div>
@@ -1780,10 +1866,24 @@ export default function CourseDetails({
           isOpen={showLoginModal}
           onClose={() => {
             setShowLoginModal(false);
-            setPendingOpenPayment(false);
           }}
           onLoginSuccess={handleLoginSuccess}
+          redirectUrl={loginRedirectUrl}
+          onSwitchToSignUp={handleSwitchToSignUp}
+        />
+      )}
+
+      {/* Mini SignUp Modal */}
+      {showSignUpModal && (
+        <MiniSignUpModal
+          isOpen={showSignUpModal}
+          onClose={() => {
+            setShowSignUpModal(false);
+            setPendingOpenPayment(false);
+          }}
+          onSignUpSuccess={handleSignUpSuccess}
           redirectUrl={`/estudiantes/cursos/${course.id}`}
+          onSwitchToLogin={handleSwitchToLogin}
         />
       )}
 

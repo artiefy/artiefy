@@ -59,6 +59,28 @@ export interface CourseType {
   metaPixelId?: string | null; // Pixel Meta/Facebook dinámico por plan
 }
 
+export interface ScheduleOption {
+  id: number;
+  name: string;
+  description?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SpaceOption {
+  id: number;
+  name: string;
+  description?: string | null;
+  location?: string | null;
+  capacity?: number | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Keep the full Course interface for other uses
 export interface Course extends BaseCourse {
   totalStudents: number;
@@ -80,6 +102,10 @@ export interface Course extends BaseCourse {
   metaPixelId?: string | null; // Pixel Meta/Facebook dinámico por curso
   horario?: string | null;
   espacios?: string | null;
+  scheduleOptionId?: number | null;
+  spaceOptionId?: number | null;
+  scheduleOption?: ScheduleOption | null;
+  spaceOption?: SpaceOption | null;
 }
 
 // Add new interface for course materias
@@ -151,6 +177,7 @@ export interface Lesson {
   resourceNames: string[];
   isNew: boolean;
   orderIndex?: number | null; // NUEVO: orden explícito opcional
+  videoDuration?: string | null; // Added for video duration display
 }
 
 export interface LessonWithProgress extends Lesson {

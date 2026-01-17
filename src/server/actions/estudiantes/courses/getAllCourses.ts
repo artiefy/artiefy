@@ -11,6 +11,8 @@ import {
   courseTypes,
   modalidades,
   nivel,
+  scheduleOptions,
+  spaceOptions,
   users,
 } from '~/server/db/schema';
 
@@ -55,6 +57,20 @@ const baseCoursesQuery = {
   spaceOptionId: courses.spaceOptionId,
   horario: courses.horario,
   espacios: courses.espacios,
+  scheduleOptionName: scheduleOptions.name,
+  scheduleOptionDescription: scheduleOptions.description,
+  scheduleOptionStartTime: scheduleOptions.startTime,
+  scheduleOptionEndTime: scheduleOptions.endTime,
+  scheduleOptionIsActive: scheduleOptions.isActive,
+  scheduleOptionCreatedAt: scheduleOptions.createdAt,
+  scheduleOptionUpdatedAt: scheduleOptions.updatedAt,
+  spaceOptionName: spaceOptions.name,
+  spaceOptionDescription: spaceOptions.description,
+  spaceOptionLocation: spaceOptions.location,
+  spaceOptionCapacity: spaceOptions.capacity,
+  spaceOptionIsActive: spaceOptions.isActive,
+  spaceOptionCreatedAt: spaceOptions.createdAt,
+  spaceOptionUpdatedAt: spaceOptions.updatedAt,
 };
 
 export async function getAllCourses(): Promise<Course[]> {
@@ -68,6 +84,11 @@ export async function getAllCourses(): Promise<Course[]> {
       .leftJoin(nivel, eq(courses.nivelid, nivel.id))
       .leftJoin(courseTypes, eq(courses.courseTypeId, courseTypes.id))
       .leftJoin(users, eq(courses.instructor, users.id))
+      .leftJoin(
+        scheduleOptions,
+        eq(courses.scheduleOptionId, scheduleOptions.id)
+      )
+      .leftJoin(spaceOptions, eq(courses.spaceOptionId, spaceOptions.id))
       .where(eq(courses.requiresProgram, false))
       .orderBy(desc(courses.createdAt))
       .limit(100);
@@ -195,6 +216,30 @@ export async function getAllCourses(): Promise<Course[]> {
         course.espacios !== undefined && course.espacios !== null
           ? String(course.espacios)
           : '',
+      scheduleOption: course.scheduleOptionId
+        ? {
+            id: course.scheduleOptionId,
+            name: course.scheduleOptionName ?? '',
+            description: course.scheduleOptionDescription,
+            startTime: course.scheduleOptionStartTime,
+            endTime: course.scheduleOptionEndTime,
+            isActive: course.scheduleOptionIsActive ?? true,
+            createdAt: course.scheduleOptionCreatedAt ?? new Date(),
+            updatedAt: course.scheduleOptionUpdatedAt ?? new Date(),
+          }
+        : null,
+      spaceOption: course.spaceOptionId
+        ? {
+            id: course.spaceOptionId,
+            name: course.spaceOptionName ?? '',
+            description: course.spaceOptionDescription,
+            location: course.spaceOptionLocation,
+            capacity: course.spaceOptionCapacity,
+            isActive: course.spaceOptionIsActive ?? true,
+            createdAt: course.spaceOptionCreatedAt ?? new Date(),
+            updatedAt: course.spaceOptionUpdatedAt ?? new Date(),
+          }
+        : null,
       // Añadir classMeetings para que esté disponible en el front
       classMeetings: classMeetingsMap[course.id] ?? [],
     }));

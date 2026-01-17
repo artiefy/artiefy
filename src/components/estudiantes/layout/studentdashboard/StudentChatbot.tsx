@@ -9,7 +9,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { TrashIcon } from '@heroicons/react/24/solid';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { MessageCircle, Zap } from 'lucide-react';
+// lucide icons removed (not used here)
 import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoClose } from 'react-icons/io5';
 import { MdArrowBack, MdSupportAgent } from 'react-icons/md';
@@ -2720,7 +2720,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         // Render estilizado conservando los colores actuales
         if (title || description) {
           return (
-            <div className="bg-background max-w-[90%] rounded-2xl px-4 py-4 shadow">
+            <div className="max-w-[90%] rounded-2xl bg-background px-4 py-4 shadow">
               {title && (
                 <h3 className="mb-2 text-xl leading-tight font-extrabold text-white">
                   {title}
@@ -2789,7 +2789,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           // Evita mostrar mensaje_inicial dos veces: solo lo mostramos si hay cursos, y nunca repetido
           // Solo mostramos mensaje_inicial una vez por bloque de cursos
           return (
-            <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+            <div className="max-w-[90%] rounded-2xl bg-background px-4 py-3 shadow">
               {/* Solo mostrar mensaje_inicial si hay cursos y no es igual al mensaje anterior */}
               {typeof parsed.mensaje_inicial === 'string' && (
                 <p className="mb-2 font-semibold text-white">
@@ -2839,7 +2839,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           typeof (parsed as { mensaje?: unknown }).mensaje === 'string'
         ) {
           return (
-            <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+            <div className="max-w-[90%] rounded-2xl bg-background px-4 py-3 shadow">
               <p className="font-semibold text-white">
                 {(parsed as { mensaje: string }).mensaje}
               </p>
@@ -2888,7 +2888,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
       // Unifica todos los casos que deben tener fondo especial
       if (isWelcome || isIdea || isNoCursosMsg || isTechnicalError) {
         return (
-          <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+          <div className="max-w-[90%] rounded-2xl bg-background px-4 py-3 shadow">
             <p className="font-semibold text-white">{msgText}</p>
           </div>
         );
@@ -2957,7 +2957,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
 
       return (
         <div className="flex flex-col space-y-4">
-          <div className="bg-background max-w-[90%] rounded-2xl px-4 py-3 shadow">
+          <div className="max-w-[90%] rounded-2xl bg-background px-4 py-3 shadow">
             <p className="font-medium text-white">{introText}</p>
           </div>
           <div className="grid gap-4">
@@ -3049,8 +3049,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   const shouldRenderSupportButton =
     !isDesktop || ((showExtras || isHovered || extrasHovered) && showAnim);
   const supportButtonWrapperClass = isDesktop
-    ? 'animate-in fade-in-0 slide-in-from-bottom-2 fixed right-7 bottom-26 duration-200 sm:right-7'
-    : 'fixed right-8.5 bottom-26';
+    ? _safePathname.startsWith('/estudiantes/clases/')
+      ? 'animate-in fade-in-0 slide-in-from-bottom-2 fixed left-7 bottom-26 duration-200 sm:left-7'
+      : 'animate-in fade-in-0 slide-in-from-bottom-2 fixed right-7 bottom-26 duration-200 sm:right-7'
+    : _safePathname.startsWith('/estudiantes/clases/')
+      ? 'fixed left-8.5 bottom-26'
+      : 'fixed right-8.5 bottom-26';
   const supportButtonStyle: React.CSSProperties = {
     zIndex: floatingButtonsZIndex,
     pointerEvents: shouldLowerFloatingButtons ? 'none' : undefined,
@@ -3074,6 +3078,17 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     : undefined;
   const mobileBoxWidth = mobileViewportWidth ?? fallbackMobileWidth;
   const mobileBoxHeight = mobileViewportHeight ?? fallbackMobileHeight;
+
+  // Mover el botón flotante a la esquina izquierda en pantallas grandes cuando estemos
+  // en la ruta de una clase individual (/estudiantes/clases/:id)
+  const floatingMainWrapperClass =
+    isDesktop && _safePathname.startsWith('/estudiantes/clases/')
+      ? 'fixed left-6 bottom-6'
+      : isDesktop
+        ? 'fixed right-6 bottom-6'
+        : _safePathname.startsWith('/estudiantes/clases/')
+          ? 'fixed left-6 bottom-6'
+          : 'fixed right-6 bottom-6';
 
   function handleDeleteHistory(
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -3161,10 +3176,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           style={{ zIndex: shouldLowerFloatingButtons ? 40 : 99999 }}
         >
           {isAlwaysVisible && (
-            <div className="fixed right-6 bottom-6" style={floatingButtonStyle}>
+            <div
+              className={`${floatingMainWrapperClass}`}
+              style={floatingButtonStyle}
+            >
               <div className="relative">
                 <button
-                  className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out hover:scale-110 hover:shadow-xl hover:shadow-cyan-400/40 ${isOpen ? 'minimized' : ''} `}
+                  className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out ${isOpen ? 'minimized' : ''}`}
                   onMouseEnter={() => {
                     if (hideTimeoutRef.current) {
                       window.clearTimeout(hideTimeoutRef.current);
@@ -3186,13 +3204,15 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 >
                   <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-teal-500 opacity-0 blur-md transition-opacity duration-300 group-hover:opacity-20" />
                   <div className="absolute inset-1 flex items-center justify-center rounded-full bg-gradient-to-br from-slate-800 to-slate-900">
-                    <div className="relative">
-                      <MessageCircle
-                        className={`h-6 w-6 text-cyan-300 transition-all duration-300 ${isHovered ? 'scale-110' : ''} `}
+                    <div className="relative flex items-center justify-center">
+                      <Image
+                        src="/robot-svgrepo-com.svg"
+                        alt="Artie IA"
+                        width={32}
+                        height={32}
+                        unoptimized
+                        className={`h-8 w-8 -translate-y-1 transform transition-all duration-300 ${isHovered ? 'scale-105' : ''}`}
                       />
-                      {isHovered && (
-                        <Zap className="absolute -top-1 -right-1 h-3 w-3 animate-ping text-yellow-400" />
-                      )}
                     </div>
                   </div>
                   <div
@@ -3204,12 +3224,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   />
                   <div className="absolute inset-0 rounded-full border-2 border-cyan-400 opacity-0 transition-opacity duration-300" />
                 </button>
-                {/* Tooltip solo en desktop y hover */}
-                {isDesktop && isHovered && (
-                  <div className="absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 rounded-md border border-cyan-400 bg-slate-800/95 px-3 py-1 text-sm whitespace-nowrap text-cyan-300 shadow-lg backdrop-blur-sm">
-                    Asistente IA
-                  </div>
-                )}
+                {/* Label debajo del botón: más grande, bold y pegada al botón */}
+                <div className="text-md absolute bottom-[-1.2rem] left-1/2 -translate-x-1/2 transform text-center font-bold whitespace-nowrap text-primary">
+                  Artie IA
+                </div>
               </div>
 
               {/* Eliminado el tooltip/frase "Asistente IA" y triángulo */}
@@ -3434,7 +3452,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                       {activeSection === 'chatia' &&
                         showLoginNotice &&
                         !isSignedIn && (
-                          <div className="border-foreground/10 bg-background/60 mx-3 mt-3 rounded-lg border p-4 text-center">
+                          <div className="mx-3 mt-3 rounded-lg border border-foreground/10 bg-background/60 p-4 text-center">
                             <p className="text-sm text-white">
                               Debes iniciar sesión para seguir la conversación
                             </p>
@@ -3445,7 +3463,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                 );
                                 window.location.href = `/sign-in?redirect_url=${currentUrl}`;
                               }}
-                              className="bg-background hover:bg-background/90 focus:ring-background mt-3 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none"
+                              className="mt-3 rounded-lg bg-background px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-background/90 focus:ring-2 focus:ring-background focus:ring-offset-2 focus:outline-none"
                             >
                               Iniciar sesión
                             </button>
@@ -3465,7 +3483,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                             ) : !isSignedIn ? (
                               <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
                                 <div className="mb-6">
-                                  <div className="bg-background/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+                                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-background/20">
                                     <svg
                                       className="h-8 w-8 text-[#3AF4EF]"
                                       fill="none"
@@ -3760,7 +3778,7 @@ const CoursesCardsWithModalidad = React.memo(
           return (
             <Card
               key={course.id}
-              className="text-primary max-w-[260px] min-w-[300px] overflow-hidden rounded-lg bg-[#0b2433] transition-all hover:scale-[1.02]"
+              className="max-w-[260px] min-w-[300px] overflow-hidden rounded-lg bg-[#0b2433] text-primary transition-all hover:scale-[1.02]"
             >
               <div className="flex flex-col items-start px-4 py-3">
                 <h4 className="mb-1 font-bold text-white">{course.title}</h4>
@@ -3773,7 +3791,7 @@ const CoursesCardsWithModalidad = React.memo(
                 >
                   <span className="font-bold">Ir al Curso</span>
                   <svg
-                    className="animate-bounce-right ml-2 h-5 w-5 text-[#3AF4EF]"
+                    className="ml-2 h-5 w-5 animate-bounce-right text-[#3AF4EF]"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"

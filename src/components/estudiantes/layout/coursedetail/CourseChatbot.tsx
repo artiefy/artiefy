@@ -127,7 +127,7 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
           >
             <div className="chat-header">
               <div className="flex items-center space-x-2">
-                <FaRobot className="text-secondary text-2xl" />
+                <FaRobot className="text-2xl text-secondary" />
                 <h2
                   id="modal-title"
                   className="text-lg font-semibold text-gray-800"
@@ -158,7 +158,7 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
                     }`}
                   >
                     {message.sender === 'bot' ? (
-                      <FaRobot className="text-secondary mt-2 text-xl" />
+                      <FaRobot className="mt-2 text-xl text-secondary" />
                     ) : (
                       <BsPersonCircle className="mt-2 text-xl text-gray-500" />
                     )}
@@ -200,13 +200,13 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
                       ? 'Escribe tu mensaje...'
                       : 'Inscríbete para chatear'
                   }
-                  className="focus:ring-secondary flex-1 rounded-lg border border-gray-300 p-2 text-white focus:ring-2 focus:outline-none"
+                  className="flex-1 rounded-lg border border-gray-300 p-2 text-white focus:ring-2 focus:ring-secondary focus:outline-none"
                   disabled={!isEnrolled || isLoading}
                 />
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-secondary rounded-lg px-4 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
+                  className="rounded-lg bg-secondary px-4 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
                   aria-label="Enviar mensaje"
                 >
                   <FiSend className="text-xl" />

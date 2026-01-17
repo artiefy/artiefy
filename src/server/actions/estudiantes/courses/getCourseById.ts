@@ -10,6 +10,8 @@ import {
   courseTypes,
   modalidades,
   nivel,
+  scheduleOptions,
+  spaceOptions,
   userLessonsProgress,
   users,
 } from '~/server/db/schema';
@@ -34,6 +36,24 @@ interface CourseDetailQueryResult {
   isActive: boolean | null;
   requiresProgram: boolean | null;
   courseTypeId: number | null;
+  scheduleOptionId: number | null;
+  spaceOptionId: number | null;
+  horario: string | null;
+  espacios: string | null;
+  scheduleOptionName: string | null;
+  scheduleOptionDescription: string | null;
+  scheduleOptionStartTime: string | null;
+  scheduleOptionEndTime: string | null;
+  scheduleOptionIsActive: boolean | null;
+  scheduleOptionCreatedAt: Date | null;
+  scheduleOptionUpdatedAt: Date | null;
+  spaceOptionName: string | null;
+  spaceOptionDescription: string | null;
+  spaceOptionLocation: string | null;
+  spaceOptionCapacity: number | null;
+  spaceOptionIsActive: boolean | null;
+  spaceOptionCreatedAt: Date | null;
+  spaceOptionUpdatedAt: Date | null;
 }
 
 export async function getCourseById(
@@ -66,6 +86,24 @@ export async function getCourseById(
         isActive: courses.isActive,
         requiresProgram: courses.requiresProgram,
         courseTypeId: courses.courseTypeId,
+        scheduleOptionId: courses.scheduleOptionId,
+        spaceOptionId: courses.spaceOptionId,
+        horario: courses.horario,
+        espacios: courses.espacios,
+        scheduleOptionName: scheduleOptions.name,
+        scheduleOptionDescription: scheduleOptions.description,
+        scheduleOptionStartTime: scheduleOptions.startTime,
+        scheduleOptionEndTime: scheduleOptions.endTime,
+        scheduleOptionIsActive: scheduleOptions.isActive,
+        scheduleOptionCreatedAt: scheduleOptions.createdAt,
+        scheduleOptionUpdatedAt: scheduleOptions.updatedAt,
+        spaceOptionName: spaceOptions.name,
+        spaceOptionDescription: spaceOptions.description,
+        spaceOptionLocation: spaceOptions.location,
+        spaceOptionCapacity: spaceOptions.capacity,
+        spaceOptionIsActive: spaceOptions.isActive,
+        spaceOptionCreatedAt: spaceOptions.createdAt,
+        spaceOptionUpdatedAt: spaceOptions.updatedAt,
       })
       .from(courses)
       .leftJoin(categories, eq(categories.id, courses.categoryid))
@@ -73,6 +111,11 @@ export async function getCourseById(
       .leftJoin(nivel, eq(nivel.id, courses.nivelid))
       .leftJoin(courseTypes, eq(courseTypes.id, courses.courseTypeId))
       .leftJoin(users, eq(courses.instructor, users.id))
+      .leftJoin(
+        scheduleOptions,
+        eq(courses.scheduleOptionId, scheduleOptions.id)
+      )
+      .leftJoin(spaceOptions, eq(courses.spaceOptionId, spaceOptions.id))
       .where(eq(courses.id, parsedCourseId))) as CourseDetailQueryResult[];
 
     if (!courseData) {
@@ -232,6 +275,34 @@ export async function getCourseById(
       instructor: courseData.instructor,
       instructorName: courseData.instructorName ?? 'Instructor no encontrado',
       courseTypeId: courseData.courseTypeId ?? 0, // Ensure courseTypeId is always a number
+      scheduleOptionId: courseData.scheduleOptionId,
+      spaceOptionId: courseData.spaceOptionId,
+      horario: courseData.horario,
+      espacios: courseData.espacios,
+      scheduleOption: courseData.scheduleOptionId
+        ? {
+            id: courseData.scheduleOptionId,
+            name: courseData.scheduleOptionName ?? '',
+            description: courseData.scheduleOptionDescription,
+            startTime: courseData.scheduleOptionStartTime,
+            endTime: courseData.scheduleOptionEndTime,
+            isActive: courseData.scheduleOptionIsActive ?? true,
+            createdAt: courseData.scheduleOptionCreatedAt ?? new Date(),
+            updatedAt: courseData.scheduleOptionUpdatedAt ?? new Date(),
+          }
+        : null,
+      spaceOption: courseData.spaceOptionId
+        ? {
+            id: courseData.spaceOptionId,
+            name: courseData.spaceOptionName ?? '',
+            description: courseData.spaceOptionDescription,
+            location: courseData.spaceOptionLocation,
+            capacity: courseData.spaceOptionCapacity,
+            isActive: courseData.spaceOptionIsActive ?? true,
+            createdAt: courseData.spaceOptionCreatedAt ?? new Date(),
+            updatedAt: courseData.spaceOptionUpdatedAt ?? new Date(),
+          }
+        : null,
     };
 
     return transformedCourse;

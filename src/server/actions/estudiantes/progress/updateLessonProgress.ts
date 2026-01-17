@@ -126,24 +126,24 @@ export async function updateLessonProgress(
   );
 
   // Determinar si la lección está completada según las reglas:
-  // 1. Si tiene video y actividades: solo se completa cuando todas las actividades están completadas
-  // 2. Si tiene video pero no actividades: se completa cuando el video se ve al 100%
-  // 3. Si no tiene video: se completa cuando todas las actividades están completadas
-  let isCompleted = false;
+  // 1. Video + actividades: requiere video al 100% Y todas las actividades completadas
+  // 2. Solo video: requiere video al 100%
+  // 3. Solo actividades: requiere todas las actividades completadas
+  // 4. Sin video ni actividades (solo descripción): se completa al abrir
+  const videoCompleted = progress >= 100;
 
-  if (!hasVideo && hasActivities) {
-    // Caso: No hay video, solo actividades
-    isCompleted = allActivitiesCompleted;
+  let isCompleted = false;
+  if (hasVideo && hasActivities) {
+    isCompleted = videoCompleted && allActivitiesCompleted;
   } else if (hasVideo && !hasActivities) {
-    // Caso: Solo video, sin actividades
-    isCompleted = progress >= 100;
-  } else if (hasVideo && hasActivities) {
-    // Caso: Video y actividades
+    isCompleted = videoCompleted;
+  } else if (!hasVideo && hasActivities) {
     isCompleted = allActivitiesCompleted;
   } else {
-    // Caso extremo: ni video ni actividades
-    isCompleted = progress >= 100;
+    isCompleted = true;
   }
+
+  const progressToPersist = isCompleted ? 100 : progress;
 
   // Actualizar el progreso de la lección
   await db
@@ -151,19 +151,19 @@ export async function updateLessonProgress(
     .values({
       userId,
       lessonId,
-      progress: isCompleted ? 100 : progress, // Si está completada, forzar 100%
+      progress: progressToPersist, // Si está completada, forzar 100%
       isCompleted,
       isLocked: false,
-      isNew: progress >= 1 ? false : true,
+      isNew: progress >= 1 || isCompleted ? false : true,
       lastUpdated: new Date(),
     })
     .onConflictDoUpdate({
       target: [userLessonsProgress.userId, userLessonsProgress.lessonId],
       set: {
-        progress: isCompleted ? 100 : progress, // Si está completada, forzar 100%
+        progress: progressToPersist, // Si está completada, forzar 100%
         isCompleted,
         isLocked: false,
-        isNew: progress >= 1 ? false : true,
+        isNew: progress >= 1 || isCompleted ? false : true,
         lastUpdated: new Date(),
       },
     });

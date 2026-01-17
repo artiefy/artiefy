@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { FaArrowRight } from 'react-icons/fa';
@@ -11,6 +12,8 @@ import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarruse
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
 import HeroCanvas from '~/components/estudiantes/layout/HeroCanvas';
+import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
+import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
@@ -19,6 +22,8 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 
 export default function HomePage() {
   const { user } = useUser();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [showAnuncio, setShowAnuncio] = useState(false);
   const [chatbotKey] = useState<number>(0);
@@ -34,6 +39,11 @@ export default function HomePage() {
     }[]
   >([]);
   const [_mounted, setMounted] = useState(false);
+
+  // Estados para los modales de autenticación
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
 
   const handleSearchComplete = useCallback(() => {
     setShowChatbot(false);
@@ -82,6 +92,26 @@ export default function HomePage() {
     }
   }, [user]);
 
+  // Manejar parámetros de error de OAuth desde URL
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const shouldShowSignup = searchParams.get('show_signup');
+
+    if (error) {
+      setOauthError(decodeURIComponent(error));
+      setShowLoginModal(true);
+      // Limpiar la URL
+      router.replace('/', { scroll: false });
+    }
+
+    if (shouldShowSignup === 'true') {
+      setShowLoginModal(false);
+      setShowSignUpModal(true);
+      // Limpiar la URL
+      router.replace('/', { scroll: false });
+    }
+  }, [searchParams, router]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -120,7 +150,7 @@ export default function HomePage() {
             <div>
               <Button
                 asChild
-                className="border-primary bg-primary text-background hover:border-primary hover:text-primary join-button relative skew-x-[-20deg] rounded-none border py-8 text-2xl font-semibold italic hover:bg-transparent active:scale-95"
+                className="join-button relative skew-x-[-20deg] rounded-none border border-primary bg-primary py-8 text-2xl font-semibold text-background italic hover:border-primary hover:bg-transparent hover:text-primary active:scale-95"
                 style={{
                   boxShadow: '6px 6px 0 black',
                   transition: '0.5s',
@@ -139,7 +169,7 @@ export default function HomePage() {
                         <span className="inline-block skew-x-[15deg]">
                           COMIENZA YA
                         </span>
-                        <FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
+                        <FaArrowRight className="ml-2 inline-block skew-x-[15deg] animate-bounce-right transition-transform duration-500" />
                       </>
                     )}
                   </div>
@@ -165,6 +195,37 @@ export default function HomePage() {
         onSearchComplete={handleSearchComplete}
       />
       <TicketSupportChatbot />
+
+      {/* Modales de autenticación */}
+      <MiniLoginModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false);
+          setOauthError(null);
+        }}
+        onLoginSuccess={() => {
+          setShowLoginModal(false);
+          setOauthError(null);
+        }}
+        redirectUrl="/"
+        onSwitchToSignUp={() => {
+          setShowLoginModal(false);
+          setShowSignUpModal(true);
+        }}
+        initialError={oauthError || undefined}
+      />
+      <MiniSignUpModal
+        isOpen={showSignUpModal}
+        onClose={() => setShowSignUpModal(false)}
+        onSignUpSuccess={() => {
+          setShowSignUpModal(false);
+        }}
+        redirectUrl="/"
+        onSwitchToLogin={() => {
+          setShowSignUpModal(false);
+          setShowLoginModal(true);
+        }}
+      />
     </div>
   );
 }

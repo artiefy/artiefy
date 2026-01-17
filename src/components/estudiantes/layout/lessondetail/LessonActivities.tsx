@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import Link from 'next/link';
-
+import { BookOpen, CircleHelp, Clock, FileUp, Rocket } from 'lucide-react';
 import {
   FaCheckCircle,
   FaChevronDown,
@@ -10,8 +9,7 @@ import {
   FaChevronUp,
   FaLock,
 } from 'react-icons/fa';
-import { MdKeyboardDoubleArrowDown } from 'react-icons/md';
-import { TbClockFilled, TbReportAnalytics } from 'react-icons/tb';
+import { TbClockFilled } from 'react-icons/tb';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
@@ -22,8 +20,6 @@ import { useMediaQuery } from '~/utils/useMediaQuery';
 
 import { LessonActivityModal } from './LessonActivityModal';
 import { GradeHistory } from './LessonGradeHistory';
-import { LessonGrades } from './LessonGrades';
-import LessonResource from './LessonResource';
 
 import type { Activity, SavedAnswer } from '~/types';
 
@@ -122,6 +118,75 @@ const fetchGradeData = async (url: string): Promise<GradeSummaryResponse> => {
   return rawData;
 };
 
+interface ActivityTypeMeta {
+  label: string;
+  icon: typeof BookOpen;
+  color: string;
+  bg: string;
+}
+
+const resolveActivityType = (activity: Activity): ActivityTypeMeta => {
+  const lowerName = activity.typeActi?.name?.toLowerCase?.() ?? '';
+  const byId = activity.typeid;
+
+  if (
+    lowerName.includes('quiz') ||
+    lowerName.includes('cuestion') ||
+    byId === 2
+  ) {
+    return {
+      label: 'Cuestionario',
+      icon: CircleHelp,
+      color: 'text-purple-400',
+      bg: 'bg-purple-500/20',
+    };
+  }
+
+  if (
+    lowerName.includes('document') ||
+    lowerName.includes('entrega') ||
+    byId === 1
+  ) {
+    return {
+      label: 'Entrega',
+      icon: FileUp,
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/20',
+    };
+  }
+
+  if (
+    lowerName.includes('proyecto') ||
+    lowerName.includes('avance') ||
+    byId === 3
+  ) {
+    return {
+      label: 'Autocompletado',
+      icon: Rocket,
+      color: 'text-emerald-400',
+      bg: 'bg-emerald-500/20',
+    };
+  }
+
+  return {
+    label: activity.typeActi?.name ?? 'Actividad',
+    icon: BookOpen,
+    color: 'text-sky-400',
+    bg: 'bg-sky-500/20',
+  };
+};
+
+const formatDeadline = (value: Activity['fechaMaximaEntrega']) => {
+  if (!value) return null;
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (!date || Number.isNaN(date.getTime())) return null;
+  return new Intl.DateTimeFormat('es-ES', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(date);
+};
+
 interface ActivityAnswersResponse {
   score: number;
   answers: Record<string, SavedAnswer>;
@@ -159,7 +224,7 @@ const LessonActivities = ({
   );
   const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
   const [isButtonLoading, setIsButtonLoading] = useState(true);
-  const [isGradesLoading, setIsGradesLoading] = useState(true);
+  const [_isGradesLoading, setIsGradesLoading] = useState(true);
   const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
     null
   );
@@ -413,25 +478,35 @@ const LessonActivities = ({
 
   const getButtonClasses = (activity: Activity) => {
     const activityState = activitiesState[activity.id];
+    const activityType = resolveActivityType(activity);
     const currentLesson = activity.lessonsId
       ? lessons.find((l) => l.id === activity.lessonsId)
       : null;
     const hasNoVideo = currentLesson?.coverVideoKey === 'none';
 
     if (isButtonLoading) {
-      return 'bg-gray-300 text-gray-300 border-none';
+      return 'bg-slate-500/20 text-slate-200 border-slate-400/20';
     }
 
     if (activityState?.isCompleted) {
-      return 'bg-green-500 text-black hover:bg-green-700 active:scale-95';
+      return 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40 hover:bg-emerald-500/30 active:scale-95';
     }
 
-    // Enable button styling for no video or completed video
+    // Enable button styling for no video or completed video, with colors based on activity type
     if (hasNoVideo || isVideoCompleted) {
-      return 'font-semibold text-black relative z-10';
+      switch (activityType.label) {
+        case 'Cuestionario':
+          return 'bg-orange-500/20 text-orange-200 border-orange-400/40 hover:bg-orange-500/30 active:scale-95';
+        case 'Entrega':
+          return 'bg-blue-500/20 text-blue-200 border-blue-400/40 hover:bg-blue-500/30 active:scale-95';
+        case 'Autocompletado':
+          return 'bg-teal-500/20 text-teal-200 border-teal-400/40 hover:bg-teal-500/30 active:scale-95';
+        default:
+          return 'bg-cyan-500/20 text-cyan-200 border-cyan-400/40 hover:bg-cyan-500/30 active:scale-95';
+      }
     }
 
-    return 'bg-gray-400 text-background';
+    return 'bg-slate-500/20 text-muted-foreground border-border/40';
   };
 
   const getButtonLabel = (activity: Activity) => {
@@ -527,7 +602,7 @@ const LessonActivities = ({
     };
   };
 
-  const shouldShowArrows = (activity: Activity, index: number) => {
+  const _shouldShowArrows = (activity: Activity, index: number) => {
     const currentLesson = activity.lessonsId
       ? lessons.find((l) => l.id === activity.lessonsId)
       : null;
@@ -551,7 +626,7 @@ const LessonActivities = ({
     return description.slice(0, maxLength).trim() + '...';
   };
 
-  const getNextAvailableLessonId = useCallback(() => {
+  const _getNextAvailableLessonId = useCallback(() => {
     if (!lessons || lessons.length === 0) return undefined;
     const sorted = sortLessons(lessons);
     const currentIndex = sorted.findIndex((l) => l.id === lessonId);
@@ -563,6 +638,9 @@ const LessonActivities = ({
   const renderActivityCard = (activity: Activity, index: number) => {
     const activityState = activitiesState[activity.id];
     const status = getActivityStatus(activity, index);
+    const activityType = resolveActivityType(activity);
+    const ActivityIcon = activityType.icon;
+    const deadlineText = formatDeadline(activity.fechaMaximaEntrega);
     const isFirstActivity = index === 0;
     const previousActivity = index > 0 ? activities[index - 1] : null;
     const isPreviousCompleted =
@@ -573,120 +651,87 @@ const LessonActivities = ({
     const hasNoVideo = currentLesson?.coverVideoKey === 'none';
     const canAccess =
       hasNoVideo || isVideoCompleted || isFirstActivity || isPreviousCompleted;
-    const isNextLessonAvailable =
+    const _isNextLessonAvailable =
       !isLastLesson && isLastActivityInLesson(activity);
 
     return (
-      <div key={activity.id}>
+      <div key={activity.id} className="w-full">
         <div
-          className={`mb-4 rounded-lg border p-4 ${
+          className={`group mb-4 w-11/12 rounded-2xl border px-5 py-4 transition-all ${activityType.bg} ${
             isButtonLoading
-              ? 'bg-white' // Tarjeta blanca durante carga
+              ? 'border-border/40'
               : status.isActive
-                ? 'bg-white'
-                : 'bg-gray-100 opacity-60'
+                ? 'border-border/50 hover:border-border'
+                : 'border-border/40 opacity-60'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">{activity.name}</h3>
-            </div>
-            <div className="ml-2">
-              <div className={`rounded-full p-1 ${status.bgColor}`}>
-                {status.icon}
+          <div className="flex w-full flex-row items-center justify-between gap-4">
+            <div className="flex flex-1 items-center gap-4">
+              <div
+                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${activityType.bg} ${activityType.color}`}
+              >
+                <ActivityIcon className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="mb-0.5 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase ${activityType.color} ${activityType.bg}`}
+                  >
+                    {activityType.label}
+                  </span>
+                  {deadlineText && (
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-xs font-medium"
+                        style={{
+                          borderColor: '#1d283a33',
+                          background: '#1d283a0f',
+                          color: '#1d283a',
+                          maxWidth: '160px',
+                        }}
+                        title={deadlineText}
+                      >
+                        <Clock className="h-3 w-3" />
+                        {deadlineText}
+                      </span>
+
+                      {/* Mostrar duración de vídeo si está disponible en la lección */}
+                      {currentLesson && currentLesson.videoDuration && (
+                        <span className="max-w-[140px] truncate text-xs text-muted-foreground">
+                          Duración: {currentLesson.videoDuration}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <h4 className="text-sm font-medium text-foreground">
+                  {activity.name}
+                </h4>
+                <p className="line-clamp-1 text-xs text-muted-foreground">
+                  {truncateDescription(activity.description)}
+                </p>
               </div>
             </div>
-          </div>
 
-          <p className="mt-2 line-clamp-2 text-sm text-gray-600">
-            {truncateDescription(activity.description)}
-          </p>
-
-          <div className="space-y-2">
-            {/* Solo mostrar flechas y botón de siguiente clase cuando no está cargando */}
-            {!isButtonLoading && (
-              <>
-                {shouldShowArrows(activity, index) && (
-                  <div className="flex justify-center pt-4">
-                    <MdKeyboardDoubleArrowDown className="animate-bounce-up-down size-10 text-2xl text-green-500" />
-                  </div>
-                )}
-
-                {activityState?.isCompleted && (
-                  <div className="flex justify-center">
-                    <TbReportAnalytics className="mt-3 size-12 text-2xl text-gray-700" />
-                  </div>
-                )}
-              </>
-            )}
-
-            <button
-              onClick={
-                activityState?.isCompleted
-                  ? () => handleCompletedActivityClick(activity)
-                  : () => handleOpenActivity(activity)
-              }
-              disabled={
-                // Solo deshabilitar si NO está completada y no se puede acceder o está cargando
-                !activityState?.isCompleted &&
-                ((!hasNoVideo && !isVideoCompleted) ||
-                  isButtonLoading ||
-                  !canAccess)
-              }
-              className={`group relative w-full overflow-hidden rounded-md px-4 py-2 transition-all duration-300 ${getButtonClasses(activity)} ${!canAccess && !isButtonLoading && !activityState?.isCompleted ? 'cursor-not-allowed bg-gray-200' : ''} [&:disabled]:bg-opacity-100 disabled:pointer-events-none [&:disabled_span]:opacity-100 [&:disabled_svg]:opacity-100`}
-            >
-              {/* Animated gradient background */}
-              {(hasNoVideo || isVideoCompleted) &&
-                !activityState?.isCompleted &&
-                canAccess &&
-                !isButtonLoading && (
-                  <div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
-                )}
-
-              <span className="relative z-10 flex items-center justify-center">
+            <div className="flex shrink-0 items-center justify-end md:w-auto">
+              <button
+                onClick={
+                  activityState?.isCompleted
+                    ? () => handleCompletedActivityClick(activity)
+                    : () => handleOpenActivity(activity)
+                }
+                disabled={
+                  // Solo deshabilitar si NO está completada y no se puede acceder o está cargando
+                  !activityState?.isCompleted &&
+                  ((!hasNoVideo && !isVideoCompleted) ||
+                    isButtonLoading ||
+                    !canAccess)
+                }
+                className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium transition-all ${getButtonClasses(activity)} ${!canAccess && !isButtonLoading && !activityState?.isCompleted ? 'cursor-not-allowed' : ''} disabled:pointer-events-none disabled:opacity-50`}
+              >
                 {getButtonLabel(activity)}
-              </span>
-            </button>
-
-            {/* Agregar el botón de siguiente clase cuando la actividad está completada y no es la última lección */}
-            {activityState?.isCompleted &&
-              isNextLessonAvailable &&
-              !isButtonLoading &&
-              !activityState.isLoading && (
-                <div className="mt-4 flex flex-col items-center space-y-2">
-                  <div className="w-50 border border-b-gray-500" />
-                  {(() => {
-                    const nextId = getNextAvailableLessonId();
-                    return nextId ? (
-                      <Link
-                        href={`/estudiantes/clases/${nextId}`}
-                        className="next-lesson-link group flex flex-col items-center text-center"
-                      >
-                        <button className="arrow-button">
-                          <div className="arrow-button-box">
-                            <span className="arrow-button-elem">
-                              <svg
-                                viewBox="0 0 46 40"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-                              </svg>
-                            </span>
-                            <span className="arrow-button-elem">
-                              <svg viewBox="0 0 46 40">
-                                <path d="M46 20.038c0-.7-.3-1.5-.8-2.1l-16-17c-1.1-1-3.2-1.4-4.4-.3-1.2 1.1-1.2 3.3 0 4.4l11.3 11.9H3c-1.7 0-3 1.3-3 3s1.3 3 3 3h33.1l-11.3 11.9c-1 1-1.2 3.3 0 4.4 1.2 1.1 3.3.8 4.4-.3l16-17c.5-.5.8-1.1.8-1.9z" />
-                              </svg>
-                            </span>
-                          </div>
-                        </button>
-                        <em className="mt-1 text-sm font-bold text-gray-600 group-hover:text-blue-500 hover:underline">
-                          Ir a la siguiente clase
-                        </em>
-                      </Link>
-                    ) : null;
-                  })()}
-                </div>
-              )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -801,7 +846,7 @@ const LessonActivities = ({
           ? 'w-full bg-transparent p-0'
           : isMobile
             ? 'm-0 w-full rounded-none bg-transparent p-0'
-            : 'max-h-[70vh] w-full overflow-y-auto p-2 md:max-h-none md:w-72 md:overflow-visible md:p-4'
+            : 'max-h-[70vh] w-full overflow-y-auto p-2 md:max-h-none md:max-w-full md:min-w-[400px] md:overflow-visible md:p-4'
       }
       style={
         isMobile || inMainContent
@@ -815,13 +860,64 @@ const LessonActivities = ({
           : undefined
       }
     >
+      {/* Progress Circle */}
+      {activities.length > 0 && !inMainContent && (
+        <div className="mb-6 flex items-center justify-start gap-4">
+          <div className="relative">
+            <svg className="h-20 w-20 -rotate-90 transform">
+              <circle
+                cx="40"
+                cy="40"
+                r="34"
+                stroke="#1d283a"
+                strokeWidth="6"
+                fill="none"
+              />
+              <circle
+                cx="40"
+                cy="40"
+                r="34"
+                stroke="currentColor"
+                strokeWidth="6"
+                fill="none"
+                strokeLinecap="round"
+                strokeDasharray={`${(activities.filter((a) => activitiesState[a.id]?.isCompleted).length / activities.length) * 213.6} 213.6`}
+                className="text-accent transition-all duration-500"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xl font-bold text-foreground">
+                {Math.round(
+                  (activities.filter((a) => activitiesState[a.id]?.isCompleted)
+                    .length /
+                    activities.length) *
+                    100
+                )}
+                %
+              </span>
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-foreground">
+              {
+                activities.filter((a) => activitiesState[a.id]?.isCompleted)
+                  .length
+              }{' '}
+              de {activities.length} completadas
+            </span>
+            <span className="text-xs text-muted-foreground">
+              Progreso de actividades
+            </span>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <h2
-          className={`text-primary mb-4 font-bold ${
+          className={`mb-4 font-bold text-primary ${
             isMobile || inMainContent ? 'px-2 text-lg' : 'text-xl md:text-2xl'
           }`}
         >
-          {inMainContent ? 'Contenido de la Clase' : 'Actividades'}
+          {inMainContent ? 'Contenido de la Clase' : ''}
         </h2>
         {/* Botón de retraer/expandir solo en móvil */}
         {isMobile && !inMainContent && (
@@ -917,28 +1013,8 @@ const LessonActivities = ({
       ) : null}
 
       {/* Rest of the component */}
-      {/* Grades section */}
-      <div
-        className={`${
-          isMobile ? (collapsed ? 'mt-1 mb-2' : 'mt-4 mb-2') : 'mt-4'
-        }`}
-      >
-        <h2
-          className={`text-primary mb-4 font-bold ${
-            isMobile ? 'px-2 text-lg' : 'text-xl md:text-2xl'
-          }`}
-        >
-          Calificaciones
-        </h2>
-        <LessonGrades
-          finalGrade={gradeSummary?.finalGrade ?? null}
-          onViewHistoryAction={() => setIsGradeHistoryOpen(true)}
-          isLoading={isGradesLoading}
-        />
-      </div>
-
-      {/* Resources section */}
-      <LessonResource lessonId={lessonId} />
+      {/* Grades section removed as it's in the menu */}
+      {/* Resources section removed as it's in the menu */}
 
       {/* Siempre renderizar el modal independientemente de inMainContent */}
       {selectedActivity && (
