@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { useAuth, useSignIn, useSignUp } from '@clerk/nextjs';
+import { useAuth, useSignIn } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
 
@@ -30,7 +30,6 @@ export default function MiniLoginModal({
   initialError,
 }: MiniLoginModalProps) {
   const { signIn, setActive } = useSignIn();
-  const { signUp } = useSignUp();
   const { isSignedIn } = useAuth({
     treatPendingAsSignedOut: false,
   });
@@ -105,7 +104,7 @@ export default function MiniLoginModal({
 
   // OAuth login con transición automática a sign-up
   const signInWith = async (strategy: OAuthStrategy) => {
-    if (!signIn || !signUp) {
+    if (!signIn) {
       setErrors([
         {
           code: 'sign_in_undefined',
@@ -116,19 +115,29 @@ export default function MiniLoginModal({
       return;
     }
 
+    const baseUrl = window.location.origin;
+    const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
+    const absoluteRedirectUrlFallback = `${baseUrl}/sign-in/sso-callback`;
+    const absoluteRedirectUrlComplete =
+      redirectUrl && redirectUrl.trim() !== ''
+        ? redirectUrl.startsWith('http')
+          ? redirectUrl
+          : `${baseUrl}${redirectUrl}`
+        : `${baseUrl}${window.location.pathname}${window.location.search}`;
+    const shouldUseRedirectInProd = process.env.NODE_ENV === 'production';
+
     try {
       setLoadingProvider(strategy);
       setErrors(undefined);
 
-      // Construir URLs absolutas
-      const baseUrl = window.location.origin;
-      const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
-      const absoluteRedirectUrlComplete =
-        redirectUrl && redirectUrl.trim() !== ''
-          ? redirectUrl.startsWith('http')
-            ? redirectUrl
-            : `${baseUrl}${redirectUrl}`
-          : `${baseUrl}${window.location.pathname}${window.location.search}`;
+      if (shouldUseRedirectInProd) {
+        await signIn.authenticateWithRedirect({
+          strategy,
+          redirectUrl: absoluteRedirectUrlFallback,
+          redirectUrlComplete: absoluteRedirectUrlComplete,
+        });
+        return;
+      }
 
       const width = 600;
       const height = 650;
@@ -143,15 +152,11 @@ export default function MiniLoginModal({
 
       if (!popup || popup.closed || typeof popup.closed === 'undefined') {
         setLoadingProvider(null);
-        setErrors([
-          {
-            code: 'popup_blocked',
-            message: 'Popup bloqueado',
-            longMessage:
-              'Por favor, permite las ventanas emergentes en tu navegador para continuar.',
-            meta: {},
-          },
-        ]);
+        await signIn.authenticateWithRedirect({
+          strategy,
+          redirectUrl: absoluteRedirectUrlFallback,
+          redirectUrlComplete: absoluteRedirectUrlComplete,
+        });
         return;
       }
 
@@ -178,6 +183,17 @@ export default function MiniLoginModal({
         console.error('❌ Error en OAuth:', err);
 
         if (isClerkAPIResponseError(err)) {
+          const popupBlocked = err.errors.some(
+            (error) => error.code === 'popup_blocked'
+          );
+          if (popupBlocked) {
+            await signIn.authenticateWithRedirect({
+              strategy,
+              redirectUrl: absoluteRedirectUrlFallback,
+              redirectUrlComplete: absoluteRedirectUrlComplete,
+            });
+            return;
+          }
           const customError = err.errors.find(
             (e) =>
               e.code === 'form_identifier_not_found' ||
