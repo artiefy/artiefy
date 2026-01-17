@@ -38,6 +38,9 @@ export default function MiniSignUpModal({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [pendingVerification, setPendingVerification] = useState(false);
+  const [oauthMissingFields, setOauthMissingFields] = useState<string[] | null>(
+    null
+  );
   const [code, setCode] = useState('');
   const [errors, setErrors] = useState<ClerkAPIError[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +48,53 @@ export default function MiniSignUpModal({
     null
   );
   const [hasHandledAuth, setHasHandledAuth] = useState(false);
+
+  // Sincronizar estado cuando el popup termina el OAuth
+  useEffect(() => {
+    if (!isOpen || !signUp || !setActive) return;
+
+    const handlePopupComplete = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'clerk:oauth:complete') return;
+
+      try {
+        if (typeof signUp.reload === 'function') {
+          await signUp.reload();
+        }
+
+        if (signUp.status === 'complete') {
+          if (signUp.createdSessionId) {
+            await setActive({ session: signUp.createdSessionId });
+          }
+          return;
+        }
+
+        if (signUp.status === 'missing_requirements') {
+          const missingFields = normalizeMissingFields(
+            signUp.missingFields ?? []
+          );
+          if (missingFields.length > 0) {
+            setOauthMissingFields(missingFields);
+            setErrors([
+              {
+                code: 'missing_requirements',
+                message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+                longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+                meta: {},
+              },
+            ]);
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error al sincronizar OAuth:', error);
+      }
+    };
+
+    window.addEventListener('message', handlePopupComplete);
+    return () => {
+      window.removeEventListener('message', handlePopupComplete);
+    };
+  }, [isOpen, signUp, setActive]);
 
   // Detectar cuando OAuth o registro se completa exitosamente
   useEffect(() => {
@@ -71,6 +121,7 @@ export default function MiniSignUpModal({
       setConfirmPassword('');
       setCode('');
       setPendingVerification(false);
+      setOauthMissingFields(null);
       setErrors(undefined);
     }
   }, [isOpen]);
@@ -179,6 +230,137 @@ export default function MiniSignUpModal({
     return validationErrors;
   };
 
+  const normalizeMissingFields = (fields: string[]) =>
+    fields.map((field) => {
+      if (field === 'email_address') return 'emailAddress';
+      if (field === 'phone_number') return 'phoneNumber';
+      return field;
+    });
+
+  const validateOAuthCompletionInputs = (
+    fields: string[],
+    data: {
+      firstName: string;
+      lastName: string;
+      username: string;
+      email: string;
+      password: string;
+      confirmPassword: string;
+    }
+  ): ClerkAPIError[] => {
+    const validationErrors: ClerkAPIError[] = [];
+    const normalizedFields = normalizeMissingFields(fields);
+    const needs = (field: string) => normalizedFields.includes(field);
+
+    if (needs('firstName')) {
+      if (!data.firstName) {
+        validationErrors.push({
+          code: 'form_param_missing',
+          message: 'Ingresa tu nombre.',
+          longMessage: 'Ingresa tu nombre.',
+          meta: { paramName: 'firstName' },
+        });
+      } else if (!/^[a-zA-Z\s]+$/.test(data.firstName)) {
+        validationErrors.push({
+          code: 'form_param_format_invalid',
+          message: 'El nombre solo puede contener letras.',
+          longMessage: 'El nombre solo puede contener letras.',
+          meta: { paramName: 'firstName' },
+        });
+      }
+    }
+
+    if (needs('lastName')) {
+      if (!data.lastName) {
+        validationErrors.push({
+          code: 'form_param_missing',
+          message: 'Ingresa tu apellido.',
+          longMessage: 'Ingresa tu apellido.',
+          meta: { paramName: 'lastName' },
+        });
+      } else if (!/^[a-zA-Z\s]+$/.test(data.lastName)) {
+        validationErrors.push({
+          code: 'form_param_format_invalid',
+          message: 'El apellido solo puede contener letras.',
+          longMessage: 'El apellido solo puede contener letras.',
+          meta: { paramName: 'lastName' },
+        });
+      }
+    }
+
+    if (needs('username')) {
+      if (!data.username) {
+        validationErrors.push({
+          code: 'form_param_missing',
+          message: 'Ingresa tu nombre de usuario.',
+          longMessage: 'Ingresa tu nombre de usuario.',
+          meta: { paramName: 'username' },
+        });
+      } else if (data.username.length < 3) {
+        validationErrors.push({
+          code: 'form_param_format_invalid',
+          message: 'El nombre de usuario debe tener al menos 3 caracteres.',
+          longMessage: 'El nombre de usuario debe tener al menos 3 caracteres.',
+          meta: { paramName: 'username' },
+        });
+      }
+    }
+
+    if (needs('emailAddress')) {
+      if (!data.email) {
+        validationErrors.push({
+          code: 'form_param_missing',
+          message: 'Ingresa tu correo electrónico.',
+          longMessage: 'Ingresa tu correo electrónico.',
+          meta: { paramName: 'emailAddress' },
+        });
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        validationErrors.push({
+          code: 'form_param_format_invalid',
+          message: 'El formato del correo electrónico no es válido.',
+          longMessage: 'El formato del correo electrónico no es válido.',
+          meta: { paramName: 'emailAddress' },
+        });
+      }
+    }
+
+    if (needs('password')) {
+      if (!data.password) {
+        validationErrors.push({
+          code: 'form_param_missing',
+          message: 'Ingresa tu contraseña.',
+          longMessage: 'Ingresa tu contraseña.',
+          meta: { paramName: 'password' },
+        });
+      } else if (data.password.length < 8) {
+        validationErrors.push({
+          code: 'form_param_format_invalid',
+          message: 'La contraseña debe tener al menos 8 caracteres.',
+          longMessage: 'La contraseña debe tener al menos 8 caracteres.',
+          meta: { paramName: 'password' },
+        });
+      }
+
+      if (!data.confirmPassword) {
+        validationErrors.push({
+          code: 'form_param_missing',
+          message: 'Confirma tu contraseña.',
+          longMessage: 'Confirma tu contraseña.',
+          meta: { paramName: 'confirmPassword' },
+        });
+      } else if (data.password !== data.confirmPassword) {
+        validationErrors.push({
+          code: 'password_mismatch',
+          message: 'Las contraseñas no coinciden',
+          longMessage: 'Las contraseñas no coinciden',
+          meta: {},
+        });
+      }
+    }
+
+    return validationErrors;
+  };
+
   // OAuth signup
   const signUpWith = async (strategy: OAuthStrategy) => {
     if (!signUp) {
@@ -198,6 +380,7 @@ export default function MiniSignUpModal({
     const absoluteRedirectUrlComplete = redirectUrl.startsWith('http')
       ? redirectUrl
       : `${baseUrl}${redirectUrl}`;
+    let popupCheckInterval: ReturnType<typeof setInterval> | null = null;
     try {
       setLoadingProvider(strategy);
       setErrors(undefined);
@@ -223,9 +406,11 @@ export default function MiniSignUpModal({
         return;
       }
 
-      const popupCheckInterval = setInterval(() => {
+      popupCheckInterval = setInterval(() => {
         if (popup.closed) {
-          clearInterval(popupCheckInterval);
+          if (popupCheckInterval) {
+            clearInterval(popupCheckInterval);
+          }
           setLoadingProvider(null);
         }
       }, 500);
@@ -237,9 +422,33 @@ export default function MiniSignUpModal({
         redirectUrlComplete: absoluteRedirectUrlComplete,
       });
 
-      clearInterval(popupCheckInterval);
+      if (typeof signUp.reload === 'function') {
+        await signUp.reload();
+      }
+
+      if (signUp.status === 'complete') {
+        if (signUp.createdSessionId) {
+          await setActive({ session: signUp.createdSessionId });
+        }
+        return;
+      }
+
+      const missingFields = normalizeMissingFields(signUp.missingFields ?? []);
+      if (signUp.status === 'missing_requirements') {
+        if (missingFields.length > 0) {
+          setOauthMissingFields(missingFields);
+          setErrors([
+            {
+              code: 'missing_requirements',
+              message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+              longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+              meta: {},
+            },
+          ]);
+        }
+        return;
+      }
     } catch (err) {
-      setLoadingProvider(null);
       console.error('❌ Error en OAuth:', err);
 
       if (isClerkAPIResponseError(err)) {
@@ -271,6 +480,121 @@ export default function MiniSignUpModal({
           },
         ]);
       }
+    } finally {
+      if (popupCheckInterval) {
+        clearInterval(popupCheckInterval);
+      }
+      setLoadingProvider(null);
+    }
+  };
+
+  const handleOAuthCompletion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors(undefined);
+
+    if (!isLoaded || !signUp || !setActive) {
+      setErrors([
+        {
+          code: 'sign_up_not_ready',
+          message:
+            'El registro no está listo todavía. Inténtalo de nuevo en unos segundos.',
+          longMessage:
+            'El registro no está listo todavía. Inténtalo de nuevo en unos segundos.',
+          meta: {},
+        },
+      ]);
+      return;
+    }
+
+    const missingFields = oauthMissingFields ?? [];
+    const trimmedEmail = email.trim();
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedUsername = username.trim();
+    const validationErrors = validateOAuthCompletionInputs(missingFields, {
+      firstName: trimmedFirstName,
+      lastName: trimmedLastName,
+      username: trimmedUsername,
+      email: trimmedEmail,
+      password,
+      confirmPassword,
+    });
+
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    const payload: Record<string, string> = {};
+    const normalizedMissingFields = normalizeMissingFields(missingFields);
+    if (normalizedMissingFields.includes('firstName')) {
+      payload.firstName = trimmedFirstName;
+    }
+    if (normalizedMissingFields.includes('lastName')) {
+      payload.lastName = trimmedLastName;
+    }
+    if (normalizedMissingFields.includes('username')) {
+      payload.username = trimmedUsername;
+    }
+    if (normalizedMissingFields.includes('emailAddress')) {
+      payload.emailAddress = trimmedEmail;
+    }
+    if (normalizedMissingFields.includes('password')) {
+      payload.password = password;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const updated = await signUp.update(payload);
+
+      if (updated.status === 'complete') {
+        if (updated.createdSessionId) {
+          await setActive({ session: updated.createdSessionId });
+        }
+        return;
+      }
+
+      if (updated.unverifiedFields?.includes('email_address')) {
+        await signUp.prepareEmailAddressVerification({
+          strategy: 'email_code',
+        });
+        setOauthMissingFields(null);
+        setPendingVerification(true);
+        return;
+      }
+
+      if (updated.status === 'missing_requirements') {
+        setOauthMissingFields(
+          normalizeMissingFields(updated.missingFields ?? missingFields)
+        );
+        setErrors([
+          {
+            code: 'missing_requirements',
+            message: `Completa tu registro. Faltan: ${formatFields(
+              updated.missingFields ?? missingFields
+            )}.`,
+            longMessage: `Completa tu registro. Faltan: ${formatFields(
+              updated.missingFields ?? missingFields
+            )}.`,
+            meta: {},
+          },
+        ]);
+      }
+    } catch (err) {
+      if (isClerkAPIResponseError(err)) {
+        setErrors(err.errors);
+      } else {
+        setErrors([
+          {
+            code: 'unknown_error',
+            message: 'Ocurrió un error desconocido',
+            longMessage: 'Ocurrió un error desconocido',
+            meta: {},
+          },
+        ]);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -486,10 +810,12 @@ export default function MiniSignUpModal({
     if (!fields || fields.length === 0) return 'ninguno';
     const labels: Record<string, string> = {
       emailAddress: 'correo',
+      email_address: 'correo',
       firstName: 'nombre',
       lastName: 'apellido',
       password: 'contraseña',
       phoneNumber: 'teléfono',
+      phone_number: 'teléfono',
       username: 'usuario',
     };
     return fields.map((field) => labels[field] ?? field).join(', ');
@@ -502,6 +828,8 @@ export default function MiniSignUpModal({
       return 'Esta contraseña es muy común. Por favor elige una más segura.';
     if (error.code === 'password_mismatch')
       return 'Las contraseñas no coinciden';
+    if (error.code === 'missing_requirements')
+      return 'Completa los campos faltantes para terminar tu registro.';
 
     const msg = error.longMessage ?? error.message ?? '';
     // Mensaje específico de Clerk en inglés: "This verification has already been verified."
@@ -517,6 +845,14 @@ export default function MiniSignUpModal({
 
     return msg;
   };
+
+  const needsOAuthField = (field: string) =>
+    oauthMissingFields?.includes(field) ?? false;
+  const needsFirstName = needsOAuthField('firstName');
+  const needsLastName = needsOAuthField('lastName');
+  const needsUsername = needsOAuthField('username');
+  const needsEmail = needsOAuthField('emailAddress');
+  const needsPassword = needsOAuthField('password');
 
   return (
     <div className="pointer-events-auto fixed inset-0 z-[1100] flex items-center justify-center bg-black/50">
@@ -711,7 +1047,153 @@ export default function MiniSignUpModal({
           </ul>
         )}
 
-        {!pendingVerification ? (
+        {pendingVerification ? (
+          <form onSubmit={onPressVerify} className="space-y-4">
+            <div>
+              <p className="mb-2 text-sm text-muted-foreground">
+                Ingresa el código que enviamos a tu correo
+              </p>
+              <input
+                onChange={(e) => setCode(e.target.value)}
+                id="code"
+                name="code"
+                type="text"
+                value={code}
+                placeholder="Código de verificación"
+                required
+                className="w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 ring-border outline-hidden ring-inset hover:ring-primary/50 focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Icons.spinner className="mx-auto h-5 w-5 text-[#080c16]" />
+              ) : (
+                'Verificar'
+              )}
+            </button>
+          </form>
+        ) : oauthMissingFields && oauthMissingFields.length > 0 ? (
+          <form onSubmit={handleOAuthCompletion} className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Completa tu registro para continuar con OAuth.
+            </p>
+            {(needsFirstName || needsLastName) && (
+              <div className="grid grid-cols-2 gap-3">
+                {needsFirstName && (
+                  <div>
+                    <input
+                      onChange={(e) => setFirstName(e.target.value)}
+                      id="oauth-firstName"
+                      name="firstName"
+                      type="text"
+                      value={firstName}
+                      placeholder="Nombre"
+                      required
+                      className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
+                        firstNameError ? 'ring-rose-400' : 'ring-border'
+                      } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                    />
+                  </div>
+                )}
+                {needsLastName && (
+                  <div>
+                    <input
+                      onChange={(e) => setLastName(e.target.value)}
+                      id="oauth-lastName"
+                      name="lastName"
+                      type="text"
+                      value={lastName}
+                      placeholder="Apellido"
+                      required
+                      className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
+                        lastNameError ? 'ring-rose-400' : 'ring-border'
+                      } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+            {needsUsername && (
+              <div>
+                <input
+                  onChange={(e) => setUsername(e.target.value)}
+                  id="oauth-username"
+                  name="username"
+                  type="text"
+                  value={username}
+                  placeholder="Usuario"
+                  required
+                  className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
+                    usernameError ? 'ring-rose-400' : 'ring-border'
+                  } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                />
+              </div>
+            )}
+            {needsEmail && (
+              <div>
+                <input
+                  onChange={(e) => setEmail(e.target.value)}
+                  id="oauth-email"
+                  name="email"
+                  type="email"
+                  value={email}
+                  placeholder="Correo Electrónico"
+                  required
+                  className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
+                    emailError ? 'ring-rose-400' : 'ring-border'
+                  } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                />
+              </div>
+            )}
+            {needsPassword && (
+              <>
+                <div>
+                  <input
+                    onChange={(e) => setPassword(e.target.value)}
+                    id="oauth-password"
+                    name="password"
+                    type="password"
+                    value={password}
+                    placeholder="Contraseña"
+                    required
+                    className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
+                      passwordError ? 'ring-rose-400' : 'ring-border'
+                    } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                  />
+                </div>
+                <div>
+                  <input
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    id="oauth-confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    placeholder="Confirmar Contraseña"
+                    required
+                    className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
+                      confirmPasswordError ? 'ring-rose-400' : 'ring-border'
+                    } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                  />
+                </div>
+              </>
+            )}
+            <button
+              type="submit"
+              className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-[#080c16] transition hover:bg-primary/90 disabled:opacity-50"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <Icons.spinner className="mx-auto h-5 w-5" />
+              ) : (
+                'Finalizar registro'
+              )}
+            </button>
+          </form>
+        ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -808,35 +1290,6 @@ export default function MiniSignUpModal({
                 <Icons.spinner className="mx-auto h-5 w-5" />
               ) : (
                 'Crear Cuenta'
-              )}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={onPressVerify} className="space-y-4">
-            <div>
-              <p className="mb-2 text-sm text-muted-foreground">
-                Ingresa el código que enviamos a tu correo
-              </p>
-              <input
-                onChange={(e) => setCode(e.target.value)}
-                id="code"
-                name="code"
-                type="text"
-                value={code}
-                placeholder="Código de verificación"
-                required
-                className="w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 ring-border outline-hidden ring-inset hover:ring-primary/50 focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5 text-[#080c16]" />
-              ) : (
-                'Verificar'
               )}
             </button>
           </form>
