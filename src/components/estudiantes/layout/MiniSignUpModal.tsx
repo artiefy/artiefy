@@ -192,15 +192,16 @@ export default function MiniSignUpModal({
       return;
     }
 
+    const baseUrl = window.location.origin;
+    const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
+    const absoluteRedirectUrlFallback = `${baseUrl}/sign-up/sso-callback`;
+    const absoluteRedirectUrlComplete = redirectUrl.startsWith('http')
+      ? redirectUrl
+      : `${baseUrl}${redirectUrl}`;
+
     try {
       setLoadingProvider(strategy);
       setErrors(undefined);
-
-      const baseUrl = window.location.origin;
-      const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
-      const absoluteRedirectUrlComplete = redirectUrl.startsWith('http')
-        ? redirectUrl
-        : `${baseUrl}${redirectUrl}`;
 
       const width = 500;
       const height = 650;
@@ -215,15 +216,11 @@ export default function MiniSignUpModal({
 
       if (!popup || popup.closed || typeof popup.closed === 'undefined') {
         setLoadingProvider(null);
-        setErrors([
-          {
-            code: 'popup_blocked',
-            message: 'Popup bloqueado',
-            longMessage:
-              'Por favor, permite las ventanas emergentes en tu navegador para continuar.',
-            meta: {},
-          },
-        ]);
+        await signUp.authenticateWithRedirect({
+          strategy,
+          redirectUrl: absoluteRedirectUrlFallback,
+          redirectUrlComplete: absoluteRedirectUrlComplete,
+        });
         return;
       }
 
@@ -247,6 +244,17 @@ export default function MiniSignUpModal({
       console.error('❌ Error en OAuth:', err);
 
       if (isClerkAPIResponseError(err)) {
+        const popupBlocked = err.errors.some(
+          (error) => error.code === 'popup_blocked'
+        );
+        if (popupBlocked) {
+          await signUp.authenticateWithRedirect({
+            strategy,
+            redirectUrl: absoluteRedirectUrlFallback,
+            redirectUrlComplete: absoluteRedirectUrlComplete,
+          });
+          return;
+        }
         setErrors(err.errors);
       } else {
         setErrors([
