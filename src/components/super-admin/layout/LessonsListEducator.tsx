@@ -289,7 +289,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <SortAsc className="h-5 w-5 text-blue-600" />
-            <h3 className="text-background text-lg font-semibold">
+            <h3 className="text-lg font-semibold text-background">
               Modo Reordenar Clases
             </h3>
           </div>
@@ -348,7 +348,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-800">
                               {lesson.orderIndex || index + 1}
                             </div>
-                            <div className="text-background flex-1 font-medium">
+                            <div className="flex-1 font-medium text-background">
                               {lesson.title}
                             </div>
                           </div>
@@ -417,7 +417,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                           >
                             {/* Card content */}
                             <div className="group relative">
-                              <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+                              <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
                               <Card
                                 className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 shadow-lg transition-all duration-300 ease-in-out hover:shadow-2xl"
                                 style={{
@@ -503,7 +503,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
           <div className="space-y-4 px-3 lg:px-1">
             {ordered.map((lesson) => (
               <div key={lesson.id} className="group relative">
-                <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+                <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
                 <Card
                   className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 shadow-lg transition-all duration-300 ease-in-out hover:shadow-2xl"
                   style={{

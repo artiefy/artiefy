@@ -165,6 +165,24 @@ export async function PATCH(
     const body = await request.json();
     const parsed = updateTransactionSchema.parse(body);
 
+    // Validar que receiptVerifiedBy sea un ID válido en users (si se proporciona)
+    const verifiedById: string | null = parsed.receiptVerifiedBy || null;
+    if (verifiedById) {
+      const [exists] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, verifiedById));
+      if (!exists) {
+        return Response.json(
+          {
+            ok: false,
+            message: `Usuario verificador con ID ${verifiedById} no encontrado`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Actualizar la transacción
     await db
       .update(pagos)
@@ -173,7 +191,7 @@ export async function PATCH(
         receiptVerifiedAt: parsed.receiptVerifiedAt
           ? new Date(parsed.receiptVerifiedAt)
           : null,
-        receiptVerifiedBy: parsed.receiptVerifiedBy,
+        receiptVerifiedBy: verifiedById,
       })
       .where(eq(pagos.id, pagoId));
 

@@ -21,7 +21,6 @@ import { toast } from 'sonner';
 import { LoadingCourses } from '~/app/dashboard/educadores/(inicio)/cursos/page';
 import { AudioRecorder } from '~/components/AudioRecorder';
 import DashboardEstudiantes from '~/components/educators/layout/DashboardEstudiantes';
-import LessonsListEducator from '~/components/educators/layout/LessonsListEducator'; // Importar el componente
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,6 +37,7 @@ import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
+import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
 import { ScheduledMeetingsList } from '~/components/super-admin/layout/ScheduledMeetingsList';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
 import {
@@ -362,7 +362,7 @@ if (typeof document !== 'undefined') {
 const FullscreenLoader = () => {
   return (
     <Portal>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+      <div className="bg-background/20 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
         <TechLoader />
       </div>
     </Portal>
@@ -1450,7 +1450,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="size-32 rounded-full border-y-2 border-primary">
+        <div className="border-primary size-32 rounded-full border-y-2">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -1497,7 +1497,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       toast('Curso eliminado', {
         description: 'El curso se ha eliminado con éxito.',
       });
-      router.push('/dashboard/educadores/cursos');
+      router.push('/dashboard/super-admin/cursos');
     } catch (error) {
       console.error('Error:', error);
       toast('Error', {
@@ -1516,7 +1516,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </p>
           <button
             onClick={fetchCourse}
-            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
+            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -2024,7 +2024,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-cyan-400 transition-colors duration-300 hover:text-cyan-300"
-              href="/dashboard/educadores"
+              href="/dashboard/super-admin"
             >
               Inicio
             </BreadcrumbLink>
@@ -2033,7 +2033,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-cyan-400 transition-colors duration-300 hover:text-cyan-300"
-              href="/dashboard/educadores/cursos"
+              href="/dashboard/super-admin/cursos"
             >
               Cursos
             </BreadcrumbLink>
@@ -2106,7 +2106,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </Button>
                 <Button className="w-full bg-blue-500 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-blue-600 md:px-4 md:py-3 md:text-sm">
                   <Link
-                    href={`/dashboard/educadores/detailsDashboard/${course.id}`}
+                    href={`/dashboard/super-admin/detailsDashboard/${course.id}`}
                   >
                     Stats
                   </Link>
@@ -2601,7 +2601,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 setForumImage(null);
                                 setForumDocument(null);
                               }}
-                              className="px-3 py-2 text-xs text-white/60 transition-colors hover:text-white"
+                              className="px-3 py-2 text-xs text-white/60 hover:text-white transition-colors"
                             >
                               Limpiar archivos
                             </button>
@@ -2724,7 +2724,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         }`
                                       )
                                     }
-                                    className="group relative flex-shrink-0 overflow-hidden rounded-lg border border-cyan-700/30 transition-colors hover:border-cyan-500/60"
+                                    className="group relative overflow-hidden rounded-lg border border-cyan-700/30 hover:border-cyan-500/60 transition-colors flex-shrink-0"
                                   >
                                     <Image
                                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${
@@ -2733,7 +2733,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         )?.coverImageKey
                                       }`}
                                       alt="Imagen del foro"
-                                      className="h-24 w-24 object-cover transition-opacity group-hover:opacity-80"
+                                      className="h-24 w-24 object-cover group-hover:opacity-80 transition-opacity"
                                       width={96}
                                       height={96}
                                       loading="lazy"
@@ -2744,8 +2744,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         e.currentTarget.style.display = 'none';
                                       }}
                                     />
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
-                                      <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
+                                      <ImageIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                                     </div>
                                   </button>
                                 )}
@@ -2799,7 +2799,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     onClick={() =>
                                       setShowAudioRecorder(!showAudioRecorder)
                                     }
-                                    className="group w-full cursor-pointer"
+                                    className="group cursor-pointer w-full"
                                   >
                                     <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
                                       <div className="text-lg">♪</div>
@@ -2830,7 +2830,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                                   {/* Menú desplegable con grabador */}
                                   {showAudioRecorder && (
-                                    <div className="absolute right-0 bottom-full z-50 mb-2 w-80 rounded-lg border border-cyan-700/30 bg-slate-900 p-4 shadow-lg">
+                                    <div className="absolute bottom-full right-0 z-50 mb-2 w-80 rounded-lg border border-cyan-700/30 bg-slate-900 p-4 shadow-lg">
                                       <div className="space-y-3">
                                         <button
                                           type="button"
@@ -2965,7 +2965,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     return (
                                       <div
                                         key={post.id}
-                                        className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow transition-all hover:border-cyan-700/60"
+                                        className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow hover:border-cyan-700/60 transition-all"
                                       >
                                         <div className="flex gap-4">
                                           {/* Avatar */}
@@ -2974,8 +2974,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                           </div>
 
                                           {/* Content */}
-                                          <div className="min-w-0 flex-1">
-                                            <div className="flex flex-wrap items-center gap-2">
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
                                               <span className="text-base font-semibold text-cyan-300">
                                                 {userName || 'Usuario'}
                                               </span>
@@ -3023,7 +3023,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         <Image
                                                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`}
                                                           alt="Imagen del post"
-                                                          className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                          className="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-300"
                                                           loading="lazy"
                                                           width={500}
                                                           height={256}
@@ -3035,8 +3035,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             );
                                                           }}
                                                         />
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/30">
-                                                          <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors duration-300">
+                                                          <ImageIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                                         </div>
                                                       </button>
                                                     )}
@@ -3064,7 +3064,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                     <Music className="h-5 w-5 flex-shrink-0 text-cyan-400/80" />
                                                     <audio
                                                       controls
-                                                      className="h-8 flex-1"
+                                                      className="flex-1 h-8"
                                                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.audioKey}`}
                                                     />
                                                   </div>
@@ -3100,7 +3100,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       new Set(expandedPosts)
                                                     );
                                                   }}
-                                                  className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white relative"
                                                   title="Comentarios"
                                                 >
                                                   <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500/20 text-xs font-semibold text-cyan-400">
@@ -3148,7 +3148,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         new Set(expandedPosts)
                                                       );
                                                     }}
-                                                    className="text-sm text-gray-400 transition-colors hover:text-cyan-300"
+                                                    className="text-sm text-gray-400 hover:text-cyan-300 transition-colors"
                                                   >
                                                     Ver{' '}
                                                     {postReplies[post.id]
@@ -3170,7 +3170,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                           new Set(expandedPosts)
                                                         );
                                                       }}
-                                                      className="text-sm text-gray-400 transition-colors hover:text-cyan-300"
+                                                      className="text-sm text-gray-400 hover:text-cyan-300 transition-colors"
                                                     >
                                                       Ocultar respuestas
                                                     </button>
@@ -3195,8 +3195,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                   replyUserInitial
                                                                 }
                                                               </div>
-                                                              <div className="min-w-0 flex-1">
-                                                                <div className="flex flex-wrap items-center gap-2">
+                                                              <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 flex-wrap">
                                                                   <span className="text-sm font-semibold text-white">
                                                                     {
                                                                       replyUserName
@@ -3237,7 +3237,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                       <>
                                                                         {reply.imageKey && (
                                                                           <button
-                                                                            className="group relative h-40 w-full cursor-pointer overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20"
+                                                                            className="relative h-40 w-full rounded-lg border border-cyan-700/40 overflow-hidden bg-gray-900 hover:shadow-lg hover:shadow-cyan-500/20 transition-all cursor-pointer group"
                                                                             onClick={() =>
                                                                               setLightboxImage(
                                                                                 `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`
@@ -3247,7 +3247,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                             <Image
                                                                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
                                                                               alt="Respuesta"
-                                                                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                                                               width={
                                                                                 500
                                                                               }
@@ -3258,10 +3258,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                           </button>
                                                                         )}
                                                                         {reply.videoKey && (
-                                                                          <div className="relative h-40 w-full overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20">
+                                                                          <div className="relative h-40 w-full rounded-lg border border-cyan-700/40 overflow-hidden bg-gray-900 hover:shadow-lg hover:shadow-cyan-500/20 transition-all">
                                                                             <video
                                                                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
-                                                                              className="h-full w-full object-cover"
+                                                                              className="w-full h-full object-cover"
                                                                               controls
                                                                             />
                                                                           </div>
@@ -3293,9 +3293,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                               {replyingToPostId.has(
                                                 post.id
                                               ) && (
-                                                <div className="mt-4 space-y-3 border-l-2 border-cyan-700/30 pl-4">
+                                                <div className="mt-4 space-y-3 pl-4 border-l-2 border-cyan-700/30">
                                                   <textarea
-                                                    className="w-full resize-none rounded-xl border border-cyan-700/30 bg-slate-900 p-3 text-sm text-white placeholder:text-gray-500 focus:border-primary focus:outline-none"
+                                                    className="w-full rounded-xl border border-cyan-700/30 bg-slate-900 p-3 text-sm text-white placeholder:text-gray-500 resize-none focus:border-primary focus:outline-none"
                                                     placeholder="Escribe tu respuesta..."
                                                     value={
                                                       replyMessage[post.id] ||
@@ -3396,7 +3396,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                           >
                                                             <X className="h-4 w-4" />
                                                           </button>
-                                                          <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
+                                                          <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-2 py-1 rounded">
                                                             {
                                                               replyImage[
                                                                 post.id
@@ -3433,7 +3433,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                           >
                                                             <X className="h-4 w-4" />
                                                           </button>
-                                                          <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
+                                                          <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-2 py-1 rounded">
                                                             {
                                                               replyVideo[
                                                                 post.id
@@ -3626,7 +3626,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                     >
                                                       {isSubmittingReply ? (
                                                         <>
-                                                          <div className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent inline-block mr-1" />
                                                           Enviando...
                                                         </>
                                                       ) : (
@@ -4088,14 +4088,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <button
             onClick={() => setLightboxImage(null)}
-            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
           >
             <X className="h-6 w-6" />
           </button>
           <Image
             src={lightboxImage}
             alt="Imagen ampliada"
-            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
             width={1000}
             height={900}
           />
