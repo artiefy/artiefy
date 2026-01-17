@@ -376,7 +376,7 @@ export function CourseContent({
         <div
           key={lesson.id}
           className={cn(
-            'overflow-hidden text-white transition-colors border rounded-lg',
+            'overflow-hidden rounded-lg border text-white transition-colors',
             isUnlocked ? 'sm:hover:neon-live-class' : 'opacity-75'
           )}
           style={{
@@ -398,7 +398,7 @@ export function CourseContent({
                     <FaLock className="mr-2 size-5 text-gray-400" />
                   )}
                   <span className="font-medium text-white">{lesson.title}</span>
-                  <span className="text-sm text-gray-300 ml-2">
+                  <span className="ml-2 text-sm text-gray-300">
                     ({lesson.duration} mins)
                   </span>
                 </div>
@@ -422,7 +422,7 @@ export function CourseContent({
           </button>
           {expandedLesson === lesson.id && isUnlocked && (
             <div
-              className="border-t px-6 py-4 bg-[#1a233366] hover:bg-[#01152d] transition-colors"
+              className="border-t bg-[#1a233366] px-6 py-4 transition-colors hover:bg-[#01152d]"
               style={{
                 borderColor: '#1d283a',
               }}
@@ -432,10 +432,10 @@ export function CourseContent({
                   lesson.description && lesson.description.length > 150;
                 const descriptionContent = (
                   <p
-                    className="mb-4 max-w-full break-words whitespace-pre-wrap text-gray-300 line-clamp-3"
+                    className="mb-4 line-clamp-3 max-w-full break-words whitespace-pre-wrap text-gray-300"
                     style={{ overflowWrap: 'anywhere' }}
                   >
-                    <IoPlayCircleOutline className="inline mr-2 text-white w-4 h-4 -mt-1" />
+                    <IoPlayCircleOutline className="-mt-1 mr-2 inline h-4 w-4 text-white" />
                     {lesson.description ??
                       'No hay descripción disponible para esta clase.'}
                   </p>
@@ -446,7 +446,7 @@ export function CourseContent({
                       {descriptionContent}
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p className="whitespace-pre-wrap break-words">
+                      <p className="break-words whitespace-pre-wrap">
                         {lesson.description ??
                           'No hay descripción disponible para esta clase.'}
                       </p>
@@ -456,9 +456,9 @@ export function CourseContent({
                   descriptionContent
                 );
               })()}
-              <div className="flex items-center gap-2 flex-1">
+              <div className="flex flex-1 items-center gap-2">
                 <div
-                  className="flex-1 h-1 rounded-full overflow-hidden"
+                  className="h-1 flex-1 overflow-hidden rounded-full"
                   style={{ backgroundColor: '#1d283a' }}
                 >
                   <div
@@ -470,7 +470,7 @@ export function CourseContent({
                   {lesson.porcentajecompletado}%
                 </span>
                 <a
-                  className="group inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all shrink-0 overflow-hidden"
+                  className="group inline-flex shrink-0 items-center gap-2 overflow-hidden rounded-full px-4 py-2 text-sm font-medium transition-all"
                   href={`/estudiantes/clases/${lesson.id}`}
                   onClick={handleClick}
                   onMouseEnter={() => setHoveredLesson(lesson.id)}
@@ -492,7 +492,7 @@ export function CourseContent({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="lucide lucide-navigation w-4 h-4 -rotate-[25deg] transition-all duration-300 group-hover:opacity-0 group-hover:-translate-y-4 group-hover:translate-x-2 group-active:animate-[rocket-launch_0.4s_ease-out]"
+                      className="lucide lucide-navigation h-4 w-4 -rotate-[25deg] transition-all duration-300 group-hover:translate-x-2 group-hover:-translate-y-4 group-hover:opacity-0 group-active:animate-[rocket-launch_0.4s_ease-out]"
                     >
                       <polygon points="3 11 22 2 13 21 11 13 3 11" />
                     </svg>
@@ -506,7 +506,7 @@ export function CourseContent({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="lucide lucide-navigation w-4 h-4 -rotate-[25deg] absolute inset-0 opacity-0 translate-y-4 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0"
+                      className="lucide lucide-navigation absolute inset-0 h-4 w-4 -translate-x-2 translate-y-4 -rotate-[25deg] opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100"
                     >
                       <polygon points="3 11 22 2 13 21 11 13 3 11" />
                     </svg>
@@ -717,7 +717,7 @@ export function CourseContent({
     upcomingMeetings.length === 0 ? 'mt-2' : 'mt-6';
 
   const recordedSectionTopMargin =
-    upcomingMeetings.length === 0 ? 'mt-2' : 'mt-6';
+    upcomingMeetings.length === 0 ? 'mt-1' : 'mt-3';
 
   // Identificar la próxima clase en vivo (la más cercana en tiempo)
   const nextMeetingId = useMemo(() => {
@@ -986,7 +986,7 @@ export function CourseContent({
                   {/* Header con variantes responsive */}
                   {/* Mobile: icono videocam + texto centrado */}
                   <div
-                    className={`${recordedSectionTopMargin} mb-3 flex flex-col items-center rounded-2xl border sm:hidden`}
+                    className={`${recordedSectionTopMargin} mb-1 flex flex-col items-center rounded-2xl border sm:hidden`}
                     style={{ backgroundColor: '#01152d' }}
                   >
                     <div className="flex items-center gap-3">
@@ -1000,7 +1000,7 @@ export function CourseContent({
                   </div>
 
                   {/* Desktop: icono videocam + texto alineados */}
-                  <div className="mb-4 hidden items-center sm:flex">
+                  <div className="mb-2 hidden items-center sm:flex">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
                         <LuVideo className="h-5 w-5 text-red-400" />
@@ -1551,7 +1551,7 @@ export function CourseContent({
                     </div>
                     <button
                       onClick={toggleRecordedClasses}
-                      className="border-secondary/30 from-secondary/10 to-secondary/5 hover:border-secondary hover:ring-secondary/30 flex items-center gap-2 rounded-full border bg-gradient-to-r px-3 py-1.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:shadow-md hover:ring-1"
+                      className="flex items-center gap-2 rounded-full border border-secondary/30 bg-gradient-to-r from-secondary/10 to-secondary/5 px-3 py-1.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:border-secondary hover:shadow-md hover:ring-1 hover:ring-secondary/30"
                     >
                       <span className="tracking-wide text-white">
                         {showRecordedClasses ? 'Ver menos' : 'Ver más'}

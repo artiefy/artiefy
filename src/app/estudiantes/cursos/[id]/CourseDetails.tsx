@@ -7,8 +7,10 @@ import { useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { AiFillFire, AiOutlineCalendar } from 'react-icons/ai';
 import { FaCheck, FaCrown, FaStar, FaTimes } from 'react-icons/fa';
+import { FaBuildingUser, FaChalkboardUser, FaUserClock } from 'react-icons/fa6';
 import { IoPlayOutline } from 'react-icons/io5';
 import { MdOutlineVideocam } from 'react-icons/md';
+import { RiEqualizer2Line } from 'react-icons/ri';
 import { toast } from 'sonner';
 
 import { CourseActivities } from '~/components/estudiantes/layout/coursedetail/CourseActivities';
@@ -138,6 +140,26 @@ export default function CourseDetails({
   const [activePill, setActivePill] = useState<NavKey>('curso');
   const [projectsCount, setProjectsCount] = useState<number>(0);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const getModalidadIcon = (modalidadName?: string) => {
+    if (!modalidadName) return <MdOutlineVideocam className="h-3 w-3" />;
+    const name = modalidadName.toLowerCase();
+    if (name.includes('presencial'))
+      return <FaBuildingUser className="h-3 w-3" />;
+    if (
+      name.includes('virtual') ||
+      name.includes('sincron') ||
+      name.includes('sincrónica') ||
+      name.includes('sincronica')
+    )
+      return <FaChalkboardUser className="h-3 w-3" />;
+    if (
+      name.includes('combin') ||
+      name.includes('hibr') ||
+      name.includes('artiefy')
+    )
+      return <FaUserClock className="h-3 w-3" />;
+    return <FaUserClock className="h-3 w-3" />;
+  };
 
   const recordedCount = Array.isArray(classMeetings)
     ? classMeetings.filter((m) => !!m.video_key).length
@@ -1230,21 +1252,7 @@ export default function CourseDetails({
                             style={{ backgroundColor: '#1A2333' }}
                             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
                           >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="16"
-                              height="16"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-3 w-3"
-                            >
-                              <path d="M12 7v10"></path>
-                              <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
-                            </svg>
+                            <RiEqualizer2Line className="h-3 w-3" />
                             {course.nivel
                               ? typeof course.nivel === 'string'
                                 ? course.nivel
@@ -1256,7 +1264,11 @@ export default function CourseDetails({
                               style={{ backgroundColor: '#1A2333' }}
                               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
                             >
-                              <MdOutlineVideocam className="h-3 w-3" />
+                              {getModalidadIcon(
+                                typeof course.modalidad === 'string'
+                                  ? course.modalidad
+                                  : course.modalidad.name
+                              )}
                               {typeof course.modalidad === 'string'
                                 ? course.modalidad
                                 : course.modalidad.name}

@@ -31,7 +31,9 @@ export default function MiniLoginModal({
 }: MiniLoginModalProps) {
   const { signIn, setActive } = useSignIn();
   const { signUp } = useSignUp();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
@@ -120,7 +122,7 @@ export default function MiniLoginModal({
 
       // Construir URLs absolutas
       const baseUrl = window.location.origin;
-      const absoluteRedirectUrl = `${baseUrl}/sign-in/sso-callback`;
+      const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
       const absoluteRedirectUrlComplete =
         redirectUrl && redirectUrl.trim() !== ''
           ? redirectUrl.startsWith('http')

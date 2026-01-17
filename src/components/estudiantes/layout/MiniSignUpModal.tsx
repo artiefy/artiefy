@@ -27,10 +27,13 @@ export default function MiniSignUpModal({
   redirectUrl = '/',
   onSwitchToLogin,
 }: MiniSignUpModalProps) {
-  const { signUp, setActive } = useSignUp();
-  const { isSignedIn } = useAuth();
+  const { signUp, setActive, isLoaded } = useSignUp();
+  const { isSignedIn } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -62,6 +65,7 @@ export default function MiniSignUpModal({
       // Reset form fields
       setFirstName('');
       setLastName('');
+      setUsername('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
@@ -76,6 +80,7 @@ export default function MiniSignUpModal({
   const validateSignUpInputs = (
     fname: string,
     lname: string,
+    uname: string,
     email: string,
     pwd: string,
     confirmPwd: string
@@ -111,6 +116,22 @@ export default function MiniSignUpModal({
         message: 'El apellido solo puede contener letras.',
         longMessage: 'El apellido solo puede contener letras.',
         meta: { paramName: 'lastName' },
+      });
+    }
+
+    if (!uname) {
+      validationErrors.push({
+        code: 'form_param_missing',
+        message: 'Ingresa tu nombre de usuario.',
+        longMessage: 'Ingresa tu nombre de usuario.',
+        meta: { paramName: 'username' },
+      });
+    } else if (uname.length < 3) {
+      validationErrors.push({
+        code: 'form_param_format_invalid',
+        message: 'El nombre de usuario debe tener al menos 3 caracteres.',
+        longMessage: 'El nombre de usuario debe tener al menos 3 caracteres.',
+        meta: { paramName: 'username' },
       });
     }
 
@@ -176,7 +197,7 @@ export default function MiniSignUpModal({
       setErrors(undefined);
 
       const baseUrl = window.location.origin;
-      const absoluteRedirectUrl = `${baseUrl}/sign-up/sso-callback`;
+      const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
       const absoluteRedirectUrlComplete = redirectUrl.startsWith('http')
         ? redirectUrl
         : `${baseUrl}${redirectUrl}`;
@@ -254,9 +275,11 @@ export default function MiniSignUpModal({
     const trimmedEmail = email.trim();
     const trimmedFirstName = firstName.trim();
     const trimmedLastName = lastName.trim();
+    const trimmedUsername = username.trim();
     const validationErrors = validateSignUpInputs(
       trimmedFirstName,
       trimmedLastName,
+      trimmedUsername,
       trimmedEmail,
       password,
       confirmPassword
@@ -280,12 +303,26 @@ export default function MiniSignUpModal({
     }
 
     setIsSubmitting(true);
-    if (!signUp) return;
+    if (!isLoaded || !signUp) {
+      setIsSubmitting(false);
+      setErrors([
+        {
+          code: 'sign_up_not_ready',
+          message:
+            'El registro no está listo todavía. Inténtalo de nuevo en unos segundos.',
+          longMessage:
+            'El registro no está listo todavía. Inténtalo de nuevo en unos segundos.',
+          meta: {},
+        },
+      ]);
+      return;
+    }
 
     try {
       await signUp.create({
         firstName: trimmedFirstName,
         lastName: trimmedLastName,
+        username: trimmedUsername,
         emailAddress: trimmedEmail,
         password,
       });
@@ -315,23 +352,67 @@ export default function MiniSignUpModal({
     e.preventDefault();
     setErrors(undefined);
     setIsSubmitting(true);
-    if (!signUp) return;
+    if (!isLoaded || !signUp || !setActive) {
+      setIsSubmitting(false);
+      setErrors([
+        {
+          code: 'sign_up_not_ready',
+          message: 'La verificación no está lista todavía. Inténtalo de nuevo.',
+          longMessage:
+            'La verificación no está lista todavía. Inténtalo de nuevo.',
+          meta: {},
+        },
+      ]);
+      return;
+    }
 
     try {
       const completeSignUp = await signUp.attemptEmailAddressVerification({
         code,
       });
 
-      if (completeSignUp.status !== 'complete') {
-        console.log(JSON.stringify(completeSignUp, null, 2));
+      if (completeSignUp.status === 'complete') {
+        if (!completeSignUp.createdSessionId) {
+          setErrors([
+            {
+              code: 'session_missing',
+              message:
+                'No se pudo iniciar sesión tras la verificación. Inténtalo de nuevo.',
+              longMessage:
+                'No se pudo iniciar sesión tras la verificación. Inténtalo de nuevo.',
+              meta: {},
+            },
+          ]);
+          return;
+        }
+        await setActive({
+          session: completeSignUp.createdSessionId,
+        });
+        return;
       }
 
-      if (completeSignUp.status === 'complete') {
-        if (setActive) {
-          await setActive({ session: completeSignUp.createdSessionId });
-        }
-        // El useEffect se encargará del resto
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('📊 Estado del registro:', completeSignUp.status);
+        console.log('❌ Campos faltantes:', completeSignUp.missingFields);
+        console.log(
+          '⏳ Campos sin verificar:',
+          completeSignUp.unverifiedFields
+        );
+        console.log('✅ Campos requeridos:', completeSignUp.requiredFields);
       }
+
+      const missingFields = formatFields(completeSignUp.missingFields);
+      const unverifiedFields = formatFields(completeSignUp.unverifiedFields);
+      const statusLabel = completeSignUp.status ?? 'incompleto';
+
+      setErrors([
+        {
+          code: 'verification_incomplete',
+          message: `No se pudo completar el registro. Estado: ${statusLabel}. Faltan: ${missingFields}. Sin verificar: ${unverifiedFields}.`,
+          longMessage: `No se pudo completar el registro. Estado: ${statusLabel}. Faltan: ${missingFields}. Sin verificar: ${unverifiedFields}.`,
+          meta: {},
+        },
+      ]);
     } catch (err) {
       if (isClerkAPIResponseError(err)) {
         setErrors(err.errors);
@@ -380,12 +461,55 @@ export default function MiniSignUpModal({
       (error.code === 'form_param_format_invalid' &&
         error.meta?.paramName === 'lastName')
   );
+  const usernameError = errors?.some(
+    (error) =>
+      (error.code === 'form_param_missing' &&
+        error.meta?.paramName === 'username') ||
+      (error.code === 'form_param_format_invalid' &&
+        error.meta?.paramName === 'username')
+  );
   const confirmPasswordError = errors?.some(
     (error) =>
       error.code === 'password_mismatch' ||
       (error.code === 'form_param_missing' &&
         error.meta?.paramName === 'confirmPassword')
   );
+
+  const formatFields = (fields?: string[]) => {
+    if (!fields || fields.length === 0) return 'ninguno';
+    const labels: Record<string, string> = {
+      emailAddress: 'correo',
+      firstName: 'nombre',
+      lastName: 'apellido',
+      password: 'contraseña',
+      phoneNumber: 'teléfono',
+      username: 'usuario',
+    };
+    return fields.map((field) => labels[field] ?? field).join(', ');
+  };
+
+  const getSignUpErrorMessage = (error: ClerkAPIError) => {
+    if (error.code === 'form_identifier_exists')
+      return 'Esta cuenta ya existe. Por favor inicia sesión.';
+    if (error.code === 'form_password_pwned')
+      return 'Esta contraseña es muy común. Por favor elige una más segura.';
+    if (error.code === 'password_mismatch')
+      return 'Las contraseñas no coinciden';
+
+    const msg = error.longMessage ?? error.message ?? '';
+    // Mensaje específico de Clerk en inglés: "This verification has already been verified."
+    if (/already been verified|already verified/i.test(msg))
+      return 'Esta verificación ya ha sido completada.';
+
+    // Mensajes que indican código de verificación inválido
+    if (
+      /verification.*code.*invalid/i.test(msg) ||
+      /invalid.*verification.*code/i.test(msg)
+    )
+      return 'El código de verificación es inválido.';
+
+    return msg;
+  };
 
   return (
     <div className="pointer-events-auto fixed inset-0 z-[1100] flex items-center justify-center bg-black/50">
@@ -574,13 +698,7 @@ export default function MiniSignUpModal({
           <ul className="space-y-1">
             {errors.map((el, index) => (
               <li key={index} className="text-sm text-rose-400">
-                {el.code === 'form_identifier_exists'
-                  ? 'Esta cuenta ya existe. Por favor inicia sesión.'
-                  : el.code === 'form_password_pwned'
-                    ? 'Esta contraseña es muy común. Por favor elige una más segura.'
-                    : el.code === 'password_mismatch'
-                      ? 'Las contraseñas no coinciden'
-                      : el.longMessage}
+                {getSignUpErrorMessage(el)}
               </li>
             ))}
           </ul>
@@ -617,6 +735,20 @@ export default function MiniSignUpModal({
                   } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
                 />
               </div>
+            </div>
+            <div>
+              <input
+                onChange={(e) => setUsername(e.target.value)}
+                id="username"
+                name="username"
+                type="text"
+                value={username}
+                placeholder="Usuario"
+                required
+                className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
+                  usernameError ? 'ring-rose-400' : 'ring-border'
+                } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+              />
             </div>
             <div>
               <input
@@ -695,7 +827,7 @@ export default function MiniSignUpModal({
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto h-5 w-5 text-[#080c16]" />
               ) : (
                 'Verificar'
               )}
