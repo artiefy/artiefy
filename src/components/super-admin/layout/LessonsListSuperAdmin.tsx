@@ -391,7 +391,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                           }
                         >
                           <div key={lesson.id} className="group relative">
-                            <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+                            <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
                             <Card
                               key={lesson.id}
                               className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]"
@@ -432,7 +432,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                     </p>
                                     <Badge
                                       variant="outline"
-                                      className="border-primary bg-background text-primary ml-1 hover:bg-black/70"
+                                      className="ml-1 border-primary bg-background text-primary hover:bg-black/70"
                                     >
                                       {lesson.course.title}
                                     </Badge>
@@ -500,7 +500,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                     className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-yellow-500 p-2 text-white hover:border-yellow-600 hover:bg-yellow-500 active:scale-95"
                                   >
                                     <p>Ver clase</p>
-                                    <ArrowRightIcon className="animate-bounce-right size-5" />
+                                    <ArrowRightIcon className="size-5 animate-bounce-right" />
                                     <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
                                       <div className="relative h-full w-10 bg-white/30" />
                                     </div>
@@ -521,7 +521,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         </div>
         <div className="mx-auto my-4">
           <Button
-            className={`bg-primary mx-auto mt-6 cursor-pointer justify-center border-transparent font-semibold ${
+            className={`mx-auto mt-6 cursor-pointer justify-center border-transparent bg-primary font-semibold ${
               selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
             }`}
             style={{ backgroundColor: selectedColor }}

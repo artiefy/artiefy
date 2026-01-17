@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { useUser } from '@clerk/nextjs';
 
+import { useUser } from '@clerk/nextjs';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {

@@ -166,7 +166,7 @@ export async function PATCH(
     const parsed = updateTransactionSchema.parse(body);
 
     // Validar que receiptVerifiedBy sea un ID válido en users (si se proporciona)
-    let verifiedById: string | null = parsed.receiptVerifiedBy || null;
+    const verifiedById: string | null = parsed.receiptVerifiedBy || null;
     if (verifiedById) {
       const [exists] = await db
         .select({ id: users.id })
