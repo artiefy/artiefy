@@ -17,6 +17,8 @@ interface MiniLoginModalProps {
   onClose: () => void;
   onLoginSuccess: () => void;
   redirectUrl?: string;
+  onSwitchToSignUp?: () => void;
+  initialError?: string;
 }
 
 export default function MiniLoginModal({
@@ -24,9 +26,13 @@ export default function MiniLoginModal({
   onClose,
   onLoginSuccess,
   redirectUrl = '/',
+  onSwitchToSignUp,
+  initialError,
 }: MiniLoginModalProps) {
   const { signIn, setActive } = useSignIn();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
@@ -37,47 +43,92 @@ export default function MiniLoginModal({
   const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
     null
   );
+  const [hasHandledAuth, setHasHandledAuth] = useState(false);
 
-  // Detectar cuando OAuth se completa exitosamente
+  // Manejar error inicial de OAuth
   useEffect(() => {
-    if (isSignedIn) {
+    if (initialError && isOpen) {
+      setErrors([
+        {
+          code: 'oauth_account_not_found',
+          message: initialError,
+          longMessage: initialError,
+          meta: {},
+        },
+      ]);
+    }
+  }, [initialError, isOpen]);
+
+  // Detectar cuando OAuth o login se completa exitosamente
+  useEffect(() => {
+    if (isSignedIn && !hasHandledAuth) {
+      // Marcar que ya manejamos esta autenticación
+      setHasHandledAuth(true);
+
       // Si el usuario está autenticado, cerrar todo
       if (loadingProvider) {
         setLoadingProvider(null);
       }
       onLoginSuccess();
       onClose();
+
+      // Solo redirigir manualmente si NO es OAuth (OAuth ya redirige automáticamente)
+      if (!loadingProvider && redirectUrl !== '/' && redirectUrl !== '') {
+        const targetUrl = redirectUrl.startsWith('http')
+          ? redirectUrl
+          : `${window.location.origin}${redirectUrl}`;
+        console.log(
+          '🔄 Redirigiendo después de login email/password a:',
+          targetUrl
+        );
+        window.location.href = targetUrl;
+      }
     }
-  }, [isSignedIn, loadingProvider, onLoginSuccess, onClose]);
+  }, [
+    isSignedIn,
+    hasHandledAuth,
+    loadingProvider,
+    onLoginSuccess,
+    onClose,
+    redirectUrl,
+  ]);
+
+  // Reset hasHandledAuth cuando se cierra el modal
+  useEffect(() => {
+    if (!isOpen) {
+      setHasHandledAuth(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  // OAuth login
+  // OAuth login con transición automática a sign-up
   const signInWith = async (strategy: OAuthStrategy) => {
     if (!signIn) {
       setErrors([
         {
           code: 'sign_in_undefined',
-          message: 'SignIn no está definido',
+          message: 'SignIn o SignUp no está definido',
           meta: {},
         },
       ]);
       return;
     }
 
+    const baseUrl = window.location.origin;
+    const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
+    const absoluteRedirectUrlFallback = `${baseUrl}/sign-in/sso-callback`;
+    const absoluteRedirectUrlComplete =
+      redirectUrl && redirectUrl.trim() !== ''
+        ? redirectUrl.startsWith('http')
+          ? redirectUrl
+          : `${baseUrl}${redirectUrl}`
+        : `${baseUrl}${window.location.pathname}${window.location.search}`;
     try {
       setLoadingProvider(strategy);
       setErrors(undefined);
 
-      // Construir URLs absolutas
-      const baseUrl = window.location.origin;
-      const absoluteRedirectUrl = `${baseUrl}/sign-in/sso-callback`;
-      const absoluteRedirectUrlComplete = redirectUrl.startsWith('http')
-        ? redirectUrl
-        : `${baseUrl}${redirectUrl}`;
-
-      // Abrir popup centrado
-      const width = 500;
+      const width = 600;
       const height = 650;
       const left = (window.screen.width - width) / 2;
       const top = (window.screen.height - height) / 2;
@@ -90,15 +141,11 @@ export default function MiniLoginModal({
 
       if (!popup || popup.closed || typeof popup.closed === 'undefined') {
         setLoadingProvider(null);
-        setErrors([
-          {
-            code: 'popup_blocked',
-            message: 'Popup bloqueado',
-            longMessage:
-              'Por favor, permite las ventanas emergentes en tu navegador para continuar.',
-            meta: {},
-          },
-        ]);
+        await signIn.authenticateWithRedirect({
+          strategy,
+          redirectUrl: absoluteRedirectUrlFallback,
+          redirectUrlComplete: absoluteRedirectUrlComplete,
+        });
         return;
       }
 
@@ -113,17 +160,69 @@ export default function MiniLoginModal({
         }
       }, 500);
 
-      // Usar authenticateWithPopup
-      await signIn.authenticateWithPopup({
-        popup,
-        strategy,
-        redirectUrl: absoluteRedirectUrl,
-        redirectUrlComplete: absoluteRedirectUrlComplete,
-      });
+      try {
+        await signIn.authenticateWithPopup({
+          popup,
+          strategy,
+          redirectUrl: absoluteRedirectUrl,
+          redirectUrlComplete: absoluteRedirectUrlComplete,
+        });
+      } catch (err) {
+        setLoadingProvider(null);
+        console.error('❌ Error en OAuth:', err);
 
-      clearInterval(popupCheckInterval);
+        if (isClerkAPIResponseError(err)) {
+          const popupBlocked = err.errors.some(
+            (error) => error.code === 'popup_blocked'
+          );
+          if (popupBlocked) {
+            await signIn.authenticateWithRedirect({
+              strategy,
+              redirectUrl: absoluteRedirectUrlFallback,
+              redirectUrlComplete: absoluteRedirectUrlComplete,
+            });
+            return;
+          }
+          const customError = err.errors.find(
+            (e) =>
+              e.code === 'form_identifier_not_found' ||
+              e.code === 'identifier_not_found'
+          );
 
-      // La autenticación se completó, el useEffect se encargará del resto
+          if (customError) {
+            // Provide a clear, actionable message
+            setErrors([
+              {
+                code: customError.code,
+                message:
+                  'No encontramos una cuenta con ese correo. ¿Quieres crear una cuenta nueva?',
+                longMessage:
+                  'No encontramos una cuenta con ese correo. Usa "Regístrate aquí" para crearla o intenta con otro proveedor.',
+                meta: {},
+              },
+            ]);
+          } else {
+            setErrors(err.errors);
+          }
+        } else {
+          setErrors([
+            {
+              code: 'oauth_error',
+              message:
+                err instanceof Error
+                  ? err.message
+                  : 'Error en el inicio de sesión con OAuth',
+              longMessage:
+                err instanceof Error
+                  ? err.message
+                  : 'Error en el inicio de sesión con OAuth',
+              meta: {},
+            },
+          ]);
+        }
+      } finally {
+        clearInterval(popupCheckInterval);
+      }
     } catch (err) {
       setLoadingProvider(null);
       console.error('❌ Error en OAuth:', err);
@@ -149,16 +248,58 @@ export default function MiniLoginModal({
     }
   };
 
+  const validateSignInInputs = (
+    identifier: string,
+    pwd: string
+  ): ClerkAPIError[] => {
+    const validationErrors: ClerkAPIError[] = [];
+
+    if (!identifier) {
+      validationErrors.push({
+        code: 'form_param_missing',
+        message: 'Ingresa tu correo electrónico.',
+        longMessage: 'Ingresa tu correo electrónico.',
+        meta: { paramName: 'identifier' },
+      });
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
+      validationErrors.push({
+        code: 'form_param_format_invalid',
+        message: 'El formato del correo electrónico no es válido.',
+        longMessage: 'El formato del correo electrónico no es válido.',
+        meta: { paramName: 'identifier' },
+      });
+    }
+
+    if (!pwd) {
+      validationErrors.push({
+        code: 'form_param_missing',
+        message: 'Ingresa tu contraseña.',
+        longMessage: 'Ingresa tu contraseña.',
+        meta: { paramName: 'password' },
+      });
+    }
+
+    return validationErrors;
+  };
+
   // Email/password login
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors(undefined);
-    setIsSubmitting(true);
     if (!signIn) return;
+
+    const trimmedEmail = email.trim();
+    const validationErrors = validateSignInInputs(trimmedEmail, password);
+    if (validationErrors.length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const signInAttempt = await signIn.create({
-        identifier: email,
+        identifier: trimmedEmail,
         password,
       });
 
@@ -166,7 +307,8 @@ export default function MiniLoginModal({
         if (setActive) {
           await setActive({ session: signInAttempt.createdSessionId });
         }
-        onLoginSuccess();
+        // No llamar onLoginSuccess aquí - dejar que el useEffect lo maneje
+        // cuando detecte isSignedIn = true
       } else if (signInAttempt.status === 'needs_first_factor') {
         const supportedStrategies =
           signInAttempt.supportedFirstFactors?.map(
@@ -271,7 +413,8 @@ export default function MiniLoginModal({
         if (setActive) {
           await setActive({ session: result.createdSessionId });
         }
-        onLoginSuccess();
+        // No llamar onLoginSuccess aquí - dejar que el useEffect lo maneje
+        // cuando detecte isSignedIn = true
       } else {
         setErrors([
           {
@@ -301,11 +444,75 @@ export default function MiniLoginModal({
   };
 
   const emailError = errors?.some(
-    (error) => error.code === 'form_identifier_not_found'
+    (error) =>
+      error.code === 'form_identifier_not_found' ||
+      (error.code === 'form_param_format_invalid' &&
+        error.meta?.paramName === 'identifier') ||
+      (error.code === 'form_param_missing' &&
+        error.meta?.paramName === 'identifier')
   );
   const passwordError = errors?.some(
-    (error) => error.code === 'form_password_incorrect'
+    (error) =>
+      error.code === 'form_password_incorrect' ||
+      (error.code === 'form_param_missing' &&
+        error.meta?.paramName === 'password')
   );
+
+  const mapErrorToMessage = (error: ClerkAPIError) => {
+    if (error.code === 'form_password_incorrect') {
+      return 'La contraseña es incorrecta. Inténtalo de nuevo.';
+    }
+    if (error.code === 'form_identifier_not_found') {
+      return 'No se encontró una cuenta con ese correo.';
+    }
+    if (error.code === 'identifier_not_found') {
+      return 'No se encontró una cuenta con ese correo.';
+    }
+    if (
+      error.code === 'form_param_missing' &&
+      error.meta?.paramName === 'identifier'
+    ) {
+      return 'Ingresa tu correo electrónico.';
+    }
+    if (
+      error.code === 'form_param_missing' &&
+      error.meta?.paramName === 'password'
+    ) {
+      return 'Ingresa tu contraseña.';
+    }
+    if (
+      error.code === 'form_param_format_invalid' &&
+      error.meta?.paramName === 'identifier'
+    ) {
+      return 'El formato del correo electrónico no es válido.';
+    }
+    if (error.code === 'popup_blocked') {
+      return 'Popup bloqueado. Permite las ventanas emergentes para continuar.';
+    }
+    if (error.code === 'oauth_error') {
+      return 'Hubo un problema al iniciar sesión con OAuth. Inténtalo de nuevo.';
+    }
+    if (error.code === 'invalid_strategy') {
+      return 'La contraseña es incorrecta. Inténtalo de nuevo.';
+    }
+    if (error.code === 'strategy_for_user_invalid') {
+      return 'La contraseña es incorrecta. Inténtalo de nuevo.';
+    }
+    if (error.code === 'verification_strategy_for_user_invalid') {
+      return 'La contraseña es incorrecta. Inténtalo de nuevo.';
+    }
+    if (error.code === 'unknown_error') {
+      return 'Ocurrió un error desconocido. Inténtalo nuevamente.';
+    }
+    if (
+      error.code === 'sign_in_undefined' ||
+      error.code === 'sign_up_undefined'
+    ) {
+      return 'No se pudo iniciar sesión. Inténtalo de nuevo.';
+    }
+
+    return error.longMessage ?? error.message ?? 'Ocurrió un error.';
+  };
 
   return (
     <div className="pointer-events-auto fixed inset-0 z-[1100] flex items-center justify-center bg-black/50">
@@ -500,16 +707,31 @@ export default function MiniLoginModal({
         {errors && (
           <div className="relative z-10 text-sm text-red-400">
             {errors.map((el, index) => (
-              <p key={index}>
-                {el.code === 'form_password_incorrect'
-                  ? 'Contraseña incorrecta. Inténtalo de nuevo.'
-                  : el.code === 'form_identifier_not_found'
-                    ? 'No se pudo encontrar tu cuenta.'
-                    : el.longMessage}
-              </p>
+              <p key={index}>{mapErrorToMessage(el)}</p>
             ))}
           </div>
         )}
+
+        {/* Special handling for account not found errors */}
+        {errors?.some(
+          (e) =>
+            e.code === 'form_identifier_not_found' ||
+            e.code === 'identifier_not_found'
+        ) &&
+          onSwitchToSignUp && (
+            <div className="relative z-10 mt-4 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+              <p className="mb-2 text-sm text-amber-400">
+                No encontramos una cuenta con ese correo electrónico.
+              </p>
+              <button
+                type="button"
+                onClick={onSwitchToSignUp}
+                className="text-sm font-semibold text-primary hover:underline"
+              >
+                Crear cuenta nueva →
+              </button>
+            </div>
+          )}
 
         {!successfulCreation && !isForgotPassword ? (
           <form
@@ -635,21 +857,20 @@ export default function MiniLoginModal({
                   Recuperarla
                 </button>
               </div>
-              <div className="text-sm">
-                <span className="text-muted-foreground">
-                  ¿No tienes cuenta?{' '}
-                </span>
-                <button
-                  type="button"
-                  className="font-medium text-primary transition-colors hover:text-primary/80"
-                  onClick={() => {
-                    const signUpUrl = `/sign-up?redirect_url=${encodeURIComponent(redirectUrl)}`;
-                    window.location.href = signUpUrl;
-                  }}
-                >
-                  Regístrate aquí
-                </button>
-              </div>
+              {onSwitchToSignUp && (
+                <div className="text-sm">
+                  <span className="text-muted-foreground">
+                    ¿No tienes cuenta?{' '}
+                  </span>
+                  <button
+                    type="button"
+                    className="font-medium text-primary transition-colors hover:text-primary/80"
+                    onClick={onSwitchToSignUp}
+                  >
+                    Regístrate aquí
+                  </button>
+                </div>
+              )}
             </div>
           </form>
         ) : successfulCreation ? (

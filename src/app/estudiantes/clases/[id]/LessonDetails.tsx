@@ -5,24 +5,24 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useProgress } from '@bprogress/next';
 import { useUser } from '@clerk/nextjs';
-import { FaCheckCircle, FaLock } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import LessonActivities from '~/components/estudiantes/layout/lessondetail/LessonActivities';
 import { LessonActivityModal } from '~/components/estudiantes/layout/lessondetail/LessonActivityModal';
-import LessonBreadcrumbs from '~/components/estudiantes/layout/lessondetail/LessonBreadcrumbs';
 import LessonCards from '~/components/estudiantes/layout/lessondetail/LessonCards';
 import LessonComments from '~/components/estudiantes/layout/lessondetail/LessonComments';
+import LessonContentTabs, {
+  type TabType,
+} from '~/components/estudiantes/layout/lessondetail/LessonContentTabs';
 // Import the missing components
-import { GradeHistory } from '~/components/estudiantes/layout/lessondetail/LessonGradeHistory';
+import { LessonGradeHistoryInline } from '~/components/estudiantes/layout/lessondetail/LessonGradeHistoryInline';
 import { LessonGrades } from '~/components/estudiantes/layout/lessondetail/LessonGrades';
-import LessonNavigation from '~/components/estudiantes/layout/lessondetail/LessonNavigation';
 import LessonPlayer from '~/components/estudiantes/layout/lessondetail/LessonPlayer';
 import LessonResource from '~/components/estudiantes/layout/lessondetail/LessonResource';
+import LessonTopNavBar from '~/components/estudiantes/layout/lessondetail/LessonTopNavBar';
+import LessonTranscription from '~/components/estudiantes/layout/lessondetail/LessonTranscription';
+import { NextLessonModal } from '~/components/estudiantes/layout/lessondetail/NextLessonModal';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
-import { Button } from '~/components/estudiantes/ui/button';
-import { Icons } from '~/components/estudiantes/ui/icons';
-import { Progress } from '~/components/estudiantes/ui/progress';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
@@ -139,11 +139,15 @@ export default function LessonDetails({
   );
 
   // Add the missing state variables
-  const [isGradeHistoryOpen, setIsGradeHistoryOpen] = useState(false);
   const [isGradesLoading, setIsGradesLoading] = useState(true);
   const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
     null
   );
+  // Tabs state for content navigation
+  const [activeTab, setActiveTab] = useState<TabType>('transcription');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const searchParams = useSearchParams();
   const { start, stop } = useProgress();
@@ -404,13 +408,101 @@ export default function LessonDetails({
       await completeActivity(activities[0].id, userId); // Add userId parameter
       setIsActivityCompleted(true);
 
-      // Remove automatic unlocking - let modal handle it
-      toast.success('¡Actividad completada!');
+      // Parent state updated; child component (or modal) shows the toast to avoid duplicates
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error al completar la actividad');
     }
   };
+
+  // Handle complete button click
+  const handleComplete = () => {
+    // Mark lesson as completed via API and update local state
+    const doComplete = async () => {
+      try {
+        const res = await fetch('/api/lessons/complete', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lessonId: lesson.id }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data?.success) {
+          throw new Error(data?.error || 'Error completing lesson');
+        }
+
+        // Update local UI state
+        setIsVideoCompleted(true);
+        setIsActivityCompleted(true);
+        setProgress(100);
+        setLessonsState((prev) =>
+          prev.map((l) =>
+            l.id === lesson.id
+              ? { ...l, porcentajecompletado: 100, isCompleted: true }
+              : l
+          )
+        );
+
+        toast.success('Clase marcada como completada');
+      } catch (err) {
+        console.error('Complete lesson error:', err);
+        toast.error('No se pudo marcar la clase como completada');
+      }
+    };
+
+    void doComplete();
+  };
+
+  // Auto-complete when client-side validations detect the lesson is fully completed
+  // Determinar si la lección está completamente completada (video + actividades)
+  const lessonHasVideo =
+    !!lesson.coverVideoKey && lesson.coverVideoKey !== 'none';
+  const activitiesCompletedAll = (activities ?? []).length
+    ? (activities ?? []).every((a) => a.isCompleted)
+    : true;
+  const lessonFullyCompleted = lessonHasVideo
+    ? isVideoCompleted && activitiesCompletedAll
+    : activitiesCompletedAll;
+
+  useEffect(() => {
+    if (lessonFullyCompleted) {
+      // avoid double calls if already completed in state
+      const already = lessonsState.find(
+        (l) => l.id === lesson.id && l.isCompleted
+      );
+      if (!already) {
+        void (async () => {
+          try {
+            const res = await fetch('/api/lessons/complete', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ lessonId: lesson.id }),
+            });
+            const data = await res.json();
+            if (res.ok && data?.success) {
+              setIsVideoCompleted(true);
+              setIsActivityCompleted(true);
+              setProgress(100);
+              setLessonsState((prev) =>
+                prev.map((l) =>
+                  l.id === lesson.id
+                    ? { ...l, porcentajecompletado: 100, isCompleted: true }
+                    : l
+                )
+              );
+            }
+          } catch (e) {
+            console.error('Auto-complete failed:', e);
+          }
+        })();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonFullyCompleted, lesson.id]);
+
+  // Handle time update from video player
+  const handleTimeUpdate = useCallback((time: number) => {
+    setCurrentTime(time);
+  }, []);
 
   // Add new effect to handle URL-based lesson unlocking
   useEffect(() => {
@@ -613,6 +705,7 @@ export default function LessonDetails({
   const [activityModalId, setActivityModalId] = useState<number | undefined>(
     undefined
   );
+  const [resourcesCount, setResourcesCount] = useState(0);
 
   // Obtener la transcripción al montar el componente
   useEffect(() => {
@@ -717,12 +810,6 @@ export default function LessonDetails({
     );
   };
 
-  // Add these functions inside your component before the return statement
-  const handleCompletedActivityClick = (activity: Activity) => {
-    // If activityModalId is defined, open the modal
-    setActivityModalId(activity.id);
-  };
-
   // Añade esta función para manejar el cierre del modal
   const handleActivityModalClose = () => {
     setIsActivityModalOpen(false);
@@ -738,20 +825,63 @@ export default function LessonDetails({
     return Promise.resolve();
   };
 
+  // Calculate current lesson index for progress bar
+  const sortedLessons = sortLessons(lessonsState);
+  const currentLessonIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
+  const totalLessons = sortedLessons.length;
+
   return (
-    <div className="flex min-h-screen flex-col">
-      <LessonBreadcrumbs
-        courseTitle={lesson.courseTitle}
+    <div
+      className="flex min-h-screen flex-col"
+      style={{ backgroundColor: '#01152d' }}
+    >
+      {/* Top Navigation Bar - ahora debajo del header global */}
+      <LessonTopNavBar
         courseId={lesson.courseId}
-        lessonTitle={lesson.title}
+        courseTitle={lesson.courseTitle}
+        currentLessonIndex={currentLessonIndex + 1}
+        totalLessons={totalLessons}
+        progress={progress}
+        isCompleted={lessonFullyCompleted}
+        onComplete={handleComplete}
+        onNavigate={handleNavigationClick}
+        lessonsState={lessonsState}
+        lessonOrder={new Date(lesson.createdAt).getTime()}
+        isNavigating={isNavigating}
+        onToggleSidebar={() => {
+          if (isMobile) {
+            setIsMobileDrawerOpen(!isMobileDrawerOpen);
+          } else {
+            setIsSidebarOpen(!isSidebarOpen);
+          }
+        }}
+        isSidebarOpen={isMobile ? isMobileDrawerOpen : isSidebarOpen}
+        completedCount={
+          lessonsState.filter((l) => {
+            const hasVideo = !!l.coverVideoKey && l.coverVideoKey !== 'none';
+            const hasActivities = (l.activities?.length ?? 0) > 0;
+            const activitiesCompleted = hasActivities
+              ? (l.activities?.every((a) => a.isCompleted) ?? false)
+              : false;
+            return hasVideo
+              ? l.porcentajecompletado === 100 &&
+                  (!hasActivities || activitiesCompleted)
+              : hasActivities
+                ? activitiesCompleted
+                : false;
+          }).length
+        }
+        totalLessonsCount={lessonsState.length}
       />
-      <div className="bg-background flex flex-1 flex-col gap-4 px-2 py-2 md:flex-row md:px-4 md:py-6">
-        {/* Left Sidebar */}
-        {!isMobile && (
-          <div className="bg-background mb-2 w-full flex-shrink-0 overflow-x-auto rounded-lg p-2 shadow-none md:mb-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-80">
-            <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
-              Clases
-            </h2>
+
+      {/* Main Layout - sin espacios */}
+      <div className="flex flex-1 gap-0">
+        {/* Left Sidebar - LessonCards */}
+        {!isMobile && isSidebarOpen && (
+          <aside
+            className="hide-scrollbar sticky top-[calc(4rem+3.5rem)] z-[50] h-[calc(100vh-4rem-3.5rem)] w-80 flex-shrink-0 overflow-y-hidden"
+            style={{ backgroundColor: '#061c37cc' }}
+          >
             <LessonCards
               lessons={lessonsState}
               selectedLessonId={selectedLessonId}
@@ -763,414 +893,207 @@ export default function LessonDetails({
               userId={userId}
               isMobile={false}
             />
-          </div>
+          </aside>
         )}
 
-        {/* Main Content */}
-        <div className="flex w-full max-w-full min-w-0 flex-1 flex-col p-0 md:p-6">
-          <div className="navigation-buttons">
-            <div className="mb-2 md:mb-4">
-              <LessonNavigation
-                onNavigate={handleNavigationClick}
-                lessonsState={lessonsState}
-                lessonOrder={new Date(lesson.createdAt).getTime()}
-                isNavigating={isNavigating}
-                isMobile={isMobile}
-              />
-            </div>
-            {/* Mostrar el select de clases debajo de los botones de navegación en móvil */}
-            {isMobile && (
-              <div className="mb-4">
-                <LessonCards
-                  lessons={lessonsState}
-                  selectedLessonId={selectedLessonId}
-                  onLessonClick={handleCardClick}
-                  progress={progress}
-                  isNavigating={isNavigating}
-                  setLessonsState={setLessonsState}
-                  courseId={lesson.courseId}
-                  userId={userId}
-                  isMobile={true}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* ACTIVIDADES EN EL CENTRO CUANDO NO HAY VIDEO */}
-          {!isMobile && lesson.coverVideoKey === 'none' ? (
-            <div className="mx-auto w-full max-w-4xl rounded-lg bg-white shadow">
-              <div className="rounded-lg bg-white p-4 shadow-xs md:p-6">
-                <h1 className="mb-2 text-xl font-bold text-gray-900 md:mb-4 md:text-2xl">
-                  {lesson.title}
-                </h1>
-                <p
-                  className="mb-6 max-w-full font-semibold break-words whitespace-pre-wrap text-gray-600"
-                  style={{ overflowWrap: 'anywhere' }}
+        {/* Mobile Drawer Overlay */}
+        {isMobile && isMobileDrawerOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+              onClick={() => setIsMobileDrawerOpen(false)}
+            />
+            {/* Drawer */}
+            <aside
+              className="hide-scrollbar fixed top-0 left-0 z-[101] h-full w-80 overflow-y-auto shadow-2xl transition-transform"
+              style={{ backgroundColor: '#061c37' }}
+            >
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-[#061c37] px-4 py-3">
+                <span className="text-sm font-semibold text-foreground">
+                  Clases
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileDrawerOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
                 >
-                  {lesson.description}
-                </p>
-
-                {/* Contenedor destacado para la actividad principal cuando no hay video */}
-                {activities.length > 0 ? (
-                  <div className="mt-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
-                    <div className="mb-4 flex flex-col items-center justify-center text-center">
-                      <h2 className="mb-2 text-2xl font-bold text-gray-800">
-                        {activities[0].name}
-                      </h2>
-                      <p className="mb-6 max-w-3xl text-gray-600">
-                        {activities[0].description}
-                      </p>
-
-                      <div className="flex w-full max-w-md flex-col items-center space-y-2">
-                        {/* Botón que imita exactamente el del sidebar, incluyendo estados de carga */}
-                        {(() => {
-                          // Use underscore prefix for unused variables
-                          const _activityState = activities[0]
-                            ? {
-                                isCompleted: activities[0].isCompleted || false,
-                                isLoading: false,
-                                typeid: activities[0].typeid,
-                              }
-                            : null;
-
-                          return (
-                            <button
-                              onClick={() => {
-                                if (activities[0]) {
-                                  // Establece directamente los estados para el modal
-                                  setSelectedActivityForModal(activities[0]);
-                                  setIsActivityModalOpen(true);
-
-                                  // También actualiza el activityModalId para mantener la consistencia
-                                  setActivityModalId(activities[0].id);
-                                }
-                              }}
-                              className="group relative z-10 w-full overflow-hidden rounded-md px-6 py-4 text-lg font-semibold text-black transition-all duration-300"
-                            >
-                              {/* Animated gradient background */}
-                              <div className="absolute inset-0 z-0 animate-pulse bg-gradient-to-r from-[#3AF4EF] to-[#2ecc71] opacity-80 group-hover:from-green-700 group-hover:to-green-700" />
-
-                              <span className="relative z-10 flex items-center justify-center">
-                                {(() => {
-                                  // Use the activity state directly here
-                                  const activityState = activities[0]
-                                    ? {
-                                        isCompleted:
-                                          activities[0].isCompleted || false,
-                                        isLoading: false,
-                                        typeid: activities[0].typeid,
-                                      }
-                                    : null;
-
-                                  return (
-                                    <>
-                                      {activityState?.isLoading && (
-                                        <Icons.spinner className="mr-2 h-5 w-5 animate-spin" />
-                                      )}
-                                      {activityState?.isCompleted ? (
-                                        <>
-                                          <span className="font-semibold">
-                                            {activityState.typeid === 1
-                                              ? 'Ver Documento'
-                                              : 'Ver Resultados'}
-                                          </span>
-                                          <FaCheckCircle className="ml-2 inline text-white" />
-                                        </>
-                                      ) : (
-                                        <span className="font-semibold">
-                                          Ver Actividad
-                                        </span>
-                                      )}
-                                    </>
-                                  );
-                                })()}
-                              </span>
-                            </button>
-                          );
-                        })()}
-
-                        <div className="mt-4 w-full">
-                          <div className="mb-2 flex items-center justify-between">
-                            <span className="font-bold text-gray-700">
-                              Progreso de la clase
-                            </span>
-                            <span className="text-gray-600">{progress}%</span>
-                          </div>
-                          <Progress value={progress} showPercentage={true} />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Lista de actividades adicionales si hay más de una */}
-                    {activities.length > 1 && (
-                      <div className="mt-8 border-t border-blue-200 pt-6">
-                        <h3 className="mb-4 text-lg font-semibold text-blue-800">
-                          Actividades adicionales
-                        </h3>
-                        <div className="space-y-4">
-                          {activities.slice(1).map((activity, index) => {
-                            const isLocked = !isVideoCompleted && index > 0;
-                            return (
-                              <div
-                                key={activity.id}
-                                className={`rounded-lg border bg-white p-4 shadow-sm ${
-                                  isLocked
-                                    ? 'bg-gray-100 opacity-60'
-                                    : 'bg-white'
-                                }`}
-                              >
-                                <div className="mb-2 flex items-center justify-between">
-                                  <h3 className="font-semibold text-gray-900">
-                                    {activity.name}
-                                  </h3>
-                                  <div className="ml-2 rounded-full bg-blue-100 p-1">
-                                    {activity.isCompleted ? (
-                                      <FaCheckCircle className="text-green-500" />
-                                    ) : isLocked ? (
-                                      <FaLock className="text-gray-400" />
-                                    ) : (
-                                      <div className="text-blue-500">
-                                        {index === 0
-                                          ? 'Disponible'
-                                          : 'Pendiente'}
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                                <p className="mb-4 text-sm text-gray-600">
-                                  {activity.description}
-                                </p>
-                                <div className="flex justify-center">
-                                  <Button
-                                    onClick={() => {
-                                      if (activity.isCompleted) {
-                                        handleCompletedActivityClick(activity);
-                                      } else if (!isLocked) {
-                                        // Abrir el modal correctamente al iniciar actividad
-                                        setActivityModalId(activity.id);
-                                      }
-                                    }}
-                                    disabled={isLocked}
-                                    className={`rounded-md bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2 font-medium text-white hover:from-blue-600 hover:to-indigo-700 ${
-                                      isLocked
-                                        ? 'cursor-not-allowed opacity-60'
-                                        : ''
-                                    }`}
-                                  >
-                                    {activity.isCompleted
-                                      ? 'Ver Resultados'
-                                      : isLocked
-                                        ? 'Bloqueada'
-                                        : 'Iniciar Actividad'}
-                                  </Button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-6 text-center">
-                    <p className="text-gray-600">
-                      No hay actividades disponibles para esta clase.
-                    </p>
-                  </div>
-                )}
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </button>
               </div>
-            </div>
-          ) : (
-            // Solo mostrar LessonPlayer si hay video o si NO es móvil
-            (lesson.coverVideoKey !== 'none' || !isMobile) && (
+              <LessonCards
+                lessons={lessonsState}
+                selectedLessonId={selectedLessonId}
+                onLessonClick={(id) => {
+                  handleCardClick(id);
+                  setIsMobileDrawerOpen(false);
+                }}
+                progress={progress}
+                isNavigating={isNavigating}
+                setLessonsState={setLessonsState}
+                courseId={lesson.courseId}
+                userId={userId}
+                isMobile={false}
+              />
+            </aside>
+          </>
+        )}
+
+        {/* Main Content Area */}
+        <main className="flex min-w-0 flex-1 flex-col overflow-y-auto p-0">
+          {/* Video Player Section */}
+          {lesson.coverVideoKey !== 'none' && (
+            <div className="w-full">
               <LessonPlayer
                 lesson={lesson}
                 progress={progress}
                 handleVideoEnd={handleVideoEnd}
                 handleProgressUpdate={handleProgressUpdate}
-                transcription={transcription}
-                isLoadingTranscription={isLoadingTranscription}
-              />
-            )
-          )}
-
-          {/* ACTIVIDADES ARRIBA DE COMENTARIOS EN MOBILE */}
-          {isMobile && (
-            <div className="mt-4">
-              <LessonActivities
-                activities={activities}
-                isVideoCompleted={
-                  lesson.coverVideoKey === 'none' ? true : isVideoCompleted
-                }
-                isActivityCompleted={isActivityCompleted}
-                handleActivityCompletion={handleActivityCompletion}
-                userId={userId}
-                onLessonUnlocked={handleLessonUnlocked}
-                courseId={lesson.courseId}
-                lessonId={lesson.id}
-                isLastLesson={isLastLesson(lessonsState, lesson.id)}
-                isLastActivity={isLastActivity(
-                  lessonsState,
-                  activities,
-                  lesson
-                )}
-                lessons={lessonsState}
-                activityModalId={activityModalId}
-                lessonCoverVideoKey={lesson.coverVideoKey} // Pass the coverVideoKey
+                onTimeUpdate={handleTimeUpdate}
               />
             </div>
           )}
-          <LessonComments lessonId={lesson.id} />
-        </div>
 
-        {/* Right Sidebar - SOLO calificaciones y recursos cuando no hay video */}
-        {!isMobile && (
-          <div className="mt-2 flex w-full flex-shrink-0 flex-col overflow-x-auto rounded-lg p-2 shadow-none md:mt-0 md:w-80 md:overflow-visible md:p-4 md:shadow-sm lg:w-80">
-            {lesson.coverVideoKey === 'none' ? (
-              <>
-                <div className="mt-4">
-                  {/* Mostrar mensaje y flecha apuntando hacia la izquierda cuando hay actividades */}
-                  <div className="mb-2">
-                    <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
-                      Actividades
-                    </h2>
-                  </div>
-                  {activities.length > 0 && (
-                    <div className="mb-6 flex flex-col items-center justify-center rounded-lg bg-gradient-to-r from-cyan-50 to-green-50 p-4 shadow-sm">
-                      <p className="mb-2 text-center font-semibold text-emerald-700">
-                        Actividad disponible en el centro
-                      </p>
-                      <div className="arrow-glow-container">
-                        {/* Flecha apuntando hacia la izquierda con colores invertidos para mejor visibilidad */}
-                        <svg
-                          width="40"
-                          height="40"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          className="arrow-glow"
-                          style={{
-                            filter:
-                              'drop-shadow(0 0 6px rgba(58, 244, 239, 0.7))',
-                          }}
-                        >
-                          <defs>
-                            <linearGradient
-                              id="arrowGradient"
-                              x1="100%"
-                              y1="0%"
-                              x2="0%"
-                              y2="0%"
-                            >
-                              <stop offset="0%" stopColor="#3AF4EF" />
-                              <stop offset="100%" stopColor="#2ecc71" />
-                            </linearGradient>
-                          </defs>
-                          <path
-                            d="M19 12H5M5 12L12 5M5 12L12 19"
-                            stroke="url(#arrowGradient)"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-                      <span className="mt-2 text-center text-sm text-gray-600">
-                        Haz clic en &quot;Ver Actividad&quot; para completar
-                        esta clase
-                      </span>
-                    </div>
+          {/* Content Tabs Navigation */}
+          <div className="w-full px-4">
+            <LessonContentTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              transcriptionCount={transcription.length}
+              resourcesCount={resourcesCount}
+              activitiesCount={activities.length}
+            />
+
+            {/* Tab Content */}
+            <div
+              className="mt-2 rounded-xl border border-border p-4"
+              style={{ backgroundColor: '#061c37cc' }}
+            >
+              {activeTab === 'transcription' && (
+                <LessonTranscription
+                  transcription={transcription}
+                  isLoading={isLoadingTranscription}
+                  currentTime={currentTime}
+                />
+              )}
+
+              {activeTab === 'resources' && (
+                <LessonResource
+                  lessonId={lesson.id}
+                  onCountChange={setResourcesCount}
+                />
+              )}
+
+              {activeTab === 'activities' && (
+                <LessonActivities
+                  activities={activities}
+                  isVideoCompleted={
+                    lesson.coverVideoKey === 'none' ? true : isVideoCompleted
+                  }
+                  isActivityCompleted={isActivityCompleted}
+                  handleActivityCompletion={handleActivityCompletion}
+                  userId={userId}
+                  onLessonUnlocked={handleLessonUnlocked}
+                  courseId={lesson.courseId}
+                  lessonId={lesson.id}
+                  isLastLesson={isLastLesson(lessonsState, lesson.id)}
+                  isLastActivity={isLastActivity(
+                    lessonsState,
+                    activities,
+                    lesson
                   )}
-                  {/* Grades section */}
-                  <div className="mt-4">
-                    <h2 className="text-primary mb-4 text-xl font-bold md:text-2xl">
-                      Calificaciones
-                    </h2>
-                    <LessonGrades
-                      finalGrade={gradeSummary?.finalGrade ?? null}
-                      onViewHistoryAction={() => setIsGradeHistoryOpen(true)}
-                      isLoading={isGradesLoading}
-                    />
-                  </div>
+                  lessons={lessonsState}
+                  activityModalId={activityModalId}
+                  lessonCoverVideoKey={lesson.coverVideoKey}
+                />
+              )}
 
-                  {/* Resources section */}
-                  <LessonResource lessonId={lesson.id} />
+              {activeTab === 'grades' && (
+                <div>
+                  <LessonGrades
+                    finalGrade={gradeSummary?.finalGrade ?? null}
+                    isLoading={isGradesLoading}
+                  />
+                  <LessonGradeHistoryInline gradeSummary={gradeSummary} />
                 </div>
-              </>
-            ) : (
-              <LessonActivities
-                activities={activities}
-                isVideoCompleted={
-                  lesson.coverVideoKey === 'none' ? true : isVideoCompleted
-                }
-                isActivityCompleted={isActivityCompleted}
-                handleActivityCompletion={handleActivityCompletion}
-                userId={userId}
-                onLessonUnlocked={handleLessonUnlocked}
-                courseId={lesson.courseId}
-                lessonId={lesson.id}
-                isLastLesson={isLastLesson(lessonsState, lesson.id)}
-                isLastActivity={isLastActivity(
-                  lessonsState,
-                  activities,
-                  lesson
-                )}
-                lessons={lessonsState}
-                activityModalId={activityModalId}
-                lessonCoverVideoKey={lesson.coverVideoKey} // Pass the coverVideoKey
-              />
-            )}
+              )}
+            </div>
           </div>
-        )}
 
-        {/* Modal de actividad montado directamente en LessonDetails */}
-        {selectedActivityForModal && (
-          <LessonActivityModal
-            isOpen={isActivityModalOpen}
-            onCloseAction={handleActivityModalClose}
-            activity={selectedActivityForModal}
-            userId={userId}
-            onQuestionsAnsweredAction={(allAnswered) => {
-              // Puedes manejar la lógica de respuesta aquí
-              if (
-                allAnswered &&
-                activities[0]?.id === selectedActivityForModal.id
-              ) {
-                setIsActivityCompleted(true);
-              }
-            }}
-            markActivityAsCompletedAction={markActivityAsCompletedAction}
-            onActivityCompletedAction={handleActivityCompletion}
-            savedResults={null} // Puedes obtener resultados guardados si es necesario
-            onLessonUnlockedAction={handleLessonUnlocked}
-            isLastLesson={isLastLesson(lessonsState, lesson.id)}
-            courseId={lesson.courseId}
-            isLastActivity={isLastActivity(lessonsState, activities, lesson)}
-            onViewHistoryAction={() => setIsGradeHistoryOpen(true)}
-            onActivityCompleteAction={() => {
-              handleActivityCompletion().catch(console.error);
-            }}
-            isLastActivityInLesson={
+          {/* Comments Section */}
+          <div className="mt-4 w-full px-4 pb-4">
+            <LessonComments lessonId={lesson.id} />
+          </div>
+        </main>
+      </div>
+
+      {/* Modal de actividad montado directamente en LessonDetails */}
+      {selectedActivityForModal && (
+        <LessonActivityModal
+          isOpen={isActivityModalOpen}
+          onCloseAction={handleActivityModalClose}
+          activity={selectedActivityForModal}
+          userId={userId}
+          onQuestionsAnsweredAction={(allAnswered) => {
+            if (
+              allAnswered &&
               activities[0]?.id === selectedActivityForModal.id
+            ) {
+              setIsActivityCompleted(true);
             }
-          />
-        )}
-
-        {/* GradeHistory modal */}
-        <GradeHistory
-          isOpen={isGradeHistoryOpen}
-          onClose={() => setIsGradeHistoryOpen(false)}
-          gradeSummary={
-            gradeSummary ?? {
-              finalGrade: 0,
-              courseCompleted: false,
-              parameters: [],
-            }
+          }}
+          markActivityAsCompletedAction={markActivityAsCompletedAction}
+          onActivityCompletedAction={handleActivityCompletion}
+          savedResults={null}
+          onLessonUnlockedAction={handleLessonUnlocked}
+          isLastLesson={isLastLesson(lessonsState, lesson.id)}
+          courseId={lesson.courseId}
+          isLastActivity={isLastActivity(lessonsState, activities, lesson)}
+          onViewHistoryAction={() => {}}
+          onActivityCompleteAction={() => {
+            handleActivityCompletion().catch(console.error);
+          }}
+          isLastActivityInLesson={
+            activities[0]?.id === selectedActivityForModal.id
           }
         />
+      )}
 
-        {/* Chatbot Button and Modal */}
-        <StudentChatbot isAlwaysVisible={true} />
-      </div>
+      {/* Next Lesson Modal */}
+      <NextLessonModal
+        nextLesson={(() => {
+          const sortedLessons = sortLessons(lessonsState);
+          const currentIndex = sortedLessons.findIndex(
+            (l) => l.id === lesson.id
+          );
+          const nextLesson =
+            currentIndex >= 0 ? sortedLessons[currentIndex + 1] : null;
+          return nextLesson
+            ? {
+                id: nextLesson.id,
+                title: nextLesson.title,
+                isLocked: nextLesson.isLocked,
+              }
+            : null;
+        })()}
+        courseId={lesson.courseId}
+      />
+
+      {/* Chatbot Button and Modal */}
+      <StudentChatbot isAlwaysVisible={true} />
     </div>
   );
 }

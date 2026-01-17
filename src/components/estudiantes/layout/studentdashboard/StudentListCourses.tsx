@@ -618,16 +618,16 @@ export default async function StudentListCourses({
                     <span className="chip chip-modalidad">
                       {course.modalidad?.name ?? 'Asistida Virtual'}
                     </span>
-                    {course.horario && (
+                    {course.scheduleOption?.name || course.horario ? (
                       <span className="chip chip-horario">
-                        {course.horario}
+                        {course.scheduleOption?.name || course.horario}
                       </span>
-                    )}
-                    {course.espacios && (
+                    ) : null}
+                    {course.spaceOption?.name || course.espacios ? (
                       <span className="chip chip-espacios">
-                        {course.espacios}
+                        {course.spaceOption?.name || course.espacios}
                       </span>
-                    )}
+                    ) : null}
                     <span className="chip chip-categoria">
                       {course.category?.name ?? 'Sin categoría'}
                     </span>

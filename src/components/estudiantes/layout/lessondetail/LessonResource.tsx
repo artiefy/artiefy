@@ -53,12 +53,13 @@ const isRawResourceFields = (d: unknown): d is RawResourceFields =>
 
 interface LessonResourceProps {
   lessonId: number;
+  onCountChange?: (count: number) => void;
 }
 
-const LessonResource = ({ lessonId }: LessonResourceProps) => {
+const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rawResponse, setRawResponse] = useState<unknown>(null); // For debugging
+  const [_rawResponse, setRawResponse] = useState<unknown>(null); // For debugging
 
   // NUEVO: detectar si es un recurso externo (link) (memoized)
   const isExternalResource = useCallback(
@@ -207,6 +208,7 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
 
               console.log('📂 Direct files:', directFiles);
               setFiles(directFiles);
+              onCountChange?.(directFiles.length);
               setLoading(false);
               return;
             }
@@ -219,6 +221,7 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
           const expanded = expandCommaSeparatedFiles(parsed);
           console.log('📂 Expanded files:', expanded);
           setFiles(expanded);
+          onCountChange?.(expanded.length);
         } else {
           console.error('❌ API error:', response.status, response.statusText);
           setFiles([]);
@@ -226,6 +229,7 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
       } catch (error) {
         console.error('❌ Error fetching files:', error);
         setFiles([]);
+        onCountChange?.(0);
       } finally {
         setLoading(false);
       }
@@ -236,6 +240,7 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
     parseFilesFromResponse,
     expandCommaSeparatedFiles,
     deriveFileName,
+    onCountChange,
   ]);
 
   // Cambiar getIcon para detectar links directamente desde key
@@ -268,23 +273,11 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
   };
 
   return (
-    <div className="mt-4">
-      <h2 className="text-primary mb-4 text-2xl font-bold">Recursos</h2>
-      {/* Fix the type error by ensuring rawResponse is properly stringified */}
-      {process.env.NODE_ENV === 'development' && rawResponse !== null && (
-        <details className="mb-2 text-xs">
-          <summary className="cursor-pointer text-gray-500">Debug info</summary>
-          <pre className="mt-2 max-h-40 overflow-auto rounded bg-gray-100 p-2">
-            {typeof rawResponse === 'string'
-              ? rawResponse
-              : JSON.stringify(rawResponse, null, 2)}
-          </pre>
-        </details>
-      )}
-      <div className="rounded-lg bg-white p-4 shadow-lg">
+    <div className="mt-4 mb-4">
+      <div>
         {loading ? (
           <div className="flex items-center justify-center p-4">
-            <Icons.spinner className="text-background h-8 w-8" />
+            <Icons.spinner className="h-8 w-8 text-background" />
           </div>
         ) : files.length > 0 ? (
           <ul className="space-y-2">
@@ -301,11 +294,11 @@ const LessonResource = ({ lessonId }: LessonResourceProps) => {
                     href={normalizedHref}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center rounded-lg bg-gray-50 p-3 transition-colors hover:bg-gray-100"
+                    className="flex items-center transition-colors hover:text-blue-400"
                   >
-                    <span className="mr-3 text-xl">{getIcon(file)}</span>
+                    <span className="mr-4 text-2xl">{getIcon(file)}</span>
                     <span
-                      className="flex-1 truncate text-sm font-medium text-gray-700"
+                      className="flex-1 truncate text-base font-medium"
                       title={file.fileName}
                     >
                       {file.fileName}

@@ -42,8 +42,6 @@ export function Header({
   const [showPreview, setShowPreview] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState(false);
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
-  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
@@ -127,27 +125,7 @@ export function Header({
     setMounted(true);
   }, []);
 
-  // Control de visibilidad del header en scroll
-  useEffect(() => {
-    const controlHeader = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY < 10) {
-        setIsHeaderVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Scrolling down & past threshold
-        setIsHeaderVisible(false);
-      } else if (currentScrollY < lastScrollY) {
-        // Scrolling up
-        setIsHeaderVisible(true);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', controlHeader, { passive: true });
-    return () => window.removeEventListener('scroll', controlHeader);
-  }, [lastScrollY]);
+  // Header visibility on scroll removed — header will remain static in flow
 
   // Debounce para preview de cursos
   useEffect(() => {
@@ -282,17 +260,13 @@ export function Header({
   };
 
   return (
-    <nav
-      className={`sticky top-0 z-50 mb-8 w-full border-b border-[#00152B] bg-[#00152B] backdrop-blur-md transition-transform duration-300 sm:mb-8 ${
-        isHeaderVisible ? 'translate-y-0' : '-translate-y-full'
-      }`}
-    >
+    <nav className="sticky top-0 z-[100] mb-8 w-full border-b bg-[#01152d] backdrop-blur-md sm:mb-8">
       <Dialog
         open={showEspaciosModal}
         onClose={() => setShowEspaciosModal(false)}
         className="fixed inset-0 z-[100] flex items-center justify-center"
       >
-        <div className="fixed inset-0 bg-black/60" aria-hidden="true" />
+        <div className="fixed inset-0" aria-hidden="true" />
         <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
           <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-blue-400 shadow-lg">
             <svg
@@ -466,7 +440,7 @@ export function Header({
         </div>
       </div>
       {showMobileSearch && (
-        <div className="absolute top-full right-0 left-0 z-50 w-full border-b border-gray-700 bg-[#00152B] p-4 md:hidden">
+        <div className="absolute top-full right-0 left-0 z-50 w-full border-b border-gray-700 bg-[#01152d] p-4 md:hidden">
           <form
             onSubmit={(e) => {
               e.preventDefault();

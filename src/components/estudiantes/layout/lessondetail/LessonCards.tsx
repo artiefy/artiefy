@@ -4,6 +4,7 @@ import { type Dispatch, type SetStateAction, useEffect } from 'react';
 import Link from 'next/link';
 
 import { FaCheckCircle, FaClock, FaLock } from 'react-icons/fa';
+import { SiGoogleclassroom } from 'react-icons/si';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
@@ -18,6 +19,23 @@ import { ClassMeeting } from '~/types';
 import { sortLessons } from '~/utils/lessonSorting';
 
 import type { LessonWithProgress } from '~/types';
+
+const isLessonCompleted = (lessonItem: LessonWithProgress) => {
+  const hasVideo =
+    !!lessonItem.coverVideoKey && lessonItem.coverVideoKey !== 'none';
+  const hasActivities = (lessonItem.activities?.length ?? 0) > 0;
+  const activitiesCompleted =
+    lessonItem.activities?.every(
+      (activity) => activity.isCompleted || (activity.userProgress ?? 0) >= 100
+    ) ?? false;
+
+  return hasVideo
+    ? lessonItem.porcentajecompletado === 100 &&
+        (!hasActivities || activitiesCompleted)
+    : hasActivities
+      ? activitiesCompleted
+      : false;
+};
 
 interface LessonCardsProps {
   lessons: LessonWithProgress[];
@@ -175,24 +193,7 @@ const LessonCards = ({
       };
     }
 
-    const hasVideo =
-      !!lessonItem.coverVideoKey && lessonItem.coverVideoKey !== 'none';
-    const hasActivities = (lessonItem.activities?.length ?? 0) > 0;
-    const activitiesCompleted =
-      lessonItem.activities?.every(
-        (a) => a.isCompleted || (a.userProgress ?? 0) >= 100
-      ) ?? false;
-
-    // Determinar si la clase está considerada completa:
-    // - Si tiene video: completada cuando porcentajecompletado === 100 y (si tiene actividades, además que todas las actividades estén completadas)
-    // - Si no tiene video pero sí actividades: completada cuando todas las actividades están completadas
-    // - Si no tiene video ni actividades: no está completada
-    const completed = hasVideo
-      ? lessonItem.porcentajecompletado === 100 &&
-        (!hasActivities || activitiesCompleted)
-      : hasActivities
-        ? activitiesCompleted
-        : false;
+    const completed = isLessonCompleted(lessonItem);
 
     if (completed) {
       return {
@@ -225,45 +226,8 @@ const LessonCards = ({
     }
   };
 
-  const truncateDescription = (description: string | null, maxLength = 50) => {
-    if (!description) return '';
-    if (description.length <= maxLength) return description;
-    return description.slice(0, maxLength).trim();
-  };
-
-  const truncateTitle = (title: string) => {
-    if (title.length <= 18) return title;
-    return title.slice(0, 18).trim();
-  };
-
-  const renderProgressBar = (lessonItem: LessonWithProgress) => {
+  const renderLessonCard = (lessonItem: LessonWithProgress, index: number) => {
     const isCurrentLesson = lessonItem.id === selectedLessonId;
-    let currentProgress;
-
-    if (isCurrentLesson) {
-      // Si estamos navegando o es una nueva lección seleccionada,
-      // mostrar el progreso real y no el heredado
-      currentProgress = isNavigating ? 0 : progress;
-    } else {
-      // Para las otras lecciones, mostrar su progreso almacenado
-      currentProgress = lessonItem.porcentajecompletado;
-    }
-
-    return (
-      <div className="relative h-2 rounded bg-gray-200">
-        <div
-          className="absolute h-2 rounded bg-blue-500 transition-all duration-300 ease-in-out"
-          style={{
-            width: `${currentProgress}%`,
-          }}
-        />
-      </div>
-    );
-  };
-
-  const renderLessonCard = (lessonItem: LessonWithProgress) => {
-    const isCurrentLesson = lessonItem.id === selectedLessonId;
-    const status = getActivityStatus(lessonItem);
     const activitiesCompleted =
       lessonItem.activities?.some(
         (a) => a.isCompleted || (a.userProgress ?? 0) > 0
@@ -276,52 +240,107 @@ const LessonCards = ({
     const shouldShowNew =
       lessonItem.isLocked === false && lessonItem.isNew && !hasSeenOrInteracted;
 
-    // Calcular el progreso a mostrar
-    const displayProgress = isCurrentLesson
-      ? isNavigating
-        ? 0
-        : progress
-      : lessonItem.porcentajecompletado;
+    // Calcular si está completada
+    const isCompleted = isLessonCompleted(lessonItem);
+
+    // Renderizar ícono de estado
+    const renderStatusIcon = () => {
+      if (lessonItem.isLocked) {
+        return (
+          <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 bg-[#01152d] transition-colors" />
+        );
+      }
+      if (isCompleted) {
+        return (
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4 text-accent"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="m9 12 2 2 4-4" />
+          </svg>
+        );
+      }
+      return (
+        <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 transition-colors group-hover/lesson:border-muted-foreground/50" />
+      );
+    };
 
     return (
-      <div
+      <button
+        type="button"
         key={lessonItem.id}
         onClick={() => handleClick(lessonItem)}
-        className={`relative rounded-lg p-4 transition-all duration-200 ease-in-out ${
-          isNavigating ? 'cursor-not-allowed opacity-50' : ''
-        } ${status.className} ${
-          isCurrentLesson
-            ? 'z-20 border-l-8 border-blue-500 bg-blue-50/95 shadow-md'
-            : ''
-        }`}
+        className={`group/lesson relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
+          isNavigating ? 'cursor-not-allowed opacity-70' : ''
+        } ${
+          isCurrentLesson ? 'bg-accent/10' : ''
+        } ${lessonItem.isLocked ? 'opacity-60' : ''}`}
+        onMouseEnter={(e) => {
+          if (!isCurrentLesson && !lessonItem.isLocked) {
+            e.currentTarget.style.backgroundColor = '#1a2333';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isCurrentLesson && !lessonItem.isLocked) {
+            e.currentTarget.style.backgroundColor = '';
+          }
+        }}
+        disabled={isNavigating || lessonItem.isLocked}
       >
-        <div className="mb-2 flex items-center justify-between">
-          <h3
-            className={`max-w-[calc(100%-4rem)] truncate font-semibold ${
-              status.isAccessible ? 'text-gray-900' : 'text-gray-500'
-            }`}
-            title={lessonItem.title}
-          >
-            {truncateTitle(lessonItem.title)}
-          </h3>
-          <div className="flex items-center space-x-2">
+        {/* Indicador lateral activo */}
+        {isCurrentLesson && (
+          <div className="absolute top-1/2 -left-[18px] h-6 w-0.5 -translate-y-1/2 rounded-full bg-accent" />
+        )}
+
+        {/* Ícono de estado */}
+        <div className="shrink-0">{renderStatusIcon()}</div>
+
+        {/* Contenido */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p
+              className={`truncate text-sm leading-tight transition-colors ${
+                isCurrentLesson
+                  ? 'font-medium text-accent'
+                  : isCompleted
+                    ? 'text-muted-foreground'
+                    : 'text-foreground group-hover/lesson:text-foreground'
+              }`}
+            >
+              {lessonItem.title}
+            </p>
             {shouldShowNew && (
-              <span className="relative [animation:nuevo-badge-pulse_1.5s_infinite_ease-in-out] rounded bg-green-500 px-2 py-1 text-xs text-white">
+              <span className="rounded-full bg-green-500 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-white uppercase">
                 Nueva
               </span>
             )}
-            {status.icon}
+          </div>
+
+          <div className="mt-1 flex items-center gap-1">
+            {isCompleted ? (
+              <FaCheckCircle className="h-3 w-3 text-green-500" />
+            ) : (
+              <FaClock className="h-3 w-3 text-muted-foreground/70" />
+            )}
+            <span className="text-[10px] text-muted-foreground">
+              {isCompleted
+                ? 'Completada'
+                : lessonItem.duration
+                  ? `${lessonItem.duration} min`
+                  : 'Clase'}
+            </span>
           </div>
         </div>
-        <p className="mb-2 line-clamp-1 text-sm text-gray-600">
-          {truncateDescription(lessonItem.description)}
-        </p>
-        {renderProgressBar(lessonItem)}
-        <div className="mt-2 flex justify-between text-xs text-gray-500">
-          <span>{lessonItem.duration} mins</span>
-          <span>{displayProgress}%</span>
-        </div>
-      </div>
+      </button>
     );
   };
 
@@ -358,7 +377,7 @@ const LessonCards = ({
   // Renderizar select en móvil
   if (isMobile) {
     return (
-      <div className="mb-4">
+      <div>
         <Select
           value={selectedLessonId ? String(selectedLessonId) : undefined}
           onValueChange={(val) => {
@@ -410,16 +429,103 @@ const LessonCards = ({
     );
   }
 
+  // calcular progreso dinámico
+  const totalLessonsCount = sortedLessons.length;
+  const completedCount = sortedLessons.filter((lesson) =>
+    isLessonCompleted(lesson)
+  ).length;
+
+  const percent =
+    totalLessonsCount > 0
+      ? Math.round((completedCount / totalLessonsCount) * 100)
+      : 0;
+
   return (
-    <div className="lesson-cards-container relative z-10 max-h-[60vh] space-y-2 overflow-y-auto md:max-h-none md:overflow-visible">
-      {sortedLessons.map((lesson) => (
-        <div
-          key={lesson.id}
-          className="relative transition-transform will-change-transform"
-        >
-          {renderLessonCard(lesson)}
+    <div className="flex h-screen flex-col">
+      {/* Progress section at top */}
+      <div className="bg-[#061c37cc ] sticky top-2 z-10 border-b border-border px-6 pt-1 pb-4 backdrop-blur-xl">
+        <div className="flex items-center gap-4">
+          <div className="relative h-14 w-14">
+            <svg className="h-14 w-14 -rotate-90">
+              <circle
+                cx="28"
+                cy="28"
+                r="24"
+                strokeWidth="4"
+                stroke="#1d283a"
+                className="fill-none"
+              />
+              <circle
+                cx="28"
+                cy="28"
+                r="24"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray={`${(percent / 100) * 151} 151`}
+                className="fill-none stroke-accent transition-all duration-500"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-xs font-bold text-foreground">
+                {percent}%
+              </span>
+            </div>
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-foreground">
+              Tu progreso
+            </h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {completedCount} de {totalLessonsCount} clases
+            </p>
+          </div>
         </div>
-      ))}
+      </div>
+
+      {/* Lista de lecciones */}
+      <div className="flex-1 overflow-y-visible p-3">
+        <div className="mb-2">
+          <button className="group flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all hover:bg-secondary/50">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-green-600 bg-green-200 transition-colors group-hover:bg-green-300">
+              <SiGoogleclassroom className="h-4 w-4 text-green-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm leading-tight font-medium text-foreground">
+                Clases
+              </p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                {completedCount}/{totalLessonsCount} completadas
+              </p>
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4 shrink-0 text-muted-foreground"
+            >
+              <path d="m6 9 6 6 6-6" />
+            </svg>
+          </button>
+          <div className="max-h-[1000px] overflow-hidden opacity-100 transition-all duration-300">
+            <div
+              className="ml-5 space-y-1 border-l-2 py-2 pl-4"
+              style={{ borderColor: '#1a2333' }}
+            >
+              {sortedLessons.map((lesson, index) => (
+                <div key={lesson.id} className="relative">
+                  {renderLessonCard(lesson, index)}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

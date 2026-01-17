@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { FaArrowRight } from 'react-icons/fa';
@@ -11,21 +11,40 @@ import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarruse
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
 import HeroCanvas from '~/components/estudiantes/layout/HeroCanvas';
+import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
+import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 
+const getDashboardRoute = (role?: string) => {
+  switch (role) {
+    case 'super-admin':
+      return '/dashboard/super-admin';
+    case 'admin':
+      return '/dashboard/admin';
+    case 'educador':
+      return '/dashboard/educadores';
+    default:
+      return '/estudiantes';
+  }
+};
+const getUserRole = (role: unknown): string | undefined =>
+  typeof role === 'string' ? role : undefined;
+
 export default function HomePage() {
   const { user } = useUser();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [showAnuncio, setShowAnuncio] = useState(false);
   const [chatbotKey] = useState<number>(0);
   const [showChatbot, setShowChatbot] = useState<boolean>(false);
   const [lastSearchQuery] = useState<string>('');
   void showAnuncio;
-  const { isSignedIn: _isSignedIn } = useAuth();
+  const { isSignedIn } = useAuth();
   const [anuncios, setAnuncios] = useState<
     {
       titulo: string;
@@ -35,18 +54,21 @@ export default function HomePage() {
   >([]);
   const [_mounted, setMounted] = useState(false);
 
+  // Estados para los modales de autenticación
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [oauthError, setOauthError] = useState<string | null>(null);
+  const [postAuthAction, setPostAuthAction] = useState<'dashboard' | null>(
+    null
+  );
+
   const handleSearchComplete = useCallback(() => {
     setShowChatbot(false);
   }, []);
 
-  const dashboardRoute =
-    user?.publicMetadata?.role === 'super-admin'
-      ? '/dashboard/super-admin'
-      : user?.publicMetadata?.role === 'admin'
-        ? '/dashboard/admin'
-        : user?.publicMetadata?.role === 'educador'
-          ? '/dashboard/educadores'
-          : '/estudiantes';
+  const dashboardRoute = getDashboardRoute(
+    getUserRole(user?.publicMetadata?.role)
+  );
 
   useEffect(() => {
     const fetchAnuncioActivo = async (userId: string) => {
@@ -82,9 +104,47 @@ export default function HomePage() {
     }
   }, [user]);
 
+  // Manejar parámetros de error de OAuth desde URL
+  useEffect(() => {
+    const error = searchParams.get('error');
+    const shouldShowSignup = searchParams.get('show_signup');
+
+    if (error) {
+      setOauthError(decodeURIComponent(error));
+      setShowLoginModal(true);
+      // Limpiar la URL
+      router.replace('/', { scroll: false });
+    }
+
+    if (shouldShowSignup === 'true') {
+      setShowLoginModal(false);
+      setShowSignUpModal(true);
+      // Limpiar la URL
+      router.replace('/', { scroll: false });
+    }
+  }, [searchParams, router]);
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handlePostAuthAction = useCallback(() => {
+    if (postAuthAction !== 'dashboard') return;
+    setPostAuthAction(null);
+    setLoading(true);
+    router.push(getDashboardRoute(getUserRole(user?.publicMetadata?.role)));
+  }, [postAuthAction, router, user?.publicMetadata?.role]);
+
+  const handleStartNowClick = useCallback(() => {
+    if (!isSignedIn) {
+      setLoading(false);
+      setPostAuthAction('dashboard');
+      setShowLoginModal(true);
+      return;
+    }
+    setLoading(true);
+    router.push(dashboardRoute);
+  }, [dashboardRoute, isSignedIn, router]);
 
   // Listener para cerrar completamente el chatbot desde dentro (evento global)
   useEffect(() => {
@@ -119,31 +179,26 @@ export default function HomePage() {
             </p>
             <div>
               <Button
-                asChild
-                className="border-primary bg-primary text-background hover:border-primary hover:text-primary join-button relative skew-x-[-20deg] rounded-none border py-8 text-2xl font-semibold italic hover:bg-transparent active:scale-95"
+                className="join-button relative skew-x-[-20deg] rounded-none border border-primary bg-primary py-8 text-2xl font-semibold text-background italic hover:border-primary hover:bg-transparent hover:text-primary active:scale-95"
                 style={{
                   boxShadow: '6px 6px 0 black',
                   transition: '0.5s',
                   width: '250px',
                 }}
-                onClick={() => setLoading(true)}
+                onClick={handleStartNowClick}
               >
-                <Link href={dashboardRoute}>
-                  <div className="flex w-full items-center justify-center">
-                    {loading ? (
-                      <Icons.spinner
-                        style={{ width: '35px', height: '35px' }}
-                      />
-                    ) : (
-                      <>
-                        <span className="inline-block skew-x-[15deg]">
-                          COMIENZA YA
-                        </span>
-                        <FaArrowRight className="animate-bounce-right ml-2 inline-block skew-x-[15deg] transition-transform duration-500" />
-                      </>
-                    )}
-                  </div>
-                </Link>
+                <div className="flex w-full items-center justify-center">
+                  {loading ? (
+                    <Icons.spinner style={{ width: '35px', height: '35px' }} />
+                  ) : (
+                    <>
+                      <span className="inline-block skew-x-[15deg]">
+                        COMIENZA YA
+                      </span>
+                      <FaArrowRight className="ml-2 inline-block skew-x-[15deg] animate-bounce-right transition-transform duration-500" />
+                    </>
+                  )}
+                </div>
               </Button>
             </div>
           </section>
@@ -165,6 +220,45 @@ export default function HomePage() {
         onSearchComplete={handleSearchComplete}
       />
       <TicketSupportChatbot />
+
+      {/* Modales de autenticación */}
+      <MiniLoginModal
+        isOpen={showLoginModal}
+        onClose={() => {
+          setShowLoginModal(false);
+          setOauthError(null);
+          setPostAuthAction(null);
+          setLoading(false);
+        }}
+        onLoginSuccess={() => {
+          setShowLoginModal(false);
+          setOauthError(null);
+          handlePostAuthAction();
+        }}
+        redirectUrl="/"
+        onSwitchToSignUp={() => {
+          setShowLoginModal(false);
+          setShowSignUpModal(true);
+        }}
+        initialError={oauthError || undefined}
+      />
+      <MiniSignUpModal
+        isOpen={showSignUpModal}
+        onClose={() => {
+          setShowSignUpModal(false);
+          setPostAuthAction(null);
+          setLoading(false);
+        }}
+        onSignUpSuccess={() => {
+          setShowSignUpModal(false);
+          handlePostAuthAction();
+        }}
+        redirectUrl="/"
+        onSwitchToLogin={() => {
+          setShowSignUpModal(false);
+          setShowLoginModal(true);
+        }}
+      />
     </div>
   );
 }

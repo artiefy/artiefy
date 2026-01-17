@@ -6,6 +6,7 @@ import { useUser } from '@clerk/nextjs';
 
 import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
 import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
+import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import { validateFormData } from '~/utils/paygateway/validation';
 
 import type { FormData, Product } from '~/types/payu';
@@ -28,8 +29,9 @@ const PaymentForm: React.FC<{
   const [manualEmail, setManualEmail] = useState('');
   const [manualFullName, setManualFullName] = useState('');
 
-  // Estados para el mini login modal
+  // Estados para los modales de login y signup
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
 
   // Si hay usuario, usar sus datos y bloquear campos; si no, usar los manuales y permitir editar
   const isLoggedIn = !!user;
@@ -47,6 +49,27 @@ const PaymentForm: React.FC<{
   }>({});
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+
+  // Función para validar si el formulario está completo
+  const isFormValid = (): boolean => {
+    // Validar email
+    const emailToValidate = isLoggedIn ? buyerEmail : manualEmail;
+    const emailValid =
+      !!emailToValidate && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToValidate);
+
+    // Validar nombre completo
+    const nameToValidate = isLoggedIn ? buyerFullName : manualFullName;
+    const nameValid = !!nameToValidate && nameToValidate.trim().length > 2;
+
+    // Validar teléfono (debe tener al menos 10 caracteres y comenzar con +)
+    const telephoneValid =
+      !!telephone && telephone.startsWith('+') && telephone.length >= 10;
+
+    // Validar términos y condiciones
+    const termsValid = termsAccepted && privacyAccepted;
+
+    return !!(emailValid && nameValid && telephoneValid && termsValid);
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked } = e.target;
@@ -172,10 +195,26 @@ const PaymentForm: React.FC<{
     await processPayment();
   };
 
-  const handleLoginSuccess = async () => {
+  const handleLoginSuccess = () => {
     setShowLoginModal(false);
-    // Procesar el pago después del login exitoso
-    await processPayment();
+    // NO procesar el pago automáticamente
+    // Dejar que el usuario revise y llene el formulario primero
+  };
+
+  const handleSignUpSuccess = () => {
+    setShowSignUpModal(false);
+    // NO procesar el pago automáticamente
+    // Dejar que el usuario revise y llene el formulario primero
+  };
+
+  const handleSwitchToSignUp = () => {
+    setShowLoginModal(false);
+    setShowSignUpModal(true);
+  };
+
+  const handleSwitchToLogin = () => {
+    setShowSignUpModal(false);
+    setShowLoginModal(true);
   };
 
   // Recuperar datos manuales después del login y limpiar sessionStorage
@@ -193,11 +232,13 @@ const PaymentForm: React.FC<{
 
       if (pendingEmail) setManualEmail(pendingEmail);
       if (pendingFullName) setManualFullName(pendingFullName);
-      if (pendingTelephone) setTelephone(pendingTelephone ?? '');
-      if (pendingTermsAccepted)
+      if (pendingTelephone) setTelephone(pendingTelephone);
+      if (pendingTermsAccepted) {
         setTermsAccepted(pendingTermsAccepted === 'true');
-      if (pendingPrivacyAccepted)
+      }
+      if (pendingPrivacyAccepted) {
         setPrivacyAccepted(pendingPrivacyAccepted === 'true');
+      }
 
       // Limpiar sessionStorage
       sessionStorage.removeItem('pendingBuyerEmail');
@@ -223,6 +264,7 @@ const PaymentForm: React.FC<{
           onSubmitAction={handleSubmit}
           loading={loading}
           readOnly={isLoggedIn} // Solo lectura si hay usuario autenticado
+          isFormValid={isFormValid()} // Nuevo: validar si el formulario está completo
         />
         {error && <p className="error">{error}</p>}
       </form>
@@ -233,6 +275,16 @@ const PaymentForm: React.FC<{
         onClose={() => setShowLoginModal(false)}
         onLoginSuccess={handleLoginSuccess}
         redirectUrl={redirectUrlOnAuth}
+        onSwitchToSignUp={handleSwitchToSignUp}
+      />
+
+      {/* Mini SignUp Modal */}
+      <MiniSignUpModal
+        isOpen={showSignUpModal}
+        onClose={() => setShowSignUpModal(false)}
+        onSignUpSuccess={handleSignUpSuccess}
+        redirectUrl={redirectUrlOnAuth}
+        onSwitchToLogin={handleSwitchToLogin}
       />
     </>
   );

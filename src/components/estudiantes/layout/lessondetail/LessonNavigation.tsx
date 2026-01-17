@@ -1,7 +1,4 @@
 'use client';
-import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
-
-import { Button } from '~/components/estudiantes/ui/button';
 
 interface LessonWithProgress {
   isLocked: boolean;
@@ -13,8 +10,8 @@ interface LessonNavigationProps {
   onNavigate: (direction: 'prev' | 'next') => void;
   lessonsState: LessonWithProgress[];
   lessonOrder: number;
-  isNavigating: boolean; // Add new prop
-  isMobile?: boolean; // <-- nuevo prop
+  isNavigating: boolean;
+  isMobile?: boolean;
 }
 
 const LessonNavigation = ({
@@ -23,7 +20,7 @@ const LessonNavigation = ({
   lessonOrder,
   isNavigating,
 }: LessonNavigationProps) => {
-  // Ordenar lecciones por título (puedes cambiar por sortLessons si lo prefieres)
+  // Ordenar lecciones por título
   const sortedLessons = [...lessonsState].sort((a, b) =>
     a.title.localeCompare(b.title)
   );
@@ -42,32 +39,61 @@ const LessonNavigation = ({
     .slice(currentIndex + 1)
     .find((lesson) => !lesson.isLocked);
 
-  // Determinar si los botones deben estar habilitados
   const hasPreviousLesson = !!previousLesson;
   const hasNextLesson = !!nextLesson;
 
   return (
-    <div className="mb-2 flex flex-col gap-2 md:mb-4 md:flex-row md:justify-between md:gap-0">
-      <Button
+    <div className="flex items-center gap-1 rounded-full border border-border bg-[#061c37cc] p-1 backdrop-blur-xl">
+      <button
+        type="button"
         onClick={() => onNavigate('prev')}
         disabled={!hasPreviousLesson || isNavigating}
-        className={`flex w-full items-center gap-2 active:scale-95 md:w-auto ${
+        style={{ backgroundColor: '#061c37cc' }}
+        className={`inline-flex h-8 w-8 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap text-slate-200 transition-colors hover:bg-[#1d283a] hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
           isNavigating ? 'opacity-50' : ''
         }`}
-        variant="outline"
+        aria-label="Clase anterior"
       >
-        <FaArrowLeft /> Clase Anterior
-      </Button>
-      <Button
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="w- h-4"
+        >
+          <path d="m15 18-6-6 6-6" />
+        </svg>
+      </button>
+      <button
+        type="button"
         onClick={() => onNavigate('next')}
         disabled={!hasNextLesson || isNavigating}
-        className={`flex w-full items-center gap-2 active:scale-95 md:w-auto ${
+        style={{ backgroundColor: '#061c37cc' }}
+        className={`inline-flex h-8 w-8 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap text-slate-200 transition-colors hover:bg-[#1d283a] hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
           isNavigating ? 'opacity-50' : ''
         }`}
-        variant="outline"
+        aria-label="Siguiente clase"
       >
-        Siguiente Clase <FaArrowRight />
-      </Button>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+        >
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </button>
     </div>
   );
 };
