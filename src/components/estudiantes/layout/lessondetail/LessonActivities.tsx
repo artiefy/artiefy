@@ -655,9 +655,12 @@ const LessonActivities = ({
       !isLastLesson && isLastActivityInLesson(activity);
 
     return (
-      <div key={activity.id} className="flex w-full justify-center">
+      <div
+        key={activity.id}
+        className="flex w-full justify-center md:justify-start"
+      >
         <div
-          className={`group mb-4 w-11/12 max-w-md rounded-2xl border px-5 py-4 transition-all ${activityType.bg} ${
+          className={`group mb-4 w-11/12 max-w-md rounded-2xl border px-5 py-4 transition-all md:w-full md:max-w-none ${activityType.bg} ${
             isButtonLoading
               ? 'border-border/40'
               : status.isActive
