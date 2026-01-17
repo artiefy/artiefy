@@ -280,7 +280,7 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
             <Icons.spinner className="h-8 w-8 text-background" />
           </div>
         ) : files.length > 0 ? (
-          <ul className="space-y-2">
+          <ul className="space-y-4">
             {files.map((file, index) => {
               const external = isExternalResource(file.key);
               const normalizedHref = external
@@ -296,6 +296,7 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
                     rel="noopener noreferrer"
                     className="flex items-center transition-colors hover:text-blue-400"
                   >
+                    <span className="mr-2 text-gray-400">•</span>
                     <span className="mr-4 text-2xl">{getIcon(file)}</span>
                     <span
                       className="flex-1 truncate text-base font-medium"

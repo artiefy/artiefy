@@ -655,9 +655,9 @@ const LessonActivities = ({
       !isLastLesson && isLastActivityInLesson(activity);
 
     return (
-      <div key={activity.id} className="w-full">
+      <div key={activity.id} className="flex w-full justify-center">
         <div
-          className={`group mb-4 w-11/12 rounded-2xl border px-5 py-4 transition-all ${activityType.bg} ${
+          className={`group mb-4 w-11/12 max-w-md rounded-2xl border px-5 py-4 transition-all ${activityType.bg} ${
             isButtonLoading
               ? 'border-border/40'
               : status.isActive
@@ -665,56 +665,49 @@ const LessonActivities = ({
                 : 'border-border/40 opacity-60'
           }`}
         >
-          <div className="flex w-full flex-row items-center justify-between gap-4">
-            <div className="flex flex-1 items-center gap-4">
+          <div className="flex w-full flex-col items-center justify-between gap-4 text-center md:flex-row md:items-start md:text-left">
+            <div className="flex min-w-0 flex-1 flex-col items-center gap-2 md:flex-row md:gap-4">
               <div
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${activityType.bg} ${activityType.color}`}
               >
                 <ActivityIcon className="h-4 w-4" />
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="mb-0.5 flex flex-wrap items-center gap-2">
+              <div className="flex flex-col items-center gap-1 md:items-start md:gap-0">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase ${activityType.color} ${activityType.bg}`}
+                >
+                  {activityType.label}
+                </span>
+                {deadlineText && activity.typeid !== 2 && (
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase ${activityType.color} ${activityType.bg}`}
+                    className="flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-xs font-medium"
+                    style={{
+                      borderColor: '#1d283a33',
+                      background: '#1d283a0f',
+                      color: '#1d283a',
+                      maxWidth: '160px',
+                    }}
+                    title={deadlineText}
                   >
-                    {activityType.label}
+                    <Clock className="h-3 w-3" />
+                    {deadlineText}
                   </span>
-                  {deadlineText && (
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-xs font-medium"
-                        style={{
-                          borderColor: '#1d283a33',
-                          background: '#1d283a0f',
-                          color: '#1d283a',
-                          maxWidth: '160px',
-                        }}
-                        title={deadlineText}
-                      >
-                        <Clock className="h-3 w-3" />
-                        {deadlineText}
-                      </span>
-
-                      {/* Mostrar duración de vídeo si está disponible en la lección */}
-                      {currentLesson &&
-                        (currentLesson as Lesson).videoDuration && (
-                          <span className="max-w-[140px] truncate text-xs text-muted-foreground">
-                            Duración: {(currentLesson as Lesson).videoDuration}
-                          </span>
-                        )}
-                    </div>
-                  )}
-                </div>
-                <h4 className="text-sm font-medium text-foreground">
+                )}
+                {/* Mostrar duración de vídeo si está disponible en la lección */}
+                {currentLesson && (currentLesson as Lesson).videoDuration && (
+                  <span className="max-w-[140px] truncate text-xs text-muted-foreground">
+                    Duración: {(currentLesson as Lesson).videoDuration}
+                  </span>
+                )}
+                <h4 className="text-center text-sm font-medium text-foreground md:text-left">
                   {activity.name}
                 </h4>
-                <p className="line-clamp-1 text-xs text-muted-foreground">
+                <p className="line-clamp-1 text-center text-xs text-muted-foreground md:text-left">
                   {truncateDescription(activity.description)}
                 </p>
               </div>
             </div>
-
-            <div className="flex shrink-0 items-center justify-end md:w-auto">
+            <div className="flex justify-center">
               <button
                 onClick={
                   activityState?.isCompleted
