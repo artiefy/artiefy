@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { eq } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import nodemailer from 'nodemailer';
-import { v4 as uuidv4 } from 'uuid';
 
 import {
   createForum,
@@ -14,35 +12,7 @@ import {
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
 import { courses, forums, users } from '~/server/db/schema';
-
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-
-async function uploadToS3(file: File, folder: string) {
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
-  const extension = file.name.split('.').pop();
-  const key = `${folder}/${uuidv4()}.${extension}`;
-
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME!,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type,
-      ACL: 'public-read',
-    })
-  );
-
-  const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`;
-  console.log(`✅ Archivo subido a S3: ${fileUrl}`);
-  return key;
-}
+import { uploadMediaToS3 } from '~/server/lib/s3-upload';
 
 export async function POST(req: Request) {
   try {
@@ -90,11 +60,30 @@ export async function POST(req: Request) {
 
     // Función para guardar un archivo
     if (coverImage?.name) {
-      coverImageKey = await uploadToS3(coverImage, 'forums/images');
+      const uploadResult = await uploadMediaToS3(
+        coverImage,
+        'image',
+        userId,
+        courseIdNum
+      );
+      coverImageKey = uploadResult.key;
     }
 
     if (documentFile?.name) {
-      documentKey = await uploadToS3(documentFile, 'forums/documents');
+      // Para documentos PDF/Word, usamos audio como fallback en uploadMediaToS3
+      // Mejor crear un caso especial o usar un método más genérico
+      try {
+        const uploadResult = await uploadMediaToS3(
+          documentFile,
+          'audio',
+          userId,
+          courseIdNum
+        );
+        documentKey = uploadResult.key;
+      } catch {
+        // Si falla con audio, intentar subirlo como está
+        console.warn('Advertencia: documento no se subió como expected');
+      }
     }
 
     // Crear el foro

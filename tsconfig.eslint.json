@@ -4,6 +4,8 @@
     "src/**/*",
     "app/**/*",
     "next-env.d.ts",
+    "next-video.config.js",
+    "postcss.config.js",
     "drizzle.config.ts",
     "video.d.ts"
   ],

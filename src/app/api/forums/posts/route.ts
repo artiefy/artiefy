@@ -5,13 +5,13 @@ import { eq, inArray } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 import {
-  createPost,
   deletePostById,
   getPostById,
   getPostsByForo,
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
 import { enrollments, forums, users } from '~/server/db/schema';
+import { deleteMediaFromS3, uploadMediaToS3 } from '~/server/lib/s3-upload';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
 const respondWithError = (message: string, status: number) =>
@@ -57,16 +57,84 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = (await request.json()) as {
-      content: string;
-      foroId: number;
-      userId: string;
-    };
+    const contentType = request.headers.get('content-type') ?? '';
+    let content: string = '';
+    let foroId: number = 0;
+    let imageKey: string | null = null;
+    let audioKey: string | null = null;
+    let videoKey: string | null = null;
 
-    const { content, foroId } = body;
+    // Verificar si es multipart (con archivos) o JSON
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await request.formData();
+      content = (formData.get('content') as string) || '';
+      foroId = Number(formData.get('foroId') as string) || 0;
 
-    await createPost(foroId, userId, content);
-    console.log('[FORO][POST] ✅ Post creado:', { foroId, userId, content });
+      const image = formData.get('image') as File | null;
+      const audio = formData.get('audio') as File | null;
+      const video = formData.get('video') as File | null;
+
+      // Subir archivos a S3
+      if (image) {
+        try {
+          const result = await uploadMediaToS3(image, 'image', userId, foroId);
+          imageKey = result.key;
+        } catch (error) {
+          console.error('Error subiendo imagen:', error);
+          return respondWithError(
+            `Error subiendo imagen: ${error instanceof Error ? error.message : 'desconocido'}`,
+            400
+          );
+        }
+      }
+
+      if (audio) {
+        try {
+          const result = await uploadMediaToS3(audio, 'audio', userId, foroId);
+          audioKey = result.key;
+        } catch (error) {
+          console.error('Error subiendo audio:', error);
+          return respondWithError(
+            `Error subiendo audio: ${error instanceof Error ? error.message : 'desconocido'}`,
+            400
+          );
+        }
+      }
+
+      if (video) {
+        try {
+          const result = await uploadMediaToS3(video, 'video', userId, foroId);
+          videoKey = result.key;
+        } catch (error) {
+          console.error('Error subiendo video:', error);
+          return respondWithError(
+            `Error subiendo video: ${error instanceof Error ? error.message : 'desconocido'}`,
+            400
+          );
+        }
+      }
+    } else {
+      // Es JSON
+      const body = (await request.json()) as {
+        content: string;
+        foroId: number;
+        userId: string;
+      };
+      content = body.content;
+      foroId = body.foroId;
+    }
+
+    if (!content || !foroId) {
+      return respondWithError('El contenido y foroId son obligatorios', 400);
+    }
+
+    console.log('[FORO][POST] ✅ Post creado:', {
+      foroId,
+      userId,
+      hasImage: !!imageKey,
+      hasAudio: !!audioKey,
+      hasVideo: !!videoKey,
+    });
 
     try {
       // 1. Obtener el foro para acceder al courseId y userId del instructor
@@ -244,6 +312,29 @@ export async function DELETE(request: NextRequest) {
 
     if (post.userId !== userId) {
       return respondWithError('No autorizado para eliminar este post', 403);
+    }
+
+    // Eliminar archivos de S3 si existen
+    if (post.imageKey) {
+      try {
+        await deleteMediaFromS3(post.imageKey);
+      } catch (error) {
+        console.error('Error al eliminar imagen:', error);
+      }
+    }
+    if (post.audioKey) {
+      try {
+        await deleteMediaFromS3(post.audioKey);
+      } catch (error) {
+        console.error('Error al eliminar audio:', error);
+      }
+    }
+    if (post.videoKey) {
+      try {
+        await deleteMediaFromS3(post.videoKey);
+      } catch (error) {
+        console.error('Error al eliminar video:', error);
+      }
     }
 
     await deletePostById(parsedPostId);

@@ -24,6 +24,9 @@ export async function GET(
         forumId: posts.forumId,
         userId: posts.userId,
         content: posts.content,
+        imageKey: posts.imageKey,
+        audioKey: posts.audioKey,
+        videoKey: posts.videoKey,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         user: {
@@ -84,6 +87,9 @@ export async function POST(
         forumId: posts.forumId,
         userId: posts.userId,
         content: posts.content,
+        imageKey: posts.imageKey,
+        audioKey: posts.audioKey,
+        videoKey: posts.videoKey,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         user: {

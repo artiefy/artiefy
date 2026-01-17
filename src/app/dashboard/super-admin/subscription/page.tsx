@@ -112,6 +112,8 @@ export default function AccessLogsPage() {
   const formatTime = (dateStr: string | null) => {
     if (!dateStr) return '—';
     const date = new Date(dateStr);
+    // El backend guardó restando 5 horas, compensar sumando 5 horas
+    date.setHours(date.getHours() + 5);
     return date.toLocaleString('es-CO', {
       hour: '2-digit',
       minute: '2-digit',

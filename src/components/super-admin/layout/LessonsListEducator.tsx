@@ -132,17 +132,17 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <span>&#128071;&#128071;&#128071;</span>
         <div className="mt-3">
           <Button
-            style={{ backgroundColor: selectedColor }}
-            className={`cursor-pointer border-transparent bg-black font-semibold ${
+            className={`mx-auto cursor-pointer border-transparent px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:shadow-xl active:scale-95 ${
               selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
             }`}
+            style={{ backgroundColor: selectedColor }}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
               setIsModalOpenLessons(true);
               console.log('isModalOpenLessons:', isModalOpenLessons);
             }}
           >
-            <ArrowUpFromLine />
+            <ArrowUpFromLine className="mr-2" />
             Crear nueva clase
           </Button>
         </div>
@@ -368,6 +368,24 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         )}
       </div>
 
+      {/* Botón Crear nueva clase */}
+      <div className="mx-auto my-8">
+        <Button
+          className={`mx-auto cursor-pointer border-transparent px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:shadow-xl active:scale-95 ${
+            selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
+          }`}
+          style={{ backgroundColor: selectedColor }}
+          onClick={() => {
+            console.log('Botón Crear nueva clase clickeado');
+            setIsModalOpenLessons(true);
+            console.log('isModalOpenLessons:', isModalOpenLessons);
+          }}
+        >
+          <ArrowUpFromLine className="mr-2" />
+          Crear nueva clase
+        </Button>
+      </div>
+
       {/* Lista de clases original - Modificado para una sola card por fila con diseño mejorado */}
       <div className="flex w-full flex-col">
         {isReorderModeActive ? (
@@ -551,23 +569,6 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
             ))}
           </div>
         )}
-
-        <div className="mx-auto my-8">
-          <Button
-            className={`mx-auto cursor-pointer border-transparent px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:shadow-xl active:scale-95 ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-            }`}
-            style={{ backgroundColor: selectedColor }}
-            onClick={() => {
-              console.log('Botón Crear nueva clase clickeado');
-              setIsModalOpenLessons(true);
-              console.log('isModalOpenLessons:', isModalOpenLessons);
-            }}
-          >
-            <ArrowUpFromLine className="mr-2" />
-            Crear nueva clase
-          </Button>
-        </div>
       </div>
 
       <ModalFormLessons

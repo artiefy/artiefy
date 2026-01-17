@@ -18,7 +18,7 @@ import {
   sede,
   userCredentials,
   userInscriptionDetails,
-  users
+  users,
 } from '~/server/db/schema';
 import { createUser } from '~/server/queries/queries';
 
@@ -81,9 +81,7 @@ interface AcademicNotifyPayload {
   comprobanteInscripcionUrl?: string | null;
 }
 
-
-
-// Función auxiliar para guardar logs
+// Función auxiliar para guardar logs de email - GARANTIZA persistencia
 async function logEmail(data: {
   userId?: string;
   email: string;
@@ -95,6 +93,7 @@ async function logEmail(data: {
   recipientName?: string;
   metadata?: Record<string, unknown>;
 }) {
+  let logSuccessful = false;
   try {
     await db.insert(emailLogs).values({
       userId: data.userId ?? null,
@@ -103,15 +102,64 @@ async function logEmail(data: {
       subject: data.subject,
       status: data.status,
       errorMessage: data.errorMessage ?? null,
-      errorDetails: data.errorDetails ? JSON.parse(JSON.stringify(data.errorDetails)) : null,
+      errorDetails: data.errorDetails
+        ? JSON.parse(JSON.stringify(data.errorDetails))
+        : null,
       recipientName: data.recipientName ?? null,
       metadata: data.metadata ?? null,
       createdAt: new Date(),
     });
-    console.log(`[EMAIL LOG] ${data.status.toUpperCase()} - ${data.emailType} a ${data.email}`);
+    logSuccessful = true;
+    console.log(
+      `[EMAIL LOG] ✅ PERSISTIDO - ${data.status.toUpperCase()} - ${data.emailType} a ${data.email}`
+    );
   } catch (logErr) {
-    console.error('[EMAIL LOG] Error guardando log:', logErr);
+    console.error('[EMAIL LOG] ❌ ERROR GUARDANDO LOG:', logErr);
+    // Log también en stderr para asegurarse de que se vea
+    console.error('[EMAIL LOG] Datos que no se pudieron guardar:', {
+      email: data.email,
+      emailType: data.emailType,
+      status: data.status,
+    });
   }
+  return logSuccessful;
+}
+
+// Función auxiliar para guardar logs de credenciales - GARANTIZA persistencia
+async function logCredentialsDelivery(data: {
+  userId: string;
+  usuario: string;
+  contrasena: string | null;
+  correo: string;
+  nota: string;
+}) {
+  let logSuccessful = false;
+  try {
+    const result = await db
+      .insert(credentialsDeliveryLogs)
+      .values({
+        userId: data.userId,
+        usuario: data.usuario,
+        contrasena: data.contrasena,
+        correo: data.correo,
+        nota: data.nota,
+      })
+      .returning({ id: credentialsDeliveryLogs.id });
+
+    logSuccessful = true;
+    console.log(
+      `[CRED LOG] ✅ PERSISTIDO - id: ${result[0]?.id}, usuario: ${data.usuario}, nota: ${data.nota}`
+    );
+  } catch (logErr) {
+    console.error('[CRED LOG] ❌ ERROR GUARDANDO LOG:', logErr);
+    console.error('[CRED LOG] Datos que no se pudieron guardar:', {
+      userId: data.userId,
+      usuario: data.usuario,
+      correo: data.correo,
+      nota: data.nota,
+    });
+  }
+  return logSuccessful;
 }
 
 // Actualiza sendWelcomeEmail
@@ -169,7 +217,6 @@ Ingresa a https://artiefy.com/ y cambia tu contraseña.
       status: 'success',
       recipientName: username,
     });
-
   } catch (error) {
     // ❌ Log de error
     await logEmail({
@@ -178,7 +225,8 @@ Ingresa a https://artiefy.com/ y cambia tu contraseña.
       emailType: 'welcome',
       subject,
       status: 'failed',
-      errorMessage: error instanceof Error ? error.message : 'Error desconocido',
+      errorMessage:
+        error instanceof Error ? error.message : 'Error desconocido',
       errorDetails: error,
       recipientName: username,
     });
@@ -226,7 +274,6 @@ Artiefy · Secretaría Académica – Notificación de matrícula/compra
         comercial: p.comercial,
       },
     });
-
   } catch (error) {
     // ❌ Log de error
     await logEmail({
@@ -234,7 +281,8 @@ Artiefy · Secretaría Académica – Notificación de matrícula/compra
       emailType: 'academic_notification',
       subject,
       status: 'failed',
-      errorMessage: error instanceof Error ? error.message : 'Error desconocido',
+      errorMessage:
+        error instanceof Error ? error.message : 'Error desconocido',
       errorDetails: error,
       recipientName: 'Secretaría Académica',
       metadata: {
@@ -247,7 +295,6 @@ Artiefy · Secretaría Académica – Notificación de matrícula/compra
     throw error;
   }
 }
-
 
 const fieldsSchema = z.object({
   primerNombre: z.string().min(1),
@@ -279,7 +326,6 @@ const fieldsSchema = z.object({
   modalidad: z.string().min(1),
   numeroCuotas: z.string().min(1),
 });
-
 
 /* =========================
    POST: crea en Clerk, guarda en BD y matrícula al programa
@@ -323,8 +369,10 @@ export async function POST(req: Request) {
     const pagareKey = fileData.pagareKey ?? null;
     const pagareUrl = fileData.pagareUrl ?? null;
 
-    const comprobanteInscripcionKey = fileData.comprobanteInscripcionKey ?? null;
-    const comprobanteInscripcionUrl = fileData.comprobanteInscripcionUrl ?? null;
+    const comprobanteInscripcionKey =
+      fileData.comprobanteInscripcionKey ?? null;
+    const comprobanteInscripcionUrl =
+      fileData.comprobanteInscripcionUrl ?? null;
     // 1) Crear usuario en Clerk o recuperar existente por email
     const firstNameClerk = [fields.primerNombre, fields.segundoNombre]
       .filter(Boolean)
@@ -367,7 +415,9 @@ export async function POST(req: Request) {
     });
 
     // Clerk a veces devuelve array directo o { data: [] }
-    const rawExisting = Array.isArray(list) ? list[0] : (list?.data?.[0] ?? null);
+    const rawExisting = Array.isArray(list)
+      ? list[0]
+      : (list?.data?.[0] ?? null);
 
     interface ClerkUser {
       id: string;
@@ -409,8 +459,12 @@ export async function POST(req: Request) {
       userId = created.user.id;
       generatedPassword = created.generatedPassword ?? null;
       usernameForEmail = created.user.username ?? fields.primerNombre;
-    }
 
+      // 🔥 Log inmediato cuando se genera password
+      console.log(
+        `[PASSWORD GENERATED] userId: ${userId}, username: ${usernameForEmail}, hasPassword: ${!!generatedPassword}`
+      );
+    }
 
     // Actualizar SIEMPRE datos en Clerk (nuevo o existente)
     await client.users.updateUser(userId, {
@@ -446,18 +500,17 @@ export async function POST(req: Request) {
         country: fields.pais,
         city: fields.ciudad,
         birthDate: fields.birthDate?.trim()
-          ? new Date(fields.birthDate).toISOString().split("T")[0]
+          ? new Date(fields.birthDate).toISOString().split('T')[0]
           : null,
         subscriptionEndDate,
-        planType: "Premium",
-        subscriptionStatus: "activo",
+        planType: 'Premium',
+        subscriptionStatus: 'activo',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
 
       // dejamos userId igual al clerk id
       userId = clerkUserId;
-
     } else {
       // Si existe: UPDATE manual
       const dbUserId = existingUser[0].id;
@@ -471,24 +524,26 @@ export async function POST(req: Request) {
         userId = dbUserId;
       }
 
-      await db.update(users).set({
-        role,
-        name: fullName,
-        email: fields.email,
-        phone: fields.telefono,
-        address: fields.direccion,
-        country: fields.pais,
-        city: fields.ciudad,
-        birthDate: fields.birthDate?.trim()
-          ? new Date(fields.birthDate).toISOString().split("T")[0]
-          : null,
-        subscriptionEndDate,
-        planType: "Premium",
-        subscriptionStatus: "activo",
-        updatedAt: new Date(),
-      }).where(eq(users.id, dbUserId));
+      await db
+        .update(users)
+        .set({
+          role,
+          name: fullName,
+          email: fields.email,
+          phone: fields.telefono,
+          address: fields.direccion,
+          country: fields.pais,
+          city: fields.ciudad,
+          birthDate: fields.birthDate?.trim()
+            ? new Date(fields.birthDate).toISOString().split('T')[0]
+            : null,
+          subscriptionEndDate,
+          planType: 'Premium',
+          subscriptionStatus: 'activo',
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, dbUserId));
     }
-
 
     // 3) user_credentials: upsert manual (sin tocar schema)
     if (generatedPassword !== null) {
@@ -559,11 +614,8 @@ export async function POST(req: Request) {
         .set(detailsPayload)
         .where(eq(userInscriptionDetails.userId, userId));
     } else {
-      await db
-        .insert(userInscriptionDetails)
-        .values(detailsPayload);
+      await db.insert(userInscriptionDetails).values(detailsPayload);
     }
-
 
     // 6) Matricular SOLO al programa
     const programRow = await db.query.programas.findFirst({
@@ -597,11 +649,15 @@ export async function POST(req: Request) {
         enrolledAt: new Date(),
         completed: false,
       });
-      console.log('[PROGRAM] Matriculado userId:', userId, 'programaId:', programRow.id);
+      console.log(
+        '[PROGRAM] Matriculado userId:',
+        userId,
+        'programaId:',
+        programRow.id
+      );
     } else {
       console.log('[PROGRAM] Ya estaba matriculado, no se duplica.');
     }
-
 
     // 7) Email credenciales (solo si se creó usuario nuevo y hubo contraseña)
     let welcomeEmailOk = false;
@@ -619,7 +675,10 @@ export async function POST(req: Request) {
         console.log('[EMAIL] ✓ Enviado a', fields.email);
       } catch (mailErr) {
         welcomeEmailOk = false;
-        console.error('❌ [EMAIL] Error enviando correo de bienvenida:', mailErr);
+        console.error(
+          '❌ [EMAIL] Error enviando correo de bienvenida:',
+          mailErr
+        );
       }
     }
 
@@ -632,20 +691,14 @@ export async function POST(req: Request) {
       credentialsNote = 'no se envió correo';
     }
 
-    // ✅ guardar log SIEMPRE
-    try {
-      await db.insert(credentialsDeliveryLogs).values({
-        userId,
-        usuario: usernameForEmail,
-        contrasena: generatedPassword ?? null,
-        correo: fields.email,
-        nota: credentialsNote,
-      });
-      console.log('[CRED LOG] Insertado:', credentialsNote);
-    } catch (logErr) {
-      console.error('❌ [CRED LOG] No se pudo guardar log:', logErr);
-    }
-
+    // ✅ guardar log SIEMPRE - con garantía de persistencia
+    await logCredentialsDelivery({
+      userId,
+      usuario: usernameForEmail,
+      contrasena: generatedPassword ?? null,
+      correo: fields.email,
+      nota: credentialsNote,
+    });
 
     // 8) Notificar a Secretaría Académica
     try {
@@ -676,12 +729,18 @@ export async function POST(req: Request) {
       });
       console.log('[EMAIL] ✓ Notificación enviada a Secretaría Académica');
     } catch (notifyErr) {
-      console.error('❌ [EMAIL] Error enviando notificación académica:', notifyErr);
+      console.error(
+        '❌ [EMAIL] Error enviando notificación académica:',
+        notifyErr
+      );
       // Ya está logueado en sendAcademicNotification
     }
     // ... después de enviar notificaciones y todo
     // Solo registrar el pago si el usuario indicó que ya pagó la inscripción
-    console.log('[PAGO] valor de fields.pagoInscripcion =>', fields.pagoInscripcion);
+    console.log(
+      '[PAGO] valor de fields.pagoInscripcion =>',
+      fields.pagoInscripcion
+    );
     const pagoInscripcionEsSi = /^s[ií]$/i.test(fields.pagoInscripcion || '');
 
     if (pagoInscripcionEsSi) {
@@ -692,7 +751,7 @@ export async function POST(req: Request) {
         const payload = {
           userId,
           programaId: programRow.id,
-          concepto: 'Cuota 1',        // o 'Inscripción' si prefieres
+          concepto: 'Cuota 1', // o 'Inscripción' si prefieres
           nroPago: 1,
           fecha: fechaStr,
           metodo: 'Artiefy',
@@ -708,22 +767,19 @@ export async function POST(req: Request) {
 
         console.log('[PAGO] Insert payload =>', payload);
 
-        const inserted = await db
-          .insert(pagos)
-          .values(payload)
-          .returning({
-            id: pagos.id,
-            userId: pagos.userId,
-            programaId: pagos.programaId,
-            concepto: pagos.concepto,
-            nroPago: pagos.nroPago,
-            fecha: pagos.fecha,
-            metodo: pagos.metodo,
-            valor: pagos.valor,
-            receiptKey: pagos.receiptKey,
-            receiptUrl: pagos.receiptUrl,
-            createdAt: pagos.createdAt,
-          });
+        const inserted = await db.insert(pagos).values(payload).returning({
+          id: pagos.id,
+          userId: pagos.userId,
+          programaId: pagos.programaId,
+          concepto: pagos.concepto,
+          nroPago: pagos.nroPago,
+          fecha: pagos.fecha,
+          metodo: pagos.metodo,
+          valor: pagos.valor,
+          receiptKey: pagos.receiptKey,
+          receiptUrl: pagos.receiptUrl,
+          createdAt: pagos.createdAt,
+        });
 
         console.log('[PAGO] Resultado de INSERT (returning):');
         console.table(inserted);
@@ -746,7 +802,6 @@ export async function POST(req: Request) {
     }
 
     console.log('==== [FORM SUBMIT] FIN OK ====');
-
 
     console.log('==== [FORM SUBMIT] FIN OK ====');
     return NextResponse.json({
@@ -772,10 +827,29 @@ export async function POST(req: Request) {
       },
       exampleVideoUrl: `${PUBLIC_BASE_URL}/documents/${uuidv4()}`,
     });
-
   } catch (err) {
     console.error('==== [FORM SUBMIT] FIN ERROR ====');
     console.error('❌ Error en submit inscripción:', err);
+
+    // Intentar guardar log de error incluso si falló el proceso
+    try {
+      const errorMessage =
+        err instanceof Error ? err.message : JSON.stringify(err);
+      await logEmail({
+        email:
+          typeof err === 'object' && err !== null && 'email' in err
+            ? ((err as Record<string, unknown>).email as string)
+            : 'desconocido@example.com',
+        emailType: 'other',
+        subject: 'Error en submisión de formulario',
+        status: 'failed',
+        errorMessage,
+        errorDetails: err,
+      });
+    } catch (logErr) {
+      console.error('[EMAIL LOG] No se pudo guardar log de error:', logErr);
+    }
+
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

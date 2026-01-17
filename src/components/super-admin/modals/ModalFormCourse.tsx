@@ -107,7 +107,11 @@ interface CourseFormProps {
   setEspacios: (espacios: number | null) => void;
   certificationTypeId: number | null;
   setCertificationTypeId: (id: number | null) => void;
-  certificationTypes?: { id: number; name: string; description: string | null }[];
+  certificationTypes?: {
+    id: number;
+    name: string;
+    description: string | null;
+  }[];
 }
 
 // Interfaz para los niveles
@@ -233,15 +237,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   const [spaceOptions, setSpaceOptions] = useState<
     { id: number; name: string }[]
   >([]);
-  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(
+    null
+  );
   const [selectedSpaceId, setSelectedSpaceId] = useState<string | null>(null);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(true);
   const [isLoadingSpaces, setIsLoadingSpaces] = useState(true);
-  const [localCertificationTypes, setLocalCertificationTypes] = useState<
-    { id: number; name: string; description: string | null }[]
-  >(certificationTypes);
+  const [localCertificationTypes, setLocalCertificationTypes] =
+    useState<{ id: number; name: string; description: string | null }[]>(
+      certificationTypes
+    );
   const [isLoadingCertifications, setIsLoadingCertifications] = useState(true);
-  const [localCertificationTypeId, setLocalCertificationTypeId] = useState<number | null>(certificationTypeId);
+  const [localCertificationTypeId, setLocalCertificationTypeId] = useState<
+    number | null
+  >(certificationTypeId);
 
   void isLoadingCategories;
   void isLoadingModalidades;
@@ -428,7 +437,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           );
         }
 
-        const data = (await response.json()) as { data: { id: number; name: string }[] };
+        const data = (await response.json()) as {
+          data: { id: number; name: string }[];
+        };
         setScheduleOptions(data.data ?? []);
       } catch (error) {
         console.error('Error detallado:', error);
@@ -456,7 +467,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           );
         }
 
-        const data = (await response.json()) as { data: { id: number; name: string }[] };
+        const data = (await response.json()) as {
+          data: { id: number; name: string }[];
+        };
         setSpaceOptions(data.data ?? []);
       } catch (error) {
         console.error('Error detallado:', error);
@@ -484,14 +497,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           );
         }
 
-        const data = (await response.json()) as { success: boolean; data: { id: number; name: string; description: string | null }[] };
+        const data = (await response.json()) as {
+          success: boolean;
+          data: { id: number; name: string; description: string | null }[];
+        };
         console.log('✅ Tipos de certificación cargados:', data.data);
         setLocalCertificationTypes(data.data ?? []);
       } catch (error) {
         console.error('Error al cargar certificaciones:', error);
         // Si el API falla, usa el prop como fallback
         if (certificationTypes && certificationTypes.length > 0) {
-          console.log('📦 Usando tipos de certificación del prop:', certificationTypes);
+          console.log(
+            '📦 Usando tipos de certificación del prop:',
+            certificationTypes
+          );
           setLocalCertificationTypes(certificationTypes);
         }
       } finally {
@@ -928,6 +947,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     setAddParametros((prevAddParametro) => !prevAddParametro);
   };
 
+  // Efecto para limpiar los selectores cuando se cierra el modal O cuando no hay editingCourseId
+  useEffect(() => {
+    if (!isOpen || !editingCourseId) {
+      console.log(
+        '🧹 Limpiando selectores - isOpen:',
+        isOpen,
+        'editingCourseId:',
+        editingCourseId
+      );
+      setSelectedScheduleId(null);
+      setSelectedSpaceId(null);
+    }
+  }, [isOpen, editingCourseId]);
+
   // Efecto para manejar la creacion o edicion del curso
   useEffect(() => {
     if (isOpen && !editingCourseId) {
@@ -986,46 +1019,108 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   useEffect(() => {
     if (editingCourseId && certificationTypeId) {
       console.log('📋 [SYNC] certificationTypeId prop:', certificationTypeId);
-      console.log('📋 [SYNC] localCertificationTypes:', localCertificationTypes);
+      console.log(
+        '📋 [SYNC] localCertificationTypes:',
+        localCertificationTypes
+      );
       console.log('📋 [SYNC] certificationTypes prop:', certificationTypes);
 
       // Sincronizar el valor local
       setLocalCertificationTypeId(certificationTypeId);
 
       // Buscar el nombre
-      const optionsToSearch = localCertificationTypes.length > 0 ? localCertificationTypes : certificationTypes;
-      const certName = optionsToSearch?.find(ct => ct.id === certificationTypeId)?.name;
-      console.log('📋 [SYNC] Certification type encontrado:', { id: certificationTypeId, name: certName });
+      const optionsToSearch =
+        localCertificationTypes.length > 0
+          ? localCertificationTypes
+          : certificationTypes;
+      const certName = optionsToSearch?.find(
+        (ct) => ct.id === certificationTypeId
+      )?.name;
+      console.log('📋 [SYNC] Certification type encontrado:', {
+        id: certificationTypeId,
+        name: certName,
+      });
     }
-  }, [editingCourseId, certificationTypeId, localCertificationTypes, certificationTypes]);
+  }, [
+    editingCourseId,
+    certificationTypeId,
+    localCertificationTypes,
+    certificationTypes,
+  ]);
 
   // ✅ Efecto para cargar el horario (scheduleOptionId) cuando se edita un curso
   useEffect(() => {
-    if (editingCourseId && horario) {
-      console.log('📋 [SYNC] horario prop:', horario);
-      console.log('📋 [SYNC] scheduleOptions:', scheduleOptions);
+    if (editingCourseId) {
+      console.log(
+        '📋 [SYNC SCHEDULE] horario prop:',
+        horario,
+        'type:',
+        typeof horario,
+        'scheduleOptions:',
+        scheduleOptions
+      );
 
-      // Sincronizar el valor local (convertir número a string)
-      setSelectedScheduleId(horario.toString());
+      if (horario !== null && horario !== undefined) {
+        // Sincronizar el valor local (convertir número a string)
+        const horarioStr = String(horario);
+        setSelectedScheduleId(horarioStr);
+        console.log('✅ [SYNC SCHEDULE] setSelectedScheduleId a:', horarioStr);
 
-      // Buscar el nombre
-      const scheduleName = scheduleOptions?.find(opt => opt.id === horario)?.name;
-      console.log('📋 [SYNC] Schedule encontrado:', { id: horario, name: scheduleName });
+        // Buscar el nombre
+        const scheduleName = scheduleOptions?.find(
+          (opt) => opt.id === Number(horario)
+        )?.name;
+        console.log('✅ [SYNC SCHEDULE] Schedule encontrado:', {
+          id: horario,
+          name: scheduleName,
+        });
+      } else {
+        console.log(
+          '⚠️ [SYNC SCHEDULE] No hay horario en props para editingCourseId:',
+          editingCourseId
+        );
+        setSelectedScheduleId(null);
+      }
+    } else {
+      setSelectedScheduleId(null);
     }
   }, [editingCourseId, horario, scheduleOptions]);
 
   // ✅ Efecto para cargar el espacio (spaceOptionId) cuando se edita un curso
   useEffect(() => {
-    if (editingCourseId && espacios) {
-      console.log('📋 [SYNC] espacios prop:', espacios);
-      console.log('📋 [SYNC] spaceOptions:', spaceOptions);
+    if (editingCourseId) {
+      console.log(
+        '📋 [SYNC SPACE] espacios prop:',
+        espacios,
+        'type:',
+        typeof espacios,
+        'spaceOptions:',
+        spaceOptions
+      );
 
-      // Sincronizar el valor local (convertir número a string)
-      setSelectedSpaceId(espacios.toString());
+      if (espacios !== null && espacios !== undefined) {
+        // Sincronizar el valor local (convertir número a string)
+        const espaciosStr = String(espacios);
+        setSelectedSpaceId(espaciosStr);
+        console.log('✅ [SYNC SPACE] setSelectedSpaceId a:', espaciosStr);
 
-      // Buscar el nombre
-      const spaceName = spaceOptions?.find(opt => opt.id === espacios)?.name;
-      console.log('📋 [SYNC] Space encontrado:', { id: espacios, name: spaceName });
+        // Buscar el nombre
+        const spaceName = spaceOptions?.find(
+          (opt) => opt.id === Number(espacios)
+        )?.name;
+        console.log('✅ [SYNC SPACE] Space encontrado:', {
+          id: espacios,
+          name: spaceName,
+        });
+      } else {
+        console.log(
+          '⚠️ [SYNC SPACE] No hay espacios en props para editingCourseId:',
+          editingCourseId
+        );
+        setSelectedSpaceId(null);
+      }
+    } else {
+      setSelectedSpaceId(null);
     }
   }, [editingCourseId, espacios, spaceOptions]);
 
@@ -1159,9 +1254,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
                   value={selectedScheduleId ?? ''}
                   onChange={(e) =>
-                    setSelectedScheduleId(
-                      e.target.value || null
-                    )
+                    setSelectedScheduleId(e.target.value || null)
                   }
                 >
                   <option value="">Seleccionar horario</option>
@@ -1179,11 +1272,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 <select
                   className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
                   value={selectedSpaceId ?? ''}
-                  onChange={(e) =>
-                    setSelectedSpaceId(
-                      e.target.value || null
-                    )
-                  }
+                  onChange={(e) => setSelectedSpaceId(e.target.value || null)}
                 >
                   <option value="">Seleccionar espacio</option>
                   {spaceOptions.map((opt) => (
@@ -1201,16 +1290,26 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
                   value={localCertificationTypeId ?? ''}
                   onChange={(e) => {
-                    const newValue = e.target.value ? Number(e.target.value) : null;
-                    console.log('✅ Seleccionado certification type:', newValue);
+                    const newValue = e.target.value
+                      ? Number(e.target.value)
+                      : null;
+                    console.log(
+                      '✅ Seleccionado certification type:',
+                      newValue
+                    );
                     setLocalCertificationTypeId(newValue);
                     setCertificationTypeId(newValue);
                   }}
                 >
                   <option value="">Seleccionar tipo de certificación</option>
-                  {(localCertificationTypes.length > 0 ? localCertificationTypes : certificationTypes ?? []).map((type) => {
+                  {(localCertificationTypes.length > 0
+                    ? localCertificationTypes
+                    : (certificationTypes ?? [])
+                  ).map((type) => {
                     const isSelected = localCertificationTypeId === type.id;
-                    console.log(`Option: ${type.name} (id: ${type.id}), Selected: ${isSelected}`);
+                    console.log(
+                      `Option: ${type.name} (id: ${type.id}), Selected: ${isSelected}`
+                    );
                     return (
                       <option key={type.id} value={type.id}>
                         {type.name}
@@ -1307,12 +1406,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 Imagen de portada
               </label>
               <div
-                className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${isDragging
-                  ? 'border-blue-500 bg-blue-50'
-                  : errors.file
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-300 bg-gray-50'
-                  }`}
+                className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${
+                  isDragging
+                    ? 'border-blue-500 bg-blue-50'
+                    : errors.file
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-300 bg-gray-50'
+                }`}
               >
                 <div className="text-center text-white">
                   {!file && (coverVideoCourseKey || coverImage) ? (

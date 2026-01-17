@@ -18,6 +18,9 @@ interface Post {
     email: string | null;
   };
   content: string;
+  imageKey?: string | null;
+  audioKey?: string | null;
+  videoKey?: string | null;
   createdAt: string | number | Date;
   updatedAt: string | number | Date;
 }
@@ -332,6 +335,9 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
         forumId: posts.forumId,
         userId: posts.userId,
         content: posts.content,
+        imageKey: posts.imageKey,
+        audioKey: posts.audioKey,
+        videoKey: posts.videoKey,
         createdAt: posts.createdAt,
         updatedAt: posts.updatedAt,
         userName: users.name,
@@ -351,6 +357,9 @@ export async function getPostsByForo(forumId: number): Promise<Post[]> {
         email: post.userEmail,
       },
       content: post.content,
+      imageKey: post.imageKey,
+      audioKey: post.audioKey,
+      videoKey: post.videoKey,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
     }));
@@ -381,6 +390,9 @@ export async function getPostById(postId: number) {
       forumId: posts.forumId,
       userId: posts.userId,
       content: posts.content,
+      imageKey: posts.imageKey,
+      audioKey: posts.audioKey,
+      videoKey: posts.videoKey,
       createdAt: posts.createdAt,
       updatedAt: posts.updatedAt,
     })
@@ -415,6 +427,9 @@ export async function getPostRepliesByPostId(postId: number) {
       postId: postReplies.postId,
       userId: postReplies.userId,
       content: postReplies.content,
+      imageKey: postReplies.imageKey,
+      audioKey: postReplies.audioKey,
+      videoKey: postReplies.videoKey,
       createdAt: postReplies.createdAt,
       updatedAt: postReplies.updatedAt,
       userName: users.name,
@@ -434,6 +449,9 @@ export async function getPostRepliesByPostId(postId: number) {
       email: reply.userEmail,
     },
     content: reply.content,
+    imageKey: reply.imageKey,
+    audioKey: reply.audioKey,
+    videoKey: reply.videoKey,
     createdAt: reply.createdAt,
     updatedAt: reply.updatedAt,
   }));
@@ -462,6 +480,9 @@ export async function getPostReplyById(replyId: number) {
       postId: postReplies.postId,
       userId: postReplies.userId,
       content: postReplies.content,
+      imageKey: postReplies.imageKey,
+      audioKey: postReplies.audioKey,
+      videoKey: postReplies.videoKey,
       createdAt: postReplies.createdAt,
       updatedAt: postReplies.updatedAt,
       userName: users.name,
