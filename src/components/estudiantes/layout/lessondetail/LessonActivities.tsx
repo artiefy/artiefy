@@ -21,7 +21,7 @@ import { useMediaQuery } from '~/utils/useMediaQuery';
 import { LessonActivityModal } from './LessonActivityModal';
 import { GradeHistory } from './LessonGradeHistory';
 
-import type { Activity, SavedAnswer } from '~/types';
+import type { Activity, Lesson, SavedAnswer } from '~/types';
 
 import '~/styles/arrowclass.css';
 
@@ -696,11 +696,12 @@ const LessonActivities = ({
                       </span>
 
                       {/* Mostrar duración de vídeo si está disponible en la lección */}
-                      {currentLesson && currentLesson.videoDuration && (
-                        <span className="max-w-[140px] truncate text-xs text-muted-foreground">
-                          Duración: {currentLesson.videoDuration}
-                        </span>
-                      )}
+                      {currentLesson &&
+                        (currentLesson as Lesson).videoDuration && (
+                          <span className="max-w-[140px] truncate text-xs text-muted-foreground">
+                            Duración: {(currentLesson as Lesson).videoDuration}
+                          </span>
+                        )}
                     </div>
                   )}
                 </div>
