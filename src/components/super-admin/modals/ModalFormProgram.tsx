@@ -28,6 +28,14 @@ interface SubjectOption {
   value: string;
   label: string;
 }
+
+interface CertificationType {
+  id: number;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+}
+
 interface ProgramFormProps {
   onSubmitAction: (
     id: string,
@@ -38,7 +46,8 @@ interface ProgramFormProps {
     rating: number,
     coverImageKey: string,
     fileName: string,
-    subjectIds: number[]
+    subjectIds: number[],
+    certificationTypeId?: number | null
   ) => Promise<void>;
   uploading: boolean;
   editingProgramId: number | null;
@@ -98,6 +107,12 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
   const [uploadController, setUploadController] =
     useState<AbortController | null>(null);
   const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [certificationTypeId, setCertificationTypeId] = useState<number | null>(
+    null
+  );
+  const [certificationTypes, setCertificationTypes] = useState<
+    CertificationType[]
+  >([]);
   void modifiedFields;
   void coverImage;
 
@@ -243,6 +258,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
               rating,
               coverImageKey,
               subjectIds,
+              certificationTypeId,
             }),
           }
         );
@@ -261,7 +277,8 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
         rating,
         coverImageKey,
         uploadedFileName,
-        subjectIds
+        subjectIds,
+        certificationTypeId
       );
 
       onCloseAction();
@@ -351,8 +368,21 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
       }
     };
 
+    const fetchCertificationTypes = async () => {
+      try {
+        const response = await fetch('/api/super-admin/certification-types');
+        if (response.ok) {
+          const data = (await response.json()) as CertificationType[];
+          setCertificationTypes(data);
+        }
+      } catch (error) {
+        console.error('Error fetching certification types:', error);
+      }
+    };
+
     if (isOpen) {
       void fetchSubjects();
+      void fetchCertificationTypes();
     }
   }, [isOpen]);
   const uniqueSelectedSubjects = Array.from(
@@ -422,6 +452,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
       setRating(0);
       setCoverImage('');
       setSelectedSubjects([]);
+      setCertificationTypeId(null);
     }
   }, [isOpen, editingProgramId]);
 
@@ -440,6 +471,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
               categoryid: number;
               rating: number;
               coverImageKey: string;
+              certificationTypeId?: number | null;
               materias?: { id: number; title: string }[];
             }
             const programData = (await response.json()) as ProgramData;
@@ -453,6 +485,9 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             if (coverImageKey !== programData.coverImageKey) {
               setCoverImageKey(programData.coverImageKey);
               setCoverImage(programData.coverImageKey);
+            }
+            if (certificationTypeId !== programData.certificationTypeId) {
+              setCertificationTypeId(programData.certificationTypeId ?? null);
             }
 
             if (programData.materias) {
@@ -489,9 +524,9 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
               : 'Llena los detalles para crear un nuevo programa'}
           </DialogDescription>
         </DialogHeader>
-        <div className="bg-background rounded-lg px-6 text-black shadow-md">
+        <div className="rounded-lg bg-background px-6 text-black shadow-md">
           {/* Título */}
-          <label htmlFor="title" className="text-primary text-lg font-medium">
+          <label htmlFor="title" className="text-lg font-medium text-primary">
             Título
           </label>
           <input
@@ -510,7 +545,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
           {/* Descripción */}
           <label
             htmlFor="description"
-            className="text-primary text-lg font-medium"
+            className="text-lg font-medium text-primary"
           >
             Descripción
           </label>
@@ -531,10 +566,8 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             <div className="flex w-full flex-col gap-2">
               <label
                 htmlFor="categoryid"
-                className="text-primary text-lg font-medium"
-              >
-                Categoría
-              </label>
+                className="text-lg font-medium text-primary"
+              ></label>
               <CategoryDropdown
                 category={categoryid}
                 setCategory={setCategoryid}
@@ -546,17 +579,42 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                 </p>
               )}
             </div>
+            <div className="flex w-full flex-col gap-2">
+              <label
+                htmlFor="certificationTypeId"
+                className="text-lg font-medium text-primary"
+              >
+                Tipo de Certificación
+              </label>
+              <select
+                id="certificationTypeId"
+                value={certificationTypeId ?? ''}
+                onChange={(e) =>
+                  setCertificationTypeId(
+                    e.target.value ? Number(e.target.value) : null
+                  )
+                }
+                className="rounded border border-primary p-2 text-white outline-none"
+              >
+                <option value="" className="text-black">
+                  Seleccionar tipo de certificación
+                </option>
+                {certificationTypes.map((type) => (
+                  <option key={type.id} value={type.id} className="text-black">
+                    {type.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Materias */}
+          <div className="mb-4 w-full">
             {isOpen && (
               <div className="flex w-full flex-col gap-2">
                 <label
                   htmlFor="subjects"
-                  className="text-primary text-lg font-medium"
-                >
-                  Materias
-                </label>
-                <label
-                  htmlFor="subjects"
-                  className="text-primary text-lg font-medium"
+                  className="text-lg font-medium text-primary"
                 >
                   Asignar Materias
                 </label>
@@ -572,8 +630,8 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             )}
           </div>
 
-          <div className="border-primary mb-4 hidden w-full rounded border p-2">
-            <h3 className="text-primary text-lg font-medium">
+          <div className="mb-4 hidden w-full rounded border border-primary p-2">
+            <h3 className="text-lg font-medium text-primary">
               Instructor: {user?.fullName}
             </h3>
           </div>
@@ -582,7 +640,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
           <div>
             <label
               htmlFor="rating"
-              className="text-primary text-lg font-medium"
+              className="text-lg font-medium text-primary"
             >
               Rating
             </label>
@@ -592,18 +650,18 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
               max="5"
               step="0.1"
               placeholder="0-5"
-              className="border-primary mt-1 w-full rounded border p-2 text-white outline-none focus:no-underline"
+              className="mt-1 w-full rounded border border-primary p-2 text-white outline-none focus:no-underline"
               value={rating}
               onChange={(e) => setRating(Number(e.target.value))}
             />
           </div>
 
           {/* Imagen de portada */}
-          <label htmlFor="file" className="text-primary text-lg font-medium">
+          <label htmlFor="file" className="text-lg font-medium text-primary">
             Imagen de portada
           </label>
           <div
-            className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${
+            className={`mx-auto mt-5 w-80 rounded-lg border-2 border-dashed border-primary p-8 lg:w-1/2 ${
               isDragging
                 ? 'border-blue-500 bg-blue-50'
                 : errors.file

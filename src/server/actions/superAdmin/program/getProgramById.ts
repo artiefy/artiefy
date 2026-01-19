@@ -75,6 +75,7 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
       creatorId: program.creatorId,
       rating: program.rating,
       categoryid: program.categoryid,
+      certificationTypeId: program.certificationTypeId,
       materias: transformedMaterias,
     };
   } catch (error) {
