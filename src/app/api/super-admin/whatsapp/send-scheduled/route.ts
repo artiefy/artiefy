@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { and,eq, lte } from 'drizzle-orm';
+import { and, eq, lte } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { scheduledWhatsAppMessages } from '~/server/db/schema';
