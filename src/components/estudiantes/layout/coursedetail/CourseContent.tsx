@@ -246,8 +246,10 @@ export function CourseContent({
       const monthCapitalized = month.charAt(0).toUpperCase() + month.slice(1);
       return `${weekdayCapitalized}, ${day} de ${monthCapitalized}, ${year}`;
     } catch {
-      return `${d.getFullYear()}/${String(d.getDate()).padStart(2, '0')}/${String(
-        d.getMonth() + 1
+      const fallback = toSafeDate(start);
+      if (!fallback) return '';
+      return `${fallback.getFullYear()}/${String(fallback.getDate()).padStart(2, '0')}/${String(
+        fallback.getMonth() + 1
       ).padStart(2, '0')}`;
     }
   };
