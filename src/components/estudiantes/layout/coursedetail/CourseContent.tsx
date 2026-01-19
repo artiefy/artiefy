@@ -55,6 +55,22 @@ interface CourseContentProps {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+const MEETING_TIME_OFFSET_HOURS = 5;
+
+const toMeetingLocalDate = (value?: string | null) => {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  date.setHours(date.getHours() - MEETING_TIME_OFFSET_HOURS);
+  return date;
+};
+
+const getMeetingNow = () => {
+  const now = new Date();
+  now.setHours(now.getHours() - MEETING_TIME_OFFSET_HOURS);
+  return now;
+};
+
 // Mueve la función formatDuration al principio para asegurar su disponibilidad
 function _formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -72,10 +88,9 @@ function _formatDuration(minutes: number): string {
 function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
   if (!startDate) return '';
   // Ajustar hora restando 5 horas manualmente
-  const start = new Date(startDate);
-  start.setHours(start.getHours() - 5);
-  const end = endDate ? new Date(endDate) : null;
-  if (end) end.setHours(end.getHours() - 5);
+  const start = toMeetingLocalDate(startDate);
+  if (!start) return '';
+  const end = endDate ? toMeetingLocalDate(endDate) : null;
   const weekday = new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(
     start
   );
@@ -215,9 +230,8 @@ export function CourseContent({
   // NUEVO: Formato compacto para móviles (Ej: "Vie, Nov 8") usando Intl y fallback
   const formatMobileDate = (start?: string) => {
     if (!start) return '';
-    const d = new Date(start);
-    // Ajustar a -5 horas para mostrar en zona deseada
-    d.setHours(d.getHours() - 5);
+    const d = toMeetingLocalDate(start);
+    if (!d) return '';
     try {
       const weekday = new Intl.DateTimeFormat('es-ES', {
         weekday: 'long',
@@ -246,8 +260,9 @@ export function CourseContent({
   // Prefijado con _ porque actualmente no se usa y ESLint lo reclama.
   const _formatTimeRange = (start?: string, end?: string) => {
     if (!start || !end) return '';
-    const s = new Date(start);
-    const e = new Date(end);
+    const s = toMeetingLocalDate(start);
+    const e = toMeetingLocalDate(end);
+    if (!s || !e) return '';
     const formatPart = (d: Date) => {
       // Intl en es-ES devuelve "12:30" y AM/PM puede variar; manualizar sufijo
       let hours = d.getHours();
@@ -263,9 +278,8 @@ export function CourseContent({
   // Nuevo: formatea solo la hora de inicio (ej: "7:00 p.m.")
   const formatStartTime = (start?: string) => {
     if (!start) return '';
-    const d = new Date(start);
-    // Ajustar a -5 horas para mostrar en zona deseada
-    d.setHours(d.getHours() - 5);
+    const d = toMeetingLocalDate(start);
+    if (!d) return '';
     const minutes = String(d.getMinutes()).padStart(2, '0');
     const isPM = d.getHours() >= 12;
     const suffix = isPM ? 'p.m.' : 'a.m.';
@@ -673,21 +687,22 @@ export function CourseContent({
   // --- Clases grabadas y en vivo ---
   // Filter classMeetings into upcoming and recorded, and sort upcoming by date
   const upcomingMeetings: ClassMeeting[] = useMemo(() => {
-    const now = new Date();
+    const now = getMeetingNow();
     return Array.isArray(classMeetings)
       ? classMeetings
-          .filter(
-            (meeting) =>
-              meeting.startDateTime &&
-              new Date(meeting.startDateTime) > now &&
-              !meeting.video_key
-          )
+          .filter((meeting) => {
+            if (meeting.video_key) return false;
+            const start = toMeetingLocalDate(meeting.startDateTime);
+            if (!start) return false;
+            const end = toMeetingLocalDate(meeting.endDateTime);
+            if (end) return end > now;
+            return start > now;
+          })
           .sort((a, b) => {
-            if (!a.startDateTime || !b.startDateTime) return 0;
-            return (
-              new Date(a.startDateTime).getTime() -
-              new Date(b.startDateTime).getTime()
-            );
+            const aStart = toMeetingLocalDate(a.startDateTime);
+            const bStart = toMeetingLocalDate(b.startDateTime);
+            if (!aStart || !bStart) return 0;
+            return aStart.getTime() - bStart.getTime();
           })
       : [];
   }, [classMeetings]);
@@ -704,11 +719,10 @@ export function CourseContent({
       ? classMeetings
           .filter((meeting) => !meeting.video_key)
           .sort((a, b) => {
-            if (!a.startDateTime || !b.startDateTime) return 0;
-            return (
-              new Date(a.startDateTime).getTime() -
-              new Date(b.startDateTime).getTime()
-            );
+            const aStart = toMeetingLocalDate(a.startDateTime);
+            const bStart = toMeetingLocalDate(b.startDateTime);
+            if (!aStart || !bStart) return 0;
+            return aStart.getTime() - bStart.getTime();
           })
       : [];
   }, [classMeetings]);
@@ -730,12 +744,11 @@ export function CourseContent({
   const featuredLiveDetails =
     featuredLiveMeeting && featuredLiveMeeting.startDateTime
       ? (() => {
-          const start = new Date(featuredLiveMeeting.startDateTime!);
-          start.setHours(start.getHours() - 5);
+          const start = toMeetingLocalDate(featuredLiveMeeting.startDateTime!);
+          if (!start) return null;
           const end = featuredLiveMeeting.endDateTime
-            ? new Date(featuredLiveMeeting.endDateTime)
+            ? toMeetingLocalDate(featuredLiveMeeting.endDateTime)
             : null;
-          if (end) end.setHours(end.getHours() - 5);
 
           const month = new Intl.DateTimeFormat('es-ES', {
             month: 'long',
@@ -777,9 +790,10 @@ export function CourseContent({
       // Si es la próxima clase programada, está disponible
       if (meeting.id === nextMeetingId) return true;
 
-      // Usar directamente los datos de BD sin conversión de zona horaria
-      const now = new Date();
-      const meetingDate = new Date(meeting.startDateTime);
+      // Comparar contra la hora ajustada a -5 para mantener consistencia en el front
+      const now = getMeetingNow();
+      const meetingDate = toMeetingLocalDate(meeting.startDateTime);
+      if (!meetingDate) return false;
 
       // Compare year, month, and day directly
       return (
@@ -1021,11 +1035,12 @@ export function CourseContent({
                   >
                     {(() => {
                       // 1) Quitar vencidas
-                      const now = new Date();
+                      const now = getMeetingNow();
                       const upcoming = liveMeetings.filter(
                         (meeting: ClassMeeting) => {
                           if (meeting.endDateTime) {
-                            const end = new Date(meeting.endDateTime);
+                            const end = toMeetingLocalDate(meeting.endDateTime);
+                            if (!end) return false;
                             if (now > end) return false;
                           }
                           return true;
@@ -1041,8 +1056,10 @@ export function CourseContent({
                           // fallback por fecha más cercana
                           const sorted = [...upcoming].sort(
                             (a, b) =>
-                              new Date(a.startDateTime ?? '').getTime() -
-                              new Date(b.startDateTime ?? '').getTime()
+                              (toMeetingLocalDate(a.startDateTime)?.getTime() ??
+                                0) -
+                              (toMeetingLocalDate(b.startDateTime)?.getTime() ??
+                                0)
                           );
                           list = sorted.length > 0 ? [sorted[0]!] : [];
                         }
@@ -1056,7 +1073,8 @@ export function CourseContent({
                           meeting.id === nextMeetingId;
                         let isToday = false;
                         if (meeting.startDateTime) {
-                          const d = new Date(meeting.startDateTime);
+                          const d = toMeetingLocalDate(meeting.startDateTime);
+                          if (!d) return false;
                           isToday =
                             now.getFullYear() === d.getFullYear() &&
                             now.getMonth() === d.getMonth() &&
@@ -1068,14 +1086,19 @@ export function CourseContent({
                       return list.map((meeting: ClassMeeting) => {
                         const isAvailable = isMeetingAvailable(meeting);
                         const isNext = meeting.id === nextMeetingId;
-                        // Determinar si es hoy usando directamente los datos de BD
+                        // Determinar si es hoy usando la hora ajustada a -5
                         let isToday = false;
                         let isJoinEnabled = false;
                         let isMeetingEnded = false;
                         if (meeting.startDateTime && meeting.endDateTime) {
-                          const now = new Date();
-                          const start = new Date(meeting.startDateTime);
-                          const end = new Date(meeting.endDateTime);
+                          const now = getMeetingNow();
+                          const start = toMeetingLocalDate(
+                            meeting.startDateTime
+                          );
+                          const end = toMeetingLocalDate(meeting.endDateTime);
+                          if (!start || !end) {
+                            return null;
+                          }
 
                           isToday =
                             now.getFullYear() === start.getFullYear() &&
@@ -1642,13 +1665,13 @@ export function CourseContent({
                                         meeting.startDateTime
                                       ) ||
                                         (meeting.startDateTime
-                                          ? new Date(
+                                          ? (toMeetingLocalDate(
                                               meeting.startDateTime
-                                            ).toLocaleDateString('es-ES', {
+                                            )?.toLocaleDateString('es-ES', {
                                               weekday: 'short',
                                               month: 'short',
                                               day: 'numeric',
-                                            })
+                                            }) ?? 'Fecha por definir')
                                           : 'Fecha por definir')}
                                     </span>
 
