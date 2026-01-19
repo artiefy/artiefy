@@ -72,17 +72,21 @@ export async function GET(request: NextRequest) {
         console.log(`[CRON WhatsApp] Procesando mensaje ${msgRecord.id}...`);
 
         // Parsear phoneNumbers (puede ser array o JSON string)
-        let phoneNumbers = msgRecord.phoneNumbers;
-        if (typeof phoneNumbers === 'string') {
-          phoneNumbers = JSON.parse(phoneNumbers);
+        let phoneNumbers: string[] = [];
+        if (msgRecord.phoneNumbers) {
+          if (typeof msgRecord.phoneNumbers === 'string') {
+            phoneNumbers = JSON.parse(msgRecord.phoneNumbers);
+          } else if (Array.isArray(msgRecord.phoneNumbers)) {
+            phoneNumbers = msgRecord.phoneNumbers;
+          }
         }
 
         // Parsear variables (puede ser array o JSON string)
-        let variables = [];
+        let variables: string[] = [];
         if (msgRecord.variables) {
           if (typeof msgRecord.variables === 'string') {
             variables = JSON.parse(msgRecord.variables);
-          } else {
+          } else if (Array.isArray(msgRecord.variables)) {
             variables = msgRecord.variables;
           }
         }
