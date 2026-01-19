@@ -4,6 +4,7 @@ import { and, eq, lte } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { scheduledWhatsAppMessages } from '~/server/db/schema';
+import { sendWhatsAppMessage } from '~/server/whatsapp/send-message';
 
 export const maxDuration = 60;
 
@@ -75,55 +76,16 @@ async function sendScheduledWhatsAppMessages() {
 
       // Enviar a cada número de teléfono
       for (const phoneNumber of phoneNumbers) {
-        // Llamar a la API de WhatsApp del super-admin para enviar
-        const sendResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/super-admin/whatsapp`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              to: phoneNumber,
-              text: msgRecord.messageText,
-              forceTemplate: !!msgRecord.templateName,
-              templateName: msgRecord.templateName,
-              variables: variables,
-              languageCode: 'es',
-              autoSession: false,
-            }),
-          }
-        );
-
-        console.log(
-          `[CRON WhatsApp] Response status for ${phoneNumber}:`,
-          sendResponse.status
-        );
-
-        if (!sendResponse.ok) {
-          const errorText = await sendResponse.text();
-          console.error(
-            `[CRON WhatsApp] Error sending to ${phoneNumber} (status ${sendResponse.status}):`,
-            errorText
-          );
-          throw new Error(
-            `WhatsApp API error: ${errorText || sendResponse.statusText}`
-          );
-        }
-
-        try {
-          const responseData = await sendResponse.json();
-          console.log(
-            `[CRON WhatsApp] Successfully sent to ${phoneNumber}:`,
-            responseData
-          );
-        } catch (parseError) {
-          console.error(
-            `[CRON WhatsApp] Error parsing response for ${phoneNumber}:`,
-            parseError
-          );
-          throw new Error(
-            `Failed to parse WhatsApp response: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`
-          );
-        }
+        // Llamar directamente a la función de envío (sin fetch)
+        await sendWhatsAppMessage({
+          to: phoneNumber,
+          text: msgRecord.messageText,
+          forceTemplate: !!msgRecord.templateName,
+          templateName: msgRecord.templateName,
+          variables: variables,
+          languageCode: 'es',
+          autoSession: false,
+        });
       }
 
       // Actualizar estado a "enviado"
