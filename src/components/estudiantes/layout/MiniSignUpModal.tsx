@@ -402,6 +402,7 @@ export default function MiniSignUpModal({
           strategy,
           redirectUrl: absoluteRedirectUrlFallback,
           redirectUrlComplete: absoluteRedirectUrlComplete,
+          continueSignUp: true,
         });
         return;
       }
@@ -420,6 +421,7 @@ export default function MiniSignUpModal({
         strategy,
         redirectUrl: absoluteRedirectUrl,
         redirectUrlComplete: absoluteRedirectUrlComplete,
+        continueSignUp: true,
       });
 
       if (typeof signUp.reload === 'function') {
@@ -460,6 +462,7 @@ export default function MiniSignUpModal({
             strategy,
             redirectUrl: absoluteRedirectUrlFallback,
             redirectUrlComplete: absoluteRedirectUrlComplete,
+            continueSignUp: true,
           });
           return;
         }

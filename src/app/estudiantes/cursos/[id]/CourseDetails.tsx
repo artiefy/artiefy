@@ -832,6 +832,14 @@ export default function CourseDetails({
     ? `${s3Base}/${String(course.coverVideoCourseKey).replace(/^\/+/, '')}`
     : undefined;
 
+  // Función para detectar si una URL es imagen
+  const isImageUrl = (url: string) => {
+    const extension = url.split('.').pop()?.toLowerCase();
+    return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(
+      extension || ''
+    );
+  };
+
   // --- NUEVO LAYOUT VISUAL ---
   return (
     <>
@@ -872,12 +880,24 @@ export default function CourseDetails({
                       <AspectRatio ratio={16 / 9}>
                         <div className="relative h-full w-full overflow-hidden">
                           {coverVideoUrl ? (
-                            <video
-                              className="h-full w-full object-cover"
-                              src={coverVideoUrl}
-                              poster={coverImageUrl}
-                              controls
-                            />
+                            isImageUrl(coverVideoUrl) ? (
+                              <Image
+                                src={coverVideoUrl}
+                                alt={course.title}
+                                fill
+                                className="object-cover"
+                                sizes="100vw"
+                                quality={85}
+                                priority={false}
+                              />
+                            ) : (
+                              <video
+                                className="h-full w-full object-cover"
+                                src={coverVideoUrl}
+                                poster={coverImageUrl}
+                                controls
+                              />
+                            )
                           ) : (
                             <>
                               {coverImageUrl && (
@@ -1328,12 +1348,25 @@ export default function CourseDetails({
                               <AspectRatio ratio={16 / 9}>
                                 <div className="relative h-full w-full overflow-hidden">
                                   {coverVideoUrl ? (
-                                    <video
-                                      className="h-full w-full object-cover"
-                                      src={coverVideoUrl}
-                                      poster={coverImageUrl}
-                                      controls
-                                    />
+                                    isImageUrl(coverVideoUrl) ? (
+                                      <Image
+                                        src={coverVideoUrl}
+                                        alt={course.title}
+                                        fill
+                                        className="object-cover"
+                                        sizes="340px"
+                                        quality={85}
+                                        loading="eager"
+                                        priority={false}
+                                      />
+                                    ) : (
+                                      <video
+                                        className="h-full w-full object-cover"
+                                        src={coverVideoUrl}
+                                        poster={coverImageUrl}
+                                        controls
+                                      />
+                                    )
                                   ) : (
                                     <>
                                       {course.coverImageKey && (
@@ -1634,13 +1667,28 @@ export default function CourseDetails({
                         <div className="relative">
                           <AspectRatio ratio={16 / 9}>
                             <div className="relative h-full w-full overflow-hidden">
-                              {coverVideoUrl ? (
-                                <video
-                                  className="h-full w-full object-cover"
-                                  src={coverVideoUrl}
-                                  poster={coverImageUrl}
-                                  controls
-                                />
+                              {course.coverVideoCourseKey && coverVideoUrl ? (
+                                isImageUrl(
+                                  course.coverVideoCourseKey as string
+                                ) ? (
+                                  <Image
+                                    src={coverVideoUrl}
+                                    alt={course.title}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 1023px) 0px, 33vw"
+                                    quality={85}
+                                    loading="eager"
+                                    priority={false}
+                                  />
+                                ) : (
+                                  <video
+                                    className="h-full w-full object-cover"
+                                    src={coverVideoUrl}
+                                    poster={coverImageUrl}
+                                    controls
+                                  />
+                                )
                               ) : (
                                 <>
                                   {course.coverImageKey && (
@@ -1814,20 +1862,29 @@ export default function CourseDetails({
                             >
                               {isEnrolling ? 'Inscribiendo…' : 'Empezar Ahora'}
                             </button>
-                            <p className="text-center text-xs text-[#94A3B8]">
-                              Accede a este y a más de{' '}
-                              <span className="font-medium text-white">
-                                {totalSimilarCourses}{' '}
-                                {totalSimilarCourses === 1 ? 'curso' : 'cursos'}
-                              </span>{' '}
-                              con {planPhrase}.{' '}
-                              <a
-                                href="/planes"
-                                className="text-white hover:underline"
-                              >
-                                Ver planes
-                              </a>
-                            </p>
+                            {!(
+                              activeCourseTypes.hasIndividual &&
+                              !activeCourseTypes.hasPremium &&
+                              !activeCourseTypes.hasPro &&
+                              !activeCourseTypes.hasFree
+                            ) && (
+                              <p className="text-center text-xs text-[#94A3B8]">
+                                Accede a este y a más de{' '}
+                                <span className="font-medium text-white">
+                                  {totalSimilarCourses}{' '}
+                                  {totalSimilarCourses === 1
+                                    ? 'curso'
+                                    : 'cursos'}
+                                </span>{' '}
+                                con {planPhrase}.{' '}
+                                <a
+                                  href="/planes"
+                                  className="text-white hover:underline"
+                                >
+                                  Ver planes
+                                </a>
+                              </p>
+                            )}
                           </div>
                         </div>
                       </div>

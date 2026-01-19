@@ -44,7 +44,7 @@ export default function HomePage() {
   const [showChatbot, setShowChatbot] = useState<boolean>(false);
   const [lastSearchQuery] = useState<string>('');
   void showAnuncio;
-  const { isSignedIn } = useAuth();
+  const { isSignedIn: _isSignedIn } = useAuth();
   const [anuncios, setAnuncios] = useState<
     {
       titulo: string;
@@ -136,15 +136,9 @@ export default function HomePage() {
   }, [postAuthAction, router, user?.publicMetadata?.role]);
 
   const handleStartNowClick = useCallback(() => {
-    if (!isSignedIn) {
-      setLoading(false);
-      setPostAuthAction('dashboard');
-      setShowLoginModal(true);
-      return;
-    }
     setLoading(true);
     router.push(dashboardRoute);
-  }, [dashboardRoute, isSignedIn, router]);
+  }, [dashboardRoute, router]);
 
   // Listener para cerrar completamente el chatbot desde dentro (evento global)
   useEffect(() => {

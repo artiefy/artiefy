@@ -968,7 +968,9 @@ export default function LessonDetails({
           )}
 
           {/* Content Tabs Navigation */}
-          <div className="w-full px-4">
+          <div
+            className={`w-full px-4 ${lesson.coverVideoKey === 'none' ? 'mt-12 md:mt-6' : ''}`}
+          >
             <LessonContentTabs
               activeTab={activeTab}
               onTabChange={setActiveTab}

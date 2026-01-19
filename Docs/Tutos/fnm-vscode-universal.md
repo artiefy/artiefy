@@ -61,3 +61,61 @@ Ambos deben funcionar igual en cualquier modo (usuario o admin).
 
 - Si cambias de versión de Node con fnm, reinicia VS Code para que tome el nuevo entorno.
 - Si tienes problemas con la terminal integrada, revisa que VS Code y la terminal tengan los mismos permisos (ambos como usuario o ambos como admin).
+
+---
+
+## Guía para Instalar Rust, fnm y Node.js usando Git Bash
+
+### 1. Instalar Rust
+
+```bash
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+### 2. Verificar la Instalación de Rust
+
+```bash
+rustup --version
+```
+
+### 3. Instalar fnm
+
+```bash
+curl -fsSL https://fnm.vercel.app/install | bash
+```
+
+### 4. Verificar la Instalación de fnm
+
+```bash
+fnm --version
+```
+
+### 5. Instalar la Última Versión LTS de Node.js
+
+```bash
+fnm install --lts
+```
+
+### 6. Verificar la Instalación de Node.js
+
+```bash
+node --version
+```
+
+### 7. Usar la Versión Instalada de Node.js
+
+```bash
+fnm use (version)
+```
+
+### 8. Configurar la Versión Predeterminada de Node.js
+
+```bash
+fnm alias (version) default
+```
+
+### 9. Verificar que Estás Usando la Versión por Defecto
+
+```bash
+fnm ls
+```

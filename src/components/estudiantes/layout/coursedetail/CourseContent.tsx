@@ -55,6 +55,35 @@ interface CourseContentProps {
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
+const MEETING_TIME_ZONE = 'America/Bogota';
+
+const toSafeDate = (value?: string | number | Date | null) => {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+};
+
+const formatBogota = (
+  value: string | number | Date | null | undefined,
+  options: Intl.DateTimeFormatOptions,
+  locale = 'es-ES'
+) => {
+  const date = toSafeDate(value);
+  if (!date) return '';
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: MEETING_TIME_ZONE,
+    ...options,
+  }).format(date);
+};
+
+const getBogotaDayKey = (value: string | number | Date | null | undefined) =>
+  formatBogota(
+    value,
+    { year: 'numeric', month: '2-digit', day: '2-digit' },
+    'en-CA'
+  );
+
 // Mueve la función formatDuration al principio para asegurar su disponibilidad
 function _formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60);
@@ -71,36 +100,28 @@ function _formatDuration(minutes: number): string {
 // Nuevo formateador para el estilo solicitado
 function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
   if (!startDate) return '';
-  // Ajustar hora restando 5 horas manualmente
-  const start = new Date(startDate);
-  start.setHours(start.getHours() - 5);
-  const end = endDate ? new Date(endDate) : null;
-  if (end) end.setHours(end.getHours() - 5);
-  const weekday = new Intl.DateTimeFormat('es-ES', { weekday: 'long' }).format(
-    start
-  );
+  const weekday = formatBogota(startDate, { weekday: 'long' });
+  if (!weekday) return '';
   const weekdayCapitalized = weekday.charAt(0).toUpperCase() + weekday.slice(1);
-  const mesNombre = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(
-    start
-  );
+  const mesNombre = formatBogota(startDate, { month: 'long' });
+  if (!mesNombre) return '';
   const mesNombreCapitalized =
     mesNombre.charAt(0).toUpperCase() + mesNombre.slice(1);
-  const day = start.getDate();
-  const year = start.getFullYear();
-  // Hora inicio
-  let hour12 = start.getHours() % 12;
-  if (hour12 === 0) hour12 = 12;
-  const ampm = start.getHours() < 12 ? 'a. m.' : 'p. m.';
-  const minStr = String(start.getMinutes()).padStart(2, '0');
-  // Hora fin
-  let horaFin = '';
-  if (end) {
-    let hour12_2 = end.getHours() % 12;
-    if (hour12_2 === 0) hour12_2 = 12;
-    const ampm2 = end.getHours() < 12 ? 'a. m.' : 'p. m.';
-    const minStr2 = String(end.getMinutes()).padStart(2, '0');
-    horaFin = `${hour12_2}:${minStr2} ${ampm2}`;
-  }
+  const day = formatBogota(startDate, { day: 'numeric' });
+  const year = formatBogota(startDate, { year: 'numeric' });
+  const horaInicio = formatBogota(
+    startDate,
+    { hour: '2-digit', minute: '2-digit', hour12: true },
+    'es-CO'
+  );
+  const horaFin = endDate
+    ? formatBogota(
+        endDate,
+        { hour: '2-digit', minute: '2-digit', hour12: true },
+        'es-CO'
+      )
+    : '';
+  if (!day || !year || !horaInicio) return '';
   return (
     <>
       {/* En móviles: apilar fecha y hora verticalmente con tamaños más pequeños */}
@@ -109,7 +130,7 @@ function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
           {weekdayCapitalized}, {String(day)} de {mesNombreCapitalized}, {year}
         </span>
         <span className="block text-sm font-bold text-cyan-400">
-          {hour12}:{minStr} {ampm}
+          {horaInicio}
           {horaFin && ` — ${horaFin}`}
         </span>
       </div>
@@ -118,9 +139,7 @@ function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
         <span className="text-base font-bold text-yellow-400">
           {weekdayCapitalized}, {String(day)} de {mesNombreCapitalized}, {year}
         </span>{' '}
-        <span className="text-base font-bold text-cyan-400">
-          {hour12}:{minStr} {ampm}
-        </span>
+        <span className="text-base font-bold text-cyan-400">{horaInicio}</span>
         {horaFin && (
           <>
             <span className="text-base font-bold text-cyan-400">
@@ -215,26 +234,22 @@ export function CourseContent({
   // NUEVO: Formato compacto para móviles (Ej: "Vie, Nov 8") usando Intl y fallback
   const formatMobileDate = (start?: string) => {
     if (!start) return '';
-    const d = new Date(start);
-    // Ajustar a -5 horas para mostrar en zona deseada
-    d.setHours(d.getHours() - 5);
     try {
-      const weekday = new Intl.DateTimeFormat('es-ES', {
-        weekday: 'long',
-      }).format(d);
-      const month = new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(
-        d
-      );
-      const day = d.getDate();
-      const year = d.getFullYear();
+      const weekday = formatBogota(start, { weekday: 'long' });
+      const month = formatBogota(start, { month: 'long' });
+      const day = formatBogota(start, { day: 'numeric' });
+      const year = formatBogota(start, { year: 'numeric' });
+      if (!weekday || !month || !day || !year) return '';
       // Capitalizar primera letra: Martes, 15 de Diciembre, 2025
       const weekdayCapitalized =
         weekday.charAt(0).toUpperCase() + weekday.slice(1);
       const monthCapitalized = month.charAt(0).toUpperCase() + month.slice(1);
       return `${weekdayCapitalized}, ${day} de ${monthCapitalized}, ${year}`;
     } catch {
-      return `${d.getFullYear()}/${String(d.getDate()).padStart(2, '0')}/${String(
-        d.getMonth() + 1
+      const fallback = toSafeDate(start);
+      if (!fallback) return '';
+      return `${fallback.getFullYear()}/${String(fallback.getDate()).padStart(2, '0')}/${String(
+        fallback.getMonth() + 1
       ).padStart(2, '0')}`;
     }
   };
@@ -246,31 +261,28 @@ export function CourseContent({
   // Prefijado con _ porque actualmente no se usa y ESLint lo reclama.
   const _formatTimeRange = (start?: string, end?: string) => {
     if (!start || !end) return '';
-    const s = new Date(start);
-    const e = new Date(end);
-    const formatPart = (d: Date) => {
-      // Intl en es-ES devuelve "12:30" y AM/PM puede variar; manualizar sufijo
-      let hours = d.getHours();
-      const minutes = String(d.getMinutes()).padStart(2, '0');
-      const isPM = hours >= 12;
-      const suffix = isPM ? 'p.m.' : 'a.m.';
-      hours = hours % 12 || 12;
-      return `${hours}:${minutes} ${suffix}`;
-    };
-    return `${formatPart(s)} – ${formatPart(e)}`;
+    const s = formatBogota(
+      start,
+      { hour: 'numeric', minute: '2-digit', hour12: true },
+      'es-CO'
+    );
+    const e = formatBogota(
+      end,
+      { hour: 'numeric', minute: '2-digit', hour12: true },
+      'es-CO'
+    );
+    if (!s || !e) return '';
+    return `${s} – ${e}`;
   };
 
   // Nuevo: formatea solo la hora de inicio (ej: "7:00 p.m.")
   const formatStartTime = (start?: string) => {
     if (!start) return '';
-    const d = new Date(start);
-    // Ajustar a -5 horas para mostrar en zona deseada
-    d.setHours(d.getHours() - 5);
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    const isPM = d.getHours() >= 12;
-    const suffix = isPM ? 'p.m.' : 'a.m.';
-    const hours = d.getHours() % 12 || 12;
-    return `${hours}:${minutes} ${suffix}`;
+    return formatBogota(
+      start,
+      { hour: 'numeric', minute: '2-digit', hour12: true },
+      'es-CO'
+    );
   };
 
   // Nuevo: etiqueta legible para duración con pluralización correcta
@@ -676,18 +688,19 @@ export function CourseContent({
     const now = new Date();
     return Array.isArray(classMeetings)
       ? classMeetings
-          .filter(
-            (meeting) =>
-              meeting.startDateTime &&
-              new Date(meeting.startDateTime) > now &&
-              !meeting.video_key
-          )
+          .filter((meeting) => {
+            if (meeting.video_key) return false;
+            const start = toSafeDate(meeting.startDateTime);
+            if (!start) return false;
+            const end = toSafeDate(meeting.endDateTime);
+            if (end) return end > now;
+            return start > now;
+          })
           .sort((a, b) => {
-            if (!a.startDateTime || !b.startDateTime) return 0;
-            return (
-              new Date(a.startDateTime).getTime() -
-              new Date(b.startDateTime).getTime()
-            );
+            const aStart = toSafeDate(a.startDateTime);
+            const bStart = toSafeDate(b.startDateTime);
+            if (!aStart || !bStart) return 0;
+            return aStart.getTime() - bStart.getTime();
           })
       : [];
   }, [classMeetings]);
@@ -704,11 +717,10 @@ export function CourseContent({
       ? classMeetings
           .filter((meeting) => !meeting.video_key)
           .sort((a, b) => {
-            if (!a.startDateTime || !b.startDateTime) return 0;
-            return (
-              new Date(a.startDateTime).getTime() -
-              new Date(b.startDateTime).getTime()
-            );
+            const aStart = toSafeDate(a.startDateTime);
+            const bStart = toSafeDate(b.startDateTime);
+            if (!aStart || !bStart) return 0;
+            return aStart.getTime() - bStart.getTime();
           })
       : [];
   }, [classMeetings]);
@@ -730,36 +742,35 @@ export function CourseContent({
   const featuredLiveDetails =
     featuredLiveMeeting && featuredLiveMeeting.startDateTime
       ? (() => {
-          const start = new Date(featuredLiveMeeting.startDateTime!);
-          start.setHours(start.getHours() - 5);
-          const end = featuredLiveMeeting.endDateTime
-            ? new Date(featuredLiveMeeting.endDateTime)
-            : null;
-          if (end) end.setHours(end.getHours() - 5);
-
-          const month = new Intl.DateTimeFormat('es-ES', {
+          const month = formatBogota(featuredLiveMeeting.startDateTime, {
             month: 'long',
-          }).format(start);
+          });
+          if (!month) return null;
           const monthCapitalized =
             month.charAt(0).toUpperCase() + month.slice(1);
-          const day = start.getDate();
-          const year = start.getFullYear();
+          const day = formatBogota(featuredLiveMeeting.startDateTime, {
+            day: 'numeric',
+          });
+          const year = formatBogota(featuredLiveMeeting.startDateTime, {
+            year: 'numeric',
+          });
+          const startLabel = formatBogota(
+            featuredLiveMeeting.startDateTime,
+            { hour: '2-digit', minute: '2-digit', hour12: true },
+            'es-CO'
+          );
+          const endLabel = featuredLiveMeeting.endDateTime
+            ? formatBogota(
+                featuredLiveMeeting.endDateTime,
+                { hour: '2-digit', minute: '2-digit', hour12: true },
+                'es-CO'
+              )
+            : '';
+          if (!day || !year || !startLabel) return null;
 
           return {
             dateLabel: `${day} de ${monthCapitalized}, ${year}`,
-            timeRangeLabel: `${start.toLocaleTimeString('es-CO', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true,
-            })}${
-              end
-                ? ` - ${end.toLocaleTimeString('es-CO', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    hour12: true,
-                  })}`
-                : ''
-            }`,
+            timeRangeLabel: `${startLabel}${endLabel ? ` - ${endLabel}` : ''}`,
             durationLabel: formatDurationLabel(
               getDurationMinutes(featuredLiveMeeting)
             ),
@@ -777,16 +788,12 @@ export function CourseContent({
       // Si es la próxima clase programada, está disponible
       if (meeting.id === nextMeetingId) return true;
 
-      // Usar directamente los datos de BD sin conversión de zona horaria
-      const now = new Date();
-      const meetingDate = new Date(meeting.startDateTime);
+      const todayKey = getBogotaDayKey(new Date());
+      const meetingKey = getBogotaDayKey(meeting.startDateTime);
+      if (!todayKey || !meetingKey) return false;
 
       // Compare year, month, and day directly
-      return (
-        now.getFullYear() === meetingDate.getFullYear() &&
-        now.getMonth() === meetingDate.getMonth() &&
-        now.getDate() === meetingDate.getDate()
-      );
+      return todayKey === meetingKey;
     },
     [nextMeetingId]
   );
@@ -1022,10 +1029,12 @@ export function CourseContent({
                     {(() => {
                       // 1) Quitar vencidas
                       const now = new Date();
+                      const todayKey = getBogotaDayKey(now);
                       const upcoming = liveMeetings.filter(
                         (meeting: ClassMeeting) => {
                           if (meeting.endDateTime) {
-                            const end = new Date(meeting.endDateTime);
+                            const end = toSafeDate(meeting.endDateTime);
+                            if (!end) return false;
                             if (now > end) return false;
                           }
                           return true;
@@ -1041,8 +1050,8 @@ export function CourseContent({
                           // fallback por fecha más cercana
                           const sorted = [...upcoming].sort(
                             (a, b) =>
-                              new Date(a.startDateTime ?? '').getTime() -
-                              new Date(b.startDateTime ?? '').getTime()
+                              (toSafeDate(a.startDateTime)?.getTime() ?? 0) -
+                              (toSafeDate(b.startDateTime)?.getTime() ?? 0)
                           );
                           list = sorted.length > 0 ? [sorted[0]!] : [];
                         }
@@ -1056,11 +1065,11 @@ export function CourseContent({
                           meeting.id === nextMeetingId;
                         let isToday = false;
                         if (meeting.startDateTime) {
-                          const d = new Date(meeting.startDateTime);
-                          isToday =
-                            now.getFullYear() === d.getFullYear() &&
-                            now.getMonth() === d.getMonth() &&
-                            now.getDate() === d.getDate();
+                          const meetingKey = getBogotaDayKey(
+                            meeting.startDateTime
+                          );
+                          if (!meetingKey || !todayKey) return false;
+                          isToday = meetingKey === todayKey;
                         }
                         return !(!isAvailable && !isNext && !isToday);
                       });
@@ -1068,19 +1077,20 @@ export function CourseContent({
                       return list.map((meeting: ClassMeeting) => {
                         const isAvailable = isMeetingAvailable(meeting);
                         const isNext = meeting.id === nextMeetingId;
-                        // Determinar si es hoy usando directamente los datos de BD
+                        // Determinar si es hoy usando la zona horaria de Bogotá
                         let isToday = false;
                         let isJoinEnabled = false;
                         let isMeetingEnded = false;
                         if (meeting.startDateTime && meeting.endDateTime) {
                           const now = new Date();
-                          const start = new Date(meeting.startDateTime);
-                          const end = new Date(meeting.endDateTime);
-
-                          isToday =
-                            now.getFullYear() === start.getFullYear() &&
-                            now.getMonth() === start.getMonth() &&
-                            now.getDate() === start.getDate();
+                          const todayKey = getBogotaDayKey(now);
+                          const meetingKey = getBogotaDayKey(
+                            meeting.startDateTime
+                          );
+                          if (!todayKey || !meetingKey) return null;
+                          const end = toSafeDate(meeting.endDateTime);
+                          if (!end) return null;
+                          isToday = meetingKey === todayKey;
                           isMeetingEnded = now > end;
                           // Permitir unirse todo el día, solo deshabilitar si ya terminó
                           isJoinEnabled = isToday && !isMeetingEnded;
@@ -1642,13 +1652,14 @@ export function CourseContent({
                                         meeting.startDateTime
                                       ) ||
                                         (meeting.startDateTime
-                                          ? new Date(
-                                              meeting.startDateTime
-                                            ).toLocaleDateString('es-ES', {
-                                              weekday: 'short',
-                                              month: 'short',
-                                              day: 'numeric',
-                                            })
+                                          ? formatBogota(
+                                              meeting.startDateTime,
+                                              {
+                                                weekday: 'short',
+                                                month: 'short',
+                                                day: 'numeric',
+                                              }
+                                            ) || 'Fecha por definir'
                                           : 'Fecha por definir')}
                                     </span>
 
