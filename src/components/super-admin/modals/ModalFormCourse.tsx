@@ -1048,6 +1048,46 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     certificationTypes,
   ]);
 
+  // ✅ Efecto para cargar el courseTypeId cuando se abre el modal para editar
+  useEffect(() => {
+    if (editingCourseId && isOpen) {
+      console.log(
+        '📋 [SYNC COURSE_TYPE] Sincronizando para editingCourseId:',
+        editingCourseId,
+        'courseTypeId prop:',
+        {
+          value: courseTypeId,
+          isArray: Array.isArray(courseTypeId),
+          length: Array.isArray(courseTypeId) ? courseTypeId.length : 'N/A',
+        }
+      );
+
+      // Asegurarse de que courseTypeId es un array
+      if (Array.isArray(courseTypeId)) {
+        // Filtrar valores válidos
+        const validTypeIds = courseTypeId.filter(
+          (id) => id !== null && id !== undefined && id !== 0
+        );
+
+        console.log('✅ [SYNC COURSE_TYPE] setCourseTypeId a:', {
+          validTypeIds,
+          count: validTypeIds.length,
+        });
+        setCourseTypeId(validTypeIds);
+      } else if (typeof courseTypeId === 'number' && courseTypeId !== 0) {
+        console.log('✅ [SYNC COURSE_TYPE] Convirtiendo número a array:', [
+          courseTypeId,
+        ]);
+        setCourseTypeId([courseTypeId]);
+      } else {
+        console.log(
+          '⚠️ [SYNC COURSE_TYPE] courseTypeId vacío, seteando array vacío'
+        );
+        setCourseTypeId([]);
+      }
+    }
+  }, [editingCourseId, isOpen]);
+
   // ✅ Efecto para cargar el horario (scheduleOptionId) cuando se edita un curso
   useEffect(() => {
     if (editingCourseId) {
@@ -1138,12 +1178,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               : ' los detalles para crear un nuevo curso'}
           </DialogDescription>
         </DialogHeader>
-        <div className="bg-background rounded-lg px-2 py-3 text-black shadow-md md:px-6 md:py-4">
+        <div className="rounded-lg bg-background px-2 py-3 text-black shadow-md md:px-6 md:py-4">
           <div className="space-y-3 md:space-y-4">
             <div>
               <label
                 htmlFor="title"
-                className="text-primary text-sm font-medium md:text-lg"
+                className="text-sm font-medium text-primary md:text-lg"
               >
                 Título
               </label>
@@ -1163,7 +1203,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div>
               <label
                 htmlFor="description"
-                className="text-primary text-sm font-medium md:text-lg"
+                className="text-sm font-medium text-primary md:text-lg"
               >
                 Descripción
               </label>
@@ -1184,11 +1224,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Nivel
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={nivelid}
                   onChange={(e) => setNivelid(Number(e.target.value))}
                 >
@@ -1205,11 +1245,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 )}
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Modalidad
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={modalidadesid}
                   onChange={(e) => setModalidadesid(Number(e.target.value))}
                 >
@@ -1226,11 +1266,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 )}
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Categoría
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={categoryid}
                   onChange={(e) => setCategoryid(Number(e.target.value))}
                 >
@@ -1247,11 +1287,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 )}
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Horario
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={selectedScheduleId ?? ''}
                   onChange={(e) =>
                     setSelectedScheduleId(e.target.value || null)
@@ -1266,11 +1306,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </select>
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Espacios
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={selectedSpaceId ?? ''}
                   onChange={(e) => setSelectedSpaceId(e.target.value || null)}
                 >
@@ -1283,11 +1323,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </select>
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Tipo de Certificación
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={localCertificationTypeId ?? ''}
                   onChange={(e) => {
                     const newValue = e.target.value
@@ -1320,7 +1360,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               </div>
               <>
                 <div className="w-full">
-                  <label className="text-primary text-sm font-medium md:text-lg">
+                  <label className="text-sm font-medium text-primary md:text-lg">
                     Tipo de Curso
                   </label>
                   <CourseTypeDropdown
@@ -1335,7 +1375,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 )}
                 {safeCourseTypeId.includes(4) && (
                   <div className="w-full">
-                    <label className="text-primary text-sm font-medium md:text-lg">
+                    <label className="text-sm font-medium text-primary md:text-lg">
                       Precio Individual
                     </label>
                     <input
@@ -1345,13 +1385,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       onChange={(e) =>
                         setIndividualPrice(Number(e.target.value))
                       }
-                      className="border-primary mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                      className="mt-1 w-full rounded border border-primary p-2 text-sm text-white md:text-base"
                     />
                   </div>
                 )}
 
                 <div className="w-full">
-                  <label className="text-primary text-sm font-medium md:text-lg">
+                  <label className="text-sm font-medium text-primary md:text-lg">
                     Estado del Curso
                   </label>
                   <ActiveDropdown
@@ -1364,7 +1404,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div>
               <label
                 htmlFor="rating"
-                className="text-primary text-sm font-medium md:text-lg"
+                className="text-sm font-medium text-primary md:text-lg"
               >
                 Rating
               </label>
@@ -1374,7 +1414,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 max="5"
                 step="0.1"
                 placeholder="0-5"
-                className="border-primary mt-1 w-full rounded border p-2 text-sm text-white outline-none focus:no-underline md:text-base"
+                className="mt-1 w-full rounded border border-primary p-2 text-sm text-white outline-none focus:no-underline md:text-base"
                 value={isNaN(rating) ? '' : rating}
                 onChange={(e) => setRating(Number(e.target.value))}
               />
@@ -1382,7 +1422,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div className="mb-4">
               <label
                 htmlFor="instructor"
-                className="text-primary text-sm font-medium md:text-lg"
+                className="text-sm font-medium text-primary md:text-lg"
               >
                 Instructor
               </label>
@@ -1390,7 +1430,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 id="instructor"
                 value={educators.find((e) => e.id === instructor)?.id ?? ''} // importante!
                 onChange={(e) => setInstructor(e.target.value)} // guarda solo el ID
-                className="border-primary bg-background w-full rounded border p-2 text-sm text-white outline-none md:text-base"
+                className="w-full rounded border border-primary bg-background p-2 text-sm text-white outline-none md:text-base"
               >
                 <option value="">Seleccionar instructor</option>
                 {educators.map((educator: { id: string; name: string }) => (
@@ -1402,7 +1442,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             </div>
 
             <div className="w-full px-2 md:px-0">
-              <label className="text-primary text-sm font-medium md:text-lg">
+              <label className="text-sm font-medium text-primary md:text-lg">
                 Imagen de portada
               </label>
               <div
@@ -1607,7 +1647,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
                   >
                     <span
-                      className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
+                      className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
                     />
                   </span>
                 </label>
@@ -1618,13 +1658,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             </div>
             {addParametros && (
               <div className="space-y-3 md:space-y-4">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Parámetros de evaluación
                 </label>
                 <Button
                   onClick={handleAddParametro}
                   disabled={parametros.length >= 10}
-                  className="bg-primary mt-2 w-10/12 text-white lg:w-1/2"
+                  className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
                 >
                   {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
                   parametro
@@ -1633,7 +1673,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 {parametros.map((parametro, index) => (
                   <div key={index} className="mt-4 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-primary text-sm font-medium md:text-lg">
+                      <h3 className="text-sm font-medium text-primary md:text-lg">
                         Parámetro {index + 1}
                       </h3>
                       <Button
@@ -1643,7 +1683,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                         Eliminar
                       </Button>
                     </div>
-                    <label className="text-primary mt-2 text-sm font-medium md:text-lg">
+                    <label className="mt-2 text-sm font-medium text-primary md:text-lg">
                       Nombre
                     </label>
                     <input
@@ -1654,7 +1694,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       }
                       className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
                     />
-                    <label className="text-primary mt-2 text-sm font-medium md:text-lg">
+                    <label className="mt-2 text-sm font-medium text-primary md:text-lg">
                       Descripción
                     </label>
                     <textarea
@@ -1668,7 +1708,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       }
                       className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
                     />
-                    <label className="text-primary mt-2 text-sm font-medium md:text-lg">
+                    <label className="mt-2 text-sm font-medium text-primary md:text-lg">
                       Porcentaje %
                     </label>
                     <input
@@ -1691,7 +1731,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               <div className="my-4 flex flex-col">
                 <label
                   htmlFor="subjects"
-                  className="text-primary text-sm font-medium md:text-lg"
+                  className="text-sm font-medium text-primary md:text-lg"
                 >
                   Asignar Materias
                 </label>

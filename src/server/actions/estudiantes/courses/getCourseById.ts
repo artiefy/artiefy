@@ -162,12 +162,43 @@ export async function getCourseById(
     }
 
     // Fetch all associated course types for this course
+    // Query directa a la BD para ver qué está ahí
+    const directCheck = await db
+      .select()
+      .from(courseCourseTypes)
+      .where(eq(courseCourseTypes.courseId, parsedCourseId));
+
+    console.log(
+      `📊 [getCourseById] Registros directos en courseCourseTypes para courseId ${parsedCourseId}:`,
+      JSON.stringify(
+        {
+          count: directCheck.length,
+          records: directCheck,
+        },
+        null,
+        2
+      )
+    );
+
     const associatedCourseTypes = await db.query.courseCourseTypes.findMany({
       where: eq(courseCourseTypes.courseId, parsedCourseId),
       with: {
         courseType: true,
       },
     });
+
+    console.log(
+      `🔍 [getCourseById] Tipos de curso para curso ${parsedCourseId}:`,
+      JSON.stringify(
+        {
+          count: associatedCourseTypes.length,
+          ids: associatedCourseTypes.map((ct) => ct.courseTypeId),
+          fullData: associatedCourseTypes,
+        },
+        null,
+        2
+      )
+    );
 
     // If userId exists, get progress data
     const userLessonsProgressData = userId
@@ -304,6 +335,11 @@ export async function getCourseById(
           }
         : null,
     };
+
+    console.log('✅ [getCourseById] courseTypes en transformedCourse:', {
+      count: transformedCourse.courseTypes?.length ?? 0,
+      courseTypes: transformedCourse.courseTypes,
+    });
 
     return transformedCourse;
   } catch (error) {

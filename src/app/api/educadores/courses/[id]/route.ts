@@ -317,7 +317,25 @@ export async function getCourseByIdWithTypes(courseId: number) {
     .leftJoin(courseTypes, eq(courseCourseTypes.courseTypeId, courseTypes.id))
     .where(eq(courseCourseTypes.courseId, courseId));
 
-  console.log('🏷️ Tipos de curso:', courseTypesList);
+  console.log('🏷️ Tipos de curso RAW:', courseTypesList);
+
+  // Mapear a formato compatible: { id, name }
+  const formattedCourseTypes = courseTypesList
+    .filter((ct) => ct.typeId !== null)
+    .map((ct) => ({
+      id: ct.typeId,
+      name: ct.typeName,
+    }));
+
+  console.log(
+    '📌 formattedCourseTypes después del mapping:',
+    formattedCourseTypes
+  );
+
+  // Extraer IDs para compatibilidad
+  const courseTypeIds = formattedCourseTypes.map((ct) => ct.id);
+
+  console.log('📝 courseTypeIds finales:', courseTypeIds);
 
   // Obtener nombre de certificationTypeId
   let certificationTypeName: string | undefined;
@@ -361,7 +379,8 @@ export async function getCourseByIdWithTypes(courseId: number) {
     instructorProfesion,
     instructorDescripcion,
     instructorProfileImageKey,
-    courseTypes: courseTypesList,
+    courseTypes: formattedCourseTypes,
+    courseTypeIds, // Incluir también el array de IDs para compatibilidad
     meetings: meetingsWithVideo,
     certificationTypeName,
     scheduleOptionName,
@@ -383,8 +402,8 @@ export async function GET(
       );
     }
 
-    // ✅ Usar getCourseById que tiene courseTypeIds, horario, espacios, etc.
-    const course = await getCourseById(courseId);
+    // ✅ Usar getCourseByIdWithTypes que retorna courseTypes array completo
+    const course = await getCourseByIdWithTypes(courseId);
     if (!course) {
       return NextResponse.json(
         { error: 'Curso no encontrado' },
@@ -395,7 +414,8 @@ export async function GET(
     console.log('✅ GET /api/educadores/courses/[id] retornando:', {
       id: course.id,
       title: course.title,
-      courseTypeIds: course.courseTypeIds,
+      courseTypes: course.courseTypes,
+      courseTypeId: course.courseTypeId,
       scheduleOptionId: course.scheduleOptionId,
       spaceOptionId: course.spaceOptionId,
       certificationTypeId: course.certificationTypeId,

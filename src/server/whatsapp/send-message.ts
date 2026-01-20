@@ -1,5 +1,3 @@
-import { db } from '~/server/db';
-import { waMessages } from '~/server/db/schema';
 import {
   getSession,
   type WhatsAppSession,
