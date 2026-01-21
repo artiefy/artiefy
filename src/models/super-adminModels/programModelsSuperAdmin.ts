@@ -15,6 +15,7 @@ export interface ProgramDetails {
   createdAt: Date;
   updatedAt: Date;
   rating?: number | null;
+  certificationTypeId?: number | null;
   materias: Materia[];
   courses: Course[];
 }
@@ -137,6 +138,7 @@ export const updateProgram = async (
         creatorId: programData.creatorId,
         updatedAt: new Date(),
         rating: programData.rating,
+        certificationTypeId: programData.certificationTypeId,
       })
       .where(eq(programas.id, programId))
       .returning();
@@ -166,6 +168,7 @@ interface CreateProgramInput {
   coverImageKey: string | null;
   categoryid: number;
   rating: number | null;
+  certificationTypeId?: number | null;
   creatorId: string;
 }
 
@@ -179,6 +182,7 @@ export async function createProgram(data: CreateProgramInput) {
         coverImageKey: data.coverImageKey,
         categoryid: data.categoryid,
         rating: data.rating,
+        certificationTypeId: data.certificationTypeId ?? null,
         creatorId: data.creatorId,
         createdAt: new Date(),
         updatedAt: new Date(),

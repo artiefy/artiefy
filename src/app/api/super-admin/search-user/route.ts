@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { eq, ilike } from 'drizzle-orm';
+import { and, eq, ilike, isNull } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { users } from '~/server/db/schema';
+import { accessLogs, users } from '~/server/db/schema';
 
 // Definir tipos para el body de la petición
 interface SearchRequestBody {
@@ -114,6 +114,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Verificar si el usuario tiene una entrada sin cerrar (exitTime es null)
+    const openEntry = await db.query.accessLogs.findFirst({
+      where: and(eq(accessLogs.userId, user.id), isNull(accessLogs.exitTime)),
+      orderBy: (logs) => [logs.entryTime],
+    });
+
+    const hasOpenEntry = !!openEntry;
+
     // Calcular días restantes si tiene suscripción activa
     let daysRemaining: number | undefined;
 
@@ -139,6 +147,7 @@ export async function POST(request: NextRequest) {
         subscriptionStatus: user.subscriptionStatus,
         subscriptionEndDate: user.subscriptionEndDate?.toISOString(),
         daysRemaining,
+        hasOpenEntry,
       },
     });
   } catch (error) {

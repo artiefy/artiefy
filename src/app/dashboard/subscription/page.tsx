@@ -26,6 +26,7 @@ interface SearchResult {
     subscriptionStatus: string;
     subscriptionEndDate?: string;
     daysRemaining?: number;
+    hasOpenEntry?: boolean; // Agregar para saber si tiene entrada sin cerrar
   };
   message?: string;
 }
@@ -68,14 +69,26 @@ export default function BuscarSuscripcionPage() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const handleRegister = async (type: 'entry' | 'exit') => {
+  // Limpiar resultado después de 5 segundos de completar la acción
+  useEffect(() => {
+    if (result && !loading) {
+      const timer = setTimeout(() => {
+        setResult(null);
+        setSearchTerm('');
+        setEsp32Message(null);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [result, loading]);
+
+  const handleRegister = async () => {
     if (!searchTerm.trim()) {
       setError('Por favor ingresa un término de búsqueda');
       return;
     }
 
     setLoading(true);
-    setActionType(type);
     setError(null);
     setResult(null);
     setEsp32Message(null);
@@ -133,6 +146,10 @@ export default function BuscarSuscripcionPage() {
       if (!userId) {
         throw new Error('ID de usuario no disponible');
       }
+
+      // Determinar si es entrada o salida
+      const type = searchResult.user?.hasOpenEntry ? 'exit' : 'entry';
+      setActionType(type);
 
       // Paso 2: Registrar entrada o salida
       const registerResponse = await fetch('/api/super-admin/register-access', {
@@ -258,16 +275,9 @@ export default function BuscarSuscripcionPage() {
       }
     } catch (err) {
       const errorMsg =
-        err instanceof Error
-          ? err.message
-          : `Error al registrar ${type === 'entry' ? 'entrada' : 'salida'}`;
+        err instanceof Error ? err.message : 'Error al registrar acceso';
       setError(errorMsg);
-      addToast(
-        `Error en ${type === 'entry' ? 'entrada' : 'salida'}`,
-        'error',
-        5000,
-        errorMsg
-      );
+      addToast('Error al registrar acceso', 'error', 5000, errorMsg);
     } finally {
       setLoading(false);
       setActionType(null);
@@ -551,17 +561,20 @@ export default function BuscarSuscripcionPage() {
               </div>
             )}
 
-            {/* Botones de Registrar Entrada y Salida */}
+            {/* Botón Inteligente - Registrar Acceso */}
             <div className="xs:pt-3 flex flex-col gap-3 pt-2 sm:flex-row sm:justify-center sm:gap-4 sm:pt-4">
-              {/* Botón Registrar Entrada */}
               <button
                 type="button"
-                onClick={() => handleRegister('entry')}
+                onClick={handleRegister}
                 disabled={loading}
-                className="xs:px-5 xs:py-2.5 flex-1 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-green-500 hover:shadow-green-400/50 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-8 sm:py-3 sm:text-lg"
+                className={`xs:px-5 xs:py-2.5 flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-8 sm:py-3 sm:text-lg ${
+                  result?.user?.hasOpenEntry
+                    ? 'bg-red-600 hover:bg-red-500 hover:shadow-red-400/50 focus:ring-2 focus:ring-red-500'
+                    : 'bg-green-600 hover:bg-green-500 hover:shadow-green-400/50 focus:ring-2 focus:ring-green-500'
+                }`}
               >
-                {loading && actionType === 'entry' ? (
-                  <span className="flex items-center justify-center gap-2">
+                {loading ? (
+                  <span className="xs:gap-2 flex items-center justify-center gap-2 sm:gap-2">
                     <svg
                       className="xs:h-4 xs:w-4 h-4 w-4 animate-spin sm:h-5 sm:w-5"
                       xmlns="http://www.w3.org/2000/svg"
@@ -582,46 +595,14 @@ export default function BuscarSuscripcionPage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       />
                     </svg>
-                    Registrando...
+                    {actionType === 'entry'
+                      ? 'Registrando entrada...'
+                      : 'Registrando salida...'}
                   </span>
+                ) : result?.user?.hasOpenEntry ? (
+                  '✗ Registrar Salida'
                 ) : (
                   '✓ Registrar Entrada'
-                )}
-              </button>
-
-              {/* Botón Registrar Salida */}
-              <button
-                type="button"
-                onClick={() => handleRegister('exit')}
-                disabled={loading}
-                className="xs:px-5 xs:py-2.5 flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-md transition hover:bg-red-500 hover:shadow-red-400/50 focus:ring-2 focus:ring-red-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-8 sm:py-3 sm:text-lg"
-              >
-                {loading && actionType === 'exit' ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <svg
-                      className="xs:h-4 xs:w-4 h-4 w-4 animate-spin sm:h-5 sm:w-5"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                    Registrando...
-                  </span>
-                ) : (
-                  '✗ Registrar Salida'
                 )}
               </button>
             </div>

@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       coverImageKey: z.string().optional(),
       categoryid: z.number(), // Cambiado a number
       rating: z.number().optional(), // Cambiado a number
+      certificationTypeId: z.number().optional(),
       subjectIds: z.array(z.number()).optional(),
     });
 
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
       coverImageKey,
       categoryid,
       rating,
+      certificationTypeId,
       subjectIds = [],
     } = body;
 
@@ -79,6 +81,9 @@ export async function POST(req: NextRequest) {
       coverImageKey: coverImageKey ?? null,
       categoryid: Number(categoryid),
       rating: rating ? Number(rating) : null,
+      certificationTypeId: certificationTypeId
+        ? Number(certificationTypeId)
+        : null,
       creatorId: userId,
     });
     console.log('✅ Programa insertado con ID:', newProgram.id);
@@ -238,6 +243,7 @@ export async function PUT(req: NextRequest) {
       coverImageKey: z.string().optional(),
       categoryid: z.number(),
       rating: z.number().optional(),
+      certificationTypeId: z.number().optional(),
       subjectIds: z.array(z.number()).optional(),
     });
 
@@ -248,6 +254,7 @@ export async function PUT(req: NextRequest) {
       coverImageKey,
       categoryid,
       rating,
+      certificationTypeId,
       subjectIds = [],
     } = body;
 
@@ -258,6 +265,9 @@ export async function PUT(req: NextRequest) {
       coverImageKey,
       categoryid,
       rating,
+      certificationTypeId: certificationTypeId
+        ? Number(certificationTypeId)
+        : null,
       creatorId: userId,
     });
 

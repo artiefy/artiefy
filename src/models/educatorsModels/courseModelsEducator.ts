@@ -448,6 +448,7 @@ export const updateCourse = async (
 ) => {
   try {
     // 🔄 Sincroniza courseTypeId en tabla intermedia si existe
+    let mainCourseTypeId: number | null = null;
     if (
       updateData.courseTypeId !== undefined &&
       Array.isArray(updateData.courseTypeId)
@@ -474,11 +475,13 @@ export const updateCourse = async (
             courseTypeId: typeId,
           }))
         );
+        // ✅ Guardar el primer tipo como tipo principal en la tabla courses (legacy)
+        mainCourseTypeId = validTypeIds[0];
       }
-      // ✅ Si validTypeIds está vacío, ya se borraron todas las relaciones
+      // ✅ Si validTypeIds está vacío, ya se borraron todas las relaciones y courseTypeId será null
     }
 
-    // 🧼 Elimina courseTypeId para que no lo intente guardar en tabla principal
+    // 🧼 Elimina courseTypeId del objeto updateData (no se guarda directamente)
     const { courseTypeId, ...rest } = updateData;
 
     // 🧹 Limpia valores undefined
@@ -488,14 +491,17 @@ export const updateCourse = async (
 
     console.log('📝 [updateCourse] cleanedData (sin undefined):', cleanedData);
 
-    // ⏱️ Agrega updatedAt
+    // ⏱️ Agrega updatedAt y courseTypeId (si fue procesado)
     const dataToUpdate = {
       ...cleanedData,
       updatedAt: new Date(),
+      ...(mainCourseTypeId !== null && { courseTypeId: mainCourseTypeId }),
+      ...(mainCourseTypeId === null &&
+        updateData.courseTypeId !== undefined && { courseTypeId: null }),
     };
 
     console.log(
-      '📝 [updateCourse] dataToUpdate (con updatedAt):',
+      '📝 [updateCourse] dataToUpdate (con updatedAt y courseTypeId):',
       dataToUpdate
     );
     console.log('📝 [updateCourse] courseId:', courseId);

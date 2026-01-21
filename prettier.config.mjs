@@ -13,8 +13,6 @@ const config = {
   bracketSpacing: true,
   arrowParens: 'always',
   endOfLine: 'lf',
-  // Sin overrides de parser: dejamos que Prettier use sus parsers por defecto
-  // (babel/typescript), que sí están soportados por prettier-plugin-tailwindcss.
 };
 
 export default config;

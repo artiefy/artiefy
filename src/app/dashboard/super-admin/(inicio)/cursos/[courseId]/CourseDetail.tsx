@@ -362,7 +362,7 @@ if (typeof document !== 'undefined') {
 const FullscreenLoader = () => {
   return (
     <Portal>
-      <div className="bg-background/20 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/20 backdrop-blur-sm">
         <TechLoader />
       </div>
     </Portal>
@@ -897,6 +897,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         }
         if (response.ok && responseParametros.ok) {
           const data = (await response.json()) as Course;
+          console.log('🔍 [fetchCourse] Datos del curso recuperados:', {
+            id: data.id,
+            title: data.title,
+            courseTypes: data.courseTypes,
+            courseTypesLength: Array.isArray(data.courseTypes)
+              ? data.courseTypes.length
+              : 0,
+            courseTypeId: data.courseTypeId,
+          });
           setCourse(data);
           setCourseTypeId(
             Array.isArray(data.courseTypes)
@@ -1431,13 +1440,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       }))
     );
     setEditRating(course.rating);
-    setCourseTypeId(
-      Array.isArray(course.courseTypes)
-        ? course.courseTypes.map((type) => type.id)
-        : course.courseTypeId !== null && course.courseTypeId !== undefined
-          ? [course.courseTypeId]
-          : []
-    );
+    const newCourseTypeIds = Array.isArray(course.courseTypes)
+      ? course.courseTypes.map((type) => type.id)
+      : course.courseTypeId !== null && course.courseTypeId !== undefined
+        ? [course.courseTypeId]
+        : [];
+
+    console.log('📋 [handleEditCourse] courseTypes recibidos:', {
+      courseTypes: course.courseTypes,
+      courseTypeId: course.courseTypeId,
+      newCourseTypeIds,
+      count: newCourseTypeIds.length,
+    });
+
+    setCourseTypeId(newCourseTypeIds);
     setIsActive(course.isActive ?? true);
     setCurrentInstructor(course.instructor);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
@@ -1450,7 +1466,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -1516,7 +1532,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </p>
           <button
             onClick={fetchCourse}
-            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -1624,6 +1640,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     return (
       <div className="flex flex-col gap-3">
+        {/* Mostrar educador actual cuando no hay búsqueda abierta */}
+        {!isOpen && (
+          <div className="rounded border border-cyan-500/25 bg-cyan-500/5 px-2 py-1.5 sm:px-3 sm:py-2">
+            <div className="flex flex-col gap-0.5 sm:gap-1">
+              <p className="text-xs font-semibold tracking-tight text-cyan-400/70 uppercase sm:tracking-wide">
+                👨‍🏫{' '}
+                {displayEducator?.name ?? course.instructorName ?? 'Sin nombre'}
+              </p>
+              {displayEducator?.email && (
+                <p className="truncate text-xs text-cyan-400/60">
+                  {displayEducator.email}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Dropdown personalizado */}
         <div className="relative">
           <button
@@ -1633,8 +1666,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="font-medium">
-                  {displayEducator?.name ?? 'Sin nombre'}
+                <p className="text-xs font-semibold tracking-wide text-cyan-400/70 uppercase">
+                  {selectedInstructor ? 'Cambiar a' : 'Seleccionar educador'}
+                </p>
+                <p className="mt-1 font-medium">
+                  {displayEducator?.name ??
+                    course.instructorName ??
+                    'Sin nombre'}
                 </p>
                 {displayEducator?.email && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-cyan-400/70">
@@ -2601,7 +2639,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 setForumImage(null);
                                 setForumDocument(null);
                               }}
-                              className="px-3 py-2 text-xs text-white/60 hover:text-white transition-colors"
+                              className="px-3 py-2 text-xs text-white/60 transition-colors hover:text-white"
                             >
                               Limpiar archivos
                             </button>
@@ -2724,7 +2762,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         }`
                                       )
                                     }
-                                    className="group relative overflow-hidden rounded-lg border border-cyan-700/30 hover:border-cyan-500/60 transition-colors flex-shrink-0"
+                                    className="group relative flex-shrink-0 overflow-hidden rounded-lg border border-cyan-700/30 transition-colors hover:border-cyan-500/60"
                                   >
                                     <Image
                                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${
@@ -2733,7 +2771,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         )?.coverImageKey
                                       }`}
                                       alt="Imagen del foro"
-                                      className="h-24 w-24 object-cover group-hover:opacity-80 transition-opacity"
+                                      className="h-24 w-24 object-cover transition-opacity group-hover:opacity-80"
                                       width={96}
                                       height={96}
                                       loading="lazy"
@@ -2744,8 +2782,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         e.currentTarget.style.display = 'none';
                                       }}
                                     />
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
-                                      <ImageIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
+                                      <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
                                     </div>
                                   </button>
                                 )}
@@ -2799,7 +2837,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     onClick={() =>
                                       setShowAudioRecorder(!showAudioRecorder)
                                     }
-                                    className="group cursor-pointer w-full"
+                                    className="group w-full cursor-pointer"
                                   >
                                     <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
                                       <div className="text-lg">♪</div>
@@ -2830,7 +2868,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                                   {/* Menú desplegable con grabador */}
                                   {showAudioRecorder && (
-                                    <div className="absolute bottom-full right-0 z-50 mb-2 w-80 rounded-lg border border-cyan-700/30 bg-slate-900 p-4 shadow-lg">
+                                    <div className="absolute right-0 bottom-full z-50 mb-2 w-80 rounded-lg border border-cyan-700/30 bg-slate-900 p-4 shadow-lg">
                                       <div className="space-y-3">
                                         <button
                                           type="button"
@@ -2965,7 +3003,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     return (
                                       <div
                                         key={post.id}
-                                        className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow hover:border-cyan-700/60 transition-all"
+                                        className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow transition-all hover:border-cyan-700/60"
                                       >
                                         <div className="flex gap-4">
                                           {/* Avatar */}
@@ -2974,8 +3012,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                           </div>
 
                                           {/* Content */}
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 flex-wrap">
+                                          <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-2">
                                               <span className="text-base font-semibold text-cyan-300">
                                                 {userName || 'Usuario'}
                                               </span>
@@ -3023,7 +3061,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         <Image
                                                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`}
                                                           alt="Imagen del post"
-                                                          className="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                          className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-110"
                                                           loading="lazy"
                                                           width={500}
                                                           height={256}
@@ -3035,8 +3073,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             );
                                                           }}
                                                         />
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors duration-300">
-                                                          <ImageIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/30">
+                                                          <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                                                         </div>
                                                       </button>
                                                     )}
@@ -3064,7 +3102,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                     <Music className="h-5 w-5 flex-shrink-0 text-cyan-400/80" />
                                                     <audio
                                                       controls
-                                                      className="flex-1 h-8"
+                                                      className="h-8 flex-1"
                                                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.audioKey}`}
                                                     />
                                                   </div>
@@ -3100,7 +3138,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       new Set(expandedPosts)
                                                     );
                                                   }}
-                                                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white relative"
+                                                  className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                                   title="Comentarios"
                                                 >
                                                   <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500/20 text-xs font-semibold text-cyan-400">
@@ -3148,7 +3186,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         new Set(expandedPosts)
                                                       );
                                                     }}
-                                                    className="text-sm text-gray-400 hover:text-cyan-300 transition-colors"
+                                                    className="text-sm text-gray-400 transition-colors hover:text-cyan-300"
                                                   >
                                                     Ver{' '}
                                                     {postReplies[post.id]
@@ -3170,7 +3208,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                           new Set(expandedPosts)
                                                         );
                                                       }}
-                                                      className="text-sm text-gray-400 hover:text-cyan-300 transition-colors"
+                                                      className="text-sm text-gray-400 transition-colors hover:text-cyan-300"
                                                     >
                                                       Ocultar respuestas
                                                     </button>
@@ -3195,8 +3233,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                   replyUserInitial
                                                                 }
                                                               </div>
-                                                              <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                              <div className="min-w-0 flex-1">
+                                                                <div className="flex flex-wrap items-center gap-2">
                                                                   <span className="text-sm font-semibold text-white">
                                                                     {
                                                                       replyUserName
@@ -3237,7 +3275,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                       <>
                                                                         {reply.imageKey && (
                                                                           <button
-                                                                            className="relative h-40 w-full rounded-lg border border-cyan-700/40 overflow-hidden bg-gray-900 hover:shadow-lg hover:shadow-cyan-500/20 transition-all cursor-pointer group"
+                                                                            className="group relative h-40 w-full cursor-pointer overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20"
                                                                             onClick={() =>
                                                                               setLightboxImage(
                                                                                 `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`
@@ -3247,7 +3285,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                             <Image
                                                                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
                                                                               alt="Respuesta"
-                                                                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                                                                               width={
                                                                                 500
                                                                               }
@@ -3258,10 +3296,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                           </button>
                                                                         )}
                                                                         {reply.videoKey && (
-                                                                          <div className="relative h-40 w-full rounded-lg border border-cyan-700/40 overflow-hidden bg-gray-900 hover:shadow-lg hover:shadow-cyan-500/20 transition-all">
+                                                                          <div className="relative h-40 w-full overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20">
                                                                             <video
                                                                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
-                                                                              className="w-full h-full object-cover"
+                                                                              className="h-full w-full object-cover"
                                                                               controls
                                                                             />
                                                                           </div>
@@ -3293,9 +3331,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                               {replyingToPostId.has(
                                                 post.id
                                               ) && (
-                                                <div className="mt-4 space-y-3 pl-4 border-l-2 border-cyan-700/30">
+                                                <div className="mt-4 space-y-3 border-l-2 border-cyan-700/30 pl-4">
                                                   <textarea
-                                                    className="w-full rounded-xl border border-cyan-700/30 bg-slate-900 p-3 text-sm text-white placeholder:text-gray-500 resize-none focus:border-primary focus:outline-none"
+                                                    className="w-full resize-none rounded-xl border border-cyan-700/30 bg-slate-900 p-3 text-sm text-white placeholder:text-gray-500 focus:border-primary focus:outline-none"
                                                     placeholder="Escribe tu respuesta..."
                                                     value={
                                                       replyMessage[post.id] ||
@@ -3396,7 +3434,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                           >
                                                             <X className="h-4 w-4" />
                                                           </button>
-                                                          <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-2 py-1 rounded">
+                                                          <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
                                                             {
                                                               replyImage[
                                                                 post.id
@@ -3433,7 +3471,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                           >
                                                             <X className="h-4 w-4" />
                                                           </button>
-                                                          <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-2 py-1 rounded">
+                                                          <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
                                                             {
                                                               replyVideo[
                                                                 post.id
@@ -3626,7 +3664,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                     >
                                                       {isSubmittingReply ? (
                                                         <>
-                                                          <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent inline-block mr-1" />
+                                                          <div className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                                           Enviando...
                                                         </>
                                                       ) : (
@@ -4088,14 +4126,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <button
             onClick={() => setLightboxImage(null)}
-            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
           >
             <X className="h-6 w-6" />
           </button>
           <Image
             src={lightboxImage}
             alt="Imagen ampliada"
-            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
             width={1000}
             height={900}
           />

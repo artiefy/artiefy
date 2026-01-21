@@ -253,6 +253,11 @@ export default function AdminDashboard() {
   const [waLoading, setWaLoading] = useState(false);
   const [waError, setWaError] = useState<string | null>(null);
 
+  // ✅ Estados para programación de WhatsApp
+  const [waScheduledDate, setWaScheduledDate] = useState<string>('');
+  const [waScheduledTime, setWaScheduledTime] = useState<string>('');
+  const [waSendNow, setWaSendNow] = useState<boolean>(true); // true = enviar ahora, false = programar
+
   const [showPassword, setShowPassword] = useState(false);
   if (typeof showPassword === 'string' && showPassword) {
     // Variable utilizada para evitar warnings, no afecta la lógica
@@ -890,7 +895,7 @@ export default function AdminDashboard() {
   };
 
   const sendWhatsApp = async () => {
-    console.log('📲 Enviando WhatsApp (modal separado)...');
+    console.log('📲 Enviando/Programando WhatsApp...');
 
     const whatsappNumbers = buildWhatsappNumbers();
     if (whatsappNumbers.length === 0) {
@@ -914,58 +919,115 @@ export default function AdminDashboard() {
       return;
     }
 
+    // ✅ Validar si está programado
+    if (!waSendNow && (!waScheduledDate || !waScheduledTime)) {
+      setNotification({
+        message: 'Debes seleccionar una fecha y hora para programar',
+        type: 'error',
+      });
+      return;
+    }
+
     setLoadingWhatsApp(true);
 
     try {
       const textMessage = `${waSubjectText.trim() ? waSubjectText.trim() + '\n\n' : ''}${stripHtml(waMessageText)}`;
 
-      for (const number of whatsappNumbers) {
-        const to = number;
+      // ✅ Si está programado, guardar en BD
+      if (!waSendNow) {
+        // Convertir hora local a UTC sumando 5 horas (Colombia UTC-5)
+        const [hours, minutes] = waScheduledTime.split(':');
+        let utcHours = parseInt(hours) + 5;
+        let utcDate = waScheduledDate;
 
-        const body = useTemplate
-          ? {
-              to,
-              forceTemplate: true,
-              templateName: waSelectedTemplate,
-              languageCode:
-                selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
-              variables: waVariables,
-            }
-          : textOnly
+        // Si sumamos 5 horas y pasamos las 24, pasar al día siguiente
+        if (utcHours >= 24) {
+          utcHours = utcHours - 24;
+          const date = new Date(waScheduledDate);
+          date.setDate(date.getDate() + 1);
+          utcDate = date.toISOString().split('T')[0];
+        }
+
+        const utcTimeString = `${String(utcHours).padStart(2, '0')}:${minutes}:00Z`;
+        const isoString = `${utcDate}T${utcTimeString}`;
+
+        const scheduleResponse = await fetch(
+          '/api/super-admin/whatsapp/schedule',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              phoneNumbers: whatsappNumbers,
+              messageText: textMessage,
+              waSubjectText: waSubjectText || null,
+              templateName: useTemplate ? waSelectedTemplate : null,
+              variables: useTemplate ? waVariables : null,
+              scheduledTime: isoString,
+              codigoPais,
+            }),
+          }
+        );
+
+        if (!scheduleResponse.ok) {
+          const error = await scheduleResponse.json();
+          throw new Error(error.error || 'Error al programar mensaje');
+        }
+
+        const result = await scheduleResponse.json();
+        setNotification({
+          message: result.message || 'Mensaje programado correctamente',
+          type: 'success',
+        });
+      } else {
+        // ✅ Enviar ahora (lógica original)
+        for (const number of whatsappNumbers) {
+          const to = number;
+
+          const body = useTemplate
             ? {
                 to,
-                text: textMessage,
+                forceTemplate: true,
+                templateName: waSelectedTemplate,
+                languageCode:
+                  selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
+                variables: waVariables,
               }
-            : {
-                to,
-                text: textMessage,
-                ensureSession: true,
-                sessionTemplate: 'hello_world',
-                sessionLanguage: 'en_US',
-              };
+            : textOnly
+              ? {
+                  to,
+                  text: textMessage,
+                }
+              : {
+                  to,
+                  text: textMessage,
+                  ensureSession: true,
+                  sessionTemplate: 'hello_world',
+                  sessionLanguage: 'en_US',
+                };
 
-        const resp = await fetch('/api/super-admin/whatsapp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
+          const resp = await fetch('/api/super-admin/whatsapp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
 
-        const json = await resp.json().catch(() => ({}));
-        console.log('📗 [WA][FRONT] Respuesta backend:', {
-          status: resp.status,
-          ok: resp.ok,
-          json,
-        });
+          const json = await resp.json().catch(() => ({}));
+          console.log('📗 [WA][FRONT] Respuesta backend:', {
+            status: resp.status,
+            ok: resp.ok,
+            json,
+          });
 
-        if (!resp.ok) {
-          console.error('❌ [WA][FRONT] Error enviando WhatsApp:', json);
+          if (!resp.ok) {
+            console.error('❌ [WA][FRONT] Error enviando WhatsApp:', json);
+          }
         }
-      }
 
-      setNotification({
-        message: 'WhatsApp enviado correctamente',
-        type: 'success',
-      });
+        setNotification({
+          message: 'WhatsApp enviado correctamente',
+          type: 'success',
+        });
+      }
 
       // Limpieza SOLO WhatsApp
       setNumerosLocales('');
@@ -974,11 +1036,18 @@ export default function AdminDashboard() {
       setWaVariables([]);
       setWaSubjectText('');
       setWaMessageText('');
+      setWaScheduledDate('');
+      setWaScheduledTime('');
+      setWaSendNow(true);
       setShowWhatsAppModal(false);
     } catch (error) {
-      console.error('❌ Error al enviar WhatsApp:', error);
+      console.error('❌ Error al enviar/programar WhatsApp:', error);
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : 'Error al enviar/programar WhatsApp';
       setNotification({
-        message: 'Error al enviar WhatsApp',
+        message: errorMsg,
         type: 'error',
       });
     } finally {
@@ -1900,9 +1969,9 @@ export default function AdminDashboard() {
       <div className="p-4 sm:p-6">
         {/* Header with gradient effect */}
         <header className="group relative overflow-hidden rounded-lg p-[1px]">
-          <div className="animate-gradient absolute -inset-0.5 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
+          <div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
           <div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
-            <h1 className="text-primary flex items-center gap-3 text-xl font-extrabold tracking-tight sm:text-2xl lg:text-3xl">
+            <h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
               Administrador de usuarios
             </h1>
           </div>
@@ -1913,7 +1982,7 @@ export default function AdminDashboard() {
         <div className="mb-6 flex flex-wrap gap-2">
           <button
             onClick={() => setShowCreateForm(true)}
-            className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">Crear Usuario</span>
             <UserPlus className="relative z-10 size-3.5 sm:size-4" />
@@ -2038,7 +2107,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setShowAssignModal(true)}
-            className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">
               Asignar a Curso o Programa
@@ -2048,7 +2117,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setShowAnuncioModal(true)}
-            className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">Crear Anuncio</span>
             <UserPlus className="relative z-10 size-3.5 sm:size-4" />
@@ -2056,7 +2125,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={handleOpenWhatsApp}
-            className="group/button bg-background relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs text-green-400 transition-all hover:bg-green-500/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-green-400 transition-all hover:bg-green-500/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">Enviar WhatsApp</span>
             <Send className="relative z-10 size-3.5 sm:size-4" />
@@ -2065,7 +2134,7 @@ export default function AdminDashboard() {
 
           <button
             onClick={() => setShowEmailModal(true)}
-            className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">Enviar Correo</span>
             <Paperclip className="relative z-10 size-3.5 sm:size-4" />
@@ -2194,8 +2263,8 @@ export default function AdminDashboard() {
                       </td>
                       <td className="px-2 py-3 sm:px-4 sm:py-4">
                         <div className="flex items-center gap-2 sm:gap-3">
-                          <div className="bg-primary/10 size-8 rounded-full p-1 sm:size-10 sm:p-2">
-                            <span className="text-primary flex h-full w-full items-center justify-center text-xs font-semibold sm:text-sm">
+                          <div className="size-8 rounded-full bg-primary/10 p-1 sm:size-10 sm:p-2">
+                            <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-primary sm:text-sm">
                               {user.firstName[0]}
                               {user.lastName[0]}
                             </span>
@@ -3586,20 +3655,86 @@ export default function AdminDashboard() {
               className="mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white"
             />
 
+            {/* ✅ Sección de Programación */}
+            <div className="mb-4 rounded-lg border border-gray-700 p-4">
+              <h3 className="mb-3 font-semibold">Programar envío</h3>
+
+              {/* Toggle Enviar ahora / Programar */}
+              <div className="mb-4 flex gap-4">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={waSendNow}
+                    onChange={() => {
+                      setWaSendNow(true);
+                      setWaScheduledDate('');
+                      setWaScheduledTime('');
+                    }}
+                    className="cursor-pointer"
+                  />
+                  <span className="text-sm">Enviar ahora</span>
+                </label>
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="radio"
+                    checked={!waSendNow}
+                    onChange={() => setWaSendNow(false)}
+                    className="cursor-pointer"
+                  />
+                  <span className="text-sm">Programar para más tarde</span>
+                </label>
+              </div>
+
+              {/* Campos de fecha y hora (solo si no es "enviar ahora") */}
+              {!waSendNow && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1 block text-sm">Fecha</label>
+                    <input
+                      type="date"
+                      value={waScheduledDate}
+                      onChange={(e) => setWaScheduledDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                      required={!waSendNow}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm">Hora (HH:MM)</label>
+                    <input
+                      type="time"
+                      value={waScheduledTime}
+                      onChange={(e) => setWaScheduledTime(e.target.value)}
+                      className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                      required={!waSendNow}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400">
+                    Se enviará automáticamente a la hora especificada
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Botón enviar */}
-            <div className="mt-4 flex justify-center">
+            <div className="mt-4 flex justify-center gap-3">
               <button
                 onClick={sendWhatsApp}
                 className="rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:opacity-50"
-                disabled={loadingWhatsApp}
+                disabled={
+                  loadingWhatsApp ||
+                  (!waSendNow && (!waScheduledDate || !waScheduledTime))
+                }
               >
                 {loadingWhatsApp ? (
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Enviando WhatsApp…
+                    {waSendNow ? 'Enviando...' : 'Programando...'}
                   </div>
+                ) : waSendNow ? (
+                  'Enviar WhatsApp Ahora'
                 ) : (
-                  'Enviar WhatsApp'
+                  `Programar para ${waScheduledDate} a las ${waScheduledTime}`
                 )}
               </button>
             </div>

@@ -177,10 +177,15 @@ export default function Page() {
     rating: number,
     coverImageKey: string,
     fileName: string,
-    subjectIds: number[]
+    subjectIds: number[],
+    certificationTypeId?: number | null
   ) => {
     if (!user) return;
     console.log('📤 Enviando programa con subjectIds:', subjectIds);
+    console.log(
+      '📤 Enviando programa con certificationTypeId:',
+      certificationTypeId
+    );
 
     try {
       setUploading(true);
@@ -249,6 +254,7 @@ export default function Page() {
             rating,
             creatorId,
             subjectIds, // ✅ Enviar materias
+            certificationTypeId,
           }),
         });
 
@@ -269,6 +275,7 @@ export default function Page() {
             rating,
             creatorId,
             subjectIds,
+            certificationTypeId,
           }),
         });
 
@@ -387,7 +394,7 @@ export default function Page() {
   if (uploading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -429,9 +436,9 @@ export default function Page() {
     <>
       <div className="p-4 sm:p-6">
         <header className="group relative overflow-hidden rounded-lg p-[1px]">
-          <div className="animate-gradient absolute -inset-0.5 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
+          <div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
           <div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
-            <h1 className="text-primary flex items-center gap-3 text-xl font-extrabold tracking-tight sm:text-2xl lg:text-3xl">
+            <h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
               Gestión de Programas
             </h1>
           </div>
@@ -490,7 +497,7 @@ export default function Page() {
             )}
             <button
               onClick={handleCreateProgram}
-              className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:w-[220px] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+              className="group/button relative inline-flex w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:w-[220px] sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
             >
               <span className="relative z-10 font-medium">
                 Agregar Programa

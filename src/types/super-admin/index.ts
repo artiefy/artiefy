@@ -293,6 +293,7 @@ export interface Program {
   creatorId: string;
   rating: number | null; // Allow null
   categoryid: number;
+  certificationTypeId?: number | null;
   creator?: User;
   category?: Category;
   materias?: MateriaWithCourse[];
