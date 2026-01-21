@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
+import { Play } from 'lucide-react';
 import {
+  FaCalendarAlt,
   FaCheckCircle,
   FaChevronDown,
   FaChevronUp,
@@ -24,7 +26,6 @@ import {
   AlertTitle,
 } from '~/components/estudiantes/ui/alert';
 import { Button } from '~/components/estudiantes/ui/button';
-import { Progress } from '~/components/estudiantes/ui/progress';
 import {
   Tooltip,
   TooltipContent,
@@ -35,7 +36,7 @@ import { sortLessons } from '~/utils/lessonSorting';
 
 import CourseModalTeams from './CourseModalTeams';
 
-import type { ClassMeeting, Course } from '~/types';
+import type { Activity, ClassMeeting, Course, Lesson } from '~/types';
 
 import '~/styles/buttonclass.css';
 import '~/styles/buttonneon.css';
@@ -50,6 +51,20 @@ interface CourseContentProps {
   isSignedIn: boolean;
   classMeetings?: import('~/types').ClassMeeting[]; // <-- Añade classMeetings aquí
   viewMode?: 'live' | 'recorded';
+  gradeSummary?: {
+    finalGrade: number;
+    courseCompleted?: boolean;
+    parameters: {
+      name: string;
+      grade: number;
+      weight: number;
+      activities: {
+        id: number;
+        name: string;
+        grade: number;
+      }[];
+    }[];
+  } | null;
 }
 
 export const dynamic = 'force-dynamic';
@@ -121,7 +136,9 @@ function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
         'es-CO'
       )
     : '';
+
   if (!day || !year || !horaInicio) return '';
+
   return (
     <>
       {/* En móviles: apilar fecha y hora verticalmente con tamaños más pequeños */}
@@ -153,17 +170,35 @@ function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
   );
 }
 
-interface Lesson {
-  id: number;
-  title: string;
-  description?: string;
-  duration: number;
-  orderIndex?: number;
-  isLocked?: boolean;
-  isNew?: boolean;
-  porcentajecompletado?: number;
-  // ...otros campos necesarios...
-}
+const isLessonFullyCompleted = (lesson: Lesson) => {
+  const hasVideo = !!lesson.coverVideoKey && lesson.coverVideoKey !== 'none';
+  const activities = lesson.activities ?? [];
+  const hasActivities = activities.length > 0;
+  const activitiesCompleted = hasActivities
+    ? activities.every(
+        (activity: Activity) =>
+          activity.isCompleted || (activity.userProgress ?? 0) >= 100
+      )
+    : false;
+  const videoCompleted = (lesson.porcentajecompletado ?? 0) >= 100;
+
+  if (hasVideo && hasActivities) {
+    return videoCompleted && activitiesCompleted;
+  }
+
+  if (hasVideo) {
+    return videoCompleted;
+  }
+
+  if (hasActivities) {
+    return activitiesCompleted;
+  }
+
+  return lesson.isCompleted ?? false;
+};
+
+const getLessonDisplayProgress = (lesson: Lesson) =>
+  isLessonFullyCompleted(lesson) ? 100 : 0;
 
 export function CourseContent({
   course,
@@ -173,10 +208,10 @@ export function CourseContent({
   isSignedIn,
   classMeetings = [],
   viewMode = 'live',
+  gradeSummary,
 }: CourseContentProps) {
   // --- Clases grabadas y en vivo ---
   const [expandedLesson, setExpandedLesson] = useState<number | null>(null);
-  const [expandedRecorded, setExpandedRecorded] = useState<number | null>(null);
   const [openRecordedModal, setOpenRecordedModal] = useState(false);
   const [currentRecordedVideo, setCurrentRecordedVideo] = useState<{
     title: string;
@@ -319,13 +354,6 @@ export function CourseContent({
     [expandedLesson, isEnrolled]
   );
 
-  const toggleRecorded = useCallback(
-    (meetingId: number) => {
-      setExpandedRecorded(expandedRecorded === meetingId ? null : meetingId);
-    },
-    [expandedRecorded]
-  );
-
   // Si la prop classMeetings cambia, sincronizar progresos de forma asíncrona
   useEffect(() => {
     if (!Array.isArray(classMeetings)) return;
@@ -378,6 +406,7 @@ export function CourseContent({
         (course.courseType?.requiredSubscriptionLevel === 'none' ||
           isSubscriptionActive) &&
         !lesson.isLocked;
+      const displayProgress = getLessonDisplayProgress(lesson);
 
       const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault();
@@ -475,11 +504,11 @@ export function CourseContent({
                 >
                   <div
                     className="h-full bg-accent transition-all"
-                    style={{ width: `${lesson.porcentajecompletado}%` }}
+                    style={{ width: `${displayProgress}%` }}
                   />
                 </div>
                 <span className="text-xs" style={{ color: '#94a3b8' }}>
-                  {lesson.porcentajecompletado}%
+                  {displayProgress}%
                 </span>
                 <a
                   className="group inline-flex shrink-0 items-center gap-2 overflow-hidden rounded-full px-4 py-2 text-sm font-medium transition-all"
@@ -541,12 +570,6 @@ export function CourseContent({
     course.courseType?.requiredSubscriptionLevel,
     hoveredLesson,
   ]);
-
-  const isFullyCompleted = useMemo(() => {
-    return course.lessons?.every(
-      (lesson) => lesson.porcentajecompletado === 100
-    );
-  }, [course.lessons]);
 
   const handleSubscriptionRedirect = useCallback(() => {
     window.open('/planes', '_blank', 'noopener,noreferrer');
@@ -808,15 +831,6 @@ export function CourseContent({
       )}
     >
       {/* Removed bg-white class from the main container */}
-
-      {isEnrolled && isFullyCompleted && (
-        <div className="artiefy-check-container mb-4">
-          <h2 className="animate-pulse bg-gradient-to-r from-green-400 to-emerald-600 bg-clip-text text-3xl font-extrabold text-transparent drop-shadow-[0_2px_2px_rgba(0,200,0,0.4)]">
-            ¡Curso Completado!
-          </h2>
-          <div className="artiefy-static-checkmark" />
-        </div>
-      )}
 
       {isEnrolled &&
         !isSubscriptionReallyActive &&
@@ -1580,173 +1594,80 @@ export function CourseContent({
                       'transition-all duration-300',
                       shouldBlurContent &&
                         'pointer-events-none opacity-100 blur-[2px]',
-                      !showRecordedClasses && 'hidden' // Hide only recorded classes
+                      !showRecordedClasses && 'hidden'
                     )}
                   >
-                    <div className="space-y-4">
-                      {recordedMeetings.map((meeting: ClassMeeting) => {
-                        const isExpanded = expandedRecorded === meeting.id;
-                        const _durationMinutes = getDurationMinutes(meeting);
+                    <div className="space-y-3">
+                      {recordedMeetings.map((meeting: ClassMeeting, idx) => {
                         const currentProgress =
                           meetingsProgress[meeting.id] ?? meeting.progress ?? 0;
+                        const dateLabel =
+                          formatMobileDate(meeting.startDateTime) ||
+                          (meeting.startDateTime
+                            ? formatBogota(meeting.startDateTime, {
+                                weekday: 'short',
+                                month: 'short',
+                                day: 'numeric',
+                              }) || 'Fecha por definir'
+                            : 'Fecha por definir');
+                        const timeLabel =
+                          formatStartTime(meeting.startDateTime) || '';
+                        const isCompleted = currentProgress >= 100;
+                        const indexLabel = String(idx + 1).padStart(2, '0');
 
                         return (
-                          <div
-                            key={meeting.id}
-                            className={cn(
-                              'relative overflow-hidden rounded-[12px] border',
-                              'sm:hover:neon-live-class'
-                            )}
-                            style={{
-                              backgroundColor: '#061c37',
-                              borderColor: 'hsla(217, 33%, 17%, 0.5)',
-                            }}
-                          >
+                          <div key={meeting.id} className="space-y-1">
                             <button
-                              className="flex w-full items-center justify-between px-6 py-4 text-left"
-                              onClick={() => toggleRecorded(meeting.id)}
+                              type="button"
+                              disabled={!isSubscriptionActive}
+                              onClick={() =>
+                                isSubscriptionActive &&
+                                handleOpenRecordedModal(meeting)
+                              }
+                              className={cn(
+                                'group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200',
+                                'border-border/50 bg-card/50 hover:border-border hover:bg-card',
+                                !isSubscriptionActive &&
+                                  'cursor-not-allowed opacity-60'
+                              )}
                             >
-                              <div className="flex w-full items-center justify-between">
-                                <div className="flex flex-col gap-1.5">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <span
-                                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-emerald-200 uppercase"
-                                      style={{ letterSpacing: '0.08em' }}
-                                    >
-                                      Grabada
-                                    </span>
-                                    <h3 className="text-lg leading-snug font-semibold text-slate-100">
-                                      {meeting.title ?? `Clase ${meeting.id}`}
-                                    </h3>
-                                  </div>
-                                  <div
-                                    className="flex flex-col gap-2 text-xs sm:flex-row sm:items-center sm:text-sm"
-                                    style={{ color: '#94a3b8' }}
-                                  >
-                                    <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1">
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        className="h-4 w-4"
-                                        style={{ color: '#94a3b8' }}
-                                      >
-                                        <path d="M8 2v4"></path>
-                                        <path d="M16 2v4"></path>
-                                        <rect
-                                          width="18"
-                                          height="18"
-                                          x="3"
-                                          y="4"
-                                          rx="2"
-                                        ></rect>
-                                        <path d="M3 10h18"></path>
-                                      </svg>
-                                      {formatMobileDate(
-                                        meeting.startDateTime
-                                      ) ||
-                                        (meeting.startDateTime
-                                          ? formatBogota(
-                                              meeting.startDateTime,
-                                              {
-                                                weekday: 'short',
-                                                month: 'short',
-                                                day: 'numeric',
-                                              }
-                                            ) || 'Fecha por definir'
-                                          : 'Fecha por definir')}
-                                    </span>
-
-                                    <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1">
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        className="h-4 w-4"
-                                        style={{ color: '#94a3b8' }}
-                                      >
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <polyline points="12 6 12 12 16 14"></polyline>
-                                      </svg>
-                                      <span>
-                                        {formatDurationLabel(
-                                          getDurationMinutes(meeting)
-                                        )}
-                                      </span>
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  {isExpanded ? (
-                                    <FaChevronUp className="text-gray-400" />
-                                  ) : (
-                                    <FaChevronDown className="text-gray-400" />
-                                  )}
+                              <div className="relative flex h-10 w-16 shrink-0 items-center justify-center rounded-lg bg-accent/20">
+                                <Play className="h-4 w-4 text-accent transition-transform group-hover:scale-110" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-muted-foreground">
+                                    {indexLabel}
+                                  </span>
+                                  <h4 className="truncate text-sm font-medium text-foreground">
+                                    {meeting.title ?? `Clase ${indexLabel}`}
+                                  </h4>
                                 </div>
                               </div>
-                            </button>
-                            {isExpanded && (
-                              <div className="border-t border-gray-700 bg-gray-900 px-6 py-4">
-                                <p className="mb-4 text-gray-300">
-                                  {
-                                    'Clase grabada disponible para repaso y consulta.'
-                                  }
-                                </p>
-                                {/* Barra de progreso de la clase grabada (shadcn) */}
-                                <div className="mb-4">
-                                  <div className="mb-2 flex items-center justify-between">
-                                    <p className="text-sm font-semibold text-gray-300">
-                                      Progreso De La Clase Grabada:
-                                    </p>
-                                    <span className="text-xs text-gray-400">
-                                      {currentProgress}%
-                                    </span>
-                                  </div>
-                                  <Progress
-                                    value={currentProgress}
-                                    showPercentage={true}
-                                    className="transition-none"
-                                  />
+                              <div className="flex shrink-0 items-center gap-3 text-muted-foreground">
+                                <div className="flex items-center gap-1 text-xs">
+                                  <FaCalendarAlt className="h-3.5 w-3.5" />
+                                  <span>{dateLabel}</span>
                                 </div>
-                                {/* Botón para ver clase grabada, deshabilitado si no hay suscripción */}
-                                <button
-                                  className={cn(
-                                    'buttonclass text-black transition-none active:scale-95',
-                                    !isSubscriptionActive &&
-                                      'pointer-events-none cursor-not-allowed opacity-60'
-                                  )}
-                                  onClick={() =>
-                                    isSubscriptionActive &&
-                                    handleOpenRecordedModal(meeting)
-                                  }
-                                  disabled={!isSubscriptionActive}
-                                >
-                                  <div className="outline" />
-                                  <div className="state state--default">
-                                    <div className="icon">
-                                      <FaVideo className="text-green-600" />
-                                    </div>
-                                    <span>Clase Grabada</span>
-                                  </div>
-                                </button>
-                                {!isSubscriptionActive && (
-                                  <div className="mt-2 text-xs font-semibold text-red-600">
-                                    Debes tener una suscripción activa para ver
-                                    la clase grabada.
+                                {timeLabel && (
+                                  <div className="flex items-center gap-1 text-xs">
+                                    <FaClock className="h-3.5 w-3.5" />
+                                    <span>{timeLabel}</span>
                                   </div>
                                 )}
+                                {isCompleted ? (
+                                  <FaCheckCircle className="h-4 w-4 text-accent" />
+                                ) : (
+                                  <span className="text-xs font-semibold text-accent">
+                                    {currentProgress}%
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                            {!isSubscriptionActive && (
+                              <div className="text-xs font-semibold text-red-600">
+                                Debes tener una suscripción activa para ver la
+                                clase grabada.
                               </div>
                             )}
                           </div>
@@ -1779,9 +1700,9 @@ export function CourseContent({
               </span>
               Clases del Curso
             </div>
-            <span className="text-sm font-light text-[#94a3b8]">
-              {course.lessons?.length || 0} Clases
-            </span>
+            <div className="inline-flex items-center rounded-full border border-primary/30 px-2.5 py-0.5 text-xs font-semibold text-primary transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+              {course.lessons?.length || 0} clases
+            </div>
           </h2>
           <div
             className={cn(
@@ -1791,6 +1712,15 @@ export function CourseContent({
             )}
           >
             <div className="space-y-4">{memoizedLessons}</div>
+            {course.lessons && course.lessons.length === 0 && (
+              <Alert className="mt-4">
+                <AlertTitle>No hay clases disponibles</AlertTitle>
+                <AlertDescription>
+                  Este curso aún no tiene clases publicadas. Pronto estarán
+                  disponibles.
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         </div>
       )}

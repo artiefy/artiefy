@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { type LessonWithProgress } from '~/types';
 
@@ -25,13 +25,6 @@ export default function LessonPlayer({
   const playerRef = useRef<VideoPlayerHandle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const startAt = useMemo(() => {
-    if (!lesson.duration || !lesson.porcentajecompletado) return 0;
-    return Math.round(
-      (lesson.porcentajecompletado / 100) * (lesson.duration * 60)
-    );
-  }, [lesson.duration, lesson.porcentajecompletado]);
-
   const handleVideoEndWrapper = useCallback(() => {
     setIsPlaying(false);
     handleProgressUpdate(100);
@@ -52,7 +45,7 @@ export default function LessonPlayer({
                 onTimeUpdate={onTimeUpdate}
                 isVideoCompleted={progress === 100}
                 isLocked={isLocked}
-                startAt={startAt}
+                resumeProgress={progress}
                 onPlaybackChange={setIsPlaying}
                 ref={playerRef}
               />

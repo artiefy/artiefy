@@ -7,6 +7,7 @@ import { programas, users } from '~/server/db/schema';
 import {
   type BaseCourse,
   type Category,
+  type Lesson,
   type MateriaWithCourse,
   type Program,
 } from '~/types';
@@ -39,12 +40,19 @@ interface ProgramQueryResult {
       title: string;
       description: string | null;
       coverImageKey: string | null;
+      coverVideoCourseKey: string | null;
       categoryid: number;
       creatorId: string;
       instructor: string;
       createdAt: Date | null; // <-- agrega estos campos
       updatedAt: Date | null; // <-- agrega estos campos
       rating: number | null; // <-- add this
+      modalidadesid: number | null;
+      nivelid: number | null;
+      horario: string | null;
+      espacios: string | null;
+      is_featured: boolean | null;
+      is_top: boolean | null;
       creator: {
         id: string;
         name: string;
@@ -61,9 +69,50 @@ interface ProgramQueryResult {
         is_featured: boolean | null;
       };
       isActive: boolean | null;
+      lessons?: {
+        id: number;
+        title: string;
+        description: string | null;
+        duration: number;
+        orderIndex: number | null;
+        coverImageKey: string;
+        coverVideoKey: string;
+        courseId: number;
+        createdAt: Date | null;
+        updatedAt: Date | null;
+        lastUpdated: Date | null;
+        resourceKey: string | null;
+        resourceNames: string | null;
+      }[];
     };
   }[];
 }
+
+const parseResourceNames = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === 'string');
+  }
+
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (item): item is string => typeof item === 'string'
+        );
+      }
+    } catch (_error) {
+      // Ignorar errores de parseo, se maneja abajo
+    }
+
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+};
 
 export const getProgramById = async (
   id: string | number | undefined
@@ -81,6 +130,7 @@ export const getProgramById = async (
       where: eq(programas.id, parsedId),
       with: {
         category: true,
+        certificationType: true,
         materias: {
           orderBy: (materias, { asc }) => [asc(materias.id)],
           with: {
@@ -90,16 +140,44 @@ export const getProgramById = async (
                 title: true,
                 description: true,
                 coverImageKey: true,
+                coverVideoCourseKey: true,
                 categoryid: true,
                 creatorId: true,
                 instructor: true,
                 createdAt: true, // <-- agrega esto
                 updatedAt: true, // <-- agrega esto
                 rating: true, // <-- add this
+                modalidadesid: true,
+                nivelid: true,
+                horario: true,
+                espacios: true,
+                is_featured: true,
+                is_top: true,
                 isActive: true,
               },
               with: {
                 category: true,
+                lessons: {
+                  columns: {
+                    id: true,
+                    title: true,
+                    description: true,
+                    duration: true,
+                    orderIndex: true,
+                    coverImageKey: true,
+                    coverVideoKey: true,
+                    courseId: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    lastUpdated: true,
+                    resourceKey: true,
+                    resourceNames: true,
+                  },
+                  orderBy: (lessons, { asc }) => [
+                    asc(lessons.orderIndex),
+                    asc(lessons.id),
+                  ],
+                },
                 modalidad: {
                   columns: {
                     id: true,
@@ -155,6 +233,31 @@ export const getProgramById = async (
 
     const transformedMaterias: MateriaWithCourse[] = program.materias.map(
       (materia) => {
+        const mappedLessons: Lesson[] =
+          materia.curso?.lessons?.map((lesson) => ({
+            id: lesson.id,
+            title: lesson.title,
+            description: lesson.description ?? null,
+            duration: lesson.duration ?? 0,
+            coverImageKey: lesson.coverImageKey,
+            coverVideoKey: lesson.coverVideoKey,
+            courseId: lesson.courseId,
+            createdAt: lesson.createdAt ?? new Date(),
+            updatedAt: lesson.updatedAt ?? new Date(),
+            porcentajecompletado: 0,
+            resourceKey: lesson.resourceKey ?? '',
+            userProgress: 0,
+            isCompleted: false,
+            lastUpdated: lesson.lastUpdated ?? lesson.updatedAt ?? new Date(),
+            course: undefined,
+            activities: [],
+            isLocked: null,
+            resourceNames: parseResourceNames(lesson.resourceNames),
+            isNew: false,
+            orderIndex: lesson.orderIndex ?? null,
+            videoDuration: null,
+          })) ?? [];
+
         let instructorId = '';
         if (
           materia.curso &&
@@ -194,8 +297,14 @@ export const getProgramById = async (
                 updatedAt: materia.curso.updatedAt ?? null,
                 creatorId: materia.curso.creatorId,
                 rating: materia.curso.rating ?? 0,
-                modalidadesid: 1,
-                nivelid: 1,
+                modalidadesid: materia.curso.modalidadesid ?? 1,
+                nivelid: materia.curso.nivelid ?? 1,
+                coverVideoCourseKey: materia.curso.coverVideoCourseKey ?? null,
+                horario: materia.curso.horario ?? null,
+                espacios: materia.curso.espacios ?? null,
+                is_featured: materia.curso.is_featured ?? null,
+                is_top: materia.curso.is_top ?? null,
+                lessons: mappedLessons,
                 modalidad: materia.curso.modalidad ?? undefined,
                 category: materia.curso.category,
                 isActive: materia.curso.isActive ?? true,

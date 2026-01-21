@@ -363,8 +363,17 @@ export interface Program {
   createdAt: Date | null; // Allow null
   updatedAt: Date | null; // Allow null
   creatorId: string;
+  creatorName?: string;
   rating: number | null; // Allow null
   categoryid: number;
+  certificationTypeId?: number | null;
+  certificationType?: {
+    id: number;
+    name: string;
+    description?: string | null;
+  };
+  totalHours?: number;
+  coursesCount?: number;
   creator?: User;
   category?: Category;
   materias?: MateriaWithCourse[];

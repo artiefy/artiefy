@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useMemo,
@@ -19,7 +20,7 @@ interface VideoPlayerProps {
   isLocked?: boolean;
   // Nuevo prop para sincronizar transcripción
   onTimeUpdate?: (currentTime: number) => void;
-  startAt?: number; // <-- NUEVO: segundos para iniciar el video
+  resumeProgress?: number;
   onPlaybackChange?: (isPlaying: boolean) => void;
 }
 
@@ -43,7 +44,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       isVideoCompleted,
       isLocked = false,
       onTimeUpdate,
-      startAt = 0, // <-- NUEVO
+      resumeProgress = 0,
       onPlaybackChange,
     },
     ref
@@ -56,6 +57,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     // Usa el tipo correcto para el ref de Player
     const playerRef = useRef<HTMLVideoElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const hasAppliedResumeRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       play: () => {
@@ -71,6 +73,46 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       if (!videoKey || videoKey === 'null' || isLocked) return '';
       return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
     }, [videoKey, isLocked]);
+
+    const applyResumeTime = useCallback(
+      (video: HTMLVideoElement | null) => {
+        if (!video || hasAppliedResumeRef.current) return;
+        const normalizedProgress = Math.min(
+          100,
+          Math.max(0, resumeProgress ?? 0)
+        );
+
+        if (normalizedProgress <= 0 || normalizedProgress >= 100) {
+          hasAppliedResumeRef.current = true;
+          return;
+        }
+
+        const duration = video.duration;
+        if (!Number.isFinite(duration) || duration <= 0) return;
+
+        const targetTime = Math.min(
+          duration - 0.5,
+          (normalizedProgress / 100) * duration
+        );
+        if (targetTime <= 0) {
+          hasAppliedResumeRef.current = true;
+          return;
+        }
+
+        if (Math.abs(video.currentTime - targetTime) > 1) {
+          video.currentTime = targetTime;
+        }
+        hasAppliedResumeRef.current = true;
+      },
+      [resumeProgress]
+    );
+
+    const handleReplay = useCallback(() => {
+      const video = playerRef.current;
+      if (!video) return;
+      video.currentTime = 0;
+      void video.play();
+    }, []);
 
     useEffect(() => {
       const shouldUseNative = videoKey
@@ -89,28 +131,36 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       return () => clearTimeout(t);
     }, [videoKey, isLocked]);
 
-    // NUEVO: Saltar al tiempo guardado al cargar el video (nativo y next-video)
     useEffect(() => {
-      if (!videoUrl || isLocked) return;
-      if (useNativePlayer && playerRef.current && startAt > 0) {
-        const video = playerRef.current;
-        const seek = () => {
-          if (!video) return;
-          if (Math.abs(video.currentTime - startAt) > 1) {
-            video.currentTime = startAt;
-          }
-        };
-        // Si ya tiene metadata cargada, aplicar directamente
-        if (video.readyState >= 1) {
-          seek();
-        } else {
-          video.addEventListener('loadedmetadata', seek, { once: true });
-        }
-        return () => {
-          video?.removeEventListener('loadedmetadata', seek);
-        };
+      hasAppliedResumeRef.current = false;
+    }, [videoKey]);
+
+    const playerStyle = useMemo(
+      () =>
+        ({
+          '--media-primary-color': '#ffff',
+          '--media-secondary-color': isVideoCompleted ? '#16a34a' : '#2ecc71',
+          '--media-accent-color': isVideoCompleted ? '#22c55e' : '#ffff',
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          maxHeight: '100vh',
+          position: 'absolute',
+          top: '0',
+          left: '0',
+        }) as React.CSSProperties & Record<`--${string}`, string | number>,
+      [isVideoCompleted]
+    );
+
+    const showCompletedIndicator = !!videoUrl && !isLocked && isVideoCompleted;
+
+    useEffect(() => {
+      if (!videoUrl || isLocked || !useNativePlayer) return;
+      const video = playerRef.current;
+      if (video && video.readyState >= 1) {
+        applyResumeTime(video);
       }
-    }, [videoUrl, useNativePlayer, startAt, isLocked]);
+    }, [applyResumeTime, isLocked, useNativePlayer, videoUrl]);
 
     const handlePlayerError = (error?: unknown) => {
       console.warn(
@@ -177,12 +227,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
             onPlay={() => onPlaybackChange?.(true)}
             onPause={() => onPlaybackChange?.(false)}
             onLoadedMetadata={(e) => {
-              if (
-                startAt > 0 &&
-                Math.abs(e.currentTarget.currentTime - startAt) > 1
-              ) {
-                e.currentTarget.currentTime = startAt;
-              }
+              applyResumeTime(e.currentTarget);
             }}
             onTimeUpdate={(e) => {
               const video = e.currentTarget;
@@ -196,18 +241,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
                 onTimeUpdate(video.currentTime);
               }
             }}
-            style={{
-              '--media-primary-color': '#ffff',
-              '--media-secondary-color': '#2ecc71',
-              '--media-accent-color': '#ffff',
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              maxHeight: '100vh',
-              position: 'absolute',
-              top: '0',
-              left: '0',
-            }}
+            style={playerStyle}
           />
         )}
         {(videoUrl && useNativePlayer) || playerError ? (
@@ -227,12 +261,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
             onPlay={() => onPlaybackChange?.(true)}
             onPause={() => onPlaybackChange?.(false)}
             onLoadedMetadata={(e) => {
-              if (
-                startAt > 0 &&
-                Math.abs(e.currentTarget.currentTime - startAt) > 1
-              ) {
-                e.currentTarget.currentTime = startAt;
-              }
+              applyResumeTime(e.currentTarget);
             }}
             onTimeUpdate={(e) => {
               const video = e.currentTarget;
@@ -249,6 +278,20 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           />
         ) : null}
         {(!videoUrl || isLoading) && renderLoadingState()}
+        {showCompletedIndicator && (
+          <div className="pointer-events-none absolute top-3 left-3 rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-emerald-950 shadow">
+            Completado
+          </div>
+        )}
+        {showCompletedIndicator && (
+          <button
+            type="button"
+            onClick={handleReplay}
+            className="absolute right-3 bottom-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900 shadow transition hover:bg-white"
+          >
+            Repetir desde el inicio
+          </button>
+        )}
       </div>
     );
   }

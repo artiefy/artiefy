@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { CheckCircleIcon } from '@heroicons/react/24/solid';
+import { randomInt } from 'crypto';
 import { AiOutlineFire } from 'react-icons/ai';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { HiLibrary } from 'react-icons/hi';
@@ -41,6 +42,19 @@ export default async function StudentListCourses({
   user,
 }: CourseListStudentProps) {
   const userId = user?.id;
+
+  // Función para barajar (shuffle) el array de cursos de forma aleatoria
+  function shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = randomInt(i + 1);
+      [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+    }
+    return shuffled;
+  }
+
+  // Barajar los cursos para mostrarlos en orden aleatorio en cada recarga
+  const shuffledCourses = shuffleArray(courses);
 
   // Helper para formatear la fecha en español (con hora y am/pm)
   function formatSpanishDate(dateString: string) {
@@ -87,7 +101,7 @@ export default async function StudentListCourses({
 
   // Process all courses data in parallel before rendering
   const processedCourses = await Promise.all(
-    courses.map(async (course) => {
+    shuffledCourses.map(async (course) => {
       // Handle image URL and blur data
       let imageUrl =
         'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';

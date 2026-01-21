@@ -40,6 +40,15 @@ export default async function ProgramCertificatePage({ params }: PageProps) {
   const programaId = Number(resolvedParams.id);
   const programId = programaId; // alias en metadata (naming consistente)
 
+  // Validación invisible: verificar inscripción al programa
+  const programEnrollment = await db.query.enrollmentPrograms.findFirst({
+    where: (ep) => and(eq(ep.userId, userId), eq(ep.programaId, programaId)),
+  });
+
+  if (!programEnrollment) {
+    notFound();
+  }
+
   // Buscar certificado existente por programa
   let certificate = await db.query.certificates.findFirst({
     where: (c) => and(eq(c.userId, userId), eq(c.programaId, programaId)),
@@ -143,7 +152,7 @@ export default async function ProgramCertificatePage({ params }: PageProps) {
   } as unknown as Course;
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <Suspense fallback={<div>Cargando certificado...</div>}>

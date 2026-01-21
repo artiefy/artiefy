@@ -555,6 +555,9 @@ export const programas = pgTable('programas', {
     .references(() => categories.id)
     .notNull(),
   price: integer('price').notNull().default(0),
+  certificationTypeId: integer('certification_type_id')
+    .references(() => certificationTypes.id)
+    .default(sql`NULL`),
 });
 
 // Tabla de materias
@@ -659,6 +662,10 @@ export const programasRelations = relations(programas, ({ one, many }) => ({
   category: one(categories, {
     fields: [programas.categoryid],
     references: [categories.id],
+  }),
+  certificationType: one(certificationTypes, {
+    fields: [programas.certificationTypeId],
+    references: [certificationTypes.id],
   }),
   materias: many(materias),
 }));
@@ -1766,6 +1773,48 @@ export const projectTypePhasesRelations = relations(
     phase: one(projectPhases, {
       fields: [projectTypePhases.phaseId],
       references: [projectPhases.id],
+    }),
+  })
+);
+
+// ✅ Tabla de mensajes de WhatsApp programados
+export const scheduledWhatsAppMessages = pgTable(
+  'scheduled_whatsapp_messages',
+  {
+    id: serial('id').primaryKey(),
+    templateName: text('template_name'), // Nombre de la plantilla si aplica
+    phoneNumbers: jsonb('phone_numbers').notNull(), // Array de números de teléfono como JSON
+    messageText: text('message_text').notNull(), // Texto del mensaje
+    variables: jsonb('variables'), // Variables si es plantilla como JSON
+    waSubjectText: text('wa_subject_text'), // Título opcional
+    scheduledTime: timestamp('scheduled_time', {
+      withTimezone: true,
+    }).notNull(), // Fecha y hora programada
+    status: text('status', {
+      enum: ['pending', 'sent', 'failed', 'cancelled'],
+    })
+      .default('pending')
+      .notNull(), // Estado del envío
+    sentAt: timestamp('sent_at', { withTimezone: true }), // Cuando se envió (null si no se ha enviado)
+    errorMessage: text('error_message'), // Mensaje de error si falló
+    codigoPais: varchar('codigo_pais', { length: 10 }).notNull().default('+57'), // Código de país
+    userId: text('user_id').references(() => users.id), // Usuario que programó el mensaje
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  }
+);
+
+// ✅ Relaciones para scheduled WhatsApp messages
+export const scheduledWhatsAppMessagesRelations = relations(
+  scheduledWhatsAppMessages,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [scheduledWhatsAppMessages.userId],
+      references: [users.id],
     }),
   })
 );

@@ -6,7 +6,14 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { AiFillFire, AiOutlineCalendar } from 'react-icons/ai';
-import { FaCheck, FaCrown, FaStar, FaTimes } from 'react-icons/fa';
+import {
+  FaCheck,
+  FaCheckCircle,
+  FaCrown,
+  FaLock,
+  FaStar,
+  FaTimes,
+} from 'react-icons/fa';
 import { FaBuildingUser, FaChalkboardUser, FaUserClock } from 'react-icons/fa6';
 import { IoPlayOutline } from 'react-icons/io5';
 import { MdOutlineVideocam } from 'react-icons/md';
@@ -21,6 +28,7 @@ import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedet
 import { CourseForum } from '~/components/estudiantes/layout/coursedetail/CourseForum';
 import { ProjectsSection } from '~/components/estudiantes/layout/coursedetail/ProjectsSection';
 import { ResourcesSection } from '~/components/estudiantes/layout/coursedetail/ResourcesSection';
+import { LessonGradeHistoryInline } from '~/components/estudiantes/layout/lessondetail/LessonGradeHistoryInline';
 import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
 import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
@@ -38,7 +46,7 @@ import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLe
 import { sortLessons } from '~/utils/lessonSorting';
 import { createProductFromCourse } from '~/utils/paygateway/products';
 
-import type { ClassMeeting, Course, Enrollment } from '~/types';
+import type { ClassMeeting, Course, Enrollment, Lesson } from '~/types';
 
 type UserMetadata = {
   planType?: 'none' | 'Pro' | 'Premium';
@@ -65,7 +73,24 @@ type NavKey =
   | 'proyectos'
   | 'recursos'
   | 'actividades'
+  | 'certificacion'
+  | 'resultados'
   | 'foro';
+
+type CourseGradeSummary = {
+  finalGrade: number;
+  courseCompleted?: boolean;
+  parameters: {
+    name: string;
+    grade: number;
+    weight: number;
+    activities: {
+      id: number;
+      name: string;
+      grade: number;
+    }[];
+  }[];
+};
 
 export default function CourseDetails({
   course: initialCourse,
@@ -97,11 +122,16 @@ export default function CourseDetails({
     proyectos: false,
     recursos: false,
     actividades: false,
+    certificacion: false,
+    resultados: false,
     foro: false,
   });
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
   const router = useRouter();
+  const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
+    null
+  );
   const userMetadata = user?.publicMetadata as UserMetadata | undefined;
 
   const courseTypes = useMemo<CourseTypeLike[]>(() => {
@@ -164,10 +194,73 @@ export default function CourseDetails({
   const recordedCount = Array.isArray(classMeetings)
     ? classMeetings.filter((m) => !!m.video_key).length
     : 0;
+  const _liveClassesCount = Array.isArray(classMeetings)
+    ? classMeetings.filter((m) => !m.video_key).length
+    : 0;
   const resourcesCount = Array.isArray(course.lessons)
     ? course.lessons.filter((l) => l.resourceKey && l.resourceKey.trim() !== '')
         .length
     : 0;
+  const courseProgressPercent = useMemo(() => {
+    const lessons = course.lessons ?? [];
+    if (lessons.length === 0) return 0;
+
+    const isLessonCompleted = (lesson: Lesson) => {
+      const hasVideo =
+        !!lesson.coverVideoKey && lesson.coverVideoKey !== 'none';
+      const activities = lesson.activities ?? [];
+      const hasActivities = activities.length > 0;
+      const activitiesCompleted = hasActivities
+        ? activities.every(
+            (activity) =>
+              activity.isCompleted || (activity.userProgress ?? 0) >= 100
+          )
+        : false;
+      const videoCompleted = (lesson.porcentajecompletado ?? 0) >= 100;
+
+      if (hasVideo && hasActivities)
+        return videoCompleted && activitiesCompleted;
+      if (hasVideo) return videoCompleted;
+      if (hasActivities) return activitiesCompleted;
+
+      return lesson.isCompleted ?? false;
+    };
+
+    const completedLessons = lessons.filter((lesson) =>
+      isLessonCompleted(lesson as Lesson)
+    ).length;
+
+    return Math.round((completedLessons / lessons.length) * 100);
+  }, [course.lessons]);
+
+  const isCertificateUnlocked = courseProgressPercent >= 100;
+  const totalLessons = useMemo(
+    () => course.lessons?.length ?? 0,
+    [course.lessons]
+  );
+  const completedLessonsCount = useMemo(() => {
+    const lessons = course.lessons ?? [];
+    return lessons.filter((lesson) => {
+      const hasVideo =
+        !!lesson.coverVideoKey && lesson.coverVideoKey !== 'none';
+      const activities = lesson.activities ?? [];
+      const hasActivities = activities.length > 0;
+      const activitiesCompleted = hasActivities
+        ? activities.every(
+            (activity: { isCompleted?: boolean; userProgress?: number }) =>
+              activity.isCompleted || (activity.userProgress ?? 0) >= 100
+          )
+        : false;
+      const videoCompleted = (lesson.porcentajecompletado ?? 0) >= 100;
+
+      if (hasVideo && hasActivities)
+        return videoCompleted && activitiesCompleted;
+      if (hasVideo) return videoCompleted;
+      if (hasActivities) return activitiesCompleted;
+
+      return lesson.isCompleted ?? false;
+    }).length;
+  }, [course.lessons]);
   const lessonsWithActivities = useMemo(
     () =>
       Array.isArray(course.lessons)
@@ -201,14 +294,22 @@ export default function CourseDetails({
 
   const unseenCounts = useMemo<Record<NavKey, number>>(
     () => ({
-      curso: 0,
+      curso: totalLessons,
       grabadas: recordedCount,
       proyectos: projectsCount,
       recursos: resourcesCount,
       actividades: activitiesStats.total,
+      certificacion: 0,
+      resultados: 0,
       foro: 0,
     }),
-    [activitiesStats.total, projectsCount, recordedCount, resourcesCount]
+    [
+      totalLessons,
+      activitiesStats.total,
+      projectsCount,
+      recordedCount,
+      resourcesCount,
+    ]
   );
   // Persistir último conteo visto por sección para calcular "nuevos" desde la última visita
   const [lastSeenCounts, setLastSeenCounts] = useState<Record<
@@ -231,6 +332,8 @@ export default function CourseDetails({
           proyectos: unseenCounts.proyectos,
           recursos: unseenCounts.recursos,
           actividades: unseenCounts.actividades,
+          certificacion: unseenCounts.certificacion,
+          resultados: unseenCounts.resultados,
           foro: unseenCounts.foro,
         };
         localStorage.setItem(storageKey, JSON.stringify(initial));
@@ -245,6 +348,8 @@ export default function CourseDetails({
         proyectos: 0,
         recursos: 0,
         actividades: 0,
+        certificacion: 0,
+        resultados: 0,
         foro: 0,
       });
     }
@@ -253,24 +358,52 @@ export default function CourseDetails({
 
   // Calcula cuántos items nuevos hay desde la última vez que el usuario vio cada sección
   const badgeCounts = useMemo<Record<NavKey, number>>(() => {
-    const result: Record<NavKey, number> = {
-      curso: 0,
-      grabadas: 0,
-      proyectos: 0,
-      recursos: resourcesCount, // Solo mostrar dinámico para recursos
-      actividades: 0,
-      foro: 0,
-    };
-    // No calcular deltas para otros, solo recursos fijo
-    if (!isEnrolled) {
-      result.recursos = 0;
+    if (!isEnrolled || !lastSeenCounts) {
+      // Si no está inscrito o no hay conteos previos, no mostrar badges
+      return {
+        curso: 0,
+        grabadas: 0,
+        proyectos: 0,
+        recursos: 0,
+        actividades: 0,
+        certificacion: 0,
+        resultados: 0,
+        foro: 0,
+      };
     }
+
+    // Calcular la diferencia entre el conteo actual y el último visto
+    const result: Record<NavKey, number> = {
+      curso: Math.max(0, unseenCounts.curso - lastSeenCounts.curso),
+      grabadas: Math.max(0, unseenCounts.grabadas - lastSeenCounts.grabadas),
+      proyectos: Math.max(0, unseenCounts.proyectos - lastSeenCounts.proyectos),
+      recursos: Math.max(0, unseenCounts.recursos - lastSeenCounts.recursos),
+      actividades: Math.max(
+        0,
+        unseenCounts.actividades - lastSeenCounts.actividades
+      ),
+      certificacion: Math.max(
+        0,
+        unseenCounts.certificacion - lastSeenCounts.certificacion
+      ),
+      resultados: Math.max(
+        0,
+        unseenCounts.resultados - lastSeenCounts.resultados
+      ),
+      foro: Math.max(0, unseenCounts.foro - lastSeenCounts.foro),
+    };
+
     return result;
-  }, [resourcesCount, isEnrolled]);
+  }, [unseenCounts, lastSeenCounts, isEnrolled]);
   const navItems: Array<{ key: NavKey; label: string; helper?: string }> = [
     {
       key: 'curso',
       label: 'Curso',
+      helper: undefined,
+    },
+    {
+      key: 'certificacion',
+      label: 'Certificación',
       helper: undefined,
     },
     {
@@ -293,15 +426,22 @@ export default function CourseDetails({
       label: 'Actividades',
       helper: undefined,
     },
+    {
+      key: 'resultados',
+      label: 'Resultados',
+      helper: undefined,
+    },
     { key: 'foro', label: 'Foro', helper: undefined },
   ];
 
   const sectionLabels: Record<NavKey, string> = {
     curso: 'el contenido del curso',
+    certificacion: 'la certificación',
     grabadas: 'las clases grabadas',
     proyectos: 'los proyectos',
     recursos: 'los recursos',
     actividades: 'las actividades',
+    resultados: 'los resultados',
     foro: 'el foro',
   };
 
@@ -319,6 +459,8 @@ export default function CourseDetails({
           proyectos: 0,
           recursos: 0,
           actividades: 0,
+          certificacion: 0,
+          resultados: 0,
           foro: 0,
         };
         const updated = { ...prev, [key]: unseenCounts[key] };
@@ -330,6 +472,16 @@ export default function CourseDetails({
     }
     if (key === 'grabadas') setViewMode('recorded');
     else setViewMode('live');
+  };
+
+  const handleCertificateClick = () => {
+    if (courseProgressPercent < 100) {
+      toast.info('Completa el 100% del curso para descargar tu certificado.');
+      return;
+    }
+
+    const certificateUrl = `/estudiantes/certificados/${course.id}`;
+    window.open(certificateUrl, '_blank', 'noopener,noreferrer');
   };
 
   const scrollCarousel = (direction: 'left' | 'right') => {
@@ -363,6 +515,27 @@ export default function CourseDetails({
     };
 
     void fetchProjectsCount();
+  }, [isSignedIn, userId, course.id]);
+
+  // Cargar resumen de calificaciones para la sección de resultados
+  useEffect(() => {
+    const fetchGradeSummary = async () => {
+      if (isSignedIn && userId && course.id) {
+        try {
+          const response = await fetch(
+            `/api/grades/summary?courseId=${course.id}&userId=${userId}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            setGradeSummary(data);
+          }
+        } catch (error) {
+          console.error('Error al obtener resumen de calificaciones:', error);
+        }
+      }
+    };
+
+    void fetchGradeSummary();
   }, [isSignedIn, userId, course.id]);
 
   // NOTA: Ya no usamos este useEffect porque abrimos el modal directamente en handleLoginSuccess
@@ -1089,6 +1262,25 @@ export default function CourseDetails({
                               <IoPlayOutline className="mr-2 text-black" />
                               Continuar curso
                             </button>
+                            {/* Mostrar frase de planes también cuando está inscrito */}
+                            {(_hasPro || _hasPremium) && (
+                              <p className="text-center text-xs text-[#94A3B8]">
+                                Accede a este y a más de{' '}
+                                <span className="font-medium text-white">
+                                  {totalSimilarCourses}{' '}
+                                  {totalSimilarCourses === 1
+                                    ? 'curso'
+                                    : 'cursos'}
+                                </span>{' '}
+                                con {planPhrase}.{' '}
+                                <a
+                                  href="/planes"
+                                  className="text-white hover:underline"
+                                >
+                                  Ver planes
+                                </a>
+                              </p>
+                            )}
                           </div>
                         ) : (
                           <>
@@ -1491,7 +1683,44 @@ export default function CourseDetails({
 
                     {/* Carousel de botones/resumen (debajo de toda la info) - a ancho completo */}
                     <div className="mt-6">
-                      <div className="flex items-center gap-2">
+                      {/* Versión expandida para desktop cuando está suscrito */}
+                      {isEnrolled ? (
+                        <div className="hidden lg:flex lg:w-full lg:justify-between">
+                          {navItems.map((item) => {
+                            const isActive = activePill === item.key;
+                            const badgeCount = badgeCounts[item.key] ?? 0;
+                            const showBadge =
+                              badgeCount > 0 && !seenSections[item.key];
+                            return (
+                              <button
+                                key={item.key}
+                                onClick={() => handlePillClick(item.key)}
+                                className={`flex items-center gap-2 rounded-full border px-[20px] py-[10px] text-sm font-semibold transition-all ${
+                                  isActive
+                                    ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
+                                    : 'border-transparent bg-transparent text-white/80 hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50 hover:text-white'
+                                }`}
+                              >
+                                <span>{item.label}</span>
+                                {showBadge && (
+                                  <span className="inline-flex aspect-square h-6 w-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
+                                    {badgeCount}
+                                  </span>
+                                )}
+                                {item.helper && (
+                                  <span className="hidden text-xs font-normal text-white/60 xl:inline">
+                                    {item.helper}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                      {/* Versión con carousel para móvil y desktop no suscrito */}
+                      <div
+                        className={`${isEnrolled ? 'lg:hidden' : ''} flex items-center gap-2`}
+                      >
                         <button
                           onClick={() => scrollCarousel('left')}
                           className="inline-flex aspect-square h-9 w-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
@@ -1618,15 +1847,105 @@ export default function CourseDetails({
                             isSignedIn={!!isSignedIn}
                             classMeetings={classMeetings}
                             viewMode={viewMode}
+                            gradeSummary={gradeSummary}
                           />
                         ) : (
                           renderAccessGuard('grabadas')
+                        )
+                      ) : activePill === 'certificacion' ? (
+                        isEnrolled ? (
+                          <div className="rounded-2xl border border-border bg-card p-6 shadow-xl md:p-8">
+                            <div className="mb-6 flex items-center gap-3">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="h-6 w-6 text-white"
+                                >
+                                  <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path>
+                                  <circle cx="12" cy="8" r="6"></circle>
+                                </svg>
+                              </div>
+                              <div>
+                                <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                                  Certificación Del Curso
+                                </h2>
+                                <p className="text-sm text-muted-foreground">
+                                  Completa el 100% para habilitar tu
+                                  certificado.
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="mb-6 rounded-xl bg-secondary p-5">
+                              <div className="mb-3 flex items-center justify-between">
+                                <span className="text-sm font-medium text-foreground">
+                                  Progreso hacia la certificación
+                                </span>
+                                <span className="text-sm font-bold text-primary">
+                                  {courseProgressPercent}%
+                                </span>
+                              </div>
+                              <div className="h-3 overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all"
+                                  style={{ width: `${courseProgressPercent}%` }}
+                                />
+                              </div>
+                              <p className="mt-2 text-xs text-muted-foreground">
+                                {`${completedLessonsCount} de ${totalLessons} clases completadas`}
+                              </p>
+                            </div>
+
+                            <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+                              <p className="text-sm text-muted-foreground">
+                                El botón se habilita automáticamente cuando
+                                alcanzas el 100% del curso.
+                              </p>
+                              <button
+                                type="button"
+                                onClick={handleCertificateClick}
+                                disabled={!isCertificateUnlocked}
+                                className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold transition focus:ring-2 focus:ring-green-400/60 focus:ring-offset-2 focus:ring-offset-card focus:outline-none ${
+                                  isCertificateUnlocked
+                                    ? 'border-green-500/30 bg-green-500/20 text-green-200 hover:bg-green-500/30'
+                                    : 'cursor-not-allowed border-white/10 bg-white/5 text-white/60'
+                                }`}
+                              >
+                                {isCertificateUnlocked ? (
+                                  <FaCheckCircle className="h-4 w-4 text-green-400" />
+                                ) : (
+                                  <FaLock className="h-4 w-4 text-white/70" />
+                                )}
+                                {isCertificateUnlocked
+                                  ? 'Ver tu certificado'
+                                  : 'Certificado bloqueado'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          renderAccessGuard('certificacion')
                         )
                       ) : activePill === 'foro' ? (
                         isEnrolled ? (
                           <CourseForum courseId={course.id} />
                         ) : (
                           renderAccessGuard('foro')
+                        )
+                      ) : activePill === 'resultados' ? (
+                        isEnrolled ? (
+                          <LessonGradeHistoryInline
+                            gradeSummary={gradeSummary}
+                          />
+                        ) : (
+                          renderAccessGuard('resultados')
                         )
                       ) : (
                         <CourseContent
@@ -1637,6 +1956,7 @@ export default function CourseDetails({
                           isSignedIn={!!isSignedIn}
                           classMeetings={classMeetings}
                           viewMode={viewMode}
+                          gradeSummary={gradeSummary}
                         />
                       )}
                     </div>
