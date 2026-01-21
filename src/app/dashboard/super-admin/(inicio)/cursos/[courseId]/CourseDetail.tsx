@@ -1640,6 +1640,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     return (
       <div className="flex flex-col gap-3">
+        {/* Mostrar educador actual cuando no hay búsqueda abierta */}
+        {!isOpen && (
+          <div className="rounded border border-cyan-500/25 bg-cyan-500/5 px-2 py-1.5 sm:px-3 sm:py-2">
+            <div className="flex flex-col gap-0.5 sm:gap-1">
+              <p className="text-xs font-semibold tracking-tight text-cyan-400/70 uppercase sm:tracking-wide">
+                👨‍🏫{' '}
+                {displayEducator?.name ?? course.instructorName ?? 'Sin nombre'}
+              </p>
+              {displayEducator?.email && (
+                <p className="truncate text-xs text-cyan-400/60">
+                  {displayEducator.email}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Dropdown personalizado */}
         <div className="relative">
           <button
@@ -1649,8 +1666,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="font-medium">
-                  {displayEducator?.name ?? 'Sin nombre'}
+                <p className="text-xs font-semibold tracking-wide text-cyan-400/70 uppercase">
+                  {selectedInstructor ? 'Cambiar a' : 'Seleccionar educador'}
+                </p>
+                <p className="mt-1 font-medium">
+                  {displayEducator?.name ??
+                    course.instructorName ??
+                    'Sin nombre'}
                 </p>
                 {displayEducator?.email && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-cyan-400/70">
