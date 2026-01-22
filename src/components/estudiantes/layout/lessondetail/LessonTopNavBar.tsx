@@ -50,9 +50,9 @@ const LessonTopNavBar = ({
 
   return (
     <div className="fixed top-16 right-0 left-0 z-[60] w-full px-4 py-2">
-      <div className="mx-auto flex max-w-[1800px] items-center justify-between gap-4">
+      <div className="mx-auto grid max-w-[1800px] grid-cols-1 items-center gap-3 md:grid-cols-[auto_1fr_auto] md:gap-4">
         {/* Left: Close button */}
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center gap-2">
           {/* Desktop close X */}
           <button
             type="button"
@@ -145,7 +145,7 @@ const LessonTopNavBar = ({
           <Link
             href={`/estudiantes/cursos/${courseId}`}
             style={{ backgroundColor: '#061c37cc' }}
-            className="group hidden items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-2.5 backdrop-blur-xl transition-all hover:bg-card md:flex"
+            className="group hidden min-w-0 items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-2.5 backdrop-blur-xl transition-all hover:bg-card md:flex"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -161,28 +161,28 @@ const LessonTopNavBar = ({
             >
               <path d="m15 18-6-6 6-6" />
             </svg>
-            <span className="text-sm font-medium text-foreground">
+            <span className="max-w-[220px] truncate text-sm font-medium text-foreground">
               {courseTitle}
             </span>
           </Link>
         </div>
 
         {/* Center: Progress indicator */}
-        <div className="hidden items-center gap-4 md:flex">
+        <div className="hidden min-w-0 items-center gap-3 md:flex md:justify-center">
           {/* Progress bars */}
           <div
             style={{ backgroundColor: '#061c37cc' }}
-            className="flex items-center gap-3 rounded-full border border-border/50 bg-[#061c37cc] px-5 py-2.5 backdrop-blur-xl"
+            className="flex min-w-0 items-center gap-3 rounded-full border border-border/50 bg-[#061c37cc] px-4 py-2.5 backdrop-blur-xl"
           >
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs whitespace-nowrap text-muted-foreground">
               {currentLessonIndex} / {totalLessons}
             </span>
-            <div className="relative flex items-center gap-1">
+            <div className="relative flex items-center gap-1 overflow-hidden">
               {/* Progress bars */}
               {Array.from({ length: 22 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1.5 w-6 rounded-full transition-all duration-300 ${
+                  className={`h-1.5 w-3 rounded-full transition-all duration-300 md:w-4 lg:w-5 xl:w-6 ${
                     i < completedBars ? 'bg-primary' : 'bg-[#1d283a]'
                   }`}
                 />
@@ -192,7 +192,7 @@ const LessonTopNavBar = ({
         </div>
 
         {/* Right: Complete button + Navigation */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-nowrap items-center gap-2 justify-self-end">
           {/* Complete button */}
           <button
             type="button"

@@ -710,8 +710,14 @@ export function ProgramHeader({
       >
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-background via-background/95 to-background/80" />
         <div className="relative z-10 mb-8 lg:hidden">{renderCtaCard()}</div>
-        <div className="relative z-10 grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="space-y-8 lg:col-span-2">
+        <div
+          className={`relative z-10 grid grid-cols-1 gap-8 ${
+            isEnrolled ? 'lg:grid-cols-1' : 'lg:grid-cols-3'
+          }`}
+        >
+          <div
+            className={`${isEnrolled ? 'lg:col-span-1' : 'lg:col-span-2'} space-y-8`}
+          >
             <div className="space-y-6">
               <div className="flex flex-wrap items-center gap-2">
                 {/* Badge de categoría */}
@@ -1233,9 +1239,11 @@ export function ProgramHeader({
               </Tabs.Content>
             </Tabs.Root>
           </div>
-          <div className="sticky top-24 hidden max-h-[calc(100vh-8rem)] self-start lg:block">
-            {renderCtaCard()}
-          </div>
+          {!isEnrolled && (
+            <div className="sticky top-24 hidden max-h-[calc(100vh-8rem)] self-start lg:block">
+              {renderCtaCard()}
+            </div>
+          )}
         </div>
       </div>
       <ProgramGradesModal
