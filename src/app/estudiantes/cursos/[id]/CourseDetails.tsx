@@ -1051,7 +1051,7 @@ export default function CourseDetails({
                   >
                     <div className="relative">
                       <AspectRatio ratio={16 / 9}>
-                        <div className="relative h-full w-full overflow-hidden">
+                        <div className="group relative h-full w-full overflow-hidden">
                           {coverVideoUrl ? (
                             isImageUrl(coverVideoUrl) ? (
                               <Image
@@ -1068,7 +1068,7 @@ export default function CourseDetails({
                                 className="h-full w-full object-cover"
                                 src={coverVideoUrl}
                                 poster={coverImageUrl}
-                                controls
+                                playsInline
                               />
                             )
                           ) : (
@@ -1084,15 +1084,53 @@ export default function CourseDetails({
                                   priority={false}
                                 />
                               )}
-                              <div
-                                className="pointer-events-none absolute inset-0 z-10"
-                                style={{
-                                  background:
-                                    'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
-                                  willChange: 'transform',
-                                }}
-                              />
                             </>
+                          )}
+                          {(!coverVideoUrl || isImageUrl(coverVideoUrl)) && (
+                            <div
+                              className="pointer-events-none absolute inset-0 z-20"
+                              style={{
+                                background:
+                                  'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
+                                willChange: 'transform',
+                              }}
+                            />
+                          )}
+                          {coverVideoUrl && !isImageUrl(coverVideoUrl) && (
+                            <div
+                              className="absolute inset-0 z-30 flex cursor-pointer items-center justify-center"
+                              role="button"
+                              aria-label="Reproducir video"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const parent = e.currentTarget.parentElement;
+                                const video = parent?.querySelector(
+                                  'video'
+                                ) as HTMLVideoElement | null;
+                                if (video) {
+                                  video.controls = true;
+                                  video.focus();
+                                  void video.play().catch(console.error);
+                                }
+                              }}
+                            >
+                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 transition-transform group-hover:scale-110">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="lucide lucide-play ml-1 h-7 w-7 text-black"
+                                >
+                                  <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                                </svg>
+                              </div>
+                            </div>
                           )}
                         </div>
                       </AspectRatio>
@@ -1986,7 +2024,7 @@ export default function CourseDetails({
                       >
                         <div className="relative">
                           <AspectRatio ratio={16 / 9}>
-                            <div className="relative h-full w-full overflow-hidden">
+                            <div className="group relative h-full w-full overflow-hidden">
                               {course.coverVideoCourseKey && coverVideoUrl ? (
                                 isImageUrl(
                                   course.coverVideoCourseKey as string
@@ -2006,7 +2044,7 @@ export default function CourseDetails({
                                     className="h-full w-full object-cover"
                                     src={coverVideoUrl}
                                     poster={coverImageUrl}
-                                    controls
+                                    playsInline
                                   />
                                 )
                               ) : (
@@ -2023,16 +2061,62 @@ export default function CourseDetails({
                                       priority={false}
                                     />
                                   )}
-                                  <div
-                                    className="pointer-events-none absolute inset-0 z-10"
-                                    style={{
-                                      background:
-                                        'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
-                                      willChange: 'transform',
-                                    }}
-                                  />
                                 </>
                               )}
+                              {(!course.coverVideoCourseKey ||
+                                isImageUrl(
+                                  course.coverVideoCourseKey as string
+                                )) && (
+                                <div
+                                  className="pointer-events-none absolute inset-0 z-20"
+                                  style={{
+                                    background:
+                                      'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
+                                    willChange: 'transform',
+                                  }}
+                                />
+                              )}
+                              {course.coverVideoCourseKey &&
+                                coverVideoUrl &&
+                                !isImageUrl(
+                                  course.coverVideoCourseKey as string
+                                ) && (
+                                  <div
+                                    className="absolute inset-0 z-30 flex cursor-pointer items-center justify-center"
+                                    role="button"
+                                    aria-label="Reproducir video"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      const parent =
+                                        e.currentTarget.parentElement;
+                                      const video = parent?.querySelector(
+                                        'video'
+                                      ) as HTMLVideoElement | null;
+                                      if (video) {
+                                        video.controls = true;
+                                        video.focus();
+                                        void video.play().catch(console.error);
+                                      }
+                                    }}
+                                  >
+                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 transition-transform group-hover:scale-110">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="lucide lucide-play ml-1 h-7 w-7 text-black"
+                                      >
+                                        <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                                      </svg>
+                                    </div>
+                                  </div>
+                                )}
                             </div>
                           </AspectRatio>
                         </div>

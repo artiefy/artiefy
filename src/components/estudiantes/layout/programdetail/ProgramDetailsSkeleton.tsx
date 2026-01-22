@@ -8,7 +8,7 @@ import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
 export function ProgramDetailsSkeleton() {
   return (
-    <div className="bg-background min-h-screen">
+    <div className="min-h-screen bg-background">
       <main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
         <Card className="overflow-hidden p-0">
           <CardHeader className="px-0">
@@ -40,24 +40,17 @@ export function ProgramDetailsSkeleton() {
               <Skeleton className="h-4 w-3/4" />
             </div>
 
-            {/* Materias skeleton */}
+            {/* Tabs skeleton */}
             <div className="space-y-4">
-              <Skeleton className="h-8 w-48" />
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={`course-skeleton-${i}`} className="space-y-3">
-                    <Skeleton className="h-48 w-full" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6" />
-                      <div className="flex items-center justify-between">
-                        <Skeleton className="h-6 w-20" />
-                        <Skeleton className="h-6 w-24" />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="flex gap-4 border-b border-border/50 pb-2">
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-20" />
+                <Skeleton className="h-8 w-24" />
+              </div>
+              <div className="space-y-3">
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
               </div>
             </div>
           </CardContent>
