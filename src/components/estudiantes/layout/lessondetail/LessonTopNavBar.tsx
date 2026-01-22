@@ -161,7 +161,11 @@ const LessonTopNavBar = ({
             >
               <path d="m15 18-6-6 6-6" />
             </svg>
-            <span className="max-w-[220px] truncate text-sm font-medium text-foreground">
+            <span
+              className="max-w-[220px] truncate text-sm font-medium text-foreground"
+              title={courseTitle}
+              aria-label={courseTitle}
+            >
               {courseTitle}
             </span>
           </Link>
