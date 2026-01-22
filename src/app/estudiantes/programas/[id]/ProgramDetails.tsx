@@ -32,6 +32,10 @@ export default function ProgramDetails({
   const [isSubscriptionActive, setIsSubscriptionActive] = useState(false);
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(true);
   const [showRequirementModal, setShowRequirementModal] = useState(false);
+  const [courseEnrollments, setCourseEnrollments] = useState<
+    Record<number, boolean>
+  >({});
+  const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
 
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
@@ -59,17 +63,41 @@ export default function ProgramDetails({
     const initializeProgram = async () => {
       if (!userId) return;
 
+      setIsLoadingEnrollments(true);
+
       try {
-        const enrolled = await isUserEnrolledInProgram(
+        const enrolledPromise = isUserEnrolledInProgram(
           parseInt(program.id),
           userId
         );
+        const enrollmentsPromise = fetch('/api/enrolled-courses').then(
+          async (res) => {
+            if (!res.ok) return { courses: [] };
+            return (await res.json()) as {
+              courses: { id: number; progress: number }[];
+            };
+          }
+        );
+
+        const [enrolled, enrollmentsData] = await Promise.all([
+          enrolledPromise,
+          enrollmentsPromise,
+        ]);
+
         setIsEnrolled(enrolled);
+
+        const enrollmentMap: Record<number, boolean> = {};
+        (enrollmentsData.courses || []).forEach((course) => {
+          enrollmentMap[course.id] = true;
+        });
+        setCourseEnrollments(enrollmentMap);
+
         checkSubscriptionStatus();
       } catch (error) {
         console.error('Error initializing program:', error);
       } finally {
         setIsCheckingEnrollment(false);
+        setIsLoadingEnrollments(false);
       }
     };
 
@@ -193,6 +221,8 @@ export default function ProgramDetails({
             (user?.publicMetadata?.subscriptionEndDate as string) ?? null
           }
           isCheckingEnrollment={isCheckingEnrollment}
+          courseEnrollments={courseEnrollments}
+          isLoadingEnrollments={isLoadingEnrollments}
         />
         {/* Remove ProgramContent since it's already in ProgramHeader */}
       </main>

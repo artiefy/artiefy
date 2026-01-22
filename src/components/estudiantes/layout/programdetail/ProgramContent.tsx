@@ -16,6 +16,7 @@ import {
   AlertTitle,
 } from '~/components/estudiantes/ui/alert';
 import { Button } from '~/components/estudiantes/ui/button';
+import { Icons } from '~/components/estudiantes/ui/icons';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
 import type { Course, MateriaWithCourse, Program } from '~/types';
@@ -46,10 +47,10 @@ export function ProgramContent({
   const [courseProgress, setCourseProgress] = useState<
     Record<number, { progress: number; isCompleted: boolean }>
   >({});
-  // Estado para almacenar las lecciones de cada curso
   const [courseLessons, setCourseLessons] = useState<
     Record<number, { duration: number; count: number }>
   >({});
+  const [isLoadingProgress, setIsLoadingProgress] = useState(true);
 
   const courses = useMemo(() => {
     const safeMateriasWithCursos =
@@ -71,14 +72,12 @@ export function ProgramContent({
     return uniqueCourses.map((materia) => materia.curso);
   }, [program.materias]);
 
-  // Efecto para calcular las lecciones de cada curso
   useEffect(() => {
     const calculateCourseLessons = () => {
       const lessonsData: Record<number, { duration: number; count: number }> =
         {};
 
       courses.forEach((course) => {
-        // Usar directamente course.lessons si está disponible
         const lessons = course.lessons || [];
         const totalMinutes = lessons.reduce(
           (acc, lesson) => acc + (lesson.duration || 0),
@@ -120,18 +119,24 @@ export function ProgramContent({
     [courses, getIsCompleted]
   );
 
-  // Traer progreso e inscripción del usuario desde el backend (ya calcula promedio de lecciones)
   useEffect(() => {
     let isMounted = true;
     const fetchProgress = async () => {
-      if (!userId) return;
+      if (!userId) {
+        setIsLoadingProgress(false);
+        return;
+      }
       try {
         const res = await fetch('/api/enrolled-courses');
         if (!res.ok) return;
-        const data = (await res.json()) as {
-          id: number;
-          progress: number;
-        }[];
+        const raw = (await res.json()) as
+          | { id: number; progress: number }[]
+          | { courses?: { id: number; progress: number }[] };
+        const data = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.courses)
+            ? raw.courses
+            : [];
 
         const progressMap: Record<
           number,
@@ -155,6 +160,10 @@ export function ProgramContent({
         }
       } catch (error) {
         console.error('Error al obtener progreso de cursos:', error);
+      } finally {
+        if (isMounted) {
+          setIsLoadingProgress(false);
+        }
       }
     };
 
@@ -195,7 +204,7 @@ export function ProgramContent({
       } catch (error) {
         console.error('Error checking enrollments:', error);
       }
-    }, 500); // Debounce time
+    }, 500);
 
     return () => {
       isSubscribed = false;
@@ -280,7 +289,6 @@ export function ProgramContent({
                 ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`
                 : 'https://images.unsplash.com/photo-1621839673705-6617adf9e890?w=400&h=225&fit=crop';
 
-              // Obtener datos de lecciones desde el estado
               const lessonData = courseLessons[course.id] || {
                 duration: 0,
                 count: 0,
@@ -314,9 +322,15 @@ export function ProgramContent({
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
                       <Play className="h-6 w-6 text-white" />
                     </div>
-                    {isEnrolled && isEnrolledCourse && (
+                    {isEnrolled && (isLoadingProgress || isEnrolledCourse) && (
                       <div className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-                        <FaCheck className="h-3 w-3 text-white" />
+                        {isLoadingProgress ? (
+                          <Icons.spinner className="h-3 w-3 text-white" />
+                        ) : (
+                          isEnrolledCourse && (
+                            <FaCheck className="h-3 w-3 text-white" />
+                          )
+                        )}
                       </div>
                     )}
                   </div>
@@ -327,7 +341,11 @@ export function ProgramContent({
                       </span>
                       {isEnrolled && (
                         <>
-                          {isCompleted ? (
+                          {isLoadingProgress ? (
+                            <div className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-[#0b2a4a] px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                              <Icons.spinner className="h-3 w-3" /> Cargando
+                            </div>
+                          ) : isCompleted ? (
                             <div className="inline-flex items-center rounded-full border border-transparent bg-emerald-500/20 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
                               Completado
                             </div>

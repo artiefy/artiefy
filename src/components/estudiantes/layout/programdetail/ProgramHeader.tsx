@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,19 +8,11 @@ import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 import * as Tabs from '@radix-ui/react-tabs';
-import {
-  Award,
-  Book,
-  Calendar,
-  Clock,
-  Crown,
-  ExternalLink,
-  Users,
-  Video,
-} from 'lucide-react';
-import { FaCheck, FaTimes } from 'react-icons/fa';
+import { Award, Book, Clock, Crown, Users, Video } from 'lucide-react';
+import { FaCheck, FaClock, FaTimes } from 'react-icons/fa';
 import { IoCloseOutline } from 'react-icons/io5';
 import { LiaCertificateSolid } from 'react-icons/lia';
+import { LuSquareArrowOutUpRight, LuVideo } from 'react-icons/lu';
 import { toast } from 'sonner';
 import useSWR from 'swr';
 
@@ -42,9 +34,11 @@ import { ProgramGradesModal } from './ProgramGradesModal';
 
 import type { ClassMeeting, Course, MateriaWithCourse, Program } from '~/types';
 
+import '~/styles/buttonneon.css';
 import '~/styles/certificado-modal.css';
 import '~/styles/certificadobutton.css';
 import '~/styles/certificadobutton2.css';
+import '~/styles/pattenrliveclass.css';
 
 interface ProgramHeaderProps {
   program: Program;
@@ -56,6 +50,8 @@ interface ProgramHeaderProps {
   onEnrollAction: () => Promise<void>;
   onUnenrollAction: () => Promise<void>;
   isCheckingEnrollment: boolean;
+  courseEnrollments: Record<number, boolean>;
+  isLoadingEnrollments: boolean;
 }
 
 // Add error type
@@ -74,6 +70,8 @@ export function ProgramHeader({
   onEnrollAction,
   onUnenrollAction,
   isCheckingEnrollment,
+  courseEnrollments,
+  isLoadingEnrollments,
 }: ProgramHeaderProps) {
   const { user, isSignedIn } = useUser();
   const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
@@ -85,7 +83,7 @@ export function ProgramHeader({
   >('cursos');
   const [enrollmentCount, setEnrollmentCount] = useState(0);
   const [liveSessions, setLiveSessions] = useState<
-    (ClassMeeting & { courseTitle: string })[]
+    (ClassMeeting & { courseTitle: string; courseId: number })[]
   >([]);
   const [isLoadingLive, setIsLoadingLive] = useState(false);
   // Agregar estado para controlar renderizado después de hidratación
@@ -249,13 +247,98 @@ export function ProgramHeader({
     return program.category?.name ?? 'Sin categoría';
   };
 
+  // Constante de zona horaria para formateo de fechas
+  const MEETING_TIME_ZONE = 'America/Bogota';
+
+  const toSafeDate = (value?: string | number | Date | null) => {
+    if (!value) return null;
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date;
+  };
+
+  const formatBogota = useCallback(
+    (
+      value: string | number | Date | null | undefined,
+      options: Intl.DateTimeFormatOptions,
+      locale = 'es-ES'
+    ) => {
+      const date = toSafeDate(value);
+      if (!date) return '';
+      return new Intl.DateTimeFormat(locale, {
+        timeZone: MEETING_TIME_ZONE,
+        ...options,
+      }).format(date);
+    },
+    []
+  );
+
+  const getBogotaDayKey = useCallback(
+    (value: string | number | Date | null | undefined) =>
+      formatBogota(
+        value,
+        { year: 'numeric', month: '2-digit', day: '2-digit' },
+        'en-CA'
+      ),
+    [formatBogota]
+  );
+
+  // Formato compacto para móviles (Ej: "Vie, Nov 8")
+  const formatMobileDate = (start?: string) => {
+    if (!start) return '';
+    try {
+      const weekday = formatBogota(start, { weekday: 'long' });
+      if (!weekday) return '';
+      const weekdayCapitalized =
+        weekday.charAt(0).toUpperCase() + weekday.slice(1);
+      const day = formatBogota(start, { day: 'numeric' });
+      const month = formatBogota(start, { month: 'long' });
+      if (!month) return '';
+      const monthCapitalized = month.charAt(0).toUpperCase() + month.slice(1);
+      const year = formatBogota(start, { year: 'numeric' });
+      return `${weekdayCapitalized}, ${day} de ${monthCapitalized}, ${year}`;
+    } catch {
+      return '';
+    }
+  };
+
+  // Formato hora de inicio (ej: "7:00 p.m.")
+  const formatStartTime = (start?: string) => {
+    if (!start) return '';
+    return formatBogota(
+      start,
+      { hour: 'numeric', minute: '2-digit', hour12: true },
+      'es-CO'
+    );
+  };
+
+  // Etiqueta legible para duración con pluralización correcta
+  const formatDurationLabelLive = (minutes: number) => {
+    if (minutes < 60) return `${minutes} minutos`;
+    if (minutes % 60 === 0) {
+      const hours = minutes / 60;
+      return hours === 1 ? '1 hora' : `${hours} horas`;
+    }
+    return `${(minutes / 60).toFixed(1)} horas`;
+  };
+
+  // Helper para calcular duración en minutos
+  const getDurationMinutes = (meeting: ClassMeeting) =>
+    meeting.startDateTime && meeting.endDateTime
+      ? Math.round(
+          (new Date(meeting.endDateTime).getTime() -
+            new Date(meeting.startDateTime).getTime()) /
+            60000
+        )
+      : 5;
+
   const parseDate = (value: string | null | undefined) => {
     if (!value) return null;
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? null : date;
   };
 
-  const formatDateLabel = (value: string | null | undefined) => {
+  const _formatDateLabel = (value: string | null | undefined) => {
     const date = parseDate(value);
     if (!date) return 'Fecha no disponible';
     return new Intl.DateTimeFormat('es-ES', {
@@ -265,7 +348,7 @@ export function ProgramHeader({
     }).format(date);
   };
 
-  const formatTimeLabel = (value: string | null | undefined) => {
+  const _formatTimeLabel = (value: string | null | undefined) => {
     const date = parseDate(value);
     if (!date) return '';
     return new Intl.DateTimeFormat('es-ES', {
@@ -274,7 +357,7 @@ export function ProgramHeader({
     }).format(date);
   };
 
-  const getDurationLabel = (
+  const _getDurationLabel = (
     start: string | null | undefined,
     end: string | null | undefined
   ) => {
@@ -293,74 +376,159 @@ export function ProgramHeader({
     return `${minutes} min`;
   };
 
+  // Memoizar los IDs de cursos para evitar re-renders infinitos
+  const courseIds = useMemo(() => {
+    if (!program.materias) return [];
+    return program.materias
+      .map((m) => m.courseid)
+      .filter((id): id is number => Boolean(id));
+  }, [program.materias]);
+
+  const liveSessionsCache = useMemo(
+    () =>
+      new Map<
+        number,
+        ClassMeeting & { courseTitle: string; courseId: number }
+      >(),
+    []
+  );
+  const lastFetchMap = useMemo(() => new Map<number, number>(), []);
+
   useEffect(() => {
     const fetchLiveSessions = async () => {
-      if (!program.materias || program.materias.length === 0) {
+      if (courseIds.length === 0) {
         setLiveSessions([]);
         return;
       }
 
       setIsLoadingLive(true);
       try {
-        const coursesWithId = program.materias
-          .map((m) => ({
-            courseId: m.courseid,
-            courseTitle: m.curso?.title ?? 'Curso sin título',
-          }))
-          .filter((c): c is { courseId: number; courseTitle: string } =>
-            Boolean(c.courseId)
-          );
+        const coursesWithId =
+          program.materias
+            ?.map((m) => ({
+              courseId: m.courseid,
+              courseTitle: m.curso?.title ?? 'Curso sin título',
+            }))
+            .filter((c): c is { courseId: number; courseTitle: string } =>
+              Boolean(c.courseId)
+            ) ?? [];
 
-        const results = await Promise.all(
-          coursesWithId.map(async ({ courseId, courseTitle }) => {
+        // Evitar duplicados de cursos
+        const uniqueCoursesWithId = Array.from(
+          new Map<number, { courseId: number; courseTitle: string }>(
+            coursesWithId.map((c) => [c.courseId, c])
+          ).values()
+        );
+
+        const now = new Date();
+        const nextClasses: Array<
+          ClassMeeting & { courseTitle: string; courseId: number }
+        > = [];
+
+        await Promise.all(
+          uniqueCoursesWithId.map(async ({ courseId, courseTitle }) => {
+            const cached = liveSessionsCache.get(courseId);
+            const lastFetched = lastFetchMap.get(courseId) ?? 0;
+            const cacheIsActive =
+              cached &&
+              (() => {
+                const start = parseDate(cached.startDateTime);
+                const end = parseDate(cached.endDateTime);
+                if (start && end) return end >= now;
+                if (end) return end >= now;
+                if (start) return start >= now;
+                return false;
+              })();
+
+            if (cacheIsActive && Date.now() - lastFetched < 60_000) {
+              nextClasses.push(cached);
+              return;
+            }
+
             try {
               const res = await fetch(
                 `/api/estudiantes/classMeetings/by-course?courseId=${courseId}`
               );
-              if (!res.ok)
-                return [] as (ClassMeeting & { courseTitle: string })[];
+              if (!res.ok) return;
+
               const data: unknown = await res.json();
               if (
                 !data ||
                 typeof data !== 'object' ||
                 !Array.isArray((data as { meetings?: unknown }).meetings)
               ) {
-                return [] as (ClassMeeting & { courseTitle: string })[];
+                return;
               }
 
               const meetings = (data as { meetings: ClassMeeting[] }).meetings;
-              return meetings.map((meeting) => ({
-                ...meeting,
-                courseTitle,
-              }));
+
+              const upcomingOrActive = meetings
+                .filter((meeting) => {
+                  const start = parseDate(meeting.startDateTime);
+                  const end = parseDate(meeting.endDateTime);
+                  if (start && end) return end >= now;
+                  if (end) return end >= now;
+                  if (start) return start >= now;
+                  return false;
+                })
+                .sort((a, b) => {
+                  const aStart = parseDate(a.startDateTime)?.getTime() ?? 0;
+                  const bStart = parseDate(b.startDateTime)?.getTime() ?? 0;
+                  return aStart - bStart;
+                });
+
+              if (upcomingOrActive.length > 0) {
+                const nextMeeting = {
+                  ...upcomingOrActive[0],
+                  courseTitle,
+                  courseId,
+                };
+                liveSessionsCache.set(courseId, nextMeeting);
+                lastFetchMap.set(courseId, Date.now());
+                nextClasses.push(nextMeeting);
+              } else {
+                liveSessionsCache.delete(courseId);
+              }
             } catch (error) {
               console.error('Error fetching class meetings', error);
-              return [] as (ClassMeeting & { courseTitle: string })[];
             }
           })
         );
 
-        const now = new Date();
-        const flattened = results
-          .flat()
-          .filter((meeting) => {
-            const start = parseDate(meeting.startDateTime);
-            return start ? start >= now : false;
-          })
-          .sort((a, b) => {
-            const aStart = parseDate(a.startDateTime)?.getTime() ?? 0;
-            const bStart = parseDate(b.startDateTime)?.getTime() ?? 0;
-            return aStart - bStart;
-          });
+        nextClasses.sort((a, b) => {
+          const aStart = parseDate(a.startDateTime)?.getTime() ?? 0;
+          const bStart = parseDate(b.startDateTime)?.getTime() ?? 0;
+          return aStart - bStart;
+        });
 
-        setLiveSessions(flattened);
+        setLiveSessions(nextClasses);
       } finally {
         setIsLoadingLive(false);
       }
     };
 
     void fetchLiveSessions();
-  }, [program.materias]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseIds.join(',')]);
+
+  // Identificar la próxima clase en vivo (la más cercana en tiempo)
+  const nextMeetingId = useMemo(() => {
+    if (liveSessions.length === 0) return null;
+    return liveSessions[0].id;
+  }, [liveSessions]);
+
+  // Helper para verificar si una clase está disponible
+  const _isMeetingAvailable = useCallback(
+    (meeting: ClassMeeting): boolean => {
+      if (!meeting.startDateTime) return false;
+      if (meeting.id === nextMeetingId) return true;
+      const todayKey = getBogotaDayKey(new Date());
+      const meetingKey = getBogotaDayKey(meeting.startDateTime);
+      if (!todayKey || !meetingKey) return false;
+      return todayKey === meetingKey;
+    },
+    [nextMeetingId, getBogotaDayKey]
+  );
 
   const handleSignInRedirect = async () => {
     toast.error('Inicio de sesión requerido', {
@@ -678,8 +846,8 @@ export function ProgramHeader({
               <Tabs.Content value="en-vivo" className="pt-6">
                 <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
                   <div className="mb-6 flex items-center gap-3">
-                    <div className="rounded-lg bg-red-500/20 p-2">
-                      <Video className="h-5 w-5 text-red-400" />
+                    <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
+                      <LuVideo className="h-5 w-5 text-red-400" />
                     </div>
                     <div>
                       <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
@@ -690,7 +858,7 @@ export function ProgramHeader({
                       </p>
                     </div>
                   </div>
-                  {isLoadingLive ? (
+                  {isLoadingLive || isLoadingEnrollments ? (
                     <div className="flex items-center justify-center py-12">
                       <Icons.spinner className="h-8 w-8 text-primary" />
                     </div>
@@ -707,57 +875,346 @@ export function ProgramHeader({
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {liveSessions.map((meeting) => {
-                        const durationLabel = getDurationLabel(
-                          meeting.startDateTime,
-                          meeting.endDateTime
-                        );
+                        const isEnrolledInCourse =
+                          !!courseEnrollments[meeting.courseId];
+
+                        // Determinar si es hoy usando la zona horaria de Bogotá
+                        let isToday = false;
+                        let isJoinEnabled = false;
+                        let isMeetingEnded = false;
+                        if (meeting.startDateTime && meeting.endDateTime) {
+                          const now = new Date();
+                          const todayKey = getBogotaDayKey(now);
+                          const meetingKey = getBogotaDayKey(
+                            meeting.startDateTime
+                          );
+                          if (todayKey && meetingKey) {
+                            const end = toSafeDate(meeting.endDateTime);
+                            if (end) {
+                              isToday = meetingKey === todayKey;
+                              isMeetingEnded = now > end;
+                              isJoinEnabled = isToday && !isMeetingEnded;
+                            }
+                          }
+                        }
+
+                        // --- Botón: color según estado ---
+                        const buttonClass =
+                          'inline-flex h-9 items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-all border-0';
+                        let buttonBg = '';
+                        let buttonDisabled = false;
+                        let buttonText = '';
+                        let buttonIcon: React.ReactNode = null;
+                        let buttonExtraClass = '';
+
+                        // Si no está inscrito en el curso, mostrar "Inscribirse al curso"
+                        if (!isEnrolledInCourse) {
+                          buttonBg =
+                            'bg-primary text-primary-foreground hover:bg-primary/90';
+                          buttonDisabled = false;
+                          buttonText =
+                            'Inscribirse al curso para ver la clase en vivo';
+                          buttonIcon = <Book className="mr-2 h-4 w-4" />;
+                        } else if (isToday && isJoinEnabled) {
+                          buttonBg = 'bg-red-600 text-white hover:bg-red-700';
+                          buttonDisabled = false;
+                          buttonText = 'Unirse Ahora';
+                          buttonIcon = (
+                            <LuSquareArrowOutUpRight
+                              className="mr-2 inline-block h-4 w-4"
+                              style={{ flexShrink: 0 }}
+                            />
+                          );
+                        } else {
+                          buttonBg = 'buttonneon-aqua';
+                          buttonDisabled = true;
+                          buttonText = 'Próxima Clase';
+                          buttonIcon = (
+                            <FaClock
+                              className="mr-2 inline-block h-4 w-4"
+                              style={{ flexShrink: 0 }}
+                            />
+                          );
+                          buttonExtraClass = 'buttonneon';
+                        }
 
                         return (
                           <div
-                            key={`${meeting.id}-${meeting.courseId}`}
-                            className="space-y-3 rounded-xl border border-border/50 bg-card/60 p-4 backdrop-blur-sm"
+                            key={`course-${meeting.courseId}`}
+                            className={`sm:hover:neon-live-class relative flex flex-col gap-3 rounded-[12px] border p-3 ${isEnrolledInCourse ? 'sm:flex-row sm:items-center sm:justify-between' : ''} sm:p-4`}
+                            style={{
+                              backgroundColor: '#01152d',
+                              borderColor: 'hsla(217, 33%, 17%, 0.5)',
+                            }}
                           >
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <h3 className="font-medium text-foreground">
-                                    {meeting.title}
-                                  </h3>
-                                  <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
-                                    {meeting.courseTitle}
+                            {/* MOBILE: layout vertical y centrado */}
+                            <div className="block w-full sm:hidden">
+                              <div className="flex w-full flex-col items-stretch gap-3">
+                                {/* Badge del curso arriba del título */}
+                                <span className="inline-flex w-fit rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                  {meeting.courseTitle}
+                                </span>
+                                {/* Header compacto */}
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                                      style={{
+                                        backgroundColor: '#061c3799',
+                                        color: '#E6F7F8',
+                                      }}
+                                    >
+                                      <span
+                                        className="h-1.5 w-1.5 animate-pulse rounded-full"
+                                        style={{ backgroundColor: '#061c37' }}
+                                      />
+                                      VIVO
+                                    </span>
+                                    <h3 className="text-lg leading-snug font-semibold text-slate-100">
+                                      {meeting.title}
+                                    </h3>
+                                  </div>
+                                </div>
+                                {/* Chips fecha+hora y duración */}
+                                <div
+                                  className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                  style={{
+                                    color: '#94a3b8',
+                                    background: '#01152d',
+                                  }}
+                                >
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="h-4 w-4"
+                                    >
+                                      <path d="M8 2v4"></path>
+                                      <path d="M16 2v4"></path>
+                                      <rect
+                                        width="18"
+                                        height="18"
+                                        x="3"
+                                        y="4"
+                                        rx="2"
+                                      ></rect>
+                                      <path d="M3 10h18"></path>
+                                    </svg>
+                                    {formatMobileDate(meeting.startDateTime)}
+                                  </span>
+                                  <span className="inline-flex items-center gap-1.5">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="h-4 w-4"
+                                    >
+                                      <circle cx="12" cy="12" r="10"></circle>
+                                      <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                    {formatStartTime(meeting.startDateTime)} (
+                                    {formatDurationLabelLive(
+                                      getDurationMinutes(meeting)
+                                    )}
+                                    )
                                   </span>
                                 </div>
-                                <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                                  <span className="flex items-center gap-1.5">
-                                    <Calendar className="h-4 w-4" />
-                                    {formatDateLabel(meeting.startDateTime)}
-                                  </span>
-                                  <span className="flex items-center gap-1.5">
-                                    <Clock className="h-4 w-4" />
-                                    {formatTimeLabel(meeting.startDateTime)}
-                                    {durationLabel ? ` (${durationLabel})` : ''}
-                                  </span>
+                                {/* Botón móvil */}
+                                <div className="flex w-full justify-center">
+                                  {!isEnrolledInCourse ? (
+                                    <Link
+                                      href={`/estudiantes/cursos/${meeting.courseId}`}
+                                      className={`${buttonClass} ${buttonBg} text-center`}
+                                      style={{
+                                        fontFamily:
+                                          'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                        whiteSpace: 'nowrap',
+                                        color: '#080c16',
+                                      }}
+                                    >
+                                      {buttonIcon}
+                                      <span className="relative z-10 whitespace-nowrap">
+                                        {buttonText}
+                                      </span>
+                                    </Link>
+                                  ) : isToday &&
+                                    isJoinEnabled &&
+                                    meeting.joinUrl ? (
+                                    <a
+                                      href={meeting.joinUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={`${buttonClass} ${buttonBg}`}
+                                      style={{
+                                        fontFamily:
+                                          'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                      }}
+                                    >
+                                      {buttonIcon}
+                                      <span className="relative z-10 whitespace-nowrap">
+                                        {buttonText}
+                                      </span>
+                                    </a>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
+                                      disabled={buttonDisabled}
+                                      style={{
+                                        fontFamily:
+                                          'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {buttonIcon}
+                                      <span className="relative z-10 whitespace-nowrap">
+                                        {buttonText}
+                                      </span>
+                                    </button>
+                                  )}
                                 </div>
                               </div>
-                              {meeting.joinUrl ? (
+                            </div>
+                            {/* DESKTOP: badge + title en una línea, fecha/hora debajo */}
+                            <div className="hidden min-w-0 flex-1 flex-col gap-2 sm:flex">
+                              <div className="flex items-center gap-3">
+                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                  {meeting.courseTitle}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
+                                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                                  VIVO
+                                </span>
+                                <div className="text-base leading-tight font-semibold text-slate-100">
+                                  {meeting.title}
+                                </div>
+                              </div>
+                              <div
+                                className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                style={{
+                                  color: '#94a3b8',
+                                  background: '#01152d',
+                                }}
+                              >
+                                <span className="inline-flex items-center gap-1.5">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="h-4 w-4"
+                                  >
+                                    <path d="M8 2v4"></path>
+                                    <path d="M16 2v4"></path>
+                                    <rect
+                                      width="18"
+                                      height="18"
+                                      x="3"
+                                      y="4"
+                                      rx="2"
+                                    ></rect>
+                                    <path d="M3 10h18"></path>
+                                  </svg>
+                                  {formatMobileDate(meeting.startDateTime)}
+                                </span>
+                                <span className="inline-flex items-center gap-1.5">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="h-4 w-4"
+                                  >
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                  </svg>
+                                  {formatStartTime(meeting.startDateTime)} (
+                                  {formatDurationLabelLive(
+                                    getDurationMinutes(meeting)
+                                  )}
+                                  )
+                                </span>
+                              </div>
+                            </div>
+                            {/* Botón desktop debajo de fecha/hora y centrado o a la derecha */}
+                            <div
+                              className={`mt-2 hidden ${isEnrolledInCourse ? 'sm:flex sm:justify-end' : 'w-full justify-center sm:flex'}`}
+                            >
+                              {!isEnrolledInCourse ? (
+                                <Link
+                                  href={`/estudiantes/cursos/${meeting.courseId}`}
+                                  className={`${buttonClass} ${buttonBg} text-center`}
+                                  style={{
+                                    fontFamily:
+                                      'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                    whiteSpace: 'nowrap',
+                                    color: '#080c16',
+                                  }}
+                                >
+                                  {buttonIcon}
+                                  <span className="relative z-10 whitespace-nowrap">
+                                    {buttonText}
+                                  </span>
+                                </Link>
+                              ) : isToday &&
+                                isJoinEnabled &&
+                                meeting.joinUrl ? (
                                 <a
                                   href={meeting.joinUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-accent/20 px-3 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                                  className={`${buttonClass} ${buttonBg}`}
+                                  style={{
+                                    fontFamily:
+                                      'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                  }}
                                 >
-                                  <ExternalLink className="h-4 w-4" />
-                                  Ver enlace
+                                  {buttonIcon}
+                                  <span className="relative z-10 whitespace-nowrap">
+                                    {buttonText}
+                                  </span>
                                 </a>
                               ) : (
                                 <button
                                   type="button"
-                                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md bg-muted px-3 text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-colors"
-                                  disabled
+                                  className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
+                                  disabled={buttonDisabled}
+                                  style={{
+                                    fontFamily:
+                                      'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
+                                  }}
                                 >
-                                  Enlace no disponible
+                                  {buttonIcon}
+                                  <span className="relative z-10 whitespace-nowrap">
+                                    {buttonText}
+                                  </span>
                                 </button>
                               )}
                             </div>
