@@ -146,8 +146,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [editSubjects, setEditSubjects] = useState<number[]>([]); // Add this for subjects
   void setEditSubjects;
-  const [horario, setHorario] = useState<string | null>(null);
-  const [espacios, setEspacios] = useState<string | null>(null);
+  const [horario, setHorario] = useState<number | null>(null);
+  const [espacios, setEspacios] = useState<number | null>(null);
   const [certificationTypeId, setCertificationTypeId] = useState<number | null>(
     null
   );
@@ -363,8 +363,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     courseTypeId: number[],
     individualPrice: number | null,
     videoKey: string,
-    horario: string | null,
-    espacios: string | null,
+    horario: number | null,
+    espacios: number | null,
     certificationTypeId: number | null
   ) => {
     if (!user) return;

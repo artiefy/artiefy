@@ -15,11 +15,11 @@ import {
   getAdminUsers,
   removeRole,
   setRoleWrapper,
-  updateEnrollmentStatus,
   updateMultipleUserStatus,
   updateUserInfo,
   updateUserStatus,
 } from '~/server/queries/queries';
+import { updateEnrollmentStatus } from '~/server/queries/queriesSuperAdmin';
 
 // 📌 Configuración de S3
 const s3Client = new S3Client({
@@ -412,6 +412,7 @@ export async function PATCH(request: Request) {
       lastName?: string;
       userIds?: string[];
       status?: string;
+      enrollmentStatus?: string;
     }
     const body: RequestBody = (await request.json()) as RequestBody;
     const { action, id, role, firstName, lastName, userIds, status } = body;
