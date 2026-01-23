@@ -19,18 +19,18 @@
 @theme {
   /* Colors */
   --color-background: oklch(19% 0.0542 252.35);
-  --color-foreground: oklch(87.88% 0.1409 192.09);
+  --color-foreground: oklch(0.9842 0.003 247.86);
   --color-primary: oklch(0.7507 0.123 205);
   --color-primary-foreground: oklch(0.985 0 0);
-  --color-secondary: oklch(73.32% 0.128083 212.6259);
+  --color-secondary: oklch(19.47% 0.056 252.53);
   --color-secondary-foreground: oklch(0.205 0 0);
 
   /* UI Colors */
-  --color-card: oklch(1 0 0);
+  --color-card: oklch(22.61% 0.06 255);
   --color-card-foreground: oklch(0.145 0 0);
   --color-popover: oklch(1 0 0);
   --color-popover-foreground: oklch(0.145 0 0);
-  --color-muted: oklch(0.7107 0.0351 256.79);
+  --color-muted: oklch(27.55% 0.037 260.02);
   --color-muted-foreground: oklch(0.7107 0.0351 256.79);
   --color-accent: oklch(0.97 0 0);
   --color-accent-foreground: oklch(0.205 0 0);

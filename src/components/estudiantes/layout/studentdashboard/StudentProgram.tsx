@@ -3,16 +3,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ArrowRightCircleIcon, StarIcon } from '@heroicons/react/24/solid';
+import { StarIcon } from '@heroicons/react/24/solid';
+import { Award, BookOpen, Clock, Users } from 'lucide-react';
 
 import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
-import { Button } from '~/components/estudiantes/ui/button';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from '~/components/estudiantes/ui/card';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type Program } from '~/types';
 
@@ -21,100 +15,107 @@ interface StudenProgramProps {
 }
 
 export function StudentProgram({ program }: StudenProgramProps) {
+  const coursesCount = program.coursesCount ?? 0;
+  const totalHours = program.totalHours ?? 0;
+  const rating = program.rating ?? 0;
+  const creatorName = program.creatorName ?? 'Artiefy';
+
   return (
-    <div className="group/card relative m-2 sm:m-2">
-      <div className="absolute -inset-1.5 animate-gradient rounded-2xl bg-gradient-to-r from-violet-600 via-violet-400 to-violet-800 opacity-0 blur-[4px] transition duration-500 group-hover/card:opacity-100" />
-      <Card className="relative flex h-full flex-col justify-between overflow-hidden border-0 bg-[#061C37] text-white">
-        <CardHeader className="-mb-2">
-          <div className="relative aspect-video overflow-hidden rounded-t-2xl">
-            <Image
-              src={
-                program.coverImageKey && program.coverImageKey !== 'NULL'
-                  ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
-                  : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
-              }
-              alt={program.title}
-              fill
-              className="object-cover transition-transform duration-300 hover:scale-105"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              quality={85}
-              placeholder="blur"
-              blurDataURL={blurDataURL}
+    <Link
+      href={`/estudiantes/programas/${program.id}`}
+      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
+    >
+      {/* Image Container */}
+      <div className="relative aspect-video overflow-hidden">
+        <Image
+          src={
+            program.coverImageKey && program.coverImageKey !== 'NULL'
+              ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
+              : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
+          }
+          alt={program.title}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          quality={85}
+          placeholder="blur"
+          blurDataURL={blurDataURL}
+        />
+
+        {/* Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+        {/* Top Left Badges */}
+        <div className="absolute top-3 left-3 flex gap-2">
+          {program.certificationType && (
+            <div className="inline-flex items-center rounded-full border border-transparent bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-0.5 text-xs font-medium text-white transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+              {program.certificationType.name}
+            </div>
+          )}
+        </div>
+
+        {/* Top Right Award Icon */}
+        <div className="absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/90">
+          <Award className="h-5 w-5 text-white" />
+        </div>
+
+        {/* Bottom Info on Image */}
+        <div className="absolute right-3 bottom-3 left-3 flex items-center justify-between text-xs text-white">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <BookOpen className="h-3.5 w-3.5" />
+              {coursesCount} cursos
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              {totalHours}h
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <StarIcon className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            <span>{rating.toFixed(1)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-4">
+        {/* Category */}
+        <p className="mb-1 text-xs font-medium text-primary">
+          {program.category?.name ?? 'Sin categoría'}
+        </p>
+
+        {/* Title */}
+        <h3
+          className="mb-2 line-clamp-2 text-lg leading-tight font-semibold text-foreground transition-colors group-hover:text-primary"
+          title={program.title}
+        >
+          {program.title}
+        </h3>
+
+        {/* Description */}
+        <p
+          className="mb-3 line-clamp-2 flex-1 text-sm text-muted-foreground"
+          title={program.description ?? ''}
+        >
+          {program.description}
+        </p>
+
+        {/* Footer with Creator and Students */}
+        <div className="flex items-center justify-between border-t border-border/50 pt-3">
+          <div className="flex items-center gap-2">
+            <div className="h-6 w-6 rounded-full bg-primary/20" />
+            <span className="text-xs text-muted-foreground">{creatorName}</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Users className="h-3.5 w-3.5" />
+            <EnrollmentCount
+              programId={parseInt(program.id)}
+              displayMode="number-only"
             />
           </div>
-        </CardHeader>
-
-        <CardContent className="flex grow flex-col justify-between space-y-0.5 px-6 sm:space-y-4">
-          <div className="flex min-h-[90px] flex-col space-y-2 sm:min-h-[120px] sm:space-y-4">
-            <div>
-              <h3
-                className="line-clamp-2 text-xs font-bold text-primary sm:-mb-2 sm:text-lg"
-                title={program.title}
-              >
-                {program.title}
-              </h3>
-            </div>
-            <div>
-              <p
-                className="line-clamp-2 text-xs text-gray-300 sm:text-sm"
-                title={program.description ?? ''}
-              >
-                {program.description}
-              </p>
-            </div>
-          </div>
-
-          <div className="-mt-2 flex items-center justify-between space-y-0 sm:-mt-4">
-            <div className="flex items-center space-x-4">
-              <span className="chip chip-categoria-program">
-                {program.category?.name ?? 'Sin categoría'}
-              </span>
-            </div>
-            <div className="flex items-center">
-              <div className="hidden sm:flex">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <StarIcon
-                    key={index}
-                    className={`h-4 w-4 ${
-                      index < Math.floor(program.rating ?? 0)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-              <div className="flex sm:hidden">
-                <StarIcon className="h-4 w-4 text-yellow-400" />
-              </div>
-              <span className="ml-1 text-sm font-bold text-yellow-500 sm:text-base">
-                {program.rating?.toFixed(1) ?? '0.0'}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-
-        <CardFooter className="-mt-4 px-6 pt-1 sm:-mt-2 sm:px-6">
-          <div className="flex w-full flex-col items-center gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-            <div className="flex-shrink-0">
-              <EnrollmentCount programId={parseInt(program.id)} />
-            </div>
-            <Button asChild className="w-full flex-shrink-0 sm:w-auto">
-              <Link
-                href={`/estudiantes/programas/${program.id}`}
-                className="group/button relative inline-flex h-7 cursor-pointer items-center justify-center overflow-hidden rounded-md border border-white/20 bg-secondary px-3 text-black active:scale-95 sm:h-10 sm:px-4"
-              >
-                <p className="text-sm font-bold whitespace-nowrap sm:text-sm">
-                  Ver Programa
-                </p>
-                <ArrowRightCircleIcon className="ml-1 size-4 animate-bounce-right sm:size-5" />
-                <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-                  <div className="relative h-full w-10 bg-white/30" />
-                </div>
-              </Link>
-            </Button>
-          </div>
-        </CardFooter>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </Link>
   );
 }

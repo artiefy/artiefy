@@ -433,56 +433,20 @@ const LessonActivities = ({
     const currentActivity = selectedActivity;
     closeModal();
 
-    // Remove the state updates that were affecting other activities
-    setActivitiesState((prev) => {
-      const updatedState = { ...prev };
-
-      // Only update the current activity's state
-      updatedState[currentActivity.id] = {
+    // Al cerrar sin completar, limpiar loading pero no marcar completada
+    setActivitiesState((prev) => ({
+      ...prev,
+      [currentActivity.id]: {
         ...(prev[currentActivity.id] || {}),
-        isCompleted: true,
-      };
-
-      return updatedState;
-    });
-
-    // Keep the fetch call to update current activity's results
-    void fetch(
-      `/api/activities/getAnswers?activityId=${currentActivity.id}&userId=${userId}`
-    )
-      .then(async (response) => {
-        if (response.ok) {
-          const rawData: unknown = await response.json();
-          if (isActivityAnswersResponse(rawData)) {
-            setActivitiesState((prev) => ({
-              ...prev,
-              [currentActivity.id]: {
-                savedResults: {
-                  score: rawData.score,
-                  answers: rawData.answers,
-                  isAlreadyCompleted: rawData.isAlreadyCompleted,
-                },
-                isLoading: false,
-                isCompleted: true,
-              },
-            }));
-          }
-        }
-      })
-      .catch((error) => {
-        console.error('Error updating activity status:', error);
-      });
+        isLoading: false,
+      },
+    }));
 
     setSelectedActivity(null);
   };
 
-  const getButtonClasses = (activity: Activity) => {
+  const getButtonClasses = (activity: Activity, isLocked: boolean) => {
     const activityState = activitiesState[activity.id];
-    const activityType = resolveActivityType(activity);
-    const currentLesson = activity.lessonsId
-      ? lessons.find((l) => l.id === activity.lessonsId)
-      : null;
-    const hasNoVideo = currentLesson?.coverVideoKey === 'none';
 
     if (isButtonLoading) {
       return 'bg-slate-500/20 text-slate-200 border-slate-400/20';
@@ -492,24 +456,14 @@ const LessonActivities = ({
       return 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40 hover:bg-emerald-500/30 active:scale-95';
     }
 
-    // Enable button styling for no video or completed video, with colors based on activity type
-    if (hasNoVideo || isVideoCompleted) {
-      switch (activityType.label) {
-        case 'Cuestionario':
-          return 'bg-orange-500/20 text-orange-200 border-orange-400/40 hover:bg-orange-500/30 active:scale-95';
-        case 'Entrega':
-          return 'bg-blue-500/20 text-blue-200 border-blue-400/40 hover:bg-blue-500/30 active:scale-95';
-        case 'Autocompletado':
-          return 'bg-teal-500/20 text-teal-200 border-teal-400/40 hover:bg-teal-500/30 active:scale-95';
-        default:
-          return 'bg-cyan-500/20 text-cyan-200 border-cyan-400/40 hover:bg-cyan-500/30 active:scale-95';
-      }
+    if (isLocked) {
+      return 'bg-[#0d223f] text-[#8fb5ff] border-[#1c355c] hover:bg-[#0f284c] cursor-not-allowed';
     }
 
-    return 'bg-slate-500/20 text-muted-foreground border-border/40';
+    return 'bg-[#13315c] text-[#e0f0ff] border-[#1f4a7a] hover:bg-[#16406d] active:scale-95';
   };
 
-  const getButtonLabel = (activity: Activity) => {
+  const getButtonLabel = (activity: Activity, isLocked: boolean) => {
     const activityState = activitiesState[activity.id];
 
     if (isButtonLoading) {
@@ -538,7 +492,14 @@ const LessonActivities = ({
     return (
       <>
         {activityState?.isLoading && <Icons.spinner className="mr-2 h-4 w-4" />}
-        <span className="font-semibold">Ver Actividad</span>
+        {isLocked ? (
+          <span className="flex items-center gap-2 font-semibold">
+            <FaLock className="h-4 w-4" />
+            Bloqueada
+          </span>
+        ) : (
+          <span className="font-semibold">Ver Actividad</span>
+        )}
       </>
     );
   };
@@ -565,11 +526,17 @@ const LessonActivities = ({
     const currentLesson = activity.lessonsId
       ? lessons.find((l) => l.id === activity.lessonsId)
       : null;
-    if (
-      !isVideoCompleted &&
-      currentLesson &&
-      currentLesson.coverVideoKey !== 'none'
-    ) {
+    const hasNoVideo = currentLesson?.coverVideoKey === 'none';
+    const isFirstActivity = index === 0;
+    const previousActivity = activities[index - 1];
+    const isPreviousCompleted = previousActivity
+      ? activitiesState[previousActivity.id]?.isCompleted
+      : true;
+    const baseUnlocked = hasNoVideo || isVideoCompleted;
+    const sequentialUnlocked = isFirstActivity || isPreviousCompleted;
+    const canAccess = baseUnlocked && sequentialUnlocked;
+
+    if (!baseUnlocked) {
       return {
         icon: <FaLock className="text-gray-400" />,
         bgColor: 'bg-gray-200',
@@ -577,8 +544,7 @@ const LessonActivities = ({
       };
     }
 
-    // First activity is always active when video is completed or when there's no video
-    if (index === 0) {
+    if (isFirstActivity) {
       return {
         icon: <TbClockFilled className="text-blue-500" />,
         bgColor: 'bg-blue-100',
@@ -586,19 +552,22 @@ const LessonActivities = ({
       };
     }
 
-    // Previous activity must be completed to unlock current one
-    const previousActivity = activities[index - 1];
-    const isPreviousCompleted =
-      previousActivity && activitiesState[previousActivity.id]?.isCompleted;
+    if (!sequentialUnlocked) {
+      return {
+        icon: <FaLock className="text-gray-400" />,
+        bgColor: 'bg-gray-200',
+        isActive: false,
+      };
+    }
 
     return {
-      icon: isPreviousCompleted ? (
+      icon: canAccess ? (
         <TbClockFilled className="text-blue-500" />
       ) : (
         <FaLock className="text-gray-400" />
       ),
-      bgColor: isPreviousCompleted ? 'bg-blue-100' : 'bg-gray-200',
-      isActive: isPreviousCompleted ?? false,
+      bgColor: canAccess ? 'bg-blue-100' : 'bg-gray-200',
+      isActive: canAccess,
     };
   };
 
@@ -649,15 +618,17 @@ const LessonActivities = ({
       ? lessons.find((l) => l.id === activity.lessonsId)
       : null;
     const hasNoVideo = currentLesson?.coverVideoKey === 'none';
-    const canAccess =
-      hasNoVideo || isVideoCompleted || isFirstActivity || isPreviousCompleted;
+    const baseUnlocked = hasNoVideo || isVideoCompleted;
+    const sequentialUnlocked = isFirstActivity || isPreviousCompleted;
+    const canAccess = baseUnlocked && sequentialUnlocked;
     const _isNextLessonAvailable =
       !isLastLesson && isLastActivityInLesson(activity);
+    const isLocked = !activityState?.isCompleted && !canAccess;
 
     return (
       <div
         key={activity.id}
-        className="flex w-full justify-center md:justify-start"
+        className="flex w-full justify-center md:w-[70%] md:justify-start"
       >
         <div
           className={`group mb-4 w-11/12 max-w-md rounded-2xl border px-5 py-4 transition-all md:w-full md:max-w-none ${activityType.bg} ${
@@ -668,7 +639,7 @@ const LessonActivities = ({
                 : 'border-border/40 opacity-60'
           }`}
         >
-          <div className="flex w-full flex-col items-center justify-between gap-4 text-center md:flex-row md:items-start md:text-left">
+          <div className="flex w-full flex-col items-center justify-between gap-4 text-center md:flex-row md:items-center md:text-left">
             <div className="flex min-w-0 flex-1 flex-col items-center gap-2 md:flex-row md:gap-4">
               <div
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${activityType.bg} ${activityType.color}`}
@@ -710,7 +681,7 @@ const LessonActivities = ({
                 </p>
               </div>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center md:self-center">
               <button
                 onClick={
                   activityState?.isCompleted
@@ -718,15 +689,15 @@ const LessonActivities = ({
                     : () => handleOpenActivity(activity)
                 }
                 disabled={
-                  // Solo deshabilitar si NO está completada y no se puede acceder o está cargando
-                  !activityState?.isCompleted &&
-                  ((!hasNoVideo && !isVideoCompleted) ||
-                    isButtonLoading ||
-                    !canAccess)
+                  !activityState?.isCompleted && (isButtonLoading || !canAccess)
                 }
-                className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium transition-all ${getButtonClasses(activity)} ${!canAccess && !isButtonLoading && !activityState?.isCompleted ? 'cursor-not-allowed' : ''} disabled:pointer-events-none disabled:opacity-50`}
+                className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium transition-all ${getButtonClasses(activity, isLocked)} ${
+                  !canAccess && !isButtonLoading && !activityState?.isCompleted
+                    ? 'cursor-not-allowed'
+                    : ''
+                } disabled:pointer-events-none disabled:opacity-50`}
               >
-                {getButtonLabel(activity)}
+                {getButtonLabel(activity, isLocked)}
               </button>
             </div>
           </div>

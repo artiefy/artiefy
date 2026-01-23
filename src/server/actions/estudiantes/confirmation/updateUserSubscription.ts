@@ -103,7 +103,7 @@ export async function updateUserSubscription(paymentData: PaymentData) {
     await clerk.users.updateUserMetadata(clerkUser.id, {
       publicMetadata: {
         subscriptionStatus: 'active',
-        subscriptionEndDate: subscriptionEndBogota,
+        subscriptionEndDate: subscriptionEndDate.toISOString(),
         planType: planType,
       },
     });

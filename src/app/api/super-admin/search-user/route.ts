@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { and, eq, ilike, isNull } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { accessLogs,users } from '~/server/db/schema';
+import { accessLogs, users } from '~/server/db/schema';
 
 // Definir tipos para el body de la petición
 interface SearchRequestBody {

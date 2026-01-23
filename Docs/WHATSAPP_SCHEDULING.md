@@ -77,7 +77,9 @@ import { NextRequest, NextResponse } from 'next/server';
 export const maxDuration = 60; // 60 segundos
 
 export async function GET(request: NextRequest) {
-  if (request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (
+    request.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`
+  ) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -86,7 +88,7 @@ export async function GET(request: NextRequest) {
       `${process.env.NEXT_PUBLIC_APP_URL}/api/super-admin/whatsapp/send-scheduled`,
       {
         headers: {
-          'authorization': `Bearer ${process.env.CRON_SECRET}`,
+          authorization: `Bearer ${process.env.CRON_SECRET}`,
         },
       }
     );

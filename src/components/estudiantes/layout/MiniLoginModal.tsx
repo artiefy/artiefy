@@ -61,6 +61,10 @@ export default function MiniLoginModal({
 
   // Detectar cuando OAuth o login se completa exitosamente
   useEffect(() => {
+    // Importante: si el modal no está abierto, no hagas side-effects.
+    // Este componente se renderiza aunque retorne null, y el useEffect corría igual.
+    if (!isOpen) return;
+
     if (isSignedIn && !hasHandledAuth) {
       // Marcar que ya manejamos esta autenticación
       setHasHandledAuth(true);
@@ -91,6 +95,7 @@ export default function MiniLoginModal({
     onLoginSuccess,
     onClose,
     redirectUrl,
+    isOpen,
   ]);
 
   // Reset hasHandledAuth cuando se cierra el modal

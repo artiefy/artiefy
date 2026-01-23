@@ -1,6 +1,6 @@
 'use client';
 
-import { createElement, useEffect, useState } from 'react';
+import { createElement, useEffect, useRef, useState } from 'react';
 
 import { usePathname, useSearchParams } from 'next/navigation';
 
@@ -10,6 +10,8 @@ import { FaTimes, FaTimesCircle } from 'react-icons/fa';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
+import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
+import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
 import { Button } from '~/components/estudiantes/ui/button';
 import { type Plan, plansEmpresas, plansPersonas } from '~/types/plans';
@@ -23,200 +25,270 @@ const PlansPage: React.FC = () => {
   const searchParams = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('personas');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [hasOpenedModal, setHasOpenedModal] = useState(false);
+  const hasProcessedUrlRef = useRef(false);
+  const initialSearchParamsRef = useRef<URLSearchParams | null>(null);
+  const PENDING_PLAN_KEY = 'pendingPlanPurchaseId';
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [authDismissed, setAuthDismissed] = useState(false);
+
+  const planIdParam = searchParams?.get('plan_id') ?? null;
 
   // Detectar plan_id en la URL y abrir modal si corresponde (solo una vez)
   useEffect(() => {
-    const planId = searchParams?.get('plan_id');
-    if (
-      isSignedIn &&
-      planId &&
-      !showModal &&
-      !selectedPlan &&
-      !hasOpenedModal
-    ) {
-      const allPlans = [...plansPersonas, ...plansEmpresas];
-      const plan = allPlans.find((p) => String(p.id) === String(planId));
-      if (plan) {
-        const timer = setTimeout(() => {
-          setSelectedPlan(plan);
-          setShowModal(true);
-          setHasOpenedModal(true);
-        }, 0);
+    // Guardar searchParams inicial solo una vez
+    if (!initialSearchParamsRef.current) {
+      initialSearchParamsRef.current = searchParams;
+    }
 
-        // Limpiar plan_id de la URL para evitar que el modal se vuelva a abrir en reloads
-        const params = new URLSearchParams(
-          Array.from(searchParams?.entries() ?? [])
-        );
-        params.delete('plan_id');
-        const newUrl =
-          pathname + (params.toString() ? `?${params.toString()}` : '');
-        window.history.replaceState({}, '', newUrl);
+    // 1) Intentar recuperar el plan pendiente guardado (login sin query params)
+    const pendingPlanId =
+      typeof window !== 'undefined'
+        ? window.sessionStorage.getItem(PENDING_PLAN_KEY)
+        : null;
 
-        return () => clearTimeout(timer);
+    // 2) Si no hay pending, usar el plan_id del query actual
+    const effectivePlanId = pendingPlanId ?? planIdParam;
+    if (!effectivePlanId) return;
+
+    const allPlans = [...plansPersonas, ...plansEmpresas];
+    const plan = allPlans.find((p) => String(p.id) === String(effectivePlanId));
+    if (!plan) return;
+
+    // Si NO está logueado: primero mostrar login/signup y limpiar la URL.
+    // Guardamos el plan pendiente para que, al autenticarse, se abra el modal de pago automáticamente.
+    if (!isSignedIn) {
+      if (typeof window !== 'undefined') {
+        if (!pendingPlanId) {
+          window.sessionStorage.setItem(PENDING_PLAN_KEY, String(plan.id));
+        }
+
+        // Limpiar plan_id de la URL inmediatamente (no queremos mostrarlo ni depender de él)
+        if (planIdParam) {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('plan_id');
+          window.history.replaceState({}, '', url.pathname + url.search);
+        }
       }
+
+      // Abrir el modal de login si no está abierto
+      if (!authDismissed && !showLoginModal && !showSignUpModal) {
+        const openAuth = () => setShowLoginModal(true);
+        if (typeof queueMicrotask === 'function') {
+          queueMicrotask(openAuth);
+        } else {
+          setTimeout(openAuth, 0);
+        }
+      }
+      return;
+    }
+
+    // Si está logueado: abrir el modal de pago una sola vez desde pending/query
+    if (hasProcessedUrlRef.current) return;
+    hasProcessedUrlRef.current = true;
+
+    const openModal = () => {
+      setSelectedPlan(plan);
+      setShowModal(true);
+    };
+    if (typeof queueMicrotask === 'function') {
+      queueMicrotask(openModal);
+    } else {
+      setTimeout(openModal, 0);
+    }
+
+    // Consumir el pendingPlanId (si existía)
+    if (typeof window !== 'undefined' && pendingPlanId) {
+      window.sessionStorage.removeItem(PENDING_PLAN_KEY);
+    }
+
+    // Limpiar plan_id de la URL (por si aún existe)
+    if (typeof window !== 'undefined' && planIdParam) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('plan_id');
+      window.history.replaceState({}, '', url.pathname + url.search);
     }
   }, [
     isSignedIn,
+    planIdParam,
+    showLoginModal,
+    showSignUpModal,
+    authDismissed,
     searchParams,
-    showModal,
-    selectedPlan,
-    hasOpenedModal,
-    pathname,
   ]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsProcessing(false);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   // Permitir abrir el modal siempre
   const handlePlanSelect = (plan: Plan) => {
+    if (plan.name === 'Enterprise') return;
     if (isProcessing) return;
     setIsProcessing(true);
+    // Si no está logueado, primero autenticación; luego se abrirá el modal de pago automáticamente.
+    if (!isSignedIn && typeof window !== 'undefined') {
+      window.sessionStorage.setItem(PENDING_PLAN_KEY, String(plan.id));
+      setAuthDismissed(false);
+      setShowLoginModal(true);
+      setIsProcessing(false);
+      return;
+    }
 
     setSelectedPlan(plan);
     setShowModal(true);
     setIsProcessing(false);
   };
 
+  // Manejar cierre del modal
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedPlan(null);
+    setIsProcessing(false);
+  };
+
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false);
+    // No abrir manualmente aquí: el useEffect lo hace al detectar isSignedIn + pendingPlanPurchaseId
+  };
+
+  const handleSignUpSuccess = () => {
+    setShowSignUpModal(false);
+    // No abrir manualmente aquí: el useEffect lo hace al detectar isSignedIn + pendingPlanPurchaseId
+  };
+
+  const handleAuthClose = () => {
+    setShowLoginModal(false);
+    setShowSignUpModal(false);
+    setAuthDismissed(true);
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(PENDING_PLAN_KEY);
+    }
+  };
+
+  const handleSwitchToSignUp = () => {
+    setShowLoginModal(false);
+    setShowSignUpModal(true);
+  };
+
+  const handleSwitchToLogin = () => {
+    setShowSignUpModal(false);
+    setShowLoginModal(true);
+  };
+
   const selectedProduct = selectedPlan ? getProductById(selectedPlan.id) : null;
+  const allPlans = [...plansPersonas, ...plansEmpresas];
 
   // Función para sobreescribir el precio COP mostrado de algunos planes
   const getDisplayCopPrice = (plan: Plan) =>
     plan.name === 'Pro' ? 99900 : plan.name === 'Premium' ? 124900 : plan.price;
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="min-h-screen bg-background">
       <Header />
       <div className="mb-12 px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="text-center">
-            <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-              Planes Artiefy
+          <div className="mx-auto mb-12 max-w-2xl text-center">
+            <h2 className="text-4xl font-extrabold text-white md:text-5xl">
+              Elige tu plan <span className="text-primary">perfecto</span>
             </h2>
-            <p className="text-primary mt-4 text-xl">
-              Elige el plan perfecto para tu viaje de aprendizaje
+            <p className="mt-4 text-lg text-muted-foreground">
+              Selecciona el plan que mejor se adapte a tus necesidades de
+              aprendizaje
             </p>
           </div>
-          <div className="mt-8 flex justify-center space-x-4">
-            <button
-              className={`button-rounded ${
-                activeTab === 'personas'
-                  ? 'bg-primary text-white'
-                  : 'text-primary bg-white'
-              }`}
-              onClick={() => setActiveTab('personas')}
-            >
-              Personas
-              <div className="hoverEffect">
-                <div />
-              </div>
-            </button>
-            <button
-              className={`button-rounded ${
-                activeTab === 'empresas'
-                  ? 'bg-primary text-white'
-                  : 'text-primary bg-white'
-              }`}
-              onClick={() => setActiveTab('empresas')}
-            >
-              Empresas
-              <div className="hoverEffect">
-                <div />
-              </div>
-            </button>
-          </div>
-          <div className="mt-12 flex justify-center">
-            <div
-              className={`grid gap-8 ${
-                activeTab === 'personas'
-                  ? 'grid-cols-1 md:grid-cols-2'
-                  : 'grid-cols-1 justify-items-center'
-              } w-full max-w-4xl`}
-            >
-              {(activeTab === 'personas' ? plansPersonas : plansEmpresas).map(
-                (plan) => (
-                  <div
-                    key={plan.id}
-                    className="from-primary to-secondary relative flex w-full max-w-md flex-col items-center justify-between rounded-lg bg-linear-to-r p-2 shadow-lg transition-all duration-200"
-                  >
-                    {plan.name === 'Pro' && (
-                      <div className="absolute top-6 -right-5 rotate-45 transform bg-red-500 px-5 py-1 text-xs font-bold text-white">
-                        15 días gratis
-                      </div>
-                    )}
-                    <div className="my-6">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-background text-2xl font-bold">
-                          {plan.name}
-                        </h3>
-                        {createElement(
-                          plan.icon as React.ComponentType<{
-                            className: string;
-                          }>,
-                          { className: 'size-8 text-background' }
-                        )}
-                      </div>
-                      <div className="m-4 flex flex-col items-center">
-                        <span className="text-background text-4xl font-extrabold">
-                          ${getDisplayCopPrice(plan).toLocaleString('es-CO')}
-                          <span className="text-lg font-normal">/mes</span>
-                        </span>
-                        <span className="w-full text-center text-2xl font-extrabold text-gray-600">
-                          ${plan.priceUsd}{' '}
-                          <span className="text-lg font-normal">/month</span>
-                        </span>
-                      </div>
-                      <div className="text-background text-left">
-                        <p>
-                          Cursos disponibles:{' '}
-                          <span className="text-2xl font-semibold">
-                            {plan.courses}
-                          </span>
-                        </p>
-                        <p>
-                          Proyectos disponibles:{' '}
-                          <span className="text-2xl font-semibold">
-                            {plan.projects}
-                          </span>
-                        </p>
-                      </div>
+
+          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+            {allPlans.map((plan) => {
+              const isPremium = plan.name === 'Premium';
+              const isPro = plan.name === 'Pro';
+              const isEnterprise = plan.name === 'Enterprise';
+              const isCurrentPlanProcessing =
+                isProcessing && selectedPlan?.id === plan.id;
+              const isPlanDisabled = isEnterprise || isCurrentPlanProcessing;
+              const ctaLabel =
+                plan.name === 'Enterprise' ? 'Muy pronto' : 'Comenzar ahora';
+              const planDescription =
+                plan.description ?? 'Impulsa tu aprendizaje con Artiefy';
+              return (
+                <div
+                  key={plan.id}
+                  aria-disabled={isPlanDisabled}
+                  className={`relative overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-sm transition-all duration-300 ${
+                    isEnterprise
+                      ? 'cursor-not-allowed'
+                      : 'hover:-translate-y-2 hover:border-primary/50'
+                  } ${
+                    isCurrentPlanProcessing
+                      ? 'pointer-events-none cursor-not-allowed opacity-60'
+                      : ''
+                  }`}
+                >
+                  {isPro && (
+                    <div className="absolute top-0 right-0 rounded-bl-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white">
+                      15 días gratis
                     </div>
-                    <div className="">
-                      <ul className="mb-5 space-y-3">
-                        {plan.features.map((feature) => (
-                          <li key={feature.text} className="flex items-center">
-                            {feature.available ? (
-                              <BsCheck2Circle className="size-6 text-green-600" />
-                            ) : (
-                              <FaTimesCircle className="size-6 text-red-600" />
-                            )}
-                            <span className="text-background ml-3">
-                              {feature.text}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
+                  )}
+                  {isPremium && (
+                    <div className="absolute top-0 right-0 rounded-bl-lg bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                      Más popular
                     </div>
-                    <div className="mb-5 flex justify-center">
-                      <Button
-                        onClick={() => handlePlanSelect(plan)} // Activa el modal y selecciona el plan
-                        className="group bg-background hover:bg-background relative h-full overflow-hidden rounded-md border border-b-4 border-white px-4 py-3 font-medium text-white outline-hidden duration-300 hover:border-t-4 hover:border-b hover:brightness-150 active:scale-95 active:opacity-75"
-                      >
-                        <span className="absolute top-[-150%] left-0 inline-flex h-[5px] w-80 rounded-md bg-white opacity-50 shadow-[0_0_10px_10px_rgba(0,0,0,0.3)] shadow-white duration-500 group-hover:top-[150%]" />
-                        Seleccionar Plan {plan.name}
-                      </Button>
+                  )}
+                  {isEnterprise && (
+                    <div className="absolute top-0 right-0 rounded-bl-lg bg-amber-400 px-3 py-1 text-xs font-semibold text-black">
+                      Muy pronto
+                    </div>
+                  )}
+
+                  <div className="flex flex-col space-y-1.5 p-6 pb-2 text-center">
+                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white">
+                      {createElement(
+                        plan.icon as React.ComponentType<{ className: string }>,
+                        { className: 'h-6 w-6' }
+                      )}
+                    </div>
+                    <h3 className="font-display text-2xl font-bold text-white">
+                      {plan.name}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {planDescription}
+                    </p>
+                    <div className="mt-4">
+                      <span className="font-display text-4xl font-bold text-foreground">
+                        ${getDisplayCopPrice(plan).toLocaleString('es-CO')}
+                      </span>
+                      <span className="text-muted-foreground">/mes</span>
                     </div>
                   </div>
-                )
-              )}
-            </div>
+
+                  <div className="p-6 pt-6">
+                    <ul className="mb-6 space-y-3">
+                      {plan.features.map((feature) => (
+                        <li
+                          key={feature.text}
+                          className="flex items-start gap-3"
+                        >
+                          <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
+                            {feature.available ? (
+                              <BsCheck2Circle className="h-3 w-3 text-primary" />
+                            ) : (
+                              <FaTimesCircle className="h-3 w-3 text-red-500" />
+                            )}
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {feature.text}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      onClick={() => handlePlanSelect(plan)}
+                      disabled={isPlanDisabled}
+                      className="h-10 w-full border border-transparent bg-secondary text-white hover:border-primary/60 hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isCurrentPlanProcessing ? 'Cargando...' : ctaLabel}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -231,7 +303,7 @@ const PlansPage: React.FC = () => {
                 <span className="font-bold">Plan {selectedPlan.name}</span>
               </h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={handleCloseModal}
                 className="absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500 hover:text-gray-700"
                 type="button"
               >
@@ -242,12 +314,35 @@ const PlansPage: React.FC = () => {
               <PaymentForm
                 selectedProduct={selectedProduct}
                 requireAuthOnSubmit={!isSignedIn}
-                redirectUrlOnAuth={`${pathname}?plan_id=${selectedPlan.id}`}
+                // Redirigir de vuelta a /planes SIN query params.
+                // El plan se reabre con sessionStorage(pendingPlanPurchaseId).
+                redirectUrlOnAuth={pathname}
+                persistOnAuth={{
+                  key: PENDING_PLAN_KEY,
+                  value: String(selectedPlan.id),
+                }}
               />
             </div>
           </div>
         </div>
       )}
+
+      {/* Auth primero (planes) */}
+      <MiniLoginModal
+        isOpen={showLoginModal}
+        onClose={handleAuthClose}
+        onLoginSuccess={handleLoginSuccess}
+        redirectUrl={pathname}
+        onSwitchToSignUp={handleSwitchToSignUp}
+      />
+
+      <MiniSignUpModal
+        isOpen={showSignUpModal}
+        onClose={handleAuthClose}
+        onSignUpSuccess={handleSignUpSuccess}
+        redirectUrl={pathname}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
       <Footer />
     </div>
   );

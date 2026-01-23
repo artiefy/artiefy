@@ -707,6 +707,53 @@ export default function LessonDetails({
   );
   const [resourcesCount, setResourcesCount] = useState(0);
 
+  useEffect(() => {
+    const fetchResourcesCount = async () => {
+      try {
+        const response = await fetch(
+          `/api/estudiantes/getFiles?lessonId=${lesson.id}`
+        );
+        if (!response.ok) {
+          setResourcesCount(0);
+          return;
+        }
+
+        const data: unknown = await response.json();
+
+        const parsedCount = (() => {
+          if (!data) return 0;
+
+          if (Array.isArray(data)) return data.length;
+
+          if (typeof data === 'object') {
+            const obj = data as Record<string, unknown>;
+
+            if (Array.isArray(obj.files)) {
+              return obj.files.length;
+            }
+
+            const resourceKey = obj.resourceKey ?? obj.resource_key;
+            if (typeof resourceKey === 'string') {
+              return resourceKey
+                .split(',')
+                .map((k) => k.trim())
+                .filter(Boolean).length;
+            }
+          }
+
+          return 0;
+        })();
+
+        setResourcesCount(parsedCount);
+      } catch (error) {
+        console.error('❌ Error fetching resources count:', error);
+        setResourcesCount(0);
+      }
+    };
+
+    void fetchResourcesCount();
+  }, [lesson.id]);
+
   // Obtener la transcripción al montar el componente
   useEffect(() => {
     const fetchTranscription = async () => {

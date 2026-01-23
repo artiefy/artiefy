@@ -32,6 +32,10 @@ export default function ProgramDetails({
   const [isSubscriptionActive, setIsSubscriptionActive] = useState(false);
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(true);
   const [showRequirementModal, setShowRequirementModal] = useState(false);
+  const [courseEnrollments, setCourseEnrollments] = useState<
+    Record<number, boolean>
+  >({});
+  const [isLoadingEnrollments, setIsLoadingEnrollments] = useState(false);
 
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
@@ -59,17 +63,41 @@ export default function ProgramDetails({
     const initializeProgram = async () => {
       if (!userId) return;
 
+      setIsLoadingEnrollments(true);
+
       try {
-        const enrolled = await isUserEnrolledInProgram(
+        const enrolledPromise = isUserEnrolledInProgram(
           parseInt(program.id),
           userId
         );
+        const enrollmentsPromise = fetch('/api/enrolled-courses').then(
+          async (res) => {
+            if (!res.ok) return { courses: [] };
+            return (await res.json()) as {
+              courses: { id: number; progress: number }[];
+            };
+          }
+        );
+
+        const [enrolled, enrollmentsData] = await Promise.all([
+          enrolledPromise,
+          enrollmentsPromise,
+        ]);
+
         setIsEnrolled(enrolled);
+
+        const enrollmentMap: Record<number, boolean> = {};
+        (enrollmentsData.courses || []).forEach((course) => {
+          enrollmentMap[course.id] = true;
+        });
+        setCourseEnrollments(enrollmentMap);
+
         checkSubscriptionStatus();
       } catch (error) {
         console.error('Error initializing program:', error);
       } finally {
         setIsCheckingEnrollment(false);
+        setIsLoadingEnrollments(false);
       }
     };
 
@@ -157,29 +185,29 @@ export default function ProgramDetails({
   };
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="min-h-screen bg-background">
       {/* Modal de requisito de 10 meses */}
       {showRequirementModal && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60">
           <div className="relative flex w-full max-w-md flex-col items-center rounded-lg bg-white p-8 shadow-xl">
             <FaCheckCircle className="mb-4 text-green-500" size={48} />
-            <h2 className="text-background mb-2 text-center text-xl font-bold">
+            <h2 className="mb-2 text-center text-xl font-bold text-background">
               Requisito de Inscripción
             </h2>
-            <p className="text-background mb-6 text-center">
+            <p className="mb-6 text-center text-background">
               La inscripción a un programa requiere al menos una estancia de{' '}
               <b>10 meses</b> en Artiefy.
             </p>
             <button
               onClick={confirmEnroll}
-              className="bg-primary hover:bg-primary/90 text-background mt-2 rounded px-6 py-2 font-semibold active:scale-95"
+              className="mt-2 rounded bg-primary px-6 py-2 font-semibold text-background hover:bg-primary/90 active:scale-95"
             >
               Aceptar y continuar
             </button>
           </div>
         </div>
       )}
-      <main className="mx-auto max-w-7xl pb-4 sm:pt-0 md:pb-6 lg:pb-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8">
         <ProgramsBreadcrumbs title={program.title} />
         <ProgramHeader
           program={program}
@@ -193,6 +221,8 @@ export default function ProgramDetails({
             (user?.publicMetadata?.subscriptionEndDate as string) ?? null
           }
           isCheckingEnrollment={isCheckingEnrollment}
+          courseEnrollments={courseEnrollments}
+          isLoadingEnrollments={isLoadingEnrollments}
         />
         {/* Remove ProgramContent since it's already in ProgramHeader */}
       </main>

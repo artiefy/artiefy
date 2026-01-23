@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { Dialog } from '@headlessui/react';
-
-import { Progress } from '~/components/estudiantes/ui/progress';
+import { X } from 'lucide-react';
 
 import CourseVideo from './CourseVideo';
 
@@ -50,6 +49,8 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
   const [startTime, _setStartTime] = useState<number>(() => progress ?? 0);
   const lastSavedProgress = useRef<number>(progress);
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const progressLabel = `${Math.round(videoProgress ?? 0)}%`;
 
   // Mantener referencias iniciales y actualizar lastSavedProgress cuando cambie progress
   useEffect(() => {
@@ -126,39 +127,40 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
       onClose={handleModalClose} // Usa nuestro handler personalizado
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
     >
-      <div className="flex h-full w-full items-center justify-center">
-        <div className="relative flex w-full max-w-2xl flex-col gap-4 rounded-lg bg-white p-6 shadow-lg">
+      <div className="flex h-full w-full items-center justify-center p-4">
+        <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
           <button
-            className="absolute top-3 right-3 z-20 text-2xl font-bold text-gray-700 hover:text-red-600"
+            className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
             onClick={handleModalClose}
             aria-label="Cerrar"
             type="button"
           >
-            ×
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
           </button>
-          <h2 className="mb-2 text-lg font-bold text-gray-900">{title}</h2>
-          <div className="rounded-lg bg-black p-2 pb-4">
+          <div className="flex flex-col space-y-1.5 p-4 pb-0 text-center sm:text-left">
+            <h2 className="text-base font-medium tracking-tight text-foreground">
+              {title}
+            </h2>
+          </div>
+          <div className="relative mt-3 bg-black">
             <CourseVideo
               videoKey={videoKey}
               onProgressUpdate={setVideoProgress}
               startTime={startTime}
             />
           </div>
-          {/* Barra de progreso debajo del video en el modal */}
-          <div className="mt-2 w-full px-2">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-700">
-                Progreso del video
-              </p>
-              <span className="text-xs text-gray-500">
-                {videoProgress ?? 0}%
-              </span>
+          <div className="space-y-2 p-4">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Progreso del video</span>
+              <span className="text-muted-foreground">{progressLabel}</span>
             </div>
-            <Progress
-              value={videoProgress ?? 0}
-              showPercentage={true}
-              className="transition-none"
-            />
+            <div className="h-2 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-accent transition-all"
+                style={{ width: `${videoProgress ?? 0}%` }}
+              />
+            </div>
           </div>
         </div>
       </div>

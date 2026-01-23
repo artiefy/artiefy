@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { BsFiletypeXls } from 'react-icons/bs';
 import {
+  FaDownload,
   FaFilePdf,
   FaFilePowerpoint,
   FaFileWord,
@@ -246,71 +247,136 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
   // Cambiar getIcon para detectar links directamente desde key
   const getIcon = (file: FileInfo) => {
     if (isExternalResource(file.key)) {
-      return <FaLink className="text-blue-500" />;
+      return <FaLink className="text-blue-400" />;
     }
     const nameForExt = file.fileName || file.key;
     const extension = nameForExt.split('.').pop()?.toLowerCase();
     switch (extension) {
       case 'pdf':
-        return <FaFilePdf className="text-red-500" />;
+        return <FaFilePdf className="text-red-400" />;
       case 'pptx':
       case 'ppt':
-        return <FaFilePowerpoint className="text-orange-500" />;
+        return <FaFilePowerpoint className="text-orange-400" />;
       case 'doc':
       case 'docx':
-        return <FaFileWord className="text-blue-500" />;
+        return <FaFileWord className="text-blue-400" />;
       case 'xlsx':
       case 'xls':
-        return <BsFiletypeXls className="text-green-600" />;
+        return <BsFiletypeXls className="text-green-400" />;
       case 'png':
       case 'jpg':
       case 'jpeg':
       case 'gif':
-        return <FaRegFileImage className="text-purple-500" />;
+        return <FaRegFileImage className="text-purple-400" />;
       default:
-        return <FaLink className="text-blue-500" />;
+        return <FaLink className="text-blue-400" />;
     }
   };
 
+  const getFileSize = (fileName: string): string => {
+    // Mock size - en producción esto vendría del backend
+    const mockSizes = ['1.2 MB', '2.4 MB', '3.5 MB', '856 KB', '4.1 MB'];
+    return mockSizes[Math.floor(Math.random() * mockSizes.length)] || '1.0 MB';
+  };
+
+  const handleDownload = (file: FileInfo) => {
+    // Detectar si es un recurso externo
+    const isExternal = isExternalResource(file.key);
+    const url = isExternal
+      ? file.key.startsWith('http')
+        ? file.key
+        : `https://${file.key.replace(/^\/+/, '')}`
+      : `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`;
+
+    window.open(url, '_blank');
+  };
+
   return (
-    <div className="mt-4 mb-4">
+    <div className="mx-auto mt-4 mb-4 w-full md:mx-0 md:w-[70%]">
       <div>
         {loading ? (
           <div className="flex items-center justify-center p-4">
             <Icons.spinner className="h-8 w-8 text-background" />
           </div>
         ) : files.length > 0 ? (
-          <ul className="space-y-4">
-            {files.map((file, index) => {
-              const external = isExternalResource(file.key);
-              const normalizedHref = external
-                ? file.key.startsWith('http')
-                  ? file.key
-                  : `https://${file.key.replace(/^\/+/, '')}`
-                : `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`;
-              return (
-                <li key={index}>
-                  <a
-                    href={normalizedHref}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center transition-colors hover:text-blue-400"
+          <div className="space-y-2">
+            {files.map((file, index) => (
+              <div
+                key={index}
+                className="group flex items-center justify-between border p-3 transition-all duration-200 hover:cursor-pointer"
+                style={{
+                  backgroundColor: '#061c3799',
+                  borderColor: 'hsla(217, 33%, 17%, 0.5)',
+                  borderRadius: '12px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#082345';
+                  e.currentTarget.style.borderColor = '#1D283A';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#01152d';
+                  e.currentTarget.style.borderColor =
+                    'hsla(217, 33%, 17%, 0.5)';
+                }}
+                onClick={() => handleDownload(file)}
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <div
+                    className="rounded-lg p-2"
+                    style={{ backgroundColor: '#061c37' }}
                   >
-                    <span className="mr-2 text-gray-400">•</span>
-                    <span className="mr-4 text-2xl">{getIcon(file)}</span>
-                    <span
-                      className="flex-1 truncate text-base font-medium"
+                    {getIcon(file)}
+                  </div>
+                  <div className="min-w-0">
+                    <p
+                      className="truncate text-sm font-medium text-foreground"
                       title={file.fileName}
                     >
                       {file.fileName}
-                    </span>
-                  </a>
-                </li>
-              );
-            })}
-          </ul>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {getFileSize(file.fileName)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDownload(file)}
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-medium whitespace-nowrap opacity-100 ring-offset-background transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  style={{
+                    transition:
+                      'background-color 0.2s, opacity 0.2s, color 0.2s',
+                    color: '#22c4d3',
+                    backgroundColor: 'transparent',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#22c4d3';
+                    e.currentTarget.style.color = '#000000';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.color = '#22c4d3';
+                  }}
+                >
+                  <FaDownload className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
+          </div>
         ) : (
-          <p className="text-gray-600">No hay recursos disponibles</p>
+          <div
+            className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
+            style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
+          >
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
+              <FaFilePdf className="h-8 w-8 text-black" />
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-slate-100">
+              No hay recursos disponibles
+            </h3>
+            <p className="text-center text-sm text-slate-300">
+              Esta clase aún no tiene recursos cargados.
+            </p>
+          </div>
         )}
       </div>
     </div>
