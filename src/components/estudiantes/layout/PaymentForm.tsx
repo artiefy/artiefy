@@ -17,10 +17,12 @@ const PaymentForm: React.FC<{
   selectedProduct: Product;
   requireAuthOnSubmit?: boolean;
   redirectUrlOnAuth?: string;
+  persistOnAuth?: { key: string; value: string };
 }> = ({
   selectedProduct,
   requireAuthOnSubmit = false,
   redirectUrlOnAuth = '',
+  persistOnAuth,
 }) => {
   const { user } = useUser();
   const [error, setError] = useState<string | null>(null);
@@ -33,12 +35,13 @@ const PaymentForm: React.FC<{
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
 
-  // Si hay usuario, usar sus datos y bloquear campos; si no, usar los manuales y permitir editar
+  // Si hay usuario, prefijar datos pero permitir editar para evitar bloqueo cuando faltan datos en el perfil
   const isLoggedIn = !!user;
-  const buyerEmail = isLoggedIn
-    ? (user.emailAddresses[0]?.emailAddress?.trim().toLowerCase() ?? '')
-    : manualEmail;
-  const buyerFullName = isLoggedIn ? (user.fullName ?? '') : manualFullName;
+  const userEmail =
+    user?.emailAddresses[0]?.emailAddress?.trim().toLowerCase() ?? '';
+  const userFullName = user?.fullName ?? '';
+  const buyerEmail = (manualEmail || userEmail).trim().toLowerCase();
+  const buyerFullName = manualFullName || userFullName;
   const [telephone, setTelephone] = useState('');
   const [loading, setLoading] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
@@ -77,11 +80,9 @@ const PaymentForm: React.FC<{
     if (name === 'termsAndConditions') setTermsAccepted(checked);
     if (name === 'privacyPolicy') setPrivacyAccepted(checked);
 
-    // Permitir editar email y nombre solo si no hay usuario autenticado
-    if (!isLoggedIn) {
-      if (name === 'buyerEmail') setManualEmail(value);
-      if (name === 'buyerFullName') setManualFullName(value);
-    }
+    // Permitir editar email y nombre incluso si hay usuario (para casos sin datos completos en el perfil)
+    if (name === 'buyerEmail') setManualEmail(value);
+    if (name === 'buyerFullName') setManualFullName(value);
 
     if (showErrors) {
       const newErrors = validateFormData(
@@ -105,10 +106,15 @@ const PaymentForm: React.FC<{
   }, [telephone, termsAccepted, privacyAccepted, showErrors]);
 
   const processPayment = async () => {
+    if (loading) return;
+
     setLoading(true);
+    setError(null);
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 10000);
 
     try {
-      // Determinar el endpoint correcto
       const endpoint = selectedProduct.name.startsWith('Curso:')
         ? '/api/generateCoursePayment'
         : '/api/generatePaymentData';
@@ -124,10 +130,11 @@ const PaymentForm: React.FC<{
           buyerFullName: isLoggedIn ? buyerFullName : manualFullName,
           telephone,
         }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch form data');
+        throw new Error('No se pudo generar el pago. Intenta de nuevo.');
       }
 
       const data: FormData = (await response.json()) as FormData;
@@ -149,7 +156,14 @@ const PaymentForm: React.FC<{
       document.body.appendChild(form);
       form.submit();
     } catch (error) {
-      setError((error as Error).message);
+      const isAbort = (error as Error).name === 'AbortError';
+      setError(
+        isAbort
+          ? 'La solicitud tardó demasiado, vuelve a intentarlo.'
+          : (error as Error).message
+      );
+    } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -158,6 +172,8 @@ const PaymentForm: React.FC<{
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     event.preventDefault();
+
+    if (loading) return;
 
     // Validar formulario primero
     const newErrors = validateFormData(
@@ -177,6 +193,12 @@ const PaymentForm: React.FC<{
 
     // Si requiere autenticación y no hay usuario, mostrar modal de login
     if (requireAuthOnSubmit && !isLoggedIn) {
+      // Persistencia opcional (p.ej. planes) para reabrir el modal tras login SIN query params.
+      // Importante: NO persistir por defecto para no afectar otros flujos (cursos, etc.).
+      if (persistOnAuth) {
+        sessionStorage.setItem(persistOnAuth.key, persistOnAuth.value);
+      }
+
       // Guardar los datos manuales en sessionStorage para recuperarlos después del login
       sessionStorage.setItem('pendingBuyerEmail', manualEmail);
       sessionStorage.setItem('pendingBuyerFullName', manualFullName);
@@ -252,7 +274,8 @@ const PaymentForm: React.FC<{
 
   return (
     <>
-      <form className="form">
+      {/* Nota: evitamos <form> aquí para que Enter no dispare navegación al route actual */}
+      <div className="form" role="form">
         <h3 className="payer-info-title">Datos del pagador</h3>
         <BuyerInfoForm
           formData={{ buyerEmail, buyerFullName, telephone }}
@@ -263,29 +286,33 @@ const PaymentForm: React.FC<{
           errors={errors}
           onSubmitAction={handleSubmit}
           loading={loading}
-          readOnly={isLoggedIn} // Solo lectura si hay usuario autenticado
+          readOnly={false}
           isFormValid={isFormValid()} // Nuevo: validar si el formulario está completo
         />
         {error && <p className="error">{error}</p>}
-      </form>
+      </div>
 
-      {/* Mini Login Modal */}
-      <MiniLoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onLoginSuccess={handleLoginSuccess}
-        redirectUrl={redirectUrlOnAuth}
-        onSwitchToSignUp={handleSwitchToSignUp}
-      />
+      {requireAuthOnSubmit ? (
+        <>
+          {/* Mini Login Modal */}
+          <MiniLoginModal
+            isOpen={showLoginModal}
+            onClose={() => setShowLoginModal(false)}
+            onLoginSuccess={handleLoginSuccess}
+            redirectUrl={redirectUrlOnAuth}
+            onSwitchToSignUp={handleSwitchToSignUp}
+          />
 
-      {/* Mini SignUp Modal */}
-      <MiniSignUpModal
-        isOpen={showSignUpModal}
-        onClose={() => setShowSignUpModal(false)}
-        onSignUpSuccess={handleSignUpSuccess}
-        redirectUrl={redirectUrlOnAuth}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
+          {/* Mini SignUp Modal */}
+          <MiniSignUpModal
+            isOpen={showSignUpModal}
+            onClose={() => setShowSignUpModal(false)}
+            onSignUpSuccess={handleSignUpSuccess}
+            redirectUrl={redirectUrlOnAuth}
+            onSwitchToLogin={handleSwitchToLogin}
+          />
+        </>
+      ) : null}
     </>
   );
 };

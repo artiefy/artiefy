@@ -6,6 +6,7 @@ import { FaBook } from 'react-icons/fa';
 export interface Plan {
   id: number;
   name: string;
+  description?: string;
   price: number;
   priceUsd: number;
   period: string;

@@ -98,6 +98,9 @@ export default function MiniSignUpModal({
 
   // Detectar cuando OAuth o registro se completa exitosamente
   useEffect(() => {
+    // Importante: si el modal no está abierto, no hagas side-effects.
+    if (!isOpen) return;
+
     if (isSignedIn && !hasHandledAuth) {
       setHasHandledAuth(true);
       if (loadingProvider) {
@@ -106,7 +109,14 @@ export default function MiniSignUpModal({
       onSignUpSuccess();
       onClose();
     }
-  }, [isSignedIn, hasHandledAuth, loadingProvider, onSignUpSuccess, onClose]);
+  }, [
+    isSignedIn,
+    hasHandledAuth,
+    loadingProvider,
+    onSignUpSuccess,
+    onClose,
+    isOpen,
+  ]);
 
   // Reset hasHandledAuth cuando se cierra el modal
   useEffect(() => {
