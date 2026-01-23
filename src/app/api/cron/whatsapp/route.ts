@@ -196,7 +196,7 @@ async function sendScheduledWhatsAppMessages() {
             templateName: msgRecord.templateName,
             variables: variables,
             languageCode: 'es',
-            autoSession: false,
+            autoSession: true, // ✅ Abrir ventana automáticamente si es necesario
           });
 
           console.log(
