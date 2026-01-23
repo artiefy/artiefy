@@ -12,8 +12,6 @@ import Select, { type MultiValue } from 'react-select';
 import { toast } from 'sonner';
 
 import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
-import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
-import NivelDropdown from '~/components/educators/layout/NivelDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
@@ -25,7 +23,6 @@ import {
 } from '~/components/educators/ui/dialog';
 import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
-import ModalidadDropdown from '~/components/super-admin/layout/ModalidadDropdown';
 
 import '~/styles/toggler.css';
 
@@ -49,8 +46,8 @@ interface CourseFormProps {
     courseTypeId: number[], // <-- ✅ agrega esto
     individualPrice: number | null,
     videoKey: string, // ✅ <-- aquí lo agregas
-    horario: string | null,
-    espacios: string | null,
+    horario: number | null,
+    espacios: number | null,
     certificationTypeId: number | null
   ) => Promise<void>;
   uploading: boolean;
@@ -96,13 +93,17 @@ interface CourseFormProps {
   instructor: string;
   setInstructor: (instructor: string) => void;
   educators?: { id: string; name: string }[];
-  horario: string | null;
-  setHorario: (horario: string | null) => void;
-  espacios: string | null;
-  setEspacios: (espacios: string | null) => void;
+  horario: number | null;
+  setHorario: (horario: number | null) => void;
+  espacios: number | null;
+  setEspacios: (espacios: number | null) => void;
   certificationTypeId: number | null;
   setCertificationTypeId: (id: number | null) => void;
-  certificationTypes?: { id: number; name: string; description: string | null }[];
+  certificationTypes?: {
+    id: number;
+    name: string;
+    description: string | null;
+  }[];
 }
 
 // Componente ModalFormCourse
@@ -175,16 +176,53 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   const [coverImage, setCoverImage] = useState<string | null>(null); // Estado para la imagen de portada
   const [addParametros, setAddParametros] = useState(false); // Estado para los parámetros
   const [modalidadesid, setModalidadesid] = useState<number[]>([]); // ✅ Ensure it's an array
-  const [localCertificationTypes, setLocalCertificationTypes] = useState<
-    { id: number; name: string; description: string | null }[]
-  >(certificationTypes);
+  const [_localCertificationTypes, setLocalCertificationTypes] =
+    useState<{ id: number; name: string; description: string | null }[]>(
+      certificationTypes
+    );
   const [isLoadingCertifications, setIsLoadingCertifications] = useState(true);
   void isLoadingCertifications;
-  const [localCertificationTypeId, setLocalCertificationTypeId] = useState<number | null>(certificationTypeId);
+  const [_localCertificationTypeId, setLocalCertificationTypeId] = useState<
+    number | null
+  >(certificationTypeId);
   // const newCourseId = responseData.id;
   const [allSubjects, setAllSubjects] = useState<
     { id: number; title: string }[]
   >([]); // Estado para todas las materias
+  const [scheduleOptions, setScheduleOptions] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [spaceOptions, setSpaceOptions] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [_isLoadingSchedules, setIsLoadingSchedules] = useState(false);
+  const [_isLoadingSpaces, setIsLoadingSpaces] = useState(false);
+
+  // Interfaces para los datos dinámicos
+  interface Nivel {
+    id: number;
+    name: string;
+    description: string;
+  }
+
+  interface Category {
+    id: number;
+    name: string;
+    description: string;
+  }
+
+  interface Modalidad {
+    id: number;
+    name: string;
+    description: string;
+  }
+
+  const [niveles, setNiveles] = useState<Nivel[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [modalidades, setModalidades] = useState<Modalidad[]>([]);
+  const [isLoadingNiveles, setIsLoadingNiveles] = useState(false);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
+  const [isLoadingModalidades, setIsLoadingModalidades] = useState(false);
 
   // Función para manejar el cambio de archivo
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -248,20 +286,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     }
   };
 
-  const safeCourseTypeId = selectedCourseType ?? [];
+  const _safeCourseTypeId = selectedCourseType ?? [];
 
   // Opciones para horarios y espacios
-  const horariosOptions = [
-    'Sábado Mañana',
-    'Sábado Tarde',
-    'Lunes y Martes',
-  ];
+  const _horariosOptions = ['Sábado Mañana', 'Sábado Tarde', 'Lunes y Martes'];
 
-  const espaciosOptions = [
-    'Florencia',
-    'Cali',
-    'Virtual',
-  ];
+  const _espaciosOptions = ['Florencia', 'Cali', 'Virtual'];
 
   const [courseTypes, setCourseTypes] = useState<
     { id: number; name: string }[]
@@ -299,14 +329,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           );
         }
 
-        const data = (await response.json()) as { success: boolean; data: { id: number; name: string; description: string | null }[] };
+        const data = (await response.json()) as {
+          success: boolean;
+          data: { id: number; name: string; description: string | null }[];
+        };
         console.log('✅ Tipos de certificación cargados:', data.data);
         setLocalCertificationTypes(data.data ?? []);
       } catch (error) {
         console.error('Error al cargar certificaciones:', error);
         // Si el API falla, usa el prop como fallback
         if (certificationTypes && certificationTypes.length > 0) {
-          console.log('📦 Usando tipos de certificación del prop:', certificationTypes);
+          console.log(
+            '📦 Usando tipos de certificación del prop:',
+            certificationTypes
+          );
           setLocalCertificationTypes(certificationTypes);
         }
       } finally {
@@ -316,6 +352,133 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
     void fetchCertifications();
   }, [certificationTypes]);
+
+  // ✅ Fetch schedule options
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      setIsLoadingSchedules(true);
+      try {
+        const response = await fetch('/api/super-admin/schedule-options', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los horarios: ${await response.text()}`
+          );
+        }
+
+        const data = (await response.json()) as {
+          data: { id: number; name: string }[];
+        };
+        setScheduleOptions(data.data ?? []);
+      } catch (error) {
+        console.error('Error al cargar horarios:', error);
+      } finally {
+        setIsLoadingSchedules(false);
+      }
+    };
+
+    if (isOpen) {
+      void fetchSchedules();
+    }
+  }, [isOpen]);
+
+  // ✅ Fetch space options
+  useEffect(() => {
+    const fetchSpaces = async () => {
+      setIsLoadingSpaces(true);
+      try {
+        const response = await fetch('/api/super-admin/space-options', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los espacios: ${await response.text()}`
+          );
+        }
+
+        const data = (await response.json()) as {
+          data: { id: number; name: string }[];
+        };
+        setSpaceOptions(data.data ?? []);
+      } catch (error) {
+        console.error('Error al cargar espacios:', error);
+      } finally {
+        setIsLoadingSpaces(false);
+      }
+    };
+
+    if (isOpen) {
+      void fetchSpaces();
+    }
+  }, [isOpen]);
+
+  // ✅ Cargar niveles
+  useEffect(() => {
+    const fetchNiveles = async () => {
+      setIsLoadingNiveles(true);
+      try {
+        const response = await fetch('/api/educadores/nivel', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) throw new Error(`Error: ${await response.text()}`);
+        const data = (await response.json()) as Nivel[];
+        setNiveles(data);
+      } catch (error) {
+        console.error('Error al cargar niveles:', error);
+      } finally {
+        setIsLoadingNiveles(false);
+      }
+    };
+    void fetchNiveles();
+  }, []);
+
+  // ✅ Cargar categorías
+  useEffect(() => {
+    const fetchCategories = async () => {
+      setIsLoadingCategories(true);
+      try {
+        const response = await fetch('/api/educadores/categories', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) throw new Error(`Error: ${await response.text()}`);
+        const data = (await response.json()) as Category[];
+        setCategories(data);
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+    void fetchCategories();
+  }, []);
+
+  // ✅ Cargar modalidades
+  useEffect(() => {
+    const fetchModalidades = async () => {
+      setIsLoadingModalidades(true);
+      try {
+        const response = await fetch('/api/educadores/modalidades', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (!response.ok) throw new Error(`Error: ${await response.text()}`);
+        const data = (await response.json()) as Modalidad[];
+        setModalidades(data);
+      } catch (error) {
+        console.error('Error al cargar modalidades:', error);
+      } finally {
+        setIsLoadingModalidades(false);
+      }
+    };
+    void fetchModalidades();
+  }, []);
 
   // Función para manejar el cambio de parámetros
   const handleParametroChange = (
@@ -758,7 +921,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   }, [isOpen, programId]);
 
   // Function to handle selecting subjects
-  const handleSelectSubjects = (
+  const _handleSelectSubjects = (
     newValue: MultiValue<{ value: string; label: string }>
   ) => {
     const selectedSubjects = newValue.map((option) => ({
@@ -771,7 +934,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // ✅ Efecto para sincronizar el certificationTypeId local
   useEffect(() => {
     if (editingCourseId && certificationTypeId) {
-      console.log('📋 Sincronizando certificationTypeId en program:', certificationTypeId);
+      console.log(
+        '📋 Sincronizando certificationTypeId en program:',
+        certificationTypeId
+      );
       setLocalCertificationTypeId(certificationTypeId);
     }
   }, [editingCourseId, certificationTypeId]);
@@ -779,603 +945,643 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Render la vista
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
-      <DialogContent className="max-h-[90vh] max-w-full overflow-y-auto">
-        <DialogHeader className="mt-4">
-          <DialogTitle className="text-4xl">
-            {editingCourseId ? 'Editar Curso 2' : 'Crear Curso'}
+      <DialogContent className="max-h-[90vh] w-[95vw] max-w-4xl overflow-y-auto p-3 md:p-6">
+        <DialogHeader className="mt-2 md:mt-4">
+          <DialogTitle className="text-xl md:text-4xl">
+            {editingCourseId ? 'Editar Curso' : 'Crear Curso'}
           </DialogTitle>
-          <DialogDescription className="text-xl text-white">
+          <DialogDescription className="text-sm text-white md:text-xl">
             {editingCourseId
               ? 'Edita los detalles del curso'
               : 'Llena los detalles para crear un nuevo curso'}
           </DialogDescription>
         </DialogHeader>
-        <div className="bg-background rounded-lg px-6 text-black shadow-md">
-          <label htmlFor="title" className="text-primary text-lg font-medium">
-            Título
-          </label>
-          <input
-            type="text"
-            placeholder="Título"
-            value={title}
-            onChange={(e) => handleFieldChange('title', e.target.value)}
-            className={`mb-4 w-full rounded border p-2 text-white outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
-          />
-          {errors.title && (
-            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-          )}
-          <label
-            htmlFor="description"
-            className="text-primary text-lg font-medium"
-          >
-            Descripción
-          </label>
-          <textarea
-            placeholder="Descripción"
-            value={description}
-            onChange={(e) => handleFieldChange('description', e.target.value)}
-            className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
-          />
-          {errors.description && (
-            <p className="text-sm text-red-500">Este campo es obligatorio.</p>
-          )}
-
-          <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
-            {/* Nivel */}
-            <div className="mx-auto flex w-10/12 flex-col gap-2">
+        <div className="rounded-lg bg-background px-2 py-3 text-black shadow-md md:px-6 md:py-4">
+          <div className="space-y-3 md:space-y-4">
+            <div>
               <label
-                htmlFor="nivelid"
-                className="text-primary text-left text-lg font-medium"
+                htmlFor="title"
+                className="text-sm font-medium text-primary md:text-lg"
               >
-                Nivel
+                Título
               </label>
-              <NivelDropdown
-                nivel={nivelid}
-                setNivel={setNivelid}
-                errors={errors}
+              <input
+                type="text"
+                placeholder="Título"
+                value={title}
+                onChange={(e) => handleFieldChange('title', e.target.value)}
+                className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.title ? 'border-red-500' : 'border-primary'}`}
               />
-              {errors.nivelid && (
-                <p className="text-left text-sm text-red-500">
+              {errors.title && (
+                <p className="text-xs text-red-500 md:text-sm">
                   Este campo es obligatorio.
                 </p>
               )}
             </div>
-
-            {/* Categoría */}
-            <div className="mx-auto flex w-10/12 flex-col gap-2">
+            <div>
               <label
-                htmlFor="categoryid"
-                className="text-primary text-left text-lg font-medium"
+                htmlFor="description"
+                className="text-sm font-medium text-primary md:text-lg"
               >
-                Categoría
+                Descripción
               </label>
-              <CategoryDropdown
-                category={categoryid}
-                setCategory={setCategoryid}
-                errors={errors}
+              <textarea
+                placeholder="Descripción"
+                value={description}
+                onChange={(e) =>
+                  handleFieldChange('description', e.target.value)
+                }
+                className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.description ? 'border-red-500' : 'border-primary'}`}
+                rows={4}
               />
-              {errors.categoryid && (
-                <p className="text-left text-sm text-red-500">
+              {errors.description && (
+                <p className="text-xs text-red-500 md:text-sm">
                   Este campo es obligatorio.
                 </p>
               )}
             </div>
-
-            {/* Modalidad */}
-            <div className="mx-auto flex w-10/12 flex-col gap-2">
-              <label
-                htmlFor="modalidadesid"
-                className="text-primary text-left text-lg font-medium"
-              >
-                Modalidad
-              </label>
-              <ModalidadDropdown
-                modalidad={modalidadesid}
-                setModalidad={setModalidadesid}
-                errors={errors}
-              />
-              {errors.modalidadesid && (
-                <p className="text-left text-sm text-red-500">
-                  Este campo es obligatorio.
-                </p>
-              )}
-            </div>
-
-            {/* Horario */}
-            <div className="mx-auto flex w-10/12 flex-col gap-2">
-              <label
-                htmlFor="horario"
-                className="text-primary text-left text-lg font-medium"
-              >
-                Horario
-              </label>
-              <select
-                id="horario"
-                className="text-primary bg-background rounded border p-2 text-white"
-                value={horario ?? ''}
-                onChange={(e) => setHorario(e.target.value || null)}
-              >
-                <option value="">Seleccionar horario</option>
-                {horariosOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Espacios */}
-            <div className="mx-auto flex w-10/12 flex-col gap-2">
-              <label
-                htmlFor="espacios"
-                className="text-primary text-left text-lg font-medium"
-              >
-                Espacios
-              </label>
-              <select
-                id="espacios"
-                className="text-primary bg-background rounded border p-2 text-white"
-                value={espacios ?? ''}
-                onChange={(e) => setEspacios(e.target.value || null)}
-              >
-                <option value="">Seleccionar espacio</option>
-                {espaciosOptions.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Tipo de Certificación */}
-            <div className="mx-auto flex w-10/12 flex-col gap-2">
-              <label
-                htmlFor="certificationTypes"
-                className="text-primary text-left text-lg font-medium"
-              >
-                Tipo de Certificación
-              </label>
-              <select
-                id="certificationTypes"
-                className="text-primary bg-background rounded border p-2 text-white"
-                value={localCertificationTypeId ?? ''}
-                onChange={(e) => {
-                  const newValue = e.target.value ? Number(e.target.value) : null;
-                  console.log('✅ Seleccionado certification type en programa:', newValue);
-                  setLocalCertificationTypeId(newValue);
-                  setCertificationTypeId(newValue);
-                }}
-              >
-                <option value="">Seleccionar tipo de certificación</option>
-                {(localCertificationTypes.length > 0 ? localCertificationTypes : certificationTypes ?? []).map((type) => {
-                  const isSelected = localCertificationTypeId === type.id;
-                  console.log(`Option programa: ${type.name} (id: ${type.id}), Selected: ${isSelected}`);
-                  return (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+              <div className="w-full">
+                <label className="text-sm font-medium text-primary md:text-lg">
+                  Nivel
+                </label>
+                <select
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  value={nivelid}
+                  onChange={(e) => setNivelid(Number(e.target.value))}
+                  disabled={isLoadingNiveles}
+                >
+                  <option value="">Seleccionar nivel</option>
+                  {isLoadingNiveles ? (
+                    <option value="">Cargando...</option>
+                  ) : (
+                    niveles.map((nivel) => (
+                      <option key={nivel.id} value={nivel.id}>
+                        {nivel.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+                {errors.nivelid && (
+                  <p className="text-xs text-red-500 md:text-sm">
+                    Este campo es obligatorio.
+                  </p>
+                )}
+              </div>
+              <div className="w-full">
+                <label className="text-sm font-medium text-primary md:text-lg">
+                  Categoría
+                </label>
+                <select
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  value={categoryid}
+                  onChange={(e) => setCategoryid(Number(e.target.value))}
+                  disabled={isLoadingCategories}
+                >
+                  <option value="">Seleccionar categoría</option>
+                  {isLoadingCategories ? (
+                    <option value="">Cargando...</option>
+                  ) : (
+                    categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+                {errors.categoryid && (
+                  <p className="text-xs text-red-500 md:text-sm">
+                    Este campo es obligatorio.
+                  </p>
+                )}
+              </div>
+              <div className="w-full">
+                <label className="text-sm font-medium text-primary md:text-lg">
+                  Modalidad
+                </label>
+                <select
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  value={
+                    Array.isArray(modalidadesid)
+                      ? (modalidadesid[0] ?? '')
+                      : (modalidadesid ?? '')
+                  }
+                  onChange={(e) => setModalidadesid([Number(e.target.value)])}
+                  disabled={isLoadingModalidades}
+                >
+                  <option value="">Seleccionar modalidad</option>
+                  {isLoadingModalidades ? (
+                    <option value="">Cargando...</option>
+                  ) : (
+                    modalidades.map((modalidad) => (
+                      <option key={modalidad.id} value={modalidad.id}>
+                        {modalidad.name}
+                      </option>
+                    ))
+                  )}
+                </select>
+                {errors.modalidadesid && (
+                  <p className="text-xs text-red-500 md:text-sm">
+                    Este campo es obligatorio.
+                  </p>
+                )}
+              </div>
+              <div className="w-full">
+                <label className="text-sm font-medium text-primary md:text-lg">
+                  Horario
+                </label>
+                <select
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  value={horario ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value
+                      ? Number(e.target.value)
+                      : null;
+                    setHorario(value);
+                  }}
+                >
+                  <option value="">Seleccionar horario</option>
+                  {scheduleOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="w-full">
+                <label className="text-sm font-medium text-primary md:text-lg">
+                  Espacios
+                </label>
+                <select
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  value={espacios ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value
+                      ? Number(e.target.value)
+                      : null;
+                    setEspacios(value);
+                  }}
+                >
+                  <option value="">Seleccionar espacio</option>
+                  {spaceOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="w-full">
+                <label className="text-sm font-medium text-primary md:text-lg">
+                  Tipo de Certificación
+                </label>
+                <select
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  value={certificationTypeId ?? ''}
+                  onChange={(e) => {
+                    const newValue = e.target.value
+                      ? Number(e.target.value)
+                      : null;
+                    setCertificationTypeId(newValue);
+                  }}
+                >
+                  <option value="">Seleccionar tipo de certificación</option>
+                  {(Array.isArray(certificationTypes)
+                    ? certificationTypes
+                    : []
+                  ).map((type) => (
                     <option key={type.id} value={type.id}>
                       {type.name}
                     </option>
-                  );
-                })}
-              </select>
-            </div>
-
-            {/* Course type */}
-            <div className="mx-auto flex w-10/12 flex-col gap-2">
-              <label
-                htmlFor="courseTypes"
-                className="text-primary text-left text-lg font-medium"
-              >
-                Tipo de curso
-              </label>
-              <label
-                htmlFor="courseTypes"
-                className="text-primary text-left text-lg font-medium"
-              >
-                Selecciona el tipo del curso
-              </label>
-              <Select
-                options={courseTypes.map((type) => ({
-                  value: type.id.toString(),
-                  label: type.name,
-                }))}
-                onChange={(selectedOptions) => {
-                  setSelectedCourseType(
-                    selectedOptions.map((opt) => Number(opt.value))
-                  );
-                  setErrors((prev) => ({ ...prev, courseTypeId: false }));
-                }}
-                isMulti // ✅ permite selección múltiple
-                classNamePrefix="react-select"
-                className="mt-1 w-full"
-              />
-            </div>
-            {errors.courseTypeId && (
-              <p className="text-left text-sm text-red-500">
-                Este campo es obligatorio.
-              </p>
-            )}
-            {safeCourseTypeId.includes(4) && (
-              <div className="mx-auto flex w-10/12 flex-col gap-2">
-                <label
-                  htmlFor="individualPrice"
-                  className="text-primary text-left text-lg font-medium"
-                >
-                  Precio Individual
+                  ))}
+                </select>
+              </div>
+              <div className="w-full">
+                <label className="text-sm font-medium text-primary md:text-lg">
+                  Tipo de Curso
                 </label>
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder="Ingrese el precio"
-                  value={individualPrice ?? ''}
-                  onChange={(e) => setIndividualPrice(Number(e.target.value))}
-                  className="border-primary mt-1 w-full rounded border p-2 text-white outline-none focus:no-underline"
+                <Select
+                  isMulti
+                  options={courseTypes.map((type) => ({
+                    value: type.id.toString(),
+                    label: type.name,
+                  }))}
+                  onChange={(selectedOptions) => {
+                    setSelectedCourseType(
+                      selectedOptions.map((opt) => Number(opt.value))
+                    );
+                    setErrors((prev) => ({ ...prev, courseTypeId: false }));
+                  }}
+                  classNamePrefix="react-select"
+                  className="mt-1 w-full"
+                  value={courseTypes
+                    .filter((type) => selectedCourseType.includes(type.id))
+                    .map((type) => ({
+                      value: type.id.toString(),
+                      label: type.name,
+                    }))}
                 />
               </div>
-            )}
-
-            <div className="mx-auto flex w-10/12 flex-col gap-2">
-              <label
-                htmlFor="courseTypes"
-                className="text-primary text-left text-lg font-medium"
-              >
-                Esta activo?
-              </label>
-              <ActiveDropdown isActive={isActive} setIsActive={setIsActive} />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="rating"
-              className="text-primary text-lg font-medium"
-            >
-              Rating
-            </label>
-            <Input
-              type="number"
-              min="0"
-              max="5"
-              step="0.1"
-              placeholder="0-5"
-              className="border-primary mt-1 w-full rounded border p-2 text-white outline-none focus:no-underline"
-              value={rating}
-              onChange={(e) => setRating(Number(e.target.value))}
-            />
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="instructor"
-              className="text-primary text-lg font-medium"
-            >
-              Instructor
-            </label>
-            <select
-              id="instructor"
-              value={instructor}
-              onChange={(e) => setInstructor(e.target.value)}
-              className="border-primary bg-background w-full rounded border p-2 text-white outline-none"
-            >
-              <option value="">Seleccionar instructor</option>
-              {educators.map((educator: { id: string; name: string }) => (
-                <option key={educator.id} value={educator.id}>
-                  {educator.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <label htmlFor="file" className="text-primary text-lg font-medium">
-            Imagen de portada
-          </label>
-          <div
-            className={`border-primary mx-auto mt-5 w-80 rounded-lg border-2 border-dashed p-8 lg:w-1/2 ${isDragging
-              ? 'border-blue-500 bg-blue-50'
-              : errors.file
-                ? 'border-red-500 bg-red-50'
-                : 'border-gray-300 bg-gray-50'
-              } transition-all duration-300 ease-in-out`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <div className="text-center">
-              {!file ? (
-                <>
-                  <FiUploadCloud
-                    className={`mx-auto size-12 ${errors.file ? 'text-red-500' : 'text-primary'} `}
-                  />
-                  <h2 className="mt-4 text-xl font-medium text-gray-700">
-                    Arrastra y suelta tu imagen aquí
-                  </h2>
-                  <p className="mt-2 text-sm text-gray-500">
-                    o haz clic para seleccionar un archivo desde tu computadora
-                  </p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Soporta: Imágenes (JPG, PNG, GIF) y Videos (MP4, MOV, WEBM)
-                    — Tamaño máx: 100MB
-                  </p>
-
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    id="file-upload"
-                  />
-
-                  <label
-                    htmlFor="file-upload"
-                    className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${errors.file ? 'bg-red-500' : 'bg-primary'}`}
-                  >
-                    Seleccionar Archivo
+              {errors.courseTypeId && (
+                <p className="text-xs text-red-500 md:text-sm">
+                  Este campo es obligatorio.
+                </p>
+              )}
+              {selectedCourseType.includes(4) && (
+                <div className="w-full">
+                  <label className="text-sm font-medium text-primary md:text-lg">
+                    Precio Individual
                   </label>
-                </>
-              ) : (
-                <div className="relative overflow-hidden rounded-lg bg-gray-100">
-                  {file.type.startsWith('video/') ? (
-                    <div className="flex flex-col">
-                      <video
-                        id="video-player"
-                        src={URL.createObjectURL(file)}
-                        controls
-                        className="h-48 w-full object-cover"
-                      />
-
-                      <div className="mt-4 flex flex-col items-start gap-2">
-                        <label className="text-sm font-medium text-gray-700">
-                          Capturar frame del video como imagen de portada
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const video = document.getElementById(
-                              'video-player'
-                            ) as HTMLVideoElement | null;
-                            if (!video) return;
-                            const canvas = document.createElement('canvas');
-                            canvas.width = video.videoWidth;
-                            canvas.height = video.videoHeight;
-                            const ctx = canvas.getContext('2d');
-                            if (ctx) {
-                              ctx.drawImage(
-                                video,
-                                0,
-                                0,
-                                canvas.width,
-                                canvas.height
-                              );
-                              canvas.toBlob((blob) => {
-                                if (blob) {
-                                  const captured = new File(
-                                    [blob],
-                                    'frame.jpg',
-                                    { type: 'image/jpeg' }
-                                  );
-                                  setFrameImageFile(captured);
-                                  toast.success(
-                                    'Frame capturado como imagen de portada'
-                                  );
-                                }
-                              }, 'image/jpeg');
-                            }
-                          }}
-                          className="mt-2 rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700"
-                        >
-                          Capturar Frame
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Image
-                      src={URL.createObjectURL(file)}
-                      alt="preview"
-                      width={500}
-                      height={200}
-                      className="h-48 w-full object-cover"
-                    />
-                  )}
-
-                  <button
-                    onClick={() => {
-                      setFile(null);
-                      setFileName(null);
-                      setFileSize(null);
-                      setErrors((prev) => ({ ...prev, file: true }));
-                    }}
-                    className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
-                  >
-                    <MdClose className="z-20 size-5" />
-                  </button>
-                  <div className="flex justify-between p-2">
-                    <p className="truncate text-sm text-gray-500">{fileName}</p>
-                    <p className="text-sm text-gray-500">
-                      {((fileSize ?? 0) / 1024).toFixed(2)} KB
-                    </p>
-                  </div>
+                  <input
+                    type="number"
+                    placeholder="Ingrese el precio"
+                    value={individualPrice ?? ''}
+                    onChange={(e) => setIndividualPrice(Number(e.target.value))}
+                    className="mt-1 w-full rounded border border-primary p-2 text-sm text-white md:text-base"
+                  />
                 </div>
               )}
+              <div className="w-full">
+                <label className="text-sm font-medium text-primary md:text-lg">
+                  Estado del Curso
+                </label>
+                <ActiveDropdown isActive={isActive} setIsActive={setIsActive} />
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="rating"
+                className="text-sm font-medium text-primary md:text-lg"
+              >
+                Rating
+              </label>
+              <Input
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+                placeholder="0-5"
+                className="mt-1 w-full rounded border border-primary p-2 text-sm text-white outline-none focus:no-underline md:text-base"
+                value={isNaN(rating) ? '' : rating}
+                onChange={(e) => setRating(Number(e.target.value))}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="instructor"
+                className="text-sm font-medium text-primary md:text-lg"
+              >
+                Instructor
+              </label>
+              <select
+                id="instructor"
+                value={educators.find((e) => e.id === instructor)?.id ?? ''}
+                onChange={(e) => setInstructor(e.target.value)}
+                className="mt-1 w-full rounded border border-primary bg-background p-2 text-sm text-white outline-none md:text-base"
+              >
+                <option value="">Seleccionar instructor</option>
+                {educators.map((educator: { id: string; name: string }) => (
+                  <option key={educator.id} value={educator.id}>
+                    {educator.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="w-full">
+              <label
+                htmlFor="file"
+                className="text-sm font-medium text-primary md:text-lg"
+              >
+                Imagen de portada
+              </label>
+              <div
+                className={`relative mt-3 rounded-lg border-2 border-dashed p-6 transition-colors md:p-8 ${
+                  isDragging
+                    ? 'border-blue-500 bg-blue-500/10'
+                    : errors.file
+                      ? 'border-red-500 bg-red-500/10'
+                      : 'border-primary/30 bg-primary/5'
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                {!file ? (
+                  <div className="flex flex-col items-center justify-center gap-2 py-6">
+                    <FiUploadCloud
+                      className={`size-8 md:size-10 ${errors.file ? 'text-red-500' : 'text-primary'}`}
+                    />
+                    <p className="text-center text-sm text-white md:text-base">
+                      Arrastra tu archivo aquí o haz clic para seleccionar
+                    </p>
+                    <p className="text-center text-xs text-gray-400 md:text-sm">
+                      Soporta: Imágenes (JPG, PNG, GIF) y Videos (MP4, MOV,
+                      WEBM) — Máx: 100MB
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const fileInput = document.getElementById(
+                          'file-upload-educator'
+                        ) as HTMLInputElement;
+                        fileInput?.click();
+                      }}
+                      className="mt-2 text-xs text-primary hover:underline md:text-sm"
+                    >
+                      Seleccionar archivo
+                    </button>
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      onChange={handleFileChange}
+                      id="file-upload-educator"
+                      className="hidden"
+                    />
+                  </div>
+                ) : file.type.startsWith('video') ? (
+                  <div className="relative flex flex-col items-center justify-center gap-3 md:gap-4">
+                    <div className="relative h-40 w-full md:h-48">
+                      <video
+                        id="video-player"
+                        controls
+                        className="h-full w-full object-cover"
+                        src={URL.createObjectURL(file)}
+                      />
+                    </div>
+                    <div className="flex w-full flex-col items-start gap-2">
+                      <label className="text-xs font-medium text-gray-400 md:text-sm">
+                        Capturar frame del video como imagen de portada
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const video = document.getElementById(
+                            'video-player'
+                          ) as HTMLVideoElement | null;
+                          if (!video) return;
+                          const canvas = document.createElement('canvas');
+                          canvas.width = video.videoWidth;
+                          canvas.height = video.videoHeight;
+                          const ctx = canvas.getContext('2d');
+                          if (ctx) {
+                            ctx.drawImage(
+                              video,
+                              0,
+                              0,
+                              canvas.width,
+                              canvas.height
+                            );
+                            canvas.toBlob((blob) => {
+                              if (blob) {
+                                const captured = new File([blob], 'frame.jpg', {
+                                  type: 'image/jpeg',
+                                });
+                                setFrameImageFile(captured);
+                                toast.success(
+                                  'Frame capturado como imagen de portada'
+                                );
+                              }
+                            }, 'image/jpeg');
+                          }
+                        }}
+                        className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700 md:px-3 md:text-sm"
+                      >
+                        Capturar Frame
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <Image
+                    src={URL.createObjectURL(file)}
+                    alt="preview"
+                    width={500}
+                    height={200}
+                    className="h-40 w-full object-cover md:h-48"
+                  />
+                )}
+                {file && (
+                  <>
+                    <button
+                      onClick={() => {
+                        setFile(null);
+                        setFileName(null);
+                        setFileSize(null);
+                        setErrors((prev) => ({ ...prev, file: true }));
+                      }}
+                      className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                    >
+                      <MdClose className="z-20 size-4 md:size-5" />
+                    </button>
+                    <div className="mt-2 flex justify-between text-xs text-gray-400 md:text-sm">
+                      <p className="truncate">{fileName}</p>
+                      <p>{((fileSize ?? 0) / 1024).toFixed(2)} KB</p>
+                    </div>
+                  </>
+                )}
+              </div>
               {errors.file && (
-                <p className="text-sm text-red-500">
+                <p className="text-xs text-red-500 md:text-sm">
                   Este campo es obligatorio.
                 </p>
               )}
             </div>
-          </div>
-          <div className="mt-6 flex flex-col text-white">
-            <p>
-              ¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
-              parametros
-            </p>
-            <div className="toggler">
-              <input
-                type="checkbox"
-                id="toggle"
-                checked={addParametros}
-                onChange={handleToggleParametro}
-                name="toggle"
-                value="1"
-              />
-              <label htmlFor="toggle">
-                <svg
-                  className="toggler-on"
-                  version="1.1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 130.2 130.2"
-                >
-                  <polyline
-                    className="path check"
-                    points="100.2,40.2 51.5,88.8 29.8,67.5"
+            <div className="mt-6 flex flex-col gap-4 text-white md:mt-8">
+              <div className="flex items-center justify-between">
+                <p className="text-sm md:text-base">
+                  ¿Es calificable? {editingCourseId ? 'Actualizar' : 'Agregar'}{' '}
+                  parámetros
+                </p>
+                <div className="toggler">
+                  <input
+                    type="checkbox"
+                    id="toggle"
+                    checked={addParametros}
+                    onChange={handleToggleParametro}
+                    name="toggle"
+                    value="1"
                   />
-                </svg>
-                <svg
-                  className="toggler-off"
-                  version="1.1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 130.2 130.2"
-                >
-                  <line
-                    className="path line"
-                    x1="34.4"
-                    y1="34.4"
-                    x2="95.8"
-                    y2="95.8"
-                  />
-                  <line
-                    className="path line"
-                    x1="95.8"
-                    y1="34.4"
-                    x2="34.4"
-                    y2="95.8"
-                  />
-                </svg>
-              </label>
-              <span className="mt-1 ml-2 text-sm text-gray-400">
-                {addParametros ? 'Si' : 'No'}
-              </span>
-            </div>
-          </div>
-          {addParametros && (
-            <div className="my-4 flex flex-col">
-              <label
-                htmlFor="totalParametros"
-                className="text-primary text-lg font-medium"
-              >
-                Parametros de evaluación
-              </label>
-              <Button
-                onClick={handleAddParametro}
-                disabled={parametros.length >= 10} // Verifica que parametros no sea undefined
-                className="bg-primary mt-2 w-10/12 text-white lg:w-1/2"
-              >
-                {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
-                parametro
-                <Plus />
-              </Button>
-              {parametros.map((parametro, index) => (
-                <div key={index} className="mt-4 rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-primary text-lg font-medium">
-                      Parámetro {index + 1}
-                    </h3>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleRemoveParametro(index)}
+                  <label htmlFor="toggle">
+                    <svg
+                      className="toggler-on"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 130.2 130.2"
                     >
-                      Eliminar
-                    </Button>
-                  </div>
-                  <label className="text-primary mt-2 text-lg font-medium">
-                    Nombre
+                      <polyline
+                        className="path check"
+                        points="100.2,40.2 51.5,88.8 29.8,67.5"
+                      />
+                    </svg>
+                    <svg
+                      className="toggler-off"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 130.2 130.2"
+                    >
+                      <line
+                        className="path line"
+                        x1="34.4"
+                        y1="34.4"
+                        x2="95.8"
+                        y2="95.8"
+                      />
+                      <line
+                        className="path line"
+                        x1="95.8"
+                        y1="34.4"
+                        x2="34.4"
+                        y2="95.8"
+                      />
+                    </svg>
                   </label>
-                  <input
-                    type="text"
-                    value={parametro.name}
-                    onChange={(e) =>
-                      handleParametroChange(index, 'name', e.target.value)
-                    }
-                    className="mt-1 w-full rounded border p-2 text-white outline-none"
-                  />
-                  <label className="text-primary mt-2 text-lg font-medium">
-                    Descripción
-                  </label>
-                  <textarea
-                    value={parametro.description}
-                    onChange={(e) =>
-                      handleParametroChange(
-                        index,
-                        'description',
-                        e.target.value
-                      )
-                    }
-                    className="mt-1 w-full rounded border p-2 text-white outline-none"
-                  />
-                  <label className="text-primary mt-2 text-lg font-medium">
-                    Porcentaje %
-                  </label>
-                  <input
-                    type="number"
-                    value={parametro.porcentaje}
-                    onChange={(e) =>
-                      handleParametroChange(
-                        index,
-                        'porcentaje',
-                        Math.max(1, Math.min(100, parseFloat(e.target.value)))
-                      )
-                    }
-                    className="mt-1 w-full rounded border p-2 text-white outline-none"
-                  />
                 </div>
-              ))}
+              </div>
+              {addParametros && (
+                <div className="my-4 flex flex-col">
+                  <label className="text-sm font-medium text-primary md:text-lg">
+                    Parámetros de evaluación
+                  </label>
+                  <Button
+                    onClick={handleAddParametro}
+                    disabled={parametros.length >= 10}
+                    className="mt-2 w-full bg-primary text-white hover:opacity-90 md:w-auto"
+                  >
+                    {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
+                    parámetro
+                    <Plus className="ml-2 size-4" />
+                  </Button>
+                  {parametros.map((parametro, index) => (
+                    <div
+                      key={index}
+                      className="mt-4 rounded-lg border border-primary/30 p-4"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-medium text-primary md:text-base">
+                          Parámetro {index + 1}
+                        </h3>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRemoveParametro(index)}
+                          className="h-8 px-2 text-xs md:text-sm"
+                        >
+                          Eliminar
+                        </Button>
+                      </div>
+                      <label className="mt-3 block text-xs font-medium text-primary md:text-sm">
+                        Nombre
+                      </label>
+                      <input
+                        type="text"
+                        value={parametro.name}
+                        onChange={(e) =>
+                          handleParametroChange(index, 'name', e.target.value)
+                        }
+                        className="mt-1 w-full rounded border border-primary/30 bg-background p-2 text-xs text-white outline-none md:text-sm"
+                      />
+                      <label className="mt-3 block text-xs font-medium text-primary md:text-sm">
+                        Descripción
+                      </label>
+                      <textarea
+                        value={parametro.description}
+                        onChange={(e) =>
+                          handleParametroChange(
+                            index,
+                            'description',
+                            e.target.value
+                          )
+                        }
+                        className="mt-1 w-full rounded border border-primary/30 bg-background p-2 text-xs text-white outline-none md:text-sm"
+                        rows={3}
+                      />
+                      <label className="mt-3 block text-xs font-medium text-primary md:text-sm">
+                        Porcentaje %
+                      </label>
+                      <input
+                        type="number"
+                        value={parametro.porcentaje}
+                        onChange={(e) =>
+                          handleParametroChange(
+                            index,
+                            'porcentaje',
+                            Math.max(
+                              1,
+                              Math.min(100, parseFloat(e.target.value))
+                            )
+                          )
+                        }
+                        className="mt-1 w-full rounded border border-primary/30 bg-background p-2 text-xs text-white outline-none md:text-sm"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-          {isOpen && (
-            <div className="my-4 flex flex-col">
-              <label
-                htmlFor="subjects"
-                className="text-primary text-lg font-medium"
-              >
-                Asignar Materias
-              </label>
-              <Select
-                isMulti
-                options={Array.from(
-                  new Map(
-                    allSubjects.map((subject) => [
-                      subject.id,
-                      {
-                        value: subject.id.toString(),
-                        label: subject.title,
-                      },
-                    ])
-                  ).values()
-                )}
-                onChange={handleSelectSubjects}
-                classNamePrefix="react-select"
-                className="mt-2 w-10/12 lg:w-1/2"
-              />
-            </div>
-          )}
-          {(uploading || isUploading) && (
-            <div className="mt-4">
-              <Progress
-                value={uploading ? progress : uploadProgress}
-                className="w-full"
-              />
-              <p className="mt-2 text-center text-sm text-gray-500">
-                {uploading ? progress : uploadProgress}% Completado
-              </p>
-            </div>
-          )}
+            {isOpen && (
+              <div className="my-4 flex flex-col">
+                <label
+                  htmlFor="subjects"
+                  className="text-sm font-medium text-primary md:text-lg"
+                >
+                  Asignar Materias
+                </label>
+                <Select
+                  isMulti
+                  value={Array.from(
+                    new Map(
+                      allSubjects
+                        .filter((subject) =>
+                          subjects.some((s) => s.id === subject.id)
+                        )
+                        .map((subject) => [subject.title, subject])
+                    ).values()
+                  ).map((subject) => ({
+                    value: subject.id.toString(),
+                    label: subject.title,
+                  }))}
+                  options={Array.from(
+                    new Map(
+                      allSubjects.map((subject) => [subject.title, subject])
+                    ).values()
+                  ).map((subject) => ({
+                    value: subject.id.toString(),
+                    label: subject.title,
+                  }))}
+                  onChange={(
+                    newValue: MultiValue<{ value: string; label: string }>
+                  ) => {
+                    const selectedSubjects = newValue.map((option) => ({
+                      id: Number(option.value),
+                    }));
+                    setSubjects(selectedSubjects);
+                  }}
+                  classNamePrefix="react-select"
+                  className="mt-2 w-full md:w-3/4"
+                />
+              </div>
+            )}
+            {(uploading || isUploading) && (
+              <div className="mt-4 md:mt-6">
+                <Progress
+                  value={uploading ? progress : uploadProgress}
+                  className="w-full"
+                />
+                <p className="mt-2 text-center text-xs text-gray-400 md:text-sm">
+                  {uploading ? progress : uploadProgress}% Completado
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-        <DialogFooter className="mt-4 grid grid-cols-2 gap-4">
+        <DialogFooter className="mt-4 grid grid-cols-2 gap-2 md:mt-6 md:gap-4">
           <Button
             onClick={handleCancel}
-            className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
+            className="w-full border-transparent bg-gray-600 p-2 text-xs hover:bg-gray-700 md:p-3 md:text-base"
           >
             Cancelar
           </Button>
           <Button
             onClick={handleSubmit}
-            className="bg-green-400 text-white hover:bg-green-400/70"
+            className="w-full bg-green-400 text-xs text-gray-900 hover:bg-green-500 md:text-base"
             disabled={uploading}
           >
             {uploading

@@ -46,6 +46,7 @@ export const users = pgTable(
     planType: text('plan_type', {
       enum: ['none', 'Pro', 'Premium', 'Enterprise'],
     }),
+    enrollmentStatus: text('enrollment_status').default('Nuevo'),
     purchaseDate: timestamp('purchase_date', {
       withTimezone: true,
       mode: 'date',

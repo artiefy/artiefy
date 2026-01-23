@@ -407,13 +407,17 @@ export async function createPostReply(
   postId: number,
   userId: string,
   content: string,
-  imageKey?: string | null
+  imageKey?: string | null,
+  audioKey?: string | null,
+  videoKey?: string | null
 ) {
   const newPostReply = await db.insert(postReplies).values({
     postId,
     userId,
     content,
     imageKey: imageKey ?? null,
+    audioKey: audioKey ?? null,
+    videoKey: videoKey ?? null,
   });
 
   return newPostReply;

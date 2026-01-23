@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -7,7 +6,14 @@ import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { saveAs } from 'file-saver';
-import { ChevronDown, Loader2, Mail, MessageCircle, UserPlus, X } from 'lucide-react';
+import {
+  ChevronDown,
+  Loader2,
+  Mail,
+  MessageCircle,
+  UserPlus,
+  X,
+} from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
@@ -112,6 +118,7 @@ const studentSchema = z
       },
       z.enum(['activo', 'inactivo', 'no verificado']).optional()
     ),
+    enrollmentStatus: z.string().optional(),
     userInscriptionDetails: z.record(z.string(), z.unknown()).optional(),
   })
   .passthrough(); // 👈 MUY IMPORTANTE
@@ -120,8 +127,9 @@ const courseSchema = z.object({
   id: z.string(),
   title: z.string(),
   instructor: z.string().nullable().optional(),
-  instructorName: z.string().nullable().optional()
-}); const enrolledUserSchema = z.object({
+  instructorName: z.string().nullable().optional(),
+});
+const enrolledUserSchema = z.object({
   id: z.string(),
   programTitle: z.string().nullish(),
 });
@@ -194,6 +202,7 @@ interface Student {
   enrolledInCourseLabel?: 'Sí' | 'No';
   inscripcionOrigen?: 'formulario' | 'artiefy';
   carteraStatus?: 'activo' | 'inactivo' | 'no verificado';
+  enrollmentStatus?: 'Nuevo' | 'Graduando' | 'Egresado' | 'Aplaza' | 'Retirado';
   userInscriptionDetails?: Record<string, unknown>;
 }
 
@@ -260,11 +269,11 @@ const allColumns: Column[] = [
 
   // Estado / fechas
   {
-    id: 'subscriptionStatus',
+    id: 'enrollmentStatus',
     label: 'Estado',
     defaultVisible: true,
     type: 'select',
-    options: ['active', 'inactive'],
+    options: ['Nuevo', 'Graduando', 'Egresado', 'Aplaza', 'Retirado'],
   },
   {
     id: 'purchaseDate',
@@ -1147,8 +1156,8 @@ export default function EnrolledUsersPage() {
       (especial ? labelForIndex(index) : `Cuota ${index + 1}`);
     const nro_pago = Number(
       row.nro_pago ??
-      row.nroPago ??
-      (especial ? nroPagoForIndex(index) : index + 1)
+        row.nroPago ??
+        (especial ? nroPagoForIndex(index) : index + 1)
     );
 
     try {
@@ -1258,9 +1267,28 @@ export default function EnrolledUsersPage() {
     name: '',
     email: '',
     subscriptionStatus: '',
+    enrollmentStatus: '',
     purchaseDateFrom: '',
     purchaseDateTo: '',
   });
+
+  // Opciones de estado de inscripción
+  const enrollmentStatusOptions = useMemo(
+    () => ['Nuevo', 'Graduando', 'Egresado', 'Aplaza', 'Retirado'],
+    []
+  );
+
+  // Contar estudiantes por estado de inscripción
+  const enrollmentStatusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    enrollmentStatusOptions.forEach((status) => {
+      counts[status] = students.filter((s) => {
+        const studentStatus = (s.enrollmentStatus ?? '').trim();
+        return studentStatus === status;
+      }).length;
+    });
+    return counts;
+  }, [students, enrollmentStatusOptions]);
 
   function formatCOP(n = 0) {
     return new Intl.NumberFormat('es-CO', {
@@ -1392,7 +1420,12 @@ export default function EnrolledUsersPage() {
   }, [editablePagos, currentUser?.carteraStatus]);
 
   const [userCourses, setUserCourses] = useState<
-    { id: string; title: string; instructor?: string | null; instructorName?: string | null }[]
+    {
+      id: string;
+      title: string;
+      instructor?: string | null;
+      instructorName?: string | null;
+    }[]
   >([]);
   const [showUserCoursesModal, setShowUserCoursesModal] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -1507,16 +1540,21 @@ export default function EnrolledUsersPage() {
     );
     if (!res.ok) throw new Error('Error cargando cursos');
     const data = (await res.json()) as {
-      courses: { id: string; title: string; instructor?: string | null; instructorName?: string | null }[];
+      courses: {
+        id: string;
+        title: string;
+        instructor?: string | null;
+        instructorName?: string | null;
+      }[];
     };
     // des-duplicar y sanitizar
     const unique = Array.from(
       new Map(data.courses.map((c) => [c.id, c])).values()
-    ).map(c => ({
+    ).map((c) => ({
       id: c.id,
       title: c.title,
       instructor: c.instructor ?? undefined,
-      instructorName: c.instructorName ?? undefined
+      instructorName: c.instructorName ?? undefined,
     }));
     setUserCourses(unique);
   }
@@ -1599,50 +1637,50 @@ export default function EnrolledUsersPage() {
 
     const pagos = Array.isArray((json as { pagos?: unknown }).pagos)
       ? ((json as { pagos?: unknown }).pagos as unknown[]).map((p): Pago => {
-        const r = p as Record<string, unknown>;
-        return {
-          concepto: typeof r.concepto === 'string' ? r.concepto : null,
-          nro_pago:
-            typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
-              ? r.nro_pago
-              : null,
-          nroPago:
-            typeof r.nroPago === 'string' || typeof r.nroPago === 'number'
-              ? r.nroPago
-              : null,
-          fecha:
-            typeof r.fecha === 'string' ||
+          const r = p as Record<string, unknown>;
+          return {
+            concepto: typeof r.concepto === 'string' ? r.concepto : null,
+            nro_pago:
+              typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
+                ? r.nro_pago
+                : null,
+            nroPago:
+              typeof r.nroPago === 'string' || typeof r.nroPago === 'number'
+                ? r.nroPago
+                : null,
+            fecha:
+              typeof r.fecha === 'string' ||
               typeof r.fecha === 'number' ||
               r.fecha instanceof Date
-              ? r.fecha
-              : null,
-          metodo: typeof r.metodo === 'string' ? r.metodo : null,
-          valor:
-            typeof r.valor === 'string' || typeof r.valor === 'number'
-              ? r.valor
-              : null,
+                ? r.fecha
+                : null,
+            metodo: typeof r.metodo === 'string' ? r.metodo : null,
+            valor:
+              typeof r.valor === 'string' || typeof r.valor === 'number'
+                ? r.valor
+                : null,
 
-          // 👇 campos del comprobante original
-          receiptUrl:
-            typeof r.receiptUrl === 'string' ? r.receiptUrl : undefined,
-          receiptName:
-            typeof r.receiptName === 'string' ? r.receiptName : undefined,
+            // 👇 campos del comprobante original
+            receiptUrl:
+              typeof r.receiptUrl === 'string' ? r.receiptUrl : undefined,
+            receiptName:
+              typeof r.receiptName === 'string' ? r.receiptName : undefined,
 
-          // 👇 NUEVOS: verificación + archivo verificado
-          receiptVerified:
-            typeof r.receiptVerified === 'boolean'
-              ? (r.receiptVerified as boolean)
-              : false,
-          verifiedReceiptUrl:
-            typeof r.verifiedReceiptUrl === 'string'
-              ? (r.verifiedReceiptUrl as string)
-              : undefined,
-          verifiedReceiptName:
-            typeof r.verifiedReceiptName === 'string'
-              ? (r.verifiedReceiptName as string)
-              : undefined,
-        };
-      })
+            // 👇 NUEVOS: verificación + archivo verificado
+            receiptVerified:
+              typeof r.receiptVerified === 'boolean'
+                ? (r.receiptVerified as boolean)
+                : false,
+            verifiedReceiptUrl:
+              typeof r.verifiedReceiptUrl === 'string'
+                ? (r.verifiedReceiptUrl as string)
+                : undefined,
+            verifiedReceiptName:
+              typeof r.verifiedReceiptName === 'string'
+                ? (r.verifiedReceiptName as string)
+                : undefined,
+          };
+        })
       : [];
 
     return pagos;
@@ -1865,25 +1903,25 @@ export default function EnrolledUsersPage() {
 
         const body = useTemplate
           ? {
-            to,
-            forceTemplate: true,
-            templateName: waSelectedTemplate,
-            languageCode:
-              selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
-            variables: waVariables,
-          }
+              to,
+              forceTemplate: true,
+              templateName: waSelectedTemplate,
+              languageCode:
+                selectedWaTemplate?.language === 'es' ? 'es' : 'en_US',
+              variables: waVariables,
+            }
           : textOnly
             ? {
-              to,
-              text: textMessage,
-            }
+                to,
+                text: textMessage,
+              }
             : {
-              to,
-              text: textMessage,
-              ensureSession: true,
-              sessionTemplate: 'hello_world',
-              sessionLanguage: 'en_US',
-            };
+                to,
+                text: textMessage,
+                ensureSession: true,
+                sessionTemplate: 'hello_world',
+                sessionLanguage: 'en_US',
+              };
 
         const resp = await fetch('/api/super-admin/whatsapp', {
           method: 'POST',
@@ -2036,11 +2074,11 @@ export default function EnrolledUsersPage() {
           prev.map((s) =>
             s.id === userId
               ? {
-                ...s,
-                carteraStatus: shouldMarkNoVerificado(pagosUsuarioPrograma)
-                  ? 'no verificado'
-                  : s.carteraStatus,
-              }
+                  ...s,
+                  carteraStatus: shouldMarkNoVerificado(pagosUsuarioPrograma)
+                    ? 'no verificado'
+                    : s.carteraStatus,
+                }
               : s
           )
         );
@@ -2341,9 +2379,30 @@ export default function EnrolledUsersPage() {
 
           const computedByDate: 'activo' | 'inactivo' =
             s.subscriptionEndDate &&
-              new Date(s.subscriptionEndDate) >= new Date()
+            new Date(s.subscriptionEndDate) >= new Date()
               ? 'activo'
               : 'inactivo';
+
+          const validEnrollmentStatuses = [
+            'Nuevo',
+            'Graduando',
+            'Egresado',
+            'Aplaza',
+            'Retirado',
+          ];
+          const trimmedEnrollmentStatus = (s.enrollmentStatus ?? '')
+            .toString()
+            .trim();
+          const enrollmentStatusValue = validEnrollmentStatuses.includes(
+            trimmedEnrollmentStatus
+          )
+            ? (trimmedEnrollmentStatus as
+                | 'Nuevo'
+                | 'Graduando'
+                | 'Egresado'
+                | 'Aplaza'
+                | 'Retirado')
+            : 'Nuevo';
 
           const obj: Student = {
             ...s,
@@ -2365,15 +2424,16 @@ export default function EnrolledUsersPage() {
             // Aseguramos que subscriptionEndDate sea string o null (no undefined)
             subscriptionEndDate:
               typeof s.subscriptionEndDate === 'string' &&
-                s.subscriptionEndDate.trim() !== ''
+              s.subscriptionEndDate.trim() !== ''
                 ? s.subscriptionEndDate
                 : Object.prototype.toString.call(s.subscriptionEndDate) ===
-                  '[object Date]'
+                    '[object Date]'
                   ? (s.subscriptionEndDate as unknown as Date).toISOString()
                   : s.subscriptionEndDate != null
                     ? String(s.subscriptionEndDate)
                     : null,
             userInscriptionDetails: s.userInscriptionDetails,
+            enrollmentStatus: enrollmentStatusValue,
           };
 
           return obj;
@@ -2518,7 +2578,6 @@ export default function EnrolledUsersPage() {
       setInfoDialogOpen(true);
       void showWhatsAppModal;
 
-
       // ✅ Cerrar el modal después de crear el usuario
       setShowCreateForm(false);
 
@@ -2577,8 +2636,8 @@ export default function EnrolledUsersPage() {
         .filter((student) =>
           selectedPrograms.length
             ? (student.programTitles ?? []).some((t) =>
-              selectedPrograms.includes(String(t).trim())
-            )
+                selectedPrograms.includes(String(t).trim())
+              )
             : true
         )
 
@@ -2726,15 +2785,20 @@ export default function EnrolledUsersPage() {
             : true
         )
         .filter((s) =>
+          filters.enrollmentStatus
+            ? (s.enrollmentStatus ?? '').trim() === filters.enrollmentStatus
+            : true
+        )
+        .filter((s) =>
           filters.purchaseDateFrom
             ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') >=
-            filters.purchaseDateFrom
+              filters.purchaseDateFrom
             : true
         )
         .filter((s) =>
           filters.purchaseDateTo
             ? (s.purchaseDate ? s.purchaseDate.split('T')[0] : '') <=
-            filters.purchaseDateTo
+              filters.purchaseDateTo
             : true
         )
 
@@ -2963,6 +3027,7 @@ export default function EnrolledUsersPage() {
       field,
       value,
     });
+
     const student = students.find((s) => s.id === userId);
     if (!student) {
       console.error(
@@ -3016,8 +3081,8 @@ export default function EnrolledUsersPage() {
       purchaseDate: updatedStudent.purchaseDate,
       subscriptionEndDate: updatedStudent.subscriptionEndDate
         ? new Date(updatedStudent.subscriptionEndDate)
-          .toISOString()
-          .split('T')[0]
+            .toISOString()
+            .split('T')[0]
         : null,
 
       // 🔽 AHORA los de inscripción (users.*)
@@ -3051,6 +3116,9 @@ export default function EnrolledUsersPage() {
       utilityBillKey: updatedStudent.utilityBillKey,
       diplomaKey: updatedStudent.diplomaKey,
       pagareKey: updatedStudent.pagareKey,
+
+      enrollmentStatus:
+        field === 'enrollmentStatus' ? value : updatedStudent.enrollmentStatus,
     };
     // Inyectar dinámicos en el payload
 
@@ -3206,7 +3274,7 @@ export default function EnrolledUsersPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+                className="group/button relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
               >
                 <span className="relative z-10 font-medium">Crear Usuario</span>
                 <UserPlus className="relative z-10 size-3.5 sm:size-4" />
@@ -3218,7 +3286,7 @@ export default function EnrolledUsersPage() {
                   setSendWhatsapp(false);
                   setShowPhoneModal(true);
                 }}
-                className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+                className="group/button relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
               >
                 <span className="relative z-10 font-medium">📧 Correo</span>
                 <Mail className="relative z-10 size-3.5 sm:size-4" />
@@ -3230,7 +3298,7 @@ export default function EnrolledUsersPage() {
                   setSendWhatsapp(true);
                   setShowPhoneModal(true);
                 }}
-                className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+                className="group/button relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
               >
                 <span className="relative z-10 font-medium">💬 WhatsApp</span>
                 <MessageCircle className="relative z-10 size-3.5 sm:size-4" />
@@ -3278,7 +3346,7 @@ export default function EnrolledUsersPage() {
         </div>
 
         {/* Filtros */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           <input
             type="text"
             placeholder="Nombre"
@@ -3300,10 +3368,11 @@ export default function EnrolledUsersPage() {
             }
             className="rounded border border-gray-700 bg-gray-800 p-2"
           >
-            <option value="">Estado</option>
+            <option value="">Estado Suscripción</option>
             <option value="active">Activa</option>
             <option value="inactive">Inactiva</option>
           </select>
+
           <input
             type="date"
             value={filters.purchaseDateFrom}
@@ -3408,6 +3477,73 @@ export default function EnrolledUsersPage() {
               </button>
             )}
           </div>
+
+          {/* Botón para limpiar todos los filtros */}
+          {(filters.name ||
+            filters.email ||
+            filters.subscriptionStatus ||
+            filters.enrollmentStatus ||
+            filters.purchaseDateFrom ||
+            filters.purchaseDateTo ||
+            selectedPrograms.length > 0) && (
+            <button
+              type="button"
+              onClick={() => {
+                setFilters({
+                  name: '',
+                  email: '',
+                  subscriptionStatus: '',
+                  enrollmentStatus: '',
+                  purchaseDateFrom: '',
+                  purchaseDateTo: '',
+                });
+                setSelectedPrograms([]);
+              }}
+              className="rounded bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 active:bg-red-800"
+              title="Limpiar todos los filtros"
+            >
+              🗑️ Limpiar Filtros
+            </button>
+          )}
+        </div>
+
+        {/* TABS DE ESTADO DE INSCRIPCIÓN - ESTILO IMAGEN */}
+        <div className="mb-6 border-b border-gray-700">
+          <div className="flex flex-wrap gap-2 overflow-x-auto pb-4">
+            {/* Botón "Todos" */}
+            <button
+              onClick={() => setFilters({ ...filters, enrollmentStatus: '' })}
+              className={`rounded-t-lg px-4 py-2 font-semibold whitespace-nowrap transition-all ${
+                filters.enrollmentStatus === ''
+                  ? 'border-b-2 border-cyan-400 text-white'
+                  : 'border-b-2 border-transparent text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              Todos
+            </button>
+
+            {/* Tabs por estado */}
+            {enrollmentStatusOptions.map((status) => (
+              <button
+                key={status}
+                onClick={() =>
+                  setFilters({ ...filters, enrollmentStatus: status })
+                }
+                className={`relative rounded-t-lg px-4 py-2 font-semibold whitespace-nowrap transition-all ${
+                  filters.enrollmentStatus === status
+                    ? 'border-b-2 border-cyan-400 text-white'
+                    : 'border-b-2 border-transparent text-gray-400 hover:text-gray-200'
+                }`}
+              >
+                {status}
+                {enrollmentStatusCounts[status] > 0 && (
+                  <span className="ml-2 inline-flex items-center justify-center rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                    {enrollmentStatusCounts[status]}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div>
@@ -3435,15 +3571,15 @@ export default function EnrolledUsersPage() {
             {Object.keys(advancedFilters).some(
               (k) => (advancedFilters[k]?.length ?? 0) > 0
             ) && (
-                <button
-                  type="button"
-                  onClick={() => setAdvancedFilters({})}
-                  className="rounded bg-blue-700 px-2 py-1 text-xs font-medium hover:bg-blue-600"
-                  title="Limpiar filtros avanzados"
-                >
-                  ✓ Limpiar filtros avanzados
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setAdvancedFilters({})}
+                className="rounded bg-blue-700 px-2 py-1 text-xs font-medium hover:bg-blue-600"
+                title="Limpiar filtros avanzados"
+              >
+                ✓ Limpiar filtros avanzados
+              </button>
+            )}
           </div>
 
           <div
@@ -3501,10 +3637,11 @@ export default function EnrolledUsersPage() {
                                 });
                                 setAdvancedFilterOpen(col.id);
                               }}
-                              className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 transition text-xs ${(advancedFilters[col.id]?.length ?? 0) > 0
-                                ? 'bg-blue-600 hover:bg-blue-700'
-                                : 'bg-gray-700 hover:bg-gray-600'
-                                }`}
+                              className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 text-xs transition ${
+                                (advancedFilters[col.id]?.length ?? 0) > 0
+                                  ? 'bg-blue-600 hover:bg-blue-700'
+                                  : 'bg-gray-700 hover:bg-gray-600'
+                              }`}
                               title="Filtro avanzado"
                             >
                               <ChevronDown className="size-3.5" />
@@ -3552,8 +3689,8 @@ export default function EnrolledUsersPage() {
                               >
                                 {(columnFiltersMulti[col.id] || []).length ===
                                   0 && (
-                                    <span className="text-gray-400">Todos</span>
-                                  )}
+                                  <span className="text-gray-400">Todos</span>
+                                )}
                                 {(columnFiltersMulti[col.id] || []).map(
                                   (val) => (
                                     <span
@@ -3730,8 +3867,8 @@ export default function EnrolledUsersPage() {
                             | 'Al día'
                             | 'En cartera'
                             | 'No verificado' = esAlDiaBase
-                              ? 'Al día'
-                              : 'En cartera';
+                            ? 'Al día'
+                            : 'En cartera';
 
                           if (pagosMes.length > 0) {
                             const ultimo = [...pagosMes].sort(
@@ -3895,7 +4032,8 @@ export default function EnrolledUsersPage() {
               advancedFilterOpen
             }
             columnType={
-              totalColumns.find((c) => c.id === advancedFilterOpen)?.type ?? 'text'
+              totalColumns.find((c) => c.id === advancedFilterOpen)?.type ??
+              'text'
             }
             allValues={columnFilterOptions[advancedFilterOpen] || []}
             currentFilters={advancedFilters[advancedFilterOpen] || []}
@@ -4030,11 +4168,17 @@ export default function EnrolledUsersPage() {
                   <li className="text-gray-500">No inscrito en ningún curso</li>
                 ) : (
                   userCourses.map((c) => {
-                    const instructorName = c.instructorName ?? c.instructor ?? 'Sin instructor';
+                    const instructorName =
+                      c.instructorName ?? c.instructor ?? 'Sin instructor';
                     return (
-                      <li key={c.id} className="text-gray-900 dark:text-gray-100">
+                      <li
+                        key={c.id}
+                        className="text-gray-900 dark:text-gray-100"
+                      >
                         <div>• {c.title}</div>
-                        <div className="mt-0.5 ml-4 text-xs text-emerald-600 dark:text-emerald-400">👨‍🏫 {instructorName}</div>
+                        <div className="mt-0.5 ml-4 text-xs text-emerald-600 dark:text-emerald-400">
+                          👨‍🏫 {instructorName}
+                        </div>
                       </li>
                     );
                   })
@@ -4118,7 +4262,7 @@ export default function EnrolledUsersPage() {
               {/* Botón para crear usuario */}
               <button
                 onClick={handleCreateUser}
-                className="bg-primary hover:bg-secondary mt-4 flex w-full justify-center rounded-md px-4 py-2 font-bold text-white"
+                className="mt-4 flex w-full justify-center rounded-md bg-primary px-4 py-2 font-bold text-white hover:bg-secondary"
                 disabled={creatingUser}
               >
                 {creatingUser ? (
@@ -4148,19 +4292,21 @@ export default function EnrolledUsersPage() {
               <div className="mb-6 flex gap-2 border-b border-gray-700">
                 <button
                   onClick={() => setSendWhatsapp(false)}
-                  className={`px-4 py-2 font-semibold transition ${!sendWhatsapp
-                    ? 'border-b-2 border-blue-500 text-blue-400'
-                    : 'text-gray-400 hover:text-white'
-                    }`}
+                  className={`px-4 py-2 font-semibold transition ${
+                    !sendWhatsapp
+                      ? 'border-b-2 border-blue-500 text-blue-400'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
                 >
                   📧 Correo
                 </button>
                 <button
                   onClick={() => setSendWhatsapp(true)}
-                  className={`px-4 py-2 font-semibold transition ${sendWhatsapp
-                    ? 'border-b-2 border-green-500 text-green-400'
-                    : 'text-gray-400 hover:text-white'
-                    }`}
+                  className={`px-4 py-2 font-semibold transition ${
+                    sendWhatsapp
+                      ? 'border-b-2 border-green-500 text-green-400'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
                 >
                   📱 WhatsApp
                 </button>
@@ -4545,10 +4691,11 @@ export default function EnrolledUsersPage() {
                                   : [...prev, col.id]
                               )
                             }
-                            className={`cursor-pointer rounded px-3 py-2 text-sm transition ${isSelected
-                              ? 'bg-blue-600 text-white'
-                              : 'text-gray-300 hover:bg-gray-600'
-                              }`}
+                            className={`cursor-pointer rounded px-3 py-2 text-sm transition ${
+                              isSelected
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-300 hover:bg-gray-600'
+                            }`}
                           >
                             {col.label}
                           </div>
@@ -4680,7 +4827,7 @@ export default function EnrolledUsersPage() {
                         alert('❌ Ocurrió un error al actualizar masivamente');
                       });
                   }}
-                  className="bg-primary hover:bg-primary-700 focus:ring-primary-400 w-full rounded px-4 py-2 font-semibold text-white transition focus:ring-2 focus:outline-none sm:w-auto"
+                  className="hover:bg-primary-700 focus:ring-primary-400 w-full rounded bg-primary px-4 py-2 font-semibold text-white transition focus:ring-2 focus:outline-none sm:w-auto"
                 >
                   Guardar Cambios
                 </button>
@@ -4782,8 +4929,8 @@ export default function EnrolledUsersPage() {
                     <span className="font-semibold">FIN SUSCRIPCIÓN: </span>
                     {currentUser.subscriptionEndDate
                       ? new Date(currentUser.subscriptionEndDate)
-                        .toISOString()
-                        .split('T')[0]
+                          .toISOString()
+                          .split('T')[0]
                       : '-'}
                   </p>
                   <p>
@@ -4804,13 +4951,13 @@ export default function EnrolledUsersPage() {
                     <strong className="text-red-600 dark:text-red-400">
                       {formatCOP(
                         price -
-                        editablePagos.slice(0, 12).reduce((sum, p) => {
-                          const v =
-                            typeof p?.valor === 'number'
-                              ? p.valor
-                              : Number(p?.valor ?? 0);
-                          return sum + (Number.isFinite(v) ? v : 0);
-                        }, 0)
+                          editablePagos.slice(0, 12).reduce((sum, p) => {
+                            const v =
+                              typeof p?.valor === 'number'
+                                ? p.valor
+                                : Number(p?.valor ?? 0);
+                            return sum + (Number.isFinite(v) ? v : 0);
+                          }, 0)
                       )}
                     </strong>
                   </span>
@@ -4961,10 +5108,11 @@ export default function EnrolledUsersPage() {
                             <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
                               <div className="flex flex-col items-center gap-1">
                                 <span
-                                  className={`rounded px-2 py-0.5 text-[10px] font-semibold ${editablePagos[idx]?.receiptVerified
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-gray-500 text-white'
-                                    }`}
+                                  className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
+                                    editablePagos[idx]?.receiptVerified
+                                      ? 'bg-green-600 text-white'
+                                      : 'bg-gray-500 text-white'
+                                  }`}
                                   title="Estado de verificación del comprobante"
                                 >
                                   {editablePagos[idx]?.receiptVerified
@@ -5041,7 +5189,7 @@ export default function EnrolledUsersPage() {
                                       openReceiptPreview(
                                         editablePagos[idx].receiptUrl!,
                                         editablePagos[idx]?.receiptName ??
-                                        'Comprobante'
+                                          'Comprobante'
                                       )
                                     }
                                     className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700/60"
@@ -5077,10 +5225,11 @@ export default function EnrolledUsersPage() {
 
                                 {/* Badge de verificación (compacto) */}
                                 <span
-                                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${editablePagos[idx]?.receiptVerified
-                                    ? 'bg-green-100 text-green-700 ring-1 ring-green-600/20 dark:bg-green-900/40 dark:text-green-300'
-                                    : 'bg-gray-100 text-gray-700 ring-1 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-300'
-                                    }`}
+                                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                                    editablePagos[idx]?.receiptVerified
+                                      ? 'bg-green-100 text-green-700 ring-1 ring-green-600/20 dark:bg-green-900/40 dark:text-green-300'
+                                      : 'bg-gray-100 text-gray-700 ring-1 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-300'
+                                  }`}
                                   title="Estado de verificación del comprobante"
                                 >
                                   <svg
@@ -5107,8 +5256,8 @@ export default function EnrolledUsersPage() {
                                     onClick={async () => {
                                       const nro_pago = Number(
                                         editablePagos[idx]?.nro_pago ??
-                                        editablePagos[idx]?.nroPago ??
-                                        idx + 1
+                                          editablePagos[idx]?.nroPago ??
+                                          idx + 1
                                       );
                                       const verifiedBy = clerkUser?.id ?? null; // ID real del admin (o null si no está logueado)
                                       const programIdNum = currentProgramId
@@ -5235,15 +5384,15 @@ export default function EnrolledUsersPage() {
                             <span className="font-semibold text-red-700 dark:text-red-400">
                               {formatCOP(
                                 price -
-                                editablePagos
-                                  .slice(0, 12)
-                                  .reduce((sum, p) => {
-                                    const v =
-                                      typeof p?.valor === 'number'
-                                        ? p.valor
-                                        : Number(p?.valor ?? 0);
-                                    return sum + (Number.isFinite(v) ? v : 0);
-                                  }, 0)
+                                  editablePagos
+                                    .slice(0, 12)
+                                    .reduce((sum, p) => {
+                                      const v =
+                                        typeof p?.valor === 'number'
+                                          ? p.valor
+                                          : Number(p?.valor ?? 0);
+                                      return sum + (Number.isFinite(v) ? v : 0);
+                                    }, 0)
                               )}
                             </span>
                           </div>
@@ -5320,12 +5469,12 @@ export default function EnrolledUsersPage() {
                                     type="date"
                                     value={
                                       typeof editablePagos[idxBase]?.fecha ===
-                                        'string'
+                                      'string'
                                         ? (editablePagos[idxBase]!
-                                          .fecha as string)
+                                            .fecha as string)
                                         : toISODateLike(
-                                          editablePagos[idxBase]?.fecha
-                                        )
+                                            editablePagos[idxBase]?.fecha
+                                          )
                                     }
                                     onChange={(e) =>
                                       handleCuotaChange(
@@ -5572,8 +5721,8 @@ export default function EnrolledUsersPage() {
                           <strong>FIN SUSCRIPCIÓN:</strong>{' '}
                           {currentUser?.subscriptionEndDate
                             ? new Date(currentUser.subscriptionEndDate)
-                              .toISOString()
-                              .split('T')[0]
+                                .toISOString()
+                                .split('T')[0]
                             : '-'}
                         </p>
                       </div>
@@ -5624,8 +5773,8 @@ export default function EnrolledUsersPage() {
                               <td className="border border-black px-3 py-2 text-black">
                                 {row.fecha
                                   ? new Date(row.fecha).toLocaleDateString(
-                                    'es-CO'
-                                  )
+                                      'es-CO'
+                                    )
                                   : '-'}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
@@ -5664,8 +5813,8 @@ export default function EnrolledUsersPage() {
                               <td className="border border-black px-3 py-2 text-black">
                                 {row.fecha
                                   ? new Date(row.fecha).toLocaleDateString(
-                                    'es-CO'
-                                  )
+                                      'es-CO'
+                                    )
                                   : '-'}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
@@ -5792,7 +5941,8 @@ export default function EnrolledUsersPage() {
                     : availableCourses
                   ).map((c) => {
                     const isSelected = selectedCourses.includes(c.id);
-                    const instructorName = c.instructorName ?? c.instructor ?? 'Sin instructor';
+                    const instructorName =
+                      c.instructorName ?? c.instructor ?? 'Sin instructor';
                     return (
                       <div
                         key={c.id}
@@ -5807,7 +5957,9 @@ export default function EnrolledUsersPage() {
                       >
                         <div className="flex-1">
                           <div>{c.title}</div>
-                          <div className="mt-0.5 text-xs text-emerald-400">👨‍🏫 {instructorName}</div>
+                          <div className="mt-0.5 text-xs text-emerald-400">
+                            👨‍🏫 {instructorName}
+                          </div>
                         </div>
                         {isSelected && <span className="ml-2">✅</span>}
                       </div>
@@ -6050,12 +6202,15 @@ export default function EnrolledUsersPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-gray-400">Estado</label>
-                    <p className="text-white">{selectedWaTemplate.status ?? 'N/A'}</p>
+                    <label className="text-xs font-semibold text-gray-400">
+                      Estado
+                    </label>
+                    <p className="text-white">
+                      {selectedWaTemplate.status ?? 'N/A'}
+                    </p>
                   </div>
 
-                  {
-                    selectedWaTemplate.example &&
+                  {selectedWaTemplate.example &&
                     selectedWaTemplate.example.length > 0 && (
                       <div>
                         <label className="text-xs font-semibold text-gray-400">
@@ -6065,9 +6220,8 @@ export default function EnrolledUsersPage() {
                           {selectedWaTemplate.example.join(', ')}
                         </p>
                       </div>
-                    )
-                  }
-                </div >
+                    )}
+                </div>
 
                 <button
                   onClick={() => setShowTemplatePreview(false)}
@@ -6075,11 +6229,10 @@ export default function EnrolledUsersPage() {
                 >
                   Cerrar
                 </button>
-              </div >
-            )
-            }
-          </div >
-        </div >
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </>
   );

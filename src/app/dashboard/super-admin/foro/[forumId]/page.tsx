@@ -285,10 +285,14 @@ const ForumPage = () => {
         setSelectedImage(null);
         setSelectedAudio(null);
         setSelectedVideo(null);
+        if (textareaRef.current) textareaRef.current.value = '';
         if (imageInputRef.current) imageInputRef.current.value = '';
         if (audioInputRef.current) audioInputRef.current.value = '';
         if (videoInputRef.current) videoInputRef.current.value = '';
-        await fetchPosts();
+        // Pequeño delay para asegurar que el estado se actualiza antes de hacer fetch
+        setTimeout(() => {
+          fetchPosts();
+        }, 100);
       }
     } catch (error) {
       console.error('Error al enviar el post:', error);
@@ -474,7 +478,7 @@ const ForumPage = () => {
         {!isExpanded ? (
           <button
             onClick={() => toggleReplies(postId)}
-            className="text-sm text-gray-400 hover:text-primary transition-colors"
+            className="text-sm text-gray-400 transition-colors hover:text-primary"
           >
             Ver {replies.length} respuesta{replies.length > 1 ? 's' : ''}
           </button>
@@ -482,7 +486,7 @@ const ForumPage = () => {
           <div className="space-y-3">
             <button
               onClick={() => toggleReplies(postId)}
-              className="text-sm text-gray-400 hover:text-primary transition-colors"
+              className="text-sm text-gray-400 transition-colors hover:text-primary"
             >
               Ocultar respuestas
             </button>
@@ -504,8 +508,8 @@ const ForumPage = () => {
                   </div>
 
                   {/* User Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold text-white">
                         {reply.userId.name}
                       </span>
@@ -546,7 +550,7 @@ const ForumPage = () => {
                 {editingReplyId === reply.id ? (
                   <div className="mt-3">
                     <textarea
-                      className="w-full rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-white resize-none focus:border-primary focus:outline-none"
+                      className="w-full resize-none rounded-lg border border-gray-700 bg-gray-900 p-2 text-sm text-white focus:border-primary focus:outline-none"
                       value={editReplyContent}
                       onChange={(e) => setEditReplyContent(e.target.value)}
                       rows={2}
@@ -582,7 +586,7 @@ const ForumPage = () => {
                           <>
                             {reply.imageKey && (
                               <div
-                                className="relative h-40 w-full rounded-lg border border-cyan-700/40 overflow-hidden bg-gray-900 hover:shadow-lg hover:shadow-cyan-500/20 transition-all cursor-pointer group"
+                                className="group relative h-40 w-full cursor-pointer overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20"
                                 onClick={() =>
                                   setLightboxImage(
                                     `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`
@@ -593,15 +597,15 @@ const ForumPage = () => {
                                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
                                   alt="Respuesta"
                                   fill
-                                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                  className="object-cover transition-transform duration-300 group-hover:scale-105"
                                 />
                               </div>
                             )}
                             {reply.videoKey && (
-                              <div className="relative h-40 w-full rounded-lg border border-cyan-700/40 overflow-hidden bg-gray-900 hover:shadow-lg hover:shadow-cyan-500/20 transition-all">
+                              <div className="relative h-40 w-full overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20">
                                 <video
                                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
-                                  className="w-full h-full object-cover"
+                                  className="h-full w-full object-cover"
                                   controls
                                 />
                               </div>
@@ -634,8 +638,8 @@ const ForumPage = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary h-12 w-12 animate-spin rounded-full border-4 border-t-transparent" />
-        <span className="text-primary mt-4 text-sm">Cargando foro...</span>
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <span className="mt-4 text-sm text-primary">Cargando foro...</span>
       </main>
     );
   }
@@ -647,14 +651,14 @@ const ForumPage = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
           <button
             onClick={() => setLightboxImage(null)}
-            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
           >
             <X className="h-6 w-6" />
           </button>
           <Image
             src={lightboxImage}
             alt="Imagen ampliada"
-            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+            className="max-h-[90vh] max-w-[90vw] rounded-lg object-contain"
             width={1000}
             height={900}
           />
@@ -666,7 +670,7 @@ const ForumPage = () => {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary text-sm hover:text-gray-300"
+                className="text-sm text-primary hover:text-gray-300"
                 href="/"
               >
                 Inicio
@@ -675,7 +679,7 @@ const ForumPage = () => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary text-sm hover:text-gray-300"
+                className="text-sm text-primary hover:text-gray-300"
                 href="/dashboard/super-admin/foro"
               >
                 Foros
@@ -691,7 +695,7 @@ const ForumPage = () => {
 
       <div className="mx-auto max-w-4xl p-6">
         {/* Contenedor principal con marco */}
-        <div className="rounded-3xl border border-gray-700/50 bg-gradient-to-b from-gray-900/90 to-gray-950/95 p-6 shadow-2xl shadow-black/40 backdrop-blur-sm ring-1 ring-white/5">
+        <div className="rounded-3xl border border-gray-700/50 bg-gradient-to-b from-gray-900/90 to-gray-950/95 p-6 shadow-2xl ring-1 shadow-black/40 ring-white/5 backdrop-blur-sm">
           {/* Header del Foro */}
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-primary">Foro del curso</h1>
@@ -717,12 +721,12 @@ const ForumPage = () => {
                         `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`
                       )
                     }
-                    className="group relative overflow-hidden rounded-lg border border-gray-700 hover:border-primary transition-colors"
+                    className="group relative overflow-hidden rounded-lg border border-gray-700 transition-colors hover:border-primary"
                   >
                     <Image
                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
                       alt="Imagen del foro"
-                      className="h-32 w-32 object-cover group-hover:opacity-80 transition-opacity"
+                      className="h-32 w-32 object-cover transition-opacity group-hover:opacity-80"
                       width={128}
                       height={128}
                       loading="lazy"
@@ -734,8 +738,8 @@ const ForumPage = () => {
                         e.currentTarget.style.display = 'none';
                       }}
                     />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-colors">
-                      <ImageIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
+                      <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
                     </div>
                   </button>
                 </div>
@@ -790,7 +794,7 @@ const ForumPage = () => {
                 >
                   <ImageIcon className="h-5 w-5" />
                   {selectedImage && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
                       ✓
                     </span>
                   )}
@@ -813,53 +817,44 @@ const ForumPage = () => {
                   >
                     <Mic className="h-5 w-5" />
                     {selectedAudio && (
-                      <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
                         ✓
                       </span>
                     )}
                   </button>
-
-                  {/* Menú desplegable con opciones */}
-                  {showAudioRecorder && (
-                    <div className="absolute bottom-12 right-0 z-50 w-80 rounded-lg border border-cyan-700/30 bg-slate-900 p-4 shadow-lg">
-                      <div className="space-y-3">
-                        {/* Opción de subir archivo */}
-                        <button
-                          onClick={() => audioInputRef.current?.click()}
-                          className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
-                        >
-                          📁 Subir archivo de audio
-                        </button>
-
-                        {/* Opción de grabar */}
-                        <div>
-                          <button
-                            onClick={() => {
-                              // La grabación se muestra inline
-                            }}
-                            className="w-full text-left"
-                          >
-                            <AudioRecorder
-                              onAudioSelect={(file) => {
-                                setSelectedAudio(file);
-                                setShowAudioRecorder(false);
-                              }}
-                              onClose={() => setShowAudioRecorder(false)}
-                            />
-                          </button>
-                        </div>
-
-                        {/* Botón para cerrar */}
-                        <button
-                          onClick={() => setShowAudioRecorder(false)}
-                          className="w-full rounded-lg bg-gray-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-600"
-                        >
-                          Cerrar
-                        </button>
-                      </div>
-                    </div>
-                  )}
                 </div>
+
+                {/* Modal del Audio Recorder - Portal */}
+                {showAudioRecorder && (
+                  <div className="fixed top-40 right-6 z-[9999] w-80 rounded-lg border border-cyan-700/30 bg-slate-900 p-4 shadow-lg">
+                    <div className="space-y-3">
+                      {/* Opción de subir archivo */}
+                      <button
+                        onClick={() => audioInputRef.current?.click()}
+                        className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                      >
+                        📁 Subir archivo de audio
+                      </button>
+
+                      {/* Opción de grabar */}
+                      <AudioRecorder
+                        onAudioSelect={(file) => {
+                          setSelectedAudio(file);
+                          setShowAudioRecorder(false);
+                        }}
+                        onClose={() => setShowAudioRecorder(false)}
+                      />
+
+                      {/* Botón para cerrar */}
+                      <button
+                        onClick={() => setShowAudioRecorder(false)}
+                        className="w-full rounded-lg bg-gray-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-600"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 <input
                   ref={videoInputRef}
@@ -877,7 +872,7 @@ const ForumPage = () => {
                 >
                   <Video className="h-5 w-5" />
                   {selectedVideo && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
+                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
                       ✓
                     </span>
                   )}
@@ -903,7 +898,7 @@ const ForumPage = () => {
                       >
                         <X className="h-4 w-4" />
                       </button>
-                      <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-2 py-1 rounded">
+                      <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
                         {selectedImage.name}
                       </span>
                     </div>
@@ -921,7 +916,7 @@ const ForumPage = () => {
                       >
                         <X className="h-4 w-4" />
                       </button>
-                      <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-2 py-1 rounded">
+                      <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
                         {selectedVideo.name}
                       </span>
                     </div>
@@ -974,7 +969,7 @@ const ForumPage = () => {
           <div className="space-y-4">
             {loadingPosts ? (
               <div className="flex justify-center py-8">
-                <div className="border-primary h-8 w-8 animate-spin rounded-full border-2 border-t-transparent" />
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
             ) : posts.length === 0 ? (
               <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-8 text-center">
@@ -1005,8 +1000,8 @@ const ForumPage = () => {
                       </div>
 
                       {/* Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span className="font-semibold text-white">
                             {post.userId.name}
                           </span>
@@ -1023,7 +1018,7 @@ const ForumPage = () => {
                         {editingPostId === post.id ? (
                           <div className="mt-3">
                             <textarea
-                              className="w-full rounded-xl border border-gray-700 bg-gray-800 p-3 text-sm text-white resize-none focus:border-primary focus:outline-none"
+                              className="w-full resize-none rounded-xl border border-gray-700 bg-gray-800 p-3 text-sm text-white focus:border-primary focus:outline-none"
                               value={editPostContent}
                               onChange={(e) =>
                                 setEditPostContent(e.target.value)
@@ -1070,7 +1065,7 @@ const ForumPage = () => {
                                     <Image
                                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`}
                                       alt="Imagen del post"
-                                      className="h-64 w-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                      className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-110"
                                       width={500}
                                       height={256}
                                       loading="lazy"
@@ -1082,8 +1077,8 @@ const ForumPage = () => {
                                         e.currentTarget.style.display = 'none';
                                       }}
                                     />
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-colors duration-300">
-                                      <ImageIcon className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/30">
+                                      <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                                     </div>
                                   </button>
                                 )}
@@ -1112,7 +1107,7 @@ const ForumPage = () => {
                                 <audio
                                   controls
                                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.audioKey}`}
-                                  className="flex-1 h-8"
+                                  className="h-8 flex-1"
                                   onError={() =>
                                     console.error(
                                       'Error cargando audio:',
@@ -1151,7 +1146,7 @@ const ForumPage = () => {
                           </div>
                           <div className="flex-1">
                             <textarea
-                              className="w-full rounded-xl border border-gray-700 bg-gray-800 p-3 text-sm text-white placeholder:text-gray-500 resize-none focus:border-primary focus:outline-none"
+                              className="w-full resize-none rounded-xl border border-gray-700 bg-gray-800 p-3 text-sm text-white placeholder:text-gray-500 focus:border-primary focus:outline-none"
                               placeholder="Escribe tu respuesta..."
                               value={replyMessage[post.id] || ''}
                               onChange={(e) =>
@@ -1226,7 +1221,7 @@ const ForumPage = () => {
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
-                                    <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-1.5 py-0.5 rounded">
+                                    <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-xs font-semibold text-white">
                                       {replyImage[post.id].name}
                                     </span>
                                   </div>
@@ -1252,7 +1247,7 @@ const ForumPage = () => {
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
-                                    <span className="absolute bottom-1 left-1 text-xs font-semibold text-white bg-black/60 px-1.5 py-0.5 rounded">
+                                    <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-xs font-semibold text-white">
                                       {replyVideo[post.id].name}
                                     </span>
                                   </div>

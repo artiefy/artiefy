@@ -15,6 +15,7 @@ import {
   getAdminUsers,
   removeRole,
   setRoleWrapper,
+  updateEnrollmentStatus,
   updateMultipleUserStatus,
   updateUserInfo,
   updateUserStatus,
@@ -460,6 +461,35 @@ export async function PATCH(request: Request) {
       } else {
         return NextResponse.json(
           { error: 'Status is required and must be a string' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (action === 'updateEnrollmentStatus') {
+      const enrollmentStatus = body.enrollmentStatus as string;
+      const validStatuses = [
+        'Nuevo',
+        'Graduando',
+        'Egresado',
+        'Aplaza',
+        'Retirado',
+      ];
+
+      if (enrollmentStatus && validStatuses.includes(enrollmentStatus)) {
+        await updateEnrollmentStatus(
+          id,
+          enrollmentStatus as
+            | 'Nuevo'
+            | 'Graduando'
+            | 'Egresado'
+            | 'Aplaza'
+            | 'Retirado'
+        );
+        return NextResponse.json({ success: true });
+      } else {
+        return NextResponse.json(
+          { error: 'Invalid enrollment status' },
           { status: 400 }
         );
       }

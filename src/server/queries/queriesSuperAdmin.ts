@@ -278,6 +278,28 @@ export async function updateMultipleUserStatus(
   }
 }
 
+export async function updateEnrollmentStatus(
+  id: string,
+  enrollmentStatus: 'Nuevo' | 'Graduando' | 'Egresado' | 'Aplaza' | 'Retirado'
+) {
+  try {
+    await db
+      .update(users)
+      .set({
+        enrollmentStatus,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id));
+
+    console.log(
+      `DEBUG: Estado de inscripción del usuario ${id} actualizado a ${enrollmentStatus}`
+    );
+  } catch (error) {
+    console.error('Error al actualizar estado de inscripción:', error);
+    throw new Error('No se pudo actualizar el estado de inscripción');
+  }
+}
+
 export interface CourseData {
   id?: number;
   title: string;
@@ -646,6 +668,13 @@ export interface FullUserUpdateInput {
   pagareKey?: string | null;
   inscripcionOrigen?: string | null;
   carteraStatus?: string | null;
+  enrollmentStatus?:
+    | 'Nuevo'
+    | 'Graduando'
+    | 'Egresado'
+    | 'Aplaza'
+    | 'Retirado'
+    | null;
   // matriculas
   programId?: number | null;
   courseId?: number | null;
@@ -725,6 +754,7 @@ export async function updateFullUser(
 
     inscripcionOrigen,
     carteraStatus,
+    enrollmentStatus,
 
     // matriculas
     programId,
@@ -904,6 +934,32 @@ export async function updateFullUser(
         inscripcionOrigen: ((): 'formulario' | 'artiefy' | null => {
           const v = toLowerEnum(inscripcionOrigen);
           if (v === 'formulario' || v === 'artiefy') return v;
+          return null;
+        })(),
+
+        enrollmentStatus: (():
+          | 'Nuevo'
+          | 'Graduando'
+          | 'Egresado'
+          | 'Aplaza'
+          | 'Retirado'
+          | null => {
+          const validStatuses = [
+            'Nuevo',
+            'Graduando',
+            'Egresado',
+            'Aplaza',
+            'Retirado',
+          ];
+          const trimmed = (enrollmentStatus ?? '').toString().trim();
+          if (trimmed && validStatuses.includes(trimmed)) {
+            return trimmed as
+              | 'Nuevo'
+              | 'Graduando'
+              | 'Egresado'
+              | 'Aplaza'
+              | 'Retirado';
+          }
           return null;
         })(),
 
