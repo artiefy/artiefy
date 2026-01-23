@@ -44,6 +44,15 @@ import '~/styles/ia.css';
 import '~/styles/searchBar.css';
 import '~/styles/uiverse-button.css';
 
+const shufflePrograms = (programs: Program[]) => {
+  const arr = [...programs];
+  for (let i = arr.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
+
 export default function StudentDetails({
   initialCourses,
   initialPrograms,
@@ -57,11 +66,7 @@ export default function StudentDetails({
       console.warn('initialPrograms is not an array:', initialPrograms);
       return [];
     }
-    return [...initialPrograms].sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA;
-    });
+    return shufflePrograms(initialPrograms);
   });
   const [_currentSlide, setCurrentSlide] = useState<number>(0);
   const [chatbotKey, setChatbotKey] = useState<number>(0);
