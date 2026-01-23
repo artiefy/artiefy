@@ -1607,60 +1607,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
   };
 
-  // Modify handleChangeInstructor to include name
-  const handleChangeInstructor = async () => {
-    if (!selectedInstructor || !course?.id) {
-      toast.error('Por favor seleccione un instructor');
-      return;
-    }
-
-    try {
-      setIsUpdating(true);
-
-      const response = await fetch('/api/super-admin/changeEducators', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          courseId: course.id,
-          newInstructor: selectedInstructor,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al actualizar el instructor');
-      }
-
-      // Update the course state with new instructor
-      const selectedEducator = educators.find(
-        (e) => e.id === selectedInstructor
-      );
-
-      if (selectedEducator && course) {
-        setCourse({
-          ...course,
-          instructor: selectedInstructor,
-          instructorName: selectedEducator.name,
-        });
-
-        setSelectedInstructor('');
-        toast.success('Instructor actualizado exitosamente');
-        await fetchCourse();
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al actualizar el instructor');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   // Add this before the return statement
   if (isUpdating) {
     return <FullscreenLoader />;
   }
-  const EducatorsList: React.FC<{
+  const _EducatorsList: React.FC<{
     educators: Educator[];
     course: Course;
     onSelectEducator: (id: string) => void;
@@ -2296,19 +2247,155 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </p>
               </div>
 
-              {/* Educador */}
+              {/* Educadores */}
               <div className="rounded-xl border-2 border-cyan-500/40 bg-cyan-500/10 p-6 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/70">
                 <h2 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-wider text-cyan-400 uppercase">
-                  Educador Asignado
+                  Instructores Asignados
                 </h2>
-                <EducatorsList
-                  educators={educators}
-                  course={course}
-                  onSelectEducator={setSelectedInstructor}
-                  selectedInstructor={selectedInstructor}
-                  onSaveChange={handleChangeInstructor}
-                  isUpdating={isUpdating}
-                />
+
+                {/* Instructores actuales mostrados como burbujas */}
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {currentInstructors.length > 0 ? (
+                    currentInstructors.map((instructorId) => {
+                      const educator = educators.find(
+                        (e) => e.id === instructorId
+                      );
+                      return (
+                        <div
+                          key={instructorId}
+                          className="text-primary-300 flex items-center gap-2 rounded-full border border-primary bg-primary/20 px-4 py-2 text-sm text-white"
+                        >
+                          <span className="font-semibold text-white">
+                            {educator?.name || instructorId}
+                          </span>
+                          <button
+                            onClick={async () => {
+                              // Remover instructor
+                              const newInstructors = currentInstructors.filter(
+                                (id) => id !== instructorId
+                              );
+                              if (newInstructors.length === 0) {
+                                toast.error(
+                                  'Debe haber al menos un instructor'
+                                );
+                                return;
+                              }
+
+                              try {
+                                setIsUpdating(true);
+                                const response = await fetch(
+                                  '/api/super-admin/courses/instructors',
+                                  {
+                                    method: 'PUT',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                      courseId: course.id,
+                                      instructors: newInstructors,
+                                    }),
+                                  }
+                                );
+
+                                if (!response.ok) {
+                                  throw new Error(
+                                    'Error al actualizar instructores'
+                                  );
+                                }
+
+                                setCurrentInstructors(newInstructors);
+                                toast.success('Instructor removido');
+                                await fetchCourse();
+                              } catch (error) {
+                                console.error(error);
+                                toast.error('Error al remover instructor');
+                              } finally {
+                                setIsUpdating(false);
+                              }
+                            }}
+                            disabled={isUpdating}
+                            className="rounded-full text-purple-300 transition-colors hover:text-red-400 disabled:opacity-50"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-white/50">
+                      No hay instructores asignados
+                    </p>
+                  )}
+                </div>
+
+                {/* Dropdown para agregar instructor */}
+                <div className="flex gap-2">
+                  <select
+                    value={selectedInstructor}
+                    onChange={(e) => setSelectedInstructor(e.target.value)}
+                    className="flex-1 rounded-lg border border-cyan-500/30 bg-slate-900 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                    disabled={isUpdating}
+                  >
+                    <option value="">Seleccionar instructor...</option>
+                    {educators
+                      .filter(
+                        (educator) => !currentInstructors.includes(educator.id)
+                      )
+                      .map((educator) => (
+                        <option key={educator.id} value={educator.id}>
+                          {educator.name}
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    onClick={async () => {
+                      if (!selectedInstructor) {
+                        toast.error('Selecciona un instructor');
+                        return;
+                      }
+
+                      try {
+                        setIsUpdating(true);
+                        const newInstructors = [
+                          ...currentInstructors,
+                          selectedInstructor,
+                        ];
+
+                        const response = await fetch(
+                          '/api/super-admin/courses/instructors',
+                          {
+                            method: 'PUT',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              courseId: course.id,
+                              instructors: newInstructors,
+                            }),
+                          }
+                        );
+
+                        if (!response.ok) {
+                          throw new Error('Error al agregar instructor');
+                        }
+
+                        setCurrentInstructors(newInstructors);
+                        setSelectedInstructor('');
+                        toast.success('Instructor agregado');
+                        await fetchCourse();
+                      } catch (error) {
+                        console.error(error);
+                        toast.error('Error al agregar instructor');
+                      } finally {
+                        setIsUpdating(false);
+                      }
+                    }}
+                    disabled={isUpdating || !selectedInstructor}
+                    className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+                  >
+                    {isUpdating ? '...' : '+ Agregar'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -17,6 +17,15 @@ const scheduleMessageSchema = z.object({
   scheduledTime: z.string(),
   codigoPais: z.string().default('+57'),
   userId: z.string().optional().nullable(),
+  recurrence: z.string().default('no-repeat'),
+  recurrenceConfig: z
+    .object({
+      interval: z.number(),
+      unit: z.enum(['days', 'weeks', 'months']),
+      weekdays: z.array(z.number()).optional(),
+    })
+    .optional()
+    .nullable(),
 });
 
 export async function POST(request: NextRequest) {
@@ -61,6 +70,11 @@ export async function POST(request: NextRequest) {
         codigoPais: validatedData.codigoPais,
         userId: validatedData.userId || null,
         status: 'pending',
+        recurrence: validatedData.recurrence || 'no-repeat',
+        recurrenceConfig: validatedData.recurrenceConfig
+          ? JSON.stringify(validatedData.recurrenceConfig)
+          : null,
+        isRecurring: validatedData.recurrence !== 'no-repeat',
       })
       .returning();
 

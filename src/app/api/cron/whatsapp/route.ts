@@ -9,6 +9,113 @@ import { sendWhatsAppMessage } from '~/server/whatsapp/send-message';
 export const maxDuration = 60;
 
 /**
+ * Calcula la siguiente ocurrencia basada en la regla de recurrencia
+ */
+function calculateNextOccurrence(
+  currentDate: Date,
+  recurrence: string | null,
+  recurrenceConfig: unknown
+): Date | null {
+  if (!recurrence || recurrence === 'no-repeat') return null;
+
+  const next = new Date(currentDate);
+
+  switch (recurrence) {
+    case 'daily':
+      next.setDate(next.getDate() + 1);
+      break;
+
+    case 'weekly-monday':
+    case 'weekly-tuesday':
+    case 'weekly-wednesday':
+    case 'weekly-thursday':
+    case 'weekly-friday':
+    case 'weekly-saturday':
+    case 'weekly-sunday':
+      next.setDate(next.getDate() + 7);
+      break;
+
+    case 'weekdays': {
+      // Lunes a viernes
+      next.setDate(next.getDate() + 1);
+      // Si cae en sábado, mover a lunes
+      if (next.getDay() === 6) next.setDate(next.getDate() + 2);
+      // Si cae en domingo, mover a lunes
+      if (next.getDay() === 0) next.setDate(next.getDate() + 1);
+      break;
+    }
+
+    case 'monthly-first':
+      next.setMonth(next.getMonth() + 1);
+      next.setDate(1);
+      break;
+
+    case 'monthly-third-monday': {
+      next.setMonth(next.getMonth() + 1);
+      next.setDate(1);
+      // Encontrar el primer lunes
+      while (next.getDay() !== 1) {
+        next.setDate(next.getDate() + 1);
+      }
+      // Avanzar al tercer lunes
+      next.setDate(next.getDate() + 14);
+      break;
+    }
+
+    case 'yearly':
+      next.setFullYear(next.getFullYear() + 1);
+      break;
+
+    case 'custom': {
+      if (
+        typeof recurrenceConfig === 'object' &&
+        recurrenceConfig !== null &&
+        'interval' in recurrenceConfig &&
+        'unit' in recurrenceConfig
+      ) {
+        const config = recurrenceConfig as {
+          interval: number;
+          unit: 'days' | 'weeks' | 'months';
+          weekdays?: number[];
+        };
+
+        switch (config.unit) {
+          case 'days':
+            next.setDate(next.getDate() + config.interval);
+            break;
+          case 'weeks': {
+            if (config.weekdays && config.weekdays.length > 0) {
+              // Encontrar el siguiente día de la semana en la lista
+              let found = false;
+              for (let i = 1; i <= 14; i++) {
+                next.setDate(next.getDate() + 1);
+                if (config.weekdays.includes(next.getDay())) {
+                  found = true;
+                  break;
+                }
+              }
+              if (!found) next.setDate(next.getDate() + 7 * config.interval);
+            } else {
+              next.setDate(next.getDate() + 7 * config.interval);
+            }
+            break;
+          }
+          case 'months':
+            next.setMonth(next.getMonth() + config.interval);
+            break;
+        }
+      }
+      break;
+    }
+
+    default:
+      return null;
+  }
+
+  return next;
+}
+
+/**
  * Función reutilizable que envía los mensajes programados
  * Puede ser llamada desde el endpoint CRON o directamente desde otros lugares
  */
@@ -73,19 +180,36 @@ async function sendScheduledWhatsAppMessages() {
       console.log(
         `[CRON WhatsApp] Números: ${phoneNumbers}, Variables: ${JSON.stringify(variables)}`
       );
+      console.log(
+        `[CRON WhatsApp] Template: ${msgRecord.templateName || 'NINGUNO'}, Texto: ${msgRecord.messageText?.substring(0, 100)}`
+      );
 
       // Enviar a cada número de teléfono
       for (const phoneNumber of phoneNumbers) {
-        // Llamar directamente a la función de envío (sin fetch)
-        await sendWhatsAppMessage({
-          to: phoneNumber,
-          text: msgRecord.messageText,
-          forceTemplate: !!msgRecord.templateName,
-          templateName: msgRecord.templateName,
-          variables: variables,
-          languageCode: 'es',
-          autoSession: false,
-        });
+        console.log(`[CRON WhatsApp] ➡️  Enviando a ${phoneNumber}...`);
+
+        try {
+          const response = await sendWhatsAppMessage({
+            to: phoneNumber,
+            text: msgRecord.messageText,
+            forceTemplate: !!msgRecord.templateName,
+            templateName: msgRecord.templateName,
+            variables: variables,
+            languageCode: 'es',
+            autoSession: false,
+          });
+
+          console.log(
+            `[CRON WhatsApp] ✅ Enviado a ${phoneNumber}:`,
+            JSON.stringify(response, null, 2)
+          );
+        } catch (sendError) {
+          console.error(
+            `[CRON WhatsApp] ❌ Error enviando a ${phoneNumber}:`,
+            sendError
+          );
+          throw sendError; // Re-lanzar para que el mensaje se marque como fallido
+        }
       }
 
       // Actualizar estado a "enviado"
@@ -100,6 +224,56 @@ async function sendScheduledWhatsAppMessages() {
       console.log(
         `[CRON WhatsApp] Mensaje ${msgRecord.id} enviado exitosamente`
       );
+
+      // 🔄 Si es recurrente, generar la siguiente instancia
+      if (msgRecord.isRecurring && msgRecord.recurrence !== 'no-repeat') {
+        try {
+          const nextOccurrence = calculateNextOccurrence(
+            msgRecord.scheduledTime,
+            msgRecord.recurrence,
+            msgRecord.recurrenceConfig
+          );
+
+          if (nextOccurrence) {
+            await db.insert(scheduledWhatsAppMessages).values({
+              phoneNumbers: msgRecord.phoneNumbers,
+              messageText: msgRecord.messageText,
+              waSubjectText: msgRecord.waSubjectText,
+              templateName: msgRecord.templateName,
+              variables: msgRecord.variables,
+              scheduledTime: nextOccurrence,
+              codigoPais: msgRecord.codigoPais,
+              userId: msgRecord.userId,
+              status: 'pending',
+              recurrence: msgRecord.recurrence,
+              recurrenceConfig: msgRecord.recurrenceConfig,
+              isRecurring: true,
+              parentId: msgRecord.parentId || msgRecord.id,
+            });
+
+            // Actualizar last_occurrence del padre
+            await db
+              .update(scheduledWhatsAppMessages)
+              .set({ lastOccurrence: new Date() })
+              .where(
+                eq(
+                  scheduledWhatsAppMessages.id,
+                  msgRecord.parentId || msgRecord.id
+                )
+              );
+
+            console.log(
+              `[CRON WhatsApp] Siguiente instancia creada para ${nextOccurrence.toISOString()}`
+            );
+          }
+        } catch (recurrenceError) {
+          console.error(
+            `[CRON WhatsApp] Error generando siguiente instancia:`,
+            recurrenceError
+          );
+        }
+      }
+
       successCount++;
     } catch (error) {
       failCount++;

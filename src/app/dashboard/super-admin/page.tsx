@@ -257,6 +257,12 @@ export default function AdminDashboard() {
   const [waScheduledDate, setWaScheduledDate] = useState<string>('');
   const [waScheduledTime, setWaScheduledTime] = useState<string>('');
   const [waSendNow, setWaSendNow] = useState<boolean>(true); // true = enviar ahora, false = programar
+  const [waRecurrence, setWaRecurrence] = useState<string>('no-repeat'); // Frecuencia de repetición
+  const [waCustomRecurrence, setWaCustomRecurrence] = useState<{
+    interval: number;
+    unit: 'days' | 'weeks' | 'months';
+    weekdays?: number[]; // 0=domingo, 1=lunes, etc.
+  }>({ interval: 1, unit: 'days' });
 
   const [showPassword, setShowPassword] = useState(false);
   if (typeof showPassword === 'string' && showPassword) {
@@ -964,6 +970,9 @@ export default function AdminDashboard() {
               variables: useTemplate ? waVariables : null,
               scheduledTime: isoString,
               codigoPais,
+              recurrence: waRecurrence,
+              recurrenceConfig:
+                waRecurrence === 'custom' ? waCustomRecurrence : null,
             }),
           }
         );
@@ -3224,7 +3233,10 @@ export default function AdminDashboard() {
                   status: updatedUser.status,
                   permissions: updatedPermissions,
                   subscriptionEndDate: updatedUser.subscriptionEndDate ?? null,
-                  planType: updatedUser.planType ?? 'none', // ✅ INCLUIDO AQUÍ
+                  planType: updatedUser.planType ?? 'none',
+                  profesion: updatedUser.profesion,
+                  descripcion: updatedUser.descripcion,
+                  profileImageKey: updatedUser.profileImageKey,
                 }),
               });
 
@@ -3669,6 +3681,7 @@ export default function AdminDashboard() {
                       setWaSendNow(true);
                       setWaScheduledDate('');
                       setWaScheduledTime('');
+                      setWaRecurrence('no-repeat');
                     }}
                     className="cursor-pointer"
                   />
@@ -3709,8 +3722,156 @@ export default function AdminDashboard() {
                       required={!waSendNow}
                     />
                   </div>
+
+                  {/* ✅ Opciones de Recurrencia */}
+                  <div>
+                    <label className="mb-1 block text-sm">Frecuencia</label>
+                    <select
+                      value={waRecurrence}
+                      onChange={(e) => setWaRecurrence(e.target.value)}
+                      className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                    >
+                      <option value="no-repeat">No se repite</option>
+                      <option value="daily">Todos los días</option>
+                      <option value="weekly-monday">
+                        Cada semana, el lunes
+                      </option>
+                      <option value="weekly-tuesday">
+                        Cada semana, el martes
+                      </option>
+                      <option value="weekly-wednesday">
+                        Cada semana, el miércoles
+                      </option>
+                      <option value="weekly-thursday">
+                        Cada semana, el jueves
+                      </option>
+                      <option value="weekly-friday">
+                        Cada semana, el viernes
+                      </option>
+                      <option value="monthly-first">
+                        Todos los meses, el primer día
+                      </option>
+                      <option value="monthly-third-monday">
+                        Todos los meses, el tercer lunes
+                      </option>
+                      <option value="yearly">Anualmente, mismo día</option>
+                      <option value="weekdays">
+                        Todos los días hábiles (lunes a viernes)
+                      </option>
+                      <option value="custom">Personalizado...</option>
+                    </select>
+                  </div>
+
+                  {/* ✅ Configuración personalizada */}
+                  {waRecurrence === 'custom' && (
+                    <div className="space-y-2 rounded border border-gray-600 bg-gray-800/50 p-3">
+                      <h4 className="text-sm font-semibold">
+                        Configuración personalizada
+                      </h4>
+
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs">Cada</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={waCustomRecurrence.interval}
+                            onChange={(e) =>
+                              setWaCustomRecurrence((prev) => ({
+                                ...prev,
+                                interval: parseInt(e.target.value) || 1,
+                              }))
+                            }
+                            className="w-full rounded border bg-gray-700 p-2 text-white"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="mb-1 block text-xs">Unidad</label>
+                          <select
+                            value={waCustomRecurrence.unit}
+                            onChange={(e) =>
+                              setWaCustomRecurrence((prev) => ({
+                                ...prev,
+                                unit: e.target.value as
+                                  | 'days'
+                                  | 'weeks'
+                                  | 'months',
+                              }))
+                            }
+                            className="w-full rounded border bg-gray-700 p-2 text-white"
+                          >
+                            <option value="days">Día(s)</option>
+                            <option value="weeks">Semana(s)</option>
+                            <option value="months">Mes(es)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Días de la semana si es semanal */}
+                      {waCustomRecurrence.unit === 'weeks' && (
+                        <div>
+                          <label className="mb-2 block text-xs">
+                            Días de la semana
+                          </label>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { label: 'D', value: 0 },
+                              { label: 'L', value: 1 },
+                              { label: 'M', value: 2 },
+                              { label: 'X', value: 3 },
+                              { label: 'J', value: 4 },
+                              { label: 'V', value: 5 },
+                              { label: 'S', value: 6 },
+                            ].map((day) => (
+                              <button
+                                key={day.value}
+                                type="button"
+                                onClick={() => {
+                                  const current =
+                                    waCustomRecurrence.weekdays || [];
+                                  const isSelected = current.includes(
+                                    day.value
+                                  );
+                                  setWaCustomRecurrence((prev) => ({
+                                    ...prev,
+                                    weekdays: isSelected
+                                      ? current.filter((d) => d !== day.value)
+                                      : [...current, day.value].sort(),
+                                  }));
+                                }}
+                                className={`h-8 w-8 rounded-full text-xs font-semibold ${
+                                  (waCustomRecurrence.weekdays || []).includes(
+                                    day.value
+                                  )
+                                    ? 'bg-green-600 text-white'
+                                    : 'bg-gray-700 text-gray-300'
+                                }`}
+                              >
+                                {day.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <p className="text-xs text-gray-400">
-                    Se enviará automáticamente a la hora especificada
+                    {waRecurrence === 'no-repeat'
+                      ? 'Se enviará una sola vez a la hora especificada'
+                      : waRecurrence === 'daily'
+                        ? 'Se enviará todos los días a la hora especificada'
+                        : waRecurrence === 'weekdays'
+                          ? 'Se enviará de lunes a viernes a la hora especificada'
+                          : waRecurrence.startsWith('weekly')
+                            ? 'Se enviará cada semana el día especificado'
+                            : waRecurrence.startsWith('monthly')
+                              ? 'Se enviará cada mes en la fecha especificada'
+                              : waRecurrence === 'yearly'
+                                ? 'Se enviará cada año en la misma fecha'
+                                : waRecurrence === 'custom'
+                                  ? `Se enviará cada ${waCustomRecurrence.interval} ${waCustomRecurrence.unit === 'days' ? 'día(s)' : waCustomRecurrence.unit === 'weeks' ? 'semana(s)' : 'mes(es)'}`
+                                  : 'Selecciona una opción'}
                   </p>
                 </div>
               )}

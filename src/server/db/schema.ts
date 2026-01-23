@@ -1818,6 +1818,12 @@ export const scheduledWhatsAppMessages = pgTable(
     errorMessage: text('error_message'), // Mensaje de error si falló
     codigoPais: varchar('codigo_pais', { length: 10 }).notNull().default('+57'), // Código de país
     userId: text('user_id').references(() => users.id), // Usuario que programó el mensaje
+    // ✅ Campos de recurrencia
+    recurrence: text('recurrence').default('no-repeat'), // Tipo de recurrencia
+    recurrenceConfig: jsonb('recurrence_config'), // Configuración personalizada de recurrencia
+    parentId: integer('parent_id'), // ID del mensaje padre si es una instancia recurrente
+    isRecurring: boolean('is_recurring').default(false), // Si es un mensaje recurrente
+    lastOccurrence: timestamp('last_occurrence', { withTimezone: true }), // Última vez que se generó una instancia
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),

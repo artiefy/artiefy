@@ -1047,6 +1047,9 @@ export async function updateUserInClerk({
   permissions,
   subscriptionEndDate,
   planType,
+  profesion,
+  descripcion,
+  profileImageKey,
 }: {
   userId: string;
   firstName: string;
@@ -1056,6 +1059,9 @@ export async function updateUserInClerk({
   permissions: string[];
   subscriptionEndDate?: string;
   planType?: string;
+  profesion?: string;
+  descripcion?: string;
+  profileImageKey?: string;
 }) {
   try {
     const client = await clerkClient();
@@ -1121,6 +1127,9 @@ export async function updateUserInClerk({
         subscriptionEndDate: formattedEndDate
           ? new Date(formattedEndDate)
           : null,
+        profesion: role === 'educador' ? profesion || null : null,
+        descripcion: role === 'educador' ? descripcion || null : null,
+        profileImageKey: role === 'educador' ? profileImageKey || null : null,
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
