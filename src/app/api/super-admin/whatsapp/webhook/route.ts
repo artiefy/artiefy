@@ -288,6 +288,19 @@ export async function POST(req: NextRequest) {
         for (const st of statuses) {
           const tsMs = toMs(st.timestamp);
 
+          // 🔍 Log completo del status para debugging
+          if (st.status === 'failed') {
+            console.error(
+              '❌ [WA-WEBHOOK] Mensaje fallido:',
+              JSON.stringify(st, null, 2)
+            );
+          } else {
+            console.log(`✅ [WA-WEBHOOK] Status: ${st.status}`, {
+              id: st.id,
+              to: st.recipient_id,
+            });
+          }
+
           pushInbox({
             id: st.id,
             direction: 'status',

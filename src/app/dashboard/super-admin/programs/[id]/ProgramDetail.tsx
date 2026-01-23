@@ -140,14 +140,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
   const [educators, setEducators] = useState<{ id: string; name: string }[]>(
     []
   );
-  const [instructor, setInstructor] = useState('');
+  const [instructors, setInstructors] = useState<string[]>([]); // Array de IDs de instructores
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [editSubjects, setEditSubjects] = useState<number[]>([]); // Add this for subjects
   void setEditSubjects;
-  const [horario, setHorario] = useState<string | null>(null);
-  const [espacios, setEspacios] = useState<string | null>(null);
+  const [horario, setHorario] = useState<number | null>(null);
+  const [espacios, setEspacios] = useState<number | null>(null);
   const [certificationTypeId, setCertificationTypeId] = useState<number | null>(
     null
   );
@@ -199,7 +199,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     categoryid: 0,
     modalidadesid: 0,
     nivelid: 0,
-    instructor: '',
+    instructors: [], // Array de IDs de instructores
     coverImageKey: '',
     creatorId: '',
     rating: 0,
@@ -228,15 +228,19 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         const coursesWithNames = await Promise.all(
           coursesData.map(async (course) => {
             try {
-              const [categoryName, instructorName] = await Promise.all([
+              const [categoryName, instructorNames] = await Promise.all([
                 getCategoryNameById(course.categoryid),
-                getInstructorNameById(course.instructor),
+                Promise.all(
+                  (course.instructors ?? []).map((instructorId) =>
+                    getInstructorNameById(instructorId)
+                  )
+                ),
               ]);
 
               return {
                 ...course,
                 categoryName: categoryName,
-                instructorName: instructorName,
+                instructorName: instructorNames.join(', '), // Unir nombres con coma
               };
             } catch (error) {
               console.error('Error fetching names:', error);
@@ -315,7 +319,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
       categoryid: 0,
       modalidadesid: 0,
       nivelid: 0,
-      instructor: '',
+      instructors: [], // Array de IDs de instructores
       programId: programIdNumber, // programId is now part of CourseData
       creatorId: '',
       rating: 0,
@@ -336,7 +340,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
       categoryid: 0,
       modalidadesid: 0,
       nivelid: 0,
-      instructor: '',
+      instructors: [], // Array de IDs de instructores
       coverImageKey: '',
       creatorId: '',
       rating: 0,
@@ -363,8 +367,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
     courseTypeId: number[],
     individualPrice: number | null,
     videoKey: string,
-    horario: string | null,
-    espacios: string | null,
+    horario: number | null,
+    espacios: number | null,
     certificationTypeId: number | null
   ) => {
     if (!user) return;
@@ -437,7 +441,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
           fileName,
           categoryid,
           modalidadesid,
-          instructorId: instructor,
+          instructorIds: instructors, // Array de IDs de instructores
           creatorId: user.id,
           nivelid,
           rating,
@@ -809,8 +813,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
         setSelectedCourseType={(typeIds) => setSelectedCourseType(typeIds)}
         isActive={isActive} // ✅ Agrega esto
         setIsActive={setIsActive}
-        instructor={instructor}
-        setInstructor={setInstructor}
+        instructors={instructors} // Array de IDs de instructores
+        setInstructors={setInstructors}
         educators={educators}
         horario={horario}
         setHorario={setHorario}

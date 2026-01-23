@@ -24,6 +24,8 @@ type ExtendedCourseData = CourseData & {
   scheduleOptionId?: number | null;
   spaceOptionId?: number | null;
   certificationTypeId?: number | null;
+  instructor?: string; // Legacy field for compatibility
+  instructors?: string[]; // ✅ Array de IDs de instructores
 };
 
 // Define el modelo de datos del curso
@@ -34,7 +36,8 @@ export interface CourseModel {
   categoryid: string;
   modalidadesid: number;
   createdAt: string;
-  instructor: string;
+  instructor: string; // Legacy field
+  instructors?: string[]; // New field
   coverImageKey: string;
   creatorId: string;
   nivelid: string;
@@ -310,17 +313,19 @@ export default function Page() {
       let response;
       let responseData: { id: number } | null = null;
 
-      // Get instructor name from educators array based on selected instructor ID
-      const selectedEducator = educators.find(
-        (edu) => edu.id === editingCourse?.instructor
-      );
-      const instructorName = selectedEducator?.name ?? '';
+      // Get all instructors from editingCourse
+      const instructors =
+        editingCourse?.instructors ??
+        (editingCourse?.instructor ? [editingCourse.instructor] : []);
+
+      console.log('👥 Instructores a enviar:', instructors);
 
       if (Number(id)) {
         console.log('🚀 ANTES de updateCourse - Enviando:', {
           horario,
           espacios,
           certificationTypeId,
+          instructors,
         });
 
         const finalCourseTypeId: number | null = courseTypeId?.[0] ?? null;
@@ -334,14 +339,14 @@ export default function Page() {
           modalidadesid: Number(modalidadesid),
           nivelid: Number(nivelid),
           rating,
-          instructor: instructorName,
+          instructors: instructors,
           creatorId: editingCourse?.creatorId ?? '',
           createdAt: editingCourse?.createdAt ?? new Date(),
           scheduleOptionId: horario ?? null,
           spaceOptionId: espacios ?? null,
           certificationTypeId: certificationTypeId ?? null,
           courseTypeId: finalCourseTypeId,
-        } as CourseData;
+        } as unknown as CourseData;
 
         console.log(
           '📦 PAYLOAD QUE SE ENVÍA:',
@@ -358,8 +363,7 @@ export default function Page() {
 
         responseData = { id: Number(id) };
       } else {
-        console.log('🧪 Enviando datos a sin id:', {
-          id: Number(id),
+        console.log('🧪 Enviando datos a crear curso:', {
           title,
           description: description ?? '',
           coverImageKey: coverImageKey ?? '',
@@ -368,9 +372,9 @@ export default function Page() {
           modalidadesid: Number(modalidadesid),
           nivelid: Number(nivelid),
           rating,
-          instructor: instructorName,
+          instructors: instructors,
         });
-        const instructorId = selectedEducator?.id ?? '';
+
         response = await fetch('/api/educadores/courses', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -383,9 +387,9 @@ export default function Page() {
             modalidadesid,
             nivelid,
             rating,
-            instructor: instructorId,
+            instructors: instructors,
             subjects,
-            courseTypeId, // <-- incluir si tu modelo lo soporta
+            courseTypeId,
             isActive,
             individualPrice,
             horario,
@@ -494,7 +498,7 @@ export default function Page() {
       categoryid: 0,
       modalidadesid: 0,
       createdAt: '',
-      instructor: '',
+      instructors: [],
       coverImageKey: '',
       creatorId: '',
       nivelid: 0,
@@ -537,7 +541,7 @@ export default function Page() {
   if (uploading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -550,9 +554,9 @@ export default function Page() {
     <div className="p-4 sm:p-6">
       {/* Header with gradient effect */}
       <header className="group relative overflow-hidden rounded-lg p-[1px]">
-        <div className="animate-gradient absolute -inset-0.5 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
+        <div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
         <div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
-          <h1 className="text-primary flex items-center gap-3 text-xl font-extrabold tracking-tight sm:text-2xl lg:text-3xl">
+          <h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
             Gestión de Cursos
           </h1>
         </div>
@@ -609,7 +613,7 @@ export default function Page() {
         <div className="col-span-1">
           <button
             onClick={handleCreateCourse}
-            className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex h-full w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="group/button relative inline-flex h-full w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">Crear Curso</span>
             <FiPlus className="relative z-10 size-3.5 sm:size-4" />
@@ -674,11 +678,16 @@ export default function Page() {
                 spaceOptionName: fullCourseData.spaceOptionName,
                 certificationTypeId: fullCourseData.certificationTypeId,
                 certificationTypeName: fullCourseData.certificationTypeName,
+                instructors: fullCourseData.instructors, // ✅ Log de instructores
               });
 
               const extendedCourse = fullCourseData as ExtendedCourseData;
               const certTypeId = fullCourseData.certificationTypeId ?? null;
 
+              console.log(
+                '👥 Instructores que se setearán en editingCourse:',
+                extendedCourse.instructors
+              );
               setEditingCourse(extendedCourse);
               setCourseTypeId(fullCourseData.courseTypeIds ?? []);
               setCertificationTypeId(certTypeId);
@@ -729,127 +738,144 @@ export default function Page() {
 
       {/* Modal Components */}
       {isModalOpen && (
-        <ModalFormCourse
-          isOpen={isModalOpen}
-          onCloseAction={handleCloseModal}
-          onSubmitAction={(...args) => {
-            console.log('🔥 Modal llamó onSubmitAction', args);
-            return handleCreateOrUpdateCourse(...args);
-          }}
-          uploading={uploading}
-          editingCourseId={editingCourse?.id ?? null}
-          title={editingCourse?.title ?? ''}
-          setTitle={setTitle}
-          description={editingCourse?.description ?? ''}
-          setDescription={setDescription}
-          categoryid={editingCourse?.categoryid ?? 0}
-          setCategoryid={(categoryid: number) =>
-            setEditingCourse((prev) => (prev ? { ...prev, categoryid } : null))
-          }
-          modalidadesid={editingCourse?.modalidadesid ?? 0}
-          setModalidadesid={(modalidadesid: number) =>
-            setEditingCourse((prev) =>
-              prev ? { ...prev, modalidadesid } : null
-            )
-          }
-          nivelid={editingCourse?.nivelid ?? 0}
-          setNivelid={(nivelid: number) =>
-            setEditingCourse((prev) => (prev ? { ...prev, nivelid } : null))
-          }
-          coverImageKey={editingCourse?.coverImageKey ?? ''}
-          setCoverImageKey={(coverImageKey: string) =>
-            setEditingCourse((prev) =>
-              prev ? { ...prev, coverImageKey } : null
-            )
-          }
-          rating={editingCourse?.rating ?? 0}
-          setRating={setRating}
-          parametros={parametrosList.map((parametro, index) => ({
-            ...parametro,
-            id: index,
-          }))}
-          setParametrosAction={setParametrosList}
-          courseTypeId={courseTypeId}
-          setCourseTypeId={(newTypeId: number[]) => {
-            setCourseTypeId(newTypeId);
-          }}
-          isActive={editingCourse ? (editingCourse.isActive ?? true) : isActive}
-          setIsActive={(newActive: boolean) => {
-            if (editingCourse) {
+        <>
+          {console.log(
+            '🎯 Renderizando modal con editingCourse.instructors:',
+            editingCourse?.instructors
+          )}
+          <ModalFormCourse
+            isOpen={isModalOpen}
+            onCloseAction={handleCloseModal}
+            onSubmitAction={(...args) => {
+              console.log('🔥 Modal llamó onSubmitAction', args);
+              return handleCreateOrUpdateCourse(...args);
+            }}
+            uploading={uploading}
+            editingCourseId={editingCourse?.id ?? null}
+            title={editingCourse?.title ?? ''}
+            setTitle={setTitle}
+            description={editingCourse?.description ?? ''}
+            setDescription={setDescription}
+            categoryid={editingCourse?.categoryid ?? 0}
+            setCategoryid={(categoryid: number) =>
               setEditingCourse((prev) =>
-                prev ? { ...prev, isActive: newActive } : null
-              );
-            } else {
-              setIsActive(newActive);
+                prev ? { ...prev, categoryid } : null
+              )
             }
-          }}
-          individualPrice={
-            editingCourse
-              ? (editingCourse.individualPrice ?? null)
-              : individualPrice
-          }
-          setIndividualPrice={(price: number | null) => {
-            if (editingCourse) {
+            modalidadesid={editingCourse?.modalidadesid ?? 0}
+            setModalidadesid={(modalidadesid: number) =>
               setEditingCourse((prev) =>
-                prev ? { ...prev, individualPrice: price ?? undefined } : null
-              );
-            } else {
-              setIndividualPrice(price);
+                prev ? { ...prev, modalidadesid } : null
+              )
             }
-          }}
-          instructor={editingCourse?.instructor ?? ''}
-          setInstructor={(instructor: string) =>
-            setEditingCourse((prev) => (prev ? { ...prev, instructor } : null))
-          }
-          educators={educators}
-          subjects={subjects}
-          setSubjects={setSubjects}
-          coverVideoCourseKey={editingCourse?.coverVideoCourseKey ?? null}
-          setCoverVideoCourseKey={(val) => {
-            setEditingCourse((prev) =>
-              prev ? { ...prev, coverVideoCourseKey: val } : null
-            );
-          }}
-          horario={
-            editingCourse ? (editingCourse.scheduleOptionId ?? null) : horario
-          }
-          setHorario={(newHorario: number | null) => {
-            if (editingCourse) {
+            nivelid={editingCourse?.nivelid ?? 0}
+            setNivelid={(nivelid: number) =>
+              setEditingCourse((prev) => (prev ? { ...prev, nivelid } : null))
+            }
+            coverImageKey={editingCourse?.coverImageKey ?? ''}
+            setCoverImageKey={(coverImageKey: string) =>
               setEditingCourse((prev) =>
-                prev ? { ...prev, scheduleOptionId: newHorario } : null
-              );
-            } else {
-              setHorario(newHorario);
+                prev ? { ...prev, coverImageKey } : null
+              )
             }
-          }}
-          espacios={
-            editingCourse ? (editingCourse.spaceOptionId ?? null) : espacios
-          }
-          setEspacios={(newEspacios: number | null) => {
-            if (editingCourse) {
+            rating={editingCourse?.rating ?? 0}
+            setRating={setRating}
+            parametros={parametrosList.map((parametro, index) => ({
+              ...parametro,
+              id: index,
+            }))}
+            setParametrosAction={setParametrosList}
+            courseTypeId={courseTypeId}
+            setCourseTypeId={(newTypeId: number[]) => {
+              setCourseTypeId(newTypeId);
+            }}
+            isActive={
+              editingCourse ? (editingCourse.isActive ?? true) : isActive
+            }
+            setIsActive={(newActive: boolean) => {
+              if (editingCourse) {
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, isActive: newActive } : null
+                );
+              } else {
+                setIsActive(newActive);
+              }
+            }}
+            individualPrice={
+              editingCourse
+                ? (editingCourse.individualPrice ?? null)
+                : individualPrice
+            }
+            setIndividualPrice={(price: number | null) => {
+              if (editingCourse) {
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, individualPrice: price ?? undefined } : null
+                );
+              } else {
+                setIndividualPrice(price);
+              }
+            }}
+            instructors={
+              editingCourse?.instructors ??
+              (editingCourse?.instructor ? [editingCourse.instructor] : [])
+            }
+            setInstructors={(instructors: string[]) =>
               setEditingCourse((prev) =>
-                prev ? { ...prev, spaceOptionId: newEspacios } : null
-              );
-            } else {
-              setEspacios(newEspacios);
+                prev
+                  ? { ...prev, instructors, instructor: instructors[0] }
+                  : null
+              )
             }
-          }}
-          certificationTypeId={
-            editingCourse
-              ? (editingCourse.certificationTypeId ?? null)
-              : certificationTypeId
-          }
-          setCertificationTypeId={(id: number | null) => {
-            if (editingCourse) {
+            educators={educators}
+            subjects={subjects}
+            setSubjects={setSubjects}
+            coverVideoCourseKey={editingCourse?.coverVideoCourseKey ?? null}
+            setCoverVideoCourseKey={(val) => {
               setEditingCourse((prev) =>
-                prev ? { ...prev, certificationTypeId: id } : null
+                prev ? { ...prev, coverVideoCourseKey: val } : null
               );
-            } else {
-              setCertificationTypeId(id);
+            }}
+            horario={
+              editingCourse ? (editingCourse.scheduleOptionId ?? null) : horario
             }
-          }}
-          certificationTypes={certificationTypes}
-        />
+            setHorario={(newHorario: number | null) => {
+              if (editingCourse) {
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, scheduleOptionId: newHorario } : null
+                );
+              } else {
+                setHorario(newHorario);
+              }
+            }}
+            espacios={
+              editingCourse ? (editingCourse.spaceOptionId ?? null) : espacios
+            }
+            setEspacios={(newEspacios: number | null) => {
+              if (editingCourse) {
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, spaceOptionId: newEspacios } : null
+                );
+              } else {
+                setEspacios(newEspacios);
+              }
+            }}
+            certificationTypeId={
+              editingCourse
+                ? (editingCourse.certificationTypeId ?? null)
+                : certificationTypeId
+            }
+            setCertificationTypeId={(id: number | null) => {
+              if (editingCourse) {
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, certificationTypeId: id } : null
+                );
+              } else {
+                setCertificationTypeId(id);
+              }
+            }}
+            certificationTypes={certificationTypes}
+          />
+        </>
       )}
     </div>
   );

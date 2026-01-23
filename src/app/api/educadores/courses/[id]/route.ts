@@ -48,7 +48,8 @@ interface PutRequestBody {
   instructorId?: string; // Changed from instructor to instructorId
   rating?: number;
   courseTypeId?: number | number[] | null; // <- admite number o number[]
-  instructor?: string; // <- para evitar any en el punto 3
+  instructorIds?: string[]; // Array de IDs de instructores (many-to-many)
+  instructors?: string[]; // 🆕 Agregar soporte para el campo "instructors" del frontend
   isActive?: boolean;
   subjects?: { id: number }[];
   individualPrice?: number | null;
@@ -370,15 +371,38 @@ export async function getCourseByIdWithTypes(courseId: number) {
     spaceOptionName = space?.name;
   }
 
+  // ✅ Obtener todos los instructores desde courseInstructors
+  const { courseInstructors } = await import('~/server/db/schema');
+  const instructorsData = await db
+    .select({
+      instructorId: courseInstructors.instructorId,
+      instructorName: users.name,
+    })
+    .from(courseInstructors)
+    .leftJoin(users, eq(courseInstructors.instructorId, users.id))
+    .where(eq(courseInstructors.courseId, courseId));
+
+  const instructors = instructorsData.map((i) => i.instructorId);
+  const instructorNames = instructorsData
+    .map((i) => i.instructorName)
+    .filter(Boolean)
+    .join(', ');
+
+  console.log(
+    `👥 Instructores encontrados para curso ${courseId}:`,
+    instructors
+  );
+
   return {
     ...course,
     categoryName,
     nivelName,
     modalidadesName,
-    instructorName,
+    instructorName: instructorNames || instructorName, // Usar nombres de courseInstructors o fallback
     instructorProfesion,
     instructorDescripcion,
     instructorProfileImageKey,
+    instructors, // ✅ Array de IDs de instructores
     courseTypes: formattedCourseTypes,
     courseTypeIds, // Incluir también el array de IDs para compatibilidad
     meetings: meetingsWithVideo,
@@ -419,6 +443,7 @@ export async function GET(
       scheduleOptionId: course.scheduleOptionId,
       spaceOptionId: course.spaceOptionId,
       certificationTypeId: course.certificationTypeId,
+      instructors: course.instructors, // ✅ Agregado para debugging
     });
 
     return NextResponse.json(course);
@@ -476,8 +501,8 @@ export async function PUT(
         : undefined,
       nivelid: data.nivelid ? Number(data.nivelid) : undefined,
 
-      // ✅ acepta instructorId o instructor (por compatibilidad)
-      instructor: data.instructorId ?? data.instructor,
+      // ✅ Mantener compatibilidad: usar instructorIds si está presente, si no, instructorId
+      instructor: data.instructorIds?.[0] ?? data.instructorId ?? undefined,
 
       rating: data.rating ? Number(data.rating) : undefined,
 
@@ -501,6 +526,37 @@ export async function PUT(
 
     // Update course
     await updateCourse(courseId, updateData);
+
+    // 🆕 Actualizar instructores en courseInstructors
+    const instructorsToUpdate = data.instructors ?? data.instructorIds ?? [];
+    console.log(
+      `📋 Instructores a actualizar: ${JSON.stringify(instructorsToUpdate)}`
+    );
+
+    if (instructorsToUpdate.length > 0) {
+      const { courseInstructors } = await import('~/server/db/schema');
+
+      // Eliminar instructores actuales del curso
+      console.log(`🗑️ Eliminando instructores actuales del curso ${courseId}`);
+      await db
+        .delete(courseInstructors)
+        .where(eq(courseInstructors.courseId, courseId));
+
+      // Insertar nuevos instructores
+      console.log(`➕ Insertando ${instructorsToUpdate.length} instructor(es)`);
+      await db.insert(courseInstructors).values(
+        instructorsToUpdate.map((instructorId) => ({
+          courseId: courseId,
+          instructorId,
+          createdAt: new Date(),
+        }))
+      );
+
+      console.log(
+        `✅ ${instructorsToUpdate.length} instructor(es) actualizado(s) en courseInstructors`
+      );
+    }
+
     // Handle subjects if present
     if (data.subjects && data.subjects.length > 0) {
       // Obtener materias actuales del curso
@@ -720,7 +776,7 @@ interface CourseData {
   categoryid: number;
   modalidadesid: number;
   nivelid: number;
-  instructorId: string;
+  instructorIds: string[]; // Array de IDs de instructores (many-to-many)
   creatorId: string;
   rating: number;
   individualPrice: number | null;
@@ -801,7 +857,7 @@ export async function POST(request: Request) {
         ...data,
         title: newTitle,
         modalidadesid: modalidadId, // importante para este curso
-        instructor: data.instructorId, // asegúrate que instructorId existe en data
+        instructors: data.instructorIds ?? [], // Array de instructores
       };
 
       console.log(

@@ -63,7 +63,8 @@ interface Course {
   nivelName?: string;
   modalidadesid: string;
   modalidadesName?: string;
-  instructor: string;
+  instructor: string; // Campo singular antiguo
+  instructors?: string[]; // ✅ Campo array nuevo de courseInstructors
   coverImageKey: string;
   creatorId: string;
   createdAt: string;
@@ -468,7 +469,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [educators, setEducators] = useState<Educator[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [currentInstructor, setCurrentInstructor] = useState('');
+  const [currentInstructors, setCurrentInstructors] = useState<string[]>([]);
 
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
@@ -485,6 +486,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [certificationTypeName, setCertificationTypeName] = useState<
     string | null
   >(null);
+
+  // ✅ Estado para los tipos de certificación
+  const [certificationTypes, setCertificationTypes] = useState<
+    { id: number; name: string; description: string | null }[]
+  >([]);
 
   // Estado para el scroll y la tarjeta mini sticky
   const [showStickyCard, setShowStickyCard] = useState(false);
@@ -915,9 +921,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 : []
           );
           setIndividualPrice(data.individualPrice ?? null);
-          setCurrentInstructor(data.instructor); // Set current instructor when course loads
-          setSelectedInstructor(data.instructor); // Set selected instructor when course loads
+
+          // ✅ Prioriza instructors array, fallback a instructor singular
+          const instructorsToSet =
+            (data as Course & { instructors?: string[] }).instructors ??
+            (data.instructor ? [data.instructor] : []);
+          console.log(
+            '🔍 Abriendo modal desde CourseDetail - instructors detectados:',
+            instructorsToSet
+          );
+          setCurrentInstructors(instructorsToSet);
+          setSelectedInstructor(instructorsToSet[0] ?? data.instructor); // Set first instructor or fallback
           setEditCoverVideoCourseKey(data.coverVideoCourseKey ?? null);
+
+          // ✅ Inicializar campos de horario, espacios y certificación para el modal
+          setEditHorario(data.scheduleOptionId ?? null);
+          setEditEspacios(data.spaceOptionId ?? null);
+
           // Set certification type names
           setCertificationTypeName(data.certificationTypeName ?? null);
           setScheduleOptionName(data.scheduleOptionName ?? null);
@@ -974,14 +994,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     }
   };
   useEffect(() => {
-    if (currentInstructor && educators.length > 0) {
-      const foundByName = educators.find((e) => e.name === currentInstructor);
+    if (currentInstructors.length > 0 && educators.length > 0) {
+      const firstInstructor = currentInstructors[0];
+      const foundByName = educators.find((e) => e.name === firstInstructor);
       if (foundByName) {
         // Esto corrige el error si por alguna razón vino el nombre en vez del ID
-        setCurrentInstructor(foundByName.id);
+        setCurrentInstructors([foundByName.id]);
       }
     }
-  }, [currentInstructor, educators]);
+  }, [currentInstructors, educators]);
 
   // Función para obtener foros
   const fetchForums = useCallback(async () => {
@@ -999,6 +1020,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Obtener el curso y los parámetros al cargar la página
   useEffect(() => {
     void fetchCourse();
+    void fetchEducators(); // ✅ También cargar educadores al iniciar
   }, [fetchCourse]);
 
   // Fetch forums when course loads
@@ -1007,6 +1029,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       void fetchForums();
     }
   }, [courseIdNumber, fetchForums]);
+
+  // ✅ Fetch certification types al cargar el componente
+  useEffect(() => {
+    const fetchCertificationTypes = async () => {
+      try {
+        const response = await fetch('/api/super-admin/certification-types');
+        if (response.ok) {
+          const certData = (await response.json()) as {
+            success: boolean;
+            data: { id: number; name: string; description: string | null }[];
+          };
+          if (certData.success) {
+            setCertificationTypes(certData.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching certification types:', error);
+      }
+    };
+    void fetchCertificationTypes();
+  }, []);
 
   // Función para crear foro
   const handleCreateForum = async () => {
@@ -1315,7 +1358,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         categoryid,
         modalidadesid,
         nivelid,
-        instructor: currentInstructor,
+        instructors: currentInstructors,
         rating,
         courseTypeId,
         isActive,
@@ -1455,10 +1498,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     setCourseTypeId(newCourseTypeIds);
     setIsActive(course.isActive ?? true);
-    setCurrentInstructor(course.instructor);
+
+    // ✅ Cargar instructors desde courseInstructors, con fallback a instructor singular
+    const instructorsToLoad =
+      (course as Course & { instructors?: string[] }).instructors ??
+      (course.instructor ? [course.instructor] : []);
+    console.log(
+      '🔍 [handleEditCourse] Cargando instructors al modal:',
+      instructorsToLoad
+    );
+    setCurrentInstructors(instructorsToLoad);
+
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
-    setEditHorario(course.horario ?? null);
-    setEditEspacios(course.espacios ?? null);
+
+    // ✅ Inicializar horario y espacios desde scheduleOptionId y spaceOptionId
+    console.log('🔍 [handleEditCourse] Cargando horario y espacios:', {
+      scheduleOptionId: course.scheduleOptionId,
+      spaceOptionId: course.spaceOptionId,
+    });
+    setEditHorario(course.scheduleOptionId ?? null);
+    setEditEspacios(course.spaceOptionId ?? null);
+
     setIsModalOpen(true);
   };
 
@@ -1547,60 +1607,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     localStorage.setItem(`selectedColor_${courseIdNumber}`, color);
   };
 
-  // Modify handleChangeInstructor to include name
-  const handleChangeInstructor = async () => {
-    if (!selectedInstructor || !course?.id) {
-      toast.error('Por favor seleccione un instructor');
-      return;
-    }
-
-    try {
-      setIsUpdating(true);
-
-      const response = await fetch('/api/super-admin/changeEducators', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          courseId: course.id,
-          newInstructor: selectedInstructor,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al actualizar el instructor');
-      }
-
-      // Update the course state with new instructor
-      const selectedEducator = educators.find(
-        (e) => e.id === selectedInstructor
-      );
-
-      if (selectedEducator && course) {
-        setCourse({
-          ...course,
-          instructor: selectedInstructor,
-          instructorName: selectedEducator.name,
-        });
-
-        setSelectedInstructor('');
-        toast.success('Instructor actualizado exitosamente');
-        await fetchCourse();
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al actualizar el instructor');
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   // Add this before the return statement
   if (isUpdating) {
     return <FullscreenLoader />;
   }
-  const EducatorsList: React.FC<{
+  const _EducatorsList: React.FC<{
     educators: Educator[];
     course: Course;
     onSelectEducator: (id: string) => void;
@@ -2236,19 +2247,155 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </p>
               </div>
 
-              {/* Educador */}
+              {/* Educadores */}
               <div className="rounded-xl border-2 border-cyan-500/40 bg-cyan-500/10 p-6 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/70">
                 <h2 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-wider text-cyan-400 uppercase">
-                  Educador Asignado
+                  Instructores Asignados
                 </h2>
-                <EducatorsList
-                  educators={educators}
-                  course={course}
-                  onSelectEducator={setSelectedInstructor}
-                  selectedInstructor={selectedInstructor}
-                  onSaveChange={handleChangeInstructor}
-                  isUpdating={isUpdating}
-                />
+
+                {/* Instructores actuales mostrados como burbujas */}
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {currentInstructors.length > 0 ? (
+                    currentInstructors.map((instructorId) => {
+                      const educator = educators.find(
+                        (e) => e.id === instructorId
+                      );
+                      return (
+                        <div
+                          key={instructorId}
+                          className="text-primary-300 flex items-center gap-2 rounded-full border border-primary bg-primary/20 px-4 py-2 text-sm text-white"
+                        >
+                          <span className="font-semibold text-white">
+                            {educator?.name || instructorId}
+                          </span>
+                          <button
+                            onClick={async () => {
+                              // Remover instructor
+                              const newInstructors = currentInstructors.filter(
+                                (id) => id !== instructorId
+                              );
+                              if (newInstructors.length === 0) {
+                                toast.error(
+                                  'Debe haber al menos un instructor'
+                                );
+                                return;
+                              }
+
+                              try {
+                                setIsUpdating(true);
+                                const response = await fetch(
+                                  '/api/super-admin/courses/instructors',
+                                  {
+                                    method: 'PUT',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                      courseId: course.id,
+                                      instructors: newInstructors,
+                                    }),
+                                  }
+                                );
+
+                                if (!response.ok) {
+                                  throw new Error(
+                                    'Error al actualizar instructores'
+                                  );
+                                }
+
+                                setCurrentInstructors(newInstructors);
+                                toast.success('Instructor removido');
+                                await fetchCourse();
+                              } catch (error) {
+                                console.error(error);
+                                toast.error('Error al remover instructor');
+                              } finally {
+                                setIsUpdating(false);
+                              }
+                            }}
+                            disabled={isUpdating}
+                            className="rounded-full text-purple-300 transition-colors hover:text-red-400 disabled:opacity-50"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <p className="text-sm text-white/50">
+                      No hay instructores asignados
+                    </p>
+                  )}
+                </div>
+
+                {/* Dropdown para agregar instructor */}
+                <div className="flex gap-2">
+                  <select
+                    value={selectedInstructor}
+                    onChange={(e) => setSelectedInstructor(e.target.value)}
+                    className="flex-1 rounded-lg border border-cyan-500/30 bg-slate-900 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                    disabled={isUpdating}
+                  >
+                    <option value="">Seleccionar instructor...</option>
+                    {educators
+                      .filter(
+                        (educator) => !currentInstructors.includes(educator.id)
+                      )
+                      .map((educator) => (
+                        <option key={educator.id} value={educator.id}>
+                          {educator.name}
+                        </option>
+                      ))}
+                  </select>
+                  <button
+                    onClick={async () => {
+                      if (!selectedInstructor) {
+                        toast.error('Selecciona un instructor');
+                        return;
+                      }
+
+                      try {
+                        setIsUpdating(true);
+                        const newInstructors = [
+                          ...currentInstructors,
+                          selectedInstructor,
+                        ];
+
+                        const response = await fetch(
+                          '/api/super-admin/courses/instructors',
+                          {
+                            method: 'PUT',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              courseId: course.id,
+                              instructors: newInstructors,
+                            }),
+                          }
+                        );
+
+                        if (!response.ok) {
+                          throw new Error('Error al agregar instructor');
+                        }
+
+                        setCurrentInstructors(newInstructors);
+                        setSelectedInstructor('');
+                        toast.success('Instructor agregado');
+                        await fetchCourse();
+                      } catch (error) {
+                        console.error(error);
+                        toast.error('Error al agregar instructor');
+                      } finally {
+                        setIsUpdating(false);
+                      }
+                    }}
+                    disabled={isUpdating || !selectedInstructor}
+                    className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+                  >
+                    {isUpdating ? '...' : '+ Agregar'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -4098,8 +4245,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           setCourseTypeId={setCourseTypeId}
           isActive={isActive}
           setIsActive={setIsActive}
-          instructor={currentInstructor}
-          setInstructor={setCurrentInstructor}
+          instructors={currentInstructors}
+          setInstructors={setCurrentInstructors}
           educators={educators}
           subjects={currentSubjects}
           setSubjects={setCurrentSubjects}
@@ -4117,7 +4264,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               prev ? { ...prev, certificationTypeId: id } : null
             );
           }}
-          certificationTypes={[]}
+          certificationTypes={certificationTypes}
         />
       )}
 

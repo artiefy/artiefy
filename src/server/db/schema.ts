@@ -46,6 +46,7 @@ export const users = pgTable(
     planType: text('plan_type', {
       enum: ['none', 'Pro', 'Premium', 'Enterprise'],
     }),
+    enrollmentStatus: text('enrollment_status').default('Nuevo'),
     purchaseDate: timestamp('purchase_date', {
       withTimezone: true,
       mode: 'date',
@@ -282,6 +283,24 @@ export const coursesTaken = pgTable('courses_taken', {
     .references(() => courses.id)
     .notNull(),
 });
+
+// Tabla de relación muchos-a-muchos entre cursos e instructores
+export const courseInstructors = pgTable(
+  'course_instructors',
+  {
+    id: serial('id').primaryKey(),
+    courseId: integer('course_id')
+      .references(() => courses.id, { onDelete: 'cascade' })
+      .notNull(),
+    instructorId: text('instructor_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('course_instructor_unique').on(table.courseId, table.instructorId),
+  ]
+);
 
 // Tabla de proyectos
 export const projects = pgTable('projects', {
@@ -1799,6 +1818,12 @@ export const scheduledWhatsAppMessages = pgTable(
     errorMessage: text('error_message'), // Mensaje de error si falló
     codigoPais: varchar('codigo_pais', { length: 10 }).notNull().default('+57'), // Código de país
     userId: text('user_id').references(() => users.id), // Usuario que programó el mensaje
+    // ✅ Campos de recurrencia
+    recurrence: text('recurrence').default('no-repeat'), // Tipo de recurrencia
+    recurrenceConfig: jsonb('recurrence_config'), // Configuración personalizada de recurrencia
+    parentId: integer('parent_id'), // ID del mensaje padre si es una instancia recurrente
+    isRecurring: boolean('is_recurring').default(false), // Si es un mensaje recurrente
+    lastOccurrence: timestamp('last_occurrence', { withTimezone: true }), // Última vez que se generó una instancia
     createdAt: timestamp('created_at', { withTimezone: true })
       .defaultNow()
       .notNull(),

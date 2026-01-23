@@ -2,7 +2,12 @@ import { clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { courses, materias, users } from '~/server/db/schema';
+import {
+  courseInstructors,
+  courses,
+  materias,
+  users,
+} from '~/server/db/schema';
 
 export async function getCoursesByProgramId(programId: string) {
   try {
@@ -13,7 +18,7 @@ export async function getCoursesByProgramId(programId: string) {
         description: courses.description,
         coverImageKey: courses.coverImageKey,
         categoryid: courses.categoryid,
-        instructor: courses.instructor,
+        instructor: courses.instructor, // Campo legacy por compatibilidad
         modalidadesid: courses.modalidadesid,
         nivelid: courses.nivelid,
         rating: courses.rating,
@@ -22,48 +27,78 @@ export async function getCoursesByProgramId(programId: string) {
       .innerJoin(materias, eq(materias.programaId, parseInt(programId)))
       .where(eq(courses.id, materias.courseid));
 
-    // Obtener información de instructores
+    // Obtener todos los instructores para cada curso desde course_instructors
     const coursesWithInstructors = await Promise.all(
       result.map(async (course) => {
-        if (!course.instructor) {
-          return { ...course, instructorName: 'Sin instructor asignado' };
-        }
-
         try {
-          // Primero intentar obtener de la tabla users
-          const dbUser = await db
+          // Obtener todos los IDs de instructores de este curso
+          const instructorRelations = await db
             .select()
-            .from(users)
-            .where(eq(users.id, course.instructor))
-            .limit(1);
+            .from(courseInstructors)
+            .where(eq(courseInstructors.courseId, course.id));
 
-          if (dbUser?.[0]?.name) {
-            return { ...course, instructorName: dbUser[0].name };
-          }
+          const instructorIds = instructorRelations.map(
+            (rel) => rel.instructorId
+          );
 
-          // Si no está en DB, intentar con Clerk
-          try {
-            const clerk = await clerkClient();
-            const user = await clerk.users.getUser(course.instructor);
-            const name =
-              `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+          if (instructorIds.length === 0) {
             return {
               ...course,
-              instructorName: name || course.instructor,
-            };
-          } catch (_) {
-            // Si falla Clerk, usar el campo instructor directamente
-            return {
-              ...course,
-              instructorName: course.instructor,
+              instructors: [],
+              instructorName: 'Sin instructor asignado',
             };
           }
+
+          // Obtener nombres de todos los instructores
+          const instructorNames = await Promise.all(
+            instructorIds.map(async (instructorId) => {
+              try {
+                // Primero intentar desde la tabla users
+                const dbUser = await db
+                  .select()
+                  .from(users)
+                  .where(eq(users.id, instructorId))
+                  .limit(1);
+
+                if (dbUser?.[0]?.name) {
+                  return dbUser[0].name;
+                }
+
+                // Si no está en DB, intentar con Clerk
+                try {
+                  const clerk = await clerkClient();
+                  const user = await clerk.users.getUser(instructorId);
+                  const name =
+                    `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+                  return name || instructorId;
+                } catch (_) {
+                  return instructorId;
+                }
+              } catch (error) {
+                console.error(
+                  `Error fetching instructor ${instructorId}:`,
+                  error
+                );
+                return instructorId;
+              }
+            })
+          );
+
+          return {
+            ...course,
+            instructors: instructorIds,
+            instructorName: instructorNames.join(', '), // Concatenar nombres para compatibilidad
+          };
         } catch (error) {
           console.error(
-            `Error fetching instructor for course ${course.id}:`,
+            `Error fetching instructors for course ${course.id}:`,
             error
           );
-          return { ...course, instructorName: course.instructor };
+          return {
+            ...course,
+            instructors: course.instructor ? [course.instructor] : [],
+            instructorName: course.instructor || 'Sin instructor asignado',
+          };
         }
       })
     );

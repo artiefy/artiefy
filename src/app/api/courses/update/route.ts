@@ -12,7 +12,7 @@ export async function PUT(request: Request) {
       categoryid?: string;
       modalidadesid?: string;
       nivelid?: string;
-      instructor?: string;
+      instructors?: string[];
     }
 
     const body: RequestBody = (await request.json()) as RequestBody;
@@ -33,7 +33,7 @@ export async function PUT(request: Request) {
       categoryid: body.categoryid ? Number(body.categoryid) : 0,
       modalidadesid: body.modalidadesid ? Number(body.modalidadesid) : 0,
       nivelid: body.nivelid ? Number(body.nivelid) : 0,
-      instructor: body.instructor ?? '',
+      instructors: body.instructors ?? [],
     });
 
     console.log(`✅ Curso ${body.id} actualizado correctamente`);

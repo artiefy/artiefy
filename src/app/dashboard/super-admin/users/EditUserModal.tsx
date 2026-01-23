@@ -20,6 +20,9 @@ interface User {
   permissions?: string[];
   subscriptionEndDate?: string | null;
   planType?: 'none' | 'Pro' | 'Premium' | 'Enterprise';
+  profesion?: string;
+  descripcion?: string;
+  profileImageKey?: string;
 }
 
 interface EditUserModalProps {
@@ -57,12 +60,19 @@ export default function EditUserModal({
       user.subscriptionEndDate
     ),
     planType: user.planType ?? 'none',
+    profesion: user.profesion ?? '',
+    descripcion: user.descripcion ?? '',
+    profileImageKey: user.profileImageKey ?? '',
   });
 
   const [selectedPermissions, setSelectedPermissions] = React.useState<
     string[]
   >(user.permissions ?? []);
-  console.log('sosa planes:', user.planType);
+  const [uploadingImage, setUploadingImage] = React.useState(false);
+  const [selectedImageFile, setSelectedImageFile] = React.useState<File | null>(
+    null
+  );
+  console.log('sosa planes:', selectedImageFile);
 
   React.useEffect(() => {
     setEditedUser({
@@ -71,6 +81,9 @@ export default function EditUserModal({
         user.subscriptionEndDate
       ),
       planType: user.planType ?? 'none',
+      profesion: user.profesion ?? '',
+      descripcion: user.descripcion ?? '',
+      profileImageKey: user.profileImageKey ?? '',
     });
 
     setSelectedPermissions(user.permissions ?? []);
@@ -78,6 +91,36 @@ export default function EditUserModal({
 
   if (!isOpen) return null;
   console.log('User data:', user);
+
+  const handleImageUpload = async (file: File) => {
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'profile-images');
+
+      const response = await fetch('/api/super-admin/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al subir la imagen');
+      }
+
+      const data = (await response.json()) as { key: string };
+      setEditedUser({
+        ...editedUser,
+        profileImageKey: data.key,
+      });
+      setSelectedImageFile(null);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Error al subir la imagen');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   return (
     <div
@@ -109,7 +152,17 @@ export default function EditUserModal({
             {/* Sidebar - Profile Image & Quick Info */}
             <div className="space-y-6">
               <div className="relative mx-auto h-48 w-48 overflow-hidden rounded-xl border-2 border-[#3AF4EF] shadow-lg">
-                {editedUser.profileImage ? (
+                {/* Priorizar profileImageKey de la BD si existe y el usuario es educador */}
+                {editedUser.role === 'educador' &&
+                editedUser.profileImageKey ? (
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${editedUser.profileImageKey}`}
+                    alt={`${editedUser.firstName} ${editedUser.lastName}`}
+                    fill
+                    className="object-cover transition duration-200 hover:scale-105"
+                    unoptimized
+                  />
+                ) : editedUser.profileImage ? (
                   <Image
                     src={editedUser.profileImage}
                     alt={`${editedUser.firstName} ${editedUser.lastName}`}
@@ -156,7 +209,7 @@ export default function EditUserModal({
                           firstName: e.target.value,
                         })
                       }
-                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     />
                   </div>
                   <div>
@@ -172,7 +225,7 @@ export default function EditUserModal({
                           lastName: e.target.value,
                         })
                       }
-                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -196,7 +249,7 @@ export default function EditUserModal({
                           role: e.target.value,
                         })
                       }
-                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     >
                       <option value="estudiante">Estudiante</option>
                       <option value="educador">Educador</option>
@@ -216,7 +269,7 @@ export default function EditUserModal({
                           status: e.target.value,
                         })
                       }
-                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     >
                       <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
@@ -245,7 +298,7 @@ export default function EditUserModal({
                           subscriptionEndDate: e.target.value,
                         })
                       }
-                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     />
                   </div>
                   <div>
@@ -271,7 +324,7 @@ export default function EditUserModal({
                           });
                         }
                       }}
-                      className="bg-background w-full rounded-lg border border-white/10 px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
                     >
                       <option value="none">Ninguno</option>
                       <option value="Pro">Pro</option>
@@ -281,6 +334,131 @@ export default function EditUserModal({
                   </div>
                 </div>
               </div>
+
+              {/* Campos específicos para Educadores */}
+              {editedUser.role === 'educador' && (
+                <div className="rounded-lg bg-white/5 p-6">
+                  <h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
+                    Información del Educador
+                  </h3>
+                  <div className="grid gap-4">
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">
+                        Profesión
+                      </label>
+                      <input
+                        type="text"
+                        value={editedUser.profesion}
+                        onChange={(e) =>
+                          setEditedUser({
+                            ...editedUser,
+                            profesion: e.target.value,
+                          })
+                        }
+                        placeholder="Ej: Ingeniero de Software, Profesor de Matemáticas"
+                        className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">
+                        Descripción / Biografía
+                      </label>
+                      <textarea
+                        value={editedUser.descripcion}
+                        onChange={(e) =>
+                          setEditedUser({
+                            ...editedUser,
+                            descripcion: e.target.value,
+                          })
+                        }
+                        placeholder="Describe la experiencia y especialización del educador..."
+                        rows={4}
+                        className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">
+                        Clave de Imagen de Perfil (S3)
+                      </label>
+
+                      {/* Preview de la imagen */}
+                      {editedUser.profileImageKey && (
+                        <div className="mb-3 overflow-hidden rounded-lg border border-[#3AF4EF]/30">
+                          <Image
+                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${editedUser.profileImageKey}`}
+                            alt="Preview"
+                            width={200}
+                            height={200}
+                            className="h-48 w-full object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      )}
+
+                      {/* Botón para subir nueva imagen */}
+                      <div className="mb-3">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setSelectedImageFile(file);
+                              void handleImageUpload(file);
+                            }
+                          }}
+                          className="hidden"
+                          id="profile-image-upload"
+                        />
+                        <label
+                          htmlFor="profile-image-upload"
+                          className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#3AF4EF]/50 bg-[#3AF4EF]/10 px-4 py-2 text-sm font-semibold text-[#3AF4EF] transition-all hover:bg-[#3AF4EF]/20"
+                        >
+                          {uploadingImage ? (
+                            <>
+                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#3AF4EF] border-t-transparent" />
+                              Subiendo...
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                />
+                              </svg>
+                              Subir Nueva Imagen
+                            </>
+                          )}
+                        </label>
+                      </div>
+
+                      <input
+                        type="text"
+                        value={editedUser.profileImageKey}
+                        onChange={(e) =>
+                          setEditedUser({
+                            ...editedUser,
+                            profileImageKey: e.target.value,
+                          })
+                        }
+                        placeholder="uploads/profile-image-123.jpg"
+                        className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Ruta del archivo en S3 (sin incluir el dominio base)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Permissions */}
               <div className="rounded-lg bg-white/5 p-6">

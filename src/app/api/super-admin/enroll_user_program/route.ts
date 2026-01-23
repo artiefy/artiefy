@@ -208,6 +208,7 @@ export async function GET(req: Request) {
         planType: users.planType,
         role: users.role,
         purchaseDate: users.purchaseDate,
+        enrollmentStatus: users.enrollmentStatus,
 
         // campos que ya estabas usando
         document: users.document,

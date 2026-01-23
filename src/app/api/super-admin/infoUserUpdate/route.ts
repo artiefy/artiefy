@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 
+import { eq } from 'drizzle-orm';
+
+import { db } from '~/server/db';
+import { users } from '~/server/db/schema';
+
 // ✅ Definimos la interfaz para los datos de usuario que esperamos de Clerk
 interface ClerkUserResponse {
   id: string;
@@ -53,6 +58,17 @@ const getUser = async (userId: string) => {
 
     const planType = userData.public_metadata?.planType ?? 'none';
 
+    // ✅ Obtener datos adicionales de la base de datos (profesion, descripcion, profileImageKey)
+    const [dbUser] = await db
+      .select({
+        profesion: users.profesion,
+        descripcion: users.descripcion,
+        profileImageKey: users.profileImageKey,
+      })
+      .from(users)
+      .where(eq(users.id, userData.id))
+      .limit(1);
+
     const user = {
       id: userData.id,
       firstName, // ✅ Ahora enviamos `firstName` correctamente
@@ -66,6 +82,9 @@ const getUser = async (userId: string) => {
       permissions, // Ahora es seguro y correctamente tipado
       subscriptionEndDate,
       planType,
+      profesion: dbUser?.profesion ?? '',
+      descripcion: dbUser?.descripcion ?? '',
+      profileImageKey: dbUser?.profileImageKey ?? '',
     };
 
     return user;

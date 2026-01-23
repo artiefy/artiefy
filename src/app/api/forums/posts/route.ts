@@ -10,7 +10,7 @@ import {
   getPostsByForo,
 } from '~/models/educatorsModels/forumAndPosts';
 import { db } from '~/server/db';
-import { enrollments, forums, users } from '~/server/db/schema';
+import { enrollments, forums, posts, users } from '~/server/db/schema';
 import { deleteMediaFromS3, uploadMediaToS3 } from '~/server/lib/s3-upload';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
 
@@ -279,6 +279,31 @@ export async function POST(request: NextRequest) {
       userId,
       foroId,
     });
+
+    // Guardar el post en la BD
+    try {
+      const result = await db
+        .insert(posts)
+        .values({
+          forumId: foroId,
+          userId,
+          content,
+          imageKey: imageKey || null,
+          audioKey: audioKey || null,
+          videoKey: videoKey || null,
+        })
+        .returning();
+      console.log('[FORO][POST] 💾 Post insertado en BD:', result[0]);
+    } catch (insertError) {
+      console.error(
+        '[FORO][POST] ❌ Error insertando post en BD:',
+        insertError
+      );
+      return respondWithError(
+        `Error guardando post: ${insertError instanceof Error ? insertError.message : 'desconocido'}`,
+        500
+      );
+    }
 
     return NextResponse.json({ message: 'Post creado exitosamente' });
   } catch (error: unknown) {

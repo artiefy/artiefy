@@ -19,6 +19,7 @@ import {
   updateUserInfo,
   updateUserStatus,
 } from '~/server/queries/queries';
+import { updateEnrollmentStatus } from '~/server/queries/queriesSuperAdmin';
 
 // 📌 Configuración de S3
 const s3Client = new S3Client({
@@ -411,6 +412,7 @@ export async function PATCH(request: Request) {
       lastName?: string;
       userIds?: string[];
       status?: string;
+      enrollmentStatus?: string;
     }
     const body: RequestBody = (await request.json()) as RequestBody;
     const { action, id, role, firstName, lastName, userIds, status } = body;
@@ -460,6 +462,35 @@ export async function PATCH(request: Request) {
       } else {
         return NextResponse.json(
           { error: 'Status is required and must be a string' },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (action === 'updateEnrollmentStatus') {
+      const enrollmentStatus = body.enrollmentStatus as string;
+      const validStatuses = [
+        'Nuevo',
+        'Graduando',
+        'Egresado',
+        'Aplaza',
+        'Retirado',
+      ];
+
+      if (enrollmentStatus && validStatuses.includes(enrollmentStatus)) {
+        await updateEnrollmentStatus(
+          id,
+          enrollmentStatus as
+            | 'Nuevo'
+            | 'Graduando'
+            | 'Egresado'
+            | 'Aplaza'
+            | 'Retirado'
+        );
+        return NextResponse.json({ success: true });
+      } else {
+        return NextResponse.json(
+          { error: 'Invalid enrollment status' },
           { status: 400 }
         );
       }

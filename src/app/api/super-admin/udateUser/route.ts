@@ -12,7 +12,10 @@ export async function PATCH(req: Request) {
       status,
       permissions,
       subscriptionEndDate,
-      planType, // ✅ Añadido aquí
+      planType,
+      profesion,
+      descripcion,
+      profileImageKey,
     } = (await req.json()) as {
       userId: string;
       firstName: string;
@@ -21,7 +24,10 @@ export async function PATCH(req: Request) {
       status: string;
       permissions: string[];
       subscriptionEndDate?: string;
-      planType?: string; // ✅ Añadido aquí
+      planType?: string;
+      profesion?: string;
+      descripcion?: string;
+      profileImageKey?: string;
     };
 
     console.log('📦 Datos recibidos en PATCH /api/super-admin/udateUser:', {
@@ -32,7 +38,10 @@ export async function PATCH(req: Request) {
       status,
       permissions,
       subscriptionEndDate,
-      planType, // ✅ Confirmar que llega
+      planType,
+      profesion,
+      descripcion,
+      profileImageKey,
     });
 
     if (!userId || !firstName?.trim() || !lastName?.trim()) {
@@ -50,7 +59,10 @@ export async function PATCH(req: Request) {
       status,
       permissions,
       subscriptionEndDate,
-      planType, // ✅ Ahora sí se pasa correctamente
+      planType,
+      profesion,
+      descripcion,
+      profileImageKey,
     });
 
     if (!updateSuccess) {
@@ -71,7 +83,10 @@ export async function PATCH(req: Request) {
         status,
         permissions,
         subscriptionEndDate,
-        planType, // ✅ Incluido en la respuesta también
+        planType,
+        profesion,
+        descripcion,
+        profileImageKey,
       },
     });
   } catch (error: unknown) {

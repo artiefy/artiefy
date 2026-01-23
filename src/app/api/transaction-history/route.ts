@@ -57,7 +57,29 @@ export async function GET(request: Request) {
       sort: url.searchParams.get('sort'),
     };
 
-    const parsed = listTransactionsSchema.parse(queryParams);
+    let parsed = listTransactionsSchema.safeParse(queryParams);
+    if (!parsed.success) {
+      // Si el error es solo por pageSize demasiado grande, lo limitamos
+      const pageSizeRaw = Number(queryParams.pageSize);
+      if (
+        parsed.error.issues.length === 1 &&
+        parsed.error.issues[0].path[0] === 'pageSize' &&
+        pageSizeRaw > 100
+      ) {
+        queryParams.pageSize = '100';
+        parsed = listTransactionsSchema.safeParse(queryParams);
+      }
+      if (!parsed.success) {
+        return Response.json(
+          {
+            ok: false,
+            message: 'Parámetros inválidos',
+            errors: parsed.error.issues,
+          },
+          { status: 400 }
+        );
+      }
+    }
     const {
       page,
       pageSize,
@@ -69,7 +91,7 @@ export async function GET(request: Request) {
       concepto,
       userId: filterUserId,
       sort,
-    } = parsed;
+    } = parsed.data;
 
     // Construir condiciones de WHERE
     const conditions: (SQL | undefined)[] = [];

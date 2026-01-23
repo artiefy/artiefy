@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
       categoryid: number;
       modalidadesid: number;
       nivelid: number;
-      instructor?: string;
+      instructors?: string | string[]; // Puede venir como string o array
     };
 
     const {
@@ -84,8 +84,15 @@ export async function POST(request: NextRequest) {
       categoryid,
       modalidadesid,
       nivelid,
-      instructor = '',
+      instructors: rawInstructors = [],
     } = body;
+
+    // Normalizar instructors a array
+    const instructors = Array.isArray(rawInstructors)
+      ? rawInstructors
+      : rawInstructors
+        ? [rawInstructors]
+        : [];
 
     if (!title || !description || !categoryid || !modalidadesid || !nivelid) {
       console.error('❌ Error: Faltan datos obligatorios');
@@ -101,7 +108,7 @@ export async function POST(request: NextRequest) {
       categoryid,
       modalidadesid,
       nivelid,
-      instructor,
+      instructors,
     });
     console.log('✅ Curso creado con éxito');
 
@@ -130,7 +137,7 @@ export async function PUT(request: NextRequest) {
       categoryid: number;
       modalidadesid: number;
       nivelid: number;
-      instructor: string;
+      instructors: string | string[]; // Puede venir como string o array
     };
     const {
       id,
@@ -140,8 +147,13 @@ export async function PUT(request: NextRequest) {
       modalidadesid,
       nivelid,
       categoryid,
-      instructor,
+      instructors: rawInstructors,
     } = body;
+
+    // Normalizar instructors a array
+    const instructors = Array.isArray(rawInstructors)
+      ? rawInstructors
+      : [rawInstructors];
 
     const course = await getCourseById(id);
     if (!course) {
@@ -158,7 +170,7 @@ export async function PUT(request: NextRequest) {
       coverImageKey,
       categoryid,
       modalidadesid,
-      instructor,
+      instructors,
       nivelid,
     });
 

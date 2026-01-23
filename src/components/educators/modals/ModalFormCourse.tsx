@@ -51,8 +51,8 @@ interface CourseFormProps {
       description: string;
       porcentaje: number;
     }[],
-    horario: string | null,
-    espacios: string | null,
+    horario: number | null,
+    espacios: number | null,
     certificationTypeId: number | null
   ) => Promise<void>;
   uploading: boolean;
@@ -101,13 +101,17 @@ interface CourseFormProps {
   subjects: { id: number }[];
   setSubjects: (subjects: { id: number }[]) => void;
   defaultAddParametros?: boolean; // Agregar esta prop
-  horario: string | null;
-  setHorario: (horario: string | null) => void;
-  espacios: string | null;
-  setEspacios: (espacios: string | null) => void;
+  horario: number | null;
+  setHorario: (horario: number | null) => void;
+  espacios: number | null;
+  setEspacios: (espacios: number | null) => void;
   certificationTypeId: number | null;
   setCertificationTypeId: (id: number | null) => void;
-  certificationTypes?: { id: number; name: string; description: string | null }[];
+  certificationTypes?: {
+    id: number;
+    name: string;
+    description: string | null;
+  }[];
 }
 
 // Interfaz para los niveles
@@ -225,31 +229,32 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [isLoadingModalidades, setIsLoadingModalidades] = useState(true);
   const [frameImageFile, setFrameImageFile] = useState<File | null>(null);
-  const [localCertificationTypes, setLocalCertificationTypes] = useState<
-    { id: number; name: string; description: string | null }[]
-  >(certificationTypes);
+  const [localCertificationTypes, setLocalCertificationTypes] =
+    useState<{ id: number; name: string; description: string | null }[]>(
+      certificationTypes
+    );
   const [isLoadingCertifications, setIsLoadingCertifications] = useState(true);
-  const [localCertificationTypeId, setLocalCertificationTypeId] = useState<number | null>(certificationTypeId);
+  const [localCertificationTypeId, setLocalCertificationTypeId] = useState<
+    number | null
+  >(certificationTypeId);
   void isLoadingCertifications;
   void isLoadingCategories;
   void isLoadingModalidades;
+
+  // States para cargar opciones de horarios y espacios desde API
+  const [scheduleOptions, setScheduleOptions] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [spaceOptions, setSpaceOptions] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
+  const [isLoadingSpaces, setIsLoadingSpaces] = useState(false);
+
   const isVideo = file instanceof File && file.type.startsWith('video/');
   const safeCourseTypeId = Array.isArray(courseTypeId) ? courseTypeId : [];
   const validFile = isFile(file) ? file : null;
   void validFile;
-
-  // Opciones para horarios y espacios
-  const horariosOptions = [
-    'Sábado Mañana',
-    'Sábado Tarde',
-    'Lunes y Martes',
-  ];
-
-  const espaciosOptions = [
-    'Florencia',
-    'Cali',
-    'Virtual',
-  ];
 
   const handleFrameImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -426,14 +431,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           );
         }
 
-        const data = (await response.json()) as { success: boolean; data: { id: number; name: string; description: string | null }[] };
+        const data = (await response.json()) as {
+          success: boolean;
+          data: { id: number; name: string; description: string | null }[];
+        };
         console.log('✅ Tipos de certificación cargados:', data.data);
         setLocalCertificationTypes(data.data ?? []);
       } catch (error) {
         console.error('Error al cargar certificaciones:', error);
         // Si el API falla, usa el prop como fallback
         if (certificationTypes && certificationTypes.length > 0) {
-          console.log('📦 Usando tipos de certificación del prop:', certificationTypes);
+          console.log(
+            '📦 Usando tipos de certificación del prop:',
+            certificationTypes
+          );
           setLocalCertificationTypes(certificationTypes);
         }
       } finally {
@@ -443,6 +454,76 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
     void fetchCertifications();
   }, [certificationTypes]);
+
+  // ✅ Fetch schedule options
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      setIsLoadingSchedules(true);
+      try {
+        const response = await fetch('/api/super-admin/schedule-options', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los horarios: ${await response.text()}`
+          );
+        }
+
+        const data = (await response.json()) as {
+          success: boolean;
+          data: { id: number; name: string }[];
+        };
+        console.log('✅ Horarios cargados:', data.data);
+        setScheduleOptions(data.data ?? []);
+      } catch (error) {
+        console.error('Error al cargar horarios:', error);
+        setScheduleOptions([]);
+      } finally {
+        setIsLoadingSchedules(false);
+      }
+    };
+
+    if (isOpen) {
+      void fetchSchedules();
+    }
+  }, [isOpen]);
+
+  // ✅ Fetch space options
+  useEffect(() => {
+    const fetchSpaces = async () => {
+      setIsLoadingSpaces(true);
+      try {
+        const response = await fetch('/api/super-admin/space-options', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!response.ok) {
+          throw new Error(
+            `Error al obtener los espacios: ${await response.text()}`
+          );
+        }
+
+        const data = (await response.json()) as {
+          success: boolean;
+          data: { id: number; name: string }[];
+        };
+        console.log('✅ Espacios cargados:', data.data);
+        setSpaceOptions(data.data ?? []);
+      } catch (error) {
+        console.error('Error al cargar espacios:', error);
+        setSpaceOptions([]);
+      } finally {
+        setIsLoadingSpaces(false);
+      }
+    };
+
+    if (isOpen) {
+      void fetchSpaces();
+    }
+  }, [isOpen]);
 
   // Función para manejar el cambio de parámetros
   const handleParametroChange = (
@@ -928,11 +1009,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // ✅ Efecto para sincronizar el certificationTypeId local
   useEffect(() => {
     if (editingCourseId && certificationTypeId) {
-      console.log('📋 Sincronizando certificationTypeId en educadores:', certificationTypeId);
-      console.log('📋 localCertificationTypes disponibles:', localCertificationTypes);
-      const certName = localCertificationTypes.find(ct => ct.id === certificationTypeId)?.name ??
-        certificationTypes?.find(ct => ct.id === certificationTypeId)?.name;
-      console.log('📋 Certification type a mostrar:', { id: certificationTypeId, name: certName });
+      console.log(
+        '📋 Sincronizando certificationTypeId en educadores:',
+        certificationTypeId
+      );
+      console.log(
+        '📋 localCertificationTypes disponibles:',
+        localCertificationTypes
+      );
+      const certName =
+        localCertificationTypes.find((ct) => ct.id === certificationTypeId)
+          ?.name ??
+        certificationTypes?.find((ct) => ct.id === certificationTypeId)?.name;
+      console.log('📋 Certification type a mostrar:', {
+        id: certificationTypeId,
+        name: certName,
+      });
       setLocalCertificationTypeId(certificationTypeId);
     }
   }, [editingCourseId, certificationTypeId, localCertificationTypes]);
@@ -951,12 +1043,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               : ' los detalles para crear un nuevo curso'}
           </DialogDescription>
         </DialogHeader>
-        <div className="bg-background rounded-lg px-2 py-3 text-black shadow-md md:px-6 md:py-4">
+        <div className="rounded-lg bg-background px-2 py-3 text-black shadow-md md:px-6 md:py-4">
           <div className="space-y-3 md:space-y-4">
             <div>
               <label
                 htmlFor="title"
-                className="text-primary text-sm font-medium md:text-lg"
+                className="text-sm font-medium text-primary md:text-lg"
               >
                 Título
               </label>
@@ -976,7 +1068,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div>
               <label
                 htmlFor="description"
-                className="text-primary text-sm font-medium md:text-lg"
+                className="text-sm font-medium text-primary md:text-lg"
               >
                 Descripción
               </label>
@@ -997,11 +1089,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Nivel
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={nivelid}
                   onChange={(e) => setNivelid(Number(e.target.value))}
                 >
@@ -1018,11 +1110,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 )}
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Modalidad
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={modalidadesid}
                   onChange={(e) => setModalidadesid(Number(e.target.value))}
                 >
@@ -1039,11 +1131,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 )}
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Categoría
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={categoryid}
                   onChange={(e) => setCategoryid(Number(e.target.value))}
                 >
@@ -1060,57 +1152,81 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 )}
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Horario
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={horario ?? ''}
-                  onChange={(e) => setHorario(e.target.value || null)}
+                  onChange={(e) =>
+                    setHorario(e.target.value ? Number(e.target.value) : null)
+                  }
+                  disabled={isLoadingSchedules}
                 >
-                  <option value="">Seleccionar horario</option>
-                  {horariosOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
+                  <option value="">
+                    {isLoadingSchedules
+                      ? 'Cargando horarios...'
+                      : 'Seleccionar horario'}
+                  </option>
+                  {scheduleOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Espacios
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={espacios ?? ''}
-                  onChange={(e) => setEspacios(e.target.value || null)}
+                  onChange={(e) =>
+                    setEspacios(e.target.value ? Number(e.target.value) : null)
+                  }
+                  disabled={isLoadingSpaces}
                 >
-                  <option value="">Seleccionar espacio</option>
-                  {espaciosOptions.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
+                  <option value="">
+                    {isLoadingSpaces
+                      ? 'Cargando espacios...'
+                      : 'Seleccionar espacio'}
+                  </option>
+                  {spaceOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name}
                     </option>
                   ))}
                 </select>
               </div>
               <div className="w-full">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Tipo de Certificación
                 </label>
                 <select
-                  className="bg-background mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
                   value={localCertificationTypeId ?? ''}
                   onChange={(e) => {
-                    const newValue = e.target.value ? Number(e.target.value) : null;
-                    console.log('✅ Seleccionado certification type:', newValue);
+                    const newValue = e.target.value
+                      ? Number(e.target.value)
+                      : null;
+                    console.log(
+                      '✅ Seleccionado certification type:',
+                      newValue
+                    );
                     setLocalCertificationTypeId(newValue);
                     setCertificationTypeId(newValue);
                   }}
                 >
                   <option value="">Seleccionar tipo de certificación</option>
-                  {(localCertificationTypes.length > 0 ? localCertificationTypes : certificationTypes ?? []).map((type) => {
+                  {(localCertificationTypes.length > 0
+                    ? localCertificationTypes
+                    : (certificationTypes ?? [])
+                  ).map((type) => {
                     const isSelected = localCertificationTypeId === type.id;
-                    console.log(`Option: ${type.name} (id: ${type.id}), Selected: ${isSelected}`);
+                    console.log(
+                      `Option: ${type.name} (id: ${type.id}), Selected: ${isSelected}`
+                    );
                     return (
                       <option key={type.id} value={type.id}>
                         {type.name}
@@ -1121,7 +1237,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               </div>
               <>
                 <div className="w-full">
-                  <label className="text-primary text-sm font-medium md:text-lg">
+                  <label className="text-sm font-medium text-primary md:text-lg">
                     Tipo de Curso
                   </label>
                   <CourseTypeDropdown
@@ -1136,7 +1252,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 )}
                 {safeCourseTypeId.includes(4) && (
                   <div className="w-full">
-                    <label className="text-primary text-sm font-medium md:text-lg">
+                    <label className="text-sm font-medium text-primary md:text-lg">
                       Precio Individual
                     </label>
                     <input
@@ -1146,13 +1262,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       onChange={(e) =>
                         setIndividualPrice(Number(e.target.value))
                       }
-                      className="border-primary mt-1 w-full rounded border p-2 text-sm text-white md:text-base"
+                      className="mt-1 w-full rounded border border-primary p-2 text-sm text-white md:text-base"
                     />
                   </div>
                 )}
 
                 <div className="w-full">
-                  <label className="text-primary text-sm font-medium md:text-lg">
+                  <label className="text-sm font-medium text-primary md:text-lg">
                     Estado del Curso
                   </label>
                   <ActiveDropdown
@@ -1165,7 +1281,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div>
               <label
                 htmlFor="rating"
-                className="text-primary text-sm font-medium md:text-lg"
+                className="text-sm font-medium text-primary md:text-lg"
               >
                 Rating
               </label>
@@ -1175,7 +1291,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 max="5"
                 step="0.1"
                 placeholder="0-5"
-                className="border-primary mt-1 w-full rounded border p-2 text-sm text-white outline-none focus:no-underline md:text-base"
+                className="mt-1 w-full rounded border border-primary p-2 text-sm text-white outline-none focus:no-underline md:text-base"
                 value={isNaN(rating) ? '' : rating}
                 onChange={(e) => setRating(Number(e.target.value))}
               />
@@ -1183,7 +1299,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div className="mb-4">
               <label
                 htmlFor="instructor"
-                className="text-primary text-sm font-medium md:text-lg"
+                className="text-sm font-medium text-primary md:text-lg"
               >
                 Instructor
               </label>
@@ -1191,7 +1307,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 id="instructor"
                 value={educators.find((e) => e.id === instructor)?.id ?? ''} // importante!
                 onChange={(e) => setInstructor(e.target.value)} // guarda solo el ID
-                className="border-primary bg-background w-full rounded border p-2 text-sm text-white outline-none md:text-base"
+                className="w-full rounded border border-primary bg-background p-2 text-sm text-white outline-none md:text-base"
               >
                 <option value="">Seleccionar instructor</option>
                 {educators.map((educator: { id: string; name: string }) => (
@@ -1203,16 +1319,17 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             </div>
 
             <div className="w-full px-2 md:px-0">
-              <label className="text-primary text-sm font-medium md:text-lg">
+              <label className="text-sm font-medium text-primary md:text-lg">
                 Imagen de portada
               </label>
               <div
-                className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${isDragging
-                  ? 'border-blue-500 bg-blue-50'
-                  : errors.file
-                    ? 'border-red-500 bg-red-50'
-                    : 'border-gray-300 bg-gray-50'
-                  }`}
+                className={`mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4 md:w-[80%] md:p-8 ${
+                  isDragging
+                    ? 'border-blue-500 bg-blue-50'
+                    : errors.file
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-300 bg-gray-50'
+                }`}
               >
                 <div className="text-center text-white">
                   {!file && (coverVideoCourseKey || coverImage) ? (
@@ -1407,7 +1524,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${addParametros ? 'bg-gray-300' : 'bg-red-500'}`}
                   >
                     <span
-                      className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
+                      className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${addParametros ? 'translate-x-8' : 'translate-x-0'}`}
                     />
                   </span>
                 </label>
@@ -1418,13 +1535,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             </div>
             {addParametros && (
               <div className="space-y-3 md:space-y-4">
-                <label className="text-primary text-sm font-medium md:text-lg">
+                <label className="text-sm font-medium text-primary md:text-lg">
                   Parámetros de evaluación
                 </label>
                 <Button
                   onClick={handleAddParametro}
                   disabled={parametros.length >= 10}
-                  className="bg-primary mt-2 w-10/12 text-white lg:w-1/2"
+                  className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
                 >
                   {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
                   parametro
@@ -1433,7 +1550,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 {parametros.map((parametro, index) => (
                   <div key={index} className="mt-4 rounded-lg border p-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-primary text-sm font-medium md:text-lg">
+                      <h3 className="text-sm font-medium text-primary md:text-lg">
                         Parámetro {index + 1}
                       </h3>
                       <Button
@@ -1443,7 +1560,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                         Eliminar
                       </Button>
                     </div>
-                    <label className="text-primary mt-2 text-sm font-medium md:text-lg">
+                    <label className="mt-2 text-sm font-medium text-primary md:text-lg">
                       Nombre
                     </label>
                     <input
@@ -1454,7 +1571,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       }
                       className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
                     />
-                    <label className="text-primary mt-2 text-sm font-medium md:text-lg">
+                    <label className="mt-2 text-sm font-medium text-primary md:text-lg">
                       Descripción
                     </label>
                     <textarea
@@ -1468,7 +1585,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       }
                       className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
                     />
-                    <label className="text-primary mt-2 text-sm font-medium md:text-lg">
+                    <label className="mt-2 text-sm font-medium text-primary md:text-lg">
                       Porcentaje %
                     </label>
                     <input
@@ -1491,7 +1608,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               <div className="my-4 flex flex-col">
                 <label
                   htmlFor="subjects"
-                  className="text-primary text-sm font-medium md:text-lg"
+                  className="text-sm font-medium text-primary md:text-lg"
                 >
                   Asignar Materias
                 </label>

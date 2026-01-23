@@ -159,7 +159,7 @@ if (typeof document !== 'undefined') {
 const FullscreenLoader = () => {
   return (
     <Portal>
-      <div className="bg-background/20 fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/20 backdrop-blur-sm">
         <TechLoader />
       </div>
     </Portal>
@@ -228,7 +228,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [educators, setEducators] = useState<Educator[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [currentInstructor, setCurrentInstructor] = useState('');
+  const [currentInstructors, setCurrentInstructors] = useState<string[]>([]);
 
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
@@ -278,7 +278,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 : []
           );
           setIndividualPrice(data.individualPrice ?? null);
-          setCurrentInstructor(data.instructor); // Set current instructor when course loads
+          setCurrentInstructors([data.instructor]); // Set current instructor when course loads
           setSelectedInstructor(data.instructor); // Set selected instructor when course loads
           setEditCoverVideoCourseKey(data.coverVideoCourseKey ?? null);
           // Set certification type names
@@ -322,14 +322,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     }
   };
   useEffect(() => {
-    if (currentInstructor && educators.length > 0) {
-      const foundByName = educators.find((e) => e.name === currentInstructor);
+    if (currentInstructors.length > 0 && educators.length > 0) {
+      const firstInstructor = currentInstructors[0];
+      const foundByName = educators.find((e) => e.name === firstInstructor);
       if (foundByName) {
         // Esto corrige el error si por alguna razón vino el nombre en vez del ID
-        setCurrentInstructor(foundByName.id);
+        setCurrentInstructors([foundByName.id]);
       }
     }
-  }, [currentInstructor, educators]);
+  }, [currentInstructors, educators]);
 
   // Obtener el curso y los parámetros al cargar la página
   useEffect(() => {
@@ -442,7 +443,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         categoryid,
         modalidadesid,
         nivelid,
-        instructor: currentInstructor,
+        instructors: currentInstructors,
         rating,
         courseTypeId,
         isActive,
@@ -575,7 +576,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           : []
     );
     setIsActive(course.isActive ?? true);
-    setCurrentInstructor(course.instructor);
+    setCurrentInstructors([course.instructor]);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
     setIsModalOpen(true);
   };
@@ -584,7 +585,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -650,7 +651,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </p>
           <button
             onClick={fetchCourse}
-            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -721,7 +722,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Renderizar el componente
   return (
-    <div className="bg-background h-auto w-full rounded-lg p-4">
+    <div className="h-auto w-full rounded-lg bg-background p-4">
       <Breadcrumb className="mb-4">
         <BreadcrumbList className="flex flex-wrap gap-2">
           <BreadcrumbItem>
@@ -750,7 +751,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative h-auto w-full">
-        <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+        <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
         <Card
           className={`zoom-in relative mt-3 h-auto overflow-hidden border-none p-4 transition-transform duration-300 ease-in-out sm:p-6`}
           style={{
@@ -759,7 +760,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           }}
         >
           <CardHeader className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:gap-16">
-            <CardTitle className="text-primary text-xl font-bold sm:text-2xl">
+            <CardTitle className="text-xl font-bold text-primary sm:text-2xl">
               Curso: {course.title}
             </CardTitle>
             <div className="flex flex-col">
@@ -812,7 +813,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 >
                   Editar curso
                 </Button>
-                <Button className="border-primary bg-primary hover:bg-primary/90 text-white">
+                <Button className="border-primary bg-primary text-white hover:bg-primary/90">
                   <Link href={`/dashboard/admin/detailsDashboard/${course.id}`}>
                     Estadisticas
                   </Link>
@@ -846,7 +847,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
             {/* Right Column - Information */}
             <div className="space-y-6">
-              <h2 className="text-primary text-xl font-bold sm:text-2xl">
+              <h2 className="text-xl font-bold text-primary sm:text-2xl">
                 Información del curso
               </h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -858,7 +859,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   >
                     Curso:
                   </h2>
-                  <h1 className="text-primary text-xl font-bold sm:text-2xl">
+                  <h1 className="text-xl font-bold text-primary sm:text-2xl">
                     {course.title}
                   </h1>
                 </div>
@@ -872,7 +873,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </h2>
                   <Badge
                     variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                   >
                     {course.categoryid}
                   </Badge>
@@ -904,7 +905,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </h2>
                 <Badge
                   variant="outline"
-                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                 >
                   {individualPrice !== null
                     ? `$${individualPrice}`
@@ -925,7 +926,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     <select
                       value={selectedInstructor || course.instructor} // Use current instructor as fallback
                       onChange={(e) => setSelectedInstructor(e.target.value)}
-                      className="border-primary bg-background text-primary w-full rounded-md border p-2 text-sm"
+                      className="w-full rounded-md border border-primary bg-background p-2 text-sm text-primary"
                     >
                       <option value={course.instructor}>
                         {course.instructorName ??
@@ -948,7 +949,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           variant="outline"
                           size="sm"
                           onClick={handleChangeInstructor}
-                          className="border-primary text-primary hover:bg-primary relative w-full hover:text-white"
+                          className="relative w-full border-primary text-primary hover:bg-primary hover:text-white"
                           disabled={isUpdating}
                         >
                           Guardar cambio
@@ -966,7 +967,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </h2>
                   <Badge
                     variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                   >
                     {course.nivelid}
                   </Badge>
@@ -981,7 +982,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </h2>
                   <Badge
                     variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                   >
                     {course.modalidadesid}
                   </Badge>
@@ -1000,7 +1001,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         <Badge
                           key={type.id}
                           variant="outline"
-                          className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                          className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                         >
                           {type.name}
                         </Badge>
@@ -1009,7 +1010,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   ) : (
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                      className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                     >
                       No especificado
                     </Badge>
@@ -1070,7 +1071,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </h2>
                   <Badge
                     variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                   >
                     {certificationTypeName ?? 'No asignado'}
                   </Badge>
@@ -1085,7 +1086,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </h2>
                   <Badge
                     variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                   >
                     {scheduleOptionName ?? 'No asignado'}
                   </Badge>
@@ -1100,7 +1101,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </h2>
                   <Badge
                     variant="outline"
-                    className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                   >
                     {spaceOptionName ?? 'No asignado'}
                   </Badge>
@@ -1198,8 +1199,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         setCourseTypeId={setCourseTypeId}
         isActive={isActive}
         setIsActive={setIsActive}
-        instructor={currentInstructor}
-        setInstructor={setCurrentInstructor}
+        instructors={currentInstructors}
+        setInstructors={setCurrentInstructors}
         educators={educators}
         subjects={currentSubjects}
         setSubjects={setCurrentSubjects}

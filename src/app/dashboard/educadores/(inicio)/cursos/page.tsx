@@ -63,8 +63,8 @@ export default function Page() {
   const [courseTypeId, setCourseTypeId] = useState<number[]>([]);
   const [individualPrice, setIndividualPrice] = useState<number | null>(null);
   const [isActive, setIsActive] = useState<boolean>(true);
-  const [horario, setHorario] = useState<string | null>(null);
-  const [espacios, setEspacios] = useState<string | null>(null);
+  const [horario, setHorario] = useState<number | null>(null);
+  const [espacios, setEspacios] = useState<number | null>(null);
   const [certificationTypeId, setCertificationTypeId] = useState<number | null>(
     null
   );
@@ -156,13 +156,21 @@ export default function Page() {
       );
       // Load certification types
       fetch('/api/super-admin/certification-types')
-        .then((res) => res.json() as Promise<{ success: boolean; data: { id: number; name: string; description: string | null }[] }>)
+        .then(
+          (res) =>
+            res.json() as Promise<{
+              success: boolean;
+              data: { id: number; name: string; description: string | null }[];
+            }>
+        )
         .then((data) => {
           if (data.success) {
             setCertificationTypes(data.data);
           }
         })
-        .catch((error) => console.error('Error loading certification types:', error));
+        .catch((error) =>
+          console.error('Error loading certification types:', error)
+        );
     }
   }, [user, fetchCourses, fetchSubjects]);
 
@@ -190,9 +198,9 @@ export default function Page() {
       description: string;
       porcentaje: number;
     }[],
-    horario: string | null,
-    espacios: string | null,
-    certificationTypeId: number | null,
+    horario: number | null,
+    espacios: number | null,
+    certificationTypeId: number | null
   ) => {
     if (!user) return;
     void subjects;
@@ -389,7 +397,7 @@ export default function Page() {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -434,7 +442,7 @@ export default function Page() {
               <p className="text-xl text-red-600">{error}</p>
               <button
                 onClick={fetchCourses}
-                className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+                className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
               >
                 Reintentar
               </button>

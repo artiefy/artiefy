@@ -94,8 +94,6 @@ export async function PUT(
       certificationTypeId: data.certificationTypeId ?? null,
     });
 
-
-
     const updatedCourse = await getCourseById(courseId);
     console.log('✅ Curso obtenido post-update:', {
       scheduleOptionId: updatedCourse?.scheduleOptionId,
@@ -132,7 +130,7 @@ interface CourseData {
   categoryid: number;
   modalidadesid: number;
   nivelid: number;
-  instructor: string;
+  instructors: string[]; // Array de IDs de instructores (many-to-many)
   creatorId: string;
   scheduleOptionId?: number | null;
   spaceOptionId?: number | null;

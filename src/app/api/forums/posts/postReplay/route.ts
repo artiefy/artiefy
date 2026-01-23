@@ -114,6 +114,14 @@ export async function POST(request: NextRequest) {
       const audio = formData.get('audio') as File | null;
       const video = formData.get('video') as File | null;
 
+      console.log('[FORO][REPLY] 📦 Archivos recibidos:', {
+        hasImage: !!image,
+        hasAudio: !!audio,
+        hasVideo: !!video,
+        audioName: audio?.name,
+        audioSize: audio?.size,
+      });
+
       // Subir archivos a S3
       if (image) {
         try {
@@ -130,8 +138,13 @@ export async function POST(request: NextRequest) {
 
       if (audio) {
         try {
+          console.log('[FORO][REPLY] 🎵 Subiendo audio a S3...', {
+            audioName: audio.name,
+            audioSize: audio.size,
+          });
           const result = await uploadMediaToS3(audio, 'audio', userId);
           audioKey = result.key;
+          console.log('[FORO][REPLY] ✅ Audio subido exitosamente:', audioKey);
         } catch (error) {
           console.error('Error subiendo audio:', error);
           return respondWithError(
@@ -168,7 +181,6 @@ export async function POST(request: NextRequest) {
       return respondWithError('El contenido y postId son obligatorios', 400);
     }
 
-   
     // Si el postId es negativo, significa que viene del pseudo-post inicial del foro
     let targetPostId = postId;
     if (postId < 0) {
@@ -201,7 +213,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    await createPostReply(targetPostId, userId, content, imageKey ?? null);
+    await createPostReply(
+      targetPostId,
+      userId,
+      content,
+      imageKey ?? null,
+      audioKey ?? null,
+      videoKey ?? null
+    );
 
     console.log('[FORO][REPLY] ✅ Respuesta creada:', {
       postId,
@@ -209,6 +228,9 @@ export async function POST(request: NextRequest) {
       hasImage: !!imageKey,
       hasAudio: !!audioKey,
       hasVideo: !!videoKey,
+      imageKey: imageKey || 'null',
+      audioKey: audioKey || 'null',
+      videoKey: videoKey || 'null',
     });
 
     try {

@@ -468,7 +468,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [educators, setEducators] = useState<Educator[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [currentInstructor, setCurrentInstructor] = useState('');
+  const [currentInstructors, setCurrentInstructors] = useState<string[]>([]);
 
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
@@ -906,8 +906,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 : []
           );
           setIndividualPrice(data.individualPrice ?? null);
-          setCurrentInstructor(data.instructor); // Set current instructor when course loads
-          setSelectedInstructor(data.instructor); // Set selected instructor when course loads
+          setCurrentInstructors([data.instructor]);
+          setSelectedInstructor(data.instructor);
           setEditCoverVideoCourseKey(data.coverVideoCourseKey ?? null);
           // Set certification type names
           setCertificationTypeName(data.certificationTypeName ?? null);
@@ -965,14 +965,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     }
   };
   useEffect(() => {
-    if (currentInstructor && educators.length > 0) {
-      const foundByName = educators.find((e) => e.name === currentInstructor);
+    if (currentInstructors.length > 0 && educators.length > 0) {
+      const firstInstructor = currentInstructors[0];
+      const foundByName = educators.find((e) => e.name === firstInstructor);
       if (foundByName) {
         // Esto corrige el error si por alguna razón vino el nombre en vez del ID
-        setCurrentInstructor(foundByName.id);
+        setCurrentInstructors([foundByName.id]);
       }
     }
-  }, [currentInstructor, educators]);
+  }, [currentInstructors, educators]);
 
   // Función para obtener foros
   const fetchForums = useCallback(async () => {
@@ -1306,7 +1307,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         categoryid,
         modalidadesid,
         nivelid,
-        instructor: currentInstructor,
+        instructors: currentInstructors,
         rating,
         courseTypeId,
         isActive,
@@ -1439,7 +1440,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           : []
     );
     setIsActive(course.isActive ?? true);
-    setCurrentInstructor(course.instructor);
+    setCurrentInstructors([course.instructor]);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
     setEditHorario(course.horario ?? null);
     setEditEspacios(course.espacios ?? null);
@@ -4077,8 +4078,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           setCourseTypeId={setCourseTypeId}
           isActive={isActive}
           setIsActive={setIsActive}
-          instructor={currentInstructor}
-          setInstructor={setCurrentInstructor}
+          instructors={currentInstructors}
+          setInstructors={setCurrentInstructors}
           educators={educators}
           subjects={currentSubjects}
           setSubjects={setCurrentSubjects}

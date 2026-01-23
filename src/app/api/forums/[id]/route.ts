@@ -8,18 +8,18 @@ export async function GET(
 ) {
   try {
     const resolvedParams = await params;
-    const courseId = parseInt(resolvedParams.id);
-    if (isNaN(courseId)) {
+    const forumId = parseInt(resolvedParams.id);
+    if (isNaN(forumId)) {
       return NextResponse.json(
-        { error: 'ID de curso inválido' },
+        { error: 'ID de foro inválido' },
         { status: 400 }
       );
     }
 
-    const forum = await getForumById(courseId);
+    const forum = await getForumById(forumId);
     if (!forum) {
       return NextResponse.json(
-        { error: 'Curso no encontrado' },
+        { error: 'Foro no encontrado' },
         { status: 404 }
       );
     }
