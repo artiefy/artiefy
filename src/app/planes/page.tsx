@@ -211,10 +211,14 @@ const PlansPage: React.FC = () => {
                 <div
                   key={plan.id}
                   aria-disabled={isPlanDisabled}
-                  className={`group relative overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-sm transition-all duration-300 ${
-                    isPlanDisabled
-                      ? 'cursor-not-allowed opacity-60 grayscale'
+                  className={`relative overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-sm transition-all duration-300 ${
+                    isEnterprise
+                      ? 'cursor-not-allowed'
                       : 'hover:-translate-y-2 hover:border-primary/50'
+                  } ${
+                    isCurrentPlanProcessing
+                      ? 'pointer-events-none cursor-not-allowed opacity-60'
+                      : ''
                   }`}
                 >
                   {isPro && (
@@ -230,12 +234,6 @@ const PlansPage: React.FC = () => {
                   {isEnterprise && (
                     <div className="absolute top-0 right-0 rounded-bl-lg bg-amber-400 px-3 py-1 text-xs font-semibold text-black">
                       Muy pronto
-                    </div>
-                  )}
-
-                  {isEnterprise && (
-                    <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/80 bg-black/30" />
                     </div>
                   )}
 
