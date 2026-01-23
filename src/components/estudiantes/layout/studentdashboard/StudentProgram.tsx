@@ -20,23 +20,19 @@ export function StudentProgram({ program }: StudenProgramProps) {
   const rating = program.rating ?? 0;
   const hasCourses = coursesCount > 0;
 
+  const containerClassName = `group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 ${
+    hasCourses
+      ? 'hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5'
+      : 'cursor-not-allowed opacity-80'
+  }`;
+
+  const CardWrapper = hasCourses ? Link : 'div';
+  const wrapperProps = hasCourses
+    ? { href: `/estudiantes/programas/${program.id}` }
+    : {};
+
   return (
-    <Link
-      href={`/estudiantes/programas/${program.id}`}
-      aria-disabled={!hasCourses}
-      tabIndex={hasCourses ? 0 : -1}
-      onClick={(event) => {
-        if (!hasCourses) {
-          event.preventDefault();
-          event.stopPropagation();
-        }
-      }}
-      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 ${
-        hasCourses
-          ? 'hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5'
-          : 'cursor-not-allowed opacity-80'
-      }`}
-    >
+    <CardWrapper {...wrapperProps} className={containerClassName}>
       {/* Image Container */}
       <div className="relative aspect-video overflow-hidden">
         <Image
@@ -125,6 +121,6 @@ export function StudentProgram({ program }: StudenProgramProps) {
           {program.description}
         </p>
       </div>
-    </Link>
+    </CardWrapper>
   );
 }
