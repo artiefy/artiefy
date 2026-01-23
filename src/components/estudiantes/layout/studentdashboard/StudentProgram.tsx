@@ -26,13 +26,8 @@ export function StudentProgram({ program }: StudenProgramProps) {
       : 'cursor-not-allowed opacity-80'
   }`;
 
-  const CardWrapper = hasCourses ? Link : 'div';
-  const wrapperProps = hasCourses
-    ? { href: `/estudiantes/programas/${program.id}` }
-    : {};
-
-  return (
-    <CardWrapper {...wrapperProps} className={containerClassName}>
+  const cardContent = (
+    <>
       {/* Image Container */}
       <div className="relative aspect-video overflow-hidden">
         <Image
@@ -121,6 +116,23 @@ export function StudentProgram({ program }: StudenProgramProps) {
           {program.description}
         </p>
       </div>
-    </CardWrapper>
+    </>
+  );
+
+  if (hasCourses) {
+    return (
+      <Link
+        href={`/estudiantes/programas/${program.id}`}
+        className={containerClassName}
+      >
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={containerClassName} aria-disabled>
+      {cardContent}
+    </div>
   );
 }
