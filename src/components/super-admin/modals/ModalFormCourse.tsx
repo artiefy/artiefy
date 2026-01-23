@@ -95,8 +95,8 @@ interface CourseFormProps {
   setCourseTypeId: (val: number[]) => void;
   isActive: boolean;
   setIsActive: (val: boolean) => void;
-  instructor: string;
-  setInstructor: (instructor: string) => void;
+  instructors: string[]; // Array de IDs de instructores
+  setInstructors: (instructors: string[]) => void;
   educators?: { id: string; name: string }[];
   subjects: { id: number }[];
   setSubjects: (subjects: { id: number }[]) => void;
@@ -173,9 +173,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   setCourseTypeId,
   isActive,
   setIsActive,
-  setInstructor,
+  setInstructors,
   educators = [],
-  instructor,
+  instructors,
   subjects,
   setSubjects,
   individualPrice,
@@ -248,6 +248,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       certificationTypes
     );
   const [isLoadingCertifications, setIsLoadingCertifications] = useState(true);
+
+  // 🐛 Debug log para ver qué instructors recibe el modal
+  console.log('🎨 Modal recibió instructors prop:', instructors);
+  console.log('🎨 Educators disponibles:', educators.length);
   const [localCertificationTypeId, setLocalCertificationTypeId] = useState<
     number | null
   >(certificationTypeId);
@@ -838,15 +842,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
   // Add this useEffect to handle instructor initialization when editing
   useEffect(() => {
-    if (editingCourseId && instructor) {
-      setInstructor(instructor);
-      // Actualizar el estado local cuando cambie el instructor
-      const selectedEducator = educators?.find((e) => e.id === instructor);
-      if (selectedEducator) {
-        setModifiedFields((prev) => new Set(prev).add('instructor'));
-      }
+    if (editingCourseId && instructors && instructors.length > 0) {
+      setInstructors(instructors);
+      // Actualizar el estado local cuando cambien los instructores
+      setModifiedFields((prev) => new Set(prev).add('instructors'));
     }
-  }, [editingCourseId, instructor, educators]);
+  }, [editingCourseId, instructors, educators]);
 
   // Efecto para manejar el progreso de carga
   useEffect(() => {
@@ -1333,29 +1334,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     const newValue = e.target.value
                       ? Number(e.target.value)
                       : null;
-                    console.log(
-                      '✅ Seleccionado certification type:',
-                      newValue
-                    );
                     setLocalCertificationTypeId(newValue);
                     setCertificationTypeId(newValue);
                   }}
+                  disabled={isLoadingCertifications}
                 >
-                  <option value="">Seleccionar tipo de certificación</option>
-                  {(localCertificationTypes.length > 0
-                    ? localCertificationTypes
-                    : (certificationTypes ?? [])
-                  ).map((type) => {
-                    const isSelected = localCertificationTypeId === type.id;
-                    console.log(
-                      `Option: ${type.name} (id: ${type.id}), Selected: ${isSelected}`
-                    );
-                    return (
-                      <option key={type.id} value={type.id}>
-                        {type.name}
-                      </option>
-                    );
-                  })}
+                  <option value="">
+                    {isLoadingCertifications
+                      ? 'Cargando...'
+                      : 'Seleccionar tipo de certificación'}
+                  </option>
+                  {localCertificationTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               <>
@@ -1421,24 +1414,94 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             </div>
             <div className="mb-4">
               <label
-                htmlFor="instructor"
+                htmlFor="instructors"
                 className="text-sm font-medium text-primary md:text-lg"
               >
-                Instructor
+                Instructores (Múltiples)
               </label>
-              <select
-                id="instructor"
-                value={educators.find((e) => e.id === instructor)?.id ?? ''} // importante!
-                onChange={(e) => setInstructor(e.target.value)} // guarda solo el ID
-                className="w-full rounded border border-primary bg-background p-2 text-sm text-white outline-none md:text-base"
-              >
-                <option value="">Seleccionar instructor</option>
-                {educators.map((educator: { id: string; name: string }) => (
-                  <option key={educator.id} value={educator.id}>
-                    {educator.name}
-                  </option>
-                ))}
-              </select>
+              <Select
+                id="instructors"
+                isMulti
+                value={educators
+                  .filter((e) => instructors.includes(e.id))
+                  .map((e) => ({ value: e.id, label: e.name }))}
+                onChange={(
+                  selectedOptions: MultiValue<{ value: string; label: string }>
+                ) => {
+                  const selectedIds = selectedOptions.map((opt) => opt.value);
+                  setInstructors(selectedIds);
+                }}
+                options={educators.map((educator) => ({
+                  value: educator.id,
+                  label: educator.name,
+                }))}
+                placeholder="Seleccionar instructores..."
+                className="mt-1"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    backgroundColor: '#0a1628',
+                    borderColor: 'hsl(var(--primary))',
+                    color: 'white',
+                    minHeight: '42px',
+                  }),
+                  input: (base) => ({
+                    ...base,
+                    color: 'white',
+                  }),
+                  placeholder: (base) => ({
+                    ...base,
+                    color: 'hsl(var(--muted-foreground))',
+                  }),
+                  singleValue: (base) => ({
+                    ...base,
+                    color: 'white',
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    backgroundColor: '#0a1628',
+                    border: '1px solid hsl(var(--primary))',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
+                  }),
+                  menuList: (base) => ({
+                    ...base,
+                    backgroundColor: '#0a1628',
+                    padding: 0,
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused
+                      ? 'hsl(var(--primary) / 0.2)'
+                      : state.isSelected
+                        ? 'hsl(var(--primary) / 0.4)'
+                        : '#0a1628',
+                    color: 'white',
+                    cursor: 'pointer',
+                    ':active': {
+                      backgroundColor: 'hsl(var(--primary) / 0.3)',
+                    },
+                  }),
+                  multiValue: (base) => ({
+                    ...base,
+                    backgroundColor: 'hsl(var(--primary) / 0.3)',
+                    borderRadius: '4px',
+                  }),
+                  multiValueLabel: (base) => ({
+                    ...base,
+                    color: 'white',
+                    padding: '2px 6px',
+                  }),
+                  multiValueRemove: (base) => ({
+                    ...base,
+                    color: 'white',
+                    ':hover': {
+                      backgroundColor: 'hsl(var(--destructive))',
+                      color: 'white',
+                    },
+                  }),
+                }}
+              />
             </div>
 
             <div className="w-full px-2 md:px-0">

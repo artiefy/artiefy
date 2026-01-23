@@ -63,7 +63,8 @@ interface Course {
   nivelName?: string;
   modalidadesid: string;
   modalidadesName?: string;
-  instructor: string;
+  instructor: string; // Campo singular antiguo
+  instructors?: string[]; // ✅ Campo array nuevo de courseInstructors
   coverImageKey: string;
   creatorId: string;
   createdAt: string;
@@ -468,7 +469,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [educators, setEducators] = useState<Educator[]>([]);
   const [selectedInstructor, setSelectedInstructor] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [currentInstructor, setCurrentInstructor] = useState('');
+  const [currentInstructors, setCurrentInstructors] = useState<string[]>([]);
 
   // Agregar este nuevo estado
   const [currentSubjects, setCurrentSubjects] = useState<{ id: number }[]>([]);
@@ -485,6 +486,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [certificationTypeName, setCertificationTypeName] = useState<
     string | null
   >(null);
+
+  // ✅ Estado para los tipos de certificación
+  const [certificationTypes, setCertificationTypes] = useState<
+    { id: number; name: string; description: string | null }[]
+  >([]);
 
   // Estado para el scroll y la tarjeta mini sticky
   const [showStickyCard, setShowStickyCard] = useState(false);
@@ -915,9 +921,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 : []
           );
           setIndividualPrice(data.individualPrice ?? null);
-          setCurrentInstructor(data.instructor); // Set current instructor when course loads
-          setSelectedInstructor(data.instructor); // Set selected instructor when course loads
+
+          // ✅ Prioriza instructors array, fallback a instructor singular
+          const instructorsToSet =
+            (data as Course & { instructors?: string[] }).instructors ??
+            (data.instructor ? [data.instructor] : []);
+          console.log(
+            '🔍 Abriendo modal desde CourseDetail - instructors detectados:',
+            instructorsToSet
+          );
+          setCurrentInstructors(instructorsToSet);
+          setSelectedInstructor(instructorsToSet[0] ?? data.instructor); // Set first instructor or fallback
           setEditCoverVideoCourseKey(data.coverVideoCourseKey ?? null);
+
+          // ✅ Inicializar campos de horario, espacios y certificación para el modal
+          setEditHorario(data.scheduleOptionId ?? null);
+          setEditEspacios(data.spaceOptionId ?? null);
+
           // Set certification type names
           setCertificationTypeName(data.certificationTypeName ?? null);
           setScheduleOptionName(data.scheduleOptionName ?? null);
@@ -974,14 +994,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     }
   };
   useEffect(() => {
-    if (currentInstructor && educators.length > 0) {
-      const foundByName = educators.find((e) => e.name === currentInstructor);
+    if (currentInstructors.length > 0 && educators.length > 0) {
+      const firstInstructor = currentInstructors[0];
+      const foundByName = educators.find((e) => e.name === firstInstructor);
       if (foundByName) {
         // Esto corrige el error si por alguna razón vino el nombre en vez del ID
-        setCurrentInstructor(foundByName.id);
+        setCurrentInstructors([foundByName.id]);
       }
     }
-  }, [currentInstructor, educators]);
+  }, [currentInstructors, educators]);
 
   // Función para obtener foros
   const fetchForums = useCallback(async () => {
@@ -999,6 +1020,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Obtener el curso y los parámetros al cargar la página
   useEffect(() => {
     void fetchCourse();
+    void fetchEducators(); // ✅ También cargar educadores al iniciar
   }, [fetchCourse]);
 
   // Fetch forums when course loads
@@ -1007,6 +1029,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       void fetchForums();
     }
   }, [courseIdNumber, fetchForums]);
+
+  // ✅ Fetch certification types al cargar el componente
+  useEffect(() => {
+    const fetchCertificationTypes = async () => {
+      try {
+        const response = await fetch('/api/super-admin/certification-types');
+        if (response.ok) {
+          const certData = (await response.json()) as {
+            success: boolean;
+            data: { id: number; name: string; description: string | null }[];
+          };
+          if (certData.success) {
+            setCertificationTypes(certData.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching certification types:', error);
+      }
+    };
+    void fetchCertificationTypes();
+  }, []);
 
   // Función para crear foro
   const handleCreateForum = async () => {
@@ -1315,7 +1358,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         categoryid,
         modalidadesid,
         nivelid,
-        instructor: currentInstructor,
+        instructors: currentInstructors,
         rating,
         courseTypeId,
         isActive,
@@ -1455,10 +1498,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     setCourseTypeId(newCourseTypeIds);
     setIsActive(course.isActive ?? true);
-    setCurrentInstructor(course.instructor);
+
+    // ✅ Cargar instructors desde courseInstructors, con fallback a instructor singular
+    const instructorsToLoad =
+      (course as Course & { instructors?: string[] }).instructors ??
+      (course.instructor ? [course.instructor] : []);
+    console.log(
+      '🔍 [handleEditCourse] Cargando instructors al modal:',
+      instructorsToLoad
+    );
+    setCurrentInstructors(instructorsToLoad);
+
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
-    setEditHorario(course.horario ?? null);
-    setEditEspacios(course.espacios ?? null);
+
+    // ✅ Inicializar horario y espacios desde scheduleOptionId y spaceOptionId
+    console.log('🔍 [handleEditCourse] Cargando horario y espacios:', {
+      scheduleOptionId: course.scheduleOptionId,
+      spaceOptionId: course.spaceOptionId,
+    });
+    setEditHorario(course.scheduleOptionId ?? null);
+    setEditEspacios(course.spaceOptionId ?? null);
+
     setIsModalOpen(true);
   };
 
@@ -4098,8 +4158,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           setCourseTypeId={setCourseTypeId}
           isActive={isActive}
           setIsActive={setIsActive}
-          instructor={currentInstructor}
-          setInstructor={setCurrentInstructor}
+          instructors={currentInstructors}
+          setInstructors={setCurrentInstructors}
           educators={educators}
           subjects={currentSubjects}
           setSubjects={setCurrentSubjects}
@@ -4117,7 +4177,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               prev ? { ...prev, certificationTypeId: id } : null
             );
           }}
-          certificationTypes={[]}
+          certificationTypes={certificationTypes}
         />
       )}
 

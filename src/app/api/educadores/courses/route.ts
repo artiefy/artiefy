@@ -121,6 +121,7 @@ export async function POST(request: NextRequest) {
       modalidadesid: number;
       nivelid: number;
       instructorId?: string;
+      instructors?: string[]; // Array de instructores
       courseTypeId?: number[]; // ahora array
       individualPrice?: number | null;
       subjects?: { id: number }[]; // ✅ añadimos subjects
@@ -137,7 +138,8 @@ export async function POST(request: NextRequest) {
       categoryid,
       modalidadesid,
       nivelid,
-      instructorId = userId,
+      instructorId,
+      instructors: rawInstructors,
       courseTypeId = [],
       individualPrice = null,
       subjects = [], // ✅ default vacío
@@ -145,6 +147,16 @@ export async function POST(request: NextRequest) {
       espacios = null,
       certificationTypeId = null,
     } = body;
+
+    // Normalizar instructors: priorizar array, luego instructorId singular, sino usar userId
+    const instructors =
+      rawInstructors && rawInstructors.length > 0
+        ? rawInstructors
+        : instructorId
+          ? [instructorId]
+          : [userId];
+
+    console.log('👥 Instructores recibidos:', instructors);
 
     const normalizedTypes = Array.isArray(courseTypeId) ? courseTypeId : [];
 
@@ -171,7 +183,7 @@ export async function POST(request: NextRequest) {
       categoryid,
       modalidadesid,
       nivelid,
-      instructor: instructorId,
+      instructor: instructors[0] ?? userId, // Primer instructor por compatibilidad
       creatorId: userId,
       isActive: true,
       createdAt: new Date(),
@@ -198,6 +210,22 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('🧪 Recibiendo payload en backend:', body);
+
+    // 🔥 Insertar relaciones de instructores en courseInstructors
+    if (createdCourse?.id && instructors.length > 0) {
+      const { courseInstructors } = await import('~/server/db/schema');
+
+      await db.insert(courseInstructors).values(
+        instructors.map((instructorId) => ({
+          courseId: createdCourse.id,
+          instructorId,
+          createdAt: new Date(),
+        }))
+      );
+      console.log(
+        `➡ ${instructors.length} instructor(es) asociado(s) al curso ${createdCourse.id}`
+      );
+    }
 
     // 🔥 Insertar SIEMPRE en tabla intermedia courseCourseTypes
     for (const typeId of normalizedTypes) {

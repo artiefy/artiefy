@@ -52,7 +52,7 @@ export interface Course {
   categoryid: number;
   modalidadesid: number;
   nivelid: number;
-  instructor: string;
+  instructors: string[]; // Array de IDs de instructores (many-to-many)
   creatorId: string;
   createdAt: string | number | Date;
   updatedAt: string | number | Date;
@@ -66,7 +66,7 @@ export const createCourse = async ({
   categoryid,
   modalidadesid,
   nivelid,
-  instructor,
+  instructors,
   creatorId,
 }: {
   title: string;
@@ -75,25 +75,43 @@ export const createCourse = async ({
   categoryid: number;
   modalidadesid: number;
   nivelid: number;
-  instructor: string;
+  instructors: string[]; // Array de IDs de instructores (many-to-many)
   creatorId: string;
 }) => {
-  return db.insert(courses).values({
-    title,
-    description,
-    coverImageKey,
-    categoryid,
-    modalidadesid,
-    nivelid,
-    instructor,
-    creatorId,
-    courseTypeId: 1, // Replace '1' with the appropriate value for courseTypeId
-  });
+  const [newCourse] = await db
+    .insert(courses)
+    .values({
+      title,
+      description,
+      coverImageKey,
+      categoryid,
+      modalidadesid,
+      nivelid,
+      instructor: instructors[0] ?? '', // Primer instructor por compatibilidad
+      creatorId,
+      courseTypeId: 1, // Replace '1' with the appropriate value for courseTypeId
+    })
+    .returning();
+
+  // Insertar relaciones instructor-curso en course_instructors
+  if (newCourse && instructors.length > 0) {
+    const { courseInstructors } = await import('~/server/db/schema');
+
+    await db.insert(courseInstructors).values(
+      instructors.map((instructorId) => ({
+        courseId: newCourse.id,
+        instructorId,
+        createdAt: new Date(),
+      }))
+    );
+  }
+
+  return [newCourse];
 };
 
 export const getCoursesByUserId = async (userId: string) => {
   console.log('UserId recibido:', userId);
-  return db
+  const coursesData = await db
     .select({
       id: courses.id,
       title: courses.title,
@@ -102,18 +120,44 @@ export const getCoursesByUserId = async (userId: string) => {
       categoryid: categories.name,
       modalidadesid: modalidades.name,
       nivelid: nivel.name,
-      instructor: users.name, // ✅ Ahora trae el NOMBRE
-      instructorId: courses.instructor, // ✅ Opcional: mantener el ID
       creatorId: courses.creatorId,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
     })
     .from(courses)
-    .leftJoin(users, eq(courses.instructor, users.id))
     .leftJoin(categories, eq(courses.categoryid, categories.id))
     .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
     .leftJoin(nivel, eq(courses.nivelid, nivel.id))
     .where(eq(courses.creatorId, userId));
+
+  // Para cada curso, obtener sus instructores desde courseInstructors
+  const { courseInstructors } = await import('~/server/db/schema');
+  const coursesWithInstructors = await Promise.all(
+    coursesData.map(async (course) => {
+      const instructorsData = await db
+        .select({
+          instructorId: courseInstructors.instructorId,
+          instructorName: users.name,
+        })
+        .from(courseInstructors)
+        .leftJoin(users, eq(courseInstructors.instructorId, users.id))
+        .where(eq(courseInstructors.courseId, course.id));
+
+      const instructors = instructorsData.map((i) => i.instructorId);
+      const instructorNames = instructorsData
+        .map((i) => i.instructorName)
+        .filter(Boolean)
+        .join(', ');
+
+      return {
+        ...course,
+        instructors,
+        instructor: instructorNames || 'Sin instructor',
+      };
+    })
+  );
+
+  return coursesWithInstructors;
 };
 
 // Obtener el número total de estudiantes inscritos en un curso
@@ -158,70 +202,79 @@ export const getCourseById = async (courseId: number) => {
     // Get additional names
     const categoryName = course.categoryid
       ? await db
-        .select({ name: categories.name })
-        .from(categories)
-        .where(eq(categories.id, course.categoryid))
-        .then((rows) => rows[0]?.name ?? null)
+          .select({ name: categories.name })
+          .from(categories)
+          .where(eq(categories.id, course.categoryid))
+          .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const modalidadName = course.modalidadesid
       ? await db
-        .select({ name: modalidades.name })
-        .from(modalidades)
-        .where(eq(modalidades.id, course.modalidadesid))
-        .then((rows) => rows[0]?.name ?? null)
+          .select({ name: modalidades.name })
+          .from(modalidades)
+          .where(eq(modalidades.id, course.modalidadesid))
+          .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const nivelName = course.nivelid
       ? await db
-        .select({ name: nivel.name })
-        .from(nivel)
-        .where(eq(nivel.id, course.nivelid))
-        .then((rows) => rows[0]?.name ?? null)
+          .select({ name: nivel.name })
+          .from(nivel)
+          .where(eq(nivel.id, course.nivelid))
+          .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const courseTypeName = course.courseTypeId
       ? await db
-        .select({ name: courseTypes.name })
-        .from(courseTypes)
-        .where(eq(courseTypes.id, course.courseTypeId))
-        .then((rows) => rows[0]?.name ?? null)
+          .select({ name: courseTypes.name })
+          .from(courseTypes)
+          .where(eq(courseTypes.id, course.courseTypeId))
+          .then((rows) => rows[0]?.name ?? null)
       : null;
 
     const certificationTypeName = course.certificationTypeId
-      ? (
-        await db
-          .select({ name: certificationTypes.name })
-          .from(certificationTypes)
-          .where(eq(certificationTypes.id, course.certificationTypeId))
-      )[0]?.name ?? null
+      ? ((
+          await db
+            .select({ name: certificationTypes.name })
+            .from(certificationTypes)
+            .where(eq(certificationTypes.id, course.certificationTypeId))
+        )[0]?.name ?? null)
       : null;
 
     const scheduleOptionName = course.scheduleOptionId
-      ? (
-        await db
-          .select({ name: scheduleOptions.name })
-          .from(scheduleOptions)
-          .where(eq(scheduleOptions.id, course.scheduleOptionId))
-      )[0]?.name ?? null
+      ? ((
+          await db
+            .select({ name: scheduleOptions.name })
+            .from(scheduleOptions)
+            .where(eq(scheduleOptions.id, course.scheduleOptionId))
+        )[0]?.name ?? null)
       : null;
 
     const spaceOptionName = course.spaceOptionId
-      ? (
-        await db
-          .select({ name: spaceOptions.name })
-          .from(spaceOptions)
-          .where(eq(spaceOptions.id, course.spaceOptionId))
-      )[0]?.name ?? null
+      ? ((
+          await db
+            .select({ name: spaceOptions.name })
+            .from(spaceOptions)
+            .where(eq(spaceOptions.id, course.spaceOptionId))
+        )[0]?.name ?? null)
       : null;
 
-    const instructorInfo = course.instructor
-      ? await db
-        .select({ name: users.name })
-        .from(users)
-        .where(eq(users.id, course.instructor))
-        .then((rows) => rows[0]?.name ?? 'Sin nombre')
-      : 'Sin nombre';
+    // Obtener todos los instructores desde courseInstructors
+    const { courseInstructors } = await import('~/server/db/schema');
+    const instructorsData = await db
+      .select({
+        instructorId: courseInstructors.instructorId,
+        instructorName: users.name,
+      })
+      .from(courseInstructors)
+      .leftJoin(users, eq(courseInstructors.instructorId, users.id))
+      .where(eq(courseInstructors.courseId, courseId));
+
+    const instructors = instructorsData.map((i) => i.instructorId);
+    const instructorNames = instructorsData
+      .map((i) => i.instructorName)
+      .filter(Boolean)
+      .join(', ');
 
     const result = {
       ...course,
@@ -232,7 +285,8 @@ export const getCourseById = async (courseId: number) => {
       certificationTypeName,
       scheduleOptionName,
       spaceOptionName,
-      instructorName: instructorInfo,
+      instructors, // Array de IDs de instructores
+      instructorName: instructorNames || 'Sin instructor', // Nombres concatenados para mostrar
     };
 
     console.log('🎓 [Super-Admin] Retornando curso con:', {
@@ -287,7 +341,7 @@ export const updateCourse = async (
     categoryid,
     modalidadesid,
     nivelid,
-    instructor,
+    instructors,
     scheduleOptionId,
     spaceOptionId,
     certificationTypeId,
@@ -298,13 +352,13 @@ export const updateCourse = async (
     categoryid: number;
     modalidadesid: number;
     nivelid: number;
-    instructor: string;
+    instructors: string[]; // Array de IDs de instructores (many-to-many)
     scheduleOptionId?: number | null;
     spaceOptionId?: number | null;
     certificationTypeId?: number | null;
   }
 ) => {
-  return db
+  const result = await db
     .update(courses)
     .set({
       title,
@@ -313,12 +367,34 @@ export const updateCourse = async (
       categoryid,
       modalidadesid,
       nivelid,
-      instructor,
+      instructor: instructors[0] ?? '', // Mantener compatibilidad con primer instructor
       scheduleOptionId: scheduleOptionId ?? null,
       spaceOptionId: spaceOptionId ?? null,
       certificationTypeId: certificationTypeId ?? null,
     })
-    .where(eq(courses.id, courseId));
+    .where(eq(courses.id, courseId))
+    .returning();
+
+  // Actualizar relaciones de instructores: eliminar existentes y crear nuevas
+  if (instructors && instructors.length > 0) {
+    const { courseInstructors } = await import('~/server/db/schema');
+
+    // Eliminar relaciones existentes
+    await db
+      .delete(courseInstructors)
+      .where(eq(courseInstructors.courseId, courseId));
+
+    // Insertar nuevas relaciones
+    await db.insert(courseInstructors).values(
+      instructors.map((instructorId) => ({
+        courseId,
+        instructorId,
+        createdAt: new Date(),
+      }))
+    );
+  }
+
+  return result;
 };
 
 export const deleteCourse = async (courseId: number): Promise<void> => {

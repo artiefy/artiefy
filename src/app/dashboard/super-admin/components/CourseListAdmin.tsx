@@ -21,7 +21,8 @@ interface Course {
   description?: string | null;
   coverImageKey: string | null;
   categoryid: number;
-  instructor: string;
+  instructor?: string; // Made optional for compatibility with instructors array
+  instructors?: string[]; // New field for multiple instructors
   createdAt?: string | Date;
   updatedAt?: string | Date;
   creatorId: string;
@@ -43,7 +44,10 @@ interface CourseListAdminProps {
   onDeleteCourse: (courseId: number) => void; // ✅ También asegurar que esta está definida
 }
 
-export default function CourseListAdmin({ courses, onEditCourse }: CourseListAdminProps) {
+export default function CourseListAdmin({
+  courses,
+  onEditCourse,
+}: CourseListAdminProps) {
   console.log('Courses received in CourseListAdmin:', courses);
 
   return (
@@ -52,7 +56,7 @@ export default function CourseListAdmin({ courses, onEditCourse }: CourseListAdm
         console.log('Rendering course:', course);
         return (
           <div key={course.id} className="group relative">
-            <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+            <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
             <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
               <CardHeader>
                 <AspectRatio ratio={16 / 9}>
@@ -74,8 +78,8 @@ export default function CourseListAdmin({ courses, onEditCourse }: CourseListAdm
               </CardHeader>
 
               <CardContent className="flex grow flex-col justify-between space-y-2 px-2">
-                <CardTitle className="text-background rounded-lg text-lg">
-                  <div className="text-primary font-bold">{course.title}</div>
+                <CardTitle className="rounded-lg text-lg text-background">
+                  <div className="font-bold text-primary">{course.title}</div>
                 </CardTitle>
                 <div className="flex flex-wrap items-start gap-2">
                   <Badge
@@ -89,7 +93,7 @@ export default function CourseListAdmin({ courses, onEditCourse }: CourseListAdm
                       key={programa.id}
                       variant="outline"
                       title={programa.title} // Añadido title para mostrar el tooltip
-                      className="bg-background inline-block max-w-[200px] border-green-500 text-xs text-green-500 hover:bg-green-500/10"
+                      className="inline-block max-w-[200px] border-green-500 bg-background text-xs text-green-500 hover:bg-green-500/10"
                     >
                       <span className="line-clamp-1">{programa.title}</span>
                     </Badge>
@@ -113,8 +117,15 @@ export default function CourseListAdmin({ courses, onEditCourse }: CourseListAdm
                 </div>
                 <div className="flex w-full items-center justify-between gap-2">
                   <button
-                    onClick={() => onEditCourse(course as CourseData)}
-                    className="group/button bg-primary text-background relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 px-2 py-1 text-xs transition-all hover:bg-primary/90 active:scale-95 sm:px-3 sm:py-2 sm:text-sm"
+                    onClick={() =>
+                      onEditCourse({
+                        ...course,
+                        instructors:
+                          course.instructors ??
+                          (course.instructor ? [course.instructor] : []),
+                      } as unknown as CourseData)
+                    }
+                    className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-primary px-2 py-1 text-xs text-background transition-all hover:bg-primary/90 active:scale-95 sm:px-3 sm:py-2 sm:text-sm"
                   >
                     <span className="relative z-10 font-bold">Editar</span>
                     <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
@@ -124,10 +135,10 @@ export default function CourseListAdmin({ courses, onEditCourse }: CourseListAdm
                   <Button asChild>
                     <Link
                       href={`/dashboard/super-admin/cursos/${course.id}`}
-                      className="group/button bg-background text-primary relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
+                      className="group/button relative inline-flex items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95"
                     >
                       <p className="text-xs font-bold sm:text-sm">Ver</p>
-                      <ArrowRightIcon className="animate-bounce-right size-4 sm:size-5" />
+                      <ArrowRightIcon className="size-4 animate-bounce-right sm:size-5" />
                       <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
                         <div className="relative h-full w-10 bg-white/30" />
                       </div>

@@ -90,8 +90,8 @@ interface CourseFormProps {
 
   isActive: boolean;
   setIsActive: (isActive: boolean) => void;
-  instructor: string;
-  setInstructor: (instructor: string) => void;
+  instructors: string[]; // Array de IDs de instructores
+  setInstructors: (instructors: string[]) => void;
   educators?: { id: string; name: string }[];
   horario: number | null;
   setHorario: (horario: number | null) => void;
@@ -133,9 +133,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   setSelectedCourseType, // 👈 Agregado
   isActive,
   setIsActive,
-  setInstructor,
+  setInstructors,
   educators = [],
-  instructor,
+  instructors,
   horario,
   setHorario,
   espacios,
@@ -696,7 +696,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           : [modalidadesid],
         nivelid,
         rating,
-        instructor, // Ensure instructor ID is included here
+        instructors, // Array de IDs de instructores (many-to-many)
         subjects: selectedSubjects,
         fileName: uploadedFileName,
         courseTypeId: selectedCourseType,
@@ -1143,12 +1143,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       : null;
                     setCertificationTypeId(newValue);
                   }}
+                  disabled={isLoadingCertifications}
                 >
-                  <option value="">Seleccionar tipo de certificación</option>
-                  {(Array.isArray(certificationTypes)
-                    ? certificationTypes
-                    : []
-                  ).map((type) => (
+                  <option value="">
+                    {isLoadingCertifications
+                      ? 'Cargando...'
+                      : 'Seleccionar tipo de certificación'}
+                  </option>
+                  {_localCertificationTypes.map((type) => (
                     <option key={type.id} value={type.id}>
                       {type.name}
                     </option>
@@ -1227,24 +1229,94 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             </div>
             <div>
               <label
-                htmlFor="instructor"
+                htmlFor="instructors"
                 className="text-sm font-medium text-primary md:text-lg"
               >
-                Instructor
+                Instructores (Múltiples)
               </label>
-              <select
-                id="instructor"
-                value={educators.find((e) => e.id === instructor)?.id ?? ''}
-                onChange={(e) => setInstructor(e.target.value)}
-                className="mt-1 w-full rounded border border-primary bg-background p-2 text-sm text-white outline-none md:text-base"
-              >
-                <option value="">Seleccionar instructor</option>
-                {educators.map((educator: { id: string; name: string }) => (
-                  <option key={educator.id} value={educator.id}>
-                    {educator.name}
-                  </option>
-                ))}
-              </select>
+              <Select
+                id="instructors"
+                isMulti
+                value={educators
+                  .filter((e) => instructors.includes(e.id))
+                  .map((e) => ({ value: e.id, label: e.name }))}
+                onChange={(
+                  selectedOptions: MultiValue<{ value: string; label: string }>
+                ) => {
+                  const selectedIds = selectedOptions.map((opt) => opt.value);
+                  setInstructors(selectedIds);
+                }}
+                options={educators.map((educator) => ({
+                  value: educator.id,
+                  label: educator.name,
+                }))}
+                placeholder="Seleccionar instructores..."
+                className="mt-1"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    backgroundColor: '#0a1628',
+                    borderColor: 'hsl(var(--primary))',
+                    color: 'white',
+                    minHeight: '42px',
+                  }),
+                  input: (base) => ({
+                    ...base,
+                    color: 'white',
+                  }),
+                  placeholder: (base) => ({
+                    ...base,
+                    color: 'hsl(var(--muted-foreground))',
+                  }),
+                  singleValue: (base) => ({
+                    ...base,
+                    color: 'white',
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    backgroundColor: '#0a1628',
+                    border: '1px solid hsl(var(--primary))',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
+                  }),
+                  menuList: (base) => ({
+                    ...base,
+                    backgroundColor: '#0a1628',
+                    padding: 0,
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused
+                      ? 'hsl(var(--primary) / 0.2)'
+                      : state.isSelected
+                        ? 'hsl(var(--primary) / 0.4)'
+                        : '#0a1628',
+                    color: 'white',
+                    cursor: 'pointer',
+                    ':active': {
+                      backgroundColor: 'hsl(var(--primary) / 0.3)',
+                    },
+                  }),
+                  multiValue: (base) => ({
+                    ...base,
+                    backgroundColor: 'hsl(var(--primary) / 0.3)',
+                    borderRadius: '4px',
+                  }),
+                  multiValueLabel: (base) => ({
+                    ...base,
+                    color: 'white',
+                    padding: '2px 6px',
+                  }),
+                  multiValueRemove: (base) => ({
+                    ...base,
+                    color: 'white',
+                    ':hover': {
+                      backgroundColor: 'hsl(var(--destructive))',
+                      color: 'white',
+                    },
+                  }),
+                }}
+              />
             </div>
             <div className="w-full">
               <label

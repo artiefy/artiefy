@@ -16,7 +16,7 @@ interface CourseData {
   description: string;
   categoryId: number;
   modalidadesid: number;
-  instructor: string;
+  instructors: string[]; // Array de IDs de instructores (many-to-many)
 }
 
 export function CourseForm({ courseId, modalidadesid }: CourseFormProps) {
@@ -27,7 +27,7 @@ export function CourseForm({ courseId, modalidadesid }: CourseFormProps) {
     description: '',
     categoryId: 1,
     modalidadesid: modalidadesid ? parseInt(modalidadesid) : 1,
-    instructor: '',
+    instructors: [],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -47,7 +47,7 @@ interface CourseData {
   categoryid: number;
   modalidadesid: number;
   nivelid: number;
-  instructor: string;
+  instructors: string[]; // Array de IDs de instructores (many-to-many)
   creatorId: string;
   rating: number;
 }
@@ -169,7 +169,7 @@ export async function PUT(request: NextRequest) {
       coverImageKey,
       categoryid,
       modalidadesid,
-      instructor,
+      instructors: [instructor],
       nivelid,
     });
 

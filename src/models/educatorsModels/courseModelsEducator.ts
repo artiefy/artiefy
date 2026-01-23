@@ -72,7 +72,7 @@ interface CreateCourseData {
   categoryid: number;
   modalidadesid: number;
   nivelid: number;
-  instructor: string;
+  instructors: string[]; // Array de IDs de instructores (many-to-many)
   creatorId: string;
   courseTypeId?: number | null;
   individualPrice?: number | null; // <-- AGREGADO
@@ -94,8 +94,8 @@ function isApiError(error: unknown): error is ApiError {
 
 export async function createCourse(data: CreateCourseData) {
   try {
-    if (!data.instructor) {
-      throw new Error('Instructor ID is required');
+    if (!data.instructors || data.instructors.length === 0) {
+      throw new Error('Al menos un instructor es requerido');
     }
 
     // 👇 le damos tipo explícito
@@ -134,7 +134,7 @@ export async function createCourse(data: CreateCourseData) {
         categoryid: data.categoryid,
         modalidadesid: data.modalidadesid,
         nivelid: data.nivelid,
-        instructor: data.instructor,
+        instructor: data.instructors[0] ?? '', // Primer instructor por compatibilidad
         creatorId: data.creatorId,
         courseTypeId: finalCourseTypeId,
         individualPrice: normalizedTypes.includes(4) ? finalPrice : null,
@@ -146,6 +146,22 @@ export async function createCourse(data: CreateCourseData) {
       .then((res) => res[0]);
 
     console.log('✅ Curso creado:', createdCourse);
+
+    // Insertar relaciones instructor-curso en course_instructors
+    if (createdCourse?.id && data.instructors.length > 0) {
+      const { courseInstructors } = await import('~/server/db/schema');
+
+      await db.insert(courseInstructors).values(
+        data.instructors.map((instructorId) => ({
+          courseId: createdCourse.id,
+          instructorId,
+          createdAt: new Date(),
+        }))
+      );
+      console.log(
+        `➡ ${data.instructors.length} instructor(es) asociado(s) al curso ${createdCourse.id}`
+      );
+    }
 
     // Si hay múltiples tipos, insertamos en tabla intermedia
     if (normalizedTypes.length > 1 && createdCourse?.id) {
@@ -358,11 +374,29 @@ export const getCourseById = async (courseId: number) => {
         )[0]?.name ?? null)
       : null;
 
+    // ✅ Obtener todos los instructores desde courseInstructors
+    const { courseInstructors } = await import('~/server/db/schema');
+    const instructorsData = await db
+      .select({
+        instructorId: courseInstructors.instructorId,
+        instructorName: users.name,
+      })
+      .from(courseInstructors)
+      .leftJoin(users, eq(courseInstructors.instructorId, users.id))
+      .where(eq(courseInstructors.courseId, courseId));
+
+    const instructors = instructorsData.map((i) => i.instructorId);
+    const instructorNames = instructorsData
+      .map((i) => i.instructorName)
+      .filter(Boolean)
+      .join(', ');
+
     const totalStudents = await getTotalStudents(courseId);
 
     const result = {
       ...course,
-      instructor: course.instructorName ?? 'Sin nombre',
+      instructors, // Array de IDs de instructores
+      instructor: instructorNames || 'Sin instructor', // Nombres concatenados para display
       instructorEmail: course.instructorEmail ?? 'No disponible',
       categoryName: category,
       modalidadName: modalidad,

@@ -308,7 +308,7 @@ export interface CourseData {
   categoryid: number;
   modalidadesid: number;
   nivelid: number;
-  instructor: string;
+  instructors: string[]; // Array de IDs de instructores (many-to-many)
   creatorId: string;
   createdAt: Date | string; // 🔹 Permitir `string` porque en errores previos llegaba como `string`
   updatedAt?: Date | string; // 🔹 Hacer opcional y permitir `string` porque en errores previos faltaba
@@ -348,12 +348,13 @@ export async function getModalidades() {
 // ✅ Función corregida con el tipo adecuado para `courseData`
 export async function createCourse(courseData: CourseData) {
   try {
-    return await db
+    // Insertar el curso (mantenemos el campo instructor por compatibilidad, usar el primer instructor si existe)
+    const [newCourse] = await db
       .insert(courses)
       .values({
         title: courseData.title,
         categoryid: courseData.categoryid,
-        instructor: courseData.instructor,
+        instructor: courseData.instructors[0] ?? '', // Primer instructor o string vacío por compatibilidad
         modalidadesid: courseData.modalidadesid,
         nivelid: courseData.nivelid,
         creatorId: courseData.creatorId || 'defaultCreatorId',
@@ -361,10 +362,25 @@ export async function createCourse(courseData: CourseData) {
         updatedAt: courseData.updatedAt
           ? new Date(courseData.updatedAt)
           : new Date(),
-        courseTypeId: courseData.courseTypeId ?? 1, // <-- Aquí colocas un valor seguro por defecto
+        courseTypeId: courseData.courseTypeId ?? 1,
         isActive: courseData.isActive ?? true,
       })
       .returning();
+
+    // Insertar relaciones instructor-curso en la tabla course_instructors
+    if (newCourse && courseData.instructors.length > 0) {
+      const { courseInstructors } = await import('~/server/db/schema');
+
+      await db.insert(courseInstructors).values(
+        courseData.instructors.map((instructorId) => ({
+          courseId: newCourse.id,
+          instructorId,
+          createdAt: new Date(),
+        }))
+      );
+    }
+
+    return [newCourse];
   } catch (error) {
     console.error('❌ Error al crear curso:', error);
     throw new Error('No se pudo crear el curso');
@@ -376,6 +392,7 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
   try {
     const cleanedData = {
       ...courseData,
+      instructor: courseData.instructors[0] ?? '', // Mantener compatibilidad con primer instructor
       createdAt: new Date(courseData.createdAt),
       updatedAt: courseData.updatedAt
         ? new Date(courseData.updatedAt)
@@ -383,14 +400,35 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
       courseTypeId:
         typeof courseData.courseTypeId === 'number'
           ? courseData.courseTypeId
-          : undefined, // Si no es número, no lo envíes
+          : undefined,
     };
 
-    return await db
+    const result = await db
       .update(courses)
       .set(cleanedData)
       .where(eq(courses.id, courseId))
       .returning();
+
+    // Actualizar relaciones de instructores: eliminar las existentes y crear nuevas
+    if (courseData.instructors && courseData.instructors.length > 0) {
+      const { courseInstructors } = await import('~/server/db/schema');
+
+      // Eliminar relaciones existentes
+      await db
+        .delete(courseInstructors)
+        .where(eq(courseInstructors.courseId, courseId));
+
+      // Insertar nuevas relaciones
+      await db.insert(courseInstructors).values(
+        courseData.instructors.map((instructorId) => ({
+          courseId,
+          instructorId,
+          createdAt: new Date(),
+        }))
+      );
+    }
+
+    return result;
   } catch (error) {
     console.error('❌ Error al actualizar curso:', error);
     throw new Error('No se pudo actualizar el curso');

@@ -712,7 +712,7 @@ export interface CourseData {
   categoryid: number;
   modalidadesid: number;
   nivelid: number;
-  instructor: string;
+  instructors: string[]; // Array de IDs de instructores (many-to-many)
   creatorId: string;
   createdAt: Date | string; // 🔹 Permitir `string` porque en errores previos llegaba como `string`
   updatedAt?: Date | string; // 🔹 Hacer opcional y permitir `string` porque en errores previos faltaba
@@ -866,6 +866,7 @@ export async function getCourses(
           programas: uniquePrograms,
           instructorName:
             instructorNames[course.instructor] || course.instructor,
+          instructors: [course.instructor], // Add instructors array for compatibility
         };
       })
     );
@@ -907,7 +908,7 @@ export async function createCourse(courseData: CourseData) {
       .values({
         title: courseData.title,
         categoryid: courseData.categoryid,
-        instructor: courseData.instructor,
+        instructor: courseData.instructors[0] ?? '',
         modalidadesid: courseData.modalidadesid,
         nivelid: courseData.nivelid,
         creatorId: courseData.creatorId || 'defaultCreatorId',
@@ -960,7 +961,7 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
       categoryid: courseData.categoryid,
       modalidadesid: courseData.modalidadesid,
       nivelid: courseData.nivelid,
-      instructor: courseData.instructor,
+      instructor: courseData.instructors[0] ?? '',
       creatorId: courseData.creatorId,
       rating: courseData.rating ?? 0,
       courseTypeId: courseData.courseTypeId ?? null,

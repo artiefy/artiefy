@@ -284,6 +284,24 @@ export const coursesTaken = pgTable('courses_taken', {
     .notNull(),
 });
 
+// Tabla de relación muchos-a-muchos entre cursos e instructores
+export const courseInstructors = pgTable(
+  'course_instructors',
+  {
+    id: serial('id').primaryKey(),
+    courseId: integer('course_id')
+      .references(() => courses.id, { onDelete: 'cascade' })
+      .notNull(),
+    instructorId: text('instructor_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('course_instructor_unique').on(table.courseId, table.instructorId),
+  ]
+);
+
 // Tabla de proyectos
 export const projects = pgTable('projects', {
   id: serial('id').primaryKey(),
