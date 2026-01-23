@@ -18,7 +18,6 @@ export function StudentProgram({ program }: StudenProgramProps) {
   const coursesCount = program.coursesCount ?? 0;
   const totalHours = program.totalHours ?? 0;
   const rating = program.rating ?? 0;
-  const creatorName = program.creatorName ?? 'Artiefy';
 
   return (
     <Link
@@ -70,6 +69,13 @@ export function StudentProgram({ program }: StudenProgramProps) {
               <Clock className="h-3.5 w-3.5" />
               {totalHours}h
             </span>
+            <span className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" />
+              <EnrollmentCount
+                programId={parseInt(program.id)}
+                displayMode="number-only"
+              />
+            </span>
           </div>
           <div className="flex items-center gap-1">
             <StarIcon className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
@@ -100,21 +106,6 @@ export function StudentProgram({ program }: StudenProgramProps) {
         >
           {program.description}
         </p>
-
-        {/* Footer with Creator and Students */}
-        <div className="flex items-center justify-between border-t border-border/50 pt-3">
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-primary/20" />
-            <span className="text-xs text-muted-foreground">{creatorName}</span>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Users className="h-3.5 w-3.5" />
-            <EnrollmentCount
-              programId={parseInt(program.id)}
-              displayMode="number-only"
-            />
-          </div>
-        </div>
       </div>
     </Link>
   );
