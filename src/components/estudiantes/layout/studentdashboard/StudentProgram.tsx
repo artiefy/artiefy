@@ -18,13 +18,16 @@ export function StudentProgram({ program }: StudenProgramProps) {
   const coursesCount = program.coursesCount ?? 0;
   const totalHours = program.totalHours ?? 0;
   const rating = program.rating ?? 0;
-  const creatorName = program.creatorName ?? 'Artiefy';
+  const hasCourses = coursesCount > 0;
 
-  return (
-    <Link
-      href={`/estudiantes/programas/${program.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5"
-    >
+  const containerClassName = `group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 ${
+    hasCourses
+      ? 'hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5'
+      : 'cursor-not-allowed opacity-80'
+  }`;
+
+  const cardContent = (
+    <>
       {/* Image Container */}
       <div className="relative aspect-video overflow-hidden">
         <Image
@@ -47,6 +50,11 @@ export function StudentProgram({ program }: StudenProgramProps) {
 
         {/* Top Left Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
+          {!hasCourses && (
+            <div className="inline-flex items-center rounded-full border border-transparent bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-slate-900 uppercase shadow-lg shadow-amber-400/40">
+              Muy pronto
+            </div>
+          )}
           {program.certificationType && (
             <div className="inline-flex items-center rounded-full border border-transparent bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-0.5 text-xs font-medium text-white transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
               {program.certificationType.name}
@@ -69,6 +77,13 @@ export function StudentProgram({ program }: StudenProgramProps) {
             <span className="flex items-center gap-1">
               <Clock className="h-3.5 w-3.5" />
               {totalHours}h
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="h-3.5 w-3.5" />
+              <EnrollmentCount
+                programId={parseInt(program.id)}
+                displayMode="number-only"
+              />
             </span>
           </div>
           <div className="flex items-center gap-1">
@@ -100,22 +115,24 @@ export function StudentProgram({ program }: StudenProgramProps) {
         >
           {program.description}
         </p>
-
-        {/* Footer with Creator and Students */}
-        <div className="flex items-center justify-between border-t border-border/50 pt-3">
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded-full bg-primary/20" />
-            <span className="text-xs text-muted-foreground">{creatorName}</span>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Users className="h-3.5 w-3.5" />
-            <EnrollmentCount
-              programId={parseInt(program.id)}
-              displayMode="number-only"
-            />
-          </div>
-        </div>
       </div>
-    </Link>
+    </>
+  );
+
+  if (hasCourses) {
+    return (
+      <Link
+        href={`/estudiantes/programas/${program.id}`}
+        className={containerClassName}
+      >
+        {cardContent}
+      </Link>
+    );
+  }
+
+  return (
+    <div className={containerClassName} aria-disabled>
+      {cardContent}
+    </div>
   );
 }

@@ -677,20 +677,7 @@ export function ProgramHeader({
           <Crown className="h-4 w-4" />
           Programa Premium
         </div>
-        <div className="space-y-3">
-          {renderEnrollmentButton()}
-          <p className="text-center text-xs text-muted-foreground">
-            Accede a este y a más de{' '}
-            <span className="font-medium text-white">50 programas</span> con el
-            plan PREMIUM.{' '}
-            <Link
-              href="/planes"
-              className="font-semibold text-white underline-offset-4 hover:underline"
-            >
-              Ver planes
-            </Link>
-          </p>
-        </div>
+        <div className="space-y-3">{renderEnrollmentButton()}</div>
       </div>
     </div>
   );
