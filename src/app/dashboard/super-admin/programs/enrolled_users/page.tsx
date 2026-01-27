@@ -2926,6 +2926,8 @@ export default function EnrolledUsersPage() {
 
   function CustomFieldForm({ selectedUserId }: { selectedUserId: string }) {
     const [fieldKey, setFieldKey] = useState('');
+    const [fieldType, setFieldType] = useState('text');
+    const [fieldDescription, setFieldDescription] = useState('');
     const [fieldValue, setFieldValue] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -2940,14 +2942,18 @@ export default function EnrolledUsersPage() {
             body: JSON.stringify({
               userId: selectedUserId,
               fieldKey,
+              fieldType,
+              fieldDescription,
               fieldValue,
             }),
           }
         );
 
         if (res.ok) {
-          alert('Campo personalizado agregado');
+          alert('Columna agregada correctamente');
           setFieldKey('');
+          setFieldType('text');
+          setFieldDescription('');
           setFieldValue('');
         } else {
           const json: unknown = await res.json();
@@ -2966,20 +2972,39 @@ export default function EnrolledUsersPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           type="text"
-          placeholder="Clave"
+          placeholder="Nombre del campo"
           value={fieldKey}
           onChange={(e) => setFieldKey(e.target.value)}
           className="w-full rounded border border-gray-700 bg-gray-800 p-2 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:flex-1"
         />
         <input
           type="text"
-          placeholder="Valor"
+          placeholder="Descripción (opcional)"
+          value={fieldDescription}
+          onChange={(e) => setFieldDescription(e.target.value)}
+          className="w-full rounded border border-gray-700 bg-gray-800 p-2 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:flex-1"
+        />
+        <select
+          value={fieldType}
+          onChange={(e) => setFieldType(e.target.value)}
+          className="w-full rounded border border-gray-700 bg-gray-800 p-2 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:flex-1"
+        >
+          <option value="text">Texto</option>
+          <option value="integer">Número entero</option>
+          <option value="decimal">Decimal</option>
+          <option value="boolean">Booleano</option>
+          <option value="date">Fecha</option>
+          <option value="timestamp">Fecha y hora</option>
+        </select>
+        <input
+          type="text"
+          placeholder="Valor inicial (opcional)"
           value={fieldValue}
           onChange={(e) => setFieldValue(e.target.value)}
           className="w-full rounded border border-gray-700 bg-gray-800 p-2 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:flex-1"
         />
         <button
-          disabled={loading || !fieldKey || !fieldValue}
+          disabled={loading || !fieldKey}
           onClick={handleSubmit}
           className="w-full rounded bg-blue-600 px-4 py-2 font-semibold transition hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
         >

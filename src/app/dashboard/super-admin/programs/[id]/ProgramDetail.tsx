@@ -3,12 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
 
-import { useUser } from '@clerk/nextjs'; // 🔥 Agrega esta línea al inicio del archivo
+import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
-import ModalFormCourse from '~/components/educators/modals/program/ModalFormCourse'; // Import ModalFormCourse
+import ModalFormCourse from '~/components/educators/modals/program/ModalFormCourse';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,18 +100,15 @@ const getContrastYIQ = (hexcolor: string) => {
   return yiq >= 128 ? 'black' : 'white';
 };
 
-const ProgramDetail: React.FC<ProgramDetailProps> = () => {
-  const params = useParams(); // Obtener los parámetros
-  const programIdUrl = params?.id; // Obtener el id del programa desde params
-  const [program, setProgram] = useState<Program | null>(null); // Nuevo estado para el programa
-  const [loading, setLoading] = useState(true); // Nuevo estado para el estado de carga de la página
-  const [error, setError] = useState<string | null>(null); // Nuevo estado para los errores
-  const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF'); // Color predeterminado blanco
-  const predefinedColors = ['#000000', '#FFFFFF', '#1f2937']; // Colores específicosconst { user } = useUser(); // 🔥 Agrega esta línea en el componente
-  const { user } = useUser(); // 🔥 Agrega esta línea en el componente
-  const [uploading, setUploading] = useState(false); // Nuevo estado para la carga
+const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
+  const [program, setProgram] = useState<Program | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF');
+  const predefinedColors = ['#000000', '#FFFFFF', '#1f2937'];
+  const { user } = useUser();
+  const [uploading, setUploading] = useState(false);
   const [isActive, setIsActive] = useState(true);
-
   const [editParametros, setEditParametros] = useState<
     {
       id: number;
@@ -120,31 +116,25 @@ const ProgramDetail: React.FC<ProgramDetailProps> = () => {
       description: string;
       porcentaje: number;
     }[]
-  >([]); // Nuevo estado para los parámetros
-  const [courses, setCourses] = useState<CourseData[]>([]); // Nuevo estado para los cursos
-  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false); // State for course modal
+  >([]);
+  const [courses, setCourses] = useState<CourseData[]>([]);
+  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
   const [subjects, setSubjects] = useState<
     { id: number; courseId?: number | null }[]
   >([]);
-
-  const programIdString = Array.isArray(programIdUrl)
-    ? programIdUrl[0]
-    : programIdUrl; // Obtener el id del programa como string
-  const programIdString2 = programIdString ?? ''; // Verificar si el id del programa es nulo
-  const programIdNumber = parseInt(programIdString2); // Convertir el id del programa a número
-  const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null); // interfaz de cursos
+  const programIdNumber = programId;
+  const [editingCourse, setEditingCourse] = useState<CourseModel | null>(null);
   const [selectedCourseType, setSelectedCourseType] = useState<number[]>([]);
-
   void setEditingCourse;
   void uploading;
   const [educators, setEducators] = useState<{ id: string; name: string }[]>(
     []
   );
-  const [instructors, setInstructors] = useState<string[]>([]); // Array de IDs de instructores
+  const [instructors, setInstructors] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
-  const [editSubjects, setEditSubjects] = useState<number[]>([]); // Add this for subjects
+  const [editSubjects, setEditSubjects] = useState<number[]>([]);
   void setEditSubjects;
   const [horario, setHorario] = useState<number | null>(null);
   const [espacios, setEspacios] = useState<number | null>(null);

@@ -1,17 +1,22 @@
+import { use } from 'react';
+
 import ProgramDetail from './ProgramDetail'; // El componente ProgramDetail
 // Importar el chatbot
 
-export default async function Page({
+export default function Page({
   params,
 }: {
-  params: Promise<{ id: number }>;
+  params: Promise<{ id: string }>;
 }) {
-  // Esperamos a que se resuelvan los parámetros
-  const resolvedParams = await params;
-
+  // Usar React.use() para resolver la promesa de params
+  const { id } = use(params);
+  const idNumber = Number(id);
+  if (!id || isNaN(idNumber)) {
+    return <div>Id de programa inválido</div>;
+  }
   return (
     <>
-      <ProgramDetail programId={resolvedParams.id} />
+      <ProgramDetail programId={idNumber} />
     </>
   );
 }

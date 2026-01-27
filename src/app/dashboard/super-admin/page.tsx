@@ -3455,41 +3455,57 @@ export default function AdminDashboard() {
                   No hay plantillas disponibles.
                 </div>
               ) : (
-                <select
-                  value={waSelectedTemplate}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setWaSelectedTemplate(value);
+                <>
+                  <select
+                    value={waSelectedTemplate}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setWaSelectedTemplate(value);
 
-                    if (value === '' || value === WA_TEXT_ONLY) {
-                      setWaVariables([]);
-                      return;
-                    }
+                      if (value === '' || value === WA_TEXT_ONLY) {
+                        setWaVariables([]);
+                        return;
+                      }
 
-                    const tmpl = waTemplates.find((t) => t.name === value);
-                    if (tmpl) {
-                      const placeholders =
-                        tmpl.body.match(/\{\{\d+\}\}/g) ?? [];
-                      setWaVariables(
-                        tmpl.example?.slice(0, placeholders.length) ??
-                          Array.from({ length: placeholders.length }, () => '')
-                      );
-                    } else {
-                      setWaVariables([]);
-                    }
-                  }}
-                  className="w-full rounded-lg border bg-gray-800 p-3 text-white"
-                >
-                  <option value="">Texto + abrir sesión (automático)</option>
-                  <option value={WA_TEXT_ONLY}>
-                    Solo mensaje (sin plantilla)
-                  </option>
-                  {waTemplates.map((t) => (
-                    <option key={t.name} value={t.name}>
-                      {t.label} {t.status ? `(${t.status})` : ''}
+                      const tmpl = waTemplates.find((t) => t.name === value);
+                      if (tmpl) {
+                        const placeholders =
+                          tmpl.body.match(/\{\{\d+\}\}/g) ?? [];
+                        setWaVariables(
+                          tmpl.example?.slice(0, placeholders.length) ??
+                            Array.from(
+                              { length: placeholders.length },
+                              () => ''
+                            )
+                        );
+                      } else {
+                        setWaVariables([]);
+                      }
+                    }}
+                    className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                  >
+                    <option value="">Texto + abrir sesión (automático)</option>
+                    <option value={WA_TEXT_ONLY}>
+                      Solo mensaje (sin plantilla)
                     </option>
-                  ))}
-                </select>
+                    {waTemplates.map((t) => (
+                      <option key={t.name} value={t.name}>
+                        {t.label} {t.status ? `(${t.status})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                  {/* Campo de mensaje libre si no hay plantilla seleccionada */}
+                  {(waSelectedTemplate === WA_TEXT_ONLY ||
+                    waSelectedTemplate === '') && (
+                    <textarea
+                      className="mt-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+                      placeholder="Escribe un mensaje para WhatsApp"
+                      value={waMessageText}
+                      onChange={(e) => setWaMessageText(e.target.value)}
+                      rows={4}
+                    />
+                  )}
+                </>
               )}
             </div>
 
