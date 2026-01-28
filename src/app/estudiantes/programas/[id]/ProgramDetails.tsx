@@ -61,7 +61,14 @@ export default function ProgramDetails({
   // Initial load effect
   useEffect(() => {
     const initializeProgram = async () => {
-      if (!userId) return;
+      if (!userId) {
+        // Sin usuario no hay inscripción; evitamos dejar isCheckingEnrollment en true
+        setIsEnrolled(false);
+        setIsCheckingEnrollment(false);
+        setIsLoadingEnrollments(false);
+        checkSubscriptionStatus();
+        return;
+      }
 
       setIsLoadingEnrollments(true);
 
