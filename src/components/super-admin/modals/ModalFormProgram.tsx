@@ -599,11 +599,17 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                 <option value="" className="text-black">
                   Seleccionar tipo de certificación
                 </option>
-                {certificationTypes.map((type) => (
-                  <option key={type.id} value={type.id} className="text-black">
-                    {type.name}
-                  </option>
-                ))}
+                {Array.isArray(certificationTypes)
+                  ? certificationTypes.map((type) => (
+                      <option
+                        key={type.id}
+                        value={type.id}
+                        className="text-black"
+                      >
+                        {type.name}
+                      </option>
+                    ))
+                  : null}
               </select>
             </div>
           </div>

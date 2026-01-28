@@ -1150,11 +1150,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       ? 'Cargando...'
                       : 'Seleccionar tipo de certificación'}
                   </option>
-                  {_localCertificationTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
+                  {Array.isArray(_localCertificationTypes)
+                    ? _localCertificationTypes.map((type) => (
+                        <option key={type.id} value={type.id}>
+                          {type.name}
+                        </option>
+                      ))
+                    : null}
                 </select>
               </div>
               <div className="w-full">
