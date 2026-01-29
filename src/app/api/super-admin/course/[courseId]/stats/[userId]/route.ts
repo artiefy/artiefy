@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -21,8 +22,15 @@ export async function GET(
   _req: Request,
   context: { params: { courseId?: string; userId?: string } }
 ) {
-  const courseId = context?.params?.courseId;
-  const userId = context?.params?.userId;
+  // Instancia Redis
+  const redis = new Redis({
+    url: process.env.UPSTASH_REDIS_REST_URL!,
+    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+  });
+
+  const params = context.params;
+  const courseId = params?.courseId;
+  const userId = params?.userId;
 
   if (!courseId || !userId) {
     return NextResponse.json(
@@ -84,27 +92,35 @@ export async function GET(
       formattedEvaluationParameters
     );
 
+    // Traer datos del curso incluyendo la foto
     const courseInfo = await db
       .select({
         title: courses.title,
         instructor: courses.instructor,
         createdAt: courses.createdAt,
         difficulty: nivel.name,
+        coverImageKey: courses.coverImageKey,
       })
       .from(courses)
       .where(eq(courses.id, Number(courseId)))
       .leftJoin(nivel, eq(courses.nivelid, nivel.id))
       .limit(1);
 
-    // 🔹 Obtener progreso en lecciones
-    const totalLessons = await db
-      .select()
+    // 🔹 Obtener todas las lecciones del curso
+    const lessonRows = await db
+      .select({
+        lessonId: userLessonsProgress.lessonId,
+        title: activities.name,
+        progress: userLessonsProgress.progress,
+        isCompleted: userLessonsProgress.isCompleted,
+        lastUpdated: userLessonsProgress.lastUpdated,
+      })
       .from(userLessonsProgress)
+      .leftJoin(activities, eq(userLessonsProgress.lessonId, activities.id))
       .where(eq(userLessonsProgress.userId, userId));
 
-    const completedLessons = totalLessons.filter(
-      (lesson) => lesson.isCompleted
-    );
+    const totalLessons = lessonRows;
+    const completedLessons = lessonRows.filter((lesson) => lesson.isCompleted);
 
     // 🔹 Calcular porcentaje de progreso
     const progressPercentage =
@@ -112,14 +128,14 @@ export async function GET(
         ? Math.round((completedLessons.length / totalLessons.length) * 100)
         : 0;
 
-    // 🔹 Obtener progreso en actividades
-    const activityDetails = await db
+    // 🔹 Obtener progreso en actividades y notas por actividad
+    const activityDetailsRaw = await db
       .select({
         activityId: userActivitiesProgress.activityId,
         name: activities.name,
         description: activities.description,
         isCompleted: userActivitiesProgress.isCompleted,
-        score: scores.score || 0,
+        score: scores.score,
       })
       .from(userActivitiesProgress)
       .leftJoin(
@@ -128,12 +144,30 @@ export async function GET(
       )
       .leftJoin(
         scores,
-        and(
-          eq(scores.userId, userId),
-          eq(userActivitiesProgress.activityId, activities.id)
-        )
+        and(eq(scores.userId, userId), eq(scores.categoryid, activities.id))
       )
       .where(eq(userActivitiesProgress.userId, userId));
+
+    // 🔹 Consultar Redis para cada actividad
+    const activityDetails = await Promise.all(
+      activityDetailsRaw.map(async (activity) => {
+        const redisKey = `activity:${activity.activityId}:user:${userId}:submission`;
+        const redisData = await redis.get(redisKey);
+        // Type guard para asegurar que redisData tiene 'grade'
+        const hasGrade = (data: unknown): data is { grade: number } => {
+          return (
+            typeof data === 'object' &&
+            data !== null &&
+            'grade' in data &&
+            typeof (data as { grade?: unknown }).grade === 'number'
+          );
+        };
+        return {
+          ...activity,
+          score: hasGrade(redisData) ? redisData.grade : activity.score,
+        };
+      })
+    );
 
     const totalActivities = activityDetails.length;
     const completedActivities = activityDetails.filter(
@@ -176,7 +210,7 @@ export async function GET(
         ? (totalActivityScore / totalActivities).toFixed(2)
         : '0.00';
 
-    // 🔹 Enviar la respuesta final con los parámetros corregidos
+    // 🔹 Enviar la respuesta final con todos los datos completos
     console.log('📊 Enviando respuesta final:', {
       success: true,
       enrolled: true,
@@ -193,7 +227,8 @@ export async function GET(
         totalTimeSpent: totalTime,
         globalCourseScore,
         activities: activityDetails,
-        evaluationParameters: formattedEvaluationParameters, // ✅ Se asegura que es un array
+        lessonDetails: lessonRows,
+        evaluationParameters: formattedEvaluationParameters,
       },
     });
 
@@ -213,9 +248,10 @@ export async function GET(
         totalTimeSpent: totalTime,
         globalCourseScore,
         activities: activityDetails,
+        lessonDetails: lessonRows,
         evaluationParameters: Array.isArray(evaluationParameters)
           ? evaluationParameters
-          : [], // ✅ Enviar como array válido
+          : [],
       },
     });
   } catch (error) {
