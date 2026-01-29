@@ -402,11 +402,6 @@ export default function CourseDetails({
       helper: undefined,
     },
     {
-      key: 'certificacion',
-      label: 'Certificación',
-      helper: undefined,
-    },
-    {
       key: 'grabadas',
       label: 'Clases grabadas',
       helper: undefined,
@@ -426,12 +421,17 @@ export default function CourseDetails({
       label: 'Actividades',
       helper: undefined,
     },
+    { key: 'foro', label: 'Foro', helper: undefined },
     {
       key: 'resultados',
       label: 'Resultados',
       helper: undefined,
     },
-    { key: 'foro', label: 'Foro', helper: undefined },
+    {
+      key: 'certificacion',
+      label: 'Certificación',
+      helper: undefined,
+    },
   ];
 
   const sectionLabels: Record<NavKey, string> = {

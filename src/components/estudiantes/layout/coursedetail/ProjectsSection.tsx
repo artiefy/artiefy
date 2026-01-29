@@ -12,6 +12,7 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'sonner';
 
+import ModalResumen from '~/components/projects/Modals/ModalResumen';
 import { cn } from '~/lib/utils';
 
 interface Project {
@@ -39,10 +40,11 @@ export function ProjectsSection({
   isSubscriptionActive,
   onProjectsChange,
 }: ProjectsSectionProps) {
-  const router = useRouter();
+  const _router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
+  const [_isCreating, _setIsCreating] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   // Cargar proyectos al montar el componente
   useEffect(() => {
@@ -75,13 +77,7 @@ export function ProjectsSection({
       toast.error('Debes estar inscrito en el curso para crear proyectos');
       return;
     }
-    // Redirige a MisProyectos y abre el modal de creación
-    setIsCreating(true);
-    try {
-      router.push('/proyectos/MisProyectos?start=create');
-    } finally {
-      setIsCreating(false);
-    }
+    setShowModal(true);
   };
 
   const handleEnterProject = (projectId: number) => {
@@ -116,10 +112,10 @@ export function ProjectsSection({
             <FaFolderOpen className="h-5 w-5" style={{ color: '#22c4d3' }} />
           </div>
           <div>
-            <h2 className="text-foreground text-xl font-semibold">
+            <h2 className="text-xl font-semibold text-foreground">
               Proyectos del Curso
             </h2>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               Crea y gestiona tus proyectos prácticos
             </p>
           </div>
@@ -128,12 +124,12 @@ export function ProjectsSection({
         {/* Botón Crear Proyecto */}
         <button
           onClick={handleCreateProject}
-          disabled={!isEnrolled || isCreating}
+          disabled={!isEnrolled || _isCreating}
           style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
-          className="ring-offset-background focus-visible:ring-ring inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
         >
           <FaPlus className="h-4 w-4" />
-          {isCreating ? 'Creando...' : 'Crear Proyecto'}
+          {_isCreating ? 'Creando...' : 'Crear Proyecto'}
         </button>
       </div>
 
@@ -145,16 +141,16 @@ export function ProjectsSection({
               <div
                 key={project.id}
                 onClick={() => handleEnterProject(project.id)}
-                className="group border-border/50 bg-card/50 hover:border-border hover:bg-card/80 cursor-pointer rounded-xl border p-5 transition-all duration-200"
+                className="group cursor-pointer rounded-xl border border-border/50 bg-card/50 p-5 transition-all duration-200 hover:border-border hover:bg-card/80"
               >
                 {/* Header con título y tipo */}
                 <div className="mb-3 flex items-start justify-between">
-                  <h3 className="text-foreground flex-1 pr-3 font-semibold transition-colors group-hover:text-[#22c4d3]">
+                  <h3 className="flex-1 pr-3 font-semibold text-foreground transition-colors group-hover:text-[#22c4d3]">
                     {project.name}
                   </h3>
                   <div
                     className={cn(
-                      'focus:ring-ring hover:bg-primary/80 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none',
+                      'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none',
                       'border-blue-500/30 bg-blue-500/20 text-blue-400'
                     )}
                   >
@@ -164,12 +160,12 @@ export function ProjectsSection({
                 </div>
 
                 {/* Descripción */}
-                <p className="text-muted-foreground mb-4 line-clamp-2 text-sm">
+                <p className="mb-4 line-clamp-2 text-sm text-muted-foreground">
                   {project.planteamiento}
                 </p>
 
                 {/* Footer con fecha y botón entrar */}
-                <div className="border-border/50 text-muted-foreground flex items-center justify-between border-t pt-3 text-xs">
+                <div className="flex items-center justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <FaCalendarAlt className="h-3.5 w-3.5" />
                     <span>{formatDate(project.createdAt)}</span>
@@ -190,10 +186,10 @@ export function ProjectsSection({
       ) : (
         /* Mensaje cuando no hay proyectos */
         <div
-          className="border-border/50 flex flex-col items-center justify-center rounded-xl border border-dashed py-12"
+          className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
           style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
         >
-          <div className="bg-muted/50 mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
             <FaFolderOpen className="h-8 w-8 text-black" />
           </div>
           <h3 className="mb-2 text-lg font-semibold text-slate-100">
@@ -207,16 +203,51 @@ export function ProjectsSection({
           {isEnrolled && (
             <button
               onClick={handleCreateProject}
-              disabled={isCreating}
+              disabled={_isCreating}
               style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
-              className="ring-offset-background focus-visible:ring-ring inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
             >
               <FaPlus className="h-4 w-4" />
-              {isCreating ? 'Creando...' : 'Crear Primer Proyecto'}
+              {_isCreating ? 'Creando...' : 'Crear Primer Proyecto'}
             </button>
           )}
         </div>
       )}
+
+      <ModalResumen
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        titulo=""
+        planteamiento=""
+        justificacion=""
+        objetivoGen=""
+        objetivosEsp={[]}
+        cronograma={{}}
+        categoriaId={undefined}
+        numMeses={undefined}
+        setObjetivosEsp={() => {}}
+        setActividades={() => {}}
+        projectId={undefined}
+        coverImageKey={undefined}
+        coverVideoKey={undefined}
+        tipoProyecto=""
+        onUpdateProject={() => {}}
+        fechaInicio=""
+        fechaFin=""
+        actividades={[]}
+        responsablesPorActividad={{}}
+        horasPorActividad={{}}
+        setHorasPorActividad={() => {}}
+        horasPorDiaProyecto={6}
+        setHorasPorDiaProyecto={() => {}}
+        tiempoEstimadoProyecto={0}
+        setTiempoEstimadoProyecto={() => {}}
+        onAnterior={() => {}}
+        setPlanteamiento={() => {}}
+        setJustificacion={() => {}}
+        setObjetivoGen={() => {}}
+        setObjetivosEspProp={() => {}}
+      />
     </div>
   );
 }

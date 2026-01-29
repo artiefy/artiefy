@@ -91,8 +91,7 @@ export function ProgramHeader({
 
   // Establecer isClient en true después del primer renderizado (solo en cliente)
   useEffect(() => {
-    if (!isClient) setIsClient(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setIsClient(true);
   }, []);
 
   useEffect(() => {
@@ -696,105 +695,120 @@ export function ProgramHeader({
         }}
       >
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-background via-background/95 to-background/80" />
-        <div className="relative z-10 mb-8 lg:hidden">{renderCtaCard()}</div>
+        {/* CTA móvil solo cuando no estás inscrito */}
+        {!isEnrolled && (
+          <div className="relative z-10 mb-8 lg:hidden">{renderCtaCard()}</div>
+        )}
+
         <div
-          className={`relative z-10 grid grid-cols-1 gap-8 ${
-            isEnrolled ? 'lg:grid-cols-1' : 'lg:grid-cols-3'
+          className={`relative z-10 grid grid-cols-1 gap-8 lg:gap-12 ${
+            !isEnrolled
+              ? 'lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start'
+              : ''
           }`}
         >
-          <div
-            className={`${isEnrolled ? 'lg:col-span-1' : 'lg:col-span-2'} space-y-8`}
-          >
-            <div className="space-y-6">
-              <div className="flex flex-wrap items-center gap-2">
-                {/* Badge de categoría */}
-                <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
-                  {program.category?.name ?? 'Sin categoría'}
-                </div>
-              </div>
-              <h1 className="font-display text-3xl leading-tight font-bold text-foreground md:text-4xl">
-                <span className="inline">
-                  {program.title}{' '}
-                  {isEnrolled && (
-                    <CheckCircleIcon className="mb-1 ml-1 inline-block h-6 w-6 flex-shrink-0 align-middle text-green-500" />
-                  )}
-                </span>
-              </h1>
-              <div className="flex flex-wrap items-center gap-4 text-sm">
-                <div className="flex items-center gap-1.5">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <StarIcon
-                      key={index}
-                      className={`h-4 w-4 ${
-                        index < Math.floor(program.rating ?? 0)
-                          ? 'text-amber-400'
-                          : 'text-amber-400/50'
-                      }`}
-                    />
-                  ))}
-                  <span className="ml-1 font-semibold text-amber-400">
-                    {ratingValue}
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <div
-                  className="rounded-xl p-3 text-center"
-                  style={{ backgroundColor: '#1a23334d' }}
-                >
-                  <Book className="mx-auto mb-1 h-5 w-5 text-primary" />
-                  <p className="text-lg font-bold text-foreground">
-                    {totalCourses}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Cursos</p>
-                </div>
-                <div
-                  className="rounded-xl p-3 text-center"
-                  style={{ backgroundColor: '#1a23334d' }}
-                >
-                  <Clock className="mx-auto mb-1 h-5 w-5 text-primary" />
-                  <p className="text-lg font-bold text-foreground">
-                    {totalContentLabel}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Contenido</p>
-                </div>
-                <div
-                  className="rounded-xl p-3 text-center"
-                  style={{ backgroundColor: '#1a23334d' }}
-                >
-                  <Users className="mx-auto mb-1 h-5 w-5 text-primary" />
-                  <p className="text-lg font-bold text-foreground">
-                    {enrollmentCount}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Estudiantes</p>
-                </div>
-                <div
-                  className="rounded-xl p-3 text-center"
-                  style={{ backgroundColor: '#1a23334d' }}
-                >
-                  <Video className="mx-auto mb-1 h-5 w-5 text-primary" />
-                  <p className="text-lg font-bold text-foreground">
-                    {liveSessionsCount}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Clases en vivo
-                  </p>
-                </div>
-              </div>
+          <div className="space-y-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+              <div className="flex-1">
+                <div className="max-w-2xl space-y-6 lg:max-w-3xl">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Badge de categoría */}
+                    <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                      {program.category?.name ?? 'Sin categoría'}
+                    </div>
+                  </div>
+                  <h1 className="font-display text-3xl leading-tight font-bold break-words text-foreground md:text-4xl">
+                    <span className="inline">
+                      {program.title}{' '}
+                      {isEnrolled && (
+                        <CheckCircleIcon className="mb-1 ml-1 inline-block h-6 w-6 flex-shrink-0 align-middle text-green-500" />
+                      )}
+                    </span>
+                  </h1>
+                  <div className="flex flex-wrap items-center gap-4 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      {Array.from({ length: 5 }).map((_, index) => (
+                        <StarIcon
+                          key={index}
+                          className={`h-4 w-4 ${
+                            index < Math.floor(program.rating ?? 0)
+                              ? 'text-amber-400'
+                              : 'text-amber-400/50'
+                          }`}
+                        />
+                      ))}
+                      <span className="ml-1 font-semibold text-amber-400">
+                        {ratingValue}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="grid max-w-3xl grid-cols-2 gap-3 md:grid-cols-4">
+                    <div
+                      className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
+                      style={{ backgroundColor: '#1a23334d' }}
+                    >
+                      <Book className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <p className="text-lg font-bold text-foreground">
+                        {totalCourses}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Cursos</p>
+                    </div>
+                    <div
+                      className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
+                      style={{ backgroundColor: '#1a23334d' }}
+                    >
+                      <Clock className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <p className="text-lg font-bold text-foreground">
+                        {totalContentLabel}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Contenido</p>
+                    </div>
+                    <div
+                      className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
+                      style={{ backgroundColor: '#1a23334d' }}
+                    >
+                      <Users className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <p className="text-lg font-bold text-foreground">
+                        {enrollmentCount}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Estudiantes
+                      </p>
+                    </div>
+                    <div
+                      className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
+                      style={{ backgroundColor: '#1a23334d' }}
+                    >
+                      <Video className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <p className="text-lg font-bold text-foreground">
+                        {liveSessionsCount}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Clases en vivo
+                      </p>
+                    </div>
+                  </div>
 
-              {/* Badge de tipo de certificación */}
-              {program.certificationType && (
-                <div className="flex w-fit items-center gap-2 rounded-full bg-muted/50 px-3 py-1.5">
-                  <LiaCertificateSolid className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-xs font-medium text-foreground">
-                    {program.certificationType.name}
-                  </span>
+                  {/* Badge de tipo de certificación */}
+                  {program.certificationType && (
+                    <div className="flex w-fit items-center gap-2 rounded-full bg-muted/50 px-3 py-1.5">
+                      <LiaCertificateSolid className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-xs font-medium text-foreground">
+                        {program.certificationType.name}
+                      </span>
+                    </div>
+                  )}
+
+                  <p className="text-base leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+                    {program.description ?? 'No hay descripción disponible.'}
+                  </p>
+                </div>
+              </div>
+              {isEnrolled && (
+                <div className="hidden lg:block lg:w-[320px] lg:flex-shrink-0">
+                  {renderCtaCard()}
                 </div>
               )}
-
-              <p className="text-base leading-relaxed whitespace-pre-wrap text-muted-foreground">
-                {program.description ?? 'No hay descripción disponible.'}
-              </p>
             </div>
 
             <Tabs.Root
@@ -1226,10 +1240,11 @@ export function ProgramHeader({
               </Tabs.Content>
             </Tabs.Root>
           </div>
+
           {!isEnrolled && (
-            <div className="sticky top-24 hidden max-h-[calc(100vh-8rem)] self-start lg:block">
+            <aside className="sticky top-24 hidden max-h-[calc(100vh-8rem)] self-start lg:block">
               {renderCtaCard()}
-            </div>
+            </aside>
           )}
         </div>
       </div>
