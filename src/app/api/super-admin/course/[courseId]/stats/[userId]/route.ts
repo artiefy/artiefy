@@ -22,19 +22,30 @@ export async function GET(
   _req: Request,
   context: { params: { courseId?: string; userId?: string } }
 ) {
+  console.log(
+    '➡️ Endpoint /api/super-admin/course/[courseId]/stats/[userId] llamado con:',
+    { params: context.params }
+  );
   // Instancia Redis
   const redis = new Redis({
     url: process.env.UPSTASH_REDIS_REST_URL!,
     token: process.env.UPSTASH_REDIS_REST_TOKEN!,
   });
 
-  const params = context.params;
-  const courseId = params?.courseId;
-  const userId = params?.userId;
+  function isPromise<T>(val: unknown): val is Promise<T> {
+    return !!val && typeof (val as { then?: unknown }).then === 'function';
+  }
+
+  let params: unknown = context.params;
+  if (isPromise(params)) {
+    params = await params;
+  }
+  const { courseId, userId } = params as { courseId?: string; userId?: string };
 
   if (!courseId || !userId) {
+    console.error('❌ Faltan parámetros requeridos', { courseId, userId });
     return NextResponse.json(
-      { error: 'Faltan parámetros requeridos' },
+      { error: 'Faltan parámetros requeridos', courseId, userId },
       { status: 400 }
     );
   }
@@ -53,10 +64,12 @@ export async function GET(
       .limit(1);
 
     if (existingEnrollment.length === 0) {
-      return NextResponse.json(
-        { error: 'El usuario no está inscrito en este curso' },
-        { status: 404 }
-      );
+      console.warn('⚠️ El usuario no está inscrito en este curso', {
+        courseId,
+        userId,
+      });
+      // Aún así, devolvemos la info del curso y del usuario si existen
+      // para que el frontend pueda mostrar algo
     }
 
     // 🔹 Obtener datos del usuario
@@ -69,6 +82,7 @@ export async function GET(
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
+    console.log('👤 userInfo:', userInfo);
 
     // 🔹 Obtener los parámetros de evaluación del curso
     const evaluationParameters = await db
@@ -105,6 +119,7 @@ export async function GET(
       .where(eq(courses.id, Number(courseId)))
       .leftJoin(nivel, eq(courses.nivelid, nivel.id))
       .limit(1);
+    console.log('📚 courseInfo:', courseInfo);
 
     // 🔹 Obtener todas las lecciones del curso
     const lessonRows = await db
@@ -234,7 +249,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      enrolled: true,
+      enrolled: existingEnrollment.length > 0,
       user: userInfo[0] || {},
       course: courseInfo[0] || {},
       statistics: {

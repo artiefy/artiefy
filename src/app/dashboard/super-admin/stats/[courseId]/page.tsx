@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useSearchParams } from 'next/navigation';
 
-import { Calendar, GraduationCap, Loader2, User } from 'lucide-react';
+import { Calendar, Loader2, User } from 'lucide-react';
 
 interface Stats {
   totalLessons: number;
@@ -122,114 +122,67 @@ export default function StudentCourseDashboard() {
   return (
     <>
       <div className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#01142B] to-[#1e2939] p-0">
-        {/* Header futurista */}
-        <header className="relative z-20 mx-auto flex w-full max-w-6xl flex-col items-center justify-center rounded-b-3xl bg-[#01142B] px-8 py-10 text-center shadow-2xl transition-all duration-700">
-          <h1 className="animate-fade-in mb-2 text-5xl font-extrabold tracking-wide text-white drop-shadow-lg">
-            {courseInfo?.title ?? 'Portal de Notas del Estudiante'}
-          </h1>
-          <div className="mt-4 flex w-full flex-col items-center justify-between gap-8 md:flex-row">
-            <div className="flex flex-col items-start gap-2">
-              <span className="mb-2 inline-block rounded-full bg-[#3AF4EF]/10 px-4 py-1 text-sm font-semibold text-[#3AF4EF]">
-                Desarrollo Web
-              </span>
-              <div className="flex items-center gap-2 text-lg font-bold text-yellow-400">
-                <span>4.8</span>
-                <span>★</span>
-                <span className="text-sm font-normal text-white">
-                  (0 opiniones)
-                </span>
-                <span className="text-sm font-normal text-white/70">
-                  | 14 estudiantes
-                </span>
-              </div>
-              <div className="mt-2 flex gap-3">
-                <span className="rounded bg-[#232B3E] px-3 py-1 text-xs text-white/80">
-                  8 clases
-                </span>
-                <span className="rounded bg-[#232B3E] px-3 py-1 text-xs text-white/80">
-                  40h contenido
-                </span>
-                <span className="rounded bg-[#232B3E] px-3 py-1 text-xs text-white/80">
-                  Básico
-                </span>
-                <span className="rounded bg-[#232B3E] px-3 py-1 text-xs text-white/80">
-                  Sincrónica Virtual Mañana
+        {/* Header futurista reorganizado */}
+        <header className="relative z-20 mx-auto flex w-full max-w-6xl flex-col rounded-b-3xl bg-[#01142B] px-4 py-8 shadow-2xl transition-all duration-700 md:py-12">
+          <div className="flex w-full flex-col gap-8 md:flex-row">
+            {/* Card principal: imagen + info curso */}
+            <div className="flex flex-1 flex-col items-center gap-6 rounded-2xl bg-[#182235] p-6 shadow-xl md:flex-row">
+              <div className="relative flex w-[320px] flex-shrink-0 flex-col items-center justify-center md:w-[260px]">
+                <Image
+                  src={
+                    courseInfo?.coverImageKey
+                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${courseInfo.coverImageKey}`
+                      : '/img/curso-visual.png'
+                  }
+                  alt="Visual del curso"
+                  width={260}
+                  height={140}
+                  className="mb-2 h-36 w-full rounded-xl object-cover shadow-lg"
+                  priority
+                  quality={75}
+                />
+                <span className="absolute top-3 left-3 rounded-full bg-yellow-500/90 px-3 py-1 text-xs font-bold text-[#232B3E] shadow">
+                  ★ Premium
                 </span>
               </div>
-              <p className="mt-4 max-w-xl text-left text-base text-white/80">
-                Este curso te lleva de la improvisación a la confiabilidad:
-                aprenderás a preparar entornos dev/prod, diseñar pipelines CI/CD
-                sólidos, versionar con buenas prácticas, configurar servidores y
-                nube, y asegurar monitoreo, pruebas, seguridad y depuración para
-                reducir fallos y evitar caídas. Dominarás estrategias como
-                blue-green/canary, rollback rápido y alertas efectivas para
-                dormir tranquilo tras cada release. Cerrarás con un proyecto
-                final: despliegue real end-to-end con monitoreo y plan de
-                mantenimiento documentado.
-              </p>
+              <div className="flex w-full flex-col items-center justify-center gap-2 md:items-start">
+                <h1 className="text-2xl font-extrabold tracking-wide text-white drop-shadow-lg md:text-3xl">
+                  {courseInfo?.title ?? 'Portal de Notas del Estudiante'}
+                </h1>
+                <p className="text-sm font-semibold text-[#3AF4EF]">
+                  Instructor: {courseInfo?.instructor}
+                </p>
+                <span className="rounded bg-[#3AF4EF]/10 px-3 py-1 text-xs font-semibold text-[#3AF4EF]">
+                  Nivel: {courseInfo?.nivel}
+                </span>
+                <div className="mt-1 flex items-center gap-2 text-xs text-white/60">
+                  <Calendar className="size-4" />
+                  Creado el{' '}
+                  {courseInfo?.createdAt
+                    ? new Date(courseInfo.createdAt).toLocaleDateString()
+                    : '-'}
+                </div>
+                <span className="mt-2 text-xs font-semibold text-[#3AF4EF]">
+                  Incluido en tu plan PREMIUM <span className="ml-1">👑</span>
+                </span>
+                <button className="mt-2 w-full max-w-[180px] rounded-lg bg-[#3AF4EF] px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-[#27c2c2]">
+                  Suscrito ✓
+                </button>
+              </div>
             </div>
-            <div className="relative flex max-w-[340px] min-w-[320px] flex-col items-center justify-center rounded-2xl bg-[#182235] p-6 shadow-xl">
-              {/* Imagen del curso dinámica */}
-              <Image
-                src={
-                  courseInfo?.coverImageKey
-                    ? `${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${courseInfo.coverImageKey}`
-                    : '/img/curso-visual.png'
-                }
-                alt="Visual del curso"
-                width={340}
-                height={160}
-                className="mb-4 h-40 w-full rounded-xl object-cover shadow-lg"
-                priority
-                quality={75}
-              />
-              <span className="absolute top-4 left-4 rounded-full bg-yellow-500/90 px-3 py-1 text-xs font-bold text-[#232B3E] shadow">
-                ★ Premium
-              </span>
-              <span className="mt-2 text-sm font-semibold text-[#3AF4EF]">
-                Incluido en tu plan PREMIUM <span className="ml-1">👑</span>
-              </span>
-              <button className="mt-4 w-full rounded-lg bg-[#3AF4EF] px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-[#27c2c2]">
-                Suscrito ✓
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Info del estudiante y curso */}
-        <div className="animate-slide-up mx-auto mt-8 flex max-w-6xl flex-col gap-6 rounded-2xl bg-[#1e2939] p-8 shadow-2xl md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <User className="size-12 animate-pulse text-[#3AF4EF]" />
-            <div>
-              <h2 className="text-2xl font-bold text-white">
+            {/* Card estudiante */}
+            <div className="mx-auto flex max-w-[320px] min-w-[220px] flex-col items-center justify-center rounded-2xl bg-[#1e2939] p-6 shadow-xl md:mx-0">
+              <User className="mb-2 size-12 animate-pulse text-[#3AF4EF]" />
+              <h2 className="mb-1 text-xl font-bold text-white">
                 {userInfo?.firstName}
               </h2>
-              <p className="text-sm text-[#3AF4EF]">{userInfo?.email}</p>
+              <p className="mb-1 text-sm text-[#3AF4EF]">{userInfo?.email}</p>
               <span className="rounded bg-[#3AF4EF]/10 px-3 py-1 text-xs font-semibold text-[#3AF4EF]">
                 {userInfo?.role}
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <GraduationCap className="size-12 animate-pulse text-[#3AF4EF]" />
-            <div>
-              <h2 className="text-2xl font-bold text-white">
-                {courseInfo?.title}
-              </h2>
-              <p className="text-sm text-[#3AF4EF]">
-                Instructor: {courseInfo?.instructor}
-              </p>
-              <span className="rounded bg-[#3AF4EF]/10 px-3 py-1 text-xs font-semibold text-[#3AF4EF]">
-                Nivel: {courseInfo?.nivel}
-              </span>
-              <div className="mt-1 flex items-center gap-2 text-xs text-white/60">
-                <Calendar className="size-4" />
-                Creado el{' '}
-                {new Date(courseInfo?.createdAt ?? '').toLocaleDateString()}
-              </div>
-            </div>
-          </div>
-        </div>
+        </header>
 
         {/* Tabla de notas editable y detalles completos */}
         <div className="animate-slide-up mx-auto mt-10 max-w-6xl rounded-2xl bg-[#1e2939] p-8 shadow-2xl">
