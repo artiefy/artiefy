@@ -475,6 +475,7 @@ export async function PATCH(request: Request) {
         'Egresado',
         'Aplaza',
         'Retirado',
+        'Estudiante',
       ];
 
       if (enrollmentStatus && validStatuses.includes(enrollmentStatus)) {
@@ -486,6 +487,7 @@ export async function PATCH(request: Request) {
             | 'Egresado'
             | 'Aplaza'
             | 'Retirado'
+            | 'Estudiante'
         );
         return NextResponse.json({ success: true });
       } else {

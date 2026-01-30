@@ -34,6 +34,7 @@ interface ActivityDetail {
   description: string;
   isCompleted: boolean;
   score: number;
+  parentTitle?: string; // Clase o lección a la que pertenece
 }
 
 interface UserInfo {
@@ -55,7 +56,8 @@ interface LessonDetail {
   title: string;
   progress: number;
   isCompleted: boolean;
-  lastUpdated: string; // Add this line
+  lastUpdated: string;
+  parentTitle?: string; // Título del módulo o clase padre (opcional)
 }
 
 export default function StudentCourseDashboard() {
@@ -132,7 +134,7 @@ export default function StudentCourseDashboard() {
                   src={
                     courseInfo?.coverImageKey
                       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${courseInfo.coverImageKey}`
-                      : '/img/curso-visual.png'
+                      : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="260" height="140" viewBox="0 0 260 140"><rect width="260" height="140" fill="%231e2939"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="%233AF4EF" font-family="Arial">Sin imagen</text></svg>'
                   }
                   alt="Visual del curso"
                   width={260}
@@ -185,7 +187,7 @@ export default function StudentCourseDashboard() {
         </header>
 
         {/* Tabla de notas editable y detalles completos */}
-        <div className="animate-slide-up mx-auto mt-10 max-w-6xl rounded-2xl bg-[#1e2939] p-8 shadow-2xl">
+        <div className="animate-slide-up mx-auto mt-10 max-w-6xl rounded-2xl bg-[#1e2939] p-4 shadow-2xl md:p-8">
           <h2 className="animate-fade-in mb-6 text-center text-2xl font-bold text-[#3AF4EF]">
             Clases y Notas del Estudiante
           </h2>
@@ -197,62 +199,24 @@ export default function StudentCourseDashboard() {
               </span>
             </div>
           ) : stats ? (
-            <div className="animate-fade-in overflow-x-auto">
-              {/* Tabla de lecciones/clases */}
-              <h3 className="mb-4 text-lg font-bold text-[#3AF4EF]">
-                Progreso por Clases
-              </h3>
-              <table className="mb-8 w-full border-separate border-spacing-y-2">
-                <thead>
-                  <tr className="bg-[#182235] text-lg text-[#3AF4EF]">
-                    <th className="rounded-l-xl px-6 py-3">Clase</th>
-                    <th className="px-6 py-3">Progreso (%)</th>
-                    <th className="px-6 py-3">Estado</th>
-                    <th className="rounded-r-xl px-6 py-3">
-                      Última actualización
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.lessonDetails?.map((lesson) => (
-                    <tr
-                      key={lesson.lessonId}
-                      className="bg-[#101A2B] text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:bg-[#232B3E]"
-                    >
-                      <td className="px-6 py-4 font-semibold text-[#3AF4EF]">
-                        {lesson.title}
-                      </td>
-                      <td className="px-6 py-4 text-center text-lg font-bold">
-                        {lesson.progress ?? 0}%
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${lesson.isCompleted ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
-                        >
-                          {lesson.isCompleted ? 'Completada' : 'Pendiente'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center text-xs text-white/70">
-                        {lesson.lastUpdated
-                          ? new Date(lesson.lastUpdated).toLocaleDateString()
-                          : '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="animate-fade-in w-full overflow-x-auto">
               {/* Tabla de actividades/notas */}
               <h3 className="mb-4 text-lg font-bold text-[#3AF4EF]">
                 Notas por Actividad
               </h3>
-              <table className="w-full border-separate border-spacing-y-2">
+              <table className="w-full min-w-[750px] border-separate border-spacing-y-2 text-xs md:text-base">
                 <thead>
-                  <tr className="bg-[#182235] text-lg text-[#3AF4EF]">
-                    <th className="rounded-l-xl px-6 py-3">Actividad</th>
-                    <th className="px-6 py-3">Descripción</th>
-                    <th className="px-6 py-3">Estado</th>
-                    <th className="px-6 py-3">Nota</th>
-                    <th className="rounded-r-xl px-6 py-3">Editar</th>
+                  <tr className="bg-[#182235] text-[#3AF4EF]">
+                    <th className="rounded-l-xl px-2 py-2 md:px-6 md:py-3">
+                      Actividad
+                    </th>
+                    <th className="px-2 py-2 md:px-6 md:py-3">Descripción</th>
+                    <th className="px-2 py-2 md:px-6 md:py-3">Clase</th>
+                    <th className="px-2 py-2 md:px-6 md:py-3">Estado</th>
+                    <th className="px-2 py-2 md:px-6 md:py-3">Nota</th>
+                    <th className="rounded-r-xl px-2 py-2 md:px-6 md:py-3">
+                      Editar
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -261,29 +225,32 @@ export default function StudentCourseDashboard() {
                       key={activity.activityId}
                       className="bg-[#101A2B] text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:bg-[#232B3E]"
                     >
-                      <td className="px-6 py-4 font-semibold text-[#3AF4EF]">
+                      <td className="px-2 py-2 font-semibold text-[#3AF4EF] md:px-6 md:py-4">
                         {activity.name}
                       </td>
-                      <td className="px-6 py-4 text-white/80">
+                      <td className="px-2 py-2 text-white/80 md:px-6 md:py-4">
                         {activity.description}
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-2 py-2 text-white/80 md:px-6 md:py-4">
+                        {activity.parentTitle ?? '—'}
+                      </td>
+                      <td className="px-2 py-2 text-center md:px-6 md:py-4">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-bold ${activity.isCompleted ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
                         >
                           {activity.isCompleted ? 'Completada' : 'Pendiente'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-center text-lg font-bold">
+                      <td className="px-2 py-2 text-center text-base font-bold md:px-6 md:py-4 md:text-lg">
                         {activity.score ?? 0}
                       </td>
-                      <td className="px-6 py-4 text-center">
+                      <td className="px-2 py-2 text-center md:px-6 md:py-4">
                         <input
                           type="number"
                           min={0}
                           max={100}
                           step={0.5}
-                          className="w-20 rounded-lg border-2 border-[#3AF4EF] bg-[#232B3E] px-2 py-1 text-center font-bold text-[#3AF4EF] shadow-md transition-all duration-300 focus:scale-105 focus:border-[#3AF4EF] focus:bg-[#101A2B] focus:outline-none"
+                          className="w-16 rounded-lg border-2 border-[#3AF4EF] bg-[#232B3E] px-2 py-1 text-center font-bold text-[#3AF4EF] shadow-md transition-all duration-300 focus:scale-105 focus:border-[#3AF4EF] focus:bg-[#101A2B] focus:outline-none md:w-20"
                           value={activity.score ?? 0}
                           onChange={(e) => {
                             const newScore = parseFloat(e.target.value);

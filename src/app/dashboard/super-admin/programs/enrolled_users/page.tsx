@@ -202,7 +202,13 @@ interface Student {
   enrolledInCourseLabel?: 'Sí' | 'No';
   inscripcionOrigen?: 'formulario' | 'artiefy';
   carteraStatus?: 'activo' | 'inactivo' | 'no verificado';
-  enrollmentStatus?: 'Nuevo' | 'Graduando' | 'Egresado' | 'Aplaza' | 'Retirado';
+  enrollmentStatus?:
+    | 'Nuevo'
+    | 'Graduando'
+    | 'Egresado'
+    | 'Aplaza'
+    | 'Retirado'
+    | 'Estudiante';
   userInscriptionDetails?: Record<string, unknown>;
 }
 
@@ -273,7 +279,14 @@ const allColumns: Column[] = [
     label: 'Estado',
     defaultVisible: true,
     type: 'select',
-    options: ['Nuevo', 'Graduando', 'Egresado', 'Aplaza', 'Retirado'],
+    options: [
+      'Nuevo',
+      'Graduando',
+      'Egresado',
+      'Aplaza',
+      'Retirado',
+      'Estudiante',
+    ],
   },
   {
     id: 'purchaseDate',
@@ -1274,7 +1287,14 @@ export default function EnrolledUsersPage() {
 
   // Opciones de estado de inscripción
   const enrollmentStatusOptions = useMemo(
-    () => ['Nuevo', 'Graduando', 'Egresado', 'Aplaza', 'Retirado'],
+    () => [
+      'Nuevo',
+      'Graduando',
+      'Egresado',
+      'Aplaza',
+      'Retirado',
+      'Estudiante',
+    ],
     []
   );
 
@@ -2389,6 +2409,7 @@ export default function EnrolledUsersPage() {
             'Egresado',
             'Aplaza',
             'Retirado',
+            'Estudiante',
           ];
           const trimmedEnrollmentStatus = (s.enrollmentStatus ?? '')
             .toString()
@@ -2401,7 +2422,8 @@ export default function EnrolledUsersPage() {
                 | 'Graduando'
                 | 'Egresado'
                 | 'Aplaza'
-                | 'Retirado')
+                | 'Retirado'
+                | 'Estudiante')
             : 'Nuevo';
 
           const obj: Student = {

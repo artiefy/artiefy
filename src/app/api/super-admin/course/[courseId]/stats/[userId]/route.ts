@@ -8,6 +8,7 @@ import {
   activities,
   courses,
   enrollments,
+  lessons,
   nivel,
   parametros,
   posts,
@@ -143,7 +144,7 @@ export async function GET(
         ? Math.round((completedLessons.length / totalLessons.length) * 100)
         : 0;
 
-    // 🔹 Obtener progreso en actividades y notas por actividad
+    // 🔹 Obtener progreso en actividades y notas por actividad, incluyendo la clase (lección) a la que pertenece
     const activityDetailsRaw = await db
       .select({
         activityId: userActivitiesProgress.activityId,
@@ -151,6 +152,7 @@ export async function GET(
         description: activities.description,
         isCompleted: userActivitiesProgress.isCompleted,
         score: scores.score,
+        parentTitle: lessons.title,
       })
       .from(userActivitiesProgress)
       .leftJoin(
@@ -161,7 +163,12 @@ export async function GET(
         scores,
         and(eq(scores.userId, userId), eq(scores.categoryid, activities.id))
       )
+      .leftJoin(lessons, eq(activities.lessonsId, lessons.id))
       .where(eq(userActivitiesProgress.userId, userId));
+    console.log(
+      '🟦 activityDetailsRaw:',
+      JSON.stringify(activityDetailsRaw, null, 2)
+    );
 
     // 🔹 Consultar Redis para cada actividad
     const activityDetails = await Promise.all(
@@ -177,10 +184,44 @@ export async function GET(
             typeof (data as { grade?: unknown }).grade === 'number'
           );
         };
-        return {
+        // Si no hay parentTitle, intentar buscarlo manualmente
+        let parentTitle = activity.parentTitle;
+        if (!parentTitle || parentTitle === '—') {
+          // Buscar la clase asociada a la actividad de forma typesafe
+          // Se asume que activity puede tener lessonsId o lessons_id (number | undefined)
+          const lessonsId: number | undefined =
+            (activity as { lessonsId?: number }).lessonsId ??
+            (activity as { lessons_id?: number }).lessons_id;
+          if (lessonsId) {
+            const lesson = await db
+              .select({ title: lessons.title })
+              .from(lessons)
+              .where(eq(lessons.id, lessonsId))
+              .limit(1);
+            if (lesson && lesson[0] && lesson[0].title) {
+              parentTitle = lesson[0].title;
+            } else {
+              console.warn(
+                '⚠️ Actividad sin clase asociada (lessonsId no encontrado):',
+                { activity, lessonsId }
+              );
+              parentTitle = '';
+            }
+          } else {
+            console.warn(
+              '⚠️ Actividad sin campo lessonsId/lessons_id:',
+              activity
+            );
+            parentTitle = '';
+          }
+        }
+        const result = {
           ...activity,
           score: hasGrade(redisData) ? redisData.grade : activity.score,
+          parentTitle,
         };
+        console.log('🟩 activityDetail result:', result);
+        return result;
       })
     );
 
