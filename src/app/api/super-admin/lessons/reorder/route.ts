@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { eq, inArray } from 'drizzle-orm';
-import { sql } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm'; // ...added inArray
+import { sql } from 'drizzle-orm'; // <-- needed for COALESCE
 
 import { db } from '~/server/db';
 import { lessons } from '~/server/db/schema';
 
 export async function POST(req: Request) {
   try {
-    // 1. Autenticación
+    // Verificar autenticación
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json(
@@ -18,11 +18,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Validar body
+    // Validar body
     const body = await req.json();
     const { lessonIds } = body as {
       lessonIds: { id: number; orderIndex: number }[];
     };
+
     if (!Array.isArray(lessonIds) || lessonIds.length === 0) {
       return NextResponse.json(
         { success: false, error: 'Formato inválido' },
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Obtener courseId de las lecciones
+    // Determinar courseId a partir de los lesson ids (asumimos same course)
     const ids = lessonIds.map((l) => l.id);
     const first = await db
       .select({ courseId: lessons.courseId })
@@ -38,6 +39,7 @@ export async function POST(req: Request) {
       .where(inArray(lessons.id, ids))
       .limit(1)
       .then((r) => r[0]);
+
     if (!first) {
       return NextResponse.json(
         { success: false, error: 'Lección no encontrada' },
@@ -46,33 +48,32 @@ export async function POST(req: Request) {
     }
     const courseId = first.courseId;
 
-    // 4. Calcular offset temporal para evitar colisiones
+    // Calcular tempOffset seguro: mayor que el max orderIndex actual para evitar colisiones
     const maxRow = await db
       .select({
         maxOrder: sql<number>`COALESCE(MAX(${lessons.orderIndex}), 0)`,
       })
       .from(lessons)
       .where(eq(lessons.courseId, courseId));
-    const maxOrder = maxRow?.[0]?.maxOrder ?? 0;
-    const tempOffset = Number(maxOrder) + 100000;
 
-    // 5. Actualizar en transacción
-    await db.transaction(async (tx) => {
-      // a) Asignar orderIndex temporal
-      for (const lesson of lessonIds) {
-        await tx
-          .update(lessons)
-          .set({ orderIndex: lesson.orderIndex + tempOffset })
-          .where(eq(lessons.id, lesson.id));
-      }
-      // b) Asignar orderIndex definitivo
-      for (const lesson of lessonIds) {
-        await tx
-          .update(lessons)
-          .set({ orderIndex: lesson.orderIndex })
-          .where(eq(lessons.id, lesson.id));
-      }
-    });
+    const maxOrder = maxRow?.[0]?.maxOrder ?? 0;
+    const tempOffset = Number(maxOrder) + 100000; // suficientemente grande para evitar colisiones
+
+    // 1. Actualiza los orderIndex a valores temporales (dentro del mismo curso y sólo para los ids enviados)
+    for (const lesson of lessonIds) {
+      await db
+        .update(lessons)
+        .set({ orderIndex: lesson.orderIndex + tempOffset })
+        .where(eq(lessons.id, lesson.id));
+    }
+
+    // 2. Asigna los orderIndex definitivos (sin usar condiciones que puedan colisionar)
+    for (const lesson of lessonIds) {
+      await db
+        .update(lessons)
+        .set({ orderIndex: lesson.orderIndex })
+        .where(eq(lessons.id, lesson.id));
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
