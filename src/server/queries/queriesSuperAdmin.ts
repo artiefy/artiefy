@@ -988,7 +988,7 @@ export async function updateFullUser(
           | 'Egresado'
           | 'Aplaza'
           | 'Retirado'
-          |'Estudiante'
+          | 'Estudiante'
           | null => {
           const validStatuses = [
             'Nuevo',
@@ -996,7 +996,7 @@ export async function updateFullUser(
             'Egresado',
             'Aplaza',
             'Retirado',
-            'Estudiante'
+            'Estudiante',
           ];
           const trimmed = (enrollmentStatus ?? '').toString().trim();
           if (trimmed && validStatuses.includes(trimmed)) {
@@ -1005,7 +1005,8 @@ export async function updateFullUser(
               | 'Graduando'
               | 'Egresado'
               | 'Aplaza'
-              | 'Retirado';
+              | 'Retirado'
+              | 'Estudiante';
           }
           return null;
         })(),
