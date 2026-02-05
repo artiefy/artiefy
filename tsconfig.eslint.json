@@ -7,7 +7,8 @@
     "next-video.config.js",
     "postcss.config.js",
     "drizzle.config.ts",
-    "video.d.ts"
+    "video.d.ts",
+    "test-embeddings.ts"
   ],
   "exclude": [
     "node_modules",

@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Portal } from '@radix-ui/react-portal';
 import {
+  Brain,
   CornerDownLeft,
   ImageIcon,
   Mic,
@@ -36,6 +37,8 @@ import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
+import { CourseSearchModal } from '~/components/embeddings/CourseSearchModal';
+import { EmbeddingsGenerator } from '~/components/embeddings/EmbeddingsGenerator';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
 import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
 import { ScheduledMeetingsList } from '~/components/super-admin/layout/ScheduledMeetingsList';
@@ -494,6 +497,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Estado para el scroll y la tarjeta mini sticky
   const [showStickyCard, setShowStickyCard] = useState(false);
+
+  // Estado para el modal de búsqueda de curso
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isGeneratingEmbeddings, setIsGeneratingEmbeddings] = useState(false);
 
   // Estados para foros
   const [forums, setForums] = useState<Forum[]>([]);
@@ -1522,6 +1529,44 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     setIsModalOpen(true);
   };
 
+  const handleGenerateEmbeddings = async () => {
+    if (!course) return;
+
+    setIsGeneratingEmbeddings(true);
+    try {
+      const response = await fetch('/api/embeddings/regenerate-course', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ courseId: course.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al generar embeddings');
+      }
+
+      const data = (await response.json()) as {
+        success: boolean;
+        message: string;
+      };
+      if (data.success) {
+        toast.success(
+          data.message ||
+            'Embeddings generados exitosamente. Ya puedes hacer preguntas.'
+        );
+      } else {
+        toast.error('Error al generar embeddings');
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Error desconocido';
+      toast.error(errorMsg);
+      console.error('Error generando embeddings:', err);
+    } finally {
+      setIsGeneratingEmbeddings(false);
+    }
+  };
+
   // Verificar si se está cargando
   if (loading) {
     return (
@@ -2140,12 +2185,38 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   quality={75}
                 />
               </div>
-              <div className="grid w-full grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+              <div className="grid w-full grid-cols-2 gap-2 md:grid-cols-5 md:gap-3">
                 <Button
                   onClick={handleEnrollAndRedirect}
                   className="w-full bg-cyan-500 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-cyan-600 md:px-4 md:py-3 md:text-sm"
                 >
                   Ver
+                </Button>
+                <Button
+                  onClick={() => setIsSearchModalOpen(true)}
+                  className="flex w-full items-center justify-center gap-1 bg-purple-600 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-purple-700 md:px-4 md:py-3 md:text-sm"
+                  title="Buscar información del curso con IA"
+                >
+                  <Brain className="h-3 w-3 md:h-4 md:w-4" />
+                  <span className="hidden sm:inline">Preguntar</span>
+                </Button>
+                <Button
+                  onClick={handleGenerateEmbeddings}
+                  disabled={isGeneratingEmbeddings}
+                  className="flex w-full items-center justify-center gap-1 bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 md:px-4 md:py-3 md:text-sm"
+                  title="Regenerar embeddings del curso para búsqueda"
+                >
+                  {isGeneratingEmbeddings ? (
+                    <>
+                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent md:h-4 md:w-4" />
+                      <span className="hidden sm:inline">Indexando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-lg">⚡</span>
+                      <span className="hidden sm:inline">Indexar</span>
+                    </>
+                  )}
                 </Button>
                 <Button
                   onClick={handleEditCourse}
@@ -2508,6 +2579,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
                       5
                     </span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('embeddings')}
+                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
+                      activeTab === 'embeddings'
+                        ? 'border-cyan-400 text-white'
+                        : 'border-transparent text-white/60 hover:text-white'
+                    }`}
+                  >
+                    🧠 Embeddings
                   </button>
                 </div>
               </div>
@@ -4153,6 +4235,26 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
                   </div>
                 )}
+
+                {/* Embeddings Tab */}
+                {activeTab === 'embeddings' && (
+                  <div className="animate-in fade-in duration-500">
+                    <h2 className="mb-6 text-2xl font-bold text-white">
+                      🧠 Sistema de Embeddings
+                    </h2>
+                    <p className="mb-6 text-white/70">
+                      Genera embeddings vectoriales para búsquedas semánticas
+                      inteligentes en el contenido del curso
+                    </p>
+                    {course && (
+                      <EmbeddingsGenerator
+                        courseId={courseIdNumber}
+                        courseTitle={course.title}
+                        courseDescription={course.description}
+                      />
+                    )}
+                  </div>
+                )}
                 {/* ⬅️ VERIFICA QUE ESTE CIERRE ESTÉ AQUÍ */}
               </div>
             </div>
@@ -4286,6 +4388,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           />
         </div>
       )}
+
+      {/* Modal de Búsqueda de Curso */}
+      <CourseSearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        courseId={courseIdNumber}
+        courseTitle={course?.title || 'Curso'}
+      />
     </div>
   );
 };
