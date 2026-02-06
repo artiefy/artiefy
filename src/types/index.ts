@@ -313,16 +313,40 @@ export interface Project {
   justificacion: string;
   objetivo_general: string;
   coverImageKey: string | null;
-  type_project: string;
+  coverVideoKey?: string | null;
+  type_project: string; // Legacy field
+  projectTypeId?: number | null; // New normalized field
   userId: string;
+  courseId?: number | null; // Proyecto asociado a un curso
   categoryId: number;
   isPublic: boolean;
+  needsCollaborators?: boolean; // Nuevo campo
   createdAt: Date;
   updatedAt: Date;
   category?: {
     id: number;
     name: string;
   };
+  projectType?: {
+    id: number;
+    name: string;
+    description?: string | null;
+    icon?: string | null;
+  };
+  course?: {
+    id: number;
+    title: string;
+  };
+}
+
+export interface ProjectType {
+  id: number;
+  name: string;
+  description?: string | null;
+  icon?: string | null;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ProjectTaken {

@@ -14,23 +14,32 @@ import {
 
 interface ProjectData {
   name: string;
+  description?: string;
   planteamiento: string;
   justificacion: string;
   objetivo_general: string;
+  requirements?: string;
+  durationEstimate?: number;
+  durationUnit?: 'dias' | 'semanas' | 'meses' | 'anos';
   objetivos_especificos?: { id: string; title: string }[]; // <-- Cambia a array de objetos
   actividades?: {
     descripcion: string;
     meses: number[]; // Ej: [0, 1, 2] para Ene-Feb-Mar
     objetivoId?: string;
+    startDate?: string | null;
+    endDate?: string | null;
     responsibleUserId?: string; // <-- Añadir
     hoursPerDay?: number; // <-- Añadir
   }[];
   integrantes?: number[]; // Aún no usados
   coverImageKey?: string; // ya está incluido
   coverVideoKey?: string; // <-- Nuevo campo
-  type_project: string;
+  type_project: string; // Legacy field
+  projectTypeId?: number; // Nuevo campo normalizado
   categoryId: number;
+  courseId?: number; // Proyecto asociado a un curso
   isPublic?: boolean;
+  needsCollaborators?: boolean; // Nuevo campo
   fechaInicio?: string;
   fechaFin?: string;
   tipoVisualizacion?: 'meses' | 'dias';
@@ -95,27 +104,40 @@ export async function createProject(
     }
   }
 
+  const normalizeDate = (value?: string | null) => {
+    if (!value) return null;
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  };
+
   // 1. Crear el proyecto
   const insertedProjects = await db
     .insert(projects)
     .values({
       name: projectData.name,
+      description: projectData.description ?? null,
       planteamiento: projectData.planteamiento,
       justificacion: projectData.justificacion,
       objetivo_general: projectData.objetivo_general,
       coverImageKey: projectData.coverImageKey ?? null,
       coverVideoKey: projectData.coverVideoKey ?? null, // <-- Nuevo
-      type_project: projectData.type_project,
+      type_project: projectData.type_project, // Mantener por compatibilidad
+      projectTypeId: projectData.projectTypeId ?? null, // Nuevo campo normalizado
       userId: UserId,
+      courseId: projectData.courseId ?? null, // Curso asociado (opcional)
       categoryId: projectData.categoryId,
       isPublic: projectData.isPublic ?? false,
+      needsCollaborators: projectData.needsCollaborators ?? false, // Nuevo campo
+      requirements: projectData.requirements ?? null,
       // Usa exactamente las fechas seleccionadas por el usuario para inicio y fin
-      fecha_inicio: projectData.fechaInicio ?? null,
-      fecha_fin: projectData.fechaFin ?? null,
+      fecha_inicio: normalizeDate(projectData.fechaInicio),
+      fecha_fin: normalizeDate(projectData.fechaFin),
+      duration_unit: projectData.durationUnit ?? null,
       tipo_visualizacion: projectData.tipoVisualizacion ?? 'meses',
       horas_por_dia: projectData.horasPorDia ?? null, // NUEVO
       total_horas: projectData.totalHoras ?? null, // NUEVO
-      tiempo_estimado: projectData.tiempoEstimado ?? null, // NUEVO
+      tiempo_estimado:
+        projectData.durationEstimate ?? projectData.tiempoEstimado ?? null, // NUEVO
       dias_estimados: projectData.diasEstimados ?? null, // NUEVO
       dias_necesarios: projectData.diasNecesarios ?? null, // NUEVO
       createdAt: new Date(), // <-- Fecha real de creación
@@ -181,6 +203,8 @@ export async function createProject(
           projectId,
           objectiveId: realObjectiveId,
           description: actividad.descripcion,
+          startDate: actividad.startDate ?? null,
+          endDate: actividad.endDate ?? null,
           responsibleUserId: actividad.responsibleUserId ?? null, // <-- Asegura que se guarda
           hoursPerDay: actividad.hoursPerDay ?? 1,
         })

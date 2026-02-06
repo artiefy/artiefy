@@ -306,23 +306,33 @@ export const courseInstructors = pgTable(
 export const projects = pgTable('projects', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull(),
-  planteamiento: text('planteamiento').notNull(),
+  description: text('description'), // Descripción general generada por IA
+  planteamiento: text('planteamiento').notNull(), // Problema a resolver
   justificacion: text('justificacion').notNull(),
   objetivo_general: text('objetivo_general').notNull(),
+  requirements: text('requirements'), // Requisitos del proyecto (JSON array)
   coverImageKey: text('cover_image_key'),
-  coverVideoKey: text('cover_video_key'), // <-- Nuevo campo para video
-  type_project: varchar('type_project', { length: 255 }).notNull(),
+  coverVideoKey: text('cover_video_key'),
+  type_project: varchar('type_project', { length: 255 }).notNull(), // Mantener por compatibilidad
+  projectTypeId: integer('project_type_id')
+    .references(() => projectTypes.id)
+    .default(sql`NULL`),
   userId: text('user_id')
     .references(() => users.id)
     .notNull(),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .default(sql`NULL`), // Opcional: proyecto asociado a un curso
   categoryId: integer('category_id')
     .references(() => categories.id)
     .notNull(),
   isPublic: boolean('is_public').default(false).notNull(),
+  needsCollaborators: boolean('needs_collaborators').default(false).notNull(),
   publicComment: text('public_comment'), // <-- Nuevo campo para comentario público
   // Cambia estos campos a snake_case para que Drizzle los mapee correctamente
   fecha_inicio: date('fecha_inicio'),
   fecha_fin: date('fecha_fin'),
+  duration_unit: varchar('duration_unit', { length: 50 }), // 'dias', 'semanas', 'meses'
   tipo_visualizacion: text('tipo_visualizacion', {
     enum: ['meses', 'dias'],
   }).default('meses'),
@@ -333,6 +343,7 @@ export const projects = pgTable('projects', {
   tiempo_estimado: integer('tiempo_estimado'), // NUEVO: Tiempo estimado (en días o similar)
   dias_estimados: integer('dias_estimados'), // NUEVO: Días estimados por cálculo automático
   dias_necesarios: integer('dias_necesarios'), // NUEVO: Días necesarios por edición manual
+  multimedia: text('multimedia'), // NUEVO: JSON array de multimedia (imágenes y videos adicionales)
 });
 
 // Tabla de objetivos especificos proyectos
@@ -363,6 +374,13 @@ export const projectActivities = pgTable('project_activities', {
   objectiveId: integer('objective_id') // <-- NUEVO: relación con specific_objectives
     .references(() => specificObjectives.id, { onDelete: 'cascade' }),
   description: text('description').notNull(),
+  startDate: date('start_date'),
+  endDate: date('end_date'),
+  deliverableKey: text('deliverable_key'),
+  deliverableUrl: text('deliverable_url'),
+  deliverableName: text('deliverable_name'),
+  deliverableDescription: text('deliverable_description'),
+  deliverableSubmittedAt: timestamp('deliverable_submitted_at'),
   // IMPORTANTE: El nombre en la BD es 'responsible_user_id', en el frontend mapea como 'responsibleUserId'
   responsibleUserId: text('responsible_user_id').references(() => users.id), // Usuario responsable (puede ser null)
   hoursPerDay: integer('hours_per_day'), // Horas al día dedicadas a la actividad
@@ -899,6 +917,14 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   category: one(categories, {
     fields: [projects.categoryId],
     references: [categories.id],
+  }),
+  projectType: one(projectTypes, {
+    fields: [projects.projectTypeId],
+    references: [projectTypes.id],
+  }),
+  course: one(courses, {
+    fields: [projects.courseId],
+    references: [courses.id],
   }),
   projectsTaken: many(projectsTaken),
   specificObjectives: many(specificObjectives),
@@ -1722,6 +1748,7 @@ export const projectTypes = pgTable('project_types', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 255 }).notNull().unique(),
   description: text('description'),
+  icon: varchar('icon', { length: 50 }), // Icono del tipo de proyecto
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true })
     .defaultNow()
@@ -1774,6 +1801,7 @@ export const projectTypePhases = pgTable(
 // ✅ Relaciones para projectTypes
 export const projectTypesRelations = relations(projectTypes, ({ many }) => ({
   typePhases: many(projectTypePhases),
+  projects: many(projects), // Relación con proyectos
 }));
 
 // ✅ Relaciones para projectPhases

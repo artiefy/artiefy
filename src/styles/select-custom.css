@@ -1,0 +1,75 @@
+/* Custom Select Styles */
+[data-slot='select-trigger'] {
+  height: 48px;
+  font-size: 1rem;
+  font-weight: 500;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 16px;
+}
+
+/* Prevent width changes when selecting */
+[data-slot='select-value'] {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-clamp: 1;
+}
+
+[data-slot='select-content'] {
+  background-color: #061c37 !important;
+  border: none !important;
+  border-radius: 16px;
+  margin-top: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-width: auto;
+  padding: 8px 4px !important;
+  overflow: visible !important;
+}
+
+[data-slot='select-item'][data-state='checked'],
+[data-slot='select-item'][data-state='unchecked'] {
+  background-color: transparent;
+  color: white;
+  padding: 8px 24px 8px 16px;
+  font-size: 1rem;
+  font-weight: 400;
+  min-width: auto;
+  border-radius: 16px;
+}
+
+[data-slot='select-item']:hover {
+  background-color: #22c4d3 !important;
+  color: black !important;
+  font-weight: 400;
+  padding: 8px 24px 8px 16px;
+  border-radius: 16px;
+}
+
+[data-slot='select-item']:focus {
+  background-color: #22c4d3 !important;
+  color: black !important;
+  outline: none;
+}
+
+/* Ensure text is white by default */
+[data-slot='select-item'] {
+  color: white;
+  transition: none;
+}
+
+/* Remove default focus background */
+[data-slot='select-item']:focus-visible {
+  background-color: #22c4d3 !important;
+  color: black !important;
+}
+
+/* Viewport styling */
+[data-slot='select-viewport'] {
+  overflow: visible !important;
+}

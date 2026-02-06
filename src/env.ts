@@ -70,6 +70,7 @@ export const env = createEnv({
     NEXT_PUBLIC_AWS_S3_URL: z.string().url(),
     NEXT_PUBLIC_BASE_URL: z.string().url(),
     NEXT_PUBLIC_PAYU_URL: z.string().url(),
+    NEXT_PUBLIC_N8N_WEBHOOK_URL: z.string().url(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -114,6 +115,7 @@ export const env = createEnv({
     CONFIRMATION_URL_PLANS: process.env.CONFIRMATION_URL_PLANS,
     CONFIRMATION_URL_COURSES: process.env.CONFIRMATION_URL_COURSES,
     NEXT_PUBLIC_PAYU_URL: process.env.NEXT_PUBLIC_PAYU_URL,
+    NEXT_PUBLIC_N8N_WEBHOOK_URL: process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL,
 
     PASS: process.env.PASS,
 

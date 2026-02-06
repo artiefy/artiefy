@@ -207,5 +207,5 @@
     "node": "24.x",
     "npm": "11.x"
   },
-  "packageManager": "npm@11.8.0"
+  "packageManager": "npm@11.9.0"
 }

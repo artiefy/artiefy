@@ -1,15 +1,13 @@
 //src\server\db\index.ts
 import { neon } from '@neondatabase/serverless';
-import { config } from 'dotenv';
 import { drizzle } from 'drizzle-orm/neon-http';
+
+import { env } from '~/env';
 
 import * as schema from './schema';
 
-// Carga variables de entorno desde .env o .env.local
-config({ path: '.env' });
-
 // Inicializa la conexión a Neon usando la URL de la base de datos
-const sql = neon(process.env.POSTGRES_URL!);
+const sql = neon(env.POSTGRES_URL);
 
 // Exporta la conexión Drizzle para usarla en otros lugares del proyecto
-export const db = drizzle(sql, { schema });
+export const db = drizzle({ client: sql, schema });

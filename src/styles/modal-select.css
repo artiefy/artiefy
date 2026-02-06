@@ -1,0 +1,45 @@
+/* Estilos para los selectores en ModalResumen */
+
+/* Select hover y focus */
+select:hover {
+  background-color: #061c3780 !important;
+}
+
+select:focus {
+  background-color: #061c3780 !important;
+}
+
+/* Opciones (items) del select */
+option {
+  background-color: #061c37 !important;
+  color: white !important;
+  padding: 8px 0;
+}
+
+option:checked {
+  background: linear-gradient(#22c4d3, #22c4d3) !important;
+  background-color: #22c4d3 !important;
+  color: black !important;
+}
+
+option:hover {
+  background: linear-gradient(#22c4d3, #22c4d3) !important;
+  background-color: #22c4d3 !important;
+  color: black !important;
+}
+
+/* Firefox específicamente */
+select option {
+  background-color: #061c37 !important;
+  color: white !important;
+}
+
+select option:checked {
+  background: linear-gradient(#22c4d3, #22c4d3) !important;
+  color: black !important;
+}
+
+select option:hover {
+  background: linear-gradient(#22c4d3, #22c4d3) !important;
+  color: black !important;
+}

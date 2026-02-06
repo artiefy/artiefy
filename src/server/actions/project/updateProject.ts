@@ -1,5 +1,7 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
+
 import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
@@ -13,25 +15,33 @@ import {
 
 interface UpdateProjectData {
   name?: string;
+  description?: string;
   planteamiento?: string;
   justificacion?: string;
   objetivo_general?: string;
-  objetivos_especificos?: string[];
+  requirements?: string;
+  durationEstimate?: number;
+  durationUnit?: 'dias' | 'semanas' | 'meses' | 'anos';
+  objetivos_especificos?: Array<string | { id?: string; title: string }>;
   actividades?: {
     descripcion: string;
     meses: number[];
     objetivoId?: string;
-    responsibleUserId?: string; // <-- Añadir
-    hoursPerDay?: number; // <-- Añadir
+    objetivoIndex?: number;
+    startDate?: string | null;
+    endDate?: string | null;
+    responsibleUserId?: string;
+    hoursPerDay?: number;
   }[];
   coverImageKey?: string;
   type_project?: string;
   categoryId?: number;
   isPublic?: boolean;
+  needsCollaborators?: boolean;
   fechaInicio?: string;
   fechaFin?: string;
   tipoVisualizacion?: 'meses' | 'dias';
-  publicComment?: string; // <-- Nuevo campo
+  publicComment?: string;
 }
 
 export async function updateProject(
@@ -60,29 +70,38 @@ export async function updateProject(
   // Preparar datos de actualización con tipos correctos
   const updateData: {
     name?: string;
+    description?: string;
     planteamiento?: string;
     justificacion?: string;
     objetivo_general?: string;
+    requirements?: string | null;
     coverImageKey?: string;
     type_project?: string;
     categoryId?: number;
     isPublic?: boolean;
+    needsCollaborators?: boolean;
     fecha_inicio?: string | null;
     fecha_fin?: string | null;
+    duration_unit?: string | null;
     tipo_visualizacion?: 'meses' | 'dias';
     publicComment?: string;
+    tiempo_estimado?: number | null;
     updatedAt: Date;
   } = {
     updatedAt: new Date(),
   };
 
   if (projectData.name !== undefined) updateData.name = projectData.name;
+  if (projectData.description !== undefined)
+    updateData.description = projectData.description;
   if (projectData.planteamiento !== undefined)
     updateData.planteamiento = projectData.planteamiento;
   if (projectData.justificacion !== undefined)
     updateData.justificacion = projectData.justificacion;
   if (projectData.objetivo_general !== undefined)
     updateData.objetivo_general = projectData.objetivo_general;
+  if (projectData.requirements !== undefined)
+    updateData.requirements = projectData.requirements;
   if (projectData.coverImageKey !== undefined)
     updateData.coverImageKey = projectData.coverImageKey;
   if (projectData.type_project !== undefined)
@@ -91,14 +110,22 @@ export async function updateProject(
     updateData.categoryId = projectData.categoryId;
   if (projectData.isPublic !== undefined)
     updateData.isPublic = projectData.isPublic;
+  if (projectData.needsCollaborators !== undefined)
+    updateData.needsCollaborators = projectData.needsCollaborators;
   if (projectData.fechaInicio !== undefined && projectData.fechaInicio !== '') {
     updateData.fecha_inicio = projectData.fechaInicio;
   }
   if (projectData.fechaFin !== undefined && projectData.fechaFin !== '') {
     updateData.fecha_fin = projectData.fechaFin;
   }
+  if (projectData.durationUnit !== undefined) {
+    updateData.duration_unit = projectData.durationUnit;
+  }
   if (projectData.tipoVisualizacion !== undefined) {
     updateData.tipo_visualizacion = projectData.tipoVisualizacion;
+  }
+  if (projectData.durationEstimate !== undefined) {
+    updateData.tiempo_estimado = projectData.durationEstimate;
   }
   if (projectData.publicComment !== undefined)
     updateData.publicComment = projectData.publicComment;
@@ -109,6 +136,8 @@ export async function updateProject(
   // Actualizar el proyecto
   await db.update(projects).set(updateData).where(eq(projects.id, projectId));
 
+  let objetivosIdMap: Record<string, number> = {};
+
   // Actualizar objetivos específicos si se proporcionan
   if (projectData.objetivos_especificos) {
     // Eliminar objetivos existentes
@@ -118,12 +147,30 @@ export async function updateProject(
 
     // Insertar nuevos objetivos
     if (projectData.objetivos_especificos.length > 0) {
-      const objetivosData = projectData.objetivos_especificos.map((desc) => ({
+      const objetivosArray = projectData.objetivos_especificos.map(
+        (obj, index) => {
+          if (typeof obj === 'string') {
+            return { key: `idx_${index}`, title: obj };
+          }
+          const key = obj.id ? String(obj.id) : `idx_${index}`;
+          return { key, title: obj.title };
+        }
+      );
+
+      const objetivosData = objetivosArray.map((obj) => ({
         projectId,
-        description: desc,
+        description: obj.title,
         createdAt: new Date(),
       }));
-      await db.insert(specificObjectives).values(objetivosData);
+
+      const inserted = await db
+        .insert(specificObjectives)
+        .values(objetivosData)
+        .returning({ id: specificObjectives.id });
+
+      objetivosIdMap = Object.fromEntries(
+        objetivosArray.map((obj, idx) => [obj.key, inserted[idx].id])
+      );
     }
   }
 
@@ -132,8 +179,24 @@ export async function updateProject(
     // Obtener IDs de actividades existentes
     const existingActivities = await db.query.projectActivities.findMany({
       where: eq(projectActivities.projectId, projectId),
-      columns: { id: true },
+      columns: {
+        id: true,
+        description: true,
+        objectiveId: true,
+        deliverableKey: true,
+        deliverableUrl: true,
+        deliverableName: true,
+        deliverableDescription: true,
+        deliverableSubmittedAt: true,
+      },
     });
+
+    const deliverableMap = new Map(
+      existingActivities.map((activity) => [
+        `${activity.objectiveId ?? 'none'}::${activity.description}`,
+        activity,
+      ])
+    );
 
     // Eliminar cronograma existente
     for (const activity of existingActivities) {
@@ -156,11 +219,43 @@ export async function updateProject(
     // Insertar nuevas actividades y cronograma
     if (actividadesValidas.length > 0) {
       for (const actividad of actividadesValidas) {
+        const objetivoKey =
+          actividad.objetivoId ??
+          (typeof actividad.objetivoIndex === 'number'
+            ? `idx_${actividad.objetivoIndex}`
+            : undefined);
+
+        const objetivoIdFromMap =
+          objetivoKey && objetivosIdMap[objetivoKey]
+            ? objetivosIdMap[objetivoKey]
+            : undefined;
+
+        const objetivoIdFallback =
+          typeof actividad.objetivoId === 'string' &&
+          !Number.isNaN(Number(actividad.objetivoId))
+            ? Number(actividad.objetivoId)
+            : undefined;
+
+        const deliverableKeyMap = `${
+          objetivoIdFromMap ?? objetivoIdFallback ?? 'none'
+        }::${actividad.descripcion}`;
+        const existingDeliverable = deliverableMap.get(deliverableKeyMap);
+
         const [insertedActividad] = await db
           .insert(projectActivities)
           .values({
             projectId,
+            objectiveId: objetivoIdFromMap ?? objetivoIdFallback ?? null,
             description: actividad.descripcion,
+            startDate: actividad.startDate ?? null,
+            endDate: actividad.endDate ?? null,
+            deliverableKey: existingDeliverable?.deliverableKey ?? null,
+            deliverableUrl: existingDeliverable?.deliverableUrl ?? null,
+            deliverableName: existingDeliverable?.deliverableName ?? null,
+            deliverableDescription:
+              existingDeliverable?.deliverableDescription ?? null,
+            deliverableSubmittedAt:
+              existingDeliverable?.deliverableSubmittedAt ?? null,
             responsibleUserId: actividad.responsibleUserId ?? null,
             hoursPerDay: actividad.hoursPerDay ?? 1,
           })
@@ -179,6 +274,11 @@ export async function updateProject(
       }
     }
   }
+
+  // Revalidar las páginas relacionadas al proyecto
+  revalidatePath(`/estudiantes/projects/${projectId}`);
+  revalidatePath('/estudiantes/projects');
+  revalidatePath(`/educador/projects/${projectId}`);
 
   return { success: true };
 }
