@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
       name: string;
       description: string;
       lessonsId: number;
+      courseId: number;
       typeid: number;
       revisada: boolean;
       parametroId?: number | null;
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
       name,
       description,
       lessonsId,
+      courseId,
       typeid,
       revisada,
       parametroId,
@@ -70,6 +72,7 @@ export async function POST(request: NextRequest) {
       description,
       typeid,
       lessonsId,
+      courseId,
       revisada,
       parametroId: revisada ? parametroId : null,
       porcentaje: revisada ? porcentaje : 0,
@@ -91,6 +94,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       id: newActivity.id,
+      lessonsId: newActivity.lessonsId,
       message: 'Actividad creada exitosamente',
     });
   } catch (error) {

@@ -280,7 +280,13 @@ export async function updateMultipleUserStatus(
 
 export async function updateEnrollmentStatus(
   id: string,
-  enrollmentStatus: 'Nuevo' | 'Graduando' | 'Egresado' | 'Aplaza' | 'Retirado'
+  enrollmentStatus:
+    | 'Nuevo'
+    | 'Graduando'
+    | 'Egresado'
+    | 'Aplaza'
+    | 'Retirado'
+    | 'Estudiante'
 ) {
   try {
     await db
@@ -712,6 +718,7 @@ export interface FullUserUpdateInput {
     | 'Egresado'
     | 'Aplaza'
     | 'Retirado'
+    | 'Estudiante'
     | null;
   // matriculas
   programId?: number | null;
@@ -981,6 +988,7 @@ export async function updateFullUser(
           | 'Egresado'
           | 'Aplaza'
           | 'Retirado'
+          | 'Estudiante'
           | null => {
           const validStatuses = [
             'Nuevo',
@@ -988,6 +996,7 @@ export async function updateFullUser(
             'Egresado',
             'Aplaza',
             'Retirado',
+            'Estudiante',
           ];
           const trimmed = (enrollmentStatus ?? '').toString().trim();
           if (trimmed && validStatuses.includes(trimmed)) {
@@ -996,7 +1005,8 @@ export async function updateFullUser(
               | 'Graduando'
               | 'Egresado'
               | 'Aplaza'
-              | 'Retirado';
+              | 'Retirado'
+              | 'Estudiante';
           }
           return null;
         })(),

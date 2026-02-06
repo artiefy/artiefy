@@ -10,6 +10,8 @@ import {
   users,
 } from '~/server/db/schema';
 
+import { createTemporaryLesson } from './lessonsModels';
+
 // Interfaces
 export interface Activity {
   id: number;
@@ -59,6 +61,7 @@ interface CreateActivityParams {
   description: string;
   typeid: number;
   lessonsId: number;
+  courseId: number;
   revisada: boolean;
   parametroId?: number | null;
   porcentaje: number;
@@ -69,13 +72,52 @@ interface CreateActivityParams {
 // Crear una nueva actividad
 export async function createActivity(params: CreateActivityParams) {
   try {
+    let finalLessonsId = params.lessonsId;
+    let courseId = params.courseId;
+
+    // Si courseId no se proporciona, obtener el primer curso disponible
+    if (!courseId || courseId <= 0) {
+      console.warn('⚠️ courseId no proporcionado, buscando curso por defecto');
+      const defaultCourse = await db
+        .select({ id: courses.id })
+        .from(courses)
+        .limit(1);
+
+      if (!defaultCourse[0]) {
+        throw new Error('No hay cursos disponibles para crear una lección temporal');
+      }
+
+      courseId = defaultCourse[0].id;
+      console.log(`📚 Usando curso por defecto: ${courseId}`);
+    }
+
+    // Validar que lessonsId sea válido
+    if (!finalLessonsId || finalLessonsId <= 0) {
+      console.warn('⚠️ lessonsId inválido o no proporcionado');
+      console.log(`📚 Creando lección temporal para curso ${courseId}`);
+      finalLessonsId = await createTemporaryLesson(courseId);
+    } else {
+      // Verificar que la lección existe
+      const lesson = await db
+        .select({ id: lessons.id })
+        .from(lessons)
+        .where(eq(lessons.id, finalLessonsId))
+        .limit(1);
+
+      if (!lesson[0]) {
+        console.warn(`⚠️ Lección ${finalLessonsId} no existe, creando lección temporal`);
+        console.log(`📚 Creando lección temporal para curso ${courseId}`);
+        finalLessonsId = await createTemporaryLesson(courseId);
+      }
+    }
+
     const newActivity = await db
       .insert(activities)
       .values({
         name: params.name,
         description: params.description,
         typeid: params.typeid,
-        lessonsId: params.lessonsId,
+        lessonsId: finalLessonsId,
         revisada: params.revisada,
         parametroId: params.parametroId ?? null,
         porcentaje: params.porcentaje ?? 0,
@@ -88,6 +130,7 @@ export async function createActivity(params: CreateActivityParams) {
       throw new Error('No se pudo crear la actividad');
     }
 
+    console.log(`✅ Actividad "${newActivity[0].name}" creada con lección temporal ID: ${finalLessonsId}`);
     return newActivity[0];
   } catch (error) {
     console.error('Error detallado:', error);

@@ -107,6 +107,7 @@
     "node-emoji": "^2.2.0",
     "nodemailer": "^7.0.12",
     "openai": "^6.16.0",
+    "pdfjs-dist": "^5.4.624",
     "pg": "^8.17.2",
     "plaiceholder": "^3.0.0",
     "postcss": "^8.5.6",

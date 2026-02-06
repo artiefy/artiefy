@@ -1,38 +1,41 @@
 #!/usr/bin/env tsx
-/*
-  scripts/regen-embeddings.ts
-  Recalcula embeddings de TODOS los cursos y los guarda en la columna pgvector `courses.embedding`.
+/**
+ * Script para regenerar embeddings de documentos
+ * Procesa contenido de cursos y genera embeddings vectoriales
+ *
+ * Uso:
+ *   npm run embeddings:regen -- --courseId=123
+ *   npm run embeddings:regen -- --all
+ *   npx tsx scripts/regen-embeddings.ts --courseId=123
+ */
 
-  Requisitos:
-  - .env con OPENAI_API_KEY configurada
-  - Conexión a DB (usa la misma de la app via src/server/db)
-  - Node 22+ y dev dep `tsx`
+// Cargar variables de entorno desde .env
+import 'dotenv/config';
 
-  Uso:
-    # Recalcular todo con concurrencia 2
-    npx tsx scripts/regen-embeddings.ts --concurrency=2
-
-    # Limitar a N cursos
-    npx tsx scripts/regen-embeddings.ts --limit=50
-
-    # Filtrar por IDs específicos
-    npx tsx scripts/regen-embeddings.ts --ids=1,2,3
-
-    # Seco (no escribe en DB)
-    npx tsx scripts/regen-embeddings.ts --dry
-*/
-
-import { eq, inArray } from 'drizzle-orm';
-import { setTimeout as sleep } from 'timers/promises';
-
+import {
+  processDocument,
+  getDocumentStats,
+} from '../src/lib/embeddings/processor';
+import {
+  saveDocumentEmbeddings,
+  deleteCourseEmbeddings,
+} from '../src/lib/embeddings/search';
 import { db } from '../src/server/db';
-import { courses } from '../src/server/db/schema';
+import {
+  courses,
+  lessons,
+  activities,
+  forums,
+  posts,
+  postReplies,
+  enrollments,
+  materias,
+} from '../src/server/db/schema';
+import { eq } from 'drizzle-orm';
 
 import 'dotenv/config';
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const OPENAI_EMBEDDING_MODEL =
-  process.env.OPENAI_EMBEDDING_MODEL ?? 'text-embedding-3-small';
 
 if (!OPENAI_API_KEY) {
   console.error('ERROR: Falta OPENAI_API_KEY en el entorno');
@@ -49,276 +52,591 @@ function parseArgs() {
   return out;
 }
 
-function buildCourseText(course: {
-  title: string;
-  description?: string | null;
-}) {
-  const parts: string[] = [];
-  const title = course.title ?? '';
-  const description = course.description ?? '';
-  if (title) parts.push(title);
-  if (description) parts.push(description);
+/**
+ * Función para extraer contenido del curso dividido en secciones
+ * Retorna un array de documentos por sección para mejor búsqueda
+ */
+async function extractCourseSections(
+  courseId: number
+): Promise<{ title: string; content: string; type: string; source: string }[]> {
+  const course = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, courseId));
 
-  const lower = (title + ' ' + description).toLowerCase();
-
-  if (lower.includes('veterin') || lower.includes('animal')) {
-    parts.push(
-      'veterinario veterinaria animales mascotas salud animal clínica veterinaria cuidado animal'
-    );
-  }
-  if (
-    lower.includes('programa') ||
-    lower.includes('software') ||
-    lower.includes('desarroll') ||
-    lower.includes('código') ||
-    lower.includes('comput') ||
-    lower.includes('web') ||
-    lower.includes('frontend') ||
-    lower.includes('backend')
-  ) {
-    parts.push(
-      'programación software desarrollo web frontend backend código computación informática sistemas aplicaciones tecnología'
-    );
-  }
-  if (
-    lower.includes('salud') ||
-    lower.includes('medic') ||
-    lower.includes('enfermer') ||
-    lower.includes('clínica') ||
-    lower.includes('hospital')
-  ) {
-    parts.push(
-      'salud medicina enfermería clínica hospital atención médica bienestar fisiología anatomía biología'
-    );
-  }
-  if (
-    lower.includes('belleza') ||
-    lower.includes('estética') ||
-    lower.includes('cosmetología') ||
-    lower.includes('maquillaje')
-  ) {
-    parts.push(
-      'belleza estética cosmetología maquillaje cuidado personal spa tratamientos piel cabello uñas'
-    );
-  }
-  if (
-    lower.includes('negocio') ||
-    lower.includes('empresa') ||
-    lower.includes('emprendimiento') ||
-    lower.includes('administración') ||
-    lower.includes('finanzas')
-  ) {
-    parts.push(
-      'negocios empresa emprendimiento administración finanzas marketing ventas gestión comercial economía liderazgo'
-    );
-  }
-  if (
-    lower.includes('educación') ||
-    lower.includes('docente') ||
-    lower.includes('pedagogía') ||
-    lower.includes('enseñanza')
-  ) {
-    parts.push(
-      'educación docente pedagogía enseñanza aprendizaje didáctica formación escuela universidad capacitación'
-    );
-  }
-  if (
-    lower.includes('ia') ||
-    lower.includes('inteligencia artificial') ||
-    lower.includes('machine learning') ||
-    lower.includes('aprendizaje automático') ||
-    lower.includes('algoritmo') ||
-    lower.includes('modelo') ||
-    lower.includes('python') ||
-    lower.includes('scikit') ||
-    lower.includes('tensorflow')
-  ) {
-    parts.push(
-      'inteligencia artificial IA machine learning aprendizaje automático algoritmos modelos datos python scikit-learn tensorflow deep learning redes neuronales'
-    );
-  }
-  if (
-    lower.includes('drone') ||
-    lower.includes('dron') ||
-    lower.includes('vuelo') ||
-    lower.includes('fotogrametría') ||
-    lower.includes('aéreo') ||
-    lower.includes('cartografía')
-  ) {
-    parts.push(
-      'drones dron vuelo fotogrametría cartografía inspección aérea automatización sensores agricultura fotografía aérea'
-    );
-  }
-  if (
-    lower.includes('energía') ||
-    lower.includes('solar') ||
-    lower.includes('fotovoltaico') ||
-    lower.includes('batería') ||
-    lower.includes('panel')
-  ) {
-    parts.push(
-      'energía solar fotovoltaica paneles baterías eficiencia energética almacenamiento renovables electricidad sistemas eléctricos'
-    );
-  }
-  if (
-    lower.includes('deporte') ||
-    lower.includes('ejercicio') ||
-    lower.includes('fisiología') ||
-    lower.includes('nutrición') ||
-    lower.includes('actividad física')
-  ) {
-    parts.push(
-      'deporte ejercicio fisiología nutrición actividad física entrenamiento rendimiento humano salud deportiva'
-    );
-  }
-  if (
-    lower.includes('comunicación') ||
-    lower.includes('competencias comunicativas') ||
-    lower.includes('presentación') ||
-    lower.includes('redactar') ||
-    lower.includes('expresión')
-  ) {
-    parts.push(
-      'comunicación competencias comunicativas expresión oral escrita presentaciones habilidades académicas profesionales textos públicos digitales'
-    );
-  }
-  if (
-    lower.includes('inglés') ||
-    lower.includes('idioma') ||
-    lower.includes('traducción') ||
-    lower.includes('enseñanza de inglés')
-  ) {
-    parts.push(
-      'inglés idioma enseñanza traducción comunicación internacional habilidades lingüísticas educación bilingüe'
-    );
+  if (!course || course.length === 0) {
+    throw new Error(`Curso con ID ${courseId} no encontrado`);
   }
 
-  return parts.join(' | ');
-}
+  const courseData = course[0];
+  const sections: {
+    title: string;
+    content: string;
+    type: string;
+    source: string;
+  }[] = [];
 
-async function getEmbedding(input: string): Promise<number[]> {
-  const res = await fetch('https://api.openai.com/v1/embeddings', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({ input, model: OPENAI_EMBEDDING_MODEL }),
-  });
-  if (!res.ok) {
-    const txt = await res.text().catch(() => '');
-    throw new Error(`OpenAI error: ${res.status} ${txt}`);
+  // ====== SECCIÓN 1: INFORMACIÓN DEL CURSO ======
+  let courseInfo = `# CURSO: ${courseData.title}\n\n`;
+
+  if (courseData.description) {
+    courseInfo += `**Descripción:** ${courseData.description}\n\n`;
   }
-  const json = (await res.json()) as { data: { embedding: number[] }[] };
-  const emb = json?.data?.[0]?.embedding;
-  if (!Array.isArray(emb)) throw new Error('Embedding vacío');
-  return emb;
-}
 
-async function main() {
-  const args = parseArgs();
-  const limit = typeof args.limit === 'string' ? Number(args.limit) : undefined;
-  const dry = Boolean(args.dry);
-  const concurrency =
-    typeof args.concurrency === 'string'
-      ? Math.max(1, Number(args.concurrency))
-      : 2;
-  const ids =
-    typeof args.ids === 'string'
-      ? args.ids
-          .split(',')
-          .map((s) => Number(s.trim()))
-          .filter((n) => !isNaN(n))
-      : [];
+  if (courseData.instructor) {
+    courseInfo += `**Instructor:** ${courseData.instructor}\n\n`;
+  }
 
-  console.log('Regenerando embeddings...');
-  console.log({
-    limit,
-    dry,
-    concurrency,
-    countIds: ids.length,
-    model: OPENAI_EMBEDDING_MODEL,
+  if (courseData.rating) {
+    courseInfo += `**Calificación:** ${courseData.rating}/5\n\n`;
+  }
+
+  sections.push({
+    title: `Información - ${courseData.title}`,
+    content: courseInfo,
+    type: 'course-info',
+    source: `course-${courseId}-info`,
   });
 
-  let toProcess: { id: number; title: string; description: string | null }[] =
-    [];
+  // ====== SECCIÓN 2: LECCIONES (UNA POR CADA LECCIÓN) ======
+  try {
+    const courseLessons = await db
+      .select()
+      .from(lessons)
+      .where(eq(lessons.courseId, courseId));
 
-  if (ids.length > 0) {
-    toProcess = await db
-      .select({
-        id: courses.id,
-        title: courses.title,
-        description: courses.description,
-      })
-      .from(courses)
-      .where(inArray(courses.id, ids));
-  } else {
-    toProcess = await db
-      .select({
-        id: courses.id,
-        title: courses.title,
-        description: courses.description,
-      })
-      .from(courses)
-      .limit(limit ?? Number.MAX_SAFE_INTEGER);
+    for (const lesson of courseLessons) {
+      let lessonContent = `# LECCIÓN: ${lesson.title}\n\n`;
+
+      if (lesson.description) {
+        lessonContent += `**Descripción:** ${lesson.description}\n\n`;
+      }
+
+      if (lesson.duration) {
+        lessonContent += `**Duración:** ${lesson.duration} minutos\n\n`;
+      }
+
+      // Obtener actividades de esta lección
+      const lessonActivities = await db
+        .select()
+        .from(activities)
+        .where(eq(activities.lessonsId, lesson.id));
+
+      if (lessonActivities.length > 0) {
+        lessonContent += `## Actividades en esta lección\n\n`;
+        for (const activity of lessonActivities) {
+          lessonContent += `- **${activity.name}**`;
+          if (activity.description) {
+            lessonContent += `: ${activity.description}`;
+          }
+          if (activity.porcentaje !== null) {
+            lessonContent += ` (${activity.porcentaje}%)`;
+          }
+          lessonContent += `\n`;
+        }
+        lessonContent += `\n`;
+      }
+
+      sections.push({
+        title: `Lección ${lesson.orderIndex + 1}: ${lesson.title}`,
+        content: lessonContent,
+        type: 'lesson',
+        source: `course-${courseId}-lesson-${lesson.id}`,
+      });
+    }
+  } catch (error) {
+    console.warn(`⚠️ Error extrayendo lecciones: ${error}`);
   }
 
-  console.log(`Cursos a procesar: ${toProcess.length}`);
-  if (toProcess.length === 0) {
-    console.log('No hay cursos para procesar.');
-    return;
+  // ====== SECCIÓN 3: ACTIVIDADES (TODAS JUNTAS) ======
+  try {
+    const allLessons = await db
+      .select()
+      .from(lessons)
+      .where(eq(lessons.courseId, courseId));
+
+    if (allLessons.length > 0) {
+      const allActivities = await db
+        .select()
+        .from(activities)
+        .where(eq(activities.lessonsId, allLessons[0].id));
+
+      if (allActivities.length > 0) {
+        let activitiesContent = `# ACTIVIDADES DEL CURSO\n\n`;
+
+        for (const activity of allActivities) {
+          activitiesContent += `## ${activity.name}\n`;
+          if (activity.description) {
+            activitiesContent += `${activity.description}\n`;
+          }
+          if (activity.porcentaje !== null) {
+            activitiesContent += `**Porcentaje:** ${activity.porcentaje}%\n`;
+          }
+          if (activity.fechaMaximaEntrega) {
+            activitiesContent += `**Fecha máxima:** ${activity.fechaMaximaEntrega}\n`;
+          }
+          activitiesContent += `\n`;
+        }
+
+        sections.push({
+          title: 'Todas las Actividades',
+          content: activitiesContent,
+          type: 'activities',
+          source: `course-${courseId}-activities`,
+        });
+      }
+    }
+  } catch (error) {
+    console.warn(`⚠️ Error extrayendo actividades: ${error}`);
   }
 
-  let processed = 0;
-  let ok = 0;
-  let fail = 0;
+  // ====== SECCIÓN 4: FOROS Y DISCUSIONES ======
+  try {
+    const courseForos = await db
+      .select()
+      .from(forums)
+      .where(eq(forums.courseId, courseId));
 
-  const queue = [...toProcess];
-  const workers = Array.from({ length: concurrency }, () =>
-    (async function worker() {
-      while (queue.length > 0) {
-        const c = queue.shift();
-        if (!c) break;
-        processed++;
-        try {
-          const text = buildCourseText({
-            title: c.title,
-            description: c.description,
+    if (courseForos.length > 0) {
+      let forosContent = `# FOROS Y DISCUSIONES DEL CURSO\n\n`;
+
+      for (const foro of courseForos) {
+        forosContent += `## Foro: ${foro.title}\n`;
+        if (foro.description) {
+          forosContent += `${foro.description}\n`;
+        }
+
+        // Obtener posts del foro
+        const foroPosts = await db
+          .select()
+          .from(posts)
+          .where(eq(posts.forumId, foro.id));
+
+        if (foroPosts.length > 0) {
+          forosContent += `\n**Posts en este foro (${foroPosts.length}):**\n`;
+          foroPosts.slice(0, 5).forEach((post) => {
+            forosContent += `- ${post.content?.substring(0, 100) || 'Sin contenido'}\n`;
           });
-          if (!text.trim()) {
-            console.warn(
-              `[${processed}/${toProcess.length}] id=${c.id} -> texto vacío, se omite.`
-            );
-            continue;
+          if (foroPosts.length > 5) {
+            forosContent += `- ... y ${foroPosts.length - 5} posts más\n`;
           }
-          if (dry) {
-            console.log(`[DRY] id=${c.id} textLen=${text.length}`);
-            ok++;
-            continue;
+        }
+
+        forosContent += `\n`;
+      }
+
+      sections.push({
+        title: 'Foros y Discusiones',
+        content: forosContent,
+        type: 'forums',
+        source: `course-${courseId}-forums`,
+      });
+    }
+  } catch (error) {
+    console.warn(`⚠️ Error extrayendo foros: ${error}`);
+  }
+
+  // ====== SECCIÓN 5: MATERIAS ASOCIADAS ======
+  try {
+    const courseMaterias = await db
+      .select()
+      .from(materias)
+      .where(eq(materias.courseid, courseId));
+
+    if (courseMaterias.length > 0) {
+      let materiasContent = `# MATERIAS ASOCIADAS AL CURSO\n\n`;
+
+      for (const materia of courseMaterias) {
+        materiasContent += `## ${materia.title}\n`;
+        if (materia.description) {
+          materiasContent += `${materia.description}\n`;
+        }
+        materiasContent += `\n`;
+      }
+
+      sections.push({
+        title: 'Materias Asociadas',
+        content: materiasContent,
+        type: 'materials',
+        source: `course-${courseId}-materias`,
+      });
+    }
+  } catch (error) {
+    console.warn(`⚠️ Error extrayendo materias: ${error}`);
+  }
+
+  // ====== SECCIÓN 6: ESTADÍSTICAS DE INSCRITOS ======
+  try {
+    const courseEnrollments = await db
+      .select()
+      .from(enrollments)
+      .where(eq(enrollments.courseId, courseId));
+
+    if (courseEnrollments.length > 0) {
+      const completedCount = courseEnrollments.filter(
+        (e) => e.completed
+      ).length;
+      const permanentCount = courseEnrollments.filter(
+        (e) => e.isPermanent
+      ).length;
+
+      let enrollmentContent = `# INFORMACIÓN DE INSCRITOS\n\n`;
+      enrollmentContent += `**Total de estudiantes inscritos:** ${courseEnrollments.length}\n`;
+      enrollmentContent += `**Estudiantes que completaron:** ${completedCount}\n`;
+      enrollmentContent += `**Inscripciones permanentes:** ${permanentCount}\n`;
+      enrollmentContent += `**Tasa de finalización:** ${Math.round((completedCount / courseEnrollments.length) * 100)}%\n\n`;
+
+      sections.push({
+        title: 'Estadísticas de Inscritos',
+        content: enrollmentContent,
+        type: 'enrollments',
+        source: `course-${courseId}-enrollments`,
+      });
+    }
+  } catch (error) {
+    console.warn(`⚠️ Error extrayendo inscritos: ${error}`);
+  }
+
+  // ====== SECCIÓN 7: DURACIÓN TOTAL DEL CURSO ======
+  try {
+    const courseLessonsForDuration = await db
+      .select()
+      .from(lessons)
+      .where(eq(lessons.courseId, courseId));
+
+    if (courseLessonsForDuration.length > 0) {
+      const totalDuration = courseLessonsForDuration.reduce(
+        (sum, lesson) => sum + (lesson.duration || 0),
+        0
+      );
+
+      let durationContent = `# DURACIÓN DEL CURSO\n\n`;
+      durationContent += `**Total de lecciones:** ${courseLessonsForDuration.length}\n`;
+      durationContent += `**Duración total:** ${totalDuration} minutos (${Math.round(totalDuration / 60)} horas)\n`;
+
+      const avgDuration = Math.round(
+        totalDuration / courseLessonsForDuration.length
+      );
+      durationContent += `**Duración promedio por lección:** ${avgDuration} minutos\n\n`;
+
+      durationContent += `## Desglose por lección:\n`;
+      courseLessonsForDuration.forEach((lesson) => {
+        durationContent += `- **${lesson.title}**: ${lesson.duration || 0} minutos\n`;
+      });
+
+      sections.push({
+        title: 'Duración y Desglose',
+        content: durationContent,
+        type: 'duration',
+        source: `course-${courseId}-duration`,
+      });
+    }
+  } catch (error) {
+    console.warn(`⚠️ Error extrayendo duración: ${error}`);
+  }
+
+  return sections;
+}
+
+/**
+ * Función para extraer TODOS los datos del curso:
+ * - Datos básicos (título, descripción, instructor, etc.)
+ * - Todas las lecciones y su contenido
+ * - Todas las actividades de cada lección
+ * - Foros, posts y respuestas
+ * - Documentos y recursos asociados
+ */
+async function extractCourseContent(courseId: number): Promise<string> {
+  const course = await db
+    .select()
+    .from(courses)
+    .where(eq(courses.id, courseId));
+
+  if (!course || course.length === 0) {
+    throw new Error(`Curso con ID ${courseId} no encontrado`);
+  }
+
+  const courseData = course[0];
+  let content = '';
+
+  // ====== DATOS DEL CURSO ======
+  content += `# CURSO: ${courseData.title}\n\n`;
+
+  if (courseData.description) {
+    content += `## Descripción\n${courseData.description}\n\n`;
+  }
+
+  if (courseData.instructor) {
+    content += `**Instructor:** ${courseData.instructor}\n\n`;
+  }
+
+  if (courseData.rating) {
+    content += `**Calificación:** ${courseData.rating}/5\n\n`;
+  }
+
+  // ====== LECCIONES Y ACTIVIDADES ======
+  try {
+    const courseLessons = await db
+      .select()
+      .from(lessons)
+      .where(eq(lessons.courseId, courseId));
+
+    if (courseLessons.length > 0) {
+      content += `## 📚 Lecciones (${courseLessons.length})\n\n`;
+
+      for (const lesson of courseLessons) {
+        content += `### Lección ${lesson.orderIndex + 1}: ${lesson.title}\n`;
+
+        if (lesson.description) {
+          content += `${lesson.description}\n`;
+        }
+
+        if (lesson.duration) {
+          content += `**Duración:** ${lesson.duration} minutos\n`;
+        }
+
+        if (lesson.resourceNames) {
+          content += `**Recursos:** ${lesson.resourceNames}\n`;
+        }
+
+        content += '\n';
+
+        // ====== ACTIVIDADES DE LECCIÓN ======
+        const lessonActivities = await db
+          .select()
+          .from(activities)
+          .where(eq(activities.lessonsId, lesson.id));
+
+        if (lessonActivities.length > 0) {
+          content += `#### 🎯 Actividades\n`;
+
+          for (const activity of lessonActivities) {
+            content += `- **${activity.name}**: ${activity.description || 'Sin descripción'}\n`;
+
+            if (activity.fechaMaximaEntrega) {
+              content += `  - Fecha máxima: ${activity.fechaMaximaEntrega}\n`;
+            }
+
+            if (activity.porcentaje) {
+              content += `  - Porcentaje: ${activity.porcentaje}%\n`;
+            }
           }
-          const embedding = await getEmbedding(text);
-          await db
-            .update(courses)
-            .set({ embedding })
-            .where(eq(courses.id, c.id));
-          ok++;
-          console.log(`[OK ${ok}] id=${c.id}`);
-          // respiro pequeño para no saturar
-          await sleep(150);
-        } catch (e) {
-          fail++;
-          console.error(`[FAIL ${fail}] id=${c.id}:`, (e as Error).message);
-          await sleep(300);
+
+          content += '\n';
         }
       }
-    })()
-  );
+    }
+  } catch (err) {
+    console.warn('⚠️ Error al extraer lecciones:', err);
+  }
 
-  await Promise.all(workers);
-  console.log(`COMPLETADO: total=${toProcess.length} ok=${ok} fail=${fail}`);
+  // ====== FOROS Y DISCUSIONES ======
+  try {
+    const courseForum = await db
+      .select()
+      .from(forums)
+      .where(eq(forums.courseId, courseId));
+
+    if (courseForum.length > 0) {
+      content += `## 💬 Foros de Discusión\n\n`;
+
+      for (const forum of courseForum) {
+        content += `### Foro: ${forum.title}\n`;
+
+        if (forum.description) {
+          content += `${forum.description}\n\n`;
+        }
+
+        // Traer posts del foro
+        const forumPosts = await db
+          .select()
+          .from(posts)
+          .where(eq(posts.forumId, forum.id));
+
+        if (forumPosts.length > 0) {
+          content += `**Posts (${forumPosts.length}):**\n`;
+
+          for (const post of forumPosts) {
+            content += `- ${post.content}\n`;
+
+            // Traer respuestas del post
+            const replies = await db
+              .select()
+              .from(postReplies)
+              .where(eq(postReplies.postId, post.id));
+
+            if (replies.length > 0) {
+              for (const reply of replies) {
+                content += `  - Respuesta: ${reply.content}\n`;
+              }
+            }
+          }
+
+          content += '\n';
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('⚠️ Error al extraer foros:', err);
+  }
+
+  if (!content.trim()) {
+    console.warn(`⚠️ Curso ${courseId} sin contenido disponible`);
+    return '';
+  }
+
+  return content;
 }
 
-main().catch((e) => {
-  console.error('Error fatal:', e);
-  process.exit(1);
-});
+/**
+ * Regenera embeddings para un curso específico
+ */
+async function regenerateCourseEmbeddings(courseId: string) {
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`📚 Regenerando embeddings para curso: ${courseId}`);
+  console.log(`${'='.repeat(60)}\n`);
+
+  try {
+    // 1. Extraer secciones del curso
+    console.log('📖 Extrayendo contenido del curso por secciones...');
+    const courseNum = parseInt(courseId);
+    const sections = await extractCourseSections(courseNum);
+    const courseIdStr = courseId;
+
+    if (sections.length === 0) {
+      console.log('⚠️ Sin contenido para procesar');
+      return;
+    }
+
+    console.log(`✅ Se extrajeron ${sections.length} secciones`);
+
+    // 2. Procesar cada sección por separado
+    console.log('\n⚙️ Procesando secciones y generando embeddings...');
+    let totalDocuments = 0;
+    let totalTokens = 0;
+    const allDocuments: Parameters<typeof saveDocumentEmbeddings>[1] = [];
+
+    for (let i = 0; i < sections.length; i++) {
+      const section = sections[i];
+      console.log(
+        `\n📄 Procesando sección ${i + 1}/${sections.length}: ${section.title}`
+      );
+
+      const documents = await processDocument(
+        section.content,
+        section.source,
+        1000,
+        200,
+        ({ current, total }) => {
+          process.stdout.write(
+            `\r⏳ Chunks ${current}/${total} para esta sección...`
+          );
+        }
+      );
+
+      const stats = getDocumentStats(documents);
+      console.log(`\n  ✅ ${documents.length} chunks generados`);
+      console.log(`  📊 Tokens: ${stats.totalTokens}`);
+
+      totalDocuments += documents.length;
+      totalTokens += stats.totalTokens;
+      allDocuments.push(...documents);
+    }
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log('📊 Estadísticas globales:');
+    console.log(`  • Total secciones: ${sections.length}`);
+    console.log(`  • Total chunks: ${totalDocuments}`);
+    console.log(`  • Tokens totales: ${totalTokens}`);
+    console.log(`${'='.repeat(60)}\n`);
+
+    // 3. Eliminar embeddings antiguos
+    console.log('🗑️ Eliminando embeddings antiguos...');
+    const deleted = await deleteCourseEmbeddings(courseId);
+    console.log(`✅ Eliminados ${deleted} embeddings antiguos`);
+
+    // 4. Guardar nuevos embeddings
+    console.log('\n💾 Guardando nuevos embeddings...');
+    const saved = await saveDocumentEmbeddings(courseIdStr, allDocuments);
+    console.log(`✅ Guardados ${saved} embeddings`);
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`✨ ¡Embeddings regenerados exitosamente!`);
+    console.log(`${'='.repeat(60)}\n`);
+  } catch (error) {
+    console.error(`\n❌ Error regenerando embeddings:`, error);
+    process.exit(1);
+  }
+}
+
+/**
+ * Regenera embeddings para todos los cursos
+ */
+async function regenerateAllCourses() {
+  console.log('\n🌟 Regenerando embeddings para TODOS los cursos...\n');
+
+  try {
+    // Obtener todos los cursos
+    const allCourses = await db.select({ id: courses.id }).from(courses);
+
+    console.log(`📚 Total de cursos encontrados: ${allCourses.length}`);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const course of allCourses) {
+      try {
+        await regenerateCourseEmbeddings(course.id.toString());
+        successCount++;
+      } catch (error) {
+        console.error(`❌ Error con curso ${course.id}:`, error);
+        failCount++;
+      }
+    }
+
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`📈 Resumen:`);
+    console.log(`  ✅ Exitosos: ${successCount}`);
+    console.log(`  ❌ Fallidos: ${failCount}`);
+    console.log(`${'='.repeat(60)}\n`);
+
+    if (failCount > 0) {
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error('❌ Error en regeneración masiva:', error);
+    process.exit(1);
+  }
+}
+
+/**
+ * Función principal
+ */
+async function main() {
+  try {
+    const args = parseArgs();
+    const courseId = args.courseId as string | undefined;
+    const all = args.all === true;
+
+    if (courseId) {
+      // Regenerar un curso específico
+      await regenerateCourseEmbeddings(courseId);
+    } else if (all) {
+      // Regenerar todos los cursos
+      await regenerateAllCourses();
+    } else {
+      // Mostrar instrucciones de uso
+      console.log(`\nUso:`);
+      console.log(
+        `  • Curso específico: npm run embeddings:regen -- --courseId=123`
+      );
+      console.log(`  • Todos los cursos: npm run embeddings:regen -- --all\n`);
+      process.exit(1);
+    }
+  } catch (error) {
+    console.error('❌ Error fatal:', error);
+    process.exit(1);
+  }
+}
+
+main().then(() => process.exit(0));

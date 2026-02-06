@@ -570,3 +570,43 @@ export const getUserProgressByCourseId = async (courseId: number) => {
 
   return progressByLesson;
 };
+
+/**
+ * Crea una lección temporal con nombre genérico
+ * La persona puede cambiar el nombre después
+ * @param courseId - ID del curso al que pertenece la lección
+ * @returns ID de la nueva lección temporal
+ */
+export async function createTemporaryLesson(courseId: number): Promise<number> {
+  try {
+    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const tempTitle = `[TEMPORAL] Lección sin nombre - ${timestamp}`;
+
+    const [newLesson] = await db
+      .insert(lessons)
+      .values({
+        title: tempTitle,
+        description: 'Lección temporal creada automáticamente. Por favor, cambia el nombre y descripción.',
+        duration: 0,
+        coverImageKey: '',
+        coverVideoKey: '',
+        courseId,
+        resourceKey: '',
+        resourceNames: '',
+        orderIndex: 0,
+      })
+      .returning({ id: lessons.id });
+
+    if (!newLesson?.id) {
+      throw new Error('No se pudo crear la lección temporal');
+    }
+
+    console.log(`✅ Lección temporal creada con ID: ${newLesson.id} para curso ${courseId}`);
+    return newLesson.id;
+  } catch (error) {
+    console.error('❌ Error al crear lección temporal:', error);
+    throw new Error(
+      `Error al crear lección temporal: ${error instanceof Error ? error.message : 'Error desconocido'}`
+    );
+  }
+}

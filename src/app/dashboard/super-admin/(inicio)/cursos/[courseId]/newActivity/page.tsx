@@ -612,6 +612,7 @@ const Page: React.FC = () => {
           description: formData.description,
           typeid: parseInt(formData.type, 10),
           lessonsId: selectedLessonId ?? 0,
+          courseId: courseIdNumber ?? 0,
           revisada: formData.revisada,
           parametroId: formData.parametro || null,
           porcentaje: formData.revisada ? formData.porcentaje || 0 : 0,
@@ -628,8 +629,9 @@ const Page: React.FC = () => {
         throw new Error(errorData.error ?? 'Error al crear la actividad');
       }
 
-      const actividadData = (await actividadResponse.json()) as { id: number };
+      const actividadData = (await actividadResponse.json()) as { id: number; lessonsId: number };
       const actividadId = actividadData.id;
+      const finalLessonId = actividadData.lessonsId || lessonIdNumber;
 
       // Mostrar mensaje de éxito
       toast('Éxito', {
@@ -637,7 +639,7 @@ const Page: React.FC = () => {
       });
 
       router.push(
-        `/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadId}`
+        `/dashboard/super-admin/cursos/${courseIdNumber}/${finalLessonId}/actividades/${actividadId}`
       );
     } catch (err: unknown) {
       console.error('Error detallado:', err);

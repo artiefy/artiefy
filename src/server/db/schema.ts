@@ -1871,3 +1871,102 @@ export const scheduledWhatsAppMessagesRelations = relations(
     }),
   })
 );
+/**
+ * 🧠 EMBEDDINGS VECTORIALES PARA BÚSQUEDA SEMÁNTICA
+ * Almacena embeddings de documentos de cursos para RAG
+ */
+
+// Tabla para almacenar embeddings vectoriales de documentos
+export const documentEmbeddings = pgTable(
+  'document_embeddings',
+  {
+    // ID único del documento
+    id: serial('id').primaryKey(),
+
+    // ID del curso al que pertenece (para asociar embeddings a cursos)
+    courseId: integer('course_id')
+      .references(() => courses.id, { onDelete: 'cascade' })
+      .notNull(),
+
+    // Contenido del documento/chunk
+    content: text('content').notNull(),
+
+    // Vector de embedding (1536 dimensiones para text-embedding-3-small)
+    embedding: vector('embedding', { dimensions: 1536 }).notNull(),
+
+    // Metadatos en JSON (página, sección, autor, etc.)
+    metadata: text('metadata').default('{}'), // JSON como string
+
+    // Fuente del documento (PDF, DOCX, TXT, URL, etc.)
+    source: text('source').notNull(),
+
+    // Orden del chunk dentro del documento (para reconstruir contexto)
+    chunkIndex: integer('chunk_index').notNull(),
+
+    // Timestamps
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    // Índice para búsquedas por curso
+    index('document_embeddings_course_id_idx').on(table.courseId),
+
+    // Índice único para evitar duplicados (mismo contenido en mismo curso)
+    unique('document_embeddings_unique').on(
+      table.courseId,
+      table.content,
+      table.chunkIndex
+    ),
+  ]
+);
+
+/**
+ * Tabla para registrar el procesamiento de documentos
+ * Útil para tracking y logging de operaciones
+ */
+export const embeddingProcessingLog = pgTable('embedding_processing_log', {
+  id: serial('id').primaryKey(),
+  courseId: integer('course_id')
+    .references(() => courses.id, { onDelete: 'cascade' })
+    .notNull(),
+  documentName: text('document_name').notNull(),
+  status: text('status', {
+    enum: ['pending', 'processing', 'completed', 'failed'],
+  })
+    .default('pending')
+    .notNull(),
+  totalChunks: integer('total_chunks').notNull(),
+  processedChunks: integer('processed_chunks').default(0),
+  error: text('error'),
+  startedAt: timestamp('started_at', { withTimezone: true }).defaultNow(),
+  completedAt: timestamp('completed_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+// Relaciones para documentEmbeddings
+export const documentEmbeddingsRelations = relations(
+  documentEmbeddings,
+  ({ one }) => ({
+    course: one(courses, {
+      fields: [documentEmbeddings.courseId],
+      references: [courses.id],
+    }),
+  })
+);
+
+// Relaciones para embeddingProcessingLog
+export const embeddingProcessingLogRelations = relations(
+  embeddingProcessingLog,
+  ({ one }) => ({
+    course: one(courses, {
+      fields: [embeddingProcessingLog.courseId],
+      references: [courses.id],
+    }),
+  })
+);

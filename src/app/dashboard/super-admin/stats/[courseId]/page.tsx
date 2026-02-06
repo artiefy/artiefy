@@ -2,20 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import { useParams, useSearchParams } from 'next/navigation';
 
-import {
-  ArrowLeft,
-  Award,
-  BarChart,
-  BookOpen,
-  Calendar,
-  FileText,
-  GraduationCap,
-  MessageSquare,
-  User,
-  Users,
-} from 'lucide-react';
+import { Calendar, Loader2, User } from 'lucide-react';
 
 interface Stats {
   totalLessons: number;
@@ -44,6 +34,7 @@ interface ActivityDetail {
   description: string;
   isCompleted: boolean;
   score: number;
+  parentTitle?: string; // Clase o lección a la que pertenece
 }
 
 interface UserInfo {
@@ -56,28 +47,23 @@ interface CourseInfo {
   title: string;
   instructor: string;
   createdAt: string;
-  nivel: string; // Replaced difficulty with nivel
+  nivel: string;
+  coverImageKey?: string;
+  difficulty?: string; // Añadido para compatibilidad con vistas antiguas
 }
 interface LessonDetail {
   lessonId: number;
   title: string;
   progress: number;
   isCompleted: boolean;
-  lastUpdated: string; // Add this line
-}
-interface SelectedDetail {
-  title: string;
-  value: number | string;
-  details?: string;
-  activities?: ActivityDetail[]; // Para mostrar actividades en el modal
-  lessons?: LessonDetail[]; // Para mostrar lecciones en el modal
-  extraInfo?: { label: string; value: string; description?: string }[]; // Add this line
+  lastUpdated: string;
+  parentTitle?: string; // Título del módulo o clase padre (opcional)
 }
 
 export default function StudentCourseDashboard() {
   const params = useParams() ?? {};
   const searchParams = useSearchParams();
-  const router = useRouter();
+  // const router = useRouter(); // Eliminado porque no se usa
 
   const user = searchParams?.get('user') ?? '';
   const courseId = Array.isArray(params.courseId)
@@ -85,63 +71,30 @@ export default function StudentCourseDashboard() {
     : params.courseId;
 
   const [stats, setStats] = useState<Stats | null>(null);
-  const [selectedDetail, setSelectedDetail] = useState<SelectedDetail | null>(
-    null
-  );
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [courseInfo, setCourseInfo] = useState<CourseInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [lessonDetails, setLessonDetails] = useState<LessonDetail[]>([]);
+  const [lessonDetails, setLessonDetails] = useState<LessonDetail[]>([]); // Eliminado
   const [evaluationParameters, setEvaluationParameters] = useState<
     { id: number; name: string; description: string; percentage: number }[]
   >([]);
 
-  const openModal = (detail: SelectedDetail) => {
-    console.log('🟢 Mostrando detalle:', detail);
-
-    if (detail.title === 'Parámetros de Evaluación') {
-      console.log('📊 Parámetros enviados al modal:', evaluationParameters);
-    }
-
-    setSelectedDetail({
-      ...detail,
-      details: detail.details ?? `Información adicional sobre ${detail.title}`,
-      extraInfo:
-        detail.title === 'Parámetros de Evaluación'
-          ? evaluationParameters.map((param) => ({
-              label: param.name,
-              value: `${param.percentage}%`,
-              description: param.description,
-            }))
-          : [],
-    });
-
-    setIsModalOpen(true);
-  };
+  void lessonDetails;
+  void evaluationParameters;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Usar el endpoint correcto para super-admin
         const res = await fetch(
-          `/api/educators/course/${courseId}/stats/${user}`
+          `/api/super-admin/course/${courseId}/stats/${user}`
         );
-        const data = (await res.json()) as {
-          statistics: Stats;
-          user: UserInfo;
-          course: CourseInfo;
-          lessonDetails: LessonDetail[];
-          evaluationParameters: {
-            id: number;
-            name: string;
-            description: string;
-            percentage: number;
-          }[];
-        };
+        const data = await res.json();
 
-        // Corregir cómo se asigna `evaluationParameters`
+        // Validar y asignar todos los datos recibidos
         setEvaluationParameters(
-          data.statistics.evaluationParameters &&
+          data.statistics?.evaluationParameters &&
             Array.isArray(data.statistics.evaluationParameters)
             ? data.statistics.evaluationParameters
             : []
@@ -149,14 +102,15 @@ export default function StudentCourseDashboard() {
 
         setStats({
           ...data.statistics,
-          averageLessonProgress: data.statistics.averageLessonProgress,
-          activities: data.statistics.activities ?? [],
+          averageLessonProgress: data.statistics?.averageLessonProgress ?? 0,
+          activities: data.statistics?.activities ?? [],
         });
 
-        setLessonDetails(data.lessonDetails ?? []);
+        // Si hay detalles de lecciones, asignar
+        setLessonDetails(data.statistics?.lessonDetails ?? []);
 
-        setUserInfo(data.user);
-        setCourseInfo(data.course);
+        setUserInfo(data.user ?? null);
+        setCourseInfo(data.course ?? null);
       } catch (error) {
         console.error('❌ Error cargando estadísticas:', error);
       } finally {
@@ -169,485 +123,258 @@ export default function StudentCourseDashboard() {
 
   return (
     <>
-      <div className="p-6">
-        {/* Botón de Volver */}
-        <button
-          onClick={() => router.push('/dashboard/super-admin')}
-          className="mb-4 flex items-center gap-2 rounded bg-gray-700 px-4 py-2 text-white hover:bg-gray-600"
-        >
-          <ArrowLeft size={20} /> Volver Atrás
-        </button>
-
-        <h2 className="text-2xl font-bold text-white">Dashboard del Curso</h2>
-
-        {/* Información del Usuario y Curso */}
-        <div className="bg-background mt-6 flex justify-between rounded-xl p-6 shadow-[0_4px_10px_rgba(58,244,239,0.3)]">
-          {/* Info del Usuario */}
-          <div className="flex flex-col">
-            <div className="flex items-center gap-3">
-              <User className="text-primary size-6" />
-              <p className="text-lg font-semibold text-white">
-                {userInfo?.firstName}
-              </p>
-            </div>
-            <p className="text-sm text-gray-400">{userInfo?.email}</p>
-            <p className="text-sm text-gray-400">Rol: {userInfo?.role}</p>
-          </div>
-
-          {/* Info del Curso */}
-          <div className="flex flex-col text-left">
-            <div className="flex items-center gap-3">
-              <GraduationCap className="text-primary size-6" />
-              <p className="text-lg font-semibold text-white">
-                {courseInfo?.title}
-              </p>
-            </div>
-            <p className="text-sm text-gray-400">
-              Instructor: {courseInfo?.instructor}
-            </p>
-            <p className="text-sm text-gray-400">Nivel: {courseInfo?.nivel}</p>
-            <div className="flex items-center gap-2 text-gray-400">
-              <Calendar className="size-4" />
-              <p className="text-sm">
-                Creado el{' '}
-                {new Date(courseInfo?.createdAt ?? '').toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Tarjetas de Estadísticas */}
-        {loading ? (
-          <p className="mt-6 text-white">Cargando estadísticas...</p>
-        ) : stats ? (
-          <div className="mt-6 grid grid-cols-3 gap-4">
-            {[
-              {
-                title: 'Lecciones Totales',
-                value: `${stats.totalLessons} Lecciones`,
-                icon: BookOpen,
-                details: `El curso contiene un total de ${stats.totalLessons} lecciones.`,
-                lessons:
-                  lessonDetails.length > 0
-                    ? lessonDetails
-                    : [
-                        {
-                          lessonId: 0,
-                          title: 'No hay lecciones registradas',
-                          progress: 0,
-                          isCompleted: false,
-                          lastUpdated: 'N/A',
-                        },
-                      ],
-              },
-
-              {
-                title: 'Progreso Promedio en Lecciones (%)',
-                value: `${stats.averageLessonProgress}%`,
-                icon: BarChart,
-                details: `Progreso promedio basado en todas las lecciones.`,
-                lessons:
-                  lessonDetails.length > 0
-                    ? lessonDetails
-                    : [
-                        {
-                          lessonId: 0,
-                          title: 'No hay lecciones registradas',
-                          progress: 0,
-                          isCompleted: false,
-                          lastUpdated: 'N/A',
-                        },
-                      ],
-              },
-
-              {
-                title: 'Lecciones Completadas',
-                value: `${stats.completedLessons} / ${stats.totalLessons}`,
-                icon: Award,
-                details: `El estudiante ha completado ${stats.completedLessons} de ${stats.totalLessons} lecciones.`,
-                lessons:
-                  lessonDetails.length > 0
-                    ? lessonDetails
-                    : [
-                        {
-                          lessonId: 0,
-                          title: 'No hay lecciones registradas',
-                          progress: 0,
-                          isCompleted: false,
-                          lastUpdated: 'N/A',
-                        },
-                      ],
-              },
-              {
-                title: 'Progreso (%)',
-                value: `${stats.progressPercentage}%`,
-                icon: BarChart,
-                details: `El avance general del curso es del ${stats.progressPercentage}%.`,
-              },
-              {
-                title: 'Actividades Totales',
-                value: stats.totalActivities,
-                icon: FileText,
-                details: `El curso tiene ${stats.totalActivities} actividades asignadas.`,
-                activities: stats.activities,
-              },
-              {
-                title: 'Actividades Completadas',
-                value: `${stats.completedActivities} / ${stats.totalActivities}`,
-                icon: Award,
-                details: `El estudiante ha completado ${stats.completedActivities} de ${stats.totalActivities} actividades.`,
-                activities: stats.activities,
-              },
-              {
-                title: 'Mensajes en Foros',
-                value: stats.forumPosts,
-                icon: MessageSquare,
-                details: `El estudiante ha participado en ${stats.forumPosts} discusiones en el foro.`,
-              },
-              {
-                title: 'Puntaje Total',
-                value: stats.userScore,
-                icon: Users,
-                details: `El estudiante ha acumulado un total de ${stats.userScore} puntos.`,
-              },
-              {
-                title: 'Tiempo Total en Plataforma (min)',
-                value: `${stats.totalTimeSpent} min`,
-                icon: Calendar,
-                details: `El estudiante ha pasado un total de ${stats.totalTimeSpent} minutos en la plataforma.`,
-                extraInfo: [
-                  {
-                    label: 'Promedio diario',
-                    value: `${Math.round(stats.totalTimeSpent / 7)} min/día`,
-                  },
-                  { label: 'Última sesión', value: 'Hace 2 días' }, // Aquí puedes hacer una consulta real de la última sesión en la BD
-                ],
-              },
-
-              {
-                title: 'Nota Global del Curso',
-                value: stats.globalCourseScore,
-                icon: Award,
-                details: `Nota promedio basada en el puntaje de todas las actividades.`,
-                activities: stats.activities,
-              },
-              {
-                title: 'Detalles Adicionales',
-                value: '📊 Ver estadísticas completas',
-                icon: BarChart,
-                details: `Resumen completo de las estadísticas del curso.`,
-                activities: stats.activities,
-                lessons: lessonDetails,
-              },
-
-              // 🔹 Nueva tarjeta para parámetros de evaluación:
-              {
-                title: 'Parámetros de Evaluación',
-                value: '📊 Ver detalles',
-                icon: BarChart,
-                details: `Criterios de evaluación para el curso.`,
-                extraInfo:
-                  selectedDetail?.title === 'Parámetros de Evaluación'
-                    ? evaluationParameters?.map((param) => ({
-                        label: param.name,
-                        value: `${param.percentage}%`,
-                        description: param.description,
-                      })) || []
-                    : [],
-              },
-            ].map((stat) => (
-              <div
-                key={stat.title}
-                onClick={() => openModal(stat)}
-                className="cursor-pointer rounded-xl bg-gray-800 p-6 transition-all duration-300 hover:shadow-[0_6px_15px_rgba(0,189,216,0.4)]"
-              >
-                <stat.icon className="text-primary mb-3 size-6 transition-all duration-300" />
-                <h4 className="text-lg font-bold text-white">{stat.value}</h4>
-                <p className="text-sm text-gray-400">{stat.title}</p>
+      <div className="relative flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#01142B] to-[#1e2939] p-0">
+        {/* Header futurista reorganizado */}
+        <header className="relative z-20 mx-auto flex w-full max-w-6xl flex-col rounded-b-3xl bg-[#01142B] px-4 py-8 shadow-2xl transition-all duration-700 md:py-12">
+          <div className="flex w-full flex-col gap-8 md:flex-row">
+            {/* Card principal: imagen + info curso */}
+            <div className="flex flex-1 flex-col items-center gap-6 rounded-2xl bg-[#182235] p-6 shadow-xl md:flex-row">
+              <div className="relative flex w-[320px] flex-shrink-0 flex-col items-center justify-center md:w-[260px]">
+                <Image
+                  src={
+                    courseInfo?.coverImageKey
+                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${courseInfo.coverImageKey}`
+                      : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="260" height="140" viewBox="0 0 260 140"><rect width="260" height="140" fill="%231e2939"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="%233AF4EF" font-family="Arial">Sin imagen</text></svg>'
+                  }
+                  alt="Visual del curso"
+                  width={260}
+                  height={140}
+                  className="mb-2 h-36 w-full rounded-xl object-cover shadow-lg"
+                  priority
+                  quality={75}
+                />
+                <span className="absolute top-3 left-3 rounded-full bg-yellow-500/90 px-3 py-1 text-xs font-bold text-[#232B3E] shadow">
+                  ★ Premium
+                </span>
               </div>
-            ))}
+              <div className="flex w-full flex-col items-center justify-center gap-2 md:items-start">
+                <h1 className="text-2xl font-extrabold tracking-wide text-white drop-shadow-lg md:text-3xl">
+                  {courseInfo?.title ?? 'Portal de Notas del Estudiante'}
+                </h1>
+                <p className="text-sm font-semibold text-[#3AF4EF]">
+                  Instructor: {courseInfo?.instructor}
+                </p>
+                <span className="rounded bg-[#3AF4EF]/10 px-3 py-1 text-xs font-semibold text-[#3AF4EF]">
+                  Nivel: {courseInfo?.nivel}
+                </span>
+                <div className="mt-1 flex items-center gap-2 text-xs text-white/60">
+                  <Calendar className="size-4" />
+                  Creado el{' '}
+                  {courseInfo?.createdAt
+                    ? new Date(courseInfo.createdAt).toLocaleDateString()
+                    : '-'}
+                </div>
+                <span className="mt-2 text-xs font-semibold text-[#3AF4EF]">
+                  Incluido en tu plan PREMIUM <span className="ml-1">👑</span>
+                </span>
+                <button className="mt-2 w-full max-w-[180px] rounded-lg bg-[#3AF4EF] px-4 py-2 font-bold text-white shadow-lg transition-all hover:bg-[#27c2c2]">
+                  Suscrito ✓
+                </button>
+              </div>
+            </div>
+            {/* Card estudiante */}
+            <div className="mx-auto flex max-w-[320px] min-w-[220px] flex-col items-center justify-center rounded-2xl bg-[#1e2939] p-6 shadow-xl md:mx-0">
+              <User className="mb-2 size-12 animate-pulse text-[#3AF4EF]" />
+              <h2 className="mb-1 text-xl font-bold text-white">
+                {userInfo?.firstName}
+              </h2>
+              <p className="mb-1 text-sm text-[#3AF4EF]">{userInfo?.email}</p>
+              <span className="rounded bg-[#3AF4EF]/10 px-3 py-1 text-xs font-semibold text-[#3AF4EF]">
+                {userInfo?.role}
+              </span>
+            </div>
           </div>
-        ) : (
-          <p className="mt-6 text-white">No hay datos disponibles.</p>
-        )}
-      </div>
-      {isModalOpen && selectedDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md">
-          <div className="relative z-50 w-[90%] max-w-6xl rounded-lg bg-gray-900 p-8 shadow-2xl">
-            <h2 className="mb-4 text-center text-2xl font-bold text-white">
-              {selectedDetail.title}
-            </h2>
-            <div className="text-center text-gray-300">
-              {selectedDetail.title === 'Parámetros de Evaluación' &&
-                selectedDetail.extraInfo && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-white">
-                      📊 Detalles de Parámetros de Evaluación
-                    </h3>
-                    <div className="overflow-x-auto">
-                      <table className="mt-2 w-full border-collapse border border-gray-700">
-                        <thead>
-                          <tr className="bg-gray-800 text-white">
-                            <th className="border border-gray-700 p-2">
-                              Parámetro
-                            </th>
-                            <th className="border border-gray-700 p-2 text-center">
-                              Porcentaje
-                            </th>
-                            <th className="border border-gray-700 p-2">
-                              Descripción
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedDetail?.extraInfo?.length > 0 ? (
-                            selectedDetail.extraInfo.map((param, index) => (
-                              <tr key={index} className="text-gray-300">
-                                <td className="border border-gray-700 p-2">
-                                  {param.label}
-                                </td>
-                                <td className="border border-gray-700 p-2 text-center">
-                                  {param.value}
-                                </td>
-                                <td className="border border-gray-700 p-2">
-                                  {param.description}
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td
-                                colSpan={3}
-                                className="p-2 text-center text-gray-400"
-                              >
-                                ⚠ No hay parámetros de evaluación registrados.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+        </header>
 
-              {selectedDetail.lessons && selectedDetail.lessons.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold text-white">
-                    📘 Detalles de Lecciones
+        {/* Tabla de notas editable y detalles completos */}
+        <div className="animate-slide-up mx-auto mt-10 max-w-6xl rounded-2xl bg-[#1e2939] p-4 shadow-2xl md:p-8">
+          <h2 className="animate-fade-in mb-6 text-center text-2xl font-bold text-[#3AF4EF]">
+            Clases y Notas del Estudiante
+          </h2>
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="size-8 animate-spin text-[#3AF4EF]" />
+              <span className="animate-fade-in ml-4 text-lg text-white">
+                Cargando datos...
+              </span>
+            </div>
+          ) : stats ? (
+            <div className="animate-fade-in w-full overflow-x-auto">
+              {/* Tabla de actividades/notas */}
+              <h3 className="mb-4 text-lg font-bold text-[#3AF4EF]">
+                Notas por Actividad
+              </h3>
+              <table className="w-full min-w-[750px] border-separate border-spacing-y-2 text-xs md:text-base">
+                <thead>
+                  <tr className="bg-[#182235] text-[#3AF4EF]">
+                    <th className="rounded-l-xl px-2 py-2 md:px-6 md:py-3">
+                      Actividad
+                    </th>
+                    <th className="px-2 py-2 md:px-6 md:py-3">Descripción</th>
+                    <th className="px-2 py-2 md:px-6 md:py-3">Clase</th>
+                    <th className="px-2 py-2 md:px-6 md:py-3">Estado</th>
+                    <th className="px-2 py-2 md:px-6 md:py-3">Nota</th>
+                    <th className="rounded-r-xl px-2 py-2 md:px-6 md:py-3">
+                      Editar
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats.activities.map((activity) => (
+                    <tr
+                      key={activity.activityId}
+                      className="bg-[#101A2B] text-white shadow-lg transition-all duration-300 hover:scale-[1.01] hover:bg-[#232B3E]"
+                    >
+                      <td className="px-2 py-2 font-semibold text-[#3AF4EF] md:px-6 md:py-4">
+                        {activity.name}
+                      </td>
+                      <td className="px-2 py-2 text-white/80 md:px-6 md:py-4">
+                        {activity.description}
+                      </td>
+                      <td className="px-2 py-2 text-white/80 md:px-6 md:py-4">
+                        {activity.parentTitle ?? '—'}
+                      </td>
+                      <td className="px-2 py-2 text-center md:px-6 md:py-4">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${activity.isCompleted ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}
+                        >
+                          {activity.isCompleted ? 'Completada' : 'Pendiente'}
+                        </span>
+                      </td>
+                      <td className="px-2 py-2 text-center text-base font-bold md:px-6 md:py-4 md:text-lg">
+                        {activity.score ?? 0}
+                      </td>
+                      <td className="px-2 py-2 text-center md:px-6 md:py-4">
+                        <input
+                          type="number"
+                          min={0}
+                          max={100}
+                          step={0.5}
+                          className="w-16 rounded-lg border-2 border-[#3AF4EF] bg-[#232B3E] px-2 py-1 text-center font-bold text-[#3AF4EF] shadow-md transition-all duration-300 focus:scale-105 focus:border-[#3AF4EF] focus:bg-[#101A2B] focus:outline-none md:w-20"
+                          value={activity.score ?? 0}
+                          onChange={(e) => {
+                            const newScore = parseFloat(e.target.value);
+                            setStats((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    activities: prev.activities.map((a) =>
+                                      a.activityId === activity.activityId
+                                        ? { ...a, score: newScore }
+                                        : a
+                                    ),
+                                  }
+                                : prev
+                            );
+                          }}
+                          onBlur={async (e) => {
+                            const newScore = parseFloat(e.target.value);
+                            try {
+                              await fetch(`/api/activities/updateScore`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  activityId: activity.activityId,
+                                  userId: user,
+                                  score: newScore,
+                                }),
+                              });
+                            } catch (err) {
+                              // Puedes mostrar un toast futurista aquí
+                              console.error('Error actualizando nota', err);
+                            }
+                          }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {/* Mostrar detalles adicionales del curso y estudiante */}
+              <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2">
+                <div className="rounded-xl bg-[#182235] p-6 shadow-lg">
+                  <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
+                    Datos del Curso
                   </h3>
-                  <div className="overflow-x-auto">
-                    <table className="mt-2 w-full border-collapse border border-gray-700">
-                      <thead>
-                        <tr className="bg-gray-800 text-white">
-                          <th className="border border-gray-700 p-2">
-                            Lección
-                          </th>
-                          <th className="border border-gray-700 p-2">
-                            Progreso
-                          </th>
-                          <th className="border border-gray-700 p-2">Estado</th>
-                          <th className="border border-gray-700 p-2">
-                            Última actualización
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedDetail.lessons.map((lesson) => (
-                          <tr key={lesson.lessonId} className="text-gray-300">
-                            <td className="border border-gray-700 p-2 font-semibold">
-                              {lesson.title}
-                            </td>
-                            <td className="border border-gray-700 p-2 text-center">
-                              {lesson.progress}%
-                            </td>
-                            <td className="border border-gray-700 p-2 text-center">
-                              {lesson.isCompleted
-                                ? '✅ Completada'
-                                : '❌ Pendiente'}
-                            </td>
-                            <td className="border border-gray-700 p-2 text-center">
-                              {lesson.lastUpdated !== 'N/A'
-                                ? new Date(
-                                    lesson.lastUpdated
-                                  ).toLocaleDateString()
-                                : 'N/A'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-              {/* 📌 Tabla de Actividades */}
-              {selectedDetail.activities &&
-                selectedDetail.activities.length > 0 && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-white">
-                      📌 Detalles de Actividades
-                    </h3>
-                    <div className="overflow-x-auto">
-                      <table className="mt-2 w-full border-collapse border border-gray-700">
-                        <thead>
-                          <tr className="bg-gray-800 text-white">
-                            <th className="border border-gray-700 p-2">
-                              Actividad
-                            </th>
-                            <th className="border border-gray-700 p-2">
-                              Descripción
-                            </th>
-                            <th className="border border-gray-700 p-2">
-                              Estado
-                            </th>
-                            <th className="border border-gray-700 p-2">
-                              Puntaje
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedDetail.activities.map((activity) => (
-                            <tr
-                              key={activity.activityId}
-                              className="text-gray-300"
-                            >
-                              <td className="border border-gray-700 p-2">
-                                {activity.name}
-                              </td>
-                              <td className="border border-gray-700 p-2">
-                                {activity.description}
-                              </td>
-                              <td className="border border-gray-700 p-2">
-                                {activity.isCompleted
-                                  ? '✅ Completada'
-                                  : '❌ Pendiente'}
-                              </td>
-                              <td className="border border-gray-700 p-2">
-                                {activity.score}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              {/* 📘 Tabla de Lecciones Completadas */}
-              {selectedDetail.title === 'Lecciones Completadas' &&
-                selectedDetail.lessons && (
-                  <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-white">
-                      📘 Detalles de Lecciones Completadas
-                    </h3>
-                    <div className="overflow-x-auto">
-                      <table className="mt-2 w-full border-collapse border border-gray-700">
-                        <thead>
-                          <tr className="bg-gray-800 text-white">
-                            <th className="border border-gray-700 p-2">
-                              Lección
-                            </th>
-                            <th className="border border-gray-700 p-2">
-                              Progreso
-                            </th>
-                            <th className="border border-gray-700 p-2">
-                              Estado
-                            </th>
-                            <th className="border border-gray-700 p-2">
-                              Última actualización
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {selectedDetail.lessons.length > 0 ? (
-                            selectedDetail.lessons
-                              .filter((lesson) => lesson.isCompleted) // Solo mostrar completadas
-                              .map((lesson) => (
-                                <tr
-                                  key={lesson.lessonId}
-                                  className="text-gray-300"
-                                >
-                                  <td className="border border-gray-700 p-2 font-semibold">
-                                    {lesson.title}
-                                  </td>
-                                  <td className="border border-gray-700 p-2 text-center">
-                                    {lesson.progress}%
-                                  </td>
-                                  <td className="border border-gray-700 p-2 text-center">
-                                    ✅ Completada
-                                  </td>
-                                  <td className="border border-gray-700 p-2 text-center">
-                                    {lesson.lastUpdated !== 'N/A'
-                                      ? new Date(
-                                          lesson.lastUpdated
-                                        ).toLocaleDateString()
-                                      : 'N/A'}
-                                  </td>
-                                </tr>
-                              ))
-                          ) : (
-                            <tr>
-                              <td
-                                colSpan={4}
-                                className="p-2 text-center text-gray-400"
-                              >
-                                No hay lecciones completadas.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              {/* 🏆 Resumen General */}
-              {selectedDetail.title === 'Detalles Adicionales' && (
-                <div className="mt-6 rounded-lg bg-gray-800 p-4 text-left text-white">
-                  <h3 className="text-lg font-semibold">🏆 Resumen General</h3>
-                  <p>
-                    <strong>📊 Progreso del Curso:</strong>{' '}
-                    {stats?.progressPercentage}%
+                  <p className="text-white/80">
+                    <span className="font-bold text-white">Título:</span>{' '}
+                    {courseInfo?.title}
                   </p>
-                  <p>
-                    <strong>📘 Lecciones Completadas:</strong>{' '}
-                    {stats?.completedLessons} / {stats?.totalLessons}
+                  <p className="text-white/80">
+                    <span className="font-bold text-white">Instructor:</span>{' '}
+                    {courseInfo?.instructor}
                   </p>
-                  <p>
-                    <strong>📌 Actividades Completadas:</strong>{' '}
-                    {stats?.completedActivities} / {stats?.totalActivities}
+                  <p className="text-white/80">
+                    <span className="font-bold text-white">Nivel:</span>{' '}
+                    {courseInfo?.nivel}
                   </p>
-                  <p>
-                    <strong>⏳ Tiempo Total:</strong> {stats?.totalTimeSpent}{' '}
-                    minutos
-                  </p>
-                  <p>
-                    <strong>🎯 Nota Global:</strong> {stats?.globalCourseScore}
+                  <p className="text-white/80">
+                    <span className="font-bold text-white">Creado el:</span>{' '}
+                    {courseInfo?.createdAt
+                      ? new Date(courseInfo.createdAt).toLocaleDateString()
+                      : ''}
                   </p>
                 </div>
-              )}
+                <div className="rounded-xl bg-[#182235] p-6 shadow-lg">
+                  <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
+                    Datos del Estudiante
+                  </h3>
+                  <p className="text-white/80">
+                    <span className="font-bold text-white">Nombre:</span>{' '}
+                    {userInfo?.firstName}
+                  </p>
+                  <p className="text-white/80">
+                    <span className="font-bold text-white">Email:</span>{' '}
+                    {userInfo?.email}
+                  </p>
+                  <p className="text-white/80">
+                    <span className="font-bold text-white">Rol:</span>{' '}
+                    {userInfo?.role}
+                  </p>
+                </div>
+              </div>
             </div>
+          ) : (
+            <p className="animate-fade-in mt-6 text-center text-white">
+              No hay datos disponibles.
+            </p>
+          )}
+        </div>
 
-            {/* 📌 Tabla de Actividades */}
-
-            {/* 📌 Botones */}
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
-                onClick={() =>
-                  console.log('🟢 Ver más detalles de:', selectedDetail)
-                }
-              >
-                Ver más
-              </button>
-
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
-              >
-                Cerrar
-              </button>
+        {/* Resumen y progreso */}
+        <div className="animate-slide-up mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-3">
+          <div className="rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all duration-500 hover:scale-105">
+            <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
+              Progreso General
+            </h3>
+            <div className="mb-2 h-3 w-full rounded-full bg-[#232B3E]">
+              <div
+                className="h-3 rounded-full bg-[#3AF4EF] transition-all duration-700"
+                style={{ width: `${stats?.progressPercentage ?? 0}%` }}
+              />
             </div>
+            <span className="text-xl font-bold text-white">
+              {stats?.progressPercentage ?? 0}%
+            </span>
+          </div>
+          <div className="rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all duration-500 hover:scale-105">
+            <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
+              Lecciones Completadas
+            </h3>
+            <span className="text-xl font-bold text-white">
+              {stats?.completedLessons ?? 0} / {stats?.totalLessons ?? 0}
+            </span>
+          </div>
+          <div className="rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all duration-500 hover:scale-105">
+            <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
+              Nota Global
+            </h3>
+            <span className="text-xl font-bold text-white">
+              {stats?.globalCourseScore ?? 'N/A'}
+            </span>
           </div>
         </div>
-      )}
+      </div>
     </>
   );
 }

@@ -2661,15 +2661,16 @@ export default function AdminDashboard() {
       )}
       {viewUser && (
         <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center overflow-y-auto bg-black/80"
+          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80"
           onClick={() => setViewUser(null)}
         >
           <div
-            className="relative m-4 w-full max-w-5xl rounded-xl bg-[#01142B] p-6 text-white shadow-2xl md:p-8"
+            className="relative m-4 flex w-full max-w-5xl flex-col rounded-xl bg-[#01142B] p-4 text-white shadow-2xl md:p-8"
+            style={{ maxHeight: '90vh' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="mb-8 flex items-center justify-between border-b border-white/10 pb-4">
+            <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
               <h2 className="text-2xl font-bold text-[#3AF4EF]">
                 Detalles del Usuario
               </h2>
@@ -2682,11 +2683,11 @@ export default function AdminDashboard() {
             </div>
 
             {/* Content */}
-            <div className="grid gap-8 md:grid-cols-[300px_1fr]">
+            <div className="grid max-h-[70vh] w-full gap-6 overflow-y-auto md:grid-cols-[320px_1fr]">
               {/* Sidebar - Info básica */}
-              <div className="space-y-6">
+              <div className="min-w-0 space-y-6">
                 {/* Avatar */}
-                <div className="relative mx-auto h-64 w-64 overflow-hidden rounded-xl border-2 border-[#3AF4EF] shadow-lg">
+                <div className="relative mx-auto h-40 w-40 max-w-full overflow-hidden rounded-xl border-2 border-[#3AF4EF] shadow-lg sm:h-56 sm:w-56 md:h-64 md:w-64">
                   {viewUser.profileImage ? (
                     <Image
                       src={viewUser.profileImage}
@@ -2703,14 +2704,14 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Información básica */}
-                <div className="rounded-lg bg-white/5 p-4">
-                  <h3 className="mb-4 text-xl font-bold text-white">
+                <div className="w-full rounded-lg bg-white/5 p-4">
+                  <h3 className="mb-4 truncate text-xl font-bold text-white">
                     {viewUser.firstName} {viewUser.lastName}
                   </h3>
                   <div className="space-y-3 text-sm">
                     <p className="flex items-center gap-2 text-gray-300">
                       <span>Email:</span>
-                      <span className="font-medium text-white">
+                      <span className="truncate font-medium text-white">
                         {viewUser.email}
                       </span>
                     </p>
@@ -2748,17 +2749,19 @@ export default function AdminDashboard() {
               </div>
 
               {/* Main Content */}
-              <div className="space-y-8">
+              <div className="w-full min-w-0 space-y-6">
                 {/* Información de la cuenta */}
                 <div>
                   <h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
                     Información adicional
                   </h3>
-                  <div className="rounded-lg bg-white/5 p-4">
+                  <div className="w-full rounded-lg bg-white/5 p-4">
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <p className="text-sm text-gray-400">ID del usuario</p>
-                        <p className="font-mono text-sm">{viewUser.id}</p>
+                        <p className="font-mono text-sm break-all">
+                          {viewUser.id}
+                        </p>
                       </div>
                       {/* Aquí puedes agregar más campos de información */}
                     </div>
@@ -2770,7 +2773,7 @@ export default function AdminDashboard() {
                   <h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
                     Cursos inscritos
                   </h3>
-                  <div className="rounded-lg bg-white/5 p-4">
+                  <div className="w-full rounded-lg bg-white/5 p-4">
                     {viewUser.courses && viewUser.courses.length > 0 ? (
                       <CourseCarousel
                         courses={viewUser.courses}
