@@ -30,6 +30,7 @@ import {
 } from '~/components/projects/ui/select';
 import { useGenerateContent } from '~/hooks/useGenerateContent';
 import { useProjectAutoSave } from '~/hooks/useProjectAutoSave';
+import { ObjetivosInput, SpecificObjective } from '~/types/objectives';
 
 import '~/styles/select-custom.css';
 import '~/styles/ai-generate-loader.css';
@@ -184,17 +185,7 @@ const parseObjectivesWithActivities = (
   }));
 };
 
-interface Activity {
-  title: string;
-  startDate?: string;
-  endDate?: string;
-}
-
-interface SpecificObjective {
-  id: string;
-  title: string;
-  activities: Activity[];
-}
+// Activity and SpecificObjective types are imported from src/types/objectives.ts
 
 type UpdatedProjectData = Record<string, unknown>;
 
@@ -206,7 +197,7 @@ interface ModalResumenProps {
   planteamiento?: string;
   justificacion?: string;
   objetivoGen?: string;
-  objetivosEsp: SpecificObjective[];
+  objetivosEsp?: ObjetivosInput;
   categoriaId?: number;
   tipoProyecto?: string;
   projectId?: number;
@@ -225,7 +216,7 @@ interface ModalResumenProps {
   }[];
   courseId?: number;
   onProjectCreated?: () => void;
-  setObjetivosEsp: (value: SpecificObjective[]) => void;
+  setObjetivosEsp: (value: ObjetivosInput) => void;
   setActividades: (value: string[]) => void;
   responsablesPorActividad?: Record<string, string>;
   horasPorActividad?: Record<string, number>;
@@ -238,12 +229,13 @@ interface ModalResumenProps {
     planteamiento?: string;
     justificacion?: string;
     objetivoGen?: string;
-    objetivosEsp?: SpecificObjective[];
+    objetivosEsp?: ObjetivosInput;
   }) => void;
   setPlanteamiento?: (value: string) => void;
   setJustificacion?: (value: string) => void;
   setObjetivoGen?: (value: string) => void;
-  setObjetivosEspProp?: (value: SpecificObjective[]) => void;
+  setObjetivosEspProp?: (value: ObjetivosInput) => void;
+  cronograma?: unknown;
 }
 
 const steps = [
@@ -310,6 +302,18 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const hasInitializedRef = useRef(false); // Para evitar resetear currentStep en cada cambio de datos
   const activitiesDirtyRef = useRef(false);
   const [creationError, setCreationError] = useState<string | null>(null);
+  const normalizeInitialObjetivos = (src?: ObjetivosInput) => {
+    if (!src) return [] as SpecificObjective[];
+    if (Array.isArray(src) && src.length > 0 && typeof src[0] === 'string') {
+      return (src as string[]).map((s, i) => ({
+        id: `${Date.now()}_${i}`,
+        title: s,
+        activities: [],
+      }));
+    }
+    return src as SpecificObjective[];
+  };
+
   const [formData, setFormData] = useState({
     titulo,
     description: '', // Descripción general (generada por IA)
@@ -317,7 +321,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     requirements: [] as string[], // Requisitos
     justificacion: justificacion ?? '',
     objetivoGen: objetivoGen ?? '',
-    objetivosEsp,
+    objetivosEsp: normalizeInitialObjetivos(objetivosEsp),
     categoriaId,
     tipoProyecto: tipoProyecto ?? '',
     projectTypeId: undefined as number | undefined,

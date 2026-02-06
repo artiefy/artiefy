@@ -22,6 +22,9 @@ interface GenerateContentResponse {
 
 const N8N_WEBHOOK_URL = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
 
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
 export const useGenerateContent = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,46 +69,121 @@ export const useGenerateContent = () => {
 
       const data: GenerateContentResponse & {
         body?: GenerateContentResponse & {
-          data?: Record<string, unknown>;
+          data?: unknown;
         };
-        data?: Record<string, unknown>;
+        data?: unknown;
       } = await response.json();
 
       // n8n puede devolver { success, body } o { success, ... }
       const responseBody = data.body ?? data;
 
       if (!data.success || !responseBody.success) {
+        const rb = responseBody as unknown;
+        let rbError: string | undefined;
+        if (
+          isRecord(rb) &&
+          typeof (rb as Record<string, unknown>).error === 'string'
+        ) {
+          rbError = (rb as Record<string, unknown>).error as string;
+        }
+        const dataError =
+          typeof data.error === 'string' ? data.error : undefined;
         throw new Error(
-          responseBody.error ||
-            data.error ||
-            'Error desconocido al generar contenido'
+          rbError || dataError || 'Error desconocido al generar contenido'
         );
       }
 
-      const typedContentMap = responseBody.data || responseBody.content || {};
-      const contentFromMap =
-        responseBody.content ||
-        data.content ||
-        (options.type === 'titulo'
-          ? typedContentMap.titulo
-          : options.type === 'descripcion'
-            ? typedContentMap.descripcion
-            : options.type === 'problema'
-              ? typedContentMap.problema
-              : options.type === 'justificacion'
-                ? typedContentMap.justificacion
-                : options.type === 'objetivoGen'
-                  ? typedContentMap.objetivo_general
-                  : options.type === 'requisitos'
-                    ? typedContentMap.requisitos
-                    : typedContentMap.objetivos);
+      let rawContent: unknown;
+      if (isRecord(responseBody)) {
+        rawContent =
+          (responseBody as Record<string, unknown>)['content'] ??
+          (responseBody as Record<string, unknown>)['data'] ??
+          data.content ??
+          responseBody;
+      } else {
+        rawContent = data.content ?? responseBody;
+      }
 
-      if (!contentFromMap) {
+      const stringifyObjectiveArray = (arr: unknown[]) => {
+        return arr
+          .map((item, idx) => {
+            if (typeof item === 'string') return item;
+            if (isRecord(item)) {
+              const title =
+                (typeof item.title === 'string' && item.title) ||
+                (typeof item.description === 'string' && item.description) ||
+                (typeof item.name === 'string' && item.name) ||
+                '';
+
+              const acts: string[] = Array.isArray(item.activities)
+                ? (item.activities as unknown[])
+                    .map((a) => {
+                      if (typeof a === 'string') return a;
+                      if (isRecord(a)) {
+                        if (
+                          typeof (a as Record<string, unknown>).title ===
+                          'string'
+                        )
+                          return (a as Record<string, unknown>).title as string;
+                        if (
+                          typeof (a as Record<string, unknown>).description ===
+                          'string'
+                        )
+                          return (a as Record<string, unknown>)
+                            .description as string;
+                      }
+                      return '';
+                    })
+                    .filter(Boolean)
+                : [];
+
+              if (acts.length > 0) {
+                return `Objetivo ${idx + 1}: ${title}\n${acts
+                  .map((a) => `Actividad: ${a}`)
+                  .join('\n')}`;
+              }
+              return title || JSON.stringify(item);
+            }
+            return String(item);
+          })
+          .join('\n\n');
+      };
+
+      let contentStr: string | undefined;
+
+      if (typeof rawContent === 'string') {
+        contentStr = rawContent;
+      } else if (Array.isArray(rawContent)) {
+        contentStr = stringifyObjectiveArray(rawContent as unknown[]);
+      } else if (isRecord(rawContent)) {
+        const candidates =
+          rawContent.objetivos ??
+          rawContent.objetivosEsp ??
+          rawContent.objetivos_especificos ??
+          rawContent.requisitos ??
+          rawContent.result ??
+          rawContent.data ??
+          rawContent;
+
+        if (Array.isArray(candidates)) {
+          contentStr = stringifyObjectiveArray(candidates as unknown[]);
+        } else if (typeof candidates === 'string') {
+          contentStr = candidates;
+        } else {
+          try {
+            contentStr = JSON.stringify(candidates, null, 2);
+          } catch (e) {
+            contentStr = String(candidates);
+          }
+        }
+      }
+
+      if (!contentStr) {
         console.error('Respuesta completa:', data);
         throw new Error('No se recibió contenido del servidor');
       }
 
-      return contentFromMap;
+      return contentStr;
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'Error desconocido';

@@ -85,12 +85,13 @@ Deberías recibir:
 
 ```typescript
 // Ubicación: src/hooks/useGenerateContent.ts
-const { generateContent, isGenerating, error, clearError } = useGenerateContent();
+const { generateContent, isGenerating, error, clearError } =
+  useGenerateContent();
 
 // Uso:
 const content = await generateContent({
   type: 'titulo' | 'descripcion' | 'justificacion' | 'objetivoGen',
-  prompt: 'Tu prompt aquí'
+  prompt: 'Tu prompt aquí',
 });
 ```
 
@@ -98,16 +99,16 @@ const content = await generateContent({
 
 ```typescript
 // Generar título basado en descripción
-await handleGenerateTitulo()
+await handleGenerateTitulo();
 
 // Generar descripción basado en título
-await handleGenerateDescripcion()
+await handleGenerateDescripcion();
 
 // Generar justificación
-await handleGenerateJustificacion()
+await handleGenerateJustificacion();
 
 // Generar objetivo general
-await handleGenerateObjetivoGen()
+await handleGenerateObjetivoGen();
 ```
 
 ### Tipos de Contenido Soportados

@@ -20,14 +20,14 @@ import {
   Users,
 } from 'lucide-react';
 
-import { Progress } from './ui/progress';
-
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '~/components/projects/ui/tabs';
+
+import { Progress } from './ui/progress';
 
 import type { Project } from '~/types/project';
 
