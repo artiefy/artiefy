@@ -1,9 +1,13 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { asc, eq } from 'drizzle-orm';
+
 import {
   getLessonById,
   updateLesson,
 } from '~/models/educatorsModels/lessonsModels';
+import { db } from '~/server/db';
+import { lessons } from '~/server/db/schema';
 
 export async function GET(
   _request: Request,
@@ -69,7 +73,55 @@ export async function PUT(
         ? data.duration
         : undefined;
 
-    const updatedLesson = await updateLesson(lessonId, {
+    const desiredIndex = Number(data.orderIndex);
+
+    if (Number.isFinite(desiredIndex)) {
+      const current = await db.query.lessons.findFirst({
+        where: eq(lessons.id, lessonId),
+        columns: { id: true, courseId: true },
+      });
+
+      if (!current?.courseId) {
+        return new Response(
+          JSON.stringify({ error: 'Lección no encontrada' }),
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        );
+      }
+
+      const courseLessons = await db.query.lessons.findMany({
+        where: eq(lessons.courseId, current.courseId),
+        orderBy: [asc(lessons.orderIndex), asc(lessons.id)],
+        columns: { id: true, orderIndex: true },
+      });
+
+      const list = courseLessons.filter((l) => l.id !== lessonId);
+      let clampedIndex = desiredIndex;
+      if (clampedIndex < 1) {
+        clampedIndex = 1;
+      }
+      const maxIndex = list.length + 1;
+      if (clampedIndex > maxIndex) {
+        clampedIndex = maxIndex;
+      }
+      const insertPos = clampedIndex - 1;
+      list.splice(insertPos, 0, { id: lessonId, orderIndex: clampedIndex });
+
+      let position = 1;
+      for (const l of list) {
+        if (l.orderIndex !== position) {
+          await db
+            .update(lessons)
+            .set({ orderIndex: position })
+            .where(eq(lessons.id, l.id));
+        }
+        position++;
+      }
+    }
+
+    const updatePayload = {
       title: data.title,
       description: data.description,
       duration,
@@ -81,8 +133,20 @@ export async function PUT(
         typeof data.courseId === 'number' && !Number.isNaN(data.courseId)
           ? data.courseId
           : undefined,
-      orderIndex: data.orderIndex,
-    });
+    };
+
+    const hasUpdates = Object.values(updatePayload).some(
+      (value) => value !== undefined
+    );
+
+    if (!hasUpdates) {
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const updatedLesson = await updateLesson(lessonId, updatePayload);
 
     return new Response(JSON.stringify(updatedLesson), {
       status: 200,
