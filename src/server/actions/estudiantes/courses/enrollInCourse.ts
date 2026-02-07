@@ -226,6 +226,11 @@ export async function enrollInCourse(
     // Sort lessons using our shared sorting utility
     const sortedLessons = sortLessons(courseLessons); // sortLessons usa orderIndex
 
+    const firstLesson =
+      sortedLessons.find((lesson) => lesson.orderIndex === 1) ??
+      sortedLessons[0];
+    const firstLessonId = firstLesson?.id;
+
     // Obtén los IDs de las lecciones que ya tienen progreso
     const existingProgress = await db.query.userLessonsProgress.findMany({
       where: eq(userLessonsProgress.userId, userId),
@@ -235,13 +240,13 @@ export async function enrollInCourse(
     // Solo crea progreso para las lecciones que no existen aún
     const progressValues = sortedLessons
       .filter((lesson) => !existingLessonIds.has(lesson.id))
-      .map((lesson, index) => ({
+      .map((lesson) => ({
         userId: userId,
         lessonId: lesson.id,
         progress: 0,
         isCompleted: false,
-        isLocked: index !== 0, // Solo la primera desbloqueada si es nueva
-        isNew: index === 0, // Solo la primera es nueva si es nueva
+        isLocked: firstLessonId ? lesson.id !== firstLessonId : true,
+        isNew: firstLessonId ? lesson.id === firstLessonId : false,
         lastUpdated: new Date(),
       }));
 

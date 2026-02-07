@@ -91,8 +91,9 @@ export async function PUT(
         );
       }
 
+      const courseId = current.courseId;
       const courseLessons = await db.query.lessons.findMany({
-        where: eq(lessons.courseId, current.courseId),
+        where: eq(lessons.courseId, courseId),
         orderBy: [asc(lessons.orderIndex), asc(lessons.id)],
         columns: { id: true, orderIndex: true },
       });
