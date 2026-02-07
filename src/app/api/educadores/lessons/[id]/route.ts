@@ -60,18 +60,28 @@ export async function PUT(
       coverVideoKey?: string;
       resourceKey?: string;
       resourceNames?: string;
-      courseId: number;
+      courseId?: number;
+      orderIndex?: number;
     };
+
+    const duration =
+      typeof data.duration === 'number' && !Number.isNaN(data.duration)
+        ? data.duration
+        : undefined;
 
     const updatedLesson = await updateLesson(lessonId, {
       title: data.title,
       description: data.description,
-      duration: Number(data.duration),
+      duration,
       coverImageKey: data.coverImageKey,
       coverVideoKey: data.coverVideoKey,
       resourceKey: data.resourceKey,
       resourceNames: data.resourceNames,
-      courseId: Number(data.courseId),
+      courseId:
+        typeof data.courseId === 'number' && !Number.isNaN(data.courseId)
+          ? data.courseId
+          : undefined,
+      orderIndex: data.orderIndex,
     });
 
     return new Response(JSON.stringify(updatedLesson), {
