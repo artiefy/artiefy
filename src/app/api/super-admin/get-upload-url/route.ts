@@ -6,12 +6,10 @@ import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { v4 as uuidv4 } from 'uuid';
 
 const REGION = process.env.AWS_REGION ?? 'us-east-2';
-const BUCKET = process.env.AWS_S3_BUCKET ?? process.env.AWS_BUCKET_NAME ?? '';
+const BUCKET = process.env.AWS_BUCKET_NAME ?? '';
 
 if (!BUCKET) {
-  throw new Error(
-    'Falta AWS_S3_BUCKET o AWS_BUCKET_NAME en variables de entorno'
-  );
+  throw new Error('Falta AWS_BUCKET_NAME en variables de entorno');
 }
 
 const s3 = new S3Client({

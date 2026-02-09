@@ -92,14 +92,19 @@ const buildProjectContext = (title?: string, description?: string) => {
 const normalizeRequirementLine = (line: string) => {
   let cleaned = line.trim();
   if (!cleaned) return '';
+  // Remove common bullet characters
   cleaned = cleaned.replace(/^[-*•]+\s*/u, '');
-  cleaned = cleaned.replace(/^\d+\s*[.)-]?\s*/u, '');
-  cleaned = cleaned.replace(/^[a-zA-Z]\s*[.)-]?\s*/u, '');
+  // Remove numeric list markers like "1.", "2)", "3 -"
+  cleaned = cleaned.replace(/^\d+\s*[.)-]\s*/u, '');
+  // Remove letter list markers only when followed by punctuation like "a." or "b)"
+  cleaned = cleaned.replace(/^[a-zA-Z]\s*[.)-]\s*/u, '');
   cleaned = cleaned.trim();
   if (!cleaned) return '';
   const lower = cleaned.toLowerCase();
   if (lower === 'requisitos' || lower === 'requisito') return '';
   if (cleaned.endsWith(':')) return '';
+  // Capitalize first letter
+  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   return cleaned;
 };
 
@@ -430,10 +435,23 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         }))
     );
 
+    const descriptionTrimmed = (formData.description ?? '').trim();
+
+    const shouldOmitDescription =
+      descriptionTrimmed === '' &&
+      existingProject &&
+      typeof (existingProject as Record<string, unknown>).description ===
+        'string' &&
+      (
+        (existingProject as Record<string, unknown>).description ?? ''
+      ).trim() !== '';
+
     const dataToSave = {
-      // Campos de info básica (sección 1) - siempre enviar el valor para que se guarde aunque esté vacío
+      // Campos de info básica (sección 1)
+      // Nota: omitimos `description` si está vacío en el formulario pero
+      // el servidor ya tiene una descripción no vacía para evitar sobrescribirla
       name: formData.titulo.trim(),
-      description: formData.description.trim(),
+      ...(shouldOmitDescription ? {} : { description: descriptionTrimmed }),
       categoryId: formData.categoriaId,
       type_project: formData.tipoProyecto.trim(),
       isPublic: formData.isPublic,

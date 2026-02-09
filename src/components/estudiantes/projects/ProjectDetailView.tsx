@@ -694,9 +694,15 @@ export default function ProjectDetailView({
                 <Pencil className="h-4 w-4" />
               </button>
             </div>
-            <p className="leading-relaxed text-muted-foreground">
-              {project.planteamiento}
-            </p>
+            {project.planteamiento && project.planteamiento.trim() !== '' ? (
+              <p className="leading-relaxed text-muted-foreground">
+                {project.planteamiento}
+              </p>
+            ) : (
+              <p className="text-muted-foreground">
+                No hay problema definido aún.
+              </p>
+            )}
           </div>
 
           {/* Justificación */}
@@ -781,10 +787,21 @@ export default function ProjectDetailView({
                 <Pencil className="h-4 w-4" />
               </button>
             </div>
-            {project.requirements ? (
-              <ul className="space-y-3">
-                {JSON.parse(project.requirements).map(
-                  (req: string, idx: number) => (
+            {(() => {
+              let reqs: string[] = [];
+              try {
+                reqs = Array.isArray(project.requirements)
+                  ? project.requirements
+                  : JSON.parse(project.requirements ?? '[]');
+              } catch {
+                reqs = [];
+              }
+              const filtered = reqs.filter(
+                (r) => typeof r === 'string' && r.trim() !== ''
+              );
+              return filtered.length > 0 ? (
+                <ul className="space-y-3">
+                  {filtered.map((req, idx) => (
                     <li
                       key={idx}
                       className="flex items-start gap-3 text-sm text-muted-foreground"
@@ -794,14 +811,14 @@ export default function ProjectDetailView({
                       </div>
                       {req}
                     </li>
-                  )
-                )}
-              </ul>
-            ) : (
-              <p className="text-muted-foreground">
-                No hay requisitos definidos aún.
-              </p>
-            )}
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-muted-foreground">
+                  No hay requisitos definidos aún.
+                </p>
+              );
+            })()}
           </div>
 
           {/* Objetivos Específicos */}
