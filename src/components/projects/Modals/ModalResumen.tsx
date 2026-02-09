@@ -437,14 +437,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
     const descriptionTrimmed = (formData.description ?? '').trim();
 
+    const serverDescription =
+      typeof (existingProject as Record<string, unknown>)?.description ===
+      'string'
+        ? String((existingProject as Record<string, unknown>).description)
+        : '';
+
     const shouldOmitDescription =
       descriptionTrimmed === '' &&
       existingProject &&
-      typeof (existingProject as Record<string, unknown>).description ===
-        'string' &&
-      (
-        (existingProject as Record<string, unknown>).description ?? ''
-      ).trim() !== '';
+      serverDescription.trim() !== '';
 
     const dataToSave = {
       // Campos de info básica (sección 1)
