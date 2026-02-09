@@ -121,6 +121,13 @@ export async function POST(req: Request) {
       });
 
       const sortedLessons = sortLessons(courseLessons);
+
+      // Buscar específicamente la lección con orderIndex = 1
+      const firstLessonWithOrderIndex = courseLessons.find(
+        (lesson) => lesson.orderIndex === 1
+      );
+      const firstLessonId = firstLessonWithOrderIndex?.id ?? null;
+
       for (const userId of newEnrollments) {
         const existingProgress = await db.query.userLessonsProgress.findMany({
           where: and(
@@ -136,21 +143,48 @@ export async function POST(req: Request) {
           existingProgress.map((p) => p.lessonId)
         );
 
-        for (const [index, lesson] of sortedLessons.entries()) {
-          if (!existingProgressSet.has(lesson.id)) {
-            const isFirstOrWelcome =
-              index === 0 ||
-              lesson.title.toLowerCase().includes('bienvenida') ||
-              lesson.title.toLowerCase().includes('clase 1');
+        for (const lesson of sortedLessons) {
+          // Desbloquear solo la lección con orderIndex = 1
+          const isFirstLesson =
+            firstLessonId !== null && lesson.id === firstLessonId;
 
+          if (!existingProgressSet.has(lesson.id)) {
+            // Insertar nueva lección
             await db.insert(userLessonsProgress).values({
               userId,
               lessonId: lesson.id,
               progress: 0,
               isCompleted: false,
-              isLocked: !isFirstOrWelcome,
-              isNew: true,
+              isLocked: !isFirstLesson,
+              isNew: isFirstLesson,
               lastUpdated: new Date(),
+            });
+
+            console.log('📝 Lección INSERTADA:', {
+              lessonId: lesson.id,
+              userId,
+              isLocked: !isFirstLesson,
+            });
+          } else {
+            // Actualizar lección existente
+            await db
+              .update(userLessonsProgress)
+              .set({
+                isLocked: !isFirstLesson,
+                isNew: isFirstLesson,
+                lastUpdated: new Date(),
+              })
+              .where(
+                and(
+                  eq(userLessonsProgress.userId, userId),
+                  eq(userLessonsProgress.lessonId, lesson.id)
+                )
+              );
+
+            console.log('🔄 Lección ACTUALIZADA:', {
+              lessonId: lesson.id,
+              userId,
+              isLocked: !isFirstLesson,
             });
           }
         }

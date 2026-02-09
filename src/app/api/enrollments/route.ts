@@ -175,19 +175,26 @@ export async function POST(request: Request) {
           }))
         );
 
-        // Obtener lecciones del curso ordenadas por orderIndex
-        // Obtener lecciones del curso ordenadas por orderIndex
+        // Obtener lecciones del curso
         const courseLessons = await db.query.lessons.findMany({
           where: eq(lessons.courseId, parsedCourseId),
-          orderBy: (lessons, { asc }) => [asc(lessons.orderIndex)],
         });
 
         if (courseLessons.length === 0) {
           console.warn(`⚠️ No hay lecciones para el curso ${parsedCourseId}`);
         } else {
-          // La primera lección es la que tiene el orderIndex más bajo
-          const firstLessonId = courseLessons[0].id;
+          // Buscar específicamente la lección con orderIndex = 1
+          const firstLessonWithOrderIndex = courseLessons.find(
+            (lesson) => lesson.orderIndex === 1
+          );
+          const firstLessonId = firstLessonWithOrderIndex?.id ?? null;
           const lessonIds = courseLessons.map((lesson) => lesson.id);
+
+          console.log('🔓 Primera lección a desbloquear (orderIndex=1):', {
+            firstLessonId,
+            lessonTitle: firstLessonWithOrderIndex?.title,
+            orderIndex: firstLessonWithOrderIndex?.orderIndex,
+          });
 
           for (const userId of newUsers) {
             const existingProgress =
@@ -203,7 +210,8 @@ export async function POST(request: Request) {
             );
 
             for (const lesson of courseLessons) {
-              const isFirstLesson = lesson.id === firstLessonId;
+              const isFirstLesson =
+                firstLessonId !== null && lesson.id === firstLessonId;
               if (!existingProgressSet.has(lesson.id)) {
                 // Usar onConflictDoUpdate para actualizar si ya existe
                 await db
@@ -213,8 +221,8 @@ export async function POST(request: Request) {
                     lessonId: lesson.id,
                     progress: 0,
                     isCompleted: false,
-                    isLocked: !isFirstLesson, // ✅ Solo false para la primera
-                    isNew: true,
+                    isLocked: !isFirstLesson, // ✅ Solo false para la lección con orderIndex=1
+                    isNew: isFirstLesson,
                     lastUpdated: new Date(),
                   })
                   .onConflictDoUpdate({
@@ -224,7 +232,7 @@ export async function POST(request: Request) {
                     ],
                     set: {
                       isLocked: !isFirstLesson, // ✅ Actualiza isLocked aunque ya exista
-                      isNew: true,
+                      isNew: isFirstLesson,
                       lastUpdated: new Date(),
                     },
                   });
@@ -233,7 +241,7 @@ export async function POST(request: Request) {
                   .update(userLessonsProgress)
                   .set({
                     isLocked: !isFirstLesson,
-                    isNew: true,
+                    isNew: isFirstLesson,
                     lastUpdated: new Date(),
                   })
                   .where(
