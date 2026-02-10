@@ -4,12 +4,12 @@ import { eq } from 'drizzle-orm';
 import { OpenAI } from 'openai';
 
 import { env } from '~/env';
+import {
+  cosineSimilarity,
+  generateEmbedding,
+} from '~/lib/embeddings/processor';
 import { db } from '~/server/db';
 import { documentEmbeddings } from '~/server/db/schema';
-import {
-  generateEmbedding,
-  cosineSimilarity,
-} from '~/lib/embeddings/processor';
 
 type SearchParams = {
   courseId?: number;

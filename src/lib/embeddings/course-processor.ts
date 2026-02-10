@@ -13,7 +13,7 @@ import { db } from '~/server/db';
 import { activities, courses, lessons } from '~/server/db/schema';
 
 import { downloadMultipleFilesFromS3 } from './s3-downloader';
-import { extractTextFromFile, estimateTokens } from './utils';
+import { estimateTokens,extractTextFromFile } from './utils';
 
 export interface CourseContentData {
   courseId: number;
@@ -52,7 +52,7 @@ export async function getCourseContentForEmbeddings(
   console.log(`ℹ️ Curso: ${courseData.title}`);
 
   // Acumular contenido
-  let contentParts: string[] = [];
+  const contentParts: string[] = [];
   const sources: CourseContentData['sources'] = [];
 
   // 2. Agregar meta del curso
