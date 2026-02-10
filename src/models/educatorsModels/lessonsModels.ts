@@ -204,6 +204,7 @@ export async function getLessonsByCourseId(courseId: number) {
         courseCategories: courses.categoryid,
         courseModalidad: courses.modalidadesid,
         courseNivel: courses.nivelid,
+        orderIndex: lessons.orderIndex,
       })
       .from(lessons)
       .innerJoin(courses, eq(courses.id, lessons.courseId))
@@ -268,6 +269,7 @@ export async function getLessonsByCourseId(courseId: number) {
         courseCategories: number;
         courseModalidad: number;
         courseNivel: number;
+        orderIndex: number;
       }) => ({
         id: Lesson.lessonId,
         title: Lesson.lessonTitle,
@@ -279,6 +281,7 @@ export async function getLessonsByCourseId(courseId: number) {
         createdAt: Lesson.createAt,
         updatedAt: Lesson.updateAt,
         duration: Lesson.lessonDuration,
+        orderIndex: Lesson.orderIndex,
         course: {
           id: Lesson.courseId,
           title: Lesson.courseTitle,
@@ -427,6 +430,7 @@ interface UpdateLessonData {
   resourceKey?: string;
   resourceNames?: string;
   courseId?: number;
+  orderIndex?: number;
 }
 
 // Actualizar una lección
@@ -444,6 +448,9 @@ export const updateLesson = async (
   if (data.resourceKey) updateData.resourceKey = data.resourceKey;
   if (data.resourceNames) updateData.resourceNames = data.resourceNames;
   if (typeof data.courseId === 'number') updateData.courseId = data.courseId;
+  if (typeof data.orderIndex === 'number') {
+    updateData.orderIndex = data.orderIndex;
+  }
 
   return await db
     .update(lessons)
@@ -586,7 +593,8 @@ export async function createTemporaryLesson(courseId: number): Promise<number> {
       .insert(lessons)
       .values({
         title: tempTitle,
-        description: 'Lección temporal creada automáticamente. Por favor, cambia el nombre y descripción.',
+        description:
+          'Lección temporal creada automáticamente. Por favor, cambia el nombre y descripción.',
         duration: 0,
         coverImageKey: '',
         coverVideoKey: '',
@@ -601,7 +609,9 @@ export async function createTemporaryLesson(courseId: number): Promise<number> {
       throw new Error('No se pudo crear la lección temporal');
     }
 
-    console.log(`✅ Lección temporal creada con ID: ${newLesson.id} para curso ${courseId}`);
+    console.log(
+      `✅ Lección temporal creada con ID: ${newLesson.id} para curso ${courseId}`
+    );
     return newLesson.id;
   } catch (error) {
     console.error('❌ Error al crear lección temporal:', error);

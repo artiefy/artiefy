@@ -162,8 +162,12 @@ export async function extractPdfText(
     for (let i = 1; i <= pdf.numPages; i++) {
       const page = await pdf.getPage(i);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item) => ('str' in item ? item.str : ''))
+      const pageText = (textContent.items as unknown[])
+        .map((item: unknown) =>
+          typeof item === 'object' && item !== null && 'str' in item
+            ? String((item as Record<string, unknown>).str)
+            : ''
+        )
         .join(' ');
       text += pageText + '\n';
     }

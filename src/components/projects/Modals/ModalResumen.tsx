@@ -1,59 +1,213 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
-import { useUser } from '@clerk/nextjs'; // Añade este import
-import { Image as ImageIcon, UploadCloud, Video } from 'lucide-react';
-import DatePicker from 'react-datepicker';
-import { FaArrowLeft, FaRegCalendarAlt, FaRegClock } from 'react-icons/fa';
+import {
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+  Globe,
+  Plus,
+  RefreshCw,
+  Sparkles,
+  Target,
+  Upload,
+  Users,
+  X,
+} from 'lucide-react';
+import useSWR from 'swr';
+import useSWRMutation from 'swr/mutation';
 
-import { typeProjects } from '~/server/actions/project/typeProject';
-import { type Category } from '~/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '~/components/projects/ui/select';
+import { useGenerateContent } from '~/hooks/useGenerateContent';
+import { useProjectAutoSave } from '~/hooks/useProjectAutoSave';
+import { ObjetivosInput, SpecificObjective } from '~/types/objectives';
 
-import 'react-datepicker/dist/react-datepicker.css';
+import '~/styles/select-custom.css';
+import '~/styles/ai-generate-loader.css';
 
-interface UpdatedProjectData {
-  name?: string;
-  planteamiento?: string;
-  justificacion?: string;
-  objetivo_general?: string;
-  objetivos_especificos?: string[];
-  actividades?: { descripcion: string; meses: number[] }[];
-  type_project?: string;
-  categoryId?: number;
-  coverImageKey?: string;
-  coverVideoKey?: string; // <-- Nuevo campo
-  fechaInicio?: string;
-  fechaFin?: string;
-  tipoVisualizacion?: 'meses' | 'dias' | 'horas'; // <-- Agrega 'horas' aquí
-}
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-// Añade la interfaz SpecificObjective
-interface SpecificObjective {
-  id: string;
-  title: string;
-  activities: string[];
-}
+const normalizeDateInput = (value?: string | null) => {
+  if (!value) return '';
+  const [datePart] = value.split(/[T ]/u);
+  return datePart ?? '';
+};
+
+const parseDateInputToUTC = (value?: string) => {
+  if (!value) return null;
+  const [year, month, day] = value.split('-').map((part) => Number(part));
+  if (!year || !month || !day) return null;
+  return new Date(Date.UTC(year, month - 1, day));
+};
+
+const formatDateInput = (date: Date) => {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const addDurationToDate = (
+  startDate: string,
+  amount: number,
+  unit: 'dias' | 'semanas' | 'meses' | 'anos'
+) => {
+  const start = parseDateInputToUTC(startDate);
+  if (!start || !Number.isFinite(amount) || amount < 1) return '';
+
+  const end = new Date(start);
+  if (unit === 'dias') {
+    end.setUTCDate(end.getUTCDate() + amount - 1);
+  } else if (unit === 'semanas') {
+    end.setUTCDate(end.getUTCDate() + amount * 7 - 1);
+  } else if (unit === 'meses') {
+    end.setUTCMonth(end.getUTCMonth() + amount);
+    end.setUTCDate(end.getUTCDate() - 1);
+  } else {
+    end.setUTCFullYear(end.getUTCFullYear() + amount);
+    end.setUTCDate(end.getUTCDate() - 1);
+  }
+
+  return formatDateInput(end);
+};
+
+const buildProjectContext = (title?: string, description?: string) => {
+  const parts = [title, description]
+    .map((value) => value?.trim())
+    .filter((value): value is string => Boolean(value));
+  if (parts.length === 0) return null;
+  return parts.join(' - ');
+};
+
+const normalizeRequirementLine = (line: string) => {
+  let cleaned = line.trim();
+  if (!cleaned) return '';
+  // Remove common bullet characters
+  cleaned = cleaned.replace(/^[-*•]+\s*/u, '');
+  // Remove numeric list markers like "1.", "2)", "3 -"
+  cleaned = cleaned.replace(/^\d+\s*[.)-]\s*/u, '');
+  // Remove letter list markers only when followed by punctuation like "a." or "b)"
+  cleaned = cleaned.replace(/^[a-zA-Z]\s*[.)-]\s*/u, '');
+  cleaned = cleaned.trim();
+  if (!cleaned) return '';
+  const lower = cleaned.toLowerCase();
+  if (lower === 'requisitos' || lower === 'requisito') return '';
+  if (cleaned.endsWith(':')) return '';
+  // Capitalize first letter
+  cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+  return cleaned;
+};
+
+const dedupeRequirements = (items: string[]) => {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    const key = item.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+const parseObjectivesWithActivities = (
+  content: string
+): SpecificObjective[] => {
+  const lines = content
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const objetivos: SpecificObjective[] = [];
+  let current: SpecificObjective | null = null;
+
+  const finishCurrent = () => {
+    if (!current) return;
+    const title = current.title.trim();
+    if (!title) {
+      current = null;
+      return;
+    }
+    const activities = current.activities.filter((act) => act.title.trim());
+    objetivos.push({ ...current, title, activities });
+    current = null;
+  };
+
+  for (const rawLine of lines) {
+    const cleaned = rawLine.replace(/^[-*•]+\s*/u, '').trim();
+    if (!cleaned) continue;
+    const lower = cleaned.toLowerCase();
+    if (lower === 'actividades' || lower === 'actividades:') continue;
+
+    const activityMatch = cleaned.match(
+      /^(?:actividad|act\.?|tarea)\s*[:\-]?\s*(.+)$/iu
+    );
+    if (activityMatch) {
+      if (current) {
+        current.activities.push({
+          title: activityMatch[1].trim(),
+          startDate: '',
+          endDate: '',
+        });
+      }
+      continue;
+    }
+
+    const objectiveMatch = cleaned.match(
+      /^(?:objetivo\s*\d*|obj\.?\s*\d*|\d+)\s*[.)-]?\s*[:\-]?\s*(.+)$/iu
+    );
+    if (objectiveMatch) {
+      finishCurrent();
+      current = {
+        id: `${Date.now()}_${objetivos.length}`,
+        title: objectiveMatch[1].trim(),
+        activities: [],
+      };
+      continue;
+    }
+
+    if (current) {
+      current.activities.push({ title: cleaned, startDate: '', endDate: '' });
+    }
+  }
+
+  finishCurrent();
+
+  if (objetivos.length > 0) return objetivos;
+
+  return lines.map((line, index) => ({
+    id: `${Date.now()}_${index}`,
+    title: line,
+    activities: [],
+  }));
+};
+
+// Activity and SpecificObjective types are imported from src/types/objectives.ts
+
+type UpdatedProjectData = Record<string, unknown>;
 
 interface ModalResumenProps {
   isOpen: boolean;
   onClose: () => void;
+  initialStep?: number;
   titulo?: string;
-  planteamiento: string;
-  justificacion: string;
-  objetivoGen: string;
-  objetivosEsp: SpecificObjective[];
-  cronograma?: Record<string, number[]>;
+  planteamiento?: string;
+  justificacion?: string;
+  objetivoGen?: string;
+  objetivosEsp?: ObjetivosInput;
   categoriaId?: number;
-  numMeses?: number;
-  setObjetivosEsp: (value: SpecificObjective[]) => void;
-  setActividades: (value: string[]) => void;
+  tipoProyecto?: string;
   projectId?: number;
   coverImageKey?: string;
-  coverVideoKey?: string; // <-- Nuevo prop
-  tipoProyecto?: string;
+  coverVideoKey?: string;
   onUpdateProject?: (updatedProject: UpdatedProjectData) => void;
   fechaInicio?: string;
   fechaFin?: string;
@@ -65,2739 +219,2557 @@ interface ModalResumenProps {
     responsibleUserId?: string;
     hoursPerDay?: number;
   }[];
+  courseId?: number;
+  onProjectCreated?: () => void;
+  setObjetivosEsp: (value: ObjetivosInput) => void;
+  setActividades: (value: string[]) => void;
   responsablesPorActividad?: Record<string, string>;
   horasPorActividad?: Record<string, number>;
-  setHorasPorActividad?: (value: Record<string, number>) => void; // <-- Nuevo setter
-  horasPorDiaProyecto?: number; // <-- Recibe el prop
-  setHorasPorDiaProyecto?: (value: number) => void; // <-- Recibe el setter
-  tiempoEstimadoProyecto?: number; // <-- Nuevo prop
-  setTiempoEstimadoProyecto?: (value: number) => void; // <-- Nuevo setter
+  setHorasPorActividad?: (value: Record<string, number>) => void;
+  horasPorDiaProyecto?: number;
+  setHorasPorDiaProyecto?: (value: number) => void;
+  tiempoEstimadoProyecto?: number;
+  setTiempoEstimadoProyecto?: (value: number) => void;
   onAnterior?: (data?: {
     planteamiento?: string;
     justificacion?: string;
     objetivoGen?: string;
-    objetivosEsp?: SpecificObjective[];
-  }) => void; // <-- Cambia la firma para aceptar datos
-  // NUEVO: setters para sincronizar cambios al volver atrás
+    objetivosEsp?: ObjetivosInput;
+  }) => void;
   setPlanteamiento?: (value: string) => void;
   setJustificacion?: (value: string) => void;
   setObjetivoGen?: (value: string) => void;
-  setObjetivosEspProp?: (value: SpecificObjective[]) => void;
+  setObjetivosEspProp?: (value: ObjetivosInput) => void;
+  cronograma?: unknown;
 }
+
+const steps = [
+  {
+    id: 1,
+    title: 'Información Básica',
+    description: 'Título y descripción del proyecto',
+  },
+  {
+    id: 2,
+    title: 'Problema y Justificación',
+    description: 'Define el problema a resolver',
+  },
+  {
+    id: 3,
+    title: 'Objetivo General',
+    description: 'Define el objetivo principal',
+  },
+  {
+    id: 4,
+    title: 'Requisitos',
+    description: 'Especifica los requisitos del proyecto',
+  },
+  { id: 5, title: 'Duración', description: 'Estima la duración del proyecto' },
+  {
+    id: 6,
+    title: 'Objetivos y Actividades',
+    description: 'Detalla objetivos específicos y actividades',
+  },
+  { id: 7, title: 'Cronograma', description: 'Planifica el cronograma' },
+];
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
   isOpen,
   onClose,
+  initialStep,
   titulo = '',
   planteamiento,
   justificacion,
   objetivoGen,
   objetivosEsp,
-  cronograma = {},
-  numMeses: _numMesesProp, // <-- Cambia aquí para evitar warning de unused var
-  tipoProyecto: _tipoProyectoProp,
-  tipoVisualizacion: tipoVisualizacionProp,
-  tiempoEstimadoProyecto: _tiempoEstimadoProyectoProp,
-  setObjetivosEsp: _setObjetivosEspProp,
-  setActividades: _setActividades, // unused
+  categoriaId,
+  tipoProyecto,
   projectId,
-  coverImageKey: _coverImageKeyProp, // unused
-  coverVideoKey: _coverVideoKeyProp, // unused
-  onUpdateProject: _onUpdateProject, // unused
-  fechaInicio: fechaInicioProp,
-  fechaFin: fechaFinProp,
-  actividades: _actividadesProp = [],
-  responsablesPorActividad: responsablesPorActividadProp = {},
-  horasPorActividad: horasPorActividadProp = {},
-  setHorasPorActividad,
-  horasPorDiaProyecto: horasPorDiaProyectoProp,
-  setHorasPorDiaProyecto,
-  setTiempoEstimadoProyecto,
-  onAnterior, // <-- Recibe la prop
-  setPlanteamiento,
-  setJustificacion,
-  setObjetivoGen,
-  setObjetivosEspProp,
+  coverImageKey,
+  coverVideoKey,
+  fechaInicio,
+  fechaFin,
+  tipoVisualizacion,
+  onUpdateProject,
+  actividades,
+  courseId,
+  onProjectCreated,
 }) => {
-  const { user } = useUser(); // Obtén el usuario logueado
-
-  // Solo mantener un estado local para horas por actividad
-  const [horasPorActividadLocal, setHorasPorActividadLocal] = useState<
-    Record<string, number>
-  >({});
-  const [duracionDias, setDuracionDias] = useState<number>(0);
-  const [diasPorActividad, setDiasPorActividad] = useState<
-    Record<string, number[]>
-  >({});
-
-  // Define horasPorActividadFinal al inicio para evitar errores de uso antes de declaración
-  const horasPorActividadFinal =
-    typeof setHorasPorActividad === 'function'
-      ? horasPorActividadProp
-      : horasPorActividadLocal;
-
-  // Modo edición: true si hay projectId
-  const isEditMode = !!projectId;
-
-  // ELIMINAR TODOS LOS ESTADOS DUPLICADOS DE HORAS
-  // const [responsablesPorActividad, setResponsablesPorActividad] = useState<{
-  //   [key: string]: string;
-  // }>(responsablesPorActividadProp);
-  // const [horasPorActividad, setHorasPorActividad] = useState<{
-  //   [key: string]: number;
-  // }>(horasPorActividadProp);
-
-  // Solo mantener un estado local para horas por actividad
-  // const [horasPorActividadLocal, setHorasPorActividadLocal] = useState<
-  //   Record<string, number>
-  // >({});
-
-  // Estado para responsables
-  const [responsablesPorActividadLocal, setResponsablesPorActividadLocal] =
-    useState<Record<string, string>>(responsablesPorActividadProp);
-
-  // Estado para tipo de visualización
-  const [tipoVisualizacion, setTipoVisualizacion] = useState<
-    'meses' | 'dias' | 'horas'
-  >(
-    typeof tipoVisualizacionProp === 'string' ? tipoVisualizacionProp : 'meses'
+  const [currentStep, setCurrentStep] = useState(1);
+  const [timelineView, setTimelineView] = useState<
+    'dias' | 'semanas' | 'meses'
+  >('semanas');
+  const [currentProjectId, setCurrentProjectId] = useState<number | undefined>(
+    projectId
   );
-
-  // --- NUEVO: Cambiar visualización por defecto según duración ---
-  useEffect(() => {
-    if (!isOpen) return;
-    if (duracionDias < 28 && tipoVisualizacion !== 'dias') {
-      setTipoVisualizacion('dias');
-    } else if (duracionDias >= 28 && tipoVisualizacion !== 'meses') {
-      setTipoVisualizacion('meses');
-    }
-    // Solo cambia si la duración y visualización no coinciden
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [duracionDias, isOpen]);
-
-  // Add missing state for isUpdating, previewImagen, setImagenProyecto, tipoProyecto, setTipoProyecto
-  const [isUpdating, setIsUpdating] = useState(false); // Cambia _setIsUpdating a setIsUpdating
-  const [previewImagen, setPreviewImagen] = useState<string | null>(null);
-  const [previewVideo, setPreviewVideo] = useState<string | null>(null);
-  const [tipoProyecto, setTipoProyecto] = useState<string>(
-    _tipoProyectoProp ?? ''
-  );
-  const [progress, setProgress] = useState(0); // Nuevo estado para progreso
-  // Estado para saber si está creando o actualizando
-  const [statusText, setStatusText] = useState<string>('');
-
-  // Estado para drag & drop y archivos seleccionados (imagen/video)
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
-  const [isDragOverImage, setIsDragOverImage] = useState(false);
-  const [isDragOverVideo, setIsDragOverVideo] = useState(false);
-  const imageInputRef = React.useRef<HTMLInputElement>(null);
-  const videoInputRef = React.useRef<HTMLInputElement>(null);
-
-  // Actualiza previewImagen y previewVideo según selectedImage/selectedVideo
-  useEffect(() => {
-    if (!selectedImage) {
-      setPreviewImagen(null);
-    } else {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewImagen(reader.result as string);
-      reader.readAsDataURL(selectedImage);
-    }
-  }, [selectedImage]);
-  useEffect(() => {
-    if (!selectedVideo) {
-      setPreviewVideo(null);
-    } else {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviewVideo(reader.result as string);
-      reader.readAsDataURL(selectedVideo);
-    }
-  }, [selectedVideo]);
-
-  // Helpers para obtener la URL de preview de imagen/video cargados
-  const coverImageUrl =
-    _coverImageKeyProp && !_coverImageKeyProp.startsWith('blob:')
-      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${_coverImageKeyProp}`
-      : undefined;
-  const coverVideoUrl =
-    _coverVideoKeyProp && !_coverVideoKeyProp.startsWith('blob:')
-      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${_coverVideoKeyProp}`
-      : undefined;
-
-  // Permitir solo un archivo de cada tipo
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      const file = e.target.files[0];
-      if (file.type.startsWith('image/')) {
-        setSelectedImage(file);
-      }
-    }
-  };
-  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      const file = e.target.files[0];
-      if (file.type.startsWith('video/')) {
-        setSelectedVideo(file);
-      }
-    }
-  };
-  const handleDragOverImage = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOverImage(true);
-  };
-  const handleDragLeaveImage = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOverImage(false);
-  };
-  const handleDropImage = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOverImage(false);
-    if (e.dataTransfer.files?.[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.type.startsWith('image/')) {
-        setSelectedImage(file);
-      }
-    }
-  };
-  const handleDragOverVideo = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOverVideo(true);
-  };
-  const handleDragLeaveVideo = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOverVideo(false);
-  };
-  const handleDropVideo = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragOverVideo(false);
-    if (e.dataTransfer.files?.[0]) {
-      const file = e.dataTransfer.files[0];
-      if (file.type.startsWith('video/')) {
-        setSelectedVideo(file);
-      }
-    }
-  };
-  function removeFile(type: 'image' | 'video') {
-    if (type === 'image') setSelectedImage(null);
-    if (type === 'video') setSelectedVideo(null);
-  }
-
-  // Función de cambio SIMPLIFICADA
-  const handleHorasCambio = (actividadKey: string, value: number) => {
-    console.log(`Cambiando horas ${actividadKey} a ${value}`);
-
-    if (typeof setHorasPorActividad === 'function') {
-      // Modo controlado - usar setter del padre
-      setHorasPorActividad({
-        ...horasPorActividadFinal,
-        [actividadKey]: value,
-      });
-    } else {
-      // Modo no controlado - usar estado local
-      setHorasPorActividadLocal((prev) => ({
-        ...prev,
-        [actividadKey]: value,
+  const [isProjectCreated, setIsProjectCreated] = useState(Boolean(projectId));
+  const lastLoadedProjectId = useRef<number | undefined>(undefined);
+  const hasInitializedRef = useRef(false); // Para evitar resetear currentStep en cada cambio de datos
+  const activitiesDirtyRef = useRef(false);
+  const [creationError, setCreationError] = useState<string | null>(null);
+  const normalizeInitialObjetivos = (src?: ObjetivosInput) => {
+    if (!src) return [] as SpecificObjective[];
+    if (Array.isArray(src) && src.length > 0 && typeof src[0] === 'string') {
+      return (src as string[]).map((s, i) => ({
+        id: `${Date.now()}_${i}`,
+        title: s,
+        activities: [],
       }));
     }
+    return src as SpecificObjective[];
   };
 
-  const [categorias, setCategorias] = useState<Category[]>([]);
-  const [categoria, setCategoria] = useState<string>('');
-  const [tituloState, setTitulo] = useState(() => titulo);
-  const [planteamientoEditado, setPlanteamientoEditado] = useState(
-    () => planteamiento
+  const [formData, setFormData] = useState({
+    titulo,
+    description: '', // Descripción general (generada por IA)
+    planteamiento: planteamiento ?? '', // Problema a resolver
+    requirements: [] as string[], // Requisitos
+    justificacion: justificacion ?? '',
+    objetivoGen: objetivoGen ?? '',
+    objetivosEsp: normalizeInitialObjetivos(objetivosEsp),
+    categoriaId,
+    tipoProyecto: tipoProyecto ?? '',
+    projectTypeId: undefined as number | undefined,
+    isPublic: false,
+    needsCollaborators: false,
+    durationEstimate: 1 as number,
+    durationUnit: 'dias' as 'dias' | 'semanas' | 'meses' | 'anos',
+    fechaInicio: normalizeDateInput(fechaInicio),
+    fechaFin: normalizeDateInput(fechaFin),
+    multimedia: [] as Array<{
+      name: string;
+      url: string;
+      type: string;
+      key?: string;
+    }>,
+  });
+
+  // Cargar tipos de proyecto desde el backend
+  const { data: _projectTypes = [] } = useSWR<
+    Array<{
+      id: number;
+      name: string;
+      description?: string | null;
+      icon?: string | null;
+    }>
+  >('/api/project-types', fetcher);
+
+  // Cargar categorías desde el backend
+  const { data: categories = [] } = useSWR<
+    Array<{ id: number; name: string; description?: string | null }>
+  >('/api/categories', fetcher);
+
+  // Cargar datos del proyecto cuando existe un projectId
+  const { data: existingProject } = useSWR(
+    projectId ? `/api/projects/${projectId}?details=true` : null,
+    fetcher
   );
-  const [justificacionEditada, setJustificacionEditada] = useState(
-    () => justificacion
+
+  // Hook para generar contenido con IA
+  const {
+    generateContent,
+    isGenerating,
+    error: generationError,
+    clearError,
+  } = useGenerateContent();
+  const [activeGenerateKey, setActiveGenerateKey] = useState<string | null>(
+    null
   );
-  const [objetivoGenEditado, setObjetivoGenEditado] = useState(
-    () => objetivoGen
-  );
-  const [objetivosEspEditado, setObjetivosEspEditado] = useState<
-    SpecificObjective[]
-  >(() => objetivosEsp);
-  // Estado para controlar si la fecha inicial ha sido editada manualmente
-  const [fechaInicioEditadaManualmente, setFechaInicioEditadaManualmente] =
-    useState<boolean>(false);
-  // Estado para controlar si la fecha final ha sido editada manualmente
-  const [fechaFinEditadaManualmente, setFechaFinEditadaManualmente] =
-    useState<boolean>(false);
-  const [fechaInicioDomingoError, setFechaInicioDomingoError] = useState(false);
-  // Agrega este estado después de la declaración de totalHorasActividadesCalculado
-  const [totalHorasInput, setTotalHorasInput] = useState<number>(
-    0 // Inicializa en 0, se sincroniza abajo
-  );
-  // Nuevo estado para detectar edición manual
-  const [totalHorasEditadoManualmente, setTotalHorasEditadoManualmente] =
-    useState(false);
-
-  // Agrega este estado después de la declaración de totalHorasEditadoManualmente
-  const [horasOriginalesBackup, setHorasOriginalesBackup] = useState<Record<
-    string,
-    number
-  > | null>(null);
-
-  // Calcula el total de horas dinámicamente SOLO si no está editado manualmente
-  const totalHorasActividadesCalculado = React.useMemo(() => {
-    if (totalHorasEditadoManualmente) {
-      // Si está editado manualmente, devuelve la suma de horasOriginalesBackup si existe
-      if (horasOriginalesBackup) {
-        return Object.values(horasOriginalesBackup).reduce(
-          (acc, val) => acc + (typeof val === 'number' && val > 0 ? val : 1),
-          0
-        );
-      }
-      // Si no hay backup, devuelve el input actual
-      return totalHorasInput;
-    }
-    if (!objetivosEspEditado || objetivosEspEditado.length === 0) {
-      // No mostrar logs ni calcular si no hay objetivos
-      return 0;
-    }
-    console.log('=== CALCULANDO TOTAL DE HORAS ===');
-    console.log('Objetivos:', objetivosEspEditado);
-    console.log('Horas finales:', horasPorActividadFinal);
-
-    let total = 0;
-    objetivosEspEditado.forEach((obj) => {
-      obj.activities.forEach((_, actIdx) => {
-        const actividadKey = `${obj.id}_${actIdx}`;
-        const horas = horasPorActividadFinal[actividadKey];
-        const horasValidas = typeof horas === 'number' && horas > 0 ? horas : 1;
-        total += horasValidas;
-        console.log(`${actividadKey}: ${horasValidas}h (acumulado: ${total}h)`);
-      });
-    });
-
-    console.log('Total calculado:', total);
-    return total;
-  }, [
-    objetivosEspEditado,
-    horasPorActividadFinal,
-    totalHorasEditadoManualmente,
-    totalHorasInput,
-    horasOriginalesBackup,
-  ]);
-
-  // Actualizar tiempo estimado automáticamente SOLO en un useEffect (no en render)
-  useEffect(() => {
-    if (
-      totalHorasActividadesCalculado > 0 &&
-      typeof setTiempoEstimadoProyecto === 'function'
-    ) {
-      setTiempoEstimadoProyecto(totalHorasActividadesCalculado);
-    }
-  }, [totalHorasActividadesCalculado, setTiempoEstimadoProyecto]);
-
-  // Sincronización cuando se abre el modal (tanto para modo edición como creación)
-  useEffect(() => {
-    if (isOpen) {
-      setTitulo(titulo);
-      setPlanteamientoEditado(planteamiento);
-      setJustificacionEditada(justificacion);
-      setObjetivoGenEditado(objetivoGen);
-      setObjetivosEspEditado(objetivosEsp);
-
-      // Forzar sincronización de horas si hay datos
-      if (
-        horasPorActividadProp &&
-        Object.keys(horasPorActividadProp).length > 0
-      ) {
-        setHorasPorActividadLocal(horasPorActividadProp);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
-
-  const [nuevoObjetivo, setNuevoObjetivo] = useState('');
-  const [nuevaActividadPorObjetivo, setNuevaActividadPorObjetivo] = useState<
-    Record<string, string>
-  >({});
-  const [cronogramaState /* setCronograma */] =
-    useState<Record<string, number[]>>(cronograma);
-  const [fechaInicio, setFechaInicio] = useState<string>(
-    fechaInicioProp && fechaInicioProp.trim() !== ''
-      ? fechaInicioProp
-      : getTodayDateString()
-  );
-  const [fechaFin, setFechaFin] = useState<string>(fechaFinProp ?? '');
-
-  // Solo sincroniza la fecha de inicio cuando cambia el prop desde el padre
-  useEffect(() => {
-    console.log(
-      '[ModalResumen] fechaInicioProp desde el padre:',
-      fechaInicioProp
-    );
-    if (fechaInicioProp && fechaInicioProp.trim() !== '') {
-      // Si la fecha de inicio recibida es domingo, ajusta al lunes siguiente
-      const date = new Date(fechaInicioProp);
-      if (date.getDay() === 0) {
-        date.setDate(date.getDate() + 1);
-        const yyyy = date.getFullYear();
-        const mm = String(date.getMonth() + 1).padStart(2, '0');
-        const dd = String(date.getDate()).padStart(2, '0');
-        setFechaInicio(`${yyyy}-${mm}-${dd}`);
-      } else {
-        setFechaInicio(fechaInicioProp);
-      }
-    } else {
-      setFechaInicio(getTodayDateString());
-    }
-  }, [fechaInicioProp]);
-
-  // Al abrir el modal, asegura que la fecha de inicio nunca sea domingo
-  useEffect(() => {
-    if (isOpen) {
-      // Si la fecha de inicio actual es domingo, ajusta al lunes siguiente
-      if (fechaInicio) {
-        const date = new Date(fechaInicio);
-        if (date.getDay() === 0) {
-          date.setDate(date.getDate() + 1);
-          const yyyy = date.getFullYear();
-          const mm = String(date.getMonth() + 1).padStart(2, '0');
-          const dd = String(date.getDate()).padStart(2, '0');
-          setFechaInicio(`${yyyy}-${mm}-${dd}`);
-        }
-      }
-    }
-    // Solo depende de isOpen y fechaInicio para evitar loops
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
-
-  // Remove unused states
-  // const [numMeses, setNumMeses] = useState<number>(numMesesProp ?? 1);
-  // const [duracionDias, setDuracionDias] = useState<number>(0);
-  // const [imagenProyecto, setImagenProyecto] = useState<File | null>(null);
-  // const [previewImagen, setPreviewImagen] = useState<string | null>(null);
-  // const [isUpdating, setIsUpdating] = useState(false);
-  // const cronogramaRef = useRef<Record<string, number[]>>(cronograma);
-  // const tituloRef = useRef<string>(titulo);
-
-  // Agrega un estado para responsables y horas por actividad
-  const [usuarios, setUsuarios] = useState<{ id: string; name: string }[]>([]);
-
-  // Add handleTextAreaChange function for auto-resize
-  const handleTextAreaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const textarea = e.target;
-    // Resetear la altura para recalcular correctamente
-    textarea.style.height = 'auto';
-
-    // Calcular la altura mínima basada en el contenido
-    const scrollHeight = textarea.scrollHeight;
-    const minHeight = 40; // Altura mínima en píxeles
-    const maxHeight = 100; // Altura máxima en píxeles
-
-    // Aplicar la altura calculada con límites
-    if (scrollHeight <= minHeight) {
-      textarea.style.height = `${minHeight}px`;
-    } else if (scrollHeight >= maxHeight) {
-      textarea.style.height = `${maxHeight}px`;
-      textarea.style.overflowY = 'auto'; // Mostrar scroll si excede el máximo
-    } else {
-      textarea.style.height = `${scrollHeight}px`;
-      textarea.style.overflowY = 'hidden'; // Ocultar scroll si está dentro del rango
+  const isGeneratingFor = (key: string) =>
+    isGenerating && activeGenerateKey === key;
+  const runGenerate = async (key: string, action: () => Promise<void>) => {
+    setActiveGenerateKey(key);
+    try {
+      await action();
+    } finally {
+      setActiveGenerateKey(null);
     }
   };
-
-  // useEffect para inicializar alturas cuando se abra el modal
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => {
-        const textareas = document.querySelectorAll('textarea');
-        textareas.forEach((textarea) => {
-          if (textarea instanceof HTMLTextAreaElement) {
-            // Inline initializeTextAreaHeight logic
-            if (textarea?.value) {
-              textarea.style.height = 'auto';
-              const scrollHeight = textarea.scrollHeight;
-              const minHeight = 40;
-              const maxHeight = 100;
-              if (scrollHeight <= minHeight) {
-                textarea.style.height = `${minHeight}px`;
-              } else if (scrollHeight >= maxHeight) {
-                textarea.style.height = `${maxHeight}px`;
-                textarea.style.overflowY = 'auto';
-              } else {
-                textarea.style.height = `${scrollHeight}px`;
-                textarea.style.overflowY = 'hidden';
-              }
-            }
-          }
+  // IMPORTANTE: Todos los hooks DEBEN estar antes del return condicional
+  // para cumplir con las Reglas de los Hooks de React
+  const { trigger: createProject, isMutating: isCreatingProject } =
+    useSWRMutation(
+      '/api/projects?draft=true',
+      async (
+        url: string,
+        { arg }: { arg: Record<string, unknown> }
+      ): Promise<{ id?: number }> => {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(arg),
         });
-      }, 100);
-    }
-  }, [
-    isOpen,
-    tituloState,
-    planteamientoEditado,
-    justificacionEditada,
-    objetivoGenEditado,
-    objetivosEspEditado,
-  ]);
-
-  // Nuevo estado para la cantidad de horas por día en el proyecto
-  const [horasPorDiaProyectoState, setHorasPorDiaProyectoState] =
-    useState<number>(horasPorDiaProyectoProp ?? 6); // Valor por defecto 6
-
-  // Si el prop cambia, sincroniza el estado local solo si no hay setter (modo no controlado)
-  useEffect(() => {
-    if (
-      typeof horasPorDiaProyectoProp === 'number' &&
-      !setHorasPorDiaProyecto &&
-      horasPorDiaProyectoProp !== horasPorDiaProyectoState
-    ) {
-      setHorasPorDiaProyectoState(horasPorDiaProyectoProp);
-    }
-  }, [
-    horasPorDiaProyectoProp,
-    setHorasPorDiaProyecto,
-    horasPorDiaProyectoState,
-  ]);
-
-  // Decide el valor y el setter a usar
-  const horasPorDiaValue =
-    typeof horasPorDiaProyectoProp === 'number' && setHorasPorDiaProyecto
-      ? horasPorDiaProyectoProp
-      : horasPorDiaProyectoState;
-  const handleHorasPorDiaChange = (val: number) => {
-    if (setHorasPorDiaProyecto) {
-      setHorasPorDiaProyecto(val); // <-- Propaga cambio global
-    } else {
-      setHorasPorDiaProyectoState(val);
-    }
-  };
-
-  // Estado local para tiempo estimado si no es controlado
-  // const [tiempoEstimadoProyectoState, setTiempoEstimadoProyectoState] =
-  //   useState<number>(tiempoEstimadoProyectoProp ?? 0);
-
-  // Si el prop cambia, sincroniza el estado local solo si no hay setter (modo no controlado)
-  useEffect(() => {
-    if (
-      typeof _tiempoEstimadoProyectoProp === 'number' &&
-      !setTiempoEstimadoProyecto
-    ) {
-      // setTiempoEstimadoProyectoState(_tiempoEstimadoProyectoProp);
-      // No action needed if not using local state
-    }
-  }, [_tiempoEstimadoProyectoProp, setTiempoEstimadoProyecto]);
-
-  // Corrige el error de variable no definida y prefer-const en el cálculo de la fecha de fin automática:
-  useEffect(() => {
-    // Corrige el cálculo de la fecha de fin: solo calcula automáticamente si la fecha de fin NO ha sido editada manualmente Y existen actividades
-    // Verifica si hay al menos una actividad en los objetivos específicos
-    const hayActividades =
-      Array.isArray(objetivosEspEditado) &&
-      objetivosEspEditado.some(
-        (obj) => Array.isArray(obj.activities) && obj.activities.length > 0
-      );
-
-    if (
-      !fechaInicio ||
-      !horasPorDiaValue ||
-      fechaFinEditadaManualmente || // Solo no calcular si la fecha de fin fue editada manualmente
-      !hayActividades
-    )
-      return;
-
-    // Usa el total de horas manual si está editado manualmente, si no el calculado
-    const totalHorasParaCalculo = totalHorasEditadoManualmente
-      ? totalHorasInput
-      : totalHorasActividadesCalculado;
-
-    if (!totalHorasParaCalculo) return;
-
-    // Calcula la cantidad de días necesarios (redondea hacia arriba)
-    const diasNecesarios = Math.ceil(totalHorasParaCalculo / horasPorDiaValue);
-
-    // Calcula la fecha de fin sumando días laborables (lunes a sábado)
-    let diasAgregados = 0;
-    // Usar la fecha seleccionada por el usuario como punto de partida
-    const [yyyy, mm, dd] = fechaInicio.split('-');
-    const fecha = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-
-    // Si la fecha de inicio es domingo, avanza al lunes siguiente
-    if (fecha.getDay() === 0) {
-      fecha.setDate(fecha.getDate() + 1);
-    }
-
-    while (diasAgregados < diasNecesarios) {
-      const day = fecha.getDay();
-      if (day !== 0) {
-        // lunes a sábado
-        diasAgregados++;
-      }
-      if (diasAgregados < diasNecesarios) {
-        fecha.setDate(fecha.getDate() + 1);
-        // Si cae en domingo, saltar al lunes
-        if (fecha.getDay() === 0) {
-          fecha.setDate(fecha.getDate() + 1);
+        if (!res.ok) {
+          throw new Error('Error al crear el proyecto');
         }
+        return (await res.json()) as { id?: number };
       }
-    }
-    // Si el último día cae en domingo, avanza al lunes siguiente
-    if (fecha.getDay() === 0) {
-      fecha.setDate(fecha.getDate() + 1);
-    }
-    // Formatea la fecha a YYYY-MM-DD
-    const yyyyFin = fecha.getFullYear();
-    const mmFin = String(fecha.getMonth() + 1).padStart(2, '0');
-    const ddFin = String(fecha.getDate()).padStart(2, '0');
-    const nuevaFechaFin = `${yyyyFin}-${mmFin}-${ddFin}`;
+    );
 
-    // Solo actualiza si es diferente para evitar loops infinitos
-    if (fechaFin !== nuevaFechaFin) {
-      setFechaFin(nuevaFechaFin);
-    }
+  // Hook de auto-guardado
+  const { saveProject, isSaving } = useProjectAutoSave({
+    projectId: currentProjectId,
+    enabled: isProjectCreated && Boolean(currentProjectId),
+    debounceMs: 2000,
+  });
+
+  // Auto-guardar cuando cambian los datos (después de que el proyecto fue creado)
+  // Incluye todos los campos de info básica: título, descripción, categoría, tipo de proyecto, etc.
+  useEffect(() => {
+    if (!isProjectCreated || !currentProjectId) return;
+
+    const objetivosPayload = formData.objetivosEsp
+      .filter((obj) => obj.title.trim() !== '')
+      .map((obj) => ({ id: obj.id, title: obj.title.trim() }));
+
+    const actividadesPayload = formData.objetivosEsp.flatMap((obj, objIndex) =>
+      obj.activities
+        .filter((act) => act.title.trim() !== '')
+        .map((act) => ({
+          descripcion: act.title.trim(),
+          meses: [],
+          objetivoId: obj.id,
+          objetivoIndex: objIndex,
+          startDate: act.startDate || null,
+          endDate: act.endDate || null,
+        }))
+    );
+
+    const descriptionTrimmed = (formData.description ?? '').trim();
+
+    const serverDescription =
+      typeof (existingProject as Record<string, unknown>)?.description ===
+      'string'
+        ? String((existingProject as Record<string, unknown>).description)
+        : '';
+
+    const shouldOmitDescription =
+      descriptionTrimmed === '' &&
+      existingProject &&
+      serverDescription.trim() !== '';
+
+    const dataToSave = {
+      // Campos de info básica (sección 1)
+      // Nota: omitimos `description` si está vacío en el formulario pero
+      // el servidor ya tiene una descripción no vacía para evitar sobrescribirla
+      name: formData.titulo.trim(),
+      ...(shouldOmitDescription ? {} : { description: descriptionTrimmed }),
+      categoryId: formData.categoriaId,
+      type_project: formData.tipoProyecto.trim(),
+      isPublic: formData.isPublic,
+      needsCollaborators: formData.needsCollaborators,
+      // Campos de otras secciones - siempre enviar el valor para que se guarde aunque esté vacío
+      planteamiento: (formData.planteamiento ?? '').trim(),
+      justificacion: (formData.justificacion ?? '').trim(),
+      objetivo_general: (formData.objetivoGen ?? '').trim(),
+      requirements: JSON.stringify(formData.requirements),
+      durationEstimate: formData.durationEstimate,
+      durationUnit: formData.durationUnit,
+      fechaInicio: formData.fechaInicio || undefined,
+      fechaFin: formData.fechaFin || undefined,
+      ...(activitiesDirtyRef.current
+        ? {
+            objetivos_especificos: objetivosPayload,
+            actividades: actividadesPayload,
+          }
+        : {}),
+    };
+
+    saveProject(dataToSave);
+    onUpdateProject?.(dataToSave);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    fechaInicio,
-    totalHorasActividadesCalculado,
-    horasPorDiaValue,
-    fechaFinEditadaManualmente,
-    objetivosEspEditado, // para detectar cambios en actividades
-    fechaFin, // <-- Añadido para cumplir con react-hooks/exhaustive-deps
-    totalHorasEditadoManualmente,
-    totalHorasInput,
+    // Campos de info básica
+    formData.titulo,
+    formData.description,
+    formData.categoriaId,
+    formData.tipoProyecto,
+    formData.isPublic,
+    formData.needsCollaborators,
+    // Campos de otras secciones
+    formData.planteamiento,
+    formData.justificacion,
+    formData.objetivoGen,
+    formData.requirements,
+    formData.durationEstimate,
+    formData.durationUnit,
+    formData.fechaInicio,
+    formData.fechaFin,
+    formData.objetivosEsp,
+    isProjectCreated,
+    currentProjectId,
   ]);
 
-  // Si la fecha de inicio es mayor a la de fin, intercambiarlas
+  // Sincronizar estado SOLO cuando se abre el modal por primera vez
   useEffect(() => {
-    if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
-      setFechaFin(fechaInicio);
+    if (!isOpen) {
+      // Cuando el modal se cierra, resetear la bandera para la próxima apertura
+      hasInitializedRef.current = false;
+      return;
     }
-  }, [fechaInicio, fechaFin]);
 
-  // Fix unsafe member access for users in fetchUsuarios
-  useEffect(() => {
-    // Cargar todos los usuarios existentes para el selector de responsables
-    const fetchUsuarios = async () => {
-      try {
-        const res = await fetch('/api/projects/UsersResponsable');
-        const data = await res.json();
-        // Safe type check for user objects
-        const usuariosFormateados = Array.isArray(data)
-          ? data.map((u: unknown) => {
-              if (
-                u &&
-                typeof u === 'object' &&
-                'id' in u &&
-                ('name' in u || 'email' in u)
-              ) {
-                return {
-                  id: (u as { id: string }).id ?? '',
-                  name:
-                    typeof (u as { name: string }).name === 'string' &&
-                    (u as { name: string }).name.trim() !== ''
-                      ? (u as { name: string }).name
-                      : ((u as { email?: string }).email ?? ''),
-                };
-              }
-              return { id: '', name: '' };
-            })
-          : [];
-        setUsuarios(usuariosFormateados);
-      } catch {
-        setUsuarios([]);
+    // Solo resetear currentStep en la primera apertura del modal
+    // No cuando existingProject cambia por auto-guardado
+    const shouldResetStep = !hasInitializedRef.current;
+
+    // Solo resetear al abrir el modal, no cuando cambian los valores internos
+    const timer = setTimeout(() => {
+      // Cambiar el paso solo la primera vez que se abre el modal
+      if (shouldResetStep) {
+        setCurrentStep(initialStep ?? 1);
+        hasInitializedRef.current = true;
       }
-    };
-    fetchUsuarios();
-  }, []);
+      setCurrentProjectId(projectId);
+      setIsProjectCreated(Boolean(projectId));
 
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? 'hidden' : 'auto';
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, [isOpen]);
+      // Si existe un proyecto cargado, usar sus datos; sino, usar los props
+      // IMPORTANTE: Solo sincronizar si es la primera carga (no cuando el usuario está editando)
+      const dataToSet = existingProject || {
+        name: titulo,
+        planteamiento,
+        justificacion,
+        objetivo_general: objetivoGen,
+        objetivos_especificos: objetivosEsp,
+        category_id: categoriaId,
+        type_project: tipoProyecto,
+      };
 
-  useEffect(() => {
-    const fetchCategorias = async () => {
-      try {
-        const res = await fetch('/api/super-admin/categories');
-        const data = (await res.json()) as Category[];
-        setCategorias(data);
-      } catch (error) {
-        console.error('Error al cargar las categorías:', error);
-      }
-    };
-    void fetchCategorias();
-  }, []);
-
-  // Actualizar tiempo estimado automáticamente
-  useEffect(() => {
-    if (
-      totalHorasActividadesCalculado > 0 &&
-      typeof setTiempoEstimadoProyecto === 'function'
-    ) {
-      setTiempoEstimadoProyecto(totalHorasActividadesCalculado);
-    }
-  }, [totalHorasActividadesCalculado, setTiempoEstimadoProyecto]);
-
-  // Sincronizar objetivos y horas al abrir el modal en modo edición
-  useEffect(() => {
-    if (isEditMode && isOpen) {
-      if (objetivosEsp?.length > 0) {
-        setObjetivosEspEditado(objetivosEsp);
-      }
-      if (
-        horasPorActividadProp &&
-        Object.keys(horasPorActividadProp).length > 0
-      ) {
-        setHorasPorActividadLocal(horasPorActividadProp);
-      }
-    }
-  }, [isOpen, objetivosEsp, horasPorActividadProp, isEditMode]);
-
-  // Sincronizar campos de texto al abrir el modal
-  useEffect(() => {
-    if (isOpen) {
-      setTitulo(titulo);
-      setPlanteamientoEditado(planteamiento);
-      setJustificacionEditada(justificacion);
-      setObjetivoGenEditado(objetivoGen);
-      setObjetivosEspEditado(objetivosEsp);
-    }
-  }, [isOpen, titulo, planteamiento, justificacion, objetivoGen, objetivosEsp]);
-
-  // Calcular duración en días y establecer estado inicial
-  useEffect(() => {
-    if (fechaInicio && fechaFin) {
-      const inicio = new Date(fechaInicio);
-      const fin = new Date(fechaFin);
-      const diff =
-        Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) +
-        1;
-      setDuracionDias(diff > 0 ? diff : 0);
-    } else {
-      setDuracionDias(0);
-    }
-  }, [fechaInicio, fechaFin]);
-
-  const meses: string[] = useMemo(() => {
-    if (fechaInicio && fechaFin) {
-      if (tipoVisualizacion === 'dias') {
-        // Mostrar todos los días laborales (lunes a sábado)
-        const fechaInicioDate = new Date(fechaInicio + 'T00:00:00');
-        const fechaFinDate = new Date(fechaFin + 'T00:00:00');
-        const dias: string[] = [];
-        const fechaActual = new Date(fechaInicioDate);
-        while (fechaActual.getTime() <= fechaFinDate.getTime()) {
-          const day = fechaActual.getDay();
-          if (day !== 0) {
-            // 0 = domingo, incluye lunes a sábado
-            dias.push(
-              `${fechaActual.getFullYear()}-${String(
-                fechaActual.getMonth() + 1
-              ).padStart(
-                2,
-                '0'
-              )}-${String(fechaActual.getDate()).padStart(2, '0')}`
+      const parsedRequirements = (() => {
+        if (typeof dataToSet?.requirements !== 'string') return undefined;
+        try {
+          const parsed = JSON.parse(dataToSet.requirements) as unknown;
+          if (Array.isArray(parsed)) {
+            return parsed.filter(
+              (item): item is string => typeof item === 'string'
             );
           }
-          fechaActual.setDate(fechaActual.getDate() + 1);
-          fechaActual.setHours(0, 0, 0, 0);
+        } catch {
+          return undefined;
         }
-        return dias;
-      } else {
-        const fechaInicioDate = new Date(fechaInicio);
-        const fechaFinDate = new Date(fechaFin);
-        const mesesArr: string[] = [];
-        const fechaActual = new Date(fechaInicioDate);
-        while (fechaActual <= fechaFinDate) {
-          mesesArr.push(
-            fechaActual
-              .toLocaleString('es-ES', { month: 'long', year: 'numeric' })
-              .toUpperCase()
-          );
-          fechaActual.setMonth(fechaActual.getMonth() + 1);
-        }
-        return mesesArr;
-      }
-    }
-    return [];
-  }, [fechaInicio, fechaFin, tipoVisualizacion]);
+        return undefined;
+      })();
 
-  const mesesRender: string[] = useMemo(() => {
-    // Para visualización por días, solo mostrar hasta la fecha de fin (no extender artificialmente)
-    if (tipoVisualizacion !== undefined && tipoVisualizacion !== 'dias')
-      return meses;
-    return meses;
-  }, [meses, tipoVisualizacion]);
-
-  // Agregar objetivo
-  const handleAgregarObjetivo = () => {
-    if (!nuevoObjetivo.trim()) return;
-    const nuevoObj: SpecificObjective = {
-      id: Date.now().toString(),
-      title: nuevoObjetivo.trim(),
-      activities: [],
-    };
-    setObjetivosEspEditado((prev) => {
-      const nuevos = Array.isArray(prev) ? [...prev, nuevoObj] : [nuevoObj];
-      // Si hay un setter externo (modo edición), propaga el cambio
-      if (typeof _setObjetivosEspProp === 'function') {
-        _setObjetivosEspProp(nuevos);
-      }
-      return nuevos;
-    });
-    setNuevoObjetivo('');
-  };
-
-  // Eliminar objetivo
-  const handleEliminarObjetivo = (index: number) => {
-    setObjetivosEspEditado((prev) => {
-      const nuevos = [...prev];
-      nuevos.splice(index, 1);
-      // Si hay un setter externo (modo edición), propaga el cambio
-      if (typeof _setObjetivosEspProp === 'function') {
-        _setObjetivosEspProp(nuevos);
-      }
-      return nuevos;
-    });
-  };
-
-  // Agregar actividad
-  const handleAgregarActividad = (objetivoId: string) => {
-    const descripcion = nuevaActividadPorObjetivo[objetivoId]?.trim();
-    if (!descripcion) return;
-    setObjetivosEspEditado((prev) => {
-      // Busca el objetivo y agrega la actividad solo si existe
-      const nuevos = prev.map((obj) => {
-        if (obj.id === objetivoId) {
-          // Solo agrega si no existe ya la actividad (evita duplicados vacíos)
-          if (!obj.activities.includes(descripcion)) {
-            return {
-              ...obj,
-              activities: [...obj.activities, descripcion],
+      const parsedObjectives = (() => {
+        const objetivos = (dataToSet as { objetivos_especificos?: unknown })
+          ?.objetivos_especificos;
+        if (!Array.isArray(objetivos)) return undefined;
+        return objetivos
+          .map((obj, idx) => {
+            if (!obj || typeof obj !== 'object') return null;
+            const objective = obj as {
+              id?: number | string;
+              description?: string;
+              title?: string;
+              actividades?: {
+                descripcion?: string;
+                startDate?: string;
+                endDate?: string;
+              }[];
             };
-          }
-        }
-        return obj;
-      });
-      // Si hay un setter externo (modo edición), propaga el cambio
-      if (typeof _setObjetivosEspProp === 'function') {
-        _setObjetivosEspProp(nuevos);
-      }
-      return nuevos;
-    });
-    // Asigna responsable logueado si no existe
-    const actIdx =
-      objetivosEspEditado.find((obj) => obj.id === objetivoId)?.activities
-        .length ?? 0;
-    const actividadKey = `${objetivoId}_${actIdx}`;
-    setResponsablesPorActividadLocal((prev) => ({
-      ...prev,
-      [actividadKey]: user?.id ?? '',
-    }));
-    setNuevaActividadPorObjetivo((prev) => ({ ...prev, [objetivoId]: '' }));
-  };
+            const title =
+              typeof objective.title === 'string'
+                ? objective.title
+                : typeof objective.description === 'string'
+                  ? objective.description
+                  : '';
+            const activities = Array.isArray(objective.actividades)
+              ? objective.actividades.map((act) => ({
+                  title: act.descripcion ?? '',
+                  startDate: normalizeDateInput(act.startDate),
+                  endDate: normalizeDateInput(act.endDate),
+                }))
+              : [];
+            return {
+              id: String(objective.id ?? idx),
+              title,
+              activities,
+            } as SpecificObjective;
+          })
+          .filter((obj): obj is SpecificObjective => !!obj);
+      })();
 
-  // Eliminar actividad
-  const handleEliminarActividad = (
-    objetivoId: string,
-    actividadIndex: number
-  ) => {
-    setObjetivosEspEditado((prev) => {
-      const nuevos = prev.map((obj) => {
-        if (obj.id === objetivoId) {
-          const nuevasActividades = [...obj.activities];
-          nuevasActividades.splice(actividadIndex, 1);
+      setFormData((prevData) => {
+        const shouldSync = lastLoadedProjectId.current !== projectId;
+        const hasServerData = Boolean(existingProject);
+        const needsRequirementsHydration =
+          prevData.requirements.length === 0 &&
+          (parsedRequirements?.length ?? 0) > 0;
+        const needsObjectivesHydration =
+          prevData.objetivosEsp.length === 0 &&
+          (parsedObjectives?.length ?? 0) > 0;
+        const needsDatesHydration =
+          (parsedObjectives?.length ?? 0) > 0 &&
+          prevData.objetivosEsp.some((obj, objIndex) =>
+            obj.activities?.some((act, actIndex) => {
+              const parsedAct =
+                parsedObjectives?.[objIndex]?.activities?.[actIndex];
+              if (!parsedAct) return false;
+              return (
+                (!act.startDate && !!parsedAct.startDate) ||
+                (!act.endDate && !!parsedAct.endDate)
+              );
+            })
+          );
+
+        // Si ya hay datos en el formulario y aún no se han guardado cambios,
+        // no sobrescribir con datos del servidor (para evitar perder ediciones)
+        // Solo sincronizar si estamos cargando un proyecto nuevo o llegó data del servidor
+        if (
+          shouldSync ||
+          (hasServerData &&
+            (needsRequirementsHydration ||
+              needsObjectivesHydration ||
+              needsDatesHydration)) ||
+          (prevData.titulo === '' && prevData.planteamiento === '')
+        ) {
+          lastLoadedProjectId.current = projectId;
+          // Primera carga: sincronizar con los datos del servidor
           return {
-            ...obj,
-            activities: nuevasActividades,
+            ...prevData,
+            titulo: dataToSet.name || titulo,
+            description:
+              (dataToSet as { description?: string | null })?.description ??
+              prevData.description,
+            planteamiento: dataToSet.planteamiento || planteamiento,
+            justificacion: dataToSet.justificacion || justificacion,
+            objetivoGen: dataToSet.objetivo_general || objetivoGen,
+            objetivosEsp:
+              (parsedObjectives ?? dataToSet.objetivos_especificos) ||
+              objetivosEsp,
+            categoriaId: dataToSet.category_id ?? categoriaId ?? undefined,
+            tipoProyecto: dataToSet.type_project ?? tipoProyecto ?? '',
+            requirements: parsedRequirements ?? prevData.requirements,
+            durationEstimate:
+              typeof dataToSet.tiempo_estimado === 'number'
+                ? dataToSet.tiempo_estimado
+                : typeof dataToSet.durationEstimate === 'number'
+                  ? dataToSet.durationEstimate
+                  : prevData.durationEstimate,
+            durationUnit:
+              (dataToSet.duration_unit ??
+                dataToSet.durationUnit ??
+                prevData.durationUnit) ||
+              prevData.durationUnit,
+            fechaInicio:
+              normalizeDateInput(
+                (dataToSet as { fecha_inicio?: string | null })?.fecha_inicio
+              ) || prevData.fechaInicio,
+            fechaFin:
+              normalizeDateInput(
+                (dataToSet as { fecha_fin?: string | null })?.fecha_fin
+              ) || prevData.fechaFin,
           };
         }
-        return obj;
+        // Si hay datos en el formulario, mantener los que está editando el usuario
+        return prevData;
       });
-      // Si hay un setter externo (modo edición), propaga el cambio
-      if (typeof _setObjetivosEspProp === 'function') {
-        _setObjetivosEspProp(nuevos);
+    }, 0);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, projectId, initialStep, existingProject]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      lastLoadedProjectId.current = undefined;
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    setIsProjectCreated(Boolean(currentProjectId));
+  }, [currentProjectId]);
+
+  // Funciones para generar contenido con IA
+  const _handleGenerateTitulo = async () => {
+    if (!(formData.planteamiento ?? '').trim()) {
+      alert('Por favor completa la descripción primero para generar un título');
+      return;
+    }
+
+    const content = await generateContent({
+      type: 'titulo',
+      prompt: `Eres un experto en educación. Genera un título académico y profesional para un proyecto educativo basado en esta descripción: "${formData.planteamiento}". El título debe ser claro, conciso y reflejar el tema principal. Solo responde con el título, sin comillas ni explicaciones.`,
+    });
+
+    if (content) {
+      setFormData((prev) => ({ ...prev, titulo: content }));
+    }
+  };
+
+  const handleRegenerateTitulo = async () => {
+    if (!formData.titulo.trim()) {
+      alert('Por favor escribe un título primero para regenerar variaciones');
+      return;
+    }
+
+    await runGenerate('titulo', async () => {
+      const content = await generateContent({
+        type: 'titulo',
+        prompt: `Basándote en este título: "${formData.titulo}", genera un título alternativo SOBRE EL MISMO TEMA pero redactado de forma más profesional, clara y atractiva. Mantén el tema principal y el contexto. Solo responde con el título mejorado, sin comillas ni explicaciones.`,
+      });
+
+      if (content) {
+        setFormData((prev) => ({ ...prev, titulo: content }));
       }
-      return nuevos;
     });
   };
 
-  // Formatear duración
-  const formatearDuracion = (dias: number) => {
-    const semanas = Math.floor(dias / 7);
-    const diasRestantes = dias % 7;
-    return `${semanas > 0 ? `${semanas} sem.` : ''} ${diasRestantes} día${
-      diasRestantes !== 1 ? 's' : ''
-    }`.trim();
-  };
-
-  // Calcular meses entre fechas
-  const calcularMesesEntreFechas = (inicio: string, fin: string): string[] => {
-    const fechaInicio = new Date(inicio);
-    const fechaFin = new Date(fin);
-    const meses: string[] = [];
-
-    const fechaActual = new Date(fechaInicio);
-    while (fechaActual <= fechaFin) {
-      meses.push(fechaActual.toLocaleString('es-ES', { month: 'long' }));
-      fechaActual.setMonth(fechaActual.getMonth() + 1);
-    }
-
-    return meses;
-  };
-
-  // --- Calculate duracionDias when fechaInicio or fechaFin changes ---
-  useEffect(() => {
-    if (fechaInicio && fechaFin) {
-      const inicio = new Date(fechaInicio);
-      const fin = new Date(fechaFin);
-      const diff =
-        Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)) +
-        1;
-      setDuracionDias(diff > 0 ? diff : 0);
-    } else {
-      setDuracionDias(0);
-    }
-  }, [fechaInicio, fechaFin]);
-
-  // --- Calculate diasPorActividad for "dias" visualization ---
-  useEffect(() => {
-    if (tipoVisualizacion === 'dias' && fechaInicio && fechaFin) {
-      // NUEVO: Distribuir actividades por responsable, ocupando huecos de horas sobrantes
-      const dias: Record<string, number[]> = {};
-      // Map: responsableId -> array de horas ocupadas por día (índice de día)
-      const horasPorDiaPorResponsable: Record<string, number[]> = {};
-
-      // Construir lista de actividades con responsable
-      const actividadesList: {
-        actividadKey: string;
-        horas: number;
-        responsableId: string;
-      }[] = [];
-      objetivosEspEditado.forEach((obj) => {
-        obj.activities.forEach((_, actIdx) => {
-          const actividadKey = `${obj.id}_${actIdx}`;
-          const horasActividad =
-            typeof horasPorActividadFinal[actividadKey] === 'number' &&
-            horasPorActividadFinal[actividadKey] > 0
-              ? horasPorActividadFinal[actividadKey]
-              : 1;
-          // Forzar responsableId a string (nunca undefined)
-          const responsableId = ((responsablesPorActividadProp[actividadKey] ||
-            responsablesPorActividadLocal[actividadKey] ||
-            user?.id) ??
-            '') as string;
-          actividadesList.push({
-            actividadKey,
-            horas: horasActividad,
-            responsableId,
-          });
-        });
-      });
-
-      // LOG: Mostrar actividades y responsables
-      console.log('--- Asignación de actividades a responsables ---');
-      actividadesList.forEach(({ actividadKey, horas, responsableId }) => {
-        console.log(
-          `Actividad: ${actividadKey}, Horas: ${horas}, Responsable: ${responsableId}`
-        );
-      });
-
-      // Para cada responsable, distribuir sus actividades en los días
-      // Inicializar matriz de horas ocupadas por día para cada responsable
-      actividadesList.forEach(({ actividadKey, horas, responsableId }) => {
-        if (!horasPorDiaPorResponsable[responsableId]) {
-          horasPorDiaPorResponsable[responsableId] =
-            Array(duracionDias).fill(0);
-        }
-        // Buscar el primer día con hueco suficiente, si no, usar el siguiente día disponible
-        let horasRestantes = horas;
-        let dia = 0;
-        dias[actividadKey] = [];
-        while (horasRestantes > 0 && dia < duracionDias) {
-          const horasOcupadas = horasPorDiaPorResponsable[responsableId][dia];
-          const horasDisponibles = horasPorDiaValue - horasOcupadas;
-          if (horasDisponibles > 0) {
-            const horasAsignar = Math.min(horasDisponibles, horasRestantes);
-            // Marcar este día para la actividad
-            dias[actividadKey].push(dia);
-            // Sumar horas ocupadas
-            horasPorDiaPorResponsable[responsableId][dia] += horasAsignar;
-            horasRestantes -= horasAsignar;
-            // LOG: Mostrar asignación de horas por día
-            console.log(
-              `Asignando ${horasAsignar}h de ${actividadKey} a responsable ${responsableId} en día ${dia} (ocupado: ${horasPorDiaPorResponsable[responsableId][dia]}/${horasPorDiaValue})`
-            );
-          }
-          // Si no se llenó la actividad, pasar al siguiente día
-          if (horasRestantes > 0) {
-            dia++;
-          }
-        }
-      });
-
-      // LOG: Mostrar resumen de ocupación por responsable
-      Object.entries(horasPorDiaPorResponsable).forEach(
-        ([responsableId, horasArray]) => {
-          console.log(
-            `Responsable ${responsableId} - Horas ocupadas por día: [${horasArray.join(', ')}]`
-          );
-        }
+  const handleGenerateDescripcion = async () => {
+    if (!formData.titulo.trim()) {
+      alert(
+        'Por favor completa el título primero para generar una descripción'
       );
-
-      // Solo actualiza el estado si el valor realmente cambió para evitar loops infinitos
-      setDiasPorActividad((prev) => {
-        const prevKeys = Object.keys(prev);
-        const newKeys = Object.keys(dias);
-        if (
-          prevKeys.length === newKeys.length &&
-          prevKeys.every(
-            (k) =>
-              Array.isArray(prev[k]) &&
-              Array.isArray(dias[k]) &&
-              prev[k].length === dias[k].length &&
-              prev[k].every((v, i) => v === dias[k][i])
-          )
-        ) {
-          return prev;
-        }
-        return dias;
-      });
-    } else if (tipoVisualizacion !== 'dias') {
-      // Solo limpiar si realmente hay algo que limpiar, para evitar bucles infinitos
-      setDiasPorActividad((prev) => (Object.keys(prev).length > 0 ? {} : prev));
-    }
-  }, [
-    tipoVisualizacion,
-    fechaInicio,
-    fechaFin,
-    objetivosEspEditado,
-    duracionDias,
-    horasPorActividadFinal,
-    horasPorDiaValue,
-    responsablesPorActividadProp,
-    responsablesPorActividadLocal,
-    user?.id,
-  ]);
-
-  // --- Calcular meses por actividad para visualización por meses ---
-  const mesesPorActividad = useMemo(() => {
-    if (
-      tipoVisualizacion !== 'meses' ||
-      !fechaInicio ||
-      !fechaFin ||
-      !objetivosEspEditado.length
-    )
-      return {};
-
-    // Generar array de objetos {inicio, fin} para cada mes visible
-    const mesesArr: { inicio: Date; fin: Date }[] = [];
-    if (mesesRender.length > 0) {
-      const fechaActual = new Date(fechaInicio);
-      for (const _ of mesesRender) {
-        const inicioMes = new Date(
-          fechaActual.getFullYear(),
-          fechaActual.getMonth(),
-          1
-        );
-        const finMes = new Date(
-          fechaActual.getFullYear(),
-          fechaActual.getMonth() + 1,
-          0
-        );
-        mesesArr.push({ inicio: inicioMes, fin: finMes });
-        fechaActual.setMonth(fechaActual.getMonth() + 1);
-      }
+      return;
     }
 
-    // Para cada actividad, calcular los días laborales desde la fecha de inicio del proyecto
-    const res: Record<string, number[]> = {};
-    objetivosEspEditado.forEach((obj) => {
-      obj.activities.forEach((_, actIdx) => {
-        const actividadKey = `${obj.id}_${actIdx}`;
-        const horas = horasPorActividadFinal[actividadKey] || 1;
-        const horasPorDia = horasPorDiaValue || 1;
-        const diasNecesarios = Math.ceil(horas / horasPorDia);
-
-        // Calcular días laborales para esta actividad desde la fecha de inicio del proyecto
-        const diasLaborales: Date[] = [];
-        let diasAgregados = 0;
-        const fechaDia = new Date(fechaInicio);
-        while (diasAgregados < diasNecesarios) {
-          if (fechaDia.getDay() !== 0) {
-            diasLaborales.push(new Date(fechaDia));
-            diasAgregados++;
-          }
-          fechaDia.setDate(fechaDia.getDate() + 1);
-        }
-
-        // Guardar meses en los que la actividad está presente
-        const mesesActividad: number[] = [];
-        mesesArr.forEach((mes, idx) => {
-          if (diasLaborales.some((d) => d >= mes.inicio && d <= mes.fin)) {
-            mesesActividad.push(idx);
-          }
-        });
-        res[actividadKey] = mesesActividad;
-      });
+    const content = await generateContent({
+      type: 'descripcion',
+      prompt: `Genera una descripción BREVE (120-150 palabras, un párrafo) para un proyecto estudiantil con el título: "${formData.titulo}". Describe desde la perspectiva del ESTUDIANTE: qué problema va a resolver, qué va a crear/desarrollar, qué habilidades aplicará, y quién se beneficiará. Usa lenguaje directo y motivador. Solo responde con la descripción, sin títulos.`,
     });
 
-    return res;
-  }, [
-    tipoVisualizacion,
-    fechaInicio,
-    fechaFin,
-    objetivosEspEditado,
-    horasPorActividadFinal,
-    horasPorDiaValue,
-    mesesRender,
-  ]);
+    if (content) {
+      setFormData((prev) => ({ ...prev, description: content }));
+    }
+  };
 
-  // Función para guardar o actualizar el proyecto en la BD
-  const handleGuardarProyecto = async () => {
+  const _handleGenerateJustificacion = async () => {
+    if (!(formData.planteamiento ?? '').trim() && !formData.titulo.trim()) {
+      alert('Por favor completa el título o descripción primero');
+      return;
+    }
+
+    const prompt = `${formData.titulo} ${formData.planteamiento}`.trim();
+    const content = await generateContent({
+      type: 'justificacion',
+      prompt,
+    });
+
+    if (content) {
+      setFormData((prev) => ({ ...prev, justificacion: content }));
+    }
+  };
+
+  const _handleGenerateObjetivoGen = async () => {
+    if (!(formData.planteamiento ?? '').trim() && !formData.titulo.trim()) {
+      alert('Por favor completa el título o descripción primero');
+      return;
+    }
+
+    const prompt = `${formData.titulo} ${formData.planteamiento}`.trim();
+    const content = await generateContent({
+      type: 'objetivoGen',
+      prompt,
+    });
+
+    if (content) {
+      setFormData((prev) => ({ ...prev, objetivoGen: content }));
+    }
+  };
+
+  // Manejar carga de multimedia a S3
+  const handleMultimediaUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files;
+    if (!files) return;
+
     try {
-      setIsUpdating(true);
-      setProgress(0);
-      setStatusText(
-        isEditMode ? 'Actualizando proyecto...' : 'Creando proyecto...'
+      for (const file of Array.from(files)) {
+        // Validar tipo de archivo
+        if (!file.type.startsWith('image') && !file.type.startsWith('video')) {
+          alert('Solo se permiten imágenes y videos');
+          continue;
+        }
+
+        // Crear FormData para presigned post
+        const uploadRequest = {
+          contentType: file.type,
+          fileSize: file.size,
+          fileName: file.name,
+        };
+
+        // Obtener presigned post del servidor
+        const presignedResponse = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(uploadRequest),
+        });
+
+        if (!presignedResponse.ok) {
+          throw new Error('Error al obtener presigned post');
+        }
+
+        const presignedData = (await presignedResponse.json()) as {
+          url: string;
+          fields: Record<string, string>;
+          key: string;
+        };
+
+        // Crear FormData con los datos de presigned post
+        const formDataS3 = new FormData();
+        Object.entries(presignedData.fields).forEach(([key, value]) => {
+          formDataS3.append(key, value as string);
+        });
+        formDataS3.append('file', file);
+
+        // Subir a S3 usando presigned post
+        const s3Response = await fetch(presignedData.url, {
+          method: 'POST',
+          body: formDataS3,
+        });
+
+        if (!s3Response.ok) {
+          throw new Error('Error al subir archivo a S3');
+        }
+
+        // Agregar archivo a la lista de multimedia
+        const s3Url = `${presignedData.url}${presignedData.key}`;
+        setFormData((prev) => ({
+          ...prev,
+          multimedia: [
+            ...prev.multimedia,
+            {
+              name: file.name,
+              url: s3Url,
+              type: file.type,
+              key: presignedData.key,
+            },
+          ],
+        }));
+      }
+    } catch (error) {
+      console.error('Error al subir multimedia:', error);
+      alert('Error al subir los archivos. Intenta de nuevo.');
+    }
+
+    // Limpiar input
+    e.target.value = '';
+  };
+
+  // Eliminar multimedia
+  const handleRemoveMultimedia = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      multimedia: prev.multimedia.filter((_, i) => i !== index),
+    }));
+  };
+
+  // Return condicional DESPUÉS de todos los hooks
+  if (!isOpen) return null;
+
+  const progress = (currentStep / steps.length) * 100;
+  const normalizedTipoVisualizacion =
+    tipoVisualizacion === 'horas' ? 'dias' : tipoVisualizacion;
+  const selectedCategoryId =
+    typeof formData.categoriaId === 'number'
+      ? formData.categoriaId
+      : typeof categoriaId === 'number'
+        ? categoriaId
+        : undefined;
+  const selectedProjectType =
+    formData.tipoProyecto?.trim() || tipoProyecto?.trim() || '';
+
+  const handleNext = () => {
+    if (isSaving) return;
+    if (currentStep < steps.length) {
+      if (!isProjectCreated && currentStep === 1) return;
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (isSaving) return;
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleCreateProject = async () => {
+    const title = formData.titulo.trim();
+    const description = formData.description.trim();
+    if (
+      !title ||
+      !description ||
+      selectedCategoryId == null ||
+      !selectedProjectType
+    ) {
+      setCreationError(
+        'Completa título, descripción, categoría y tipo de proyecto para continuar.'
+      );
+      return;
+    }
+
+    setCreationError(null);
+
+    try {
+      const objetivosPayload = formData.objetivosEsp
+        .filter((obj) => obj.title.trim() !== '')
+        .map((obj) => ({ id: obj.id, title: obj.title.trim() }));
+
+      const actividadesPayload = formData.objetivosEsp.flatMap(
+        (obj, objIndex) =>
+          obj.activities
+            .filter((act) => act.title.trim() !== '')
+            .map((act) => ({
+              descripcion: act.title.trim(),
+              meses: [],
+              objetivoId: obj.id,
+              objetivoIndex: objIndex,
+              startDate: act.startDate || null,
+              endDate: act.endDate || null,
+            }))
       );
 
-      // Validar campos requeridos
-      if (
-        !tituloState ||
-        !planteamientoEditado ||
-        !justificacionEditada ||
-        !objetivoGenEditado ||
-        !tipoProyecto ||
-        !categoria
-      ) {
-        alert('Por favor, completa todos los campos requeridos.');
-        setIsUpdating(false);
-        setProgress(0);
+      const payload = {
+        name: title,
+        description: description, // Descripción general
+        planteamiento: '', // Inicialmente vacío, se llena en paso 2
+        requirements: JSON.stringify(formData.requirements), // Requisitos como JSON
+        justificacion: formData.justificacion?.trim() ?? '',
+        objetivo_general: formData.objetivoGen?.trim() ?? '',
+        objetivos_especificos: objetivosPayload,
+        actividades: actividadesPayload,
+        type_project: selectedProjectType,
+        projectTypeId: formData.projectTypeId,
+        categoryId: selectedCategoryId,
+        courseId: courseId,
+        isPublic: formData.isPublic ?? false,
+        needsCollaborators: formData.needsCollaborators ?? false,
+        tipoVisualizacion: normalizedTipoVisualizacion,
+        durationEstimate: formData.durationEstimate,
+        durationUnit: formData.durationUnit,
+        fechaInicio,
+        fechaFin,
+        multimedia: JSON.stringify(
+          formData.multimedia.map((m) => ({
+            name: m.name,
+            url: m.url,
+            type: m.type,
+            key: m.key,
+          }))
+        ),
+      };
+
+      console.log('🟢 Enviando proyecto:', payload);
+      const result = await createProject(payload);
+      console.log('🟢 Respuesta del backend:', result);
+
+      const createdId =
+        typeof result?.id === 'number'
+          ? result.id
+          : Number((result as Record<string, unknown>)?.id) || undefined;
+
+      console.log('🟢 ID extraído:', createdId);
+
+      if (!createdId) {
+        setCreationError(
+          'Proyecto guardado pero no se recibió el ID. Recarga la página.'
+        );
         return;
       }
 
-      // Mapear objetivos_especificos como array de objetos {id, title}
-      const objetivos_especificos = objetivosEspEditado.map((obj, idx) => ({
-        id:
-          obj.id ||
-          `obj_${Date.now()}_${idx}_${Math.floor(Math.random() * 1000)}`,
-        title: obj.title,
+      // Marcar como creado ANTES de cambiar de paso
+      setCurrentProjectId(createdId);
+      setIsProjectCreated(true);
+
+      // Mantener los valores del formulario
+      setFormData((prev) => ({
+        ...prev,
+        titulo: title,
+        description: description,
+        categoriaId: selectedCategoryId,
+        tipoProyecto: selectedProjectType,
       }));
 
-      // Mapear actividades correctamente con objetivoId y responsable
-      const actividades: {
-        descripcion: string;
-        meses: number[];
-        objetivoId?: string;
-        responsibleUserId?: string;
-        hoursPerDay?: number;
-      }[] = [];
-      objetivosEspEditado.forEach((obj) => {
-        obj.activities.forEach((act, actIdx) => {
-          const actividadKey = `${obj.id}_${actIdx}`;
-          actividades.push({
-            descripcion: act,
-            meses: [], // Puedes mapear el cronograma si lo necesitas
-            objetivoId: obj.id, // <-- importante para edición
-            responsibleUserId:
-              (responsablesPorActividadProp[actividadKey] ||
-                responsablesPorActividadLocal[actividadKey] ||
-                user?.id) ?? // <-- add parentheses to fix precedence
-              '', // <-- Asegura que siempre se asigna un responsable
-            hoursPerDay: horasPorActividadFinal[actividadKey] || 1,
-          });
-        });
-      });
+      // Avanzar al siguiente paso
+      setCurrentStep(2);
 
-      // --- NUEVO: Subir imagen/video a S3 si hay archivo seleccionado ---
-      let uploadedCoverImageKey: string | undefined = _coverImageKeyProp;
-      let uploadedCoverVideoKey: string | undefined = _coverVideoKeyProp;
-
-      // Subida de imagen con progreso
-      if (selectedImage) {
-        setStatusText(
-          isEditMode ? 'Actualizando imagen...' : 'Subiendo imagen...'
-        );
-        setProgress(10);
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contentType: selectedImage.type,
-            fileSize: selectedImage.size,
-            fileName: selectedImage.name,
-          }),
-        });
-        interface UploadData {
-          url: string;
-          fields?: Record<string, string>;
-          key: string;
-          fileName: string;
-          uploadType: 'simple' | 'put';
-          contentType: string;
-          coverImageKey?: string;
-          error?: string;
-        }
-        const uploadData = (await uploadRes.json()) as Partial<UploadData>;
-        if (!uploadRes.ok) {
-          alert(uploadData.error ?? 'Error al preparar la carga');
-          return;
-        }
-        if (
-          uploadData.uploadType === 'simple' &&
-          uploadData.url &&
-          uploadData.fields
-        ) {
-          const formData = new FormData();
-          Object.entries(uploadData.fields).forEach(([k, v]) =>
-            formData.append(k, v)
-          );
-          formData.append('file', selectedImage);
-
-          // Usar XMLHttpRequest para progreso
-          await new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', uploadData.url!);
-            xhr.upload.onprogress = (e) => {
-              if (e.lengthComputable) {
-                setProgress(10 + Math.round((e.loaded / e.total) * 30));
-              }
-            };
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                setProgress(40);
-                resolve();
-              } else {
-                alert('Error al subir el archivo a S3');
-                setIsUpdating(false);
-                setProgress(0);
-                reject(new Error('Error al subir el archivo a S3'));
-              }
-            };
-            xhr.onerror = () => {
-              alert('Error al subir el archivo a S3');
-              setIsUpdating(false);
-              setProgress(0);
-              reject(new Error('Error al subir el archivo a S3'));
-            };
-            xhr.send(formData);
-          });
-        } else if (uploadData.uploadType === 'put' && uploadData.url) {
-          await new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('PUT', uploadData.url!);
-            xhr.setRequestHeader('Content-Type', selectedImage.type);
-            xhr.upload.onprogress = (e) => {
-              if (e.lengthComputable) {
-                setProgress(10 + Math.round((e.loaded / e.total) * 30));
-              }
-            };
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                setProgress(40);
-                resolve();
-              } else {
-                alert('Error al subir el archivo a S3');
-                setIsUpdating(false);
-                setProgress(0);
-                reject(new Error('Error al subir el archivo a S3'));
-              }
-            };
-            xhr.onerror = () => {
-              alert('Error al subir el archivo a S3');
-              setIsUpdating(false);
-              setProgress(0);
-              reject(new Error('Error al subir el archivo a S3'));
-            };
-            xhr.send(selectedImage);
-          });
-        }
-        uploadedCoverImageKey = uploadData.key;
+      // Notificar al componente padre
+      if (onProjectCreated) {
+        onProjectCreated();
       }
-
-      // Subida de video con progreso
-      if (selectedVideo) {
-        setStatusText(
-          isEditMode ? 'Actualizando video...' : 'Subiendo video...'
-        );
-        setProgress(45);
-        const uploadRes = await fetch('/api/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contentType: selectedVideo.type,
-            fileSize: selectedVideo.size,
-            fileName: selectedVideo.name,
-          }),
-        });
-        interface UploadData {
-          url: string;
-          fields?: Record<string, string>;
-          key: string;
-          fileName: string;
-          uploadType: 'simple' | 'put';
-          contentType: string;
-          coverVideoKey?: string;
-          error?: string;
-        }
-        const uploadData = (await uploadRes.json()) as Partial<UploadData>;
-        if (!uploadRes.ok) {
-          alert(uploadData.error ?? 'Error al preparar la carga');
-          return;
-        }
-        if (
-          uploadData.uploadType === 'simple' &&
-          uploadData.url &&
-          uploadData.fields
-        ) {
-          const formData = new FormData();
-          Object.entries(uploadData.fields).forEach(([k, v]) =>
-            formData.append(k, v)
-          );
-          formData.append('file', selectedVideo);
-
-          await new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', uploadData.url!);
-            xhr.upload.onprogress = (e) => {
-              if (e.lengthComputable) {
-                setProgress(45 + Math.round((e.loaded / e.total) * 30));
-              }
-            };
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                setProgress(75);
-                resolve();
-              } else {
-                alert('Error al subir el archivo a S3');
-                setIsUpdating(false);
-                setProgress(0);
-                reject(new Error('Error al subir el archivo a S3'));
-              }
-            };
-            xhr.onerror = () => {
-              alert('Error al subir el archivo a S3');
-              setIsUpdating(false);
-              setProgress(0);
-              reject(new Error('Error al subir el archivo a S3'));
-            };
-            xhr.send(formData);
-          });
-        } else if (uploadData.uploadType === 'put' && uploadData.url) {
-          await new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('PUT', uploadData.url!);
-            xhr.setRequestHeader('Content-Type', selectedVideo.type);
-            xhr.upload.onprogress = (e) => {
-              if (e.lengthComputable) {
-                setProgress(45 + Math.round((e.loaded / e.total) * 30));
-              }
-            };
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                setProgress(75);
-                resolve();
-              } else {
-                alert('Error al subir el archivo a S3');
-                setIsUpdating(false);
-                setProgress(0);
-                reject(new Error('Error al subir el archivo a S3'));
-              }
-            };
-            xhr.onerror = () => {
-              alert('Error al subir el archivo a S3');
-              setIsUpdating(false);
-              setProgress(0);
-              reject(new Error('Error al subir el archivo a S3'));
-            };
-            xhr.send(selectedVideo);
-          });
-        }
-        uploadedCoverVideoKey = uploadData.key;
-      }
-
-      setProgress(80);
-      setStatusText(
-        isEditMode ? 'Actualizando proyecto...' : 'Creando proyecto...'
-      );
-
-      const body = {
-        name: tituloState,
-        planteamiento: planteamientoEditado,
-        justificacion: justificacionEditada,
-        objetivo_general: objetivoGenEditado,
-        objetivos_especificos, // <-- ahora es array de objetos {id, title}
-        actividades,
-        type_project: tipoProyecto,
-        categoryId: Number(categoria),
-        coverImageKey: uploadedCoverImageKey,
-        coverVideoKey: uploadedCoverVideoKey,
-        fechaInicio,
-        fechaFin,
-        tipoVisualizacion,
-        horasPorDia: horasPorDiaValue,
-        totalHoras: totalHorasInput,
-        tiempoEstimado: totalHorasActividadesCalculado, // sigue siendo el estimado por cálculo automático
-        diasEstimados, // NUEVO: estimado automático
-        diasNecesarios, // NUEVO: por edición manual
-        isPublic: false,
-      };
-
-      // Define un tipo para la respuesta de la API
-      type ApiResponse =
-        | { id: string | number }
-        | { error: string }
-        | Record<string, unknown>;
-
-      let res: Response, data: ApiResponse;
-      if (isEditMode && projectId) {
-        // --- MODO EDICIÓN: actualizar proyecto existente ---
-        setStatusText('Actualizando proyecto...');
-        res = await fetch(`/api/projects/${projectId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
-        setProgress(95);
-        data = await res.json();
-        if (res.ok) {
-          setProgress(100);
-          setStatusText('Proyecto actualizado correctamente.');
-          setTimeout(() => {
-            alert('Proyecto actualizado correctamente.');
-            setIsUpdating(false);
-            setProgress(0);
-            onClose();
-            window.location.href = `/proyectos/DetallesProyectos/${projectId}`;
-          }, 500);
-        } else {
-          setIsUpdating(false);
-          setProgress(0);
-          alert(
-            typeof data === 'object' &&
-              data &&
-              'error' in data &&
-              typeof (data as { error?: unknown }).error === 'string'
-              ? (data as { error: string }).error
-              : 'Error al actualizar el proyecto.'
-          );
-        }
-      } else {
-        // --- MODO CREACIÓN: crear nuevo proyecto ---
-        setStatusText('Creando proyecto...');
-        res = await fetch('/api/projects', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
-        setProgress(95);
-        data = await res.json();
-        if (res.ok) {
-          setProgress(100);
-          setStatusText('Proyecto creado correctamente.');
-          setTimeout(() => {
-            alert('Proyecto guardado correctamente.');
-            setIsUpdating(false);
-            setProgress(0);
-            onClose();
-            if (typeof data === 'object' && data !== null && 'id' in data) {
-              window.location.href = `/proyectos/DetallesProyectos/${(data as { id: string | number }).id}`;
-            } else {
-              window.location.reload();
-            }
-          }, 500);
-        } else {
-          setIsUpdating(false);
-          setProgress(0);
-          alert(
-            typeof data === 'object' &&
-              data &&
-              'error' in data &&
-              typeof (data as { error?: unknown }).error === 'string'
-              ? (data as { error: string }).error
-              : 'Error al guardar el proyecto.'
-          );
-        }
-      }
-    } catch (_error) {
-      setIsUpdating(false);
-      setProgress(0);
-      setStatusText('');
-      alert(
-        isEditMode
-          ? 'Error al actualizar el proyecto.'
-          : 'Error al guardar el proyecto.'
-      );
+    } catch (error) {
+      console.error('❌ Error al crear el proyecto:', error);
+      setCreationError('No se pudo crear el proyecto. Inténtalo nuevamente.');
     }
   };
 
-  // Utilidad para obtener la fecha actual en formato YYYY-MM-DD, ajustando si es domingo
-  function getTodayDateString() {
-    const today = new Date();
-    // Si hoy es domingo, avanzar al lunes siguiente
-    if (today.getDay() === 0) {
-      today.setDate(today.getDate() + 1);
-    }
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
+  const isCreateStep = currentStep === 1 && !isProjectCreated;
+  const isCreateReady =
+    !!formData.titulo.trim() &&
+    !!formData.description.trim() &&
+    selectedCategoryId != null &&
+    selectedProjectType.length > 0;
+  const nextDisabled = isCreateStep
+    ? isCreatingProject || !isCreateReady
+    : currentStep === steps.length;
 
-  // Si la fecha de inicio es mayor a la de fin, intercambiarlas
-  useEffect(() => {
-    if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
-      setFechaFin(fechaInicio);
-    }
-  }, [fechaInicio, fechaFin]);
+  const parseTimelineDate = (value?: string) => {
+    if (!value) return null;
+    const [year, month, day] = value.split('-').map((part) => Number(part));
+    if (!year || !month || !day) return null;
+    return new Date(Date.UTC(year, month - 1, day));
+  };
 
-  // Si la fecha de inicio es mayor a la de fin, intercambiarlas
-  useEffect(() => {
-    if (fechaInicio && fechaFin && new Date(fechaInicio) > new Date(fechaFin)) {
-      setFechaFin(fechaInicio);
-    }
-  }, [fechaInicio, fechaFin]);
+  const formatShortDate = (date: Date) =>
+    date.toLocaleDateString('es-CO', {
+      day: 'numeric',
+      month: 'short',
+      timeZone: 'UTC',
+    });
 
-  // Añade esta función utilitaria antes del return principal (por ejemplo, después de los hooks y antes de if (!isOpen) return null;)
-  function limpiarNumeracionObjetivo(texto: string) {
-    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio, incluso si hay varios y en cualquier orden
-    let t = texto;
-    // Elimina todos los "OE x. ACT y. " y "OE x. " repetidos al inicio
-    t = t.replace(/^((OE\s*\d+\.\s*ACT\s*\d+\.\s*)|(OE\s*\d+\.\s*))+/, '');
-    return t.trim();
-  }
+  const formatMonthLabel = (date: Date) =>
+    date.toLocaleDateString('es-CO', { month: 'short', timeZone: 'UTC' });
 
-  function limpiarNumeracionActividad(texto: string) {
-    // Elimina todos los prefijos tipo "OE x. ACT y. " y "OE x. " al inicio, incluso si hay varios y en cualquier orden
-    let t = texto;
-    // Elimina todos los "OE x. ACT y. " y "OE x. " repetidos al inicio
-    t = t.replace(/^((OE\s*\d+\.\s*ACT\s*\d+\.\s*)|(OE\s*\d+\.\s*))+/, '');
-    return t.trim();
-  }
-
-  // Utilidad para convertir yyyy-mm-dd a Date
-  function parseYMDToDate(str: string): Date | null {
-    if (!str) return null;
-    const [yyyy, mm, dd] = str.split('-');
-    if (!yyyy || !mm || !dd) return null;
-    const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
-    // Si cae en domingo, sumar 1 día para que sea lunes
-    if (date.getDay() === 0) {
-      date.setDate(date.getDate() + 1);
-    }
-    return date;
-  }
-
-  // Utilidad para convertir Date a yyyy-mm-dd
-  function formatDateYMD(date: Date): string {
-    const d = new Date(date);
-    // Si cae en domingo, sumar 1 día para que sea lunes
-    if (d.getDay() === 0) {
-      d.setDate(d.getDate() + 1);
-    }
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  }
-
-  // Utilidad para comparar si dos fechas (Date) son el mismo día (sin horas)
-  function isSameDay(a: Date, b: Date) {
-    return (
-      a.getFullYear() === b.getFullYear() &&
-      a.getMonth() === b.getMonth() &&
-      a.getDate() === b.getDate()
+  const addDaysUTC = (date: Date, days: number) =>
+    new Date(
+      Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate() + days
+      )
     );
-  }
 
-  // Cuando el usuario edita manualmente el total, guarda el backup si aún no existe
-  useEffect(() => {
-    if (totalHorasEditadoManualmente && horasOriginalesBackup === null) {
-      // Guarda el estado actual de horas por actividad antes de la edición manual
-      setHorasOriginalesBackup({ ...horasPorActividadFinal });
-    }
-    // Si se desactiva la edición manual, limpia el backup
-    if (!totalHorasEditadoManualmente && horasOriginalesBackup !== null) {
-      setHorasOriginalesBackup(null);
-    }
-  }, [
-    totalHorasEditadoManualmente,
-    horasOriginalesBackup,
-    horasPorActividadFinal,
-  ]); // <-- Añadidos
+  const getTimelineColumns = (
+    startDate: Date | null,
+    endDate: Date | null,
+    view: 'dias' | 'semanas' | 'meses'
+  ) => {
+    if (!startDate || !endDate)
+      return [] as Array<{
+        label: string;
+        sublabel: string;
+      }>;
 
-  // Sincroniza el valor inicial cuando cambian las horas calculadas
-  useEffect(() => {
-    if (!totalHorasEditadoManualmente) {
-      setTotalHorasInput(totalHorasActividadesCalculado);
-    }
-  }, [totalHorasActividadesCalculado, totalHorasEditadoManualmente]);
+    const msPerDay = 1000 * 60 * 60 * 24;
+    const toUTCStart = (date: Date) =>
+      Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+    const totalDays =
+      Math.max(
+        0,
+        Math.floor((toUTCStart(endDate) - toUTCStart(startDate)) / msPerDay)
+      ) + 1;
 
-  // --- Distribuir horas proporcionalmente cuando se edita manualmente el total ---
-  useEffect(() => {
-    if (!totalHorasEditadoManualmente) return;
-    // Solo distribuir si hay actividades
-    const actividadKeys: string[] = [];
-    objetivosEspEditado.forEach((obj) => {
-      obj.activities.forEach((_, actIdx) => {
-        actividadKeys.push(`${obj.id}_${actIdx}`);
+    if (view === 'dias') {
+      return Array.from({ length: totalDays }, (_, index) => {
+        const date = addDaysUTC(startDate, index);
+        return {
+          label: `Dia ${index + 1}`,
+          sublabel: formatShortDate(date),
+        };
+      });
+    }
+
+    if (view === 'semanas') {
+      const totalWeeks = Math.ceil(totalDays / 7);
+      return Array.from({ length: totalWeeks }, (_, index) => {
+        const date = addDaysUTC(startDate, index * 7);
+        return {
+          label: `Sem ${index + 1}`,
+          sublabel: formatShortDate(date),
+        };
+      });
+    }
+
+    const columns: Array<{ label: string; sublabel: string }> = [];
+    const cursor = new Date(
+      Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth(), 1)
+    );
+    const endCursor = new Date(
+      Date.UTC(endDate.getUTCFullYear(), endDate.getUTCMonth(), 1)
+    );
+    while (cursor <= endCursor) {
+      columns.push({
+        label: formatMonthLabel(cursor),
+        sublabel: cursor.getFullYear().toString(),
+      });
+      cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+    }
+    return columns;
+  };
+
+  const getTimelineRows = () => {
+    const objetivos = Array.isArray(formData.objetivosEsp)
+      ? formData.objetivosEsp
+      : [];
+
+    const rows = objetivos.flatMap((objective, objIndex) => {
+      const activities = Array.isArray(objective.activities)
+        ? objective.activities
+        : [];
+      return activities.map((activity, actIndex) => {
+        const activityId =
+          existingProject?.objetivos_especificos?.[objIndex]?.actividades?.[
+            actIndex
+          ]?.id;
+        const deliverableUrl =
+          existingProject?.objetivos_especificos?.[objIndex]?.actividades?.[
+            actIndex
+          ]?.deliverableUrl ?? null;
+        const startDate = parseTimelineDate(activity.startDate);
+        const endDate = parseTimelineDate(activity.endDate);
+        return {
+          id: activityId,
+          key: `${objIndex + 1}.${actIndex + 1}`,
+          title: activity.title || 'Actividad sin título',
+          startDate,
+          endDate,
+          deliverableUrl,
+        };
       });
     });
-    if (actividadKeys.length === 0) return;
 
-    // Distribución equitativa: todas las actividades reciben la misma cantidad, el resto se reparte de a 1
-    const totalTarget = Math.max(
-      actividadKeys.length,
-      Math.round(totalHorasInput)
-    );
-    const base = Math.floor(totalTarget / actividadKeys.length);
-    let resto = totalTarget - base * actividadKeys.length;
+    return rows
+      .map((row, index) => ({ ...row, orderIndex: index }))
+      .sort((a, b) => {
+        if (a.id == null && b.id == null) return a.orderIndex - b.orderIndex;
+        if (a.id == null) return 1;
+        if (b.id == null) return -1;
+        return b.id - a.id;
+      })
+      .map(({ orderIndex, ...row }) => row);
+  };
 
-    const nuevasHoras: Record<string, number> = {};
-    actividadKeys.forEach((k, _idx) => {
-      nuevasHoras[k] = base + (resto > 0 ? 1 : 0);
-      if (resto > 0) resto--;
-    });
-
-    // Actualizar el estado de horas por actividad
-    if (typeof setHorasPorActividad === 'function') {
-      setHorasPorActividad(nuevasHoras);
+  // Handler unificado para el botón principal
+  const handleMainButtonClick = async () => {
+    if (isCreateStep) {
+      await handleCreateProject();
     } else {
-      setHorasPorActividadLocal(nuevasHoras);
+      handleNext();
     }
-  }, [
-    totalHorasInput,
-    totalHorasEditadoManualmente,
-    objetivosEspEditado,
-    setHorasPorActividad,
-  ]); // <-- Añadidos
+  };
 
-  const [diasEstimados, setDiasEstimados] = useState<number>(0);
-  const [diasNecesarios, setDiasNecesarios] = useState<number>(0);
-
-  // Calcular y guardar dos variables: diasEstimados (usando horasOriginalesBackup si está editado manualmente) y diasNecesarios (usando totalHorasInput)
-  useEffect(() => {
-    let horasParaEstimados = totalHorasActividadesCalculado;
-    if (totalHorasEditadoManualmente && horasOriginalesBackup) {
-      horasParaEstimados = Object.values(horasOriginalesBackup).reduce(
-        (acc, val) => acc + (typeof val === 'number' && val > 0 ? val : 1),
-        0
-      );
-    }
-    setDiasEstimados(
-      Math.ceil(
-        horasParaEstimados > 0 && horasPorDiaValue > 0
-          ? horasParaEstimados / horasPorDiaValue
-          : 0
-      )
-    );
-    setDiasNecesarios(
-      Math.ceil(
-        totalHorasInput > 0 && horasPorDiaValue > 0
-          ? totalHorasInput / horasPorDiaValue
-          : 0
-      )
-    );
-  }, [
-    totalHorasActividadesCalculado,
-    totalHorasInput,
-    horasPorDiaValue,
-    totalHorasEditadoManualmente,
-    horasOriginalesBackup,
-  ]);
-
-  if (!isOpen) return null;
-
-  return (
-    <>
-      {/* Estilo para el contorno del día actual */}
-      <style>
-        {`
-          .datepicker-today-outline {
-            outline: 2px solid #10b981 !important;
-            outline-offset: 1px;
-            border-radius: 50% !important;
-          }
-        `}
-      </style>
-      {/* Barra de progreso de carga */}
-      {isUpdating && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
-            <div className="mb-4 w-full">
-              <div className="h-6 w-full rounded-full bg-gray-200">
-                <div
-                  className="h-6 rounded-full bg-green-500 transition-all duration-300"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <div className="mt-2 text-center font-semibold text-gray-500">
-                {statusText
-                  ? statusText
-                  : progress < 100
-                    ? `Procesando... (${progress}%)`
-                    : '¡Completado!'}
-              </div>
-            </div>
-            <div className="text-sm text-gray-300">
-              Por favor, espera a que termine el proceso.
-            </div>
-          </div>
-        </div>
-      )}
-      <div
-        onClick={(e) => e.target === e.currentTarget && onClose()}
-        className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4 ${isUpdating ? 'pointer-events-none opacity-60 select-none' : ''}`}
-        aria-disabled={isUpdating}
-      >
-        <div className="relative h-full max-h-[95vh] w-full max-w-6xl overflow-y-auto rounded-lg bg-[#0F2940] p-3 text-white shadow-lg sm:p-6">
-          <button
-            onClick={onClose}
-            className="absolute top-2 right-2 text-xl font-bold text-white hover:text-red-500 sm:top-3 sm:right-4 sm:text-2xl"
-          >
-            ✕
-          </button>
-
-          {/* Espacio para la imagen del proyecto */}
-          <div className="mb-4 flex w-full flex-row items-start justify-center gap-4 sm:mb-6">
-            {/* Área de carga de imagen */}
-            <div className="flex w-1/2 flex-col items-center">
-              {!(selectedImage ?? coverImageUrl) && (
-                <div
-                  className={`flex h-36 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-200 ${
-                    isDragOverImage
-                      ? 'scale-105 border-teal-400 bg-teal-900/30'
-                      : 'border-slate-600 bg-slate-700 hover:bg-slate-600'
-                  }`}
-                  onDragOver={handleDragOverImage}
-                  onDragLeave={handleDragLeaveImage}
-                  onDrop={handleDropImage}
-                  onClick={() => imageInputRef.current?.click()}
-                >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <UploadCloud className="mb-3 h-8 w-8 text-teal-400" />
-                    <p className="mb-2 text-center text-sm text-gray-300">
-                      {isDragOverImage ? (
-                        <span className="font-semibold text-teal-300">
-                          Suelta el archivo aquí
-                        </span>
-                      ) : (
-                        <span className="font-semibold">
-                          Sube una imagen del proyecto
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-center text-xs text-gray-400">
-                      Solo se permite 1 imagen
-                    </p>
-                  </div>
-                  <input
-                    ref={imageInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageFileChange}
-                    className="hidden"
-                    disabled={!!selectedImage || !!coverImageUrl}
-                  />
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <div className="mb-4 rounded-lg border border-accent/30 bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/20">
+                  <Sparkles className="h-5 w-5 text-accent" />
                 </div>
-              )}
-              {/* Previsualización de imagen seleccionada o cargada */}
-              {selectedImage ? (
-                <div className="mt-2 flex w-full flex-col gap-2">
-                  <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
-                    <ImageIcon className="h-4 w-4 text-green-400" />
-                    <span
-                      className="truncate text-sm text-gray-300"
-                      title={selectedImage.name}
-                    >
-                      {selectedImage.name}
-                    </span>
-                    <span className="flex-shrink-0 text-xs text-gray-400">
-                      ({(selectedImage.size / 1024 / 1024).toFixed(1)} MB)
-                    </span>
-                    <button
-                      type="button"
-                      className="ml-auto rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
-                      onClick={() => removeFile('image')}
-                    >
-                      Quitar
-                    </button>
-                  </div>
-                  {previewImagen && (
-                    <div className="flex w-full items-center justify-center">
-                      <Image
-                        src={previewImagen}
-                        alt="Previsualización imagen"
-                        width={320}
-                        height={320}
-                        className="h-auto max-h-80 w-full rounded bg-slate-900 object-contain"
-                        unoptimized
-                      />
+                <div className="flex-1">
+                  <div className="mb-1 flex items-center gap-2">
+                    <h4 className="text-sm font-semibold text-foreground">
+                      Asistente de IA
+                    </h4>
+                    <div className="inline-flex items-center rounded-full border border-accent/30 bg-accent/20 px-2.5 py-0.5 text-xs font-semibold text-accent transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                      Nuevo
                     </div>
-                  )}
-                </div>
-              ) : coverImageUrl ? (
-                <div className="mt-2 flex w-full flex-col gap-2">
-                  <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
-                    <ImageIcon className="h-4 w-4 text-green-400" />
-                    <span className="truncate text-sm text-gray-300">
-                      Imagen cargada
-                    </span>
                   </div>
-                  <div className="flex w-full items-center justify-center">
-                    <Image
-                      src={coverImageUrl}
-                      alt="Imagen del proyecto"
-                      width={320}
-                      height={320}
-                      className="h-auto max-h-80 w-full rounded bg-slate-900 object-contain"
-                      unoptimized
-                    />
-                  </div>
-                </div>
-              ) : null}
-            </div>
-            {/* Área de carga de video */}
-            <div className="flex w-1/2 flex-col items-center">
-              {!(selectedVideo ?? coverVideoUrl) && (
-                <div
-                  className={`flex h-36 w-full max-w-md cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-200 ${
-                    isDragOverVideo
-                      ? 'scale-105 border-purple-400 bg-purple-900/30'
-                      : 'border-slate-600 bg-slate-700 hover:bg-slate-600'
-                  }`}
-                  onDragOver={handleDragOverVideo}
-                  onDragLeave={handleDragLeaveVideo}
-                  onDrop={handleDropVideo}
-                  onClick={() => videoInputRef.current?.click()}
-                >
-                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                    <UploadCloud className="mb-3 h-8 w-8 text-purple-400" />
-                    <p className="mb-2 text-center text-sm text-gray-300">
-                      {isDragOverVideo ? (
-                        <span className="font-semibold text-purple-300">
-                          Suelta el archivo aquí
-                        </span>
-                      ) : (
-                        <span className="font-semibold">
-                          Sube un video del proyecto
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-center text-xs text-gray-400">
-                      Solo se permite 1 video
-                    </p>
-                  </div>
-                  <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoFileChange}
-                    className="hidden"
-                    disabled={!!selectedVideo || !!coverVideoUrl}
-                  />
-                </div>
-              )}
-              {/* Previsualización de video seleccionado o cargado */}
-              {selectedVideo ? (
-                <div className="mt-2 flex w-full flex-col gap-2">
-                  <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
-                    <Video className="h-4 w-4 text-purple-400" />
-                    <span
-                      className="truncate text-sm text-gray-300"
-                      title={selectedVideo.name}
-                    >
-                      {selectedVideo.name}
-                    </span>
-                    <span className="flex-shrink-0 text-xs text-gray-400">
-                      ({(selectedVideo.size / 1024 / 1024).toFixed(1)} MB)
-                    </span>
-                    <button
-                      type="button"
-                      className="ml-auto rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
-                      onClick={() => removeFile('video')}
-                    >
-                      Quitar
-                    </button>
-                  </div>
-                  {previewVideo && (
-                    <div className="flex w-full items-center justify-center">
-                      <video
-                        src={previewVideo}
-                        controls
-                        className="h-auto max-h-80 w-full rounded bg-slate-900 object-contain"
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : coverVideoUrl ? (
-                <div className="mt-2 flex w-full flex-col gap-2">
-                  <div className="flex items-center gap-2 rounded border border-slate-600 bg-slate-700 p-2">
-                    <Video className="h-4 w-4 text-purple-400" />
-                    <span className="truncate text-sm text-gray-300">
-                      Video cargado
-                    </span>
-                  </div>
-                  <div className="flex w-full items-center justify-center">
-                    <video
-                      src={coverVideoUrl}
-                      controls
-                      className="h-auto max-h-80 w-full rounded bg-slate-900 object-contain"
-                    />
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          </div>
-          <br />
-          <br />
-          <textarea
-            value={tituloState}
-            onChange={(e) => {
-              setTitulo(e.target.value);
-              handleTextAreaChange(e);
-            }}
-            rows={1}
-            className="mb-4 w-full resize-none overflow-hidden rounded border p-2 text-center text-xl font-semibold text-cyan-300 sm:mb-6 sm:text-2xl md:text-3xl"
-            placeholder="Título del Proyecto"
-          />
-
-          <form className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-2">
-            <div className="col-span-1 lg:col-span-2">
-              <label className="text-sm text-cyan-300 sm:text-base">
-                Planteamiento del problema
-              </label>
-              <textarea
-                value={planteamientoEditado}
-                onChange={(e) => {
-                  setPlanteamientoEditado(e.target.value);
-                  handleTextAreaChange(e);
-                  // Quitar: if (setPlanteamiento) setPlanteamiento(e.target.value);
-                }}
-                rows={1}
-                className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-                placeholder="Describe el planteamiento del problema"
-              />
-            </div>
-
-            <div className="col-span-1 lg:col-span-2">
-              <label className="text-sm text-cyan-300 sm:text-base">
-                Justificación
-              </label>
-              <textarea
-                value={justificacionEditada}
-                onChange={(e) => {
-                  setJustificacionEditada(e.target.value);
-                  handleTextAreaChange(e);
-                  // Quitar: if (setJustificacion) setJustificacion(e.target.value);
-                }}
-                rows={1}
-                className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-                placeholder="Justifica la necesidad del proyecto"
-              />
-            </div>
-
-            <div className="col-span-1 lg:col-span-2">
-              <label className="text-sm text-cyan-300 sm:text-base">
-                Objetivo General
-              </label>
-              <textarea
-                value={objetivoGenEditado}
-                onChange={(e) => {
-                  setObjetivoGenEditado(e.target.value);
-                  handleTextAreaChange(e);
-                  // Quitar: if (setObjetivoGen) setObjetivoGen(e.target.value);
-                }}
-                rows={1}
-                className="mt-1 w-full resize-none overflow-hidden rounded border bg-gray-400 p-2 text-black"
-                placeholder="Define el objetivo general del proyecto"
-              />
-            </div>
-
-            <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <label
-                className="text-sm font-medium text-cyan-300 sm:text-base"
-                htmlFor="horasPorDiaProyecto"
-              >
-                Horas por día de trabajo:
-              </label>
-              <input
-                id="horasPorDiaProyecto"
-                type="number"
-                min={1}
-                max={24}
-                value={horasPorDiaValue}
-                onChange={(e) => {
-                  const num = Number(e.target.value);
-                  if (!isNaN(num) && num >= 1 && num <= 24) {
-                    handleHorasPorDiaChange(num);
-                  }
-                }}
-                className="rounded bg-gray-400 p-1 text-black"
-              />
-              <FaRegClock className="inline-block text-cyan-300" />
-            </div>
-            {/* Izquierda: Horas totales del proyecto*/}
-            <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <label
-                className="text-sm font-medium text-cyan-300 sm:text-base"
-                htmlFor="horasPorProyecto"
-              >
-                Tiempo estimado del proyecto:
-              </label>
-              <input
-                id="horasPorProyecto"
-                type="number"
-                min={0}
-                value={totalHorasActividadesCalculado}
-                readOnly
-                className="rounded bg-gray-400 p-1 text-black"
-                style={{
-                  width: `${String(totalHorasActividadesCalculado).length + 3}ch`,
-                  minWidth: '4ch',
-                  textAlign: 'center',
-                  border: '2px solid #10b981',
-                  fontWeight: 'bold',
-                }}
-              />
-
-              <FaRegClock className="inline-block text-cyan-300" />
-            </div>
-            {/* Fechas responsive */}
-            <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
-                Fecha de Inicio del Proyecto:
-                {/* Solo mostrar el texto si la fecha es distinta a la actual */}
-                {fechaInicioEditadaManualmente &&
-                  fechaInicio !== getTodayDateString() && (
-                    <span className="ml-2 text-xs text-orange-300">
-                      (Editada manualmente)
-                    </span>
-                  )}
-              </label>
-              {/* Cambia aquí: fuerza el contenedor a w-full */}
-              <DatePicker
-                selected={fechaInicio ? parseYMDToDate(fechaInicio) : null}
-                onChange={(date: Date | null) => {
-                  if (!date) return;
-                  if (date instanceof Date && !isNaN(date.getTime())) {
-                    if (date.getDay() === 0) return;
-                    const ymd = formatDateYMD(date);
-                    setFechaInicio(ymd);
-                    setFechaInicioEditadaManualmente(
-                      ymd !== getTodayDateString()
-                    );
-                    setFechaInicioDomingoError(false);
-                    // Si la fecha de fin NO ha sido editada manualmente, recalcula la fecha de fin automáticamente
-                    if (!fechaFinEditadaManualmente) {
-                      // El cálculo automático ya se realiza en el useEffect anterior, así que no es necesario duplicar aquí
-                    }
-                  }
-                }}
-                filterDate={(date: Date) => date.getDay() !== 0}
-                dateFormat="dd / MM / yyyy"
-                minDate={new Date(getTodayDateString())}
-                className={`w-20 rounded bg-gray-400 p-2 text-black ${fechaInicioDomingoError ? 'border-2 border-red-500' : ''}`}
-                placeholderText="Selecciona la fecha de inicio"
-                required
-                customInput={
-                  <CustomDateInput
-                    className={`w-full rounded bg-gray-400 p-2 pr-10 text-black ${fechaInicioDomingoError ? 'border-2 border-red-500' : ''}`}
-                  />
-                }
-                dayClassName={(date) => {
-                  // Solo resalta si la seleccionada NO es la actual
-                  const today = new Date(getTodayDateString());
-                  const selected = fechaInicio
-                    ? parseYMDToDate(fechaInicio)
-                    : null;
-                  if (
-                    date instanceof Date &&
-                    today instanceof Date &&
-                    (selected === null || selected instanceof Date)
-                  ) {
-                    if (
-                      selected &&
-                      isSameDay(date as Date, today as Date) &&
-                      !isSameDay(date as Date, selected as Date)
-                    ) {
-                      return 'datepicker-today-outline';
-                    }
-                    if (!selected && isSameDay(date as Date, today as Date)) {
-                      return 'datepicker-today-outline';
-                    }
-                  }
-                  return '';
-                }}
-              />
-              {/* Solo mostrar el botón si la fecha es distinta a la actual */}
-              {fechaInicioEditadaManualmente &&
-                fechaInicio !== getTodayDateString() && (
+                  <p className="mb-3 text-sm text-muted-foreground">
+                    Deja que la IA genere una descripción completa basándose en
+                    tu título manual. Puedes editar el resultado después.
+                  </p>
                   <button
-                    type="button"
-                    onClick={() => {
-                      setFechaInicio(getTodayDateString());
-                      setFechaInicioEditadaManualmente(false);
-                    }}
-                    className="flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xs text-white hover:bg-green-700 sm:text-sm"
-                    title="Restablecer a la fecha actual"
+                    onClick={() =>
+                      runGenerate('descripcion-card', handleGenerateDescripcion)
+                    }
+                    disabled={isGenerating}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-3 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                   >
-                    Hoy
+                    {isGeneratingFor('descripcion-card') ? (
+                      <span className="ai-generate-loader" aria-hidden />
+                    ) : (
+                      <Sparkles className="mr-2 h-4 w-4" />
+                    )}
+                    <span
+                      className={
+                        isGeneratingFor('descripcion-card')
+                          ? 'ai-generate-text-pulse'
+                          : ''
+                      }
+                    >
+                      {isGeneratingFor('descripcion-card')
+                        ? 'Generando...'
+                        : 'Generar con IA'}
+                    </span>
                   </button>
-                )}
-              {fechaInicioDomingoError && (
-                <span className="text-xs text-red-400">
-                  No puedes seleccionar un domingo como fecha de inicio.
-                </span>
-              )}
+                </div>
+              </div>
             </div>
-
-            <div className="col-span-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-              <label className="mb-1 block text-sm font-medium text-cyan-300 sm:text-base">
-                Fecha de Fin del Proyecto:
-                {/* Mostrar si la fecha fue editada manualmente */}
-                {fechaFinEditadaManualmente && (
-                  <span className="ml-2 text-xs text-orange-300">
-                    (Editada manualmente)
-                  </span>
-                )}
+            <div className="space-y-2">
+              <label
+                className="mb-2 block text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                htmlFor="title"
+              >
+                Título del proyecto *
               </label>
-              {/* Cambia aquí: fuerza el contenedor a w-full */}
-              <DatePicker
-                selected={fechaFin ? parseYMDToDate(fechaFin) : null}
-                onChange={(date: Date | null) => {
-                  if (!date) return;
-                  if (date instanceof Date && !isNaN(date.getTime())) {
-                    const ymd = formatDateYMD(date);
-                    setFechaFin(ymd);
-                    setFechaFinEditadaManualmente(true);
+              <div className="flex gap-2">
+                <input
+                  className="flex h-10 w-full flex-1 rounded-md border border-input bg-background/50 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                  id="title"
+                  placeholder="Ej: Landing Page Responsiva"
+                  value={formData.titulo}
+                  onChange={(e) =>
+                    setFormData({ ...formData, titulo: e.target.value })
                   }
-                }}
-                dateFormat="dd / MM / yyyy"
-                minDate={
-                  fechaInicio
-                    ? (parseYMDToDate(fechaInicio) ?? undefined)
-                    : undefined
-                }
-                filterDate={(date: Date) => date.getDay() !== 0} // <-- Deshabilita domingos
-                className="w-full rounded bg-gray-400 p-2 text-black"
-                placeholderText="DD / MM / YYYY"
-                required
-                customInput={
-                  <CustomDateInput className="w-full rounded bg-gray-400 p-2 pr-10 text-black" />
-                }
-                dayClassName={(date) => {
-                  const today = new Date(getTodayDateString());
-                  const selected = fechaFin ? parseYMDToDate(fechaFin) : null;
-                  if (
-                    date instanceof Date &&
-                    today instanceof Date &&
-                    (selected === null || selected instanceof Date)
-                  ) {
-                    if (
-                      selected &&
-                      isSameDay(date as Date, today as Date) &&
-                      !isSameDay(date as Date, selected as Date)
-                    ) {
-                      return 'datepicker-today-outline';
+                />
+                <button
+                  onClick={handleRegenerateTitulo}
+                  disabled={isGenerating || !formData.titulo.trim()}
+                  type="button"
+                  title="Generar títulos alternativos con IA basados en tu título"
+                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  <RefreshCw
+                    className={
+                      isGeneratingFor('titulo')
+                        ? 'h-4 w-4 animate-spin transition-transform'
+                        : 'h-4 w-4 transition-transform'
                     }
-                    if (!selected && isSameDay(date as Date, today as Date)) {
-                      return 'datepicker-today-outline';
-                    }
-                  }
-                  return '';
-                }}
-              />
-              {/* Botón para volver a calcular automáticamente la fecha fin */}
-              {fechaFinEditadaManualmente && (
+                  />
+                </button>
+              </div>
+              <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
+                <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <span>
+                  Escribe tu título manualmente. Usa el botón 🔄 para generar
+                  títulos alternativos sobre el mismo tema.
+                </span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label
+                  className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="description"
+                >
+                  Descripción *
+                </label>
                 <button
                   type="button"
-                  onClick={() => {
-                    setFechaFinEditadaManualmente(false);
-                  }}
-                  className="flex-shrink-0 rounded bg-blue-600 px-3 py-2 text-xs text-white hover:bg-blue-700 sm:text-sm"
-                  title="Recalcular automáticamente la fecha de fin"
+                  onClick={() =>
+                    runGenerate('descripcion-field', handleGenerateDescripcion)
+                  }
+                  disabled={!formData.titulo.trim()}
+                  className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-primary ring-offset-background transition-colors hover:bg-primary/10 hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
-                  Auto
-                </button>
-              )}
-            </div>
-
-            {/* Horas por día responsive con información adicional */}
-            {fechaInicio && fechaFin && (
-              <>
-                <div className="col-span-1 flex items-center gap-2">
-                  <span className="ml-2 text-sm font-semibold text-cyan-200 sm:text-base">
-                    Total de horas:
-                  </span>
-                  {/* Cambia el span por un input editable */}
-                  <input
-                    type="number"
-                    min={0}
-                    value={totalHorasInput}
-                    onChange={(e) => {
-                      setTotalHorasInput(Number(e.target.value));
-                      setTotalHorasEditadoManualmente(true);
-                    }}
-                    className="rounded bg-gray-400 p-1 text-sm font-semibold text-black sm:text-base"
-                    style={{
-                      width: `${String(totalHorasInput).length + 3}ch`,
-                      minWidth: '4ch',
-                      textAlign: 'center',
-                    }}
-                  />
-                  <FaRegClock className="inline-block text-cyan-200" />
-                  {totalHorasEditadoManualmente && (
-                    <>
-                      <span className="ml-2 text-xs text-orange-300">
-                        (Editado manualmente)
-                      </span>
-                      <button
-                        type="button"
-                        className="ml-2 rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
-                        onClick={() => {
-                          // Restaurar las horas originales y desactivar edición manual
-                          if (horasOriginalesBackup) {
-                            if (typeof setHorasPorActividad === 'function') {
-                              setHorasPorActividad(horasOriginalesBackup);
-                            } else {
-                              setHorasPorActividadLocal(horasOriginalesBackup);
-                            }
-                          }
-                          setTotalHorasEditadoManualmente(false);
-                        }}
-                        title="Restaurar horas originales"
-                      >
-                        Restaurar
-                      </button>
-                    </>
-                  )}
-                </div>
-                <div className="col-span-1 flex flex-col items-start">
-                  {!totalHorasEditadoManualmente ? (
-                    <span className="text-sm font-semibold text-green-300 sm:text-base">
-                      Días laborables necesarios: {diasEstimados}
-                    </span>
+                  {isGeneratingFor('descripcion-field') ? (
+                    <span className="ai-generate-loader" aria-hidden />
                   ) : (
-                    <>
-                      <span className="text-sm font-semibold text-orange-300 sm:text-base">
-                        Estimados de días laborables necesarios: {diasEstimados}
-                      </span>
-                      <span className="text-sm font-semibold text-green-300 sm:text-base">
-                        Días laborables necesarios: {diasNecesarios}
-                      </span>
-                    </>
+                    <RefreshCw className="h-3 w-3" />
                   )}
-                </div>
-              </>
-            )}
-
-            {/* Objetivos específicos */}
-            <div className="col-span-1 lg:col-span-2">
-              <label className="text-sm text-cyan-300 sm:text-base">
-                Objetivos Específicos
-              </label>
-
-              {/* Sección para agregar nuevo objetivo */}
-              <div className="mb-4 rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:p-4">
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <textarea
-                    value={nuevoObjetivo}
-                    onChange={(e) => {
-                      setNuevoObjetivo(e.target.value);
-                      handleTextAreaChange(e);
-                    }}
-                    rows={1}
-                    className="w-full resize-none overflow-hidden rounded border-none bg-gray-500 p-2 text-xs break-words text-white placeholder:text-gray-300 sm:text-sm"
-                    placeholder="Agregar nuevo objetivo específico..."
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        handleAgregarObjetivo();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAgregarObjetivo}
-                    className="w-full flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xl font-semibold text-white hover:bg-blue-700 sm:w-auto sm:px-4 sm:text-2xl"
+                  <span
+                    className={
+                      isGeneratingFor('descripcion-field')
+                        ? 'ai-generate-text-pulse'
+                        : ''
+                    }
                   >
-                    +
-                  </button>
+                    Generar con IA
+                  </span>
+                </button>
+              </div>
+              <textarea
+                className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                id="description"
+                placeholder="Escribe una idea básica y Artie te ayudará a completarla. Ej: Quiero crear una app para gestionar tareas..."
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
+              {generationError && (
+                <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
+                  <div className="flex items-start gap-2">
+                    <span className="font-semibold">Error:</span>
+                    <span>{generationError}</span>
+                    <button
+                      onClick={clearError}
+                      className="ml-auto text-destructive hover:text-destructive/80"
+                    >
+                      ✕
+                    </button>
+                  </div>
                 </div>
-              </div>
-
-              {/* Lista de objetivos responsive */}
-              <div className="m-2 mb-2 gap-2">
-                <ul className="mb-2 space-y-4">
-                  {objetivosEspEditado.map((obj, idx) => (
-                    <li key={obj.id}>
-                      <div className="mb-2 rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:p-4">
-                        {/* Header objetivo */}
-                        <div className="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-start sm:justify-between">
-                          <h3 className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 text-sm font-semibold break-words hyphens-auto text-cyan-300 sm:pr-2 sm:text-lg">
-                            {/* Añade la numeración aquí */}
-                            {`OE ${idx + 1}. ${limpiarNumeracionObjetivo(obj.title)}`}
-                          </h3>
-                          <button
-                            type="button"
-                            onClick={() => handleEliminarObjetivo(idx)}
-                            className="h-7 w-7 flex-shrink-0 self-end rounded bg-red-600 p-0 text-white hover:bg-red-700 sm:h-8 sm:w-8 sm:self-start"
-                          >
-                            <span className="text-xs sm:text-sm">✕</span>
-                          </button>
-                        </div>
-                        {/* Agregar actividad */}
-                        <div className="mb-3 flex flex-col gap-2 sm:flex-row">
-                          <textarea
-                            value={nuevaActividadPorObjetivo[obj.id] || ''}
-                            onChange={(e) => {
-                              setNuevaActividadPorObjetivo((prev) => ({
-                                ...prev,
-                                [obj.id]: e.target.value,
-                              }));
-                              handleTextAreaChange(e);
-                            }}
-                            rows={1}
-                            className="w-full resize-none overflow-hidden rounded border-none bg-gray-500 p-2 text-xs break-words text-white placeholder:text-gray-300 sm:text-sm"
-                            placeholder="Nueva actividad para este objetivo..."
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter' && !e.shiftKey) {
-                                e.preventDefault();
-                                handleAgregarActividad(obj.id);
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => handleAgregarActividad(obj.id)}
-                            className="w-full flex-shrink-0 rounded bg-green-600 px-3 py-2 text-xl font-semibold text-white hover:bg-blue-700 sm:w-auto sm:px-4 sm:text-2xl"
-                          >
-                            +
-                          </button>
-                        </div>
-                        {/* Lista de actividades */}
-                        <div className="space-y-2">
-                          {obj.activities.length > 0 && (
-                            <div className="mb-2 text-xs text-gray-300 sm:text-sm">
-                              Actividades ({obj.activities.length}):
-                            </div>
-                          )}
-                          {obj.activities.map((act, _idx) => {
-                            const actIdx = _idx; // Use _idx to avoid eslint unused var warning
-                            const actividadKey = `${obj.id}_${actIdx}`;
-                            const responsableId =
-                              responsablesPorActividadProp[actividadKey] ||
-                              responsablesPorActividadLocal[actividadKey] ||
-                              '';
-                            const responsableObj = usuarios?.find(
-                              (u) => u.id === responsableId
-                            );
-
-                            // Obtener horas de forma simple
-                            const horasActividad =
-                              horasPorActividadFinal[actividadKey] || 1;
-                            return (
-                              <div
-                                key={actIdx}
-                                className="flex flex-col gap-2 rounded bg-slate-600/50 p-2 text-xs sm:flex-row sm:items-start sm:text-sm"
-                              >
-                                {/* Añade la numeración aquí */}
-                                <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
-                                  {`OE ${idx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
-                                    act
-                                  )}`}
-                                </span>
-                                {/* Responsable */}
-                                <span className="overflow-wrap-anywhere min-w-0 flex-1 pr-0 break-words hyphens-auto text-gray-200 sm:pr-2">
-                                  {responsableObj
-                                    ? responsableObj.name
-                                    : (user?.fullName ??
-                                      user?.firstName ??
-                                      'Usuario')}
-                                </span>
-                                {/* Input de horas SIMPLIFICADO */}
-                                <input
-                                  type="number"
-                                  min={1}
-                                  value={horasActividad}
-                                  onChange={(e) => {
-                                    const newValue = Number(e.target.value);
-                                    if (!isNaN(newValue) && newValue >= 1) {
-                                      handleHorasCambio(actividadKey, newValue);
-                                    }
-                                  }}
-                                  onBlur={(e) => {
-                                    const value = Number(e.target.value);
-                                    if (value < 1 || isNaN(value)) {
-                                      handleHorasCambio(actividadKey, 1);
-                                    }
-                                  }}
-                                  className="w-16 rounded bg-gray-300 p-1 text-xs text-black sm:text-sm"
-                                  placeholder="Horas"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleEliminarActividad(obj.id, actIdx)
-                                  }
-                                  className="h-5 w-5 flex-shrink-0 self-end rounded bg-red-600 p-0 text-white hover:bg-red-700 sm:h-6 sm:w-6 sm:self-start"
-                                >
-                                  <span className="text-xs sm:text-sm">✕</span>
-                                </button>
-                              </div>
-                            );
-                          })}
-                          {obj.activities.length === 0 && (
-                            <div className="text-xs text-gray-400 italic sm:text-sm">
-                              No hay actividades agregadas para este objetivo
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            {/* Selectores responsive */}
-            <div className="flex flex-col">
-              <label className="text-sm text-cyan-300 sm:text-base">
-                Categoría
-              </label>
-              <select
-                value={categoria}
-                onChange={(e) => setCategoria(e.target.value)}
-                className="mt-1 rounded border bg-gray-400 p-2 text-black"
-                required
-              >
-                <option value="" className="text-gray-500">
-                  -- Seleccione una Categoría --
-                </option>
-                {categorias.map((categoria) => (
-                  <option key={categoria.id} value={categoria.id}>
-                    {categoria.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="flex flex-col">
-              <label className="text-sm text-cyan-300 sm:text-base">
-                Tipo de Proyecto
-              </label>
-              <select
-                value={tipoProyecto}
-                onChange={(e) => setTipoProyecto(e.target.value)}
-                className="mt-1 rounded border bg-gray-400 p-2 text-black"
-                required
-              >
-                <option value="" className="text-gray-500">
-                  -- Seleccione un tipo de proyecto --
-                </option>
-                {typeProjects.map((tp) => (
-                  <option key={tp.value} value={tp.value}>
-                    {tp?.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Información de duración responsive */}
-            {fechaInicio && fechaFin && (
-              <div className="col-span-1 mb-4 lg:col-span-2">
-                <span className="block text-xs text-gray-300 sm:text-sm">
-                  Duración: {formatearDuracion(duracionDias)} ({duracionDias}{' '}
-                  días en total)
-                </span>
-                <span className="block text-xs text-gray-400">
-                  Cronograma:{' '}
-                  {tipoVisualizacion === 'meses'
-                    ? `${calcularMesesEntreFechas(fechaInicio, fechaFin).length} mes${calcularMesesEntreFechas(fechaInicio, fechaFin).length !== 1 ? 'es' : ''}`
-                    : `${duracionDias} día${duracionDias !== 1 ? 's' : ''}`}
-                </span>
-              </div>
-            )}
-
-            {/* Selector de visualización responsive */}
-            {fechaInicio && fechaFin && (
-              <div className="col-span-1 mb-4 lg:col-span-2">
-                <label className="mb-2 block text-sm font-medium text-cyan-300 sm:text-base">
-                  Visualización del Cronograma
-                </label>
-                <div className="flex flex-col gap-2 sm:flex-row sm:gap-4">
-                  {duracionDias >= 28 && (
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        value="meses"
-                        checked={tipoVisualizacion === 'meses'}
-                        onChange={(e) =>
-                          setTipoVisualizacion(
-                            e.target.value as 'meses' | 'dias' | 'horas'
-                          )
-                        }
-                        className="text-cyan-500"
-                      />
-                      <span className="text-sm sm:text-base">Por Meses</span>
-                    </label>
-                  )}
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      value="dias"
-                      checked={tipoVisualizacion === 'dias'}
-                      onChange={(e) =>
-                        setTipoVisualizacion(
-                          e.target.value as 'meses' | 'dias' | 'horas'
-                        )
-                      }
-                      className="text-cyan-500"
-                    />
-                    <span className="text-sm sm:text-base">Por Días</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      value="horas"
-                      checked={tipoVisualizacion === 'horas'}
-                      onChange={(e) =>
-                        setTipoVisualizacion(
-                          e.target.value as 'meses' | 'dias' | 'horas'
-                        )
-                      }
-                      className="text-cyan-500"
-                    />
-                    <span className="text-sm sm:text-base">Por Horas</span>
-                  </label>
-                </div>
-              </div>
-            )}
-          </form>
-
-          {/* Cronograma responsive */}
-          <h3 className="mb-2 text-base font-semibold text-cyan-300 sm:text-lg">
-            Cronograma{' '}
-            {tipoVisualizacion === 'meses'
-              ? 'por Meses'
-              : tipoVisualizacion === 'dias'
-                ? 'por Días'
-                : ' por Horas'}
-          </h3>
-          {fechaInicio && fechaFin && duracionDias > 0 && (
-            <div className="mt-4 overflow-x-auto sm:mt-6">
-              {tipoVisualizacion === 'horas' ? (
-                <table className="w-full table-auto border-collapse text-sm text-black">
-                  <thead className="sticky top-0 z-10 bg-gray-300">
-                    <tr>
-                      <th
-                        className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
-                        style={{ minWidth: 180 }}
-                      >
-                        Actividad
-                      </th>
-                      <th className="border px-2 py-2 text-left break-words">
-                        Total de Horas
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {objetivosEspEditado.map((obj, objIdx) =>
-                      obj.activities.map((act, actIdx) => {
-                        const actividadKey = `${obj.id}_${actIdx}`;
-                        const horasActividad =
-                          typeof horasPorActividadFinal[actividadKey] ===
-                            'number' && horasPorActividadFinal[actividadKey] > 0
-                            ? horasPorActividadFinal[actividadKey]
-                            : 1;
-                        return (
-                          <tr key={actividadKey}>
-                            <td
-                              className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
-                              style={{ minWidth: 250, maxWidth: 300 }}
-                            >
-                              {/* Añade la numeración aquí */}
-                              {`OE ${objIdx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
-                                act
-                              )}`}
-                            </td>
-                            <td className="border bg-cyan-100 px-2 py-2 text-center font-bold">
-                              {horasActividad}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
-              ) : (
-                <table className="w-full table-auto border-collapse text-sm text-black">
-                  <thead className="sticky top-0 z-10 bg-gray-300">
-                    <tr>
-                      <th
-                        className="sticky left-0 z-10 border bg-gray-300 px-2 py-2 text-left break-words"
-                        style={{ minWidth: 180 }}
-                      >
-                        Actividad
-                      </th>
-                      {/* Cambia aquí: */}
-                      {mesesRender.map((periodo, i) => (
-                        <th
-                          key={i}
-                          className="border px-2 py-2 text-left break-words whitespace-normal"
-                          style={{
-                            minWidth:
-                              tipoVisualizacion === 'dias' ? '80px' : '120px',
-                          }}
-                        >
-                          {tipoVisualizacion === 'dias'
-                            ? (() => {
-                                // periodo es yyyy-mm-dd, mostrar como dd/MM/yyyy con ceros a la izquierda
-                                const [yyyy, mm, dd] = periodo.split('-');
-                                if (yyyy && mm && dd) {
-                                  return `${dd.padStart(2, '0')}/${mm.padStart(2, '0')}/${yyyy}`;
-                                }
-                                return periodo;
-                              })()
-                            : periodo}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {objetivosEspEditado.map((obj, objIdx) =>
-                      obj.activities.map((act, actIdx) => {
-                        const actividadKey = `${obj.id}_${actIdx}`;
-                        return (
-                          <tr key={actividadKey}>
-                            <td
-                              className="sticky left-0 z-10 border bg-white px-2 py-2 font-medium break-words"
-                              style={{ minWidth: 180 }}
-                            >
-                              {/* Añade la numeración aquí */}
-                              {`OE ${objIdx + 1}. ACT ${actIdx + 1}. ${limpiarNumeracionActividad(
-                                act
-                              )}`}
-                            </td>
-                            {/* Cambia aquí: */}
-                            {mesesRender.map((_, i) => (
-                              <td
-                                key={i}
-                                className={`border px-2 py-2 text-center ${
-                                  tipoVisualizacion === 'dias' &&
-                                  diasPorActividad[actividadKey]?.includes(i)
-                                    ? 'bg-cyan-300 font-bold text-white'
-                                    : tipoVisualizacion === 'meses' &&
-                                        mesesPorActividad[
-                                          actividadKey
-                                        ]?.includes(i)
-                                      ? 'bg-cyan-300 font-bold text-white'
-                                      : cronogramaState[act]?.includes(i)
-                                        ? 'bg-cyan-300 font-bold text-white'
-                                        : 'bg-white'
-                                }`}
-                              >
-                                {tipoVisualizacion === 'dias' &&
-                                diasPorActividad[actividadKey]?.includes(i)
-                                  ? '✔️'
-                                  : tipoVisualizacion === 'meses' &&
-                                      mesesPorActividad[actividadKey]?.includes(
-                                        i
-                                      )
-                                    ? '✔️'
-                                    : tipoVisualizacion !== 'dias' &&
-                                        cronogramaState[act]?.includes(i)
-                                      ? '✔️'
-                                      : ''}
-                              </td>
-                            ))}
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                </table>
               )}
             </div>
-          )}
+            {isCreateStep && creationError && (
+              <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                {creationError}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label
+                  className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="category"
+                >
+                  Categoría del Proyecto
+                </label>
+                <div className="mt-3">
+                  <Select
+                    value={(formData.categoriaId ?? '').toString()}
+                    onValueChange={(value) => {
+                      setFormData({
+                        ...formData,
+                        categoriaId: value ? Number(value) : undefined,
+                      });
+                    }}
+                  >
+                    <SelectTrigger
+                      id="category"
+                      className="h-12 w-full text-base font-medium"
+                    >
+                      <SelectValue placeholder="Selecciona una categoría" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="mt-2 border-0 bg-[#061c3780]"
+                      position="popper"
+                    >
+                      {categories.map((cat: { id: number; name: string }) => (
+                        <SelectItem
+                          key={cat.id}
+                          value={cat.id.toString()}
+                          className="cursor-pointer px-4 py-2 text-base text-white hover:bg-[#22c4d3] hover:text-black"
+                        >
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label
+                  className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  htmlFor="projectType"
+                >
+                  Tipo de proyecto
+                </label>
+                <div className="mt-3">
+                  <Select
+                    value={formData.tipoProyecto}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        tipoProyecto: value,
+                      })
+                    }
+                  >
+                    <SelectTrigger
+                      id="projectType"
+                      className="h-12 w-full text-base font-medium"
+                    >
+                      <SelectValue placeholder="Seleccione un tipo de proyecto" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="mt-2 border-0 bg-[#061c3780]"
+                      position="popper"
+                    >
+                      <SelectItem
+                        value="AI-Assistant"
+                        className="cursor-pointer px-4 py-2 text-base text-white hover:bg-[#22c4d3] hover:text-black"
+                      >
+                        AI-Assistant
+                      </SelectItem>
+                      <SelectItem
+                        value="Individual"
+                        className="cursor-pointer px-4 py-2 text-base text-white hover:bg-[#22c4d3] hover:text-black"
+                      >
+                        Individual
+                      </SelectItem>
+                      <SelectItem
+                        value="Grupal"
+                        className="cursor-pointer px-4 py-2 text-base text-white hover:bg-[#22c4d3] hover:text-black"
+                      >
+                        Grupal
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
 
-          {/* Botones responsive */}
-          <div className="mt-4 flex flex-col justify-between gap-3 p-3 sm:mt-6 sm:flex-row sm:gap-4">
-            {/* Nuevo botón para volver a Objetivos Específicos */}
-            {onAnterior && (
+            {/* Switches: Público y Colaboradores */}
+            <div className="space-y-4 border-t border-border/50 pt-4">
+              {/* Switch: ¿Proyecto Público? */}
+              <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/30 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
+                    <Globe className="h-4 w-4 text-accent" />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="isPublic"
+                      className="cursor-pointer text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      ¿Deseas que el proyecto sea público?
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Otros usuarios podrán ver tu proyecto
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.isPublic ?? false}
+                  data-state={formData.isPublic ? 'checked' : 'unchecked'}
+                  value="on"
+                  className="peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+                  id="isPublic"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      isPublic: !formData.isPublic,
+                    })
+                  }
+                >
+                  <span
+                    data-state={formData.isPublic ? 'checked' : 'unchecked'}
+                    className="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+                  />
+                </button>
+              </div>
+
+              {/* Switch: ¿Necesitas Colaboradores? */}
+              <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/30 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
+                    <Users className="h-4 w-4 text-accent" />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="needsCollaborators"
+                      className="cursor-pointer text-sm font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                    >
+                      ¿Necesitas colaboradores?
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Buscar personas que te ayuden en el proyecto
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={formData.needsCollaborators ?? false}
+                  data-state={
+                    formData.needsCollaborators ? 'checked' : 'unchecked'
+                  }
+                  value="on"
+                  className="peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+                  id="needsCollaborators"
+                  onClick={() =>
+                    setFormData({
+                      ...formData,
+                      needsCollaborators: !formData.needsCollaborators,
+                    })
+                  }
+                >
+                  <span
+                    data-state={
+                      formData.needsCollaborators ? 'checked' : 'unchecked'
+                    }
+                    className="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+                  />
+                </button>
+              </div>
+
+              {/* Contenido Multimedia */}
+              <div className="space-y-3 border-t border-border/50 pt-4">
+                <label className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Contenido multimedia (opcional)
+                </label>
+                <div className="rounded-lg border-2 border-dashed border-border/50 p-6 text-center transition-colors hover:border-primary/50">
+                  <input
+                    type="file"
+                    id="file-upload"
+                    multiple
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={handleMultimediaUpload}
+                  />
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+                        <Upload className="h-6 w-6 text-muted-foreground" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          Haz clic para subir archivos
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Imágenes y videos (PNG, JPG, MP4, etc.)
+                        </p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+                {formData.multimedia &&
+                  Array.isArray(formData.multimedia) &&
+                  formData.multimedia.length > 0 && (
+                    <div className="mt-4 grid grid-cols-2 gap-3">
+                      {formData.multimedia.map((file, index) => (
+                        <div key={index} className="group relative">
+                          <div className="flex aspect-video items-center justify-center overflow-hidden rounded-lg bg-muted">
+                            {file.type.startsWith('image') ? (
+                              <Image
+                                src={file.url}
+                                alt={`multimedia-${index}`}
+                                className="h-full w-full object-cover"
+                                width={400}
+                                height={225}
+                              />
+                            ) : (
+                              <div className="flex h-full w-full flex-col items-center justify-center">
+                                <FileText className="mb-2 h-8 w-8 text-muted-foreground" />
+                                <span className="px-2 text-center text-xs text-muted-foreground">
+                                  {file.name}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveMultimedia(index)}
+                            className="absolute top-2 right-2 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+              </div>
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-medium">Problema</label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    runGenerate('problema', async () => {
+                      try {
+                        const context = buildProjectContext(
+                          formData.titulo,
+                          formData.description
+                        );
+                        if (!context) {
+                          alert(
+                            'Completa el título o la descripción del proyecto antes de generar con IA.'
+                          );
+                          return;
+                        }
+
+                        const prompt = (formData.planteamiento ?? '').trim()
+                          ? `Mejora y reescribe el problema del proyecto manteniendo el significado. Contexto del proyecto: "${context}". Problema actual: "${formData.planteamiento}". Responde solo con el problema mejorado.`
+                          : `Genera un problema claro y conciso para un proyecto educativo. Contexto del proyecto: "${context}". Responde solo con el problema.`;
+
+                        const result = await generateContent({
+                          type: 'problema',
+                          prompt,
+                        });
+                        if (result) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            planteamiento: result,
+                          }));
+                        }
+                      } catch (error) {
+                        console.error('Error generando problema:', error);
+                      }
+                    })
+                  }
+                  className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/10 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  {isGeneratingFor('problema') ? (
+                    <span className="ai-generate-loader" aria-hidden />
+                  ) : (
+                    <RefreshCw className="mr-1.5 h-3 w-3" />
+                  )}
+                  <span
+                    className={
+                      isGeneratingFor('problema')
+                        ? 'ai-generate-text-pulse text-xs'
+                        : 'text-xs'
+                    }
+                  >
+                    Generar con IA
+                  </span>
+                </button>
+              </div>
+              <textarea
+                className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.planteamiento}
+                onChange={(e) =>
+                  setFormData({ ...formData, planteamiento: e.target.value })
+                }
+                placeholder="Describe el problema que resolverá el proyecto..."
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-medium">Justificación</label>
+                <button
+                  type="button"
+                  onClick={() =>
+                    runGenerate('justificacion', async () => {
+                      try {
+                        const context = buildProjectContext(
+                          formData.titulo,
+                          formData.description
+                        );
+                        if (!context) {
+                          alert(
+                            'Completa el título o la descripción del proyecto antes de generar con IA.'
+                          );
+                          return;
+                        }
+
+                        const prompt = (formData.justificacion ?? '').trim()
+                          ? `Mejora y reescribe la justificación del proyecto manteniendo el significado. Contexto del proyecto: "${context}". Problema: "${formData.planteamiento || 'No especificado'}". Justificación actual: "${formData.justificacion}". Responde solo con la justificación mejorada.`
+                          : `Genera una justificación clara para un proyecto educativo. Contexto del proyecto: "${context}". Problema: "${formData.planteamiento || 'No especificado'}". Responde solo con la justificación.`;
+
+                        const result = await generateContent({
+                          type: 'justificacion',
+                          prompt,
+                        });
+                        if (result) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            justificacion: result,
+                          }));
+                        }
+                      } catch (error) {
+                        console.error('Error generando justificación:', error);
+                      }
+                    })
+                  }
+                  className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/10 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  {isGeneratingFor('justificacion') ? (
+                    <span className="ai-generate-loader" aria-hidden />
+                  ) : (
+                    <RefreshCw className="mr-1.5 h-3 w-3" />
+                  )}
+                  <span
+                    className={
+                      isGeneratingFor('justificacion')
+                        ? 'ai-generate-text-pulse text-xs'
+                        : 'text-xs'
+                    }
+                  >
+                    Generar con IA
+                  </span>
+                </button>
+              </div>
+              <textarea
+                className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                value={formData.justificacion}
+                onChange={(e) =>
+                  setFormData({ ...formData, justificacion: e.target.value })
+                }
+                placeholder="Explica por qué es importante resolver este problema..."
+              />
+            </div>
+          </div>
+        );
+      case 3:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-lg font-semibold">Objetivo General</h3>
+              <button
+                type="button"
+                onClick={() =>
+                  runGenerate('objetivoGen', async () => {
+                    try {
+                      const context = buildProjectContext(
+                        formData.titulo,
+                        formData.description
+                      );
+                      if (!context) {
+                        alert(
+                          'Completa el título o la descripción del proyecto antes de generar con IA.'
+                        );
+                        return;
+                      }
+
+                      const prompt = (formData.objetivoGen ?? '').trim()
+                        ? `Mejora y reescribe el objetivo general manteniendo el significado. Contexto del proyecto: "${context}". Problema: "${formData.planteamiento || 'No especificado'}". Objetivo actual: "${formData.objetivoGen}". Responde solo con el objetivo general mejorado.`
+                        : `Genera un objetivo general claro y alcanzable para un proyecto educativo. Contexto del proyecto: "${context}". Problema: "${formData.planteamiento || 'No especificado'}". Responde solo con el objetivo general.`;
+
+                      const result = await generateContent({
+                        type: 'objetivoGen',
+                        prompt,
+                      });
+                      if (result) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          objetivoGen: result,
+                        }));
+                      }
+                    } catch (error) {
+                      console.error('Error generando objetivo:', error);
+                    }
+                  })
+                }
+                className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/10 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              >
+                {isGeneratingFor('objetivoGen') ? (
+                  <span className="ai-generate-loader" aria-hidden />
+                ) : (
+                  <RefreshCw className="mr-1.5 h-3 w-3" />
+                )}
+                <span
+                  className={
+                    isGeneratingFor('objetivoGen')
+                      ? 'ai-generate-text-pulse text-xs'
+                      : 'text-xs'
+                  }
+                >
+                  Generar con IA
+                </span>
+              </button>
+            </div>
+            <textarea
+              className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              placeholder="Describa el objetivo general del proyecto..."
+              value={formData.objetivoGen}
+              onChange={(e) =>
+                setFormData({ ...formData, objetivoGen: e.target.value })
+              }
+            />
+            <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
+              <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <span>
+                El objetivo general debe ser claro, alcanzable y alineado con el
+                problema que se busca resolver.
+              </span>
+            </div>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <h3 className="text-lg font-semibold">Requisitos</h3>
+              <button
+                type="button"
+                onClick={() =>
+                  runGenerate('requisitos', async () => {
+                    try {
+                      const contextParts = [
+                        formData.titulo?.trim()
+                          ? `Titulo: ${formData.titulo.trim()}`
+                          : '',
+                        formData.description?.trim()
+                          ? `Descripcion: ${formData.description.trim()}`
+                          : '',
+                        formData.planteamiento?.trim()
+                          ? `Problema: ${formData.planteamiento.trim()}`
+                          : '',
+                        formData.justificacion?.trim()
+                          ? `Justificacion: ${formData.justificacion.trim()}`
+                          : '',
+                        formData.objetivoGen?.trim()
+                          ? `Objetivo general: ${formData.objetivoGen.trim()}`
+                          : '',
+                      ].filter(Boolean);
+                      const context = contextParts.join('\n');
+                      if (!context) {
+                        alert(
+                          'Completa al menos el titulo, descripcion, problema, justificacion u objetivo general antes de generar con IA.'
+                        );
+                        return;
+                      }
+
+                      const prompt =
+                        formData.requirements &&
+                        formData.requirements.length > 0
+                          ? `Mejora y expande la lista de requisitos manteniendo el significado. Usa el contexto del proyecto.\n\n${context}\n\nRequisitos actuales: ${formData.requirements.join(', ')}\n\nResponde solo con la lista de requisitos mejorada, uno por linea.`
+                          : `Genera una lista de requisitos tecnicos y funcionales para un proyecto educativo, basandote en el contexto.\n\n${context}\n\nResponde solo con la lista de requisitos, uno por linea.`;
+
+                      const result = await generateContent({
+                        type: 'requisitos',
+                        prompt,
+                      });
+                      if (result) {
+                        const requirements = dedupeRequirements(
+                          result
+                            .split('\n')
+                            .map(normalizeRequirementLine)
+                            .filter(Boolean)
+                        );
+                        setFormData((prev) => ({
+                          ...prev,
+                          requirements: requirements,
+                        }));
+                      }
+                    } catch (error) {
+                      console.error('Error generando requisitos:', error);
+                    }
+                  })
+                }
+                className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/10 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              >
+                {isGeneratingFor('requisitos') ? (
+                  <span className="ai-generate-loader" aria-hidden />
+                ) : (
+                  <RefreshCw className="mr-1.5 h-3 w-3" />
+                )}
+                <span
+                  className={
+                    isGeneratingFor('requisitos')
+                      ? 'ai-generate-text-pulse text-xs'
+                      : 'text-xs'
+                  }
+                >
+                  Generar con IA
+                </span>
+              </button>
+            </div>
+            <div className="space-y-3">
+              {formData.requirements && formData.requirements.length > 0 ? (
+                formData.requirements.map((requisito, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-2 rounded-lg border border-border/50 bg-card/30 p-3"
+                  >
+                    <span className="text-sm text-muted-foreground">
+                      {idx + 1}.
+                    </span>
+                    <input
+                      type="text"
+                      className="flex-1 bg-transparent text-sm outline-none"
+                      placeholder="Describe el requisito..."
+                      value={requisito}
+                      onChange={(e) => {
+                        const updated = [...formData.requirements];
+                        updated[idx] = e.target.value;
+                        setFormData({ ...formData, requirements: updated });
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const updated = formData.requirements.filter(
+                          (_, i) => i !== idx
+                        );
+                        setFormData({ ...formData, requirements: updated });
+                      }}
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-lg border-2 border-dashed border-border/50 p-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    No hay requisitos definidos aún.
+                  </p>
+                </div>
+              )}
               <button
                 type="button"
                 onClick={() => {
-                  // Al volver atrás, propaga los valores actuales editados
-                  if (setPlanteamiento) setPlanteamiento(planteamientoEditado);
-                  if (setJustificacion) setJustificacion(justificacionEditada);
-                  if (setObjetivoGen) setObjetivoGen(objetivoGenEditado);
-                  if (setObjetivosEspProp)
-                    setObjetivosEspProp(objetivosEspEditado);
-                  setTotalHorasEditadoManualmente(false);
-                  // También pasa los datos por el callback si lo acepta
-                  onAnterior({
-                    planteamiento: planteamientoEditado,
-                    justificacion: justificacionEditada,
-                    objetivoGen: objetivoGenEditado,
-                    objetivosEsp: objetivosEspEditado,
+                  setFormData({
+                    ...formData,
+                    requirements: [...(formData.requirements || []), ''],
                   });
                 }}
-                className="group flex w-full items-center justify-center gap-2 rounded-lg bg-cyan-600 px-6 py-2 font-bold text-white shadow transition-all duration-200 hover:bg-cyan-700 hover:underline sm:w-auto"
+                className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-3 text-sm font-medium text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
-                <FaArrowLeft className="transition-transform duration-300 group-hover:-translate-x-1" />
-                Objetivos Específicos
+                <Plus className="h-4 w-4" />
+                Agregar requisito
               </button>
-            )}
-            <button
-              onClick={handleGuardarProyecto}
-              className="rounded bg-green-700 px-4 py-2 text-base font-bold text-white hover:bg-green-600 hover:underline sm:px-6 sm:text-lg"
-              disabled={isUpdating}
-            >
-              {isEditMode ? 'Actualizar Proyecto' : 'Crear Proyecto'}
-            </button>
+            </div>
+            <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
+              <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <span>
+                Los requisitos deben ser específicos, medibles y alineados con
+                los objetivos del proyecto.
+              </span>
+            </div>
+          </div>
+        );
+      case 5:
+        return (
+          <div className="space-y-4">
+            {/* Card informativa */}
+            <div className="rounded-lg border border-border/50 bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="mt-0.5 h-5 w-5 text-accent"
+                >
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <div>
+                  <h4 className="mb-1 font-medium text-foreground">
+                    Duración del proyecto
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Define el tiempo estimado y las fechas del proyecto.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tiempo estimado */}
+            <div className="space-y-2">
+              <label className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Tiempo estimado *
+              </label>
+              <div className="flex gap-3 pt-2">
+                <input
+                  type="number"
+                  className="mt-1 flex h-10 w-24 rounded-md border border-input bg-background/50 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                  min="1"
+                  placeholder="Cantidad"
+                  value={formData.durationEstimate}
+                  onChange={(e) =>
+                    setFormData((prev) => {
+                      const nextEstimate = Number(e.target.value);
+                      const nextEnd = prev.fechaInicio
+                        ? addDurationToDate(
+                            prev.fechaInicio,
+                            nextEstimate,
+                            prev.durationUnit
+                          )
+                        : prev.fechaFin;
+                      return {
+                        ...prev,
+                        durationEstimate: nextEstimate,
+                        fechaFin: nextEnd,
+                      };
+                    })
+                  }
+                />
+                <Select
+                  value={formData.durationUnit}
+                  onValueChange={(
+                    value: 'dias' | 'semanas' | 'meses' | 'anos'
+                  ) =>
+                    setFormData((prev) => {
+                      const nextEnd = prev.fechaInicio
+                        ? addDurationToDate(
+                            prev.fechaInicio,
+                            prev.durationEstimate,
+                            value
+                          )
+                        : prev.fechaFin;
+                      return {
+                        ...prev,
+                        durationUnit: value,
+                        fechaFin: nextEnd,
+                      };
+                    })
+                  }
+                >
+                  <SelectTrigger className="flex-1 bg-background/50">
+                    <SelectValue placeholder="Selecciona unidad" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="dias">Días</SelectItem>
+                    <SelectItem value="semanas">Semanas</SelectItem>
+                    <SelectItem value="meses">Meses</SelectItem>
+                    <SelectItem value="anos">Años</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Fechas de inicio y fin */}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="mt-3 space-y-2">
+                <label className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Fecha de inicio
+                </label>
+                <input
+                  type="date"
+                  className="mt-2 flex h-10 w-full rounded-md border border-input bg-background/50 px-4 py-2 text-left text-sm font-normal text-foreground ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none [&::-webkit-calendar-picker-indicator]:opacity-90 [&::-webkit-calendar-picker-indicator]:invert"
+                  value={formData.fechaInicio || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => {
+                      const nextStart = e.target.value;
+                      const nextEnd = nextStart
+                        ? addDurationToDate(
+                            nextStart,
+                            prev.durationEstimate,
+                            prev.durationUnit
+                          )
+                        : prev.fechaFin;
+                      return {
+                        ...prev,
+                        fechaInicio: nextStart,
+                        fechaFin: nextEnd,
+                      };
+                    })
+                  }
+                />
+              </div>
+              <div className="mt-3 space-y-2">
+                <label className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Fecha de fin
+                </label>
+                <input
+                  type="date"
+                  className="mt-2 flex h-10 w-full rounded-md border border-input bg-background/50 px-4 py-2 text-left text-sm font-normal text-foreground ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none [&::-webkit-calendar-picker-indicator]:opacity-90 [&::-webkit-calendar-picker-indicator]:invert"
+                  value={formData.fechaFin || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      fechaFin: e.target.value,
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Tip */}
+            <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500"
+              >
+                <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
+                <path d="M9 18h6"></path>
+                <path d="M10 22h4"></path>
+              </svg>
+              <span>
+                Considera el alcance del proyecto, los requisitos y los recursos
+                disponibles para estimar el tiempo.
+              </span>
+            </div>
+          </div>
+        );
+      case 6:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-2">
+              <label className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Objetivos específicos y actividades *
+              </label>
+              <button
+                type="button"
+                onClick={() =>
+                  runGenerate('objetivosEsp', async () => {
+                    try {
+                      const contextParts = [
+                        formData.titulo?.trim()
+                          ? `Titulo: ${formData.titulo.trim()}`
+                          : '',
+                        formData.description?.trim()
+                          ? `Descripcion: ${formData.description.trim()}`
+                          : '',
+                        formData.planteamiento?.trim()
+                          ? `Problema: ${formData.planteamiento.trim()}`
+                          : '',
+                        formData.objetivoGen?.trim()
+                          ? `Objetivo general: ${formData.objetivoGen.trim()}`
+                          : '',
+                      ].filter(Boolean);
+                      const context = contextParts.join('\n');
+                      if (!context) {
+                        alert(
+                          'Completa el titulo, descripcion o el objetivo general antes de generar con IA.'
+                        );
+                        return;
+                      }
+
+                      const hasExisting =
+                        formData.objetivosEsp &&
+                        formData.objetivosEsp.length > 0;
+                      const prompt = hasExisting
+                        ? `Mejora y reescribe los objetivos especificos y sus actividades manteniendo el significado.\n\n${context}\n\nFormato exacto por objetivo:\nObjetivo 1: [texto]\nActividad: [texto]\nActividad: [texto]\n\nNo incluyas subtitulos ni explicaciones.`
+                        : `Genera entre 3 y 5 objetivos especificos para este proyecto y, para cada objetivo, 2 a 3 actividades claras y medibles.\n\n${context}\n\nFormato exacto por objetivo:\nObjetivo 1: [texto]\nActividad: [texto]\nActividad: [texto]\n\nNo incluyas subtitulos ni explicaciones.`;
+
+                      const result = await generateContent({
+                        type: 'objetivosEsp',
+                        prompt,
+                      });
+                      if (result) {
+                        activitiesDirtyRef.current = true;
+                        const parsed = parseObjectivesWithActivities(result);
+                        setFormData((prev) => ({
+                          ...prev,
+                          objetivosEsp: parsed,
+                        }));
+                      }
+                    } catch (error) {
+                      console.error('Error generando actividades:', error);
+                    }
+                  })
+                }
+                className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/10 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              >
+                {isGeneratingFor('objetivosEsp') ? (
+                  <span className="ai-generate-loader" aria-hidden />
+                ) : (
+                  <RefreshCw className="mr-1.5 h-3 w-3" />
+                )}
+                <span
+                  className={
+                    isGeneratingFor('objetivosEsp')
+                      ? 'ai-generate-text-pulse text-xs'
+                      : 'text-xs'
+                  }
+                >
+                  Generar con IA
+                </span>
+              </button>
+            </div>
+            <div className="space-y-3">
+              {formData.objetivosEsp && formData.objetivosEsp.length > 0
+                ? formData.objetivosEsp.map((objetivo, idx) => (
+                    <div
+                      key={idx}
+                      className="rounded-lg border border-border/50 bg-card/30 p-4"
+                    >
+                      <div className="mb-3 flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <Target className="h-4 w-4 text-accent" />
+                          <span className="text-sm font-medium text-muted-foreground">
+                            Objetivo {idx + 1}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            activitiesDirtyRef.current = true;
+                            const updated = formData.objetivosEsp.filter(
+                              (_, i) => i !== idx
+                            );
+                            setFormData({ ...formData, objetivosEsp: updated });
+                          }}
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        className="mb-3 flex h-10 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                        placeholder="Título del objetivo específico"
+                        value={objetivo.title || ''}
+                        onChange={(e) => {
+                          activitiesDirtyRef.current = true;
+                          const updated = [...formData.objetivosEsp];
+                          updated[idx].title = e.target.value;
+                          setFormData({ ...formData, objetivosEsp: updated });
+                        }}
+                      />
+                      <div className="space-y-2 border-l-2 border-accent/30 pl-4">
+                        <span className="text-xs text-muted-foreground">
+                          Actividades:
+                        </span>
+                        {objetivo.activities && objetivo.activities.length > 0
+                          ? objetivo.activities.map((activity, actIdx) => (
+                              <div
+                                key={actIdx}
+                                className="flex items-start gap-2"
+                              >
+                                <span className="mt-2.5 text-xs text-muted-foreground">
+                                  {actIdx + 1}.
+                                </span>
+                                <div className="flex-1 space-y-2">
+                                  <input
+                                    type="text"
+                                    className="flex h-8 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                    placeholder="Título de la actividad"
+                                    value={activity.title || ''}
+                                    onChange={(e) => {
+                                      activitiesDirtyRef.current = true;
+                                      const updated = [
+                                        ...formData.objetivosEsp,
+                                      ];
+                                      updated[idx].activities[actIdx].title =
+                                        e.target.value;
+                                      setFormData({
+                                        ...formData,
+                                        objetivosEsp: updated,
+                                      });
+                                    }}
+                                  />
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <input
+                                      type="date"
+                                      className="flex h-8 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                      placeholder="Inicio"
+                                      value={activity.startDate || ''}
+                                      onChange={(e) => {
+                                        activitiesDirtyRef.current = true;
+                                        const updated = [
+                                          ...formData.objetivosEsp,
+                                        ];
+                                        updated[idx].activities[
+                                          actIdx
+                                        ].startDate = e.target.value;
+                                        setFormData({
+                                          ...formData,
+                                          objetivosEsp: updated,
+                                        });
+                                      }}
+                                    />
+                                    <input
+                                      type="date"
+                                      className="flex h-8 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                                      placeholder="Fin"
+                                      value={activity.endDate || ''}
+                                      onChange={(e) => {
+                                        activitiesDirtyRef.current = true;
+                                        const updated = [
+                                          ...formData.objetivosEsp,
+                                        ];
+                                        updated[idx].activities[
+                                          actIdx
+                                        ].endDate = e.target.value;
+                                        setFormData({
+                                          ...formData,
+                                          objetivosEsp: updated,
+                                        });
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    activitiesDirtyRef.current = true;
+                                    const updated = [...formData.objetivosEsp];
+                                    updated[idx].activities = updated[
+                                      idx
+                                    ].activities.filter((_, i) => i !== actIdx);
+                                    setFormData({
+                                      ...formData,
+                                      objetivosEsp: updated,
+                                    });
+                                  }}
+                                  className="text-xs text-muted-foreground hover:text-foreground"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))
+                          : null}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            activitiesDirtyRef.current = true;
+                            const updated = [...formData.objetivosEsp];
+                            if (!updated[idx].activities) {
+                              updated[idx].activities = [];
+                            }
+                            updated[idx].activities.push({
+                              title: '',
+                              startDate: '',
+                              endDate: '',
+                            });
+                            setFormData({ ...formData, objetivosEsp: updated });
+                          }}
+                          className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Agregar actividad
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                : null}
+            </div>
             <button
               type="button"
-              onClick={onClose}
-              className="rounded bg-red-700 px-4 py-2 text-base font-bold text-white hover:bg-red-600 hover:underline sm:px-6 sm:text-lg"
-              disabled={isUpdating}
+              onClick={() => {
+                activitiesDirtyRef.current = true;
+                setFormData({
+                  ...formData,
+                  objetivosEsp: [
+                    ...formData.objetivosEsp,
+                    { id: Date.now().toString(), title: '', activities: [] },
+                  ],
+                });
+              }}
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium whitespace-nowrap ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
             >
-              Cancelar
+              <Plus className="mr-2 h-4 w-4" />
+              Agregar objetivo específico
             </button>
           </div>
+        );
+      case 7:
+        return (() => {
+          const allRows = getTimelineRows();
+          const timelineRows = allRows.filter(
+            (row) => row.startDate && row.endDate
+          );
+          const rangeStart = timelineRows.reduce<Date | null>(
+            (acc, row) =>
+              !row.startDate
+                ? acc
+                : acc
+                  ? row.startDate < acc
+                    ? row.startDate
+                    : acc
+                  : row.startDate,
+            null
+          );
+          const rangeEnd = timelineRows.reduce<Date | null>(
+            (acc, row) =>
+              !row.endDate
+                ? acc
+                : acc
+                  ? row.endDate > acc
+                    ? row.endDate
+                    : acc
+                  : row.endDate,
+            null
+          );
+          const columns = getTimelineColumns(
+            rangeStart,
+            rangeEnd,
+            timelineView
+          );
+          const columnWidth = 80;
+          const labelColumnWidth = 208;
+          const gridWidth = Math.max(columns.length * columnWidth, 1);
+          const totalWidth = labelColumnWidth + gridWidth;
+          const msPerDay = 1000 * 60 * 60 * 24;
+          const toUTCStart = (date: Date) =>
+            Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+          const diffDays = (from: Date, to: Date) =>
+            Math.max(
+              0,
+              Math.floor((toUTCStart(to) - toUTCStart(from)) / msPerDay)
+            );
+          const today = new Date();
+          const todayUTC = new Date(
+            Date.UTC(
+              today.getUTCFullYear(),
+              today.getUTCMonth(),
+              today.getUTCDate()
+            )
+          );
+
+          const getStatusClass = (row: {
+            startDate: Date | null;
+            endDate: Date | null;
+            deliverableUrl?: string | null;
+          }) => {
+            if (row.deliverableUrl) return 'bg-green-500';
+            if (!row.startDate || !row.endDate) return 'bg-muted-foreground/50';
+            if (row.endDate < todayUTC) return 'bg-red-500';
+            if (row.startDate <= todayUTC && row.endDate >= todayUTC) {
+              return 'bg-accent';
+            }
+            return 'bg-muted-foreground/50';
+          };
+
+          return (
+            <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
+                    <Calendar className="h-4 w-4 text-purple-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Cronograma
+                  </h3>
+                </div>
+                <div className="ml-auto flex items-center gap-1 rounded-lg bg-muted/30 p-1">
+                  {(['dias', 'semanas', 'meses'] as const).map((view) => (
+                    <button
+                      key={view}
+                      type="button"
+                      onClick={() => setTimelineView(view)}
+                      className={`inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
+                        timelineView === view
+                          ? 'bg-accent text-background hover:bg-accent/90'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                      }`}
+                    >
+                      {view === 'dias'
+                        ? 'Días'
+                        : view === 'semanas'
+                          ? 'Semanas'
+                          : 'Meses'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {timelineRows.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Define fechas de inicio y fin en las actividades para ver el
+                  cronograma.
+                </p>
+              ) : (
+                <div className="scrollbar-thin w-full overflow-x-auto [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent">
+                  <div className="flex" style={{ minWidth: totalWidth }}>
+                    <div
+                      className="shrink-0 border-r border-border/30"
+                      style={{ width: labelColumnWidth }}
+                    >
+                      <div className="mb-2 flex h-10 items-end border-b border-border/50 pr-3 pb-2">
+                        <span className="text-xs font-medium text-muted-foreground">
+                          Actividad
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        {timelineRows.map((row) => (
+                          <div
+                            key={row.key}
+                            className="flex h-6 items-center pr-3"
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-accent">
+                                {row.key}
+                              </span>
+                              <span
+                                className="max-w-[140px] truncate text-xs text-foreground"
+                                title={row.title}
+                              >
+                                {row.title}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <div style={{ minWidth: gridWidth }}>
+                        <div className="mb-2 flex h-10 border-b border-border/50">
+                          {columns.map((column, index) => (
+                            <div
+                              key={`${column.label}-${index}`}
+                              className="flex flex-col justify-end border-l border-border/30 px-1 pb-2 text-center first:border-l-0"
+                              style={{ width: columnWidth }}
+                            >
+                              <div className="truncate text-xs text-muted-foreground">
+                                {column.label}
+                              </div>
+                              <div className="truncate text-xs font-medium text-foreground">
+                                {column.sublabel}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="space-y-2">
+                          {timelineRows.map((row) => {
+                            if (!row.startDate || !row.endDate || !rangeStart) {
+                              return null;
+                            }
+                            const startDate = row.startDate;
+                            const endDate = row.endDate;
+                            const getUnitRange = () => {
+                              if (timelineView === 'dias') {
+                                const offsetUnits = diffDays(
+                                  rangeStart,
+                                  startDate
+                                );
+                                const durationUnits =
+                                  diffDays(startDate, endDate) + 1;
+                                return { offsetUnits, durationUnits };
+                              }
+
+                              if (timelineView === 'semanas') {
+                                const offsetDays = diffDays(
+                                  rangeStart,
+                                  startDate
+                                );
+                                const endOffsetDays = diffDays(
+                                  rangeStart,
+                                  endDate
+                                );
+                                const offsetUnits = Math.floor(offsetDays / 7);
+                                const durationUnits =
+                                  Math.floor(endOffsetDays / 7) -
+                                  offsetUnits +
+                                  1;
+                                return { offsetUnits, durationUnits };
+                              }
+
+                              const rangeMonthIndex =
+                                rangeStart.getUTCFullYear() * 12 +
+                                rangeStart.getUTCMonth();
+                              const startIndex =
+                                startDate.getUTCFullYear() * 12 +
+                                startDate.getUTCMonth();
+                              const endIndex =
+                                endDate.getUTCFullYear() * 12 +
+                                endDate.getUTCMonth();
+                              const offsetUnits = startIndex - rangeMonthIndex;
+                              const durationUnits = endIndex - startIndex + 1;
+                              return { offsetUnits, durationUnits };
+                            };
+
+                            const { offsetUnits, durationUnits } =
+                              getUnitRange();
+                            const leftPx = offsetUnits * columnWidth;
+                            const widthPx = durationUnits * columnWidth;
+                            return (
+                              <div
+                                key={`row-${row.key}`}
+                                className="group relative h-6 rounded bg-muted/20"
+                              >
+                                <div className="absolute inset-0 flex">
+                                  {columns.map((_, index) => (
+                                    <div
+                                      key={`grid-${row.key}-${index}`}
+                                      className="border-l border-border/20 first:border-l-0"
+                                      style={{ width: columnWidth }}
+                                    />
+                                  ))}
+                                </div>
+                                <div
+                                  className={`absolute top-1 h-4 rounded-full transition-all group-hover:opacity-80 ${getStatusClass(
+                                    row
+                                  )}`}
+                                  title={`${row.title}: ${formatShortDate(
+                                    startDate
+                                  )} - ${formatShortDate(endDate)}`}
+                                  style={{
+                                    left: leftPx,
+                                    width: widthPx,
+                                  }}
+                                />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border/50 pt-4">
+                <span className="text-xs text-muted-foreground">Estado:</span>
+                <div className="flex items-center gap-1">
+                  <div className="h-3 w-3 rounded-full bg-green-500" />
+                  <span className="text-xs text-muted-foreground">
+                    Completado
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-3 w-3 rounded-full bg-accent" />
+                  <span className="text-xs text-muted-foreground">
+                    En progreso
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-3 w-3 rounded-full bg-muted-foreground/50" />
+                  <span className="text-xs text-muted-foreground">
+                    Pendiente
+                  </span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="h-3 w-3 rounded-full bg-red-500" />
+                  <span className="text-xs text-muted-foreground">
+                    Atrasado
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })();
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+      <div
+        role="dialog"
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description"
+        className="relative flex h-[75vh] max-h-[650px] w-full max-w-2xl gap-4 overflow-hidden border bg-background p-0 shadow-lg duration-200 sm:rounded-lg"
+        style={{ pointerEvents: 'auto' }}
+      >
+        {/* Layout principal con sidebar y contenido */}
+        <div className="flex min-h-0 flex-1">
+          {/* Sidebar de navegación */}
+          <div className="flex w-12 shrink-0 flex-col items-center border-r border-border/50 bg-muted/30 py-4">
+            <button
+              onClick={handlePrevious}
+              disabled={currentStep === 1 || isSaving}
+              className="inline-flex h-8 w-8 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              title="Paso anterior"
+            >
+              <ChevronLeft className="h-4 w-4 rotate-90" />
+            </button>
+
+            {/* Indicadores de pasos */}
+            <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4">
+              {steps.map((step) => (
+                <button
+                  key={step.id}
+                  onClick={() => {
+                    if (!isSaving && (isProjectCreated || step.id === 1)) {
+                      setCurrentStep(step.id);
+                    }
+                  }}
+                  disabled={isSaving || (!isProjectCreated && step.id !== 1)}
+                  className={`h-2.5 w-2.5 rounded-full transition-all ${
+                    step.id === currentStep
+                      ? 'scale-125 bg-[#22c4d3]'
+                      : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                  }`}
+                  title={step.title}
+                />
+              ))}
+            </div>
+
+            <button
+              onClick={handleNext}
+              disabled={
+                currentStep === steps.length ||
+                (!isProjectCreated && currentStep === 1) ||
+                isSaving
+              }
+              className="inline-flex h-8 w-8 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              title="Paso siguiente"
+            >
+              <ChevronRight className="h-4 w-4 rotate-90" />
+            </button>
+          </div>
+
+          {/* Área de contenido */}
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            {/* Header del modal */}
+            <div className="relative shrink-0 border-b border-border/50 p-6 pb-4">
+              <div className="flex flex-col space-y-1.5 text-center sm:text-left">
+                <h2
+                  id="modal-title"
+                  className="flex items-center gap-2 text-lg leading-none font-semibold tracking-tight"
+                >
+                  <FileText className="h-5 w-5 text-accent" />
+                  {steps[currentStep - 1].title}
+                  <div className="ml-2 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-foreground transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                    {currentStep}/{steps.length}
+                  </div>
+                  {/* Indicador de guardado */}
+                  {isProjectCreated && (
+                    <div className="absolute top-4 right-12 flex items-center">
+                      {isSaving ? (
+                        <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4 text-green-500"
+                        >
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <path d="m9 12 2 2 4-4"></path>
+                        </svg>
+                      )}
+                    </div>
+                  )}
+                </h2>
+                <p
+                  id="modal-description"
+                  className="text-sm text-muted-foreground"
+                >
+                  {steps[currentStep - 1].description}
+                </p>
+              </div>
+
+              {/* Barra de progreso */}
+              <div className="mt-4">
+                <div
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={progress}
+                  className="relative h-1.5 w-full overflow-hidden rounded-full bg-[#1A2333]"
+                >
+                  <div
+                    className="h-full w-full flex-1 bg-primary transition-all"
+                    style={{ transform: `translateX(-${100 - progress}%)` }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Contenido del paso actual */}
+            <div className="min-h-0 flex-1 overflow-y-auto p-6">
+              {renderStepContent()}
+            </div>
+
+            {/* Footer con botones de navegación */}
+            <div className="flex items-center justify-between border-t border-border/50 bg-card/50 p-4">
+              <button
+                onClick={handlePrevious}
+                disabled={currentStep === 1 || isSaving}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-[16px] bg-[#22c4d3] px-4 py-2 text-sm font-medium whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                <span className="relative mr-1 mb-1">Anterior</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleMainButtonClick}
+                  disabled={nextDisabled || isSaving}
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[16px] bg-[#22c4d3] px-4 py-2 text-sm font-medium whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  {isCreateStep ? (
+                    <>
+                      <span className="relative mb-1 ml-1">
+                        Guardar Proyecto
+                      </span>
+                      <ChevronRight className="h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      <span className="relative mb-1 ml-1">Siguiente</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Botón de cerrar */}
+        <button
+          type="button"
+          onClick={onClose}
+          disabled={isSaving}
+          className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-40 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+        >
+          <X className="h-4 w-4" />
+          <span className="sr-only">Cerrar</span>
+        </button>
       </div>
-    </>
+    </div>
   );
 };
-
-const CustomDateInput = React.forwardRef<
-  HTMLInputElement,
-  React.InputHTMLAttributes<HTMLInputElement>
->(({ value, onClick, placeholder, className }, ref) => (
-  // Cambia aquí: fuerza el div y el input a w-full
-  <div className="relative w-full">
-    <input
-      type="text"
-      ref={ref}
-      value={value && value !== '' ? value : ''}
-      onClick={onClick}
-      placeholder={placeholder}
-      className={className ?? 'w-full rounded bg-gray-400 p-2 pr-10 text-black'}
-      readOnly
-      style={{ cursor: 'pointer', width: '100%' }}
-    />
-    <FaRegCalendarAlt
-      className="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-cyan-700"
-      size={16}
-    />
-  </div>
-));
 export default ModalResumen;

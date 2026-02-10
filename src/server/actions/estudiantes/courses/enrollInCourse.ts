@@ -1,7 +1,7 @@
 'use server';
 
 import { currentUser } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm'; // Quitar inArray
+import { and, eq } from 'drizzle-orm';
 
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
@@ -223,8 +223,37 @@ export async function enrollInCourse(
       where: eq(lessons.courseId, courseId),
     });
 
+    console.log('📚 Lecciones obtenidas del curso:', {
+      courseId,
+      totalLessons: courseLessons.length,
+      lessonsData: courseLessons.map((l) => ({
+        id: l.id,
+        title: l.title,
+        orderIndex: l.orderIndex,
+      })),
+    });
+
     // Sort lessons using our shared sorting utility
     const sortedLessons = sortLessons(courseLessons); // sortLessons usa orderIndex
+
+    console.log('📍 Lecciones DESPUÉS de ordenar:', {
+      sortedLessons: sortedLessons.map((l) => ({
+        id: l.id,
+        title: l.title,
+        orderIndex: l.orderIndex,
+      })),
+    });
+
+    // Buscar específicamente la lección con orderIndex = 1
+    const firstLesson = courseLessons.find((lesson) => lesson.orderIndex === 1);
+    const firstLessonId = firstLesson?.id ?? null;
+
+    console.log('🔓 Primera lección a desbloquear (orderIndex=1):', {
+      firstLessonId,
+      firstLessonTitle: firstLesson?.title,
+      firstLessonOrderIndex: firstLesson?.orderIndex,
+      encontrada: !!firstLesson,
+    });
 
     // Obtén los IDs de las lecciones que ya tienen progreso
     const existingProgress = await db.query.userLessonsProgress.findMany({
@@ -232,28 +261,76 @@ export async function enrollInCourse(
     });
     const existingLessonIds = new Set(existingProgress.map((p) => p.lessonId));
 
-    // Solo crea progreso para las lecciones que no existen aún
-    const progressValues = sortedLessons
-      .filter((lesson) => !existingLessonIds.has(lesson.id))
-      .map((lesson, index) => ({
-        userId: userId,
-        lessonId: lesson.id,
-        progress: 0,
-        isCompleted: false,
-        isLocked: index !== 0, // Solo la primera desbloqueada si es nueva
-        isNew: index === 0, // Solo la primera es nueva si es nueva
-        lastUpdated: new Date(),
-      }));
+    console.log('📊 Progreso existente del usuario:', {
+      totalExistingLessons: existingProgress.length,
+      existingLessonIds: Array.from(existingLessonIds),
+    });
 
-    // Inserta solo las nuevas lecciones de una vez
-    await Promise.all(
-      progressValues.map((values) =>
-        db.insert(userLessonsProgress).values(values).onConflictDoNothing()
-      )
-    );
+    // Procesar cada lección: insertar nuevas o actualizar existentes
+    let createdCount = 0;
+    let updatedCount = 0;
 
-    // Ya usamos sortLessons que ahora prioriza orderIndex, por lo que la primera lección
-    // se desbloqueará correctamente según orderIndex si está definido.
+    for (const lesson of sortedLessons) {
+      const isFirstLesson =
+        firstLessonId !== null && lesson.id === firstLessonId;
+      const isNew = !existingLessonIds.has(lesson.id);
+
+      if (isNew) {
+        // Insertar nueva lección
+        await db.insert(userLessonsProgress).values({
+          userId: userId,
+          lessonId: lesson.id,
+          progress: 0,
+          isCompleted: false,
+          isLocked: !isFirstLesson,
+          isNew: isFirstLesson,
+          lastUpdated: new Date(),
+        });
+        createdCount++;
+
+        console.log('📝 Lección INSERTADA:', {
+          lessonId: lesson.id,
+          title: lesson.title,
+          orderIndex: lesson.orderIndex,
+          isFirstLesson,
+          isLocked: !isFirstLesson,
+        });
+      } else {
+        // Actualizar lección existente: cambiar isLocked según si es la primera
+        await db
+          .update(userLessonsProgress)
+          .set({
+            isLocked: !isFirstLesson,
+            isNew: isFirstLesson,
+            lastUpdated: new Date(),
+          })
+          .where(
+            and(
+              eq(userLessonsProgress.userId, userId),
+              eq(userLessonsProgress.lessonId, lesson.id)
+            )
+          );
+        updatedCount++;
+
+        console.log('🔄 Lección ACTUALIZADA:', {
+          lessonId: lesson.id,
+          title: lesson.title,
+          orderIndex: lesson.orderIndex,
+          isFirstLesson,
+          isLocked: !isFirstLesson,
+        });
+      }
+    }
+
+    console.log('✅ Progreso actualizado. Resumen:', {
+      courseId,
+      userId,
+      firstLessonId,
+      firstLessonTitle: firstLesson?.title,
+      totalLessonsProcessed: sortedLessons.length,
+      createdCount,
+      updatedCount,
+    });
 
     return {
       success: true,

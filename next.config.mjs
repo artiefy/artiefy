@@ -19,10 +19,12 @@ const nextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb', // Aumentar límite para videos y archivos grandes en App Router
+      allowedOrigins: [
+        'https://artiefy.com',
+        'https://accounts.artiefy.com',
+        'http://localhost:3000',
+      ],
     },
-  },
-  middleware: {
-    clientMaxBodySize: '100mb', // Permitir uploads grandes de multipart/form-data en API routes
   },
   images: {
     dangerouslyAllowSVG: true,

@@ -1,10 +1,15 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { projects } from '~/server/db/schema';
+import {
+  categories,
+  projectActivities,
+  projects,
+  specificObjectives,
+} from '~/server/db/schema';
 
 // GET - Obtener proyectos de un curso para el usuario actual
 export async function GET(req: NextRequest) {
@@ -28,18 +33,171 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Obtener proyectos del curso para este usuario
-    const userProjects = await db
-      .select()
-      .from(projects)
-      .where(
-        and(
-          eq(projects.userId, userId),
-          eq(projects.categoryId, parseInt(courseId))
-        )
-      );
+    // Obtener proyectos del curso para este usuario con el nombre de la categoría
+    let userProjects;
+    try {
+      userProjects = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          description: projects.description,
+          planteamiento: projects.planteamiento,
+          justificacion: projects.justificacion,
+          objetivo_general: projects.objetivo_general,
+          requirements: projects.requirements,
+          coverImageKey: projects.coverImageKey,
+          coverVideoKey: projects.coverVideoKey,
+          multimedia: projects.multimedia,
+          type_project: projects.type_project,
+          projectTypeId: projects.projectTypeId,
+          userId: projects.userId,
+          courseId: projects.courseId,
+          categoryId: projects.categoryId,
+          categoryName: categories.name,
+          isPublic: projects.isPublic,
+          needsCollaborators: projects.needsCollaborators,
+          publicComment: projects.publicComment,
+          fecha_inicio: projects.fecha_inicio,
+          fecha_fin: projects.fecha_fin,
+          duration_unit: projects.duration_unit,
+          tipo_visualizacion: projects.tipo_visualizacion,
+          createdAt: projects.createdAt,
+          updatedAt: projects.updatedAt,
+          horas_por_dia: projects.horas_por_dia,
+          total_horas: projects.total_horas,
+          tiempo_estimado: projects.tiempo_estimado,
+        })
+        .from(projects)
+        .leftJoin(categories, eq(projects.categoryId, categories.id))
+        .where(
+          and(
+            eq(projects.userId, userId),
+            eq(projects.courseId, parseInt(courseId))
+          )
+        );
+    } catch (queryError) {
+      const errorCode = (queryError as { cause?: { code?: string } })?.cause
+        ?.code;
+      if (errorCode !== '42703') {
+        throw queryError;
+      }
 
-    return NextResponse.json(userProjects, { status: 200 });
+      userProjects = await db
+        .select({
+          id: projects.id,
+          name: projects.name,
+          description: projects.description,
+          planteamiento: projects.planteamiento,
+          justificacion: projects.justificacion,
+          objetivo_general: projects.objetivo_general,
+          requirements: projects.requirements,
+          coverImageKey: projects.coverImageKey,
+          coverVideoKey: projects.coverVideoKey,
+          multimedia: projects.multimedia,
+          type_project: projects.type_project,
+          projectTypeId: projects.projectTypeId,
+          userId: projects.userId,
+          courseId: projects.courseId,
+          categoryId: projects.categoryId,
+          categoryName: categories.name,
+          isPublic: projects.isPublic,
+          needsCollaborators: projects.needsCollaborators,
+          publicComment: projects.publicComment,
+          fecha_inicio: projects.fecha_inicio,
+          fecha_fin: projects.fecha_fin,
+          duration_unit: projects.duration_unit,
+          tipo_visualizacion: projects.tipo_visualizacion,
+          createdAt: projects.createdAt,
+          updatedAt: projects.updatedAt,
+          horas_por_dia: projects.horas_por_dia,
+          total_horas: projects.total_horas,
+          tiempo_estimado: projects.tiempo_estimado,
+        })
+        .from(projects)
+        .leftJoin(categories, eq(projects.categoryId, categories.id))
+        .where(
+          and(
+            eq(projects.userId, userId),
+            eq(projects.courseId, parseInt(courseId))
+          )
+        );
+    }
+
+    const projectIds = userProjects.map((project) => project.id);
+
+    const objectivesByProject = new Map<number, number>();
+    const cronogramaByProject = new Map<number, boolean>();
+
+    if (projectIds.length > 0) {
+      const objectives = await db
+        .select({ projectId: specificObjectives.projectId })
+        .from(specificObjectives)
+        .where(inArray(specificObjectives.projectId, projectIds));
+
+      objectives.forEach((obj) => {
+        objectivesByProject.set(
+          obj.projectId,
+          (objectivesByProject.get(obj.projectId) ?? 0) + 1
+        );
+      });
+
+      const activitiesWithDates = await db
+        .select({
+          projectId: projectActivities.projectId,
+          startDate: projectActivities.startDate,
+          endDate: projectActivities.endDate,
+        })
+        .from(projectActivities)
+        .where(inArray(projectActivities.projectId, projectIds));
+
+      activitiesWithDates.forEach((activity) => {
+        if (activity.startDate && activity.endDate) {
+          cronogramaByProject.set(activity.projectId, true);
+        }
+      });
+    }
+
+    const projectsWithProgress = userProjects.map((project) => {
+      const hasBasicInfo = Boolean(
+        project.name?.trim() &&
+        ((project.description ?? '').trim() ||
+          (project.planteamiento ?? '').trim())
+      );
+      const hasProblemaJustificacion = Boolean(
+        project.planteamiento?.trim() && project.justificacion?.trim()
+      );
+      const hasObjetivoGeneral = Boolean(project.objetivo_general?.trim());
+      const hasRequisitos = (() => {
+        if (!project.requirements) return false;
+        try {
+          const parsed = JSON.parse(project.requirements) as unknown;
+          return Array.isArray(parsed) && parsed.some((item) => item?.trim?.());
+        } catch {
+          return false;
+        }
+      })();
+      const hasDuracion = Boolean(project.fecha_inicio && project.fecha_fin);
+      const hasObjetivosEspecificos =
+        (objectivesByProject.get(project.id) ?? 0) > 0;
+      const hasCronograma = cronogramaByProject.get(project.id) ?? false;
+
+      const completedSections = [
+        hasBasicInfo,
+        hasProblemaJustificacion,
+        hasObjetivoGeneral,
+        hasRequisitos,
+        hasDuracion,
+        hasObjetivosEspecificos,
+        hasCronograma,
+      ].filter(Boolean).length;
+
+      return {
+        ...project,
+        progressPercentage: Math.round((completedSections / 7) * 100),
+      };
+    });
+
+    return NextResponse.json(projectsWithProgress, { status: 200 });
   } catch (error) {
     console.error('Error al obtener proyectos:', error);
     return NextResponse.json(

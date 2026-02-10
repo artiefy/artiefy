@@ -109,6 +109,9 @@ export async function PUT(
       horas?: unknown;
       hoursPerDay?: unknown;
       objetivoId?: unknown;
+      objetivoIndex?: unknown;
+      startDate?: unknown;
+      endDate?: unknown;
     }
 
     if (updateFields.actividades && Array.isArray(updateFields.actividades)) {
@@ -126,7 +129,7 @@ export async function PUT(
           if (!desc || desc === 'default') return null;
 
           return {
-            description: desc,
+            descripcion: desc,
             meses: Array.isArray(a.meses) ? a.meses : [],
             responsibleUserId:
               typeof a.responsableId === 'string'
@@ -142,15 +145,20 @@ export async function PUT(
                   : undefined,
             objetivoId:
               typeof a.objetivoId === 'string' ? a.objetivoId : undefined,
+            objetivoIndex:
+              typeof a.objetivoIndex === 'number' ? a.objetivoIndex : undefined,
+            startDate:
+              typeof a.startDate === 'string' ? a.startDate : undefined,
+            endDate: typeof a.endDate === 'string' ? a.endDate : undefined,
           };
         })
         // Filtra cualquier actividad null (sin descripción válida)
         .filter(
           (act): act is NonNullable<typeof act> =>
             !!act &&
-            typeof act.description === 'string' &&
-            act.description.trim() !== '' &&
-            act.description !== 'default'
+            typeof act.descripcion === 'string' &&
+            act.descripcion.trim() !== '' &&
+            act.descripcion !== 'default'
         );
     }
     // -------------------------------------------------------------
@@ -160,9 +168,13 @@ export async function PUT(
       if (
         [
           'name',
+          'description',
           'planteamiento',
           'justificacion',
           'objetivo_general',
+          'requirements',
+          'durationEstimate',
+          'durationUnit',
           'objetivos_especificos',
           'actividades',
           'coverImageKey',
@@ -170,6 +182,7 @@ export async function PUT(
           'type_project',
           'categoryId',
           'isPublic',
+          'needsCollaborators',
           'fechaInicio',
           'fechaFin',
           'tipoVisualizacion',

@@ -11,6 +11,7 @@ import getPublicProjects from '~/server/actions/project/getPublicProjects';
 // Actualizar la interfaz para que coincida completamente con el schema
 interface ProjectData {
   name: string;
+  description?: string;
   planteamiento: string;
   justificacion: string;
   objetivo_general: string;
@@ -25,13 +26,17 @@ interface ProjectData {
   integrantes?: number[];
   coverImageKey?: string;
   coverVideoKey?: string; // <-- Nuevo campo
-  type_project: string;
+  type_project: string; // Legacy field
+  projectTypeId?: number; // Nuevo campo normalizado
   categoryId: number;
+  courseId?: number; // Proyecto asociado a un curso
   isPublic?: boolean;
+  needsCollaborators?: boolean; // Nuevo campo
   userId: string;
   fechaInicio?: string;
   fechaFin?: string;
   tipoVisualizacion?: 'meses' | 'dias';
+  durationUnit?: 'dias' | 'semanas' | 'meses' | 'anos';
   horasPorDia?: number; // NUEVO
   totalHoras?: number; // NUEVO
   tiempoEstimado?: number; // NUEVO
@@ -146,6 +151,7 @@ export async function POST(req: Request) {
       // Validar campos requeridos según el schema para creación final
       if (
         !body.name ||
+        !body.description ||
         !body.planteamiento ||
         !body.justificacion ||
         !body.objetivo_general ||
@@ -160,6 +166,7 @@ export async function POST(req: Request) {
     } else {
       // Si es draft, rellenar valores por defecto para permitir persistir parcial
       body.name = body.name ?? `Borrador - ${userId} - ${Date.now()}`;
+      body.description = body.description ?? '';
       body.planteamiento = body.planteamiento ?? '';
       body.justificacion = body.justificacion ?? '';
       body.objetivo_general = body.objetivo_general ?? '';
@@ -219,11 +226,14 @@ export async function POST(req: Request) {
     // Preparar datos del proyecto
     const projectData: ProjectData = {
       name: body.name,
+      description: body.description,
       planteamiento: body.planteamiento,
       justificacion: body.justificacion,
       objetivo_general: body.objetivo_general,
       type_project: body.type_project,
+      projectTypeId: body.projectTypeId ?? undefined, // Nuevo campo normalizado
       categoryId: body.categoryId,
+      courseId: body.courseId ?? undefined, // Proyecto asociado a un curso (opcional)
       userId,
       objetivos_especificos: objetivos_especificos_db,
       actividades: actividades_db,
@@ -235,6 +245,7 @@ export async function POST(req: Request) {
       fechaFin: body.fechaFin ?? undefined,
       tipoVisualizacion: body.tipoVisualizacion ?? 'meses',
       isPublic: body.isPublic ?? false,
+      needsCollaborators: body.needsCollaborators ?? false, // Nuevo campo
       horasPorDia: body.horasPorDia ?? undefined, // NUEVO
       totalHoras: body.totalHoras ?? undefined, // NUEVO
       tiempoEstimado: body.tiempoEstimado ?? undefined, // NUEVO

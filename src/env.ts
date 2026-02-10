@@ -7,8 +7,8 @@ export const env = createEnv({
    * Will throw if you access these variables on the client.
    */
   server: {
-    POSTGRES_URL: z.string().url(),
-    POSTGRES_URL_NON_POOLING: z.string().url(),
+    POSTGRES_URL: z.url(),
+    POSTGRES_URL_NON_POOLING: z.url(),
     POSTGRES_USER: z.string().min(1),
     POSTGRES_HOST: z.string().min(1),
     POSTGRES_PASSWORD: z.string().min(1),
@@ -16,7 +16,7 @@ export const env = createEnv({
 
     CLERK_SECRET_KEY: z.string().min(1),
 
-    UPSTASH_REDIS_REST_URL: z.string().url(),
+    UPSTASH_REDIS_REST_URL: z.url(),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
 
     AWS_BUCKET_NAME: z.string().min(1),
@@ -28,11 +28,11 @@ export const env = createEnv({
     ACCOUNT_ID: z.string().min(1),
     API_LOGIN: z.string().min(1),
     API_KEY: z.string().min(1),
-    PAYU_API_URL: z.string().url(),
-    RESPONSE_URL: z.string().url(),
-    CONFIRMATION_URL: z.string().url(),
-    CONFIRMATION_URL_PLANS: z.string().url(),
-    CONFIRMATION_URL_COURSES: z.string().url(),
+    PAYU_API_URL: z.url(),
+    RESPONSE_URL: z.url(),
+    CONFIRMATION_URL: z.url(),
+    CONFIRMATION_URL_PLANS: z.url(),
+    CONFIRMATION_URL_COURSES: z.url(),
 
     PASS: z.string().min(1),
 
@@ -42,7 +42,7 @@ export const env = createEnv({
     CRON_SECRET: z.string().min(1),
     SKIP_ENV_VALIDATION: z.boolean().default(false),
 
-    N8N_BASE_URL: z.string().url().optional(),
+    N8N_BASE_URL: z.url().optional(),
     N8N_WEBHOOK_PATH: z.string().optional(),
     N8N_LICENSE_KEY: z.string().min(1),
     OPENAI_API_KEY: z.string().min(1),
@@ -52,7 +52,7 @@ export const env = createEnv({
     OPENAI_ASSISTANT_ID: z.string().min(1).optional(),
     N8N_WEBHOOK_ID: z.string().min(1),
 
-    ESP32_BASE_URL: z.string().url().optional(),
+    ESP32_BASE_URL: z.url().optional(),
     ESP32_API_KEY: z.string().optional(),
     NEON_API_KEY: z.string().min(1),
   },
@@ -67,9 +67,12 @@ export const env = createEnv({
     NEXT_PUBLIC_CLERK_SIGN_UP_URL: z.string().min(1),
     NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_URL: z.string().min(1),
     NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_URL: z.string().min(1),
-    NEXT_PUBLIC_AWS_S3_URL: z.string().url(),
-    NEXT_PUBLIC_BASE_URL: z.string().url(),
-    NEXT_PUBLIC_PAYU_URL: z.string().url(),
+    NEXT_PUBLIC_AWS_S3_URL: z.url(),
+    NEXT_PUBLIC_BASE_URL: z.url(),
+    NEXT_PUBLIC_PAYU_URL: z.url(),
+    NEXT_PUBLIC_N8N_WEBHOOK_URL: z.url(),
+    NEXT_PUBLIC_N8N_WEBHOOK_PROJECTS_LOCAL: z.url(),
+    NEXT_PUBLIC_N8N_WEBHOOK_PROJECTS_PROD: z.url(),
   },
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -78,6 +81,7 @@ export const env = createEnv({
    * 💡 You'll get type errors if not all variables from `server` & `client` are included here.
    */
   runtimeEnv: {
+    // Server variables
     POSTGRES_URL: process.env.POSTGRES_URL,
     POSTGRES_URL_NON_POOLING: process.env.POSTGRES_URL_NON_POOLING,
     POSTGRES_USER: process.env.POSTGRES_USER,
@@ -86,14 +90,6 @@ export const env = createEnv({
     POSTGRES_DATABASE: process.env.POSTGRES_DATABASE,
 
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
-    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
-      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
-    NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
-    NEXT_PUBLIC_CLERK_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
-    NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_URL:
-      process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_URL,
-    NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_URL:
-      process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_URL,
 
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
@@ -102,7 +98,6 @@ export const env = createEnv({
     AWS_REGION: process.env.AWS_REGION,
     AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
-    NEXT_PUBLIC_AWS_S3_URL: process.env.NEXT_PUBLIC_AWS_S3_URL,
 
     MERCHANT_ID: process.env.MERCHANT_ID,
     ACCOUNT_ID: process.env.ACCOUNT_ID,
@@ -113,12 +108,10 @@ export const env = createEnv({
     CONFIRMATION_URL: process.env.CONFIRMATION_URL,
     CONFIRMATION_URL_PLANS: process.env.CONFIRMATION_URL_PLANS,
     CONFIRMATION_URL_COURSES: process.env.CONFIRMATION_URL_COURSES,
-    NEXT_PUBLIC_PAYU_URL: process.env.NEXT_PUBLIC_PAYU_URL,
 
     PASS: process.env.PASS,
 
     NODE_ENV: process.env.NODE_ENV,
-    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
     CRON_SECRET: process.env.CRON_SECRET,
     SKIP_ENV_VALIDATION: process.env.SKIP_ENV_VALIDATION === 'true' || false,
 
@@ -126,13 +119,31 @@ export const env = createEnv({
     N8N_WEBHOOK_PATH: process.env.N8N_WEBHOOK_PATH,
     N8N_LICENSE_KEY: process.env.N8N_LICENSE_KEY,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_ASSISTANT_API_KEY: process.env.OPENAI_ASSISTANT_API_KEY,
     OPENAI_ASSISTANT_ID: process.env.OPENAI_ASSISTANT_ID,
     N8N_WEBHOOK_ID: process.env.N8N_WEBHOOK_ID,
-    NEON_API_KEY: process.env.NEON_API_KEY,
-    OPENAI_ASSISTANT_API_KEY: process.env.OPENAI_ASSISTANT_API_KEY,
 
     ESP32_BASE_URL: process.env.ESP32_BASE_URL,
     ESP32_API_KEY: process.env.ESP32_API_KEY,
+    NEON_API_KEY: process.env.NEON_API_KEY,
+
+    // Client variables (NEXT_PUBLIC_*)
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:
+      process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
+    NEXT_PUBLIC_CLERK_SIGN_IN_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_IN_URL,
+    NEXT_PUBLIC_CLERK_SIGN_UP_URL: process.env.NEXT_PUBLIC_CLERK_SIGN_UP_URL,
+    NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_URL:
+      process.env.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_URL,
+    NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_URL:
+      process.env.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_URL,
+    NEXT_PUBLIC_AWS_S3_URL: process.env.NEXT_PUBLIC_AWS_S3_URL,
+    NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL,
+    NEXT_PUBLIC_PAYU_URL: process.env.NEXT_PUBLIC_PAYU_URL,
+    NEXT_PUBLIC_N8N_WEBHOOK_URL: process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL,
+    NEXT_PUBLIC_N8N_WEBHOOK_PROJECTS_LOCAL:
+      process.env.NEXT_PUBLIC_N8N_WEBHOOK_PROJECTS_LOCAL,
+    NEXT_PUBLIC_N8N_WEBHOOK_PROJECTS_PROD:
+      process.env.NEXT_PUBLIC_N8N_WEBHOOK_PROJECTS_PROD,
   },
   skipValidation: Boolean(process.env.SKIP_ENV_VALIDATION),
   emptyStringAsUndefined: true,

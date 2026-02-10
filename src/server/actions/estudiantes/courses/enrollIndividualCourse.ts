@@ -109,6 +109,18 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
     // Ordenar lecciones usando nuestra utilidad de ordenamiento compartida
     const sortedLessons = sortLessons(courseLessons);
 
+    // Buscar específicamente la lección con orderIndex = 1
+    const firstLessonWithOrderIndex = courseLessons.find(
+      (lesson) => lesson.orderIndex === 1
+    );
+    const firstLessonId = firstLessonWithOrderIndex?.id ?? null;
+
+    console.log('🔓 Primera lección a desbloquear (orderIndex=1):', {
+      firstLessonId,
+      lessonTitle: firstLessonWithOrderIndex?.title,
+      orderIndex: firstLessonWithOrderIndex?.orderIndex,
+    });
+
     // Obtener IDs de lecciones en el orden correcto
     const lessonIds = sortedLessons.map((lesson) => lesson.id);
 
@@ -125,23 +137,58 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
       existingProgress.map((progress) => progress.lessonId)
     );
 
-    // Insertar progreso solo para lecciones que no tienen progreso
-    for (const [index, lesson] of sortedLessons.entries()) {
-      if (!existingProgressSet.has(lesson.id)) {
-        // Verificar si es la primera lección O tiene "Bienvenida" en el título
-        const isFirstOrWelcome =
-          index === 0 ||
-          lesson.title.toLowerCase().includes('bienvenida') ||
-          lesson.title.toLowerCase().includes('clase 1');
+    // Procesar cada lección: insertar nuevas o actualizar existentes
+    let createdCount = 0;
+    let updatedCount = 0;
 
+    for (const lesson of sortedLessons) {
+      const isFirstLesson =
+        firstLessonId !== null && lesson.id === firstLessonId;
+      const isNew = !existingProgressSet.has(lesson.id);
+
+      if (isNew) {
+        // Insertar nueva lección
         await db.insert(userLessonsProgress).values({
           userId: user.id,
           lessonId: lesson.id,
           progress: 0,
           isCompleted: false,
-          isLocked: !isFirstOrWelcome, // Desbloquear solo la primera lección o la lección de bienvenida
-          isNew: true,
+          isLocked: !isFirstLesson,
+          isNew: isFirstLesson,
           lastUpdated: new Date(),
+        });
+        createdCount++;
+
+        console.log('📝 Lección INSERTADA:', {
+          lessonId: lesson.id,
+          title: lesson.title,
+          orderIndex: lesson.orderIndex,
+          isFirstLesson,
+          isLocked: !isFirstLesson,
+        });
+      } else {
+        // Actualizar lección existente: cambiar isLocked según si es la primera
+        await db
+          .update(userLessonsProgress)
+          .set({
+            isLocked: !isFirstLesson,
+            isNew: isFirstLesson,
+            lastUpdated: new Date(),
+          })
+          .where(
+            and(
+              eq(userLessonsProgress.userId, user.id),
+              eq(userLessonsProgress.lessonId, lesson.id)
+            )
+          );
+        updatedCount++;
+
+        console.log('🔄 Lección ACTUALIZADA:', {
+          lessonId: lesson.id,
+          title: lesson.title,
+          orderIndex: lesson.orderIndex,
+          isFirstLesson,
+          isLocked: !isFirstLesson,
         });
       }
     }
@@ -150,6 +197,9 @@ export async function enrollUserInCourse(userEmail: string, courseId: number) {
       userId: user.id,
       email: user.email,
       courseId,
+      totalLessonsProcessed: sortedLessons.length,
+      createdCount,
+      updatedCount,
     });
 
     return { success: true, message: 'Inscripción exitosa' };

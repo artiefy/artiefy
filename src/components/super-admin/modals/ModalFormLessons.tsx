@@ -44,12 +44,14 @@ interface LessonsFormProps {
 
 interface UploadResponse {
   uploadType: 'simple' | 'multipart' | 'put';
-  url: string;
+  url?: string;
   fields?: Record<string, string>;
   key: string;
   fileName: string;
   uploadId?: string;
   contentType: string;
+  partSize?: number;
+  totalParts?: number;
 }
 
 interface UploadProgress {
@@ -300,6 +302,143 @@ const ModalFormLessons = ({
 
       const uploadData = (await uploadResponse.json()) as UploadResponse;
 
+      if (uploadData.uploadType === 'multipart') {
+        if (!uploadData.uploadId || !uploadData.partSize) {
+          throw new Error('Respuesta multipart incompleta');
+        }
+
+        const partSize = uploadData.partSize;
+        const totalParts = Math.ceil(file.size / partSize);
+        const startTime = Date.now();
+        const uploadedParts: Array<{ ETag: string; PartNumber: number }> = [];
+
+        const uploadPart = async (
+          partNumber: number,
+          blob: Blob,
+          baseBytes: number
+        ): Promise<string> => {
+          const partResponse = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'multipart-part',
+              key: uploadData.key,
+              uploadId: uploadData.uploadId,
+              partNumber,
+            }),
+          });
+
+          if (!partResponse.ok) {
+            throw new Error('Error al obtener URL de parte');
+          }
+
+          const partData = (await partResponse.json()) as { url: string };
+
+          return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const uploadedBytes = baseBytes + event.loaded;
+                const percentComplete =
+                  (uploadedBytes / Math.max(1, file.size)) * 100;
+                const elapsedTime = (Date.now() - startTime) / 1000;
+                const uploadSpeed =
+                  elapsedTime > 0 ? uploadedBytes / elapsedTime : 0;
+                const remainingBytes = file.size - uploadedBytes;
+                const remainingTime =
+                  uploadSpeed > 0 ? remainingBytes / uploadSpeed : 0;
+
+                let timeRemaining = '';
+                if (remainingTime < 60) {
+                  timeRemaining = `${Math.round(remainingTime)} segundos`;
+                } else if (remainingTime < 3600) {
+                  timeRemaining = `${Math.round(remainingTime / 60)} minutos`;
+                } else {
+                  timeRemaining = `${Math.round(remainingTime / 3600)} horas`;
+                }
+
+                updateProgress(
+                  file.name,
+                  Math.round(percentComplete),
+                  'uploading',
+                  timeRemaining
+                );
+              }
+            };
+
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                const etagHeader =
+                  xhr.getResponseHeader('ETag') ||
+                  xhr.getResponseHeader('etag');
+
+                if (!etagHeader) {
+                  reject(new Error('No se recibio ETag del servidor'));
+                  return;
+                }
+
+                const cleanEtag = etagHeader.replace(/"/g, '');
+                resolve(cleanEtag);
+              } else {
+                reject(new Error(`Error en la parte: ${xhr.status}`));
+              }
+            };
+
+            xhr.onerror = () => {
+              reject(new Error('Upload failed'));
+            };
+
+            xhr.open('PUT', partData.url);
+            xhr.setRequestHeader('Content-Type', file.type);
+            xhr.send(blob);
+          });
+        };
+
+        try {
+          for (let partNumber = 1; partNumber <= totalParts; partNumber += 1) {
+            const start = (partNumber - 1) * partSize;
+            const end = Math.min(file.size, start + partSize);
+            const blob = file.slice(start, end);
+            const etag = await uploadPart(partNumber, blob, start);
+            uploadedParts.push({ ETag: etag, PartNumber: partNumber });
+          }
+
+          const completeResponse = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'multipart-complete',
+              key: uploadData.key,
+              uploadId: uploadData.uploadId,
+              parts: uploadedParts,
+            }),
+          });
+
+          if (!completeResponse.ok) {
+            throw new Error('Error al completar la subida multipart');
+          }
+
+          updateProgress(file.name, 100, 'completed');
+          toast.success(`${file.name} subido exitosamente`);
+          return {
+            key: uploadData.key,
+            fileName: uploadData.fileName,
+          };
+        } catch (multipartError) {
+          await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'multipart-abort',
+              key: uploadData.key,
+              uploadId: uploadData.uploadId,
+            }),
+          });
+          throw multipartError;
+        }
+      }
+
       return new Promise<UploadResult>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         const startTime = Date.now();
@@ -350,10 +489,18 @@ const ModalFormLessons = ({
         };
 
         if (uploadData.uploadType === 'put') {
+          if (!uploadData.url) {
+            reject(new Error('URL de subida no disponible'));
+            return;
+          }
           xhr.open('PUT', uploadData.url);
           xhr.setRequestHeader('Content-Type', file.type);
           xhr.send(file);
         } else if (uploadData.uploadType === 'simple') {
+          if (!uploadData.url) {
+            reject(new Error('URL de subida no disponible'));
+            return;
+          }
           const formData = new FormData();
           Object.entries(uploadData.fields ?? {}).forEach(([key, value]) => {
             formData.append(key, value);
@@ -485,8 +632,8 @@ const ModalFormLessons = ({
 
   // Añadir componente de progreso persistente
   const UploadProgressDisplay = () => (
-    <div className="bg-background fixed right-4 bottom-4 z-50 w-96 rounded-lg p-4 shadow-lg">
-      <h3 className="text-primary mb-2 font-semibold">Progreso de carga</h3>
+    <div className="fixed right-4 bottom-4 z-50 w-96 rounded-lg bg-background p-4 shadow-lg">
+      <h3 className="mb-2 font-semibold text-primary">Progreso de carga</h3>
       {Object.values(uploadProgresses).map((item) => (
         <div key={item.fileName} className="mb-4">
           <div className="flex justify-between text-sm">
@@ -520,8 +667,8 @@ const ModalFormLessons = ({
               solo lectura.
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-background rounded-lg px-6 shadow-md">
-            <label htmlFor="title" className="text-primary text-lg font-medium">
+          <div className="rounded-lg bg-background px-6 shadow-md">
+            <label htmlFor="title" className="text-lg font-medium text-primary">
               Título
             </label>
             <input
@@ -539,7 +686,7 @@ const ModalFormLessons = ({
 
             <label
               htmlFor="description"
-              className="text-primary text-lg font-medium"
+              className="text-lg font-medium text-primary"
             >
               Descripción
             </label>
@@ -556,7 +703,7 @@ const ModalFormLessons = ({
             )}
             <label
               htmlFor="duration"
-              className="text-primary text-lg font-medium"
+              className="text-lg font-medium text-primary"
             >
               Duración (minutos)
             </label>
@@ -581,7 +728,7 @@ const ModalFormLessons = ({
               />
               <Label
                 htmlFor="needs-video"
-                className="text-primary text-lg font-medium"
+                className="text-lg font-medium text-primary"
               >
                 ¿Esta clase necesita video?
               </Label>
@@ -590,7 +737,7 @@ const ModalFormLessons = ({
               <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {formData.cover_image_key && (
                   <div className="flex flex-col gap-2">
-                    <label className="text-primary text-sm font-medium">
+                    <label className="text-sm font-medium text-primary">
                       Imagen actual:
                     </label>
                     <Image
@@ -604,7 +751,7 @@ const ModalFormLessons = ({
                 )}
                 {formData.cover_video_key && (
                   <div className="flex flex-col gap-2">
-                    <label className="text-primary text-sm font-medium">
+                    <label className="text-sm font-medium text-primary">
                       Video actual:
                     </label>
                     <video
@@ -616,7 +763,7 @@ const ModalFormLessons = ({
                 )}
                 {formData.resource_keys.length > 0 && (
                   <div className="flex flex-col gap-2">
-                    <label className="text-primary text-sm font-medium">
+                    <label className="text-sm font-medium text-primary">
                       Archivos actuales:
                     </label>
                     {formData.resource_keys.map((key, index) => (
@@ -690,12 +837,12 @@ const ModalFormLessons = ({
               />
 
               <div className="mb-4">
-                <label className="text-primary text-lg font-medium">
+                <label className="text-lg font-medium text-primary">
                   Enlaces externos
                 </label>
                 <textarea
                   placeholder="Pega los enlaces separados por saltos de línea"
-                  className="border-primary w-full rounded border p-2 text-white outline-none"
+                  className="w-full rounded border border-primary p-2 text-white outline-none"
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
