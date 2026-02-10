@@ -39,6 +39,7 @@ import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { Label } from '~/components/educators/ui/label';
 import { CourseSearchModal } from '~/components/embeddings/CourseSearchModal';
 import { EmbeddingsGenerator } from '~/components/embeddings/EmbeddingsGenerator';
+import { EmbeddingsGeneratorComplete } from '~/components/embeddings/EmbeddingsGeneratorComplete';
 import TechLoader from '~/components/estudiantes/ui/tech-loader';
 import LessonsListEducator from '~/components/super-admin/layout/LessonsListEducator'; // Importar el componente
 import { ScheduledMeetingsList } from '~/components/super-admin/layout/ScheduledMeetingsList';
@@ -4238,21 +4239,75 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                 {/* Embeddings Tab */}
                 {activeTab === 'embeddings' && (
-                  <div className="animate-in fade-in duration-500">
-                    <h2 className="mb-6 text-2xl font-bold text-white">
-                      🧠 Sistema de Embeddings
-                    </h2>
-                    <p className="mb-6 text-white/70">
-                      Genera embeddings vectoriales para búsquedas semánticas
-                      inteligentes en el contenido del curso
-                    </p>
-                    {course && (
-                      <EmbeddingsGenerator
-                        courseId={courseIdNumber}
-                        courseTitle={course.title}
-                        courseDescription={course.description}
-                      />
-                    )}
+                  <div className="animate-in fade-in space-y-8 duration-500">
+                    <div>
+                      <h2 className="mb-4 text-3xl font-bold text-white">
+                        🧠 Sistema de Embeddings Inteligente
+                      </h2>
+                      <p className="text-white/70">
+                        Genera embeddings vectoriales para búsquedas semánticas
+                        completas que incluyen todo el contenido del curso:
+                        lecciones, actividades, archivos y recursos.
+                      </p>
+                    </div>
+
+                    {/* Dos opciones: Completo o Solo Curso */}
+                    <div className="grid gap-6 md:grid-cols-2">
+                      {/* Opción 1: Embeddings Completo */}
+                      <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-6 backdrop-blur-sm">
+                        <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-blue-400">
+                          <span>🚀</span> Completo (Recomendado)
+                        </h3>
+                        <p className="mb-4 text-sm text-white/70">
+                          Procesa el curso completo incluyendo:
+                        </p>
+                        <ul className="mb-4 space-y-1 text-xs text-white/60">
+                          <li>✅ Descripción y metadata del curso</li>
+                          <li>✅ Todas las lecciones y sus contenidos</li>
+                          <li>✅ Todas las actividades</li>
+                          <li>✅ Archivos asociados (PDF, DOCX, TXT)</li>
+                        </ul>
+                        {course && (
+                          <EmbeddingsGeneratorComplete
+                            courseId={courseIdNumber}
+                            courseTitle={course.title}
+                          />
+                        )}
+                      </div>
+
+                      {/* Opción 2: Embeddings Simple */}
+                      <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-6 backdrop-blur-sm">
+                        <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-purple-400">
+                          <span>⚡</span> Simple (Solo Metadata)
+                        </h3>
+                        <p className="mb-4 text-sm text-white/70">
+                          Procesa solo la información básica:
+                        </p>
+                        <ul className="mb-4 space-y-1 text-xs text-white/60">
+                          <li>✅ Título del curso</li>
+                          <li>✅ Descripción</li>
+                          <li>⚠️ Sin contenido de archivos</li>
+                          <li>⚠️ Sin datos de lecciones</li>
+                        </ul>
+                        {course && (
+                          <EmbeddingsGenerator
+                            courseId={courseIdNumber}
+                            courseTitle={course.title}
+                            courseDescription={course.description}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Información general */}
+                    <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4">
+                      <p className="text-xs text-cyan-400/70">
+                        <strong>💡 Recomendación:</strong> Usa la opción
+                        <strong> Completo</strong> para obtener búsquedas
+                        semánticas más precisas que consideren TODO el contenido
+                        de tu curso, incluyendo documentos y recursos.
+                      </p>
+                    </div>
                   </div>
                 )}
                 {/* ⬅️ VERIFICA QUE ESTE CIERRE ESTÉ AQUÍ */}
