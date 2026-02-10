@@ -32,32 +32,9 @@ export async function downloadFileFromS3(key: string): Promise<ArrayBuffer> {
       throw new Error(`No body en respuesta S3 para ${key}`);
     }
 
-    // Convertir stream a buffer
-    const chunks: Uint8Array[] = [];
-    const reader = response.Body.getReader?.();
-
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-      }
-    } else {
-      // Si no es stream, intentar como buffer directo
-      const buffer = await response.Body.transformToByteArray?.();
-      if (buffer) {
-        chunks.push(buffer);
-      }
-    }
-
-    const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-    const result = new Uint8Array(totalLength);
-    let offset = 0;
-
-    for (const chunk of chunks) {
-      result.set(chunk, offset);
-      offset += chunk.length;
-    }
+    // Convertir stream a buffer usando el método recomendado de AWS SDK v3
+    const byteArray = await response.Body.transformToByteArray();
+    const result = new Uint8Array(byteArray);
 
     return result.buffer;
   } catch (error) {
