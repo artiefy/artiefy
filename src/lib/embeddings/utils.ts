@@ -304,9 +304,10 @@ export async function extractImageText(
       // Guardar ArrayBuffer a archivo temporal
       await fs.writeFile(tempPath, Buffer.from(arrayBuffer));
 
-      // Realizar OCR
-      const result = await Tesseract.recognize(tempPath, 'spa+eng');
-      const extractedText = result?.data?.text || '';
+      // Realizar OCR - pasar opciones como objeto
+      const result = await Tesseract.recognize(tempPath, { lang: 'spa+eng' });
+      const extractedText =
+        (result as any)?.data?.text || (result as any)?.text || '';
 
       // Limpiar archivo temporal
       await fs.unlink(tempPath).catch(() => {});
