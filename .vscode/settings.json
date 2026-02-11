@@ -120,10 +120,23 @@
     "typescript": "javascript",
     "typescriptreact": "javascript"
   },
+  "tailwindCSS.classAttributes": [
+    "class",
+    "className",
+    "classname",
+    "ngClass",
+    "classList"
+  ],
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
   "css.validate": false,
   "tailwindCSS.validate": true,
   "tailwindCSS.showPixelEquivalents": true,
   "tailwindCSS.colorDecorators": true,
+  "tailwindCSS.lint.cssConflict": "warning",
+  "tailwindCSS.lint.invalidApply": "error",
+  "tailwindCSS.lint.invalidScreen": "error",
   "tailwindCSS.lint.recommendedVariantOrder": "warning",
   "tailwindCSS.lint.suggestCanonicalClasses": "ignore",
   // HTML CSS Support Configuration

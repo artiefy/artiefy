@@ -240,10 +240,11 @@ export async function getCourseById(
 
         return {
           ...lesson,
-          isLocked: lessonProgress?.isLocked ?? true,
+          isLocked: false,
           isCompleted: lessonProgress?.isCompleted ?? false,
           userProgress: lessonProgress?.progress ?? 0,
           porcentajecompletado: lessonProgress?.progress ?? 0,
+          lastPositionSeconds: lessonProgress?.lastPositionSeconds ?? 0,
           resourceNames: lesson.resourceNames.split(','),
           isNew: lessonProgress?.isNew ?? true,
           activities,

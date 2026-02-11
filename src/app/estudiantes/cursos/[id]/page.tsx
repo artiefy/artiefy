@@ -168,7 +168,7 @@ async function CourseContent({ id }: { id: string }) {
     const lessons =
       (await getLessonsByCourseId(courseId, safeUserId))?.map((lesson) => ({
         ...lesson,
-        isLocked: lesson.isLocked,
+        isLocked: false,
         porcentajecompletado: lesson.userProgress,
         isNew: lesson.isNew,
       })) ?? [];

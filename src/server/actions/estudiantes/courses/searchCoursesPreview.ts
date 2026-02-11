@@ -1,6 +1,6 @@
 'use server';
 
-import { eq, ilike, or } from 'drizzle-orm';
+import { eq, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { categories, courses, modalidades } from '~/server/db/schema';
@@ -10,7 +10,18 @@ import type { Course } from '~/types';
 // Busca cursos por texto en título, categoría o modalidad
 export async function searchCoursesPreview(query: string): Promise<Course[]> {
   if (!query || query.trim().length < 2) return [];
-  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedQuery = query
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+  const accentFrom =
+    'áàäâãåÁÀÄÂÃÅéèëêÉÈËÊíìïîÍÌÏÎóòöôõÓÒÖÔÕúùüûÚÙÜÛñÑçÇ';
+  const accentTo =
+    'aaaaaaAAAAAAeeeeEEEEiiiiIIIIoooooOOOOOuuuuUUUUnNcC';
+  const searchPattern = `%${normalizedQuery}%`;
+  const normalizeColumn = (column: unknown) =>
+    sql`translate(lower(${column}), ${accentFrom}, ${accentTo})`;
 
   // Buscar en título, categoría y modalidad
   const results = await db
@@ -31,9 +42,9 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
     .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
     .where(
       or(
-        ilike(courses.title, `%${normalizedQuery}%`),
-        ilike(categories.name, `%${normalizedQuery}%`),
-        ilike(modalidades.name, `%${normalizedQuery}%`)
+        sql`${normalizeColumn(courses.title)} ilike ${searchPattern}`,
+        sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
+        sql`${normalizeColumn(modalidades.name)} ilike ${searchPattern}`
       )
     )
     .limit(8);

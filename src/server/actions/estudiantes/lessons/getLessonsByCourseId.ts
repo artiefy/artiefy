@@ -43,8 +43,9 @@ export async function getLessonsByCourseId(
     return {
       ...lesson,
       porcentajecompletado: lessonProgress?.progress ?? 0,
-      isLocked: lessonProgress?.isLocked ?? true,
+      isLocked: false,
       userProgress: lessonProgress?.progress ?? 0,
+      lastPositionSeconds: lessonProgress?.lastPositionSeconds ?? 0,
       resourceNames: lesson.resourceNames
         ? lesson.resourceNames.split(',')
         : [], // Convertir texto a array

@@ -117,6 +117,7 @@ export interface Lesson {
   userProgress: number;
   isCompleted: boolean;
   lastUpdated: Date;
+  lastPositionSeconds?: number;
   course?: Course;
   activities?: Activity[];
   isLocked: boolean | null;
@@ -142,6 +143,7 @@ export interface UserLessonsProgress {
   userId: string;
   lessonId: number;
   progress: number;
+  lastPositionSeconds?: number;
   isCompleted: boolean;
   isLocked: boolean | null;
   isNew: boolean;

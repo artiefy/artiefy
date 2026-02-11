@@ -444,6 +444,7 @@ export const userLessonsProgress = pgTable(
       .references(() => lessons.id)
       .notNull(),
     progress: real('progress').default(0).notNull(),
+    lastPositionSeconds: real('last_position_seconds').default(0).notNull(),
     isCompleted: boolean('is_completed').default(false).notNull(),
     isLocked: boolean('is_locked').default(true),
     isNew: boolean('is_new').default(true).notNull(),
@@ -928,6 +929,7 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   }),
   projectsTaken: many(projectsTaken),
   specificObjectives: many(specificObjectives),
+  addedSections: many(projectAddedSections),
 }));
 
 export const projectsTakenRelations = relations(projectsTaken, ({ one }) => ({
@@ -1956,6 +1958,32 @@ export const documentEmbeddingsRelations = relations(
     course: one(courses, {
       fields: [documentEmbeddings.courseId],
       references: [courses.id],
+    }),
+  })
+);
+
+// Tabla de secciones personalizadas de proyectos
+export const projectAddedSections = pgTable('project_added_sections', {
+  id: serial('id').primaryKey(),
+  projectId: integer('project_id')
+    .references(() => projects.id, { onDelete: 'cascade' })
+    .notNull(),
+  sectionId: varchar('section_id', { length: 255 }).notNull(), // ej: 'justificacion', 'custom-123456789'
+  sectionName: varchar('section_name', { length: 255 }).notNull(), // ej: 'Justificación', 'Mi sección personalizada'
+  sectionContent: text('section_content').notNull(), // Contenido de la sección
+  isCustom: boolean('is_custom').default(false).notNull(), // True si es personalizada
+  displayOrder: integer('display_order').default(0).notNull(), // Orden de visualización
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Relaciones para projectAddedSections
+export const projectAddedSectionsRelations = relations(
+  projectAddedSections,
+  ({ one }) => ({
+    project: one(projects, {
+      fields: [projectAddedSections.projectId],
+      references: [projects.id],
     }),
   })
 );

@@ -24,6 +24,24 @@ interface DocumentMetadata {
   feedback?: string;
 }
 
+const sanitizeFilename = (value: string): string => {
+  const normalized = value.normalize('NFKD').replace(/[\u0300-\u036f]/g, '');
+  const cleaned = normalized
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '');
+
+  if (!cleaned) return 'archivo';
+
+  const maxLength = 120;
+  if (cleaned.length <= maxLength) return cleaned;
+
+  const extMatch = cleaned.match(/(\.[a-zA-Z0-9]{1,8})$/);
+  const ext = extMatch?.[1] ?? '';
+  const base = cleaned.slice(0, maxLength - ext.length);
+  return `${base}${ext}`;
+};
+
 export async function POST(request: Request) {
   try {
     // Parse and validate request body
@@ -46,8 +64,9 @@ export async function POST(request: Request) {
       },
     });
 
-    // Generate unique key for the file
-    const key = `documents/${activityId}/${userId}/${uuidv4()}-${filename}`;
+    // Generate unique key for the file (sanitize filename for S3 URL safety)
+    const safeFilename = sanitizeFilename(filename);
+    const key = `documents/${activityId}/${userId}/${uuidv4()}-${safeFilename}`;
 
     // Create presigned post data
     const { url, fields } = await createPresignedPost(client, {

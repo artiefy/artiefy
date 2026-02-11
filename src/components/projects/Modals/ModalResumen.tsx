@@ -12,12 +12,13 @@ import {
   Globe,
   Plus,
   RefreshCw,
-  Sparkles,
+  Pencil,
   Target,
   Upload,
   Users,
   X,
 } from 'lucide-react';
+import { FaWandMagicSparkles } from 'react-icons/fa6';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 
@@ -28,6 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/projects/ui/select';
+import AddCustomSectionModal from '~/components/estudiantes/projects/AddCustomSectionModal';
+import AddSectionDropdown from '~/components/estudiantes/projects/AddSectionDropdown';
 import { useGenerateContent } from '~/hooks/useGenerateContent';
 import { useProjectAutoSave } from '~/hooks/useProjectAutoSave';
 import { ObjetivosInput, SpecificObjective } from '~/types/objectives';
@@ -193,6 +196,25 @@ const parseObjectivesWithActivities = (
 // Activity and SpecificObjective types are imported from src/types/objectives.ts
 
 type UpdatedProjectData = Record<string, unknown>;
+type Section = { name: string; content: string };
+
+const areSectionsEqual = (
+  a: Record<string, Section>,
+  b: Record<string, Section>
+) => {
+  if (a === b) return true;
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    const aSection = a[key];
+    const bSection = b[key];
+    if (!aSection || !bSection) return false;
+    if (aSection.name !== bSection.name) return false;
+    if (aSection.content !== bSection.content) return false;
+  }
+  return true;
+};
 
 interface ModalResumenProps {
   isOpen: boolean;
@@ -241,6 +263,10 @@ interface ModalResumenProps {
   setObjetivoGen?: (value: string) => void;
   setObjetivosEspProp?: (value: ObjetivosInput) => void;
   cronograma?: unknown;
+  addedSections?: Record<string, { name: string; content: string }>;
+  onAddedSectionsChange?: (
+    sections: Record<string, { name: string; content: string }>
+  ) => void;
 }
 
 const steps = [
@@ -251,7 +277,7 @@ const steps = [
   },
   {
     id: 2,
-    title: 'Problema y Justificación',
+    title: 'Problema',
     description: 'Define el problema a resolver',
   },
   {
@@ -271,6 +297,11 @@ const steps = [
     description: 'Detalla objetivos específicos y actividades',
   },
   { id: 7, title: 'Cronograma', description: 'Planifica el cronograma' },
+  {
+    id: 8,
+    title: 'Secciones Personalizadas',
+    description: 'Agrega contenido personalizado',
+  },
 ];
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -294,6 +325,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   actividades,
   courseId,
   onProjectCreated,
+  addedSections = {},
+  onAddedSectionsChange,
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [timelineView, setTimelineView] = useState<
@@ -303,9 +336,23 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     projectId
   );
   const [isProjectCreated, setIsProjectCreated] = useState(Boolean(projectId));
+  const [localAddedSections, setLocalAddedSections] = useState(addedSections);
+  const [showAddCustomSectionModal, setShowAddCustomSectionModal] =
+    useState(false);
+  const [isAddingCustomSection, setIsAddingCustomSection] = useState(false);
+  const [pendingSection, setPendingSection] = useState<{
+    id: string;
+    name: string;
+    isCustom: boolean;
+  } | null>(null);
+  const [isSavingSections, setIsSavingSections] = useState(false);
   const lastLoadedProjectId = useRef<number | undefined>(undefined);
   const hasInitializedRef = useRef(false); // Para evitar resetear currentStep en cada cambio de datos
   const activitiesDirtyRef = useRef(false);
+  const hasEditedSectionsRef = useRef(false);
+  const hadSectionsRef = useRef(false);
+  const lastSectionsProjectIdRef = useRef<number | undefined>(undefined);
+  const lastSectionsSaveIdRef = useRef(0);
   const [creationError, setCreationError] = useState<string | null>(null);
   const normalizeInitialObjetivos = (src?: ObjetivosInput) => {
     if (!src) return [] as SpecificObjective[];
@@ -343,6 +390,205 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       key?: string;
     }>,
   });
+
+  const getSectionLabel = (sectionId: string): string => {
+    const labels: Record<string, string> = {
+      introduccion: 'Introducción',
+      justificacion: 'Justificación',
+      'marco-teorico': 'Marco Teórico',
+      metodologia: 'Metodología',
+      alcance: 'Alcance',
+      equipo: 'Equipo',
+    };
+    return labels[sectionId] ?? sectionId;
+  };
+
+  const createCustomSectionId = (
+    existing: Record<string, { name: string; content: string }>
+  ) => {
+    let newId = `custom-${Date.now()}`;
+    while (existing[newId]) {
+      newId = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+    return newId;
+  };
+
+  const updateLocalSections = (
+    next:
+      | Record<string, { name: string; content: string }>
+      | ((
+          prev: Record<string, { name: string; content: string }>
+        ) => Record<string, { name: string; content: string }>)
+  ) => {
+    const resolved =
+      typeof next === 'function' ? next(localAddedSections) : next;
+    setLocalAddedSections(resolved);
+    onAddedSectionsChange?.(resolved);
+    hasEditedSectionsRef.current = true;
+  };
+
+  const buildSectionContext = () => {
+    const parts = [
+      formData.titulo?.trim()
+        ? `Título del proyecto: ${formData.titulo.trim()}`
+        : '',
+      formData.description?.trim()
+        ? `Descripción del proyecto: ${formData.description.trim()}`
+        : '',
+      formData.planteamiento?.trim()
+        ? `Problema: ${formData.planteamiento.trim()}`
+        : '',
+      formData.justificacion?.trim()
+        ? `Justificación: ${formData.justificacion.trim()}`
+        : '',
+      formData.objetivoGen?.trim()
+        ? `Objetivo general: ${formData.objetivoGen.trim()}`
+        : '',
+      formData.requirements?.length
+        ? `Requisitos: ${formData.requirements.join(', ')}`
+        : '',
+    ].filter(Boolean);
+
+    const extraSections = Object.entries(localAddedSections)
+      .map(([id, section]) => {
+        const label = section.name?.trim() || id;
+        const content = section.content?.trim() || '';
+        if (!content) return `Sección ${label}: (sin contenido)`;
+        return `Sección ${label}: ${content}`;
+      })
+      .filter(Boolean)
+      .slice(0, 6);
+
+    const context = [...parts, ...extraSections].join('\n');
+    return context.length > 2000 ? context.slice(0, 2000) : context;
+  };
+
+  const handleAddSectionFromModal = (
+    sectionId: string,
+    isCustom?: boolean
+  ) => {
+    if (isCustom) {
+      setPendingSection({ id: 'custom', name: '', isCustom: true });
+      setShowAddCustomSectionModal(true);
+      return;
+    }
+
+    if (localAddedSections[sectionId]) return;
+
+    setPendingSection({
+      id: sectionId,
+      name: getSectionLabel(sectionId),
+      isCustom: false,
+    });
+    setShowAddCustomSectionModal(true);
+  };
+
+  const handleAddCustomSectionFromModal = (
+    name: string,
+    description: string
+  ) => {
+    setIsAddingCustomSection(true);
+    const sectionId = pendingSection?.isCustom
+      ? createCustomSectionId(localAddedSections)
+      : pendingSection?.id ?? createCustomSectionId(localAddedSections);
+    const sectionName = pendingSection?.isCustom
+      ? name
+      : pendingSection?.name ?? name;
+    updateLocalSections({
+      ...localAddedSections,
+      [sectionId]: {
+        name: sectionName,
+        content: description,
+      },
+    });
+    setShowAddCustomSectionModal(false);
+    setPendingSection(null);
+    setIsAddingCustomSection(false);
+  };
+
+  const handleGenerateSectionDescription = async (
+    currentText: string,
+    sectionTitleOverride: string
+  ) => {
+    if (!pendingSection) return null;
+    const sectionTitle =
+      sectionTitleOverride.trim() ||
+      pendingSection.name ||
+      'Sección';
+    const context = buildSectionContext();
+    const basePrompt = currentText.trim()
+      ? `Mejora y reescribe el contenido de la sección "${sectionTitle}" manteniendo el significado.`
+      : `Genera el contenido para la sección "${sectionTitle}" de un proyecto educativo.`;
+    const prompt = `${basePrompt}\n\nContexto del proyecto:\n${context}\n\nResponde solo con el contenido de la sección.`;
+
+    const result = await generateContent({
+      type: 'descripcion',
+      prompt,
+      titulo: formData.titulo ?? '',
+      descripcion: formData.description ?? '',
+      existingText: currentText,
+      sectionTitle,
+      sectionsContext: context,
+    });
+
+    return result;
+  };
+
+  const renderSectionCard = (sectionId: string, section: Section) => (
+    <div
+      key={sectionId}
+      className="rounded-lg border border-border/50 bg-card/30 p-4"
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex-1">
+          <input
+            type="text"
+            value={section.name}
+            onChange={(e) => {
+              updateLocalSections({
+                ...localAddedSections,
+                [sectionId]: {
+                  ...section,
+                  name: e.target.value,
+                },
+              });
+            }}
+            className="mb-2 flex h-9 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm font-semibold ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder="Nombre de la sección"
+          />
+          <div className="text-xs text-muted-foreground">
+            Se guarda automáticamente mientras escribes
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const next = { ...localAddedSections };
+            delete next[sectionId];
+            updateLocalSections(next);
+          }}
+          className="ml-2 inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/20 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+          title="Eliminar sección"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <textarea
+        className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        placeholder={`Contenido de ${section.name}...`}
+        value={section.content}
+        onChange={(e) => {
+          updateLocalSections({
+            ...localAddedSections,
+            [sectionId]: {
+              ...section,
+              content: e.target.value,
+            },
+          });
+        }}
+      />
+    </div>
+  );
 
   // Cargar tipos de proyecto desde el backend
   const { data: _projectTypes = [] } = useSWR<
@@ -412,6 +658,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     enabled: isProjectCreated && Boolean(currentProjectId),
     debounceMs: 2000,
   });
+  const isAutoSaving = isSaving || isSavingSections;
 
   // Auto-guardar cuando cambian los datos (después de que el proyecto fue creado)
   // Incluye todos los campos de info básica: título, descripción, categoría, tipo de proyecto, etc.
@@ -499,6 +746,83 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     isProjectCreated,
     currentProjectId,
   ]);
+
+  // Auto-save para secciones agregadas (debounce 1.2s)
+  useEffect(() => {
+    if (!isOpen || !isProjectCreated || !currentProjectId) return;
+    if (!hasEditedSectionsRef.current) return;
+    if (
+      Object.keys(localAddedSections).length === 0 &&
+      !hadSectionsRef.current
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      const saveId = lastSectionsSaveIdRef.current + 1;
+      lastSectionsSaveIdRef.current = saveId;
+      setIsSavingSections(true);
+      try {
+        console.log(
+          `💾 Modal: Auto-guardando ${Object.keys(localAddedSections).length} secciones`
+        );
+        const response = await fetch('/api/project-sections-save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId: currentProjectId,
+            sections: localAddedSections,
+          }),
+        });
+
+        if (response.ok) {
+          console.log(`✅ Modal: Secciones auto-guardadas correctamente`);
+        } else {
+          const error = await response.json();
+          console.error(`❌ Modal: Error al auto-guardar:`, error);
+        }
+      } catch (error) {
+        console.error('❌ Modal: Error al auto-guardar secciones:', error);
+      } finally {
+        if (lastSectionsSaveIdRef.current === saveId) {
+          setIsSavingSections(false);
+        }
+      }
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, isProjectCreated, currentProjectId, localAddedSections]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      hasEditedSectionsRef.current = false;
+      hadSectionsRef.current = false;
+      lastSectionsProjectIdRef.current = undefined;
+      setIsSavingSections(false);
+      if (!areSectionsEqual(localAddedSections, addedSections)) {
+        setLocalAddedSections(addedSections);
+      }
+      return;
+    }
+
+    const shouldSync =
+      lastSectionsProjectIdRef.current !== projectId ||
+      !hasEditedSectionsRef.current;
+
+    if (shouldSync) {
+      if (!areSectionsEqual(localAddedSections, addedSections)) {
+        setLocalAddedSections(addedSections);
+      }
+      hadSectionsRef.current = Object.keys(addedSections).length > 0;
+      lastSectionsProjectIdRef.current = projectId;
+    }
+  }, [isOpen, projectId, addedSections, localAddedSections]);
+
+  useEffect(() => {
+    if (Object.keys(localAddedSections).length > 0) {
+      hadSectionsRef.current = true;
+    }
+  }, [localAddedSections]);
 
   // Sincronizar estado SOLO cuando se abre el modal por primera vez
   useEffect(() => {
@@ -706,6 +1030,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       const content = await generateContent({
         type: 'titulo',
         prompt: `Basándote en este título: "${formData.titulo}", genera un título alternativo SOBRE EL MISMO TEMA pero redactado de forma más profesional, clara y atractiva. Mantén el tema principal y el contexto. Solo responde con el título mejorado, sin comillas ni explicaciones.`,
+        existingText: formData.titulo,
+        titulo: formData.titulo,
       });
 
       if (content) {
@@ -725,6 +1051,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     const content = await generateContent({
       type: 'descripcion',
       prompt: `Genera una descripción BREVE (120-150 palabras, un párrafo) para un proyecto estudiantil con el título: "${formData.titulo}". Describe desde la perspectiva del ESTUDIANTE: qué problema va a resolver, qué va a crear/desarrollar, qué habilidades aplicará, y quién se beneficiará. Usa lenguaje directo y motivador. Solo responde con la descripción, sin títulos.`,
+      existingText: formData.description,
+      titulo: formData.titulo,
+      descripcion: formData.description,
     });
 
     if (content) {
@@ -742,6 +1071,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     const content = await generateContent({
       type: 'justificacion',
       prompt,
+      existingText: formData.justificacion,
+      titulo: formData.titulo,
+      descripcion: formData.description,
     });
 
     if (content) {
@@ -759,6 +1091,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     const content = await generateContent({
       type: 'objetivoGen',
       prompt,
+      existingText: formData.objetivoGen,
+      titulo: formData.titulo,
+      descripcion: formData.description,
     });
 
     if (content) {
@@ -870,7 +1205,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     formData.tipoProyecto?.trim() || tipoProyecto?.trim() || '';
 
   const handleNext = () => {
-    if (isSaving) return;
+    if (isAutoSaving) return;
     if (currentStep < steps.length) {
       if (!isProjectCreated && currentStep === 1) return;
       setCurrentStep(currentStep + 1);
@@ -878,7 +1213,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   };
 
   const handlePrevious = () => {
-    if (isSaving) return;
+    if (isAutoSaving) return;
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
@@ -1132,6 +1467,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   // Handler unificado para el botón principal
   const handleMainButtonClick = async () => {
+    if (isAutoSaving) return;
     if (isCreateStep) {
       await handleCreateProject();
     } else {
@@ -1144,17 +1480,17 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       case 1:
         return (
           <div className="space-y-4">
-            <div className="mb-4 rounded-lg border border-accent/30 bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 p-4">
+            <div className="mb-4 rounded-[16px] border border-[#22c4d34d] bg-[#22c4d31a] from-accent/10 via-primary/10 to-accent/10 p-4">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/20">
-                  <Sparkles className="h-5 w-5 text-accent" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#22c4d333]">
+                  <FaWandMagicSparkles className="h-5 w-5 text-[#22c4d3]" />
                 </div>
                 <div className="flex-1">
                   <div className="mb-1 flex items-center gap-2">
                     <h4 className="text-sm font-semibold text-foreground">
                       Asistente de IA
                     </h4>
-                    <div className="inline-flex items-center rounded-full border border-accent/30 bg-accent/20 px-2.5 py-0.5 text-xs font-semibold text-accent transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                    <div className="inline-flex items-center rounded-full border border-[#22c4d34d] bg-[#22c4d333] px-2.5 py-0.5 text-xs font-semibold text-accent transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
                       Nuevo
                     </div>
                   </div>
@@ -1167,12 +1503,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       runGenerate('descripcion-card', handleGenerateDescripcion)
                     }
                     disabled={isGenerating}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-3 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-[14px] border border-[#22c4d3]/30 bg-[#22c4d3]/10 px-3 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-[#22c4d3]/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                   >
                     {isGeneratingFor('descripcion-card') ? (
                       <span className="ai-generate-loader" aria-hidden />
                     ) : (
-                      <Sparkles className="mr-2 h-4 w-4" />
+                      <FaWandMagicSparkles className="mr-2 h-4 w-4" />
                     )}
                     <span
                       className={
@@ -1183,7 +1519,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     >
                       {isGeneratingFor('descripcion-card')
                         ? 'Generando...'
-                        : 'Generar con IA'}
+                        : formData.description.trim()
+                          ? 'Regenerar con IA'
+                          : 'Generar con IA'}
                     </span>
                   </button>
                 </div>
@@ -1213,17 +1551,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   title="Generar títulos alternativos con IA basados en tu título"
                   className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
-                  <RefreshCw
-                    className={
-                      isGeneratingFor('titulo')
-                        ? 'h-4 w-4 animate-spin transition-transform'
-                        : 'h-4 w-4 transition-transform'
-                    }
-                  />
+                  {isGeneratingFor('titulo') ? (
+                    <RefreshCw className="h-4 w-4 animate-spin transition-transform" />
+                  ) : (
+                    <Pencil className="h-4 w-4 transition-transform" />
+                  )}
                 </button>
               </div>
               <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
-                <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
                 <span>
                   Escribe tu título manualmente. Usa el botón 🔄 para generar
                   títulos alternativos sobre el mismo tema.
@@ -1249,7 +1585,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {isGeneratingFor('descripcion-field') ? (
                     <span className="ai-generate-loader" aria-hidden />
                   ) : (
-                    <RefreshCw className="h-3 w-3" />
+                    <FaWandMagicSparkles className="h-3 w-3" />
                   )}
                   <span
                     className={
@@ -1258,7 +1594,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         : ''
                     }
                   >
-                    Generar con IA
+                    {formData.description.trim()
+                      ? 'Regenerar con IA'
+                      : 'Generar con IA'}
                   </span>
                 </button>
               </div>
@@ -1567,6 +1905,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         const result = await generateContent({
                           type: 'problema',
                           prompt,
+                          existingText: formData.planteamiento,
+                          titulo: formData.titulo,
+                          descripcion: formData.description,
                         });
                         if (result) {
                           setFormData((prev) => ({
@@ -1584,7 +1925,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {isGeneratingFor('problema') ? (
                     <span className="ai-generate-loader" aria-hidden />
                   ) : (
-                    <RefreshCw className="mr-1.5 h-3 w-3" />
+                    <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
                   )}
                   <span
                     className={
@@ -1593,7 +1934,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         : 'text-xs'
                     }
                   >
-                    Generar con IA
+                    {formData.planteamiento?.trim()
+                      ? 'Regenerar con IA'
+                      : 'Generar con IA'}
                   </span>
                 </button>
               </div>
@@ -1604,71 +1947,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   setFormData({ ...formData, planteamiento: e.target.value })
                 }
                 placeholder="Describe el problema que resolverá el proyecto..."
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <label className="text-sm font-medium">Justificación</label>
-                <button
-                  type="button"
-                  onClick={() =>
-                    runGenerate('justificacion', async () => {
-                      try {
-                        const context = buildProjectContext(
-                          formData.titulo,
-                          formData.description
-                        );
-                        if (!context) {
-                          alert(
-                            'Completa el título o la descripción del proyecto antes de generar con IA.'
-                          );
-                          return;
-                        }
-
-                        const prompt = (formData.justificacion ?? '').trim()
-                          ? `Mejora y reescribe la justificación del proyecto manteniendo el significado. Contexto del proyecto: "${context}". Problema: "${formData.planteamiento || 'No especificado'}". Justificación actual: "${formData.justificacion}". Responde solo con la justificación mejorada.`
-                          : `Genera una justificación clara para un proyecto educativo. Contexto del proyecto: "${context}". Problema: "${formData.planteamiento || 'No especificado'}". Responde solo con la justificación.`;
-
-                        const result = await generateContent({
-                          type: 'justificacion',
-                          prompt,
-                        });
-                        if (result) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            justificacion: result,
-                          }));
-                        }
-                      } catch (error) {
-                        console.error('Error generando justificación:', error);
-                      }
-                    })
-                  }
-                  className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/10 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-                >
-                  {isGeneratingFor('justificacion') ? (
-                    <span className="ai-generate-loader" aria-hidden />
-                  ) : (
-                    <RefreshCw className="mr-1.5 h-3 w-3" />
-                  )}
-                  <span
-                    className={
-                      isGeneratingFor('justificacion')
-                        ? 'ai-generate-text-pulse text-xs'
-                        : 'text-xs'
-                    }
-                  >
-                    Generar con IA
-                  </span>
-                </button>
-              </div>
-              <textarea
-                className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                value={formData.justificacion}
-                onChange={(e) =>
-                  setFormData({ ...formData, justificacion: e.target.value })
-                }
-                placeholder="Explica por qué es importante resolver este problema..."
               />
             </div>
           </div>
@@ -1701,6 +1979,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       const result = await generateContent({
                         type: 'objetivoGen',
                         prompt,
+                        existingText: formData.objetivoGen,
+                        titulo: formData.titulo,
+                        descripcion: formData.description,
                       });
                       if (result) {
                         setFormData((prev) => ({
@@ -1714,22 +1995,24 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   })
                 }
                 className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/10 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-              >
-                {isGeneratingFor('objetivoGen') ? (
-                  <span className="ai-generate-loader" aria-hidden />
-                ) : (
-                  <RefreshCw className="mr-1.5 h-3 w-3" />
-                )}
-                <span
-                  className={
-                    isGeneratingFor('objetivoGen')
-                      ? 'ai-generate-text-pulse text-xs'
-                      : 'text-xs'
-                  }
                 >
-                  Generar con IA
-                </span>
-              </button>
+                  {isGeneratingFor('objetivoGen') ? (
+                    <span className="ai-generate-loader" aria-hidden />
+                  ) : (
+                    <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
+                  )}
+                  <span
+                    className={
+                      isGeneratingFor('objetivoGen')
+                        ? 'ai-generate-text-pulse text-xs'
+                        : 'text-xs'
+                    }
+                  >
+                    {formData.objetivoGen?.trim()
+                      ? 'Regenerar con IA'
+                      : 'Generar con IA'}
+                  </span>
+                </button>
             </div>
             <textarea
               className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -1740,7 +2023,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               }
             />
             <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
-              <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
               <span>
                 El objetivo general debe ser claro, alcanzable y alineado con el
                 problema que se busca resolver.
@@ -1792,6 +2075,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       const result = await generateContent({
                         type: 'requisitos',
                         prompt,
+                        existingText: formData.requirements?.join('\n'),
+                        titulo: formData.titulo,
+                        descripcion: formData.description,
                       });
                       if (result) {
                         const requirements = dedupeRequirements(
@@ -1815,7 +2101,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 {isGeneratingFor('requisitos') ? (
                   <span className="ai-generate-loader" aria-hidden />
                 ) : (
-                  <RefreshCw className="mr-1.5 h-3 w-3" />
+                  <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
                 )}
                 <span
                   className={
@@ -1824,7 +2110,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       : 'text-xs'
                   }
                 >
-                  Generar con IA
+                  {formData.requirements && formData.requirements.length > 0
+                    ? 'Regenerar con IA'
+                    : 'Generar con IA'}
                 </span>
               </button>
             </div>
@@ -1885,7 +2173,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               </button>
             </div>
             <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
-              <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
               <span>
                 Los requisitos deben ser específicos, medibles y alineados con
                 los objetivos del proyecto.
@@ -2105,6 +2393,18 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       const result = await generateContent({
                         type: 'objetivosEsp',
                         prompt,
+                        existingText: (formData.objetivosEsp || [])
+                          .map((obj, index) => {
+                            const title = obj.title || `Objetivo ${index + 1}`;
+                            const acts = (obj.activities || [])
+                              .map((act) => `Actividad: ${act.title || ''}`)
+                              .filter(Boolean)
+                              .join('\n');
+                            return acts ? `${title}\n${acts}` : title;
+                          })
+                          .join('\n\n'),
+                        titulo: formData.titulo,
+                        descripcion: formData.description,
                       });
                       if (result) {
                         activitiesDirtyRef.current = true;
@@ -2124,7 +2424,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 {isGeneratingFor('objetivosEsp') ? (
                   <span className="ai-generate-loader" aria-hidden />
                 ) : (
-                  <RefreshCw className="mr-1.5 h-3 w-3" />
+                  <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
                 )}
                 <span
                   className={
@@ -2133,7 +2433,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       : 'text-xs'
                   }
                 >
-                  Generar con IA
+                  {formData.objetivosEsp && formData.objetivosEsp.length > 0
+                    ? 'Regenerar con IA'
+                    : 'Generar con IA'}
                 </span>
               </button>
             </div>
@@ -2591,6 +2893,73 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           );
         })();
 
+      case 8: {
+        const predefinedSections = Object.entries(localAddedSections).filter(
+          ([sectionId]) => !sectionId.startsWith('custom-')
+        );
+        const customSections = Object.entries(localAddedSections).filter(
+          ([sectionId]) => sectionId.startsWith('custom-')
+        );
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                Agrega y personaliza secciones. Se guardan automáticamente.
+              </p>
+              <AddSectionDropdown
+                addedSections={Object.keys(localAddedSections)}
+                onSectionSelect={handleAddSectionFromModal}
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Secciones predefinidas
+                  </h4>
+                  <span className="text-xs text-muted-foreground">
+                    {predefinedSections.length}
+                  </span>
+                </div>
+                {predefinedSections.length > 0 ? (
+                  predefinedSections.map(([sectionId, section]) =>
+                    renderSectionCard(sectionId, section)
+                  )
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-border/50 p-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No hay secciones predefinidas agregadas.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Secciones personalizadas
+                  </h4>
+                  <span className="text-xs text-muted-foreground">
+                    {customSections.length}
+                  </span>
+                </div>
+                {customSections.length > 0 ? (
+                  customSections.map(([sectionId, section]) =>
+                    renderSectionCard(sectionId, section)
+                  )
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-border/50 p-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No hay secciones personalizadas agregadas aún.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       default:
         return null;
     }
@@ -2602,7 +2971,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         role="dialog"
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
-        className="relative flex h-[75vh] max-h-[650px] w-full max-w-2xl gap-4 overflow-hidden border bg-background p-0 shadow-lg duration-200 sm:rounded-lg"
+        className="relative flex h-[75vh] max-h-[650px] w-full max-w-2xl gap-4 overflow-hidden rounded-[16px] border bg-background p-0 shadow-lg duration-200"
         style={{ pointerEvents: 'auto' }}
       >
         {/* Layout principal con sidebar y contenido */}
@@ -2611,7 +2980,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           <div className="flex w-12 shrink-0 flex-col items-center border-r border-border/50 bg-muted/30 py-4">
             <button
               onClick={handlePrevious}
-              disabled={currentStep === 1 || isSaving}
+              disabled={currentStep === 1 || isAutoSaving}
               className="inline-flex h-8 w-8 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               title="Paso anterior"
             >
@@ -2624,11 +2993,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 <button
                   key={step.id}
                   onClick={() => {
-                    if (!isSaving && (isProjectCreated || step.id === 1)) {
+                    if (!isAutoSaving && (isProjectCreated || step.id === 1)) {
                       setCurrentStep(step.id);
                     }
                   }}
-                  disabled={isSaving || (!isProjectCreated && step.id !== 1)}
+                  disabled={
+                    isAutoSaving || (!isProjectCreated && step.id !== 1)
+                  }
                   className={`h-2.5 w-2.5 rounded-full transition-all ${
                     step.id === currentStep
                       ? 'scale-125 bg-[#22c4d3]'
@@ -2644,7 +3015,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               disabled={
                 currentStep === steps.length ||
                 (!isProjectCreated && currentStep === 1) ||
-                isSaving
+                isAutoSaving
               }
               className="inline-flex h-8 w-8 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               title="Paso siguiente"
@@ -2670,7 +3041,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {/* Indicador de guardado */}
                   {isProjectCreated && (
                     <div className="absolute top-4 right-12 flex items-center">
-                      {isSaving ? (
+                  {isAutoSaving ? (
                         <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
                       ) : (
                         <svg
@@ -2726,7 +3097,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             <div className="flex items-center justify-between border-t border-border/50 bg-card/50 p-4">
               <button
                 onClick={handlePrevious}
-                disabled={currentStep === 1 || isSaving}
+                disabled={currentStep === 1 || isAutoSaving}
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-[16px] bg-[#22c4d3] px-4 py-2 text-sm font-medium whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -2736,7 +3107,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleMainButtonClick}
-                  disabled={nextDisabled || isSaving}
+                  disabled={nextDisabled || isAutoSaving}
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-[16px] bg-[#22c4d3] px-4 py-2 text-sm font-medium whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   {isCreateStep ? (
@@ -2762,13 +3133,26 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         <button
           type="button"
           onClick={onClose}
-          disabled={isSaving}
+          disabled={isAutoSaving}
           className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-40 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Cerrar</span>
         </button>
       </div>
+
+      <AddCustomSectionModal
+        isOpen={showAddCustomSectionModal}
+        onClose={() => {
+          setShowAddCustomSectionModal(false);
+          setPendingSection(null);
+        }}
+        onAdd={handleAddCustomSectionFromModal}
+        isLoading={isAddingCustomSection}
+        initialName={pendingSection?.name ?? ''}
+        nameLocked={Boolean(pendingSection && !pendingSection.isCustom)}
+        onGenerateDescription={handleGenerateSectionDescription}
+      />
     </div>
   );
 };

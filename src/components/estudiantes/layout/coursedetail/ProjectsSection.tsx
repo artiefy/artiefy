@@ -36,6 +36,10 @@ export function ProjectsSection({
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [modalProject, setModalProject] = useState<Project | null>(null);
   const [modalStep, setModalStep] = useState<number | undefined>(undefined);
+  const [addedSections, setAddedSections] = useState<
+    Record<string, { name: string; content: string }>
+  >({});
+  const selectedProjectId = selectedProject?.id;
 
   // Cargar proyectos al montar el componente
   useEffect(() => {
@@ -63,6 +67,45 @@ export function ProjectsSection({
     void fetchProjects();
   }, [courseId]);
 
+  // Cargar secciones del proyecto cuando se selecciona uno
+  useEffect(() => {
+    const loadSections = async () => {
+      if (!selectedProjectId) {
+        console.log('📂 No hay proyecto seleccionado, limpiando secciones');
+        setAddedSections({});
+        return;
+      }
+
+      try {
+        console.log(
+          `📂 useEffect: Obteniendo secciones para proyecto ${selectedProjectId}`
+        );
+        const response = await fetch(
+          `/api/project-sections?projectId=${selectedProjectId}`
+        );
+
+        if (!response.ok) {
+          console.error(
+            `❌ Error HTTP ${response.status}:`,
+            response.statusText
+          );
+          return;
+        }
+
+        const sections = await response.json();
+        console.log(
+          `✅ useEffect: Secciones obtenidas: ${Object.keys(sections).length}`,
+          sections
+        );
+        setAddedSections(sections);
+      } catch (error) {
+        console.error('❌ useEffect: Error al cargar secciones:', error);
+      }
+    };
+
+    void loadSections();
+  }, [selectedProjectId]);
+
   const handleCreateProject = async () => {
     if (!isEnrolled) {
       toast.error('Debes estar inscrito en el curso para crear proyectos');
@@ -75,6 +118,7 @@ export function ProjectsSection({
 
   const handleEnterProject = async (project: Project) => {
     // Mostrar el detalle del proyecto in-place
+    console.log(`🔍 Abriendo proyecto ${project.id} - ${project.name}`);
     setSelectedProject(project);
 
     try {
@@ -82,6 +126,7 @@ export function ProjectsSection({
       if (!response.ok) return;
       const data = (await response.json()) as Project;
       setSelectedProject(data);
+      // Las secciones se cargarán automáticamente por el useEffect
     } catch (error) {
       console.error('Error al cargar detalle del proyecto:', error);
     }
@@ -91,11 +136,59 @@ export function ProjectsSection({
     setSelectedProject(null);
   };
 
-  const handleEditSection = (step: number) => {
+  const handleEditSection = (
+    step: number,
+    sections?: Record<string, { name: string; content: string }>
+  ) => {
     if (!selectedProject) return;
     setModalProject(selectedProject);
     setModalStep(step);
+    if (sections) {
+      setAddedSections(sections);
+    }
     setShowModal(true);
+  };
+
+  const handleModalClose = async () => {
+    // No guardar aquí porque las secciones ya se guardan automáticamente
+    // cuando se crean/editan desde el detalle del proyecto
+    console.log(`📁 handleModalClose: Cerrando modal (secciones ya guardadas)`);
+
+    // Cerrar modal y limpiar estado
+    setShowModal(false);
+    setModalStep(undefined);
+    setModalProject(null);
+
+    // Recargar secciones del proyecto actual (si existe) para sincronizar
+    if (selectedProject) {
+      try {
+        console.log(
+          `📂 handleModalClose: Sincronizando secciones para proyecto ${selectedProject.id}`
+        );
+        const response = await fetch(
+          `/api/project-sections?projectId=${selectedProject.id}`
+        );
+
+        if (response.ok) {
+          const sections = await response.json();
+          console.log(
+            `✅ handleModalClose: Secciones recargadas: ${Object.keys(sections).length}`,
+            sections
+          );
+          setAddedSections(sections);
+        } else {
+          console.error(
+            `❌ handleModalClose: Error HTTP ${response.status}`,
+            response.statusText
+          );
+        }
+      } catch (error) {
+        console.error(
+          '❌ handleModalClose: Error al recargar secciones:',
+          error
+        );
+      }
+    }
   };
 
   const applyProjectUpdate = (updated: Record<string, unknown>) => {
@@ -205,17 +298,15 @@ export function ProjectsSection({
           <ProjectDetailView
             project={selectedProject}
             onEditSection={handleEditSection}
+            addedSections={addedSections}
+            onAddedSectionsChange={setAddedSections}
           />
         </div>
 
         {/* Modal siempre disponible en detalle del proyecto */}
         <ModalResumen
           isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-            setModalStep(undefined);
-            setModalProject(null);
-          }}
+          onClose={handleModalClose}
           initialStep={modalStep}
           titulo={modalProject?.name ?? ''}
           planteamiento={modalProject?.planteamiento ?? ''}
@@ -254,6 +345,8 @@ export function ProjectsSection({
           horasPorDiaProyecto={6}
           setHorasPorDiaProyecto={() => {}}
           tiempoEstimadoProyecto={0}
+          addedSections={addedSections}
+          onAddedSectionsChange={setAddedSections}
           setTiempoEstimadoProyecto={() => {}}
           onAnterior={() => {}}
           setPlanteamiento={() => {}}

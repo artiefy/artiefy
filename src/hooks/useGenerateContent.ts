@@ -10,6 +10,11 @@ interface GenerateContentOptions {
     | 'objetivosEsp'
     | 'requisitos';
   prompt: string;
+  titulo?: string;
+  descripcion?: string;
+  existingText?: string;
+  sectionTitle?: string;
+  sectionsContext?: string;
 }
 
 interface GenerateContentResponse {
@@ -113,6 +118,11 @@ export const useGenerateContent = () => {
       const payload = {
         type: options.type,
         prompt: options.prompt,
+        titulo: options.titulo,
+        descripcion: options.descripcion,
+        existingText: options.existingText,
+        sectionTitle: options.sectionTitle,
+        sectionsContext: options.sectionsContext,
         timestamp: new Date().toISOString(),
       };
 

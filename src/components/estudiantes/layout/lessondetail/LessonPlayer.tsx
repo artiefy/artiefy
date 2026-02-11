@@ -21,7 +21,7 @@ export default function LessonPlayer({
   handleProgressUpdate,
   onTimeUpdate,
 }: LessonPlayerProps) {
-  const isLocked = lesson.isLocked ?? false;
+  const isLocked = false;
   const playerRef = useRef<VideoPlayerHandle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -46,6 +46,9 @@ export default function LessonPlayer({
                 isVideoCompleted={progress === 100}
                 isLocked={isLocked}
                 resumeProgress={progress}
+                resumeTimeSeconds={
+                  progress === 100 ? 0 : (lesson.lastPositionSeconds ?? 0)
+                }
                 onPlaybackChange={setIsPlaying}
                 ref={playerRef}
               />

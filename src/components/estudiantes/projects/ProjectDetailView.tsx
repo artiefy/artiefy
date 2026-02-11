@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   Calendar,
@@ -19,6 +19,7 @@ import {
   Upload,
   Users,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import {
   Tabs,
@@ -26,19 +27,31 @@ import {
   TabsList,
   TabsTrigger,
 } from '~/components/projects/ui/tabs';
+import { useGenerateContent } from '~/hooks/useGenerateContent';
 
 import { Progress } from './ui/progress';
+import AddCustomSectionModal from './AddCustomSectionModal';
+import AddSectionDropdown from './AddSectionDropdown';
 
 import type { Project } from '~/types/project';
 
 interface ProjectDetailViewProps {
   project: Project;
-  onEditSection?: (step: number) => void;
+  onEditSection?: (
+    step: number,
+    addedSections?: Record<string, { name: string; content: string }>
+  ) => void;
+  addedSections?: Record<string, { name: string; content: string }>;
+  onAddedSectionsChange?: (
+    sections: Record<string, { name: string; content: string }>
+  ) => void;
 }
 
 export default function ProjectDetailView({
   project,
   onEditSection,
+  addedSections: initialAddedSections = {},
+  onAddedSectionsChange,
 }: ProjectDetailViewProps) {
   const totalSections = 7;
   const hasBasicInfo = Boolean(
@@ -119,6 +132,216 @@ export default function ProjectDetailView({
   const [deliverableOverrides, setDeliverableOverrides] = useState<
     Record<number, { url: string; name: string; submittedAt: string }>
   >({});
+  const [addedSections, setAddedSectionsState] =
+    useState<Record<string, { name: string; content: string }>>(
+      initialAddedSections
+    );
+  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [isAddingSectionLoading, setIsAddingSectionLoading] = useState(false);
+  const [isDeletingSection, setIsDeletingSection] = useState<string | null>(
+    null
+  );
+  const [pendingSection, setPendingSection] = useState<{
+    id: string;
+    name: string;
+    isCustom: boolean;
+  } | null>(null);
+
+  const { generateContent } = useGenerateContent();
+
+  // Sincronizar estado local con cambios de prop del padre
+  useEffect(() => {
+    console.log(
+      `📋 ProjectDetailView: Sincronizando secciones desde prop:`,
+      initialAddedSections
+    );
+    setAddedSectionsState(initialAddedSections);
+  }, [initialAddedSections]);
+
+  const setAddedSections = (
+    sections:
+      | Record<string, { name: string; content: string }>
+      | ((
+          prev: Record<string, { name: string; content: string }>
+        ) => Record<string, { name: string; content: string }>)
+  ) => {
+    const newSections =
+      typeof sections === 'function' ? sections(addedSections) : sections;
+    setAddedSectionsState(newSections);
+    onAddedSectionsChange?.(newSections);
+  };
+
+  const handleSectionSelect = async (sectionId: string, isCustom?: boolean) => {
+    if (isCustom) {
+      setPendingSection({ id: 'custom', name: '', isCustom: true });
+      setShowAddCustomModal(true);
+      return;
+    }
+
+    if (!addedSections[sectionId]) {
+      setPendingSection({
+        id: sectionId,
+        name: getSectionLabel(sectionId),
+        isCustom: false,
+      });
+      setShowAddCustomModal(true);
+    }
+  };
+
+  const getSectionLabel = (sectionId: string): string => {
+    const labels: Record<string, string> = {
+      introduccion: 'Introducción',
+      justificacion: 'Justificación',
+      'marco-teorico': 'Marco Teórico',
+      metodologia: 'Metodología',
+      alcance: 'Alcance',
+      equipo: 'Equipo',
+    };
+    return labels[sectionId] ?? sectionId;
+  };
+
+  const handleAddCustomSection = async (name: string, description: string) => {
+    setIsAddingSectionLoading(true);
+    try {
+      const sectionId = pendingSection?.isCustom
+        ? `custom-${Date.now()}`
+        : pendingSection?.id ?? `custom-${Date.now()}`;
+      const sectionName = pendingSection?.isCustom
+        ? name
+        : pendingSection?.name ?? name;
+      const newSections = {
+        ...addedSections,
+        [sectionId]: { name: sectionName, content: description },
+      };
+
+      console.log(`📝 handleAddCustomSection: Guardando sección personalizada`);
+      // Guardar en BD de forma silenciosa
+      const response = await fetch('/api/project-sections-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          sections: newSections,
+        }),
+      });
+
+      if (response.ok) {
+        // Actualizar estado local solo si se guardó exitosamente
+        setAddedSections(newSections);
+        setShowAddCustomModal(false);
+        setPendingSection(null);
+        toast.success('Sección personalizada agregada correctamente');
+        console.log(
+          `✅ handleAddCustomSection: Sección personalizada guardada`
+        );
+      } else {
+        const error = await response.json();
+        console.error(`❌ handleAddCustomSection: ${error.error}`);
+        toast.error(error.error || 'Error al agregar sección');
+      }
+    } catch (error) {
+      console.error('❌ handleAddCustomSection: Error:', error);
+      toast.error('Error al agregar sección');
+    } finally {
+      setIsAddingSectionLoading(false);
+    }
+  };
+
+  const sectionContext = useMemo(() => {
+    const parts = [
+      project.name?.trim() ? `Título del proyecto: ${project.name.trim()}` : '',
+      project.description?.trim()
+        ? `Descripción del proyecto: ${project.description.trim()}`
+        : project.planteamiento?.trim()
+          ? `Descripción del proyecto: ${project.planteamiento.trim()}`
+          : '',
+      project.planteamiento?.trim()
+        ? `Problema: ${project.planteamiento.trim()}`
+        : '',
+      project.justificacion?.trim()
+        ? `Justificación: ${project.justificacion.trim()}`
+        : '',
+      project.objetivo_general?.trim()
+        ? `Objetivo general: ${project.objetivo_general.trim()}`
+        : '',
+    ].filter(Boolean);
+
+    const extraSections = Object.entries(addedSections)
+      .map(([id, section]) => {
+        const label = section.name?.trim() || id;
+        const content = section.content?.trim() || '';
+        if (!content) return `Sección ${label}: (sin contenido)`;
+        return `Sección ${label}: ${content}`;
+      })
+      .filter(Boolean)
+      .slice(0, 6);
+
+    const context = [...parts, ...extraSections].join('\n');
+    return context.length > 2000 ? context.slice(0, 2000) : context;
+  }, [project, addedSections]);
+
+  const handleGenerateSectionDescription = async (
+    currentText: string,
+    sectionTitleOverride: string
+  ) => {
+    if (!pendingSection) return null;
+    const sectionTitle =
+      sectionTitleOverride.trim() ||
+      pendingSection.name ||
+      'Sección';
+    const basePrompt = currentText.trim()
+      ? `Mejora y reescribe el contenido de la sección "${sectionTitle}" manteniendo el significado.`
+      : `Genera el contenido para la sección "${sectionTitle}" de un proyecto educativo.`;
+    const prompt = `${basePrompt}\n\nContexto del proyecto:\n${sectionContext}\n\nResponde solo con el contenido de la sección.`;
+
+    const result = await generateContent({
+      type: 'descripcion',
+      prompt,
+      titulo: project.name ?? '',
+      descripcion: project.description ?? project.planteamiento ?? '',
+      existingText: currentText,
+      sectionTitle,
+      sectionsContext: sectionContext,
+    });
+
+    return result;
+  };
+
+  const handleDeleteSection = async (sectionId: string) => {
+    try {
+      setIsDeletingSection(sectionId);
+      console.log(`🗑️ Eliminando sección: ${sectionId}`);
+
+      const response = await fetch('/api/project-sections-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          sectionId,
+        }),
+      });
+
+      if (response.ok) {
+        // Eliminar del estado local
+        setAddedSections((prev) => {
+          const newSections = { ...prev };
+          delete newSections[sectionId];
+          return newSections;
+        });
+        toast.success('Sección eliminada correctamente');
+        console.log(`✅ Sección eliminada: ${sectionId}`);
+      } else {
+        const error = await response.json();
+        console.error(`❌ Error al eliminar: ${error.error}`);
+        toast.error(error.error || 'Error al eliminar sección');
+      }
+    } catch (error) {
+      console.error('❌ Error al eliminar sección:', error);
+      toast.error('Error al eliminar sección');
+    } finally {
+      setIsDeletingSection(null);
+    }
+  };
 
   const normalizeActivityId = (value: unknown) => {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -600,7 +823,7 @@ export default function ProjectDetailView({
             </div>
             <button
               type="button"
-              onClick={() => onEditSection?.(1)}
+              onClick={() => onEditSection?.(1, addedSections)}
               className="inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
             >
               <Pencil className="h-3.5 w-3.5" />
@@ -675,6 +898,14 @@ export default function ProjectDetailView({
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          {/* Botón Agregar Sección */}
+          <div className="flex justify-end">
+            <AddSectionDropdown
+              addedSections={Object.keys(addedSections)}
+              onSectionSelect={handleSectionSelect}
+            />
+          </div>
+
           {/* Problema */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-5">
             <div className="mb-4 flex items-center justify-between">
@@ -688,7 +919,7 @@ export default function ProjectDetailView({
               </div>
               <button
                 type="button"
-                onClick={() => onEditSection?.(2)}
+                onClick={() => onEditSection?.(2, addedSections)}
                 className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Pencil className="h-4 w-4" />
@@ -705,35 +936,32 @@ export default function ProjectDetailView({
             )}
           </div>
 
-          {/* Justificación */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/20">
-                  <Lightbulb className="h-4 w-4 text-yellow-400" />
+          {/* Justificación - Solo si existe */}
+          {(project.justificacion || addedSections['justificacion']) && (
+            <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/20">
+                    <Lightbulb className="h-4 w-4 text-yellow-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Justificación
+                  </h3>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  Justificación
-                </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => onEditSection?.(2)}
-                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {project.justificacion ||
+              addedSections['justificacion']?.content ? (
+                <p className="leading-relaxed text-muted-foreground">
+                  {project.justificacion ||
+                    addedSections['justificacion']?.content}
+                </p>
+              ) : (
+                <p className="text-muted-foreground">
+                  No hay contenido definido aún.
+                </p>
+              )}
             </div>
-            {project.justificacion ? (
-              <p className="leading-relaxed text-muted-foreground">
-                {project.justificacion}
-              </p>
-            ) : (
-              <p className="text-muted-foreground">
-                No hay justificación definida aún.
-              </p>
-            )}
-          </div>
+          )}
 
           {/* Objetivo General */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-5">
@@ -751,7 +979,7 @@ export default function ProjectDetailView({
               </div>
               <button
                 type="button"
-                onClick={() => onEditSection?.(3)}
+                onClick={() => onEditSection?.(3, addedSections)}
                 className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Pencil className="h-4 w-4" />
@@ -781,7 +1009,7 @@ export default function ProjectDetailView({
               </div>
               <button
                 type="button"
-                onClick={() => onEditSection?.(4)}
+                onClick={() => onEditSection?.(4, addedSections)}
                 className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Pencil className="h-4 w-4" />
@@ -847,7 +1075,7 @@ export default function ProjectDetailView({
               </div>
               <button
                 type="button"
-                onClick={() => onEditSection?.(6)}
+                onClick={() => onEditSection?.(6, addedSections)}
                 className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Pencil className="h-4 w-4" />
@@ -1289,7 +1517,7 @@ export default function ProjectDetailView({
                 </div>
                 <button
                   type="button"
-                  onClick={() => onEditSection?.(7)}
+                  onClick={() => onEditSection?.(7, addedSections)}
                   className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   <Pencil className="h-4 w-4" />
@@ -1599,7 +1827,7 @@ export default function ProjectDetailView({
                 </div>
                 <button
                   type="button"
-                  onClick={() => onEditSection?.(7)}
+                  onClick={() => onEditSection?.(7, addedSections)}
                   className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   <Pencil className="h-4 w-4" />
@@ -1867,6 +2095,60 @@ export default function ProjectDetailView({
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Secciones Agregadas */}
+      {Object.entries(addedSections).map(([sectionId, section]) => (
+        <div
+          key={sectionId}
+          className="mt-4 rounded-xl border border-border/50 bg-card/50 p-5"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">
+              {section.name}
+            </h3>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => onEditSection?.(8, addedSections)}
+                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                title="Editar sección en modal"
+              >
+                <Pencil size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteSection(sectionId)}
+                disabled={isDeletingSection === sectionId}
+                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-red-500 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
+                title="Eliminar sección"
+              >
+                {isDeletingSection === sectionId ? '⏳' : '×'}
+              </button>
+            </div>
+          </div>
+          {section.content ? (
+            <p className="leading-relaxed text-muted-foreground">
+              {section.content}
+            </p>
+          ) : (
+            <p className="text-muted-foreground">Sin contenido.</p>
+          )}
+        </div>
+      ))}
+
+      {/* Modal Agregar Sección */}
+      <AddCustomSectionModal
+        isOpen={showAddCustomModal}
+        onClose={() => {
+          setShowAddCustomModal(false);
+          setPendingSection(null);
+        }}
+        onAdd={handleAddCustomSection}
+        isLoading={isAddingSectionLoading}
+        initialName={pendingSection?.name ?? ''}
+        nameLocked={Boolean(pendingSection && !pendingSection.isCustom)}
+        onGenerateDescription={handleGenerateSectionDescription}
+      />
     </section>
   );
 }

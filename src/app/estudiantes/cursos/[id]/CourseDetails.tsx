@@ -46,7 +46,7 @@ import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLe
 import { sortLessons } from '~/utils/lessonSorting';
 import { createProductFromCourse } from '~/utils/paygateway/products';
 
-import type { ClassMeeting, Course, Enrollment, Lesson } from '~/types';
+import type { ClassMeeting, Course, Enrollment } from '~/types';
 
 type UserMetadata = {
   planType?: 'none' | 'Pro' | 'Premium';
@@ -80,6 +80,11 @@ type NavKey =
 type CourseGradeSummary = {
   finalGrade: number;
   courseCompleted?: boolean;
+  hasParameters?: boolean;
+  isFullyGraded?: boolean;
+  totalParameterActivities?: number;
+  gradedParameterActivities?: number;
+  ungradedParameterActivities?: number;
   parameters: {
     name: string;
     grade: number;
@@ -201,66 +206,10 @@ export default function CourseDetails({
     ? course.lessons.filter((l) => l.resourceKey && l.resourceKey.trim() !== '')
         .length
     : 0;
-  const courseProgressPercent = useMemo(() => {
-    const lessons = course.lessons ?? [];
-    if (lessons.length === 0) return 0;
-
-    const isLessonCompleted = (lesson: Lesson) => {
-      const hasVideo =
-        !!lesson.coverVideoKey && lesson.coverVideoKey !== 'none';
-      const activities = lesson.activities ?? [];
-      const hasActivities = activities.length > 0;
-      const activitiesCompleted = hasActivities
-        ? activities.every(
-            (activity) =>
-              activity.isCompleted || (activity.userProgress ?? 0) >= 100
-          )
-        : false;
-      const videoCompleted = (lesson.porcentajecompletado ?? 0) >= 100;
-
-      if (hasVideo && hasActivities)
-        return videoCompleted && activitiesCompleted;
-      if (hasVideo) return videoCompleted;
-      if (hasActivities) return activitiesCompleted;
-
-      return lesson.isCompleted ?? false;
-    };
-
-    const completedLessons = lessons.filter((lesson) =>
-      isLessonCompleted(lesson as Lesson)
-    ).length;
-
-    return Math.round((completedLessons / lessons.length) * 100);
-  }, [course.lessons]);
-
-  const isCertificateUnlocked = courseProgressPercent >= 100;
   const totalLessons = useMemo(
     () => course.lessons?.length ?? 0,
     [course.lessons]
   );
-  const completedLessonsCount = useMemo(() => {
-    const lessons = course.lessons ?? [];
-    return lessons.filter((lesson) => {
-      const hasVideo =
-        !!lesson.coverVideoKey && lesson.coverVideoKey !== 'none';
-      const activities = lesson.activities ?? [];
-      const hasActivities = activities.length > 0;
-      const activitiesCompleted = hasActivities
-        ? activities.every(
-            (activity: { isCompleted?: boolean; userProgress?: number }) =>
-              activity.isCompleted || (activity.userProgress ?? 0) >= 100
-          )
-        : false;
-      const videoCompleted = (lesson.porcentajecompletado ?? 0) >= 100;
-
-      if (hasVideo && hasActivities)
-        return videoCompleted && activitiesCompleted;
-      if (hasVideo) return videoCompleted;
-      if (hasActivities) return activitiesCompleted;
-
-      return lesson.isCompleted ?? false;
-    }).length;
-  }, [course.lessons]);
   const lessonsWithActivities = useMemo(
     () =>
       Array.isArray(course.lessons)
@@ -291,6 +240,117 @@ export default function CourseDetails({
 
     return { total, completed, pending };
   }, [lessonsWithActivities]);
+
+  const hasParameters = useMemo(() => {
+    if (!Array.isArray(course.lessons)) return false;
+    return course.lessons.some((lesson) =>
+      (lesson.activities ?? []).some((activity) => activity.parametroId)
+    );
+  }, [course.lessons]);
+
+  const parameterActivityStats = useMemo(() => {
+    const total = gradeSummary?.totalParameterActivities ?? 0;
+    const graded = gradeSummary?.gradedParameterActivities ?? 0;
+    const pending = Math.max(total - graded, 0);
+    return { total, graded, pending };
+  }, [gradeSummary]);
+
+  const parametersFullyGraded = !hasParameters
+    ? true
+    : Boolean(gradeSummary?.isFullyGraded);
+
+  const hasActivities = activitiesStats.total > 0;
+  const activitiesCompleted = !hasActivities
+    ? true
+    : activitiesStats.completed === activitiesStats.total;
+
+  const lessonsAboveNinety = useMemo(() => {
+    const lessons = course.lessons ?? [];
+    return lessons.filter((lesson) => (lesson.porcentajecompletado ?? 0) > 90)
+      .length;
+  }, [course.lessons]);
+
+  const lessonsProgressOk = !hasActivities
+    ? totalLessons > 0 && lessonsAboveNinety === totalLessons
+    : true;
+
+  const certificateProgressPercent = useMemo(() => {
+    const buckets: number[] = [];
+    if (hasParameters) {
+      if (parameterActivityStats.total > 0) {
+        buckets.push(
+          Math.round(
+            (parameterActivityStats.graded / parameterActivityStats.total) * 100
+          )
+        );
+      } else {
+        buckets.push(0);
+      }
+    }
+
+    if (hasActivities) {
+      buckets.push(
+        Math.round(
+          (activitiesStats.completed / Math.max(activitiesStats.total, 1)) * 100
+        )
+      );
+    } else {
+      buckets.push(
+        totalLessons > 0
+          ? Math.round((lessonsAboveNinety / totalLessons) * 100)
+          : 0
+      );
+    }
+
+    return buckets.length > 0 ? Math.min(...buckets) : 0;
+  }, [
+    hasParameters,
+    hasActivities,
+    parameterActivityStats,
+    activitiesStats,
+    lessonsAboveNinety,
+    totalLessons,
+  ]);
+
+  const isCertificateUnlocked =
+    parametersFullyGraded && activitiesCompleted && lessonsProgressOk;
+
+  const certificateBlockReasons = useMemo(() => {
+    const reasons: string[] = [];
+    if (hasParameters && !parametersFullyGraded) {
+      if (parameterActivityStats.total > 0) {
+        reasons.push(
+          `Falta calificar ${parameterActivityStats.pending} de ${parameterActivityStats.total} actividades con parámetros`
+        );
+      } else {
+        reasons.push('Falta completar la calificación de los parámetros');
+      }
+    }
+
+    if (hasActivities && !activitiesCompleted) {
+      reasons.push(
+        `Completa todas las actividades (${activitiesStats.completed}/${activitiesStats.total})`
+      );
+    }
+
+    if (!hasActivities && !lessonsProgressOk) {
+      reasons.push(
+        `Cada clase debe superar 90% (${lessonsAboveNinety}/${totalLessons})`
+      );
+    }
+
+    return reasons;
+  }, [
+    hasParameters,
+    parametersFullyGraded,
+    parameterActivityStats,
+    hasActivities,
+    activitiesCompleted,
+    activitiesStats,
+    lessonsProgressOk,
+    lessonsAboveNinety,
+    totalLessons,
+  ]);
 
   const unseenCounts = useMemo<Record<NavKey, number>>(
     () => ({
@@ -475,8 +535,14 @@ export default function CourseDetails({
   };
 
   const handleCertificateClick = () => {
-    if (courseProgressPercent < 100) {
-      toast.info('Completa el 100% del curso para descargar tu certificado.');
+    if (!isCertificateUnlocked) {
+      const description =
+        certificateBlockReasons.length > 0
+          ? certificateBlockReasons.join(' • ')
+          : 'Completa los requisitos del curso.';
+      toast.info('Aún no cumples los requisitos del certificado.', {
+        description,
+      });
       return;
     }
 
@@ -807,7 +873,7 @@ export default function CourseDetails({
       if (lessons) {
         const normalizedLessons = lessons.map((lesson) => ({
           ...lesson,
-          isLocked: lesson.isLocked,
+          isLocked: false,
           porcentajecompletado: lesson.userProgress,
           isNew: lesson.isNew,
         }));
@@ -851,7 +917,7 @@ export default function CourseDetails({
             if (lessons) {
               const normalizedLessons = lessons.map((lesson) => ({
                 ...lesson,
-                isLocked: lesson.isLocked,
+                isLocked: false,
                 porcentajecompletado: lesson.userProgress,
                 isNew: lesson.isNew,
               }));
@@ -893,24 +959,21 @@ export default function CourseDetails({
     const sortedLessons = sortLessons(
       course.lessons as Array<
         Course['lessons'][number] & {
-          isLocked?: boolean | null;
           porcentajecompletado?: number | null;
         }
       >
     );
 
-    const unlockedLessons = sortedLessons.filter((lesson) => !lesson.isLocked);
-
-    for (let i = unlockedLessons.length - 1; i >= 0; i -= 1) {
-      const lesson = unlockedLessons[i];
+    for (let i = sortedLessons.length - 1; i >= 0; i -= 1) {
+      const lesson = sortedLessons[i];
       const progress = lesson.porcentajecompletado ?? 0;
       if (progress < 100) {
         return lesson.id;
       }
     }
 
-    if (unlockedLessons.length > 0) {
-      return unlockedLessons[unlockedLessons.length - 1]?.id ?? null;
+    if (sortedLessons.length > 0) {
+      return sortedLessons[sortedLessons.length - 1]?.id ?? null;
     }
 
     return sortedLessons[0]?.id ?? null;
@@ -1916,7 +1979,7 @@ export default function CourseDetails({
                                   Certificación Del Curso
                                 </h2>
                                 <p className="text-sm text-muted-foreground">
-                                  Completa el 100% para habilitar tu
+                                  Cumple los requisitos para habilitar tu
                                   certificado.
                                 </p>
                               </div>
@@ -1928,24 +1991,65 @@ export default function CourseDetails({
                                   Progreso hacia la certificación
                                 </span>
                                 <span className="text-sm font-bold text-primary">
-                                  {courseProgressPercent}%
+                                  {certificateProgressPercent}%
                                 </span>
                               </div>
                               <div className="h-3 overflow-hidden rounded-full bg-muted">
                                 <div
                                   className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all"
-                                  style={{ width: `${courseProgressPercent}%` }}
+                                  style={{
+                                    width: `${certificateProgressPercent}%`,
+                                  }}
                                 />
                               </div>
-                              <p className="mt-2 text-xs text-muted-foreground">
-                                {`${completedLessonsCount} de ${totalLessons} clases completadas`}
-                              </p>
+                              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                                {hasParameters && (
+                                  <div className="flex items-center gap-2">
+                                    {parametersFullyGraded ? (
+                                      <FaCheckCircle className="h-3.5 w-3.5 text-green-400" />
+                                    ) : (
+                                      <FaLock className="h-3.5 w-3.5 text-white/70" />
+                                    )}
+                                    <span>
+                                      Calificación de parámetros:{' '}
+                                      {parameterActivityStats.graded}/
+                                      {parameterActivityStats.total}
+                                    </span>
+                                  </div>
+                                )}
+                                {hasActivities ? (
+                                  <div className="flex items-center gap-2">
+                                    {activitiesCompleted ? (
+                                      <FaCheckCircle className="h-3.5 w-3.5 text-green-400" />
+                                    ) : (
+                                      <FaLock className="h-3.5 w-3.5 text-white/70" />
+                                    )}
+                                    <span>
+                                      Actividades completadas:{' '}
+                                      {activitiesStats.completed}/
+                                      {activitiesStats.total}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    {lessonsProgressOk ? (
+                                      <FaCheckCircle className="h-3.5 w-3.5 text-green-400" />
+                                    ) : (
+                                      <FaLock className="h-3.5 w-3.5 text-white/70" />
+                                    )}
+                                    <span>
+                                      Clases &gt; 90%: {lessonsAboveNinety}/
+                                      {totalLessons}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
 
                             <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
                               <p className="text-sm text-muted-foreground">
-                                El botón se habilita automáticamente cuando
-                                alcanzas el 100% del curso.
+                                El botón se habilita cuando cumples todos los
+                                requisitos del curso.
                               </p>
                               <button
                                 type="button"

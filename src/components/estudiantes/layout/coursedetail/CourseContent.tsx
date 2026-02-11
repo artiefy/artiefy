@@ -54,6 +54,11 @@ interface CourseContentProps {
   gradeSummary?: {
     finalGrade: number;
     courseCompleted?: boolean;
+    hasParameters?: boolean;
+    isFullyGraded?: boolean;
+    totalParameterActivities?: number;
+    gradedParameterActivities?: number;
+    ungradedParameterActivities?: number;
     parameters: {
       name: string;
       grade: number;
@@ -404,8 +409,7 @@ export function CourseContent({
       const isUnlocked =
         isEnrolled &&
         (course.courseType?.requiredSubscriptionLevel === 'none' ||
-          isSubscriptionActive) &&
-        !lesson.isLocked;
+          isSubscriptionActive);
       const displayProgress = getLessonDisplayProgress(lesson);
 
       const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {

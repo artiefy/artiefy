@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 
 import { CertificationStudent } from '~/components/estudiantes/layout/certification/CertificationStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
@@ -51,10 +51,83 @@ export default async function CertificatePage({ params }: PageProps) {
     if (!course) {
       notFound();
     }
-    // Verificar progreso y nota final
-    const allLessonsCompleted = course.lessons?.every(
-      (l) => l.porcentajecompletado === 100
+
+    const parametersResult = await db.execute(sql`
+      SELECT COUNT(*)::int as count
+      FROM parametros
+      WHERE course_id = ${courseId}
+    `);
+    const hasParameters = Number(parametersResult.rows?.[0]?.count ?? 0) > 0;
+
+    const parameterActivitiesResult = await db.execute(sql`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE uap.final_grade IS NOT NULL)::int as graded,
+        COUNT(*) FILTER (WHERE uap.final_grade IS NULL)::int as ungraded
+      FROM activities a
+      JOIN parametros p ON p.id = a.parametro_id
+      LEFT JOIN user_activities_progress uap
+        ON uap.activity_id = a.id
+        AND uap.user_id = ${userId}
+      WHERE p.course_id = ${courseId}
+    `);
+
+    const totalParameterActivities = Number(
+      parameterActivitiesResult.rows?.[0]?.total ?? 0
     );
+    const ungradedParameterActivities = Number(
+      parameterActivitiesResult.rows?.[0]?.ungraded ?? 0
+    );
+    const parametersFullyGraded = hasParameters
+      ? totalParameterActivities > 0 && ungradedParameterActivities === 0
+      : true;
+
+    const activitiesResult = await db.execute(sql`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (
+          WHERE COALESCE(uap.is_completed, false) = true
+            OR COALESCE(uap.progress, 0) >= 100
+        )::int as completed
+      FROM activities a
+      JOIN lessons l ON l.id = a.lessons_id
+      LEFT JOIN user_activities_progress uap
+        ON uap.activity_id = a.id
+        AND uap.user_id = ${userId}
+      WHERE l.course_id = ${courseId}
+    `);
+
+    const totalActivities = Number(activitiesResult.rows?.[0]?.total ?? 0);
+    const completedActivities = Number(
+      activitiesResult.rows?.[0]?.completed ?? 0
+    );
+    const hasActivities = totalActivities > 0;
+    const activitiesCompleted = hasActivities
+      ? completedActivities === totalActivities
+      : true;
+
+    const lessonsProgressResult = await db.execute(sql`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE COALESCE(ulp.progress, 0) > 90)::int as completed
+      FROM lessons l
+      LEFT JOIN user_lessons_progress ulp
+        ON ulp.lesson_id = l.id
+        AND ulp.user_id = ${userId}
+      WHERE l.course_id = ${courseId}
+    `);
+
+    const totalLessons = Number(lessonsProgressResult.rows?.[0]?.total ?? 0);
+    const lessonsAboveNinety = Number(
+      lessonsProgressResult.rows?.[0]?.completed ?? 0
+    );
+    const lessonsProgressOk = !hasActivities
+      ? totalLessons > 0 && lessonsAboveNinety === totalLessons
+      : true;
+
+    const canIssueCertificate =
+      parametersFullyGraded && activitiesCompleted && lessonsProgressOk;
+
     // Obtener nota final promedio de las materias
     const materiasGrades = await db.query.materiaGrades.findMany({
       where: (mg) => eq(mg.userId, userId),
@@ -67,7 +140,7 @@ export default async function CertificatePage({ params }: PageProps) {
     const finalGrade =
       grades.length > 0 ? grades.reduce((a, b) => a + b, 0) / grades.length : 0;
 
-    if (allLessonsCompleted && finalGrade >= 3) {
+    if (canIssueCertificate) {
       // Obtener nombre del usuario
       const userData = await db.query.users.findFirst({
         where: (u) => eq(u.id, userId),
@@ -123,7 +196,7 @@ export default async function CertificatePage({ params }: PageProps) {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="min-h-screen bg-background">
       <Header />
       <main className="container mx-auto px-4 py-8">
         <Suspense fallback={<div>Cargando certificado...</div>}>

@@ -38,6 +38,11 @@ interface GradeResponse {
   finalGrade: number;
   parameters: GradeParameter[];
   isCompleted: boolean;
+  hasParameters: boolean;
+  isFullyGraded: boolean;
+  totalParameterActivities: number;
+  gradedParameterActivities: number;
+  ungradedParameterActivities: number;
 }
 
 export async function GET(request: NextRequest) {
@@ -143,6 +148,40 @@ export async function GET(request: NextRequest) {
     // Get final grade with proper type casting
     const finalGrade = Number(dbRows[0]?.final_grade ?? 0);
 
+    const parametersCount = (await db.execute(sql`
+      SELECT COUNT(*)::int as count
+      FROM parametros
+      WHERE course_id = ${courseId}
+    `)) as unknown as DBQueryResult;
+
+    const hasParameters = Number(parametersCount.rows?.[0]?.count ?? 0) > 0;
+
+    const parameterActivityStats = (await db.execute(sql`
+      SELECT
+        COUNT(*)::int as total,
+        COUNT(*) FILTER (WHERE uap.final_grade IS NOT NULL)::int as graded,
+        COUNT(*) FILTER (WHERE uap.final_grade IS NULL)::int as ungraded
+      FROM activities a
+      JOIN parametros p ON p.id = a.parametro_id
+      LEFT JOIN user_activities_progress uap
+        ON uap.activity_id = a.id
+        AND uap.user_id = ${userId}
+      WHERE p.course_id = ${courseId}
+    `)) as unknown as DBQueryResult;
+
+    const totalParameterActivities = Number(
+      parameterActivityStats.rows?.[0]?.total ?? 0
+    );
+    const gradedParameterActivities = Number(
+      parameterActivityStats.rows?.[0]?.graded ?? 0
+    );
+    const ungradedParameterActivities = Number(
+      parameterActivityStats.rows?.[0]?.ungraded ?? 0
+    );
+    const isFullyGraded = hasParameters
+      ? totalParameterActivities > 0 && ungradedParameterActivities === 0
+      : true;
+
     // Update materias grades with the correct final grade
     if (finalGrade > 0) {
       console.log('Updating materia grades with final grade:', finalGrade);
@@ -180,6 +219,11 @@ export async function GET(request: NextRequest) {
       finalGrade,
       parameters,
       isCompleted: true,
+      hasParameters,
+      isFullyGraded,
+      totalParameterActivities,
+      gradedParameterActivities,
+      ungradedParameterActivities,
     };
 
     return NextResponse.json(response);

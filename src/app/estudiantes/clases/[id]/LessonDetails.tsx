@@ -25,6 +25,7 @@ import { NextLessonModal } from '~/components/estudiantes/layout/lessondetail/Ne
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
+import { updateLessonPlaybackPosition } from '~/server/actions/estudiantes/progress/updateLessonPlaybackPosition';
 import { updateLessonProgress } from '~/server/actions/estudiantes/progress/updateLessonProgress';
 import {
   type Activity,
@@ -64,6 +65,11 @@ interface GradeSummaryResponse {
 interface CourseGradeSummary {
   finalGrade: number;
   courseCompleted?: boolean;
+  hasParameters?: boolean;
+  isFullyGraded?: boolean;
+  totalParameterActivities?: number;
+  gradedParameterActivities?: number;
+  ungradedParameterActivities?: number;
   parameters: {
     name: string;
     grade: number;
@@ -130,7 +136,7 @@ export default function LessonDetails({
   const [lessonsState, setLessonsState] = useState<LessonWithProgress[]>(() =>
     sortLessons(lessons).map((lessonItem) => ({
       ...lessonItem,
-      isLocked: true,
+      isLocked: false,
       porcentajecompletado: 0,
       isCompleted: false,
       isNew: true,
@@ -152,6 +158,8 @@ export default function LessonDetails({
   const searchParams = useSearchParams();
   const { start, stop } = useProgress();
   const isInitialized = useRef(false);
+  const lastSavedTimeRef = useRef(0);
+  const lastSavedAtRef = useRef(0);
 
   // Add the activity modal state variables at the top level
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
@@ -222,13 +230,9 @@ export default function LessonDetails({
             (p) => p.lessonId === lessonItem.id
           );
 
-          const isFirst =
-            index === 0 ||
-            lessonItem.title.toLowerCase().includes('bienvenida');
-
           return {
             ...lessonItem,
-            isLocked: isFirst ? false : (progress?.isLocked ?? true),
+            isLocked: false,
             porcentajecompletado: progress?.progress ?? 0,
             isCompleted: progress?.isCompleted ?? false,
             isNew: progress?.isNew ?? true,
@@ -272,30 +276,6 @@ export default function LessonDetails({
     restoreScrollPosition();
   }, [lesson?.id]);
 
-  // Mueve la lógica de redirección fuera del condicional
-  useEffect(() => {
-    let redirectTimeout: NodeJS.Timeout | undefined;
-
-    if (lesson?.isLocked) {
-      // Mostrar un único toast
-      toast.error('Lección bloqueada', {
-        description:
-          'Completa las lecciones anteriores para desbloquear esta clase.',
-        id: 'lesson-locked',
-      });
-
-      // Configurar la redirección con un nuevo timeout
-      redirectTimeout = setTimeout(() => {
-        void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
-      }, 2000);
-    }
-
-    // Limpiar el timeout si el componente se desmonta
-    return () => {
-      if (redirectTimeout) clearTimeout(redirectTimeout);
-    };
-  }, [lesson?.isLocked, lesson.courseId, router]);
-
   // Verificar si el usuario está inscrito en el curso
   useEffect(() => {
     if (!userId || !lesson.courseId) return;
@@ -325,8 +305,8 @@ export default function LessonDetails({
     async (videoProgress: number) => {
       const roundedProgress = Math.round(videoProgress);
 
-      // Only update if progress is different from current
-      if (roundedProgress !== progress) {
+      // Only update if progress advances
+      if (roundedProgress > progress) {
         try {
           // Update local state immediately
           setProgress(roundedProgress);
@@ -382,17 +362,6 @@ export default function LessonDetails({
               : l
           )
         );
-
-        // Desbloquear siguiente lección estrictamente en orden (el backend valida)
-        await fetch('/api/lessons/unlock', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            currentLessonId: lesson.id,
-            hasActivities: false,
-            allActivitiesCompleted: true,
-          }),
-        }).catch(() => undefined);
       }
     } catch (error) {
       console.error('Error al completar la lección:', error);
@@ -402,7 +371,7 @@ export default function LessonDetails({
 
   // Handle activity completion event
   const handleActivityCompletion = async () => {
-    if (!activities.length || !isVideoCompleted) return;
+    if (!activities.length) return;
 
     try {
       await completeActivity(activities[0].id, userId); // Add userId parameter
@@ -500,13 +469,42 @@ export default function LessonDetails({
   }, [lessonFullyCompleted, lesson.id]);
 
   // Handle time update from video player
-  const handleTimeUpdate = useCallback((time: number) => {
-    setCurrentTime(time);
-  }, []);
+  const handleTimeUpdate = useCallback(
+    (time: number) => {
+      setCurrentTime(time);
+
+      if (
+        lesson.coverVideoKey === 'none' ||
+        lesson.coverVideoKey === null ||
+        lesson.coverVideoKey === ''
+      ) {
+        return;
+      }
+
+      if (isVideoCompleted) return;
+
+      const safeTime = Math.max(0, Math.floor(time));
+      const now = Date.now();
+      const lastSavedTime = lastSavedTimeRef.current;
+      const lastSavedAt = lastSavedAtRef.current;
+      const timeDelta = Math.abs(safeTime - lastSavedTime);
+      const elapsed = now - lastSavedAt;
+
+      if (safeTime <= lastSavedTime || (timeDelta < 5 && elapsed < 5000)) {
+        return;
+      }
+
+      lastSavedTimeRef.current = safeTime;
+      lastSavedAtRef.current = now;
+
+      void updateLessonPlaybackPosition(lesson.id, safeTime);
+    },
+    [lesson.coverVideoKey, lesson.id, isVideoCompleted]
+  );
 
   // Add new effect to handle URL-based lesson unlocking
   useEffect(() => {
-    if (!lesson?.isLocked && !isVideoCompleted) {
+    if (!isVideoCompleted) {
       setProgress(lesson?.porcentajecompletado ?? 0);
       setIsVideoCompleted(lesson?.porcentajecompletado === 100);
     }
@@ -520,20 +518,12 @@ export default function LessonDetails({
       (l) => l.id === selectedLessonId
     );
 
-    let targetLesson: LessonWithProgress | undefined;
-    if (direction === 'prev') {
-      targetLesson = sortedLessons
-        .slice(0, currentIndex)
-        .reverse()
-        .find((l) => !l.isLocked);
-    } else {
-      targetLesson = sortedLessons
-        .slice(currentIndex + 1)
-        .find((l) => !l.isLocked);
-    }
+    const targetLesson =
+      direction === 'prev'
+        ? sortedLessons[currentIndex - 1]
+        : sortedLessons[currentIndex + 1];
 
-    // Solo navegar si la clase destino está desbloqueada
-    if (targetLesson && !targetLesson.isLocked) {
+    if (targetLesson) {
       navigateWithProgress(targetLesson.id);
     }
   };
@@ -824,18 +814,6 @@ export default function LessonDetails({
     return (
       <div className="flex h-screen items-center justify-center">
         <p>Lección no encontrada</p>
-      </div>
-    );
-  }
-
-  // Add safety check for lesson
-  if (lesson.isLocked) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <p>
-          Lección bloqueada. Completa las lecciones anteriores para desbloquear
-          esta clase.
-        </p>
       </div>
     );
   }

@@ -28,16 +28,9 @@ const LessonNavigation = ({
   // Encontrar el índice de la lección actual
   const currentIndex = sortedLessons.findIndex((l) => l.id === lessonOrder);
 
-  // Buscar la lección anterior desbloqueada
-  const previousLesson = sortedLessons
-    .slice(0, currentIndex)
-    .reverse()
-    .find((lesson) => !lesson.isLocked);
-
-  // Buscar la siguiente lección desbloqueada
-  const nextLesson = sortedLessons
-    .slice(currentIndex + 1)
-    .find((lesson) => !lesson.isLocked);
+  // Usar la lección anterior/siguiente sin bloqueo secuencial
+  const previousLesson = sortedLessons[currentIndex - 1];
+  const nextLesson = sortedLessons[currentIndex + 1];
 
   const hasPreviousLesson = !!previousLesson;
   const hasNextLesson = !!nextLesson;
