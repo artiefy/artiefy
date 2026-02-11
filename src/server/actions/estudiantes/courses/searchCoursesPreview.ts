@@ -15,10 +15,8 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .toLowerCase();
-  const accentFrom =
-    'áàäâãåÁÀÄÂÃÅéèëêÉÈËÊíìïîÍÌÏÎóòöôõÓÒÖÔÕúùüûÚÙÜÛñÑçÇ';
-  const accentTo =
-    'aaaaaaAAAAAAeeeeEEEEiiiiIIIIoooooOOOOOuuuuUUUUnNcC';
+  const accentFrom = 'áàäâãåÁÀÄÂÃÅéèëêÉÈËÊíìïîÍÌÏÎóòöôõÓÒÖÔÕúùüûÚÙÜÛñÑçÇ';
+  const accentTo = 'aaaaaaAAAAAAeeeeEEEEiiiiIIIIoooooOOOOOuuuuUUUUnNcC';
   const searchPattern = `%${normalizedQuery}%`;
   const normalizeColumn = (column: unknown) =>
     sql`translate(lower(${column}), ${accentFrom}, ${accentTo})`;

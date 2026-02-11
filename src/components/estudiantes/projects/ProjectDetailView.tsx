@@ -205,10 +205,10 @@ export default function ProjectDetailView({
     try {
       const sectionId = pendingSection?.isCustom
         ? `custom-${Date.now()}`
-        : pendingSection?.id ?? `custom-${Date.now()}`;
+        : (pendingSection?.id ?? `custom-${Date.now()}`);
       const sectionName = pendingSection?.isCustom
         ? name
-        : pendingSection?.name ?? name;
+        : (pendingSection?.name ?? name);
       const newSections = {
         ...addedSections,
         [sectionId]: { name: sectionName, content: description },
@@ -286,9 +286,7 @@ export default function ProjectDetailView({
   ) => {
     if (!pendingSection) return null;
     const sectionTitle =
-      sectionTitleOverride.trim() ||
-      pendingSection.name ||
-      'Sección';
+      sectionTitleOverride.trim() || pendingSection.name || 'Sección';
     const basePrompt = currentText.trim()
       ? `Mejora y reescribe el contenido de la sección "${sectionTitle}" manteniendo el significado.`
       : `Genera el contenido para la sección "${sectionTitle}" de un proyecto educativo.`;

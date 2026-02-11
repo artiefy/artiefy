@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { FaWandMagicSparkles } from 'react-icons/fa6';
 import { X } from 'lucide-react';
+import { FaWandMagicSparkles } from 'react-icons/fa6';
 
 import '~/styles/ai-generate-loader.css';
 
@@ -41,6 +41,21 @@ export default function AddCustomSectionModal({
     setSectionDescription(initialDescription);
   }, [isOpen, initialName, initialDescription]);
 
+  const modalMetrics = useMemo(() => {
+    if (!isOpen || typeof window === 'undefined') {
+      return { overlayHeight: 0, modalTop: 0 };
+    }
+    const doc = document.documentElement;
+    const scrollTop = window.scrollY || doc.scrollTop || 0;
+    const height = Math.max(doc.scrollHeight, doc.clientHeight);
+    const desiredTop = scrollTop + 80;
+    const maxTop = Math.max(24, height - 560);
+    return {
+      overlayHeight: height,
+      modalTop: Math.min(desiredTop, maxTop),
+    };
+  }, [isOpen]);
+
   const handleSubmit = () => {
     const finalName = nameLocked ? initialName.trim() : sectionName.trim();
     if (finalName) {
@@ -54,9 +69,7 @@ export default function AddCustomSectionModal({
     if (!onGenerateDescription) return;
     setIsGenerating(true);
     try {
-      const activeName = nameLocked
-        ? initialName.trim()
-        : sectionName.trim();
+      const activeName = nameLocked ? initialName.trim() : sectionName.trim();
       const result = await onGenerateDescription(
         sectionDescription.trim() || '',
         activeName
@@ -74,10 +87,17 @@ export default function AddCustomSectionModal({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />
+      <div
+        className="absolute right-0 left-0 z-40 bg-black/50"
+        style={{ top: 0, height: modalMetrics.overlayHeight || '100%' }}
+        onClick={onClose}
+      />
 
       {/* Modal */}
-      <div className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] animate-in fixed top-[50%] left-[50%] z-50 grid w-full max-w-md translate-x-[-50%] translate-y-[-50%] gap-4 rounded-[16px] border border-border/50 bg-card p-6 shadow-lg duration-200">
+      <div
+        className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] animate-in absolute left-1/2 z-50 grid w-full max-w-md translate-x-[-50%] gap-4 rounded-[16px] border border-border/50 bg-card p-6 shadow-lg duration-200"
+        style={{ top: modalMetrics.modalTop }}
+      >
         {/* Header */}
         <div className="flex flex-col space-y-1.5 text-center sm:text-left">
           <h2 className="text-lg leading-none font-semibold tracking-tight text-foreground">

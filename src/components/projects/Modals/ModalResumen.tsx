@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -10,9 +10,9 @@ import {
   ChevronRight,
   FileText,
   Globe,
+  Pencil,
   Plus,
   RefreshCw,
-  Pencil,
   Target,
   Upload,
   Users,
@@ -22,6 +22,8 @@ import { FaWandMagicSparkles } from 'react-icons/fa6';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 
+import AddCustomSectionModal from '~/components/estudiantes/projects/AddCustomSectionModal';
+import AddSectionDropdown from '~/components/estudiantes/projects/AddSectionDropdown';
 import {
   Select,
   SelectContent,
@@ -29,8 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '~/components/projects/ui/select';
-import AddCustomSectionModal from '~/components/estudiantes/projects/AddCustomSectionModal';
-import AddSectionDropdown from '~/components/estudiantes/projects/AddSectionDropdown';
 import { useGenerateContent } from '~/hooks/useGenerateContent';
 import { useProjectAutoSave } from '~/hooks/useProjectAutoSave';
 import { ObjetivosInput, SpecificObjective } from '~/types/objectives';
@@ -391,6 +391,21 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }>,
   });
 
+  const modalMetrics = useMemo(() => {
+    if (!isOpen || typeof window === 'undefined') {
+      return { overlayHeight: 0, modalTop: 0 };
+    }
+    const doc = document.documentElement;
+    const scrollTop = window.scrollY || doc.scrollTop || 0;
+    const height = Math.max(doc.scrollHeight, doc.clientHeight);
+    const desiredTop = scrollTop + 80;
+    const maxTop = Math.max(24, height - 720);
+    return {
+      overlayHeight: height,
+      modalTop: Math.min(desiredTop, maxTop),
+    };
+  }, [isOpen]);
+
   const getSectionLabel = (sectionId: string): string => {
     const labels: Record<string, string> = {
       introduccion: 'Introducción',
@@ -463,10 +478,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     return context.length > 2000 ? context.slice(0, 2000) : context;
   };
 
-  const handleAddSectionFromModal = (
-    sectionId: string,
-    isCustom?: boolean
-  ) => {
+  const handleAddSectionFromModal = (sectionId: string, isCustom?: boolean) => {
     if (isCustom) {
       setPendingSection({ id: 'custom', name: '', isCustom: true });
       setShowAddCustomSectionModal(true);
@@ -490,10 +502,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     setIsAddingCustomSection(true);
     const sectionId = pendingSection?.isCustom
       ? createCustomSectionId(localAddedSections)
-      : pendingSection?.id ?? createCustomSectionId(localAddedSections);
+      : (pendingSection?.id ?? createCustomSectionId(localAddedSections));
     const sectionName = pendingSection?.isCustom
       ? name
-      : pendingSection?.name ?? name;
+      : (pendingSection?.name ?? name);
     updateLocalSections({
       ...localAddedSections,
       [sectionId]: {
@@ -512,9 +524,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   ) => {
     if (!pendingSection) return null;
     const sectionTitle =
-      sectionTitleOverride.trim() ||
-      pendingSection.name ||
-      'Sección';
+      sectionTitleOverride.trim() || pendingSection.name || 'Sección';
     const context = buildSectionContext();
     const basePrompt = currentText.trim()
       ? `Mejora y reescribe el contenido de la sección "${sectionTitle}" manteniendo el significado.`
@@ -1995,24 +2005,24 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   })
                 }
                 className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/10 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              >
+                {isGeneratingFor('objetivoGen') ? (
+                  <span className="ai-generate-loader" aria-hidden />
+                ) : (
+                  <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
+                )}
+                <span
+                  className={
+                    isGeneratingFor('objetivoGen')
+                      ? 'ai-generate-text-pulse text-xs'
+                      : 'text-xs'
+                  }
                 >
-                  {isGeneratingFor('objetivoGen') ? (
-                    <span className="ai-generate-loader" aria-hidden />
-                  ) : (
-                    <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
-                  )}
-                  <span
-                    className={
-                      isGeneratingFor('objetivoGen')
-                        ? 'ai-generate-text-pulse text-xs'
-                        : 'text-xs'
-                    }
-                  >
-                    {formData.objetivoGen?.trim()
-                      ? 'Regenerar con IA'
-                      : 'Generar con IA'}
-                  </span>
-                </button>
+                  {formData.objetivoGen?.trim()
+                    ? 'Regenerar con IA'
+                    : 'Generar con IA'}
+                </span>
+              </button>
             </div>
             <textarea
               className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
@@ -2966,13 +2976,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+    <div
+      className="absolute right-0 left-0 z-50 bg-black/80 p-4"
+      style={{ top: 0, height: modalMetrics.overlayHeight || '100%' }}
+    >
       <div
         role="dialog"
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
-        className="relative flex h-[75vh] max-h-[650px] w-full max-w-2xl gap-4 overflow-hidden rounded-[16px] border bg-background p-0 shadow-lg duration-200"
-        style={{ pointerEvents: 'auto' }}
+        className="absolute left-1/2 flex h-[75vh] max-h-[650px] w-full max-w-2xl translate-x-[-50%] gap-4 overflow-hidden rounded-[16px] border bg-background p-0 shadow-lg duration-200"
+        style={{ pointerEvents: 'auto', top: modalMetrics.modalTop }}
       >
         {/* Layout principal con sidebar y contenido */}
         <div className="flex min-h-0 flex-1">
@@ -3041,7 +3054,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {/* Indicador de guardado */}
                   {isProjectCreated && (
                     <div className="absolute top-4 right-12 flex items-center">
-                  {isAutoSaving ? (
+                      {isAutoSaving ? (
                         <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
                       ) : (
                         <svg

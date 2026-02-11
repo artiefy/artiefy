@@ -60,8 +60,8 @@ export async function getLessonById(
       userProgress:
         lessonsProgress.find((p) => p.lessonId === l.id)?.progress ?? 0,
       lastPositionSeconds:
-        lessonsProgress.find((p) => p.lessonId === l.id)
-          ?.lastPositionSeconds ?? 0,
+        lessonsProgress.find((p) => p.lessonId === l.id)?.lastPositionSeconds ??
+        0,
       isCompleted:
         lessonsProgress.find((p) => p.lessonId === l.id)?.isCompleted ?? false,
       isLocked: false,
