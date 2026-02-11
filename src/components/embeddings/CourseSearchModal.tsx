@@ -123,6 +123,9 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [aiResponse, setAiResponse] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+
   const handleSearch = useCallback(async () => {
     if (!query.trim()) {
       toast.error('Por favor escribe una pregunta');
@@ -132,9 +135,12 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
     setIsLoading(true);
     setError(null);
     setHasSearched(true);
+    setAiResponse(null);
+    setShowDetails(false);
 
     try {
-      const response = await fetch('/api/embeddings/search', {
+      // Usar el nuevo endpoint que procesa con IA
+      const response = await fetch('/api/embeddings/search-with-ai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,14 +159,16 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
 
       const data = (await response.json()) as {
         success: boolean;
+        response: string;
         results: SearchResult[];
         count: number;
       };
 
       if (data.success) {
+        setAiResponse(data.response);
         setResults(data.results);
         if (data.count === 0) {
-          toast.info('No se encontraron resultados para tu pregunta');
+          setShowDetails(false);
         }
       } else {
         throw new Error('La búsqueda no fue exitosa');
@@ -258,17 +266,74 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
                 Escribe una pregunta para buscar información en el curso
               </p>
               <p className="mt-2 text-sm text-gray-500">
-                Ejemplos: duración, alumnos inscritos, actividades, materias,
-                foros
+                Ejemplos: nombre del curso, duración, alumnos inscritos, temas,
+                actividades
               </p>
             </div>
           )}
 
-          {hasSearched && !isLoading && results.length === 0 && !error && (
+          {/* Respuesta de IA conversacional */}
+          {aiResponse && (
+            <div className="space-y-4">
+              {/* Respuesta principal */}
+              <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 p-6">
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="text-xl">💬</span>
+                  <span className="text-sm font-semibold text-cyan-400">
+                    Respuesta
+                  </span>
+                </div>
+                <p className="mb-4 text-base leading-relaxed whitespace-pre-wrap text-white">
+                  {aiResponse}
+                </p>
+                {results.length > 0 && (
+                  <button
+                    onClick={() => setShowDetails(!showDetails)}
+                    className="text-sm text-cyan-400 transition-colors hover:text-cyan-300"
+                  >
+                    {showDetails ? '▼ Ocultar fuentes' : '▶ Ver fuentes'}
+                  </button>
+                )}
+              </div>
+
+              {/* Detalles técnicos (opcional) */}
+              {showDetails && results.length > 0 && (
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-cyan-400/70">
+                    Información técnica de las fuentes:
+                  </p>
+                  {results.map((result, idx) => (
+                    <div
+                      key={result.id}
+                      className="rounded-lg border border-cyan-500/20 bg-slate-800/50 p-4 transition-colors hover:border-cyan-500/40"
+                    >
+                      <div className="mb-3 flex items-center gap-3">
+                        <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs font-bold text-cyan-400">
+                          Fuente {idx + 1}
+                        </span>
+                        <span className="text-xs text-cyan-400/60">
+                          Relevancia: {Math.round((1 + result.similarity) * 50)}
+                          %
+                        </span>
+                      </div>
+                      <div className="mb-2 space-y-2">
+                        {renderFormattedContent(result.content, result.source)}
+                      </div>
+                      <p className="text-xs text-cyan-400/50">
+                        📍 {result.source}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {hasSearched && !isLoading && !aiResponse && !error && (
             <div className="py-12 text-center">
               <AlertCircle className="mx-auto mb-4 h-12 w-12 text-yellow-500/30" />
               <p className="text-gray-400">
-                No se encontraron resultados para &quot;{query}&quot;
+                No se encontró información sobre &quot;{query}&quot;
               </p>
               <p className="mt-2 text-sm text-gray-500">
                 Intenta con palabras clave diferentes
@@ -276,61 +341,13 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
             </div>
           )}
 
-          {results.length > 0 && (
-            <div className="space-y-6">
-              <p className="text-sm font-semibold text-cyan-400/70">
-                {results.length === 1
-                  ? '1 resultado encontrado'
-                  : `${results.length} resultados encontrados`}
-              </p>
-              {results.map((result, idx) => (
-                <div
-                  key={result.id}
-                  className="rounded-lg border border-cyan-500/20 bg-slate-800/50 p-6 transition-colors hover:border-cyan-500/40"
-                >
-                  {/* Encabezado */}
-                  <div className="mb-4 flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-bold text-cyan-400">
-                        Resultado {idx + 1}
-                      </span>
-                      <span className="text-xs text-cyan-400/60">
-                        Relevancia: {Math.round((1 + result.similarity) * 50)}%
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Tu pregunta */}
-                  <div className="mb-4 rounded border border-cyan-500/10 bg-slate-900/50 p-3">
-                    <p className="mb-1 text-xs font-semibold text-cyan-400/70">
-                      Tu pregunta:
-                    </p>
-                    <p className="text-sm text-white italic">
-                      &quot;{query}&quot;
-                    </p>
-                  </div>
-
-                  {/* Contenido */}
-                  <div className="mb-4 space-y-2">
-                    {renderFormattedContent(result.content, result.source)}
-                  </div>
-
-                  {/* Footer */}
-                  <div className="border-t border-cyan-500/10 pt-4">
-                    <p className="text-xs text-cyan-400/60">
-                      💡 Para más detalles, accede a la sección completa del
-                      curso
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 className="mb-4 h-8 w-8 animate-spin text-cyan-500" />
-              <p className="text-gray-400">Buscando en el curso...</p>
+              <p className="text-gray-400">Buscando información...</p>
+              <p className="mt-2 text-xs text-gray-500">
+                Procesando con IA para generar una respuesta clara
+              </p>
             </div>
           )}
         </div>

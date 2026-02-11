@@ -16,6 +16,10 @@ export interface DocumentChunk {
     overlap: number;
   };
 }
+interface extractedText {
+  data?: { text?: string };
+  text?: string;
+}
 
 /**
  * Calcula el número de tokens aproximadamente
@@ -218,6 +222,129 @@ export async function extractDocxText(
 }
 
 /**
+ * Extrae texto de un archivo XLSX/XLS (Excel)
+ * Requiere: npm install xlsx
+ */
+export async function extractXlsxText(
+  arrayBuffer: ArrayBuffer
+): Promise<string> {
+  try {
+    const xlsx = await import('xlsx').catch(() => null);
+
+    if (!xlsx) {
+      console.warn('xlsx no está instalado. Instala con: npm install xlsx');
+      return '';
+    }
+
+    const workbook = xlsx.read(new Uint8Array(arrayBuffer));
+    const textParts: string[] = [];
+
+    // Iterar sobre todas las hojas
+    for (const sheetName of workbook.SheetNames) {
+      const worksheet = workbook.Sheets[sheetName];
+      if (!worksheet) continue;
+
+      // Convertir hoja a CSV
+      const csv = xlsx.utils.sheet_to_csv(worksheet);
+      textParts.push(`--- Hoja: ${sheetName} ---`);
+      textParts.push(csv);
+    }
+
+    return textParts.join('\n');
+  } catch (error) {
+    console.error('Error extrayendo XLSX:', error);
+    return '';
+  }
+}
+
+/**
+ * Extrae texto de un archivo CSV
+ */
+export async function extractCsvText(
+  arrayBuffer: ArrayBuffer
+): Promise<string> {
+  try {
+    const text = new TextDecoder().decode(arrayBuffer);
+    return text;
+  } catch (error) {
+    console.error('Error extrayendo CSV:', error);
+    return '';
+  }
+}
+
+/**
+ * Extrae texto de una imagen usando OCR (node-tesseract-ocr)
+ * Opcional: Requiere Tesseract-OCR instalado en el sistema
+ * Soporta: JPG, PNG, BMP, TIF
+ * Si OCR no está disponible, retorna cadena vacía gracefully
+ */
+export async function extractImageText(
+  arrayBuffer: ArrayBuffer,
+  fileName: string
+): Promise<string> {
+  try {
+    // Intentar cargar node-tesseract-ocr de forma dinámica
+    const Tesseract = await import('node-tesseract-ocr').catch(() => null);
+
+    if (!Tesseract) {
+      console.warn(
+        `⚠️ OCR no disponible para ${fileName}. Para habilitar: npm install node-tesseract-ocr y instalar Tesseract-OCR en el sistema.`
+      );
+      return '';
+    }
+
+    console.log(`🔍 Procesando imagen con OCR: ${fileName}`);
+
+    // Usar dynamic imports para fs, path, os
+    const fs = await import('fs').then((m) => m.promises);
+    const path = await import('path');
+    const os = await import('os');
+
+    // Crear archivo temporal en carpeta temp del sistema
+    const tempDir = os.tmpdir();
+    const tempPath = path.join(tempDir, `ocr-${Date.now()}-${fileName}`);
+
+    try {
+      // Guardar ArrayBuffer a archivo temporal
+      await fs.writeFile(tempPath, Buffer.from(arrayBuffer));
+
+      // Realizar OCR - pasar opciones como objeto
+      const result = await Tesseract.recognize(tempPath, { lang: 'spa+eng' });
+      const extractedText =
+        (result as extractedText)?.data?.text ||
+        (result as extractedText)?.text ||
+        '';
+
+      // Limpiar archivo temporal
+      await fs.unlink(tempPath).catch(() => {});
+
+      if (!extractedText || extractedText.trim().length === 0) {
+        console.warn(`⚠️ No se detectó texto en la imagen: ${fileName}`);
+        return '';
+      }
+
+      return extractedText;
+    } catch (ocrError) {
+      // Si falla OCR, limpiar archivo temporal y continuar gracefully
+      await fs.unlink(tempPath).catch(() => {});
+      console.warn(
+        `⚠️ OCR falló para ${fileName}: ${ocrError instanceof Error ? ocrError.message : String(ocrError)}`
+      );
+      console.log(
+        `📸 Imagen "${fileName}" omitida (OCR requiere Tesseract-OCR en el sistema)`
+      );
+      return '';
+    }
+  } catch (error) {
+    console.warn(
+      `⚠️ No se pudo procesar imagen ${fileName} con OCR:`,
+      error instanceof Error ? error.message : String(error)
+    );
+    return '';
+  }
+}
+
+/**
  * Extrae texto según el tipo de archivo
  */
 export async function extractTextFromFile(
@@ -232,6 +359,18 @@ export async function extractTextFromFile(
     case 'docx':
     case 'doc':
       return extractDocxText(arrayBuffer);
+    case 'xlsx':
+    case 'xls':
+      return extractXlsxText(arrayBuffer);
+    case 'csv':
+      return extractCsvText(arrayBuffer);
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+    case 'bmp':
+    case 'tif':
+    case 'tiff':
+      return extractImageText(arrayBuffer, fileName);
     case 'txt':
       // Para TXT, convertir ArrayBuffer a string
       return new TextDecoder().decode(arrayBuffer);
@@ -257,7 +396,21 @@ export function validateFile(file: File | { name: string; size: number }): {
     };
   }
 
-  const supportedTypes = ['.pdf', '.docx', '.doc', '.txt'];
+  const supportedTypes = [
+    '.pdf',
+    '.docx',
+    '.doc',
+    '.txt',
+    '.xlsx',
+    '.xls',
+    '.csv',
+    '.jpg',
+    '.jpeg',
+    '.png',
+    '.bmp',
+    '.tif',
+    '.tiff',
+  ];
   const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
 
   if (!supportedTypes.includes(fileExtension)) {

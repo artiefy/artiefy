@@ -196,14 +196,14 @@ export async function GET(req: Request) {
     const students = await db
       .select({
         id: users.id,
-        name: users.name,
-        email: users.email,
+        name: sql<string>`COALESCE(${users.name}, 'Sin especificar')`,
+        email: sql<string>`COALESCE(${users.email}, 'Sin especificar')`,
         phone: users.phone,
         address: users.address,
         country: users.country,
         city: users.city,
         birthDate: users.birthDate,
-        subscriptionStatus: users.subscriptionStatus,
+        subscriptionStatus: sql<string>`COALESCE(${users.subscriptionStatus}, 'Sin especificar')`,
         subscriptionEndDate: users.subscriptionEndDate,
         planType: users.planType,
         role: users.role,
