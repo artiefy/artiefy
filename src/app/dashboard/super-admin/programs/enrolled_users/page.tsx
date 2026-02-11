@@ -603,6 +603,11 @@ export default function EnrolledUsersPage() {
     name?: string;
   }>({ open: false });
 
+  // ✅ Estados para modal de drag & drop de comprobantes
+  const [showReceiptUploadModal, setShowReceiptUploadModal] = useState(false);
+  const [receiptUploadFile, setReceiptUploadFile] = useState<File | null>(null);
+  const [receiptUploadDragOver, setReceiptUploadDragOver] = useState(false);
+
   const openReceiptPreview = (url?: string, name?: string) => {
     if (!url) return;
     setReceiptPreview({ open: true, url, name });
@@ -1998,8 +2003,11 @@ export default function EnrolledUsersPage() {
   const [showCarteraModal, setShowCarteraModal] = useState(false);
   const [carteraUserId, setCarteraUserId] = useState<string | null>(null);
   const [carteraReceipt, setCarteraReceipt] = useState<File | null>(null);
+  const [showCarteraReceiptUploadModal, setShowCarteraReceiptUploadModal] =
+    useState(false);
+  const [carteraReceiptUploadDragOver, setCarteraReceiptUploadDragOver] =
+    useState(false);
   const fileInputPagoRef = useRef<HTMLInputElement>(null);
-  const fileInputCarteraRef = useRef<HTMLInputElement>(null);
   const existingRecord = Boolean(carteraInfo?.programaPrice); // true si ya hay precio guardado
   const userId = currentUser?.id; // o currentUser?.document si prefieres
   const programaId = userPrograms?.[0]?.id; // tomamos el primer programa
@@ -2286,49 +2294,6 @@ export default function EnrolledUsersPage() {
     }
   };
 
-  const uploadCarteraReceipt = async () => {
-    if (!carteraUserId || !carteraReceipt) return;
-
-    try {
-      const fd = new FormData();
-      fd.append('action', 'uploadCarteraReceipt');
-      fd.append('userId', carteraUserId);
-      // 👇 añade el nombre para evitar que llegue sin filename
-      fd.append('receipt', carteraReceipt, carteraReceipt.name);
-
-      const res = await fetch('/api/super-admin/enroll_user_program', {
-        method: 'POST',
-        body: fd,
-      });
-
-      const data: unknown = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        console.error('Upload error:', data);
-        const msg = isErrorResponse(data)
-          ? data.error
-          : 'Error subiendo comprobante.';
-        alert(msg);
-        return;
-      }
-
-      // éxito: pónlo en ACTIVO y cierra modal
-      setStudents((prev) =>
-        prev.map((s) =>
-          s.id === carteraUserId ? { ...s, carteraStatus: 'activo' } : s
-        )
-      );
-      setCarteraReceipt(null);
-      setShowCarteraModal(false);
-      alert('Comprobante subido y estado marcado como ACTIVO.');
-      // dentro de uploadCarteraReceipt()
-    } catch (e: unknown) {
-      console.error('Network/JS error:', e);
-      const msg =
-        e instanceof Error ? e.message : 'Error de red al subir comprobante';
-      alert(msg);
-    }
-  };
   useEffect(() => {
     // Solo ejecutar cuando hay datos de pagos
     if (!carteraInfo?.pagosUsuarioPrograma) return;
@@ -5209,12 +5174,54 @@ export default function EnrolledUsersPage() {
                                 {/* Subir comprobante */}
                                 <button
                                   type="button"
+                                  onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.add(
+                                      'ring-2',
+                                      'ring-blue-400',
+                                      'border-2',
+                                      'border-blue-500',
+                                      'shadow-lg',
+                                      'shadow-blue-400/50',
+                                      'bg-blue-700'
+                                    );
+                                  }}
+                                  onDragLeave={(e) => {
+                                    e.currentTarget.classList.remove(
+                                      'ring-2',
+                                      'ring-blue-400',
+                                      'border-2',
+                                      'border-blue-500',
+                                      'shadow-lg',
+                                      'shadow-blue-400/50',
+                                      'bg-blue-700'
+                                    );
+                                  }}
+                                  onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.currentTarget.classList.remove(
+                                      'ring-2',
+                                      'ring-blue-400',
+                                      'border-2',
+                                      'border-blue-500',
+                                      'shadow-lg',
+                                      'shadow-blue-400/50',
+                                      'bg-blue-700'
+                                    );
+                                    const files = e.dataTransfer?.files;
+                                    if (files && files.length > 0) {
+                                      setPendingRowForReceipt(idx);
+                                      setReceiptUploadFile(files[0]);
+                                      setShowReceiptUploadModal(true);
+                                    }
+                                  }}
                                   onClick={() => {
                                     setPendingRowForReceipt(idx);
-                                    fileInputPagoRef.current?.click();
+                                    setShowReceiptUploadModal(true);
+                                    setReceiptUploadFile(null);
                                   }}
-                                  className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-400/60 focus:outline-none"
-                                  title="Subir comprobante"
+                                  className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400/60 focus:outline-none"
+                                  title="Subir comprobante 1"
                                 >
                                   <svg
                                     viewBox="0 0 20 20"
@@ -5586,13 +5593,55 @@ export default function EnrolledUsersPage() {
 
                                       <button
                                         type="button"
+                                        onDragOver={(e) => {
+                                          e.preventDefault();
+                                          e.currentTarget.classList.add(
+                                            'ring-2',
+                                            'ring-blue-400',
+                                            'border-2',
+                                            'border-blue-500',
+                                            'shadow-lg',
+                                            'shadow-blue-400/50',
+                                            'bg-blue-700'
+                                          );
+                                        }}
+                                        onDragLeave={(e) => {
+                                          e.currentTarget.classList.remove(
+                                            'ring-2',
+                                            'ring-blue-400',
+                                            'border-2',
+                                            'border-blue-500',
+                                            'shadow-lg',
+                                            'shadow-blue-400/50',
+                                            'bg-blue-700'
+                                          );
+                                        }}
+                                        onDrop={(e) => {
+                                          e.preventDefault();
+                                          e.currentTarget.classList.remove(
+                                            'ring-2',
+                                            'ring-blue-400',
+                                            'border-2',
+                                            'border-blue-500',
+                                            'shadow-lg',
+                                            'shadow-blue-400/50',
+                                            'bg-blue-700'
+                                          );
+                                          const files = e.dataTransfer?.files;
+                                          if (files && files.length > 0) {
+                                            setPendingRowForReceipt(idxBase);
+                                            setReceiptUploadFile(files[0]);
+                                            setShowReceiptUploadModal(true);
+                                          }
+                                        }}
                                         onClick={() => {
                                           setPendingRowForReceipt(idxBase);
-                                          fileInputPagoRef.current?.click();
+                                          setShowReceiptUploadModal(true);
+                                          setReceiptUploadFile(null);
                                         }}
-                                        className="rounded bg-blue-600 px-2 py-1 text-xs font-semibold text-white hover:bg-blue-700"
+                                        className="rounded bg-blue-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-blue-700"
                                       >
-                                        Subir comprobante
+                                        Subir comprobante 2
                                       </button>
 
                                       {editablePagos[idxBase]?.receiptUrl && (
@@ -5647,39 +5696,56 @@ export default function EnrolledUsersPage() {
                         Subir comprobante de pago
                       </label>
 
-                      <input
-                        ref={fileInputCarteraRef}
-                        id="carteraReceipt"
-                        type="file"
-                        accept="application/pdf,image/png,image/jpeg"
-                        className="hidden"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0] ?? null;
-                          setCarteraReceipt(f);
-                          if (f && pendingRowForReceipt !== null) {
-                            uploadCarteraReceipt().then(() =>
-                              setPendingRowForReceipt(null)
-                            );
-                          }
-                        }}
-                      />
-
                       <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
-                          onClick={() => fileInputCarteraRef.current?.click()}
-                          className="rounded bg-gray-600 px-4 py-2 text-white hover:bg-gray-500"
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.add(
+                              'ring-2',
+                              'ring-blue-400',
+                              'border-2',
+                              'border-blue-500',
+                              'shadow-lg',
+                              'shadow-blue-400/50',
+                              'bg-blue-700'
+                            );
+                          }}
+                          onDragLeave={(e) => {
+                            e.currentTarget.classList.remove(
+                              'ring-2',
+                              'ring-blue-400',
+                              'border-2',
+                              'border-blue-500',
+                              'shadow-lg',
+                              'shadow-blue-400/50',
+                              'bg-blue-700'
+                            );
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            e.currentTarget.classList.remove(
+                              'ring-2',
+                              'ring-blue-400',
+                              'border-2',
+                              'border-blue-500',
+                              'shadow-lg',
+                              'shadow-blue-400/50',
+                              'bg-blue-700'
+                            );
+                            const files = e.dataTransfer?.files;
+                            if (files && files.length > 0) {
+                              setCarteraReceipt(files[0]);
+                              setShowCarteraReceiptUploadModal(true);
+                            }
+                          }}
+                          onClick={() => {
+                            setCarteraReceipt(null);
+                            setShowCarteraReceiptUploadModal(true);
+                          }}
+                          className="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700"
                         >
-                          Elegir archivo
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={!carteraReceipt}
-                          onClick={uploadCarteraReceipt}
-                          className="rounded bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
-                        >
-                          Subir comprobante
+                          Subir comprobante 3
                         </button>
 
                         {carteraReceipt && (
@@ -5931,6 +5997,441 @@ export default function EnrolledUsersPage() {
                   className="rounded bg-gray-900 px-4 py-2 font-semibold text-white hover:bg-black dark:bg-gray-600 dark:hover:bg-gray-700"
                 >
                   Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ MODAL: Drag & Drop para comprobantes */}
+        {showReceiptUploadModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <div className="w-full max-w-md animate-fade-in rounded-xl bg-white p-8 shadow-2xl dark:bg-gray-800">
+              {/* Header */}
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  📋 Subir Comprobante
+                </h2>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  Carga un PDF o imagen del comprobante de pago
+                </p>
+              </div>
+
+              {/* Información de la cuota */}
+              {pendingRowForReceipt !== null &&
+                editablePagos[pendingRowForReceipt] && (
+                  <div className="mb-6 rounded-lg border-2 border-amber-200 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/30">
+                    <h3 className="mb-3 font-semibold text-amber-900 dark:text-amber-100">
+                      📍 Información{' '}
+                      {pendingRowForReceipt >= 12
+                        ? 'del Concepto'
+                        : 'de la Cuota'}
+                    </h3>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                          {pendingRowForReceipt >= 12 ? 'Número' : 'Cuota #'}
+                        </p>
+                        <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                          {pendingRowForReceipt + 1}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                          {pendingRowForReceipt >= 12 ? 'Producto' : 'Concepto'}
+                        </p>
+                        <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                          {pendingRowForReceipt === 12
+                            ? 'PÓLIZA Y CARNET'
+                            : pendingRowForReceipt === 13
+                              ? 'UNIFORME'
+                              : pendingRowForReceipt === 14
+                                ? 'DERECHOS DE GRADO'
+                                : editablePagos[pendingRowForReceipt]
+                                    .concepto ||
+                                  `Cuota ${pendingRowForReceipt + 1}`}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                          Fecha
+                        </p>
+                        <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                          {editablePagos[pendingRowForReceipt].fecha
+                            ? new Date(
+                                editablePagos[pendingRowForReceipt].fecha as
+                                  | string
+                                  | Date
+                              ).toLocaleDateString('es-CO', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                              })
+                            : '—'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                          Monto
+                        </p>
+                        <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                          $
+                          {Number(
+                            editablePagos[pendingRowForReceipt].valor ?? 0
+                          ).toLocaleString('es-CO', {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
+                        </p>
+                      </div>
+                      {editablePagos[pendingRowForReceipt].metodo && (
+                        <div className="col-span-2">
+                          <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                            Método de Pago
+                          </p>
+                          <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                            {editablePagos[pendingRowForReceipt].metodo}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+              {/* Mostrar archivo seleccionado */}
+              {receiptUploadFile ? (
+                <div className="mb-6 rounded-lg bg-green-50 p-4 dark:bg-green-900/30">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-1 items-start gap-3">
+                      <div className="mt-1 text-2xl">✅</div>
+                      <div className="flex-1">
+                        <p className="font-semibold break-all text-gray-900 dark:text-white">
+                          {receiptUploadFile.name}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                          {(receiptUploadFile.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReceiptUploadFile(null)}
+                    className="mt-3 w-full rounded bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                  >
+                    🔄 Cambiar archivo
+                  </button>
+                </div>
+              ) : (
+                /* Área de drag & drop */
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setReceiptUploadDragOver(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setReceiptUploadDragOver(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setReceiptUploadDragOver(false);
+                    const files = e.dataTransfer?.files;
+                    if (files && files.length > 0) {
+                      setReceiptUploadFile(files[0]);
+                    }
+                  }}
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'application/pdf,image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) setReceiptUploadFile(file);
+                    };
+                    input.click();
+                  }}
+                  className={`relative mb-6 cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all ${
+                    receiptUploadDragOver
+                      ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30'
+                      : 'border-gray-300 bg-gray-50 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-900/50 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <div className="mb-3 text-5xl">📁</div>
+                  <p className="mb-2 text-base font-semibold text-gray-900 dark:text-white">
+                    {receiptUploadDragOver
+                      ? 'Suelta aquí'
+                      : 'Arrastra o haz clic'}
+                  </p>
+                  <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                    {receiptUploadDragOver
+                      ? 'El archivo se cargará'
+                      : 'Para seleccionar PDF o imagen'}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                    Máximo 10 MB • PDF, PNG, JPEG, JPG
+                  </p>
+                </div>
+              )}
+
+              {/* Botones */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowReceiptUploadModal(false);
+                    setReceiptUploadFile(null);
+                  }}
+                  className="flex-1 rounded-lg bg-gray-200 px-4 py-3 font-semibold text-gray-900 transition hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                >
+                  ✕ Cancelar
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!receiptUploadFile || pendingRowForReceipt === null)
+                      return;
+
+                    try {
+                      const fd = new FormData();
+                      fd.append('userId', carteraUserId ?? '');
+                      fd.append('programId', String(currentProgramId ?? ''));
+                      fd.append('index', String(pendingRowForReceipt));
+                      fd.append(
+                        'receipt',
+                        receiptUploadFile,
+                        receiptUploadFile.name
+                      );
+
+                      const res = await fetch(
+                        '/api/super-admin/enroll_user_program/programsUser/pagos',
+                        { method: 'POST', body: fd }
+                      );
+
+                      const data: unknown = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        const msg = isErrorResponse(data)
+                          ? data.error
+                          : 'No se pudo subir el comprobante';
+                        alert('❌ ' + msg);
+                        return;
+                      }
+
+                      const pagosRefrescados = await fetchPagosUsuarioPrograma(
+                        carteraUserId ?? '',
+                        String(currentProgramId ?? '')
+                      );
+                      setEditablePagos(mapPagosToEditable(pagosRefrescados));
+                      alert('✅ ¡Comprobante subido exitosamente!');
+
+                      setShowReceiptUploadModal(false);
+                      setReceiptUploadFile(null);
+                      setPendingRowForReceipt(null);
+                    } catch (err) {
+                      console.error(err);
+                      alert(
+                        '❌ Error: ' +
+                          (err instanceof Error
+                            ? err.message
+                            : 'No se pudo procesar')
+                      );
+                    }
+                  }}
+                  disabled={!receiptUploadFile}
+                  className="flex-1 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-600"
+                >
+                  {receiptUploadFile ? '✓ Enviar' : '⊙ Selecciona archivo'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ MODAL: Drag & Drop para comprobantes de CARTERA */}
+        {showCarteraReceiptUploadModal && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
+            <div className="w-full max-w-md animate-fade-in rounded-xl bg-white p-8 shadow-2xl dark:bg-gray-800">
+              {/* Header */}
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                  💳 Comprobante Cartera
+                </h2>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  Sube el comprobante para marcar el estado como ACTIVO
+                </p>
+              </div>
+
+              {/* Mostrar archivo seleccionado */}
+              {carteraReceipt ? (
+                <div className="mb-6 rounded-lg bg-green-50 p-4 dark:bg-green-900/30">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-1 items-start gap-3">
+                      <div className="mt-1 text-2xl">✅</div>
+                      <div className="flex-1">
+                        <p className="font-semibold break-all text-gray-900 dark:text-white">
+                          {carteraReceipt.name}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                          {(carteraReceipt.size / 1024).toFixed(2)} KB
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCarteraReceipt(null)}
+                    className="mt-3 w-full rounded bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                  >
+                    🔄 Cambiar archivo
+                  </button>
+                </div>
+              ) : (
+                /* Área de drag & drop */
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCarteraReceiptUploadDragOver(true);
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCarteraReceiptUploadDragOver(false);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCarteraReceiptUploadDragOver(false);
+                    const files = e.dataTransfer?.files;
+                    if (files && files.length > 0) {
+                      setCarteraReceipt(files[0]);
+                    }
+                  }}
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'application/pdf,image/*';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) setCarteraReceipt(file);
+                    };
+                    input.click();
+                  }}
+                  className={`relative mb-6 cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all ${
+                    carteraReceiptUploadDragOver
+                      ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30'
+                      : 'border-gray-300 bg-gray-50 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-900/50 dark:hover:border-gray-500'
+                  }`}
+                >
+                  <div className="mb-3 text-5xl">📁</div>
+                  <p className="mb-2 text-base font-semibold text-gray-900 dark:text-white">
+                    {carteraReceiptUploadDragOver
+                      ? 'Suelta aquí'
+                      : 'Arrastra o haz clic'}
+                  </p>
+                  <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                    {carteraReceiptUploadDragOver
+                      ? 'El archivo se cargará'
+                      : 'Para seleccionar PDF o imagen'}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                    Máximo 10 MB • PDF, PNG, JPEG, JPG
+                  </p>
+                </div>
+              )}
+
+              {/* Botones */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowCarteraReceiptUploadModal(false);
+                    setCarteraReceipt(null);
+                  }}
+                  className="flex-1 rounded-lg bg-gray-200 px-4 py-3 font-semibold text-gray-900 transition hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                >
+                  ✕ Cancelar
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!carteraReceipt) return;
+
+                    try {
+                      const fd = new FormData();
+                      fd.append('action', 'uploadCarteraReceipt');
+                      fd.append('userId', carteraUserId ?? '');
+                      fd.append('receipt', carteraReceipt, carteraReceipt.name);
+
+                      const res = await fetch(
+                        '/api/super-admin/enroll_user_program',
+                        { method: 'POST', body: fd }
+                      );
+
+                      const data: unknown = await res.json().catch(() => ({}));
+                      if (!res.ok) {
+                        const msg = isErrorResponse(data)
+                          ? data.error
+                          : 'No se pudo subir el comprobante';
+                        alert('❌ ' + msg);
+                        return;
+                      }
+
+                      setStudents((prev) =>
+                        prev.map((s) =>
+                          s.id === carteraUserId
+                            ? { ...s, carteraStatus: 'activo' }
+                            : s
+                        )
+                      );
+                      alert(
+                        '✅ ¡Comprobante subido! Estado marcado como ACTIVO'
+                      );
+
+                      setShowCarteraReceiptUploadModal(false);
+                      setCarteraReceipt(null);
+                      setShowCarteraModal(false);
+                    } catch (err) {
+                      console.error(err);
+                      alert(
+                        '❌ Error: ' +
+                          (err instanceof Error
+                            ? err.message
+                            : 'No se pudo procesar')
+                      );
+                    }
+                  }}
+                  disabled={!carteraReceipt}
+                  className="flex-1 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-600"
+                >
+                  {carteraReceipt ? '✓ Enviar' : '⊙ Selecciona archivo'}
                 </button>
               </div>
             </div>

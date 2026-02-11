@@ -16,6 +16,10 @@ export interface DocumentChunk {
     overlap: number;
   };
 }
+interface extractedText {
+  data?: { text?: string };
+  text?: string;
+}
 
 /**
  * Calcula el número de tokens aproximadamente
@@ -307,7 +311,9 @@ export async function extractImageText(
       // Realizar OCR - pasar opciones como objeto
       const result = await Tesseract.recognize(tempPath, { lang: 'spa+eng' });
       const extractedText =
-        (result as any)?.data?.text || (result as any)?.text || '';
+        (result as extractedText)?.data?.text ||
+        (result as extractedText)?.text ||
+        '';
 
       // Limpiar archivo temporal
       await fs.unlink(tempPath).catch(() => {});
@@ -316,10 +322,6 @@ export async function extractImageText(
         console.warn(`⚠️ No se detectó texto en la imagen: ${fileName}`);
         return '';
       }
-
-      console.log(
-        `✅ Texto extraído de imagen: ${fileName} (${extractedText.length} caracteres)`
-      );
 
       return extractedText;
     } catch (ocrError) {
