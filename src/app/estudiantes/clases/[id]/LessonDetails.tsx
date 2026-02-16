@@ -168,7 +168,7 @@ export default function LessonDetails({
 
   // Move course active check to the top
   useEffect(() => {
-    if (!course.isActive) {
+    if (course.isActive === false) {
       toast.error('Curso no disponible', {
         description: 'Este curso no está disponible actualmente.',
       });

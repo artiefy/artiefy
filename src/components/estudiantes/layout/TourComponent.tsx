@@ -14,12 +14,14 @@ export const TourComponent = () => {
   const [isDesktop, setIsDesktop] = useState(
     () => typeof window !== 'undefined' && window.innerWidth > 768
   );
-  const [hideButton, setHideButton] = useState(false); // ← visible por defecto
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [showAnim, setShowAnim] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const ANIMATION_DURATION = 350;
   const pathname = usePathname();
   const isClassRoute = pathname?.startsWith('/estudiantes/clases/') ?? false;
+  const hideButton = isChatOpen || isProjectModalOpen;
 
   useEffect(() => {
     // Solo se ejecuta en el cliente: actualizar on resize (no establecer sincronamente)
@@ -52,13 +54,27 @@ export const TourComponent = () => {
 
   // Oculta al abrir chat, muestra al cerrar chat
   useEffect(() => {
-    const handleHideButton = () => setHideButton(true);
-    const handleShowButton = () => setHideButton(false);
+    const handleHideButton = () => setIsChatOpen(true);
+    const handleShowButton = () => setIsChatOpen(false);
     window.addEventListener('student-chat-open', handleHideButton);
     window.addEventListener('student-chat-close', handleShowButton);
     return () => {
       window.removeEventListener('student-chat-open', handleHideButton);
       window.removeEventListener('student-chat-close', handleShowButton);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleProjectModalOpen = () => setIsProjectModalOpen(true);
+    const handleProjectModalClose = () => setIsProjectModalOpen(false);
+    window.addEventListener('project-modal-open', handleProjectModalOpen);
+    window.addEventListener('project-modal-close', handleProjectModalClose);
+    return () => {
+      window.removeEventListener('project-modal-open', handleProjectModalOpen);
+      window.removeEventListener(
+        'project-modal-close',
+        handleProjectModalClose
+      );
     };
   }, []);
 

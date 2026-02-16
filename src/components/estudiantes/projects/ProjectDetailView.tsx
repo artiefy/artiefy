@@ -596,6 +596,27 @@ export default function ProjectDetailView({
     });
   };
 
+  const formatActivityDate = (dateString: string) => {
+    const parsed = parseDateForDisplay(dateString);
+    if (!parsed) return '';
+    const day = parsed.toLocaleDateString('es-CO', {
+      day: 'numeric',
+      timeZone: 'America/Bogota',
+    });
+    const month = parsed
+      .toLocaleDateString('es-CO', {
+        month: 'short',
+        timeZone: 'America/Bogota',
+      })
+      .replace('.', '')
+      .toLowerCase();
+    const year = parsed.toLocaleDateString('es-CO', {
+      year: '2-digit',
+      timeZone: 'America/Bogota',
+    });
+    return `${day} de ${month}, ${year}`;
+  };
+
   const formatDateTime = (dateString?: string | null) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleString('es-CO', {
@@ -650,18 +671,20 @@ export default function ProjectDetailView({
           </p>
         ))}
         {isLongText && (
-          <button
-            type="button"
-            onClick={() =>
-              setExpandedTextBlocks((prev) => ({
-                ...prev,
-                [key]: !prev[key],
-              }))
-            }
-            className="inline-flex items-center text-xs font-semibold text-[#22c4d3] hover:text-[#1eaab7] hover:underline"
-          >
-            {isExpanded ? 'Ver menos' : 'Ver más'}
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() =>
+                setExpandedTextBlocks((prev) => ({
+                  ...prev,
+                  [key]: !prev[key],
+                }))
+              }
+              className="inline-flex items-center text-xs font-semibold text-muted-foreground hover:text-purple-400 hover:underline"
+            >
+              {isExpanded ? 'Ver menos' : 'Ver más'}
+            </button>
+          </div>
         )}
       </div>
     );
@@ -1103,20 +1126,41 @@ export default function ProjectDetailView({
               const filtered = reqs.filter(
                 (r) => typeof r === 'string' && r.trim() !== ''
               );
+              const requisitosKey = 'project-requisitos';
+              const isExpanded = expandedTextBlocks[requisitosKey] ?? false;
+              const visible = isExpanded ? filtered : filtered.slice(0, 8);
               return filtered.length > 0 ? (
-                <ul className="space-y-3">
-                  {filtered.map((req, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-3 text-sm text-muted-foreground"
-                    >
-                      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-medium text-accent">
-                        {idx + 1}
-                      </div>
-                      {req}
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <ul className="space-y-3">
+                    {visible.map((req, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-start gap-3 text-sm text-muted-foreground"
+                      >
+                        <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-medium text-accent">
+                          {idx + 1}
+                        </div>
+                        {req}
+                      </li>
+                    ))}
+                  </ul>
+                  {filtered.length > 8 && (
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedTextBlocks((prev) => ({
+                            ...prev,
+                            [requisitosKey]: !isExpanded,
+                          }))
+                        }
+                        className="inline-flex items-center text-xs font-semibold text-muted-foreground hover:text-purple-400 hover:underline"
+                      >
+                        {isExpanded ? 'Ver menos' : 'Ver más'}
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-muted-foreground">
                   No hay requisitos definidos aún.
@@ -1127,32 +1171,34 @@ export default function ProjectDetailView({
 
           {/* Objetivos Específicos */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="relative mb-4 sm:flex sm:items-start sm:justify-between sm:gap-3">
+              <div className="flex items-start gap-3 pr-10 sm:pr-0">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
                   <ListChecks className="h-4 w-4 text-blue-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  Objetivos Específicos
-                </h3>
-                <span className="text-sm text-muted-foreground">
-                  {(() => {
-                    const objetivos = project.objetivos_especificos ?? [];
-                    const completados = objetivos.filter(
-                      (obj) =>
-                        (obj.actividades ?? []).length > 0 &&
-                        (obj.actividades ?? []).every(
-                          (act) => act.startDate && act.endDate
-                        )
-                    ).length;
-                    return `${completados}/${objetivos.length} completados`;
-                  })()}
-                </span>
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Objetivos Específicos
+                  </h3>
+                  <span className="mt-1 block text-sm text-muted-foreground sm:mt-0 sm:inline">
+                    {(() => {
+                      const objetivos = project.objetivos_especificos ?? [];
+                      const completados = objetivos.filter(
+                        (obj) =>
+                          (obj.actividades ?? []).length > 0 &&
+                          (obj.actividades ?? []).every(
+                            (act) => act.startDate && act.endDate
+                          )
+                      ).length;
+                      return `${completados}/${objetivos.length} completados`;
+                    })()}
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => onEditSection?.(6, addedSections)}
-                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="absolute top-0 right-0 inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Pencil className="h-4 w-4" />
               </button>
@@ -1185,7 +1231,7 @@ export default function ProjectDetailView({
                       <button
                         type="button"
                         onClick={() => toggleObjective(objetivo.id)}
-                        className="w-full p-4 text-left transition-colors hover:bg-muted/30"
+                        className="relative w-full p-4 text-left transition-colors hover:bg-muted/30"
                       >
                         <div className="flex items-start gap-3">
                           <div
@@ -1201,25 +1247,16 @@ export default function ProjectDetailView({
                               idx + 1
                             )}
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-2 sm:hidden">
-                              <span
-                                className={`text-sm ${
-                                  objetivoCompletado
-                                    ? 'text-foreground'
-                                    : 'text-muted-foreground'
-                                }`}
-                              >
-                                {objetivo.description}
-                              </span>
-                              <ChevronDown
-                                className={`h-4 w-4 text-muted-foreground transition-transform ${
-                                  expandedObjectives[objetivo.id]
-                                    ? 'rotate-180'
-                                    : 'rotate-0'
-                                }`}
-                              />
-                            </div>
+                          <div className="min-w-0 flex-1 pr-8 sm:pr-0">
+                            <span
+                              className={`block text-sm sm:hidden ${
+                                objetivoCompletado
+                                  ? 'text-foreground'
+                                  : 'text-muted-foreground'
+                              }`}
+                            >
+                              {objetivo.description}
+                            </span>
                             <span
                               className={`hidden text-sm sm:inline ${
                                 objetivoCompletado
@@ -1266,6 +1303,13 @@ export default function ProjectDetailView({
                             }`}
                           />
                         </div>
+                        <ChevronDown
+                          className={`absolute top-4 right-2 h-4 w-4 text-muted-foreground transition-transform sm:hidden ${
+                            expandedObjectives[objetivo.id]
+                              ? 'rotate-180'
+                              : 'rotate-0'
+                          }`}
+                        />
                       </button>
 
                       {expandedObjectives[objetivo.id] &&
@@ -1372,7 +1416,9 @@ export default function ProjectDetailView({
                                           {actividad.startDate && (
                                             <span className="flex items-center gap-1">
                                               <Calendar className="h-3 w-3" />
-                                              {formatDate(actividad.startDate)}
+                                              {formatActivityDate(
+                                                actividad.startDate
+                                              )}
                                             </span>
                                           )}
                                           {actividad.startDate &&
@@ -1380,7 +1426,9 @@ export default function ProjectDetailView({
                                           {actividad.endDate && (
                                             <span className="flex items-center gap-1">
                                               <Clock className="h-3 w-3" />
-                                              {formatDate(actividad.endDate)}
+                                              {formatActivityDate(
+                                                actividad.endDate
+                                              )}
                                             </span>
                                           )}
                                         </div>
@@ -1395,11 +1443,6 @@ export default function ProjectDetailView({
                                         >
                                           {estadoActividad}
                                         </span>
-                                        {!actividadCompletada && (
-                                          <span className="animate-pulse rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
-                                            Entregar
-                                          </span>
-                                        )}
                                       </div>
                                     </div>
                                     <div className="hidden sm:flex sm:items-center sm:justify-between">
@@ -1428,7 +1471,7 @@ export default function ProjectDetailView({
                                               {actividad.startDate && (
                                                 <span className="flex items-center gap-1">
                                                   <Calendar className="h-3 w-3" />
-                                                  {formatDate(
+                                                  {formatActivityDate(
                                                     actividad.startDate
                                                   )}
                                                 </span>
@@ -1440,7 +1483,7 @@ export default function ProjectDetailView({
                                               {actividad.endDate && (
                                                 <span className="flex items-center gap-1">
                                                   <Clock className="h-3 w-3" />
-                                                  {formatDate(
+                                                  {formatActivityDate(
                                                     actividad.endDate
                                                   )}
                                                 </span>
@@ -1450,11 +1493,6 @@ export default function ProjectDetailView({
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        {!actividadCompletada && (
-                                          <span className="animate-pulse rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
-                                            Entregar
-                                          </span>
-                                        )}
                                         <ChevronDown
                                           className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
@@ -1658,7 +1696,7 @@ export default function ProjectDetailView({
 
           {/* Cronograma */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
                   <Calendar className="h-4 w-4 text-purple-400" />
@@ -1667,7 +1705,7 @@ export default function ProjectDetailView({
                   Cronograma
                 </h3>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 sm:justify-end">
                 <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-1">
                   {(['dias', 'semanas', 'meses'] as const).map((view) => (
                     <button
@@ -1968,7 +2006,7 @@ export default function ProjectDetailView({
 
         <TabsContent value="timeline" className="space-y-4">
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
                   <Calendar className="h-4 w-4 text-purple-400" />
@@ -1977,7 +2015,7 @@ export default function ProjectDetailView({
                   Cronograma
                 </h3>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 sm:justify-end">
                 <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-1">
                   {(['dias', 'semanas', 'meses'] as const).map((view) => (
                     <button
