@@ -15,6 +15,10 @@ interface GenerateContentOptions {
   existingText?: string;
   sectionTitle?: string;
   sectionsContext?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  durationEstimate?: number;
+  durationUnit?: 'dias' | 'semanas' | 'meses' | 'anos';
 }
 
 interface GenerateContentResponse {
@@ -123,6 +127,10 @@ export const useGenerateContent = () => {
         existingText: options.existingText,
         sectionTitle: options.sectionTitle,
         sectionsContext: options.sectionsContext,
+        fechaInicio: options.fechaInicio,
+        fechaFin: options.fechaFin,
+        durationEstimate: options.durationEstimate,
+        durationUnit: options.durationUnit,
         timestamp: new Date().toISOString(),
       };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { X } from 'lucide-react';
 import { FaWandMagicSparkles } from 'react-icons/fa6';
@@ -34,12 +34,67 @@ export default function AddCustomSectionModal({
   const [sectionName, setSectionName] = useState('');
   const [sectionDescription, setSectionDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const typingTimerRef = useRef<number | null>(null);
+  const typingTokenRef = useRef(0);
+
+  const stopTyping = () => {
+    if (typingTimerRef.current !== null) {
+      window.clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    typingTokenRef.current += 1;
+  };
+
+  const shouldReduceMotion = () => {
+    if (typeof window === 'undefined') return true;
+    return (
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+  };
+
+  const typeIntoDescription = (fullText: string) => {
+    stopTyping();
+    if (!fullText) {
+      setSectionDescription('');
+      return;
+    }
+    if (shouldReduceMotion()) {
+      setSectionDescription(fullText);
+      return;
+    }
+
+    const token = typingTokenRef.current;
+    const total = fullText.length;
+    const intervalMs = 12;
+    const chunk = Math.max(1, Math.ceil(total / 180));
+    let index = 0;
+
+    const step = () => {
+      if (typingTokenRef.current !== token) return;
+      index = Math.min(total, index + chunk);
+      setSectionDescription(fullText.slice(0, index));
+      if (index < total) {
+        typingTimerRef.current = window.setTimeout(step, intervalMs);
+      }
+    };
+
+    step();
+  };
 
   useEffect(() => {
     if (!isOpen) return;
     setSectionName(initialName);
     setSectionDescription(initialDescription);
   }, [isOpen, initialName, initialDescription]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimerRef.current !== null) {
+        window.clearTimeout(typingTimerRef.current);
+      }
+    };
+  }, []);
 
   const modalMetrics = useMemo(() => {
     if (!isOpen || typeof window === 'undefined') {
@@ -75,7 +130,7 @@ export default function AddCustomSectionModal({
         activeName
       );
       if (result) {
-        setSectionDescription(result);
+        typeIntoDescription(result);
       }
     } finally {
       setIsGenerating(false);
@@ -165,7 +220,10 @@ export default function AddCustomSectionModal({
               id="section-description"
               placeholder="Escribe el contenido de esta sección..."
               value={sectionDescription}
-              onChange={(e) => setSectionDescription(e.target.value)}
+              onChange={(e) => {
+                stopTyping();
+                setSectionDescription(e.target.value);
+              }}
               disabled={isLoading || isGenerating}
             />
           </div>

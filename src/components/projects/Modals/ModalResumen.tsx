@@ -121,9 +121,263 @@ const dedupeRequirements = (items: string[]) => {
   });
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+type ObjectivesParseOptions = {
+  projectStart?: string;
+  projectEnd?: string;
+  durationEstimate?: number;
+  durationUnit?: 'dias' | 'semanas' | 'meses' | 'anos';
+};
+
+const normalizeDateValue = (value: unknown) => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    const normalized = trimmed.replace(/\//gu, '-');
+    const datePart = normalizeDateInput(normalized);
+    if (datePart) return datePart;
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return formatDateInput(
+      new Date(
+        Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+      )
+    );
+  }
+  if (typeof value === 'number') {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return formatDateInput(
+      new Date(
+        Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+      )
+    );
+  }
+  return '';
+};
+
+const extractJsonPayload = (content: string) => {
+  const trimmed = content.trim();
+  if (!trimmed) return null;
+  const withoutFence = trimmed
+    .replace(/^```(?:json)?/iu, '')
+    .replace(/```$/iu, '')
+    .trim();
+  const firstBrace = withoutFence.indexOf('{');
+  const lastBrace = withoutFence.lastIndexOf('}');
+  const firstBracket = withoutFence.indexOf('[');
+  const lastBracket = withoutFence.lastIndexOf(']');
+  let candidate = '';
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    candidate = withoutFence.slice(firstBrace, lastBrace + 1);
+  } else if (firstBracket !== -1 && lastBracket > firstBracket) {
+    candidate = withoutFence.slice(firstBracket, lastBracket + 1);
+  } else if (withoutFence.startsWith('{') || withoutFence.startsWith('[')) {
+    candidate = withoutFence;
+  }
+  if (!candidate) return null;
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    return null;
+  }
+};
+
+const parseObjectivesFromJson = (
+  payload: unknown
+): SpecificObjective[] | null => {
+  const pickString = (obj: Record<string, unknown>, keys: string[]) => {
+    for (const key of keys) {
+      const value = obj[key];
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+    return '';
+  };
+
+  const getArray = (obj: Record<string, unknown>, keys: string[]) => {
+    for (const key of keys) {
+      const value = obj[key];
+      if (Array.isArray(value)) return value;
+    }
+    return null;
+  };
+
+  const rawObjectives = Array.isArray(payload)
+    ? payload
+    : isRecord(payload)
+      ? (payload.objetivos ??
+        payload.objectives ??
+        payload.objetivos_especificos ??
+        payload.data ??
+        payload.result)
+      : null;
+
+  if (!Array.isArray(rawObjectives)) return null;
+
+  const objetivos = rawObjectives
+    .map((obj, index) => {
+      if (!isRecord(obj)) {
+        if (typeof obj === 'string' && obj.trim()) {
+          return {
+            id: `${Date.now()}_${index}`,
+            title: obj.trim(),
+            activities: [],
+          } as SpecificObjective;
+        }
+        return null;
+      }
+      const title = pickString(obj, [
+        'title',
+        'objetivo',
+        'description',
+        'name',
+      ]);
+      const rawActivities =
+        getArray(obj, ['activities', 'actividades', 'tareas']) ?? [];
+      const activities = rawActivities
+        .map((act, actIndex) => {
+          if (typeof act === 'string') {
+            return { title: act.trim(), startDate: '', endDate: '' };
+          }
+          if (!isRecord(act)) return null;
+          const actTitle = pickString(act, [
+            'title',
+            'actividad',
+            'descripcion',
+            'description',
+            'name',
+          ]);
+          const startDate = normalizeDateValue(
+            act.startDate ?? act.start_date ?? act.fecha_inicio ?? act.inicio
+          );
+          const endDate = normalizeDateValue(
+            act.endDate ?? act.end_date ?? act.fecha_fin ?? act.fin
+          );
+          return {
+            title: actTitle,
+            startDate,
+            endDate,
+          };
+        })
+        .filter(
+          (act): act is { title: string; startDate: string; endDate: string } =>
+            Boolean(act && act.title.trim())
+        );
+
+      if (!title) return null;
+      return {
+        id: String(obj.id ?? `${Date.now()}_${index}`),
+        title,
+        activities,
+      } as SpecificObjective;
+    })
+    .filter((obj): obj is SpecificObjective => Boolean(obj));
+
+  return objetivos.length > 0 ? objetivos : null;
+};
+
+const applyFallbackDates = (
+  objetivos: SpecificObjective[],
+  options: ObjectivesParseOptions
+) => {
+  const hasAnyDates = objetivos.some((obj) =>
+    obj.activities?.some((act) => act.startDate || act.endDate)
+  );
+  if (hasAnyDates) return objetivos;
+
+  const start = options.projectStart ?? '';
+  const end =
+    options.projectEnd ??
+    (start && options.durationEstimate
+      ? addDurationToDate(
+          start,
+          options.durationEstimate,
+          options.durationUnit ?? 'dias'
+        )
+      : '');
+  if (!start || !end) return objetivos;
+
+  const startDate = parseDateInputToUTC(start);
+  const endDate = parseDateInputToUTC(end);
+  if (!startDate || !endDate) return objetivos;
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const totalDays =
+    Math.floor((endDate.getTime() - startDate.getTime()) / msPerDay) + 1;
+
+  const flatActivities: Array<{
+    objectiveIndex: number;
+    activityIndex: number;
+  }> = [];
+  objetivos.forEach((obj, objIndex) => {
+    obj.activities.forEach((_, actIndex) => {
+      flatActivities.push({
+        objectiveIndex: objIndex,
+        activityIndex: actIndex,
+      });
+    });
+  });
+
+  if (flatActivities.length === 0 || totalDays <= 0) return objetivos;
+
+  const cloned = objetivos.map((obj) => ({
+    ...obj,
+    activities: obj.activities.map((act) => ({ ...act })),
+  }));
+
+  if (totalDays < flatActivities.length) {
+    flatActivities.forEach((ref, idx) => {
+      const offset = Math.min(idx, totalDays - 1);
+      const date = new Date(startDate);
+      date.setUTCDate(date.getUTCDate() + offset);
+      const safeDate = date > endDate ? endDate : date;
+      const formatted = formatDateInput(safeDate);
+      cloned[ref.objectiveIndex].activities[ref.activityIndex].startDate =
+        formatted;
+      cloned[ref.objectiveIndex].activities[ref.activityIndex].endDate =
+        formatted;
+    });
+    return cloned;
+  }
+
+  const baseDays = Math.floor(totalDays / flatActivities.length);
+  let remainder = totalDays % flatActivities.length;
+  const cursor = new Date(startDate);
+
+  flatActivities.forEach((ref) => {
+    const span = Math.max(1, baseDays + (remainder > 0 ? 1 : 0));
+    if (remainder > 0) remainder -= 1;
+
+    const startValue = new Date(cursor);
+    const endValue = new Date(cursor);
+    endValue.setUTCDate(endValue.getUTCDate() + span - 1);
+
+    const safeEnd = endValue > endDate ? endDate : endValue;
+    cloned[ref.objectiveIndex].activities[ref.activityIndex].startDate =
+      formatDateInput(startValue);
+    cloned[ref.objectiveIndex].activities[ref.activityIndex].endDate =
+      formatDateInput(safeEnd);
+
+    cursor.setUTCDate(cursor.getUTCDate() + span);
+  });
+
+  return cloned;
+};
+
 const parseObjectivesWithActivities = (
-  content: string
+  content: string,
+  options: ObjectivesParseOptions = {}
 ): SpecificObjective[] => {
+  const jsonPayload = extractJsonPayload(content);
+  const jsonObjectives = jsonPayload
+    ? parseObjectivesFromJson(jsonPayload)
+    : null;
+  if (jsonObjectives && jsonObjectives.length > 0) {
+    return applyFallbackDates(jsonObjectives, options);
+  }
+
   const lines = content
     .split('\n')
     .map((line) => line.trim())
@@ -184,13 +438,17 @@ const parseObjectivesWithActivities = (
 
   finishCurrent();
 
-  if (objetivos.length > 0) return objetivos;
+  if (objetivos.length > 0) {
+    return applyFallbackDates(objetivos, options);
+  }
 
-  return lines.map((line, index) => ({
+  const fallback = lines.map((line, index) => ({
     id: `${Date.now()}_${index}`,
     title: line,
     activities: [],
   }));
+
+  return applyFallbackDates(fallback, options);
 };
 
 // Activity and SpecificObjective types are imported from src/types/objectives.ts
@@ -354,6 +612,60 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const lastSectionsProjectIdRef = useRef<number | undefined>(undefined);
   const lastSectionsSaveIdRef = useRef(0);
   const [creationError, setCreationError] = useState<string | null>(null);
+  const typingTimersRef = useRef<Record<string, number>>({});
+  const typingTokensRef = useRef<Record<string, number>>({});
+
+  const stopTyping = (key: string) => {
+    const timer = typingTimersRef.current[key];
+    if (typeof timer === 'number') {
+      window.clearTimeout(timer);
+      delete typingTimersRef.current[key];
+    }
+    typingTokensRef.current[key] = (typingTokensRef.current[key] ?? 0) + 1;
+  };
+
+  const shouldReduceMotion = () => {
+    if (typeof window === 'undefined') return true;
+    return (
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+  };
+
+  const typeIntoField = (
+    key: string,
+    fullText: string,
+    apply: (value: string) => void
+  ) => {
+    stopTyping(key);
+    if (!fullText) {
+      apply('');
+      return;
+    }
+    if (shouldReduceMotion()) {
+      apply(fullText);
+      return;
+    }
+
+    const token = (typingTokensRef.current[key] ?? 0) + 1;
+    typingTokensRef.current[key] = token;
+    const total = fullText.length;
+    const intervalMs = 12;
+    const chunk = Math.max(1, Math.ceil(total / 180));
+    let index = 0;
+
+    const step = () => {
+      if (typingTokensRef.current[key] !== token) return;
+      index = Math.min(total, index + chunk);
+      apply(fullText.slice(0, index));
+      if (index < total) {
+        typingTimersRef.current[key] = window.setTimeout(step, intervalMs);
+      }
+    };
+
+    step();
+  };
+
   const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
     if (typeof window !== 'undefined' && window.innerWidth < 640) {
@@ -370,6 +682,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
     return undefined;
   }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(typingTimersRef.current).forEach((timer) => {
+        window.clearTimeout(timer);
+      });
+      typingTimersRef.current = {};
+      typingTokensRef.current = {};
+    };
+  }, []);
   const normalizeInitialObjetivos = (src?: ObjetivosInput) => {
     if (!src) return [] as SpecificObjective[];
     if (Array.isArray(src) && src.length > 0 && typeof src[0] === 'string') {
@@ -1088,7 +1410,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     });
 
     if (content) {
-      setFormData((prev) => ({ ...prev, description: content }));
+      typeIntoField('description', content, (value) => {
+        setFormData((prev) => ({ ...prev, description: value }));
+      });
     }
   };
 
@@ -1108,7 +1432,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     });
 
     if (content) {
-      setFormData((prev) => ({ ...prev, justificacion: content }));
+      typeIntoField('justificacion', content, (value) => {
+        setFormData((prev) => ({ ...prev, justificacion: value }));
+      });
     }
   };
 
@@ -1128,7 +1454,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     });
 
     if (content) {
-      setFormData((prev) => ({ ...prev, objetivoGen: content }));
+      typeIntoField('objetivoGen', content, (value) => {
+        setFormData((prev) => ({ ...prev, objetivoGen: value }));
+      });
     }
   };
 
@@ -1636,9 +1964,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 id="description"
                 placeholder="Escribe una idea básica y Artie te ayudará a completarla. Ej: Quiero crear una app para gestionar tareas..."
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                onChange={(e) => {
+                  stopTyping('description');
+                  setFormData({ ...formData, description: e.target.value });
+                }}
               />
               {generationError && (
                 <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
@@ -1943,10 +2272,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           descripcion: formData.description,
                         });
                         if (result) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            planteamiento: result,
-                          }));
+                          typeIntoField('planteamiento', result, (value) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              planteamiento: value,
+                            }));
+                          });
                         }
                       } catch (error) {
                         console.error('Error generando problema:', error);
@@ -1976,9 +2307,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               <textarea
                 className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 value={formData.planteamiento}
-                onChange={(e) =>
-                  setFormData({ ...formData, planteamiento: e.target.value })
-                }
+                onChange={(e) => {
+                  stopTyping('planteamiento');
+                  setFormData({ ...formData, planteamiento: e.target.value });
+                }}
                 placeholder="Describe el problema que resolverá el proyecto..."
               />
               <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
@@ -2039,10 +2371,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         descripcion: formData.description,
                       });
                       if (result) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          objetivoGen: result,
-                        }));
+                        typeIntoField('objetivoGen', result, (value) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            objetivoGen: value,
+                          }));
+                        });
                       }
                     } catch (error) {
                       console.error('Error generando objetivo:', error);
@@ -2073,9 +2407,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Describa el objetivo general del proyecto..."
               value={formData.objetivoGen}
-              onChange={(e) =>
-                setFormData({ ...formData, objetivoGen: e.target.value })
-              }
+              onChange={(e) => {
+                stopTyping('objetivoGen');
+                setFormData({ ...formData, objetivoGen: e.target.value });
+              }}
             />
             <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
               <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
@@ -2431,6 +2766,26 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           : '',
                       ].filter(Boolean);
                       const context = contextParts.join('\n');
+                      const scheduleParts = [
+                        formData.fechaInicio?.trim()
+                          ? `Fecha de inicio del proyecto: ${formData.fechaInicio}`
+                          : '',
+                        formData.fechaFin?.trim()
+                          ? `Fecha de fin del proyecto: ${formData.fechaFin}`
+                          : '',
+                        typeof formData.durationEstimate === 'number' &&
+                        formData.durationEstimate > 0
+                          ? `Duración estimada: ${formData.durationEstimate} ${
+                              formData.durationUnit ?? 'dias'
+                            }`
+                          : '',
+                      ].filter(Boolean);
+                      const scheduleContext =
+                        scheduleParts.length > 0
+                          ? `\nCronograma del proyecto:\n${scheduleParts.join(
+                              '\n'
+                            )}`
+                          : '\nCronograma del proyecto:\nNo hay fechas definidas. Estima un cronograma razonable (6 a 8 semanas desde hoy).';
                       if (!context) {
                         alert(
                           'Completa el titulo, descripcion o el objetivo general antes de generar con IA.'
@@ -2441,9 +2796,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       const hasExisting =
                         formData.objetivosEsp &&
                         formData.objetivosEsp.length > 0;
-                      const prompt = hasExisting
-                        ? `Mejora y reescribe los objetivos especificos y sus actividades manteniendo el significado.\n\n${context}\n\nFormato exacto por objetivo:\nObjetivo 1: [texto]\nActividad: [texto]\nActividad: [texto]\n\nNo incluyas subtitulos ni explicaciones.`
-                        : `Genera entre 3 y 5 objetivos especificos para este proyecto y, para cada objetivo, 2 a 3 actividades claras y medibles.\n\n${context}\n\nFormato exacto por objetivo:\nObjetivo 1: [texto]\nActividad: [texto]\nActividad: [texto]\n\nNo incluyas subtitulos ni explicaciones.`;
+                      const basePrompt = hasExisting
+                        ? 'Mejora y reescribe los objetivos especificos y sus actividades manteniendo el significado.'
+                        : 'Genera entre 3 y 5 objetivos especificos para este proyecto y, para cada objetivo, 2 a 3 actividades claras y medibles.';
+                      const prompt = `${basePrompt}\n\n${context}${scheduleContext}\n\nDevuelve SOLO JSON válido con este formato:\n{"objetivos":[{"title":"Objetivo 1","activities":[{"title":"Actividad 1","startDate":"YYYY-MM-DD","endDate":"YYYY-MM-DD"}]}]}`;
 
                       const result = await generateContent({
                         type: 'objetivosEsp',
@@ -2452,7 +2808,18 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           .map((obj, index) => {
                             const title = obj.title || `Objetivo ${index + 1}`;
                             const acts = (obj.activities || [])
-                              .map((act) => `Actividad: ${act.title || ''}`)
+                              .map((act) => {
+                                const dateInfo = [
+                                  act.startDate
+                                    ? `Inicio: ${act.startDate}`
+                                    : '',
+                                  act.endDate ? `Fin: ${act.endDate}` : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ');
+                                const suffix = dateInfo ? ` (${dateInfo})` : '';
+                                return `Actividad: ${act.title || ''}${suffix}`;
+                              })
                               .filter(Boolean)
                               .join('\n');
                             return acts ? `${title}\n${acts}` : title;
@@ -2460,10 +2827,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           .join('\n\n'),
                         titulo: formData.titulo,
                         descripcion: formData.description,
+                        fechaInicio: formData.fechaInicio,
+                        fechaFin: formData.fechaFin,
+                        durationEstimate: formData.durationEstimate,
+                        durationUnit: formData.durationUnit,
                       });
                       if (result) {
                         activitiesDirtyRef.current = true;
-                        const parsed = parseObjectivesWithActivities(result);
+                        const parsed = parseObjectivesWithActivities(result, {
+                          projectStart: formData.fechaInicio,
+                          projectEnd: formData.fechaFin,
+                          durationEstimate: formData.durationEstimate,
+                          durationUnit: formData.durationUnit,
+                        });
                         setFormData((prev) => ({
                           ...prev,
                           objetivosEsp: parsed,
