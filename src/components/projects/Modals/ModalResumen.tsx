@@ -354,6 +354,22 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const lastSectionsProjectIdRef = useRef<number | undefined>(undefined);
   const lastSectionsSaveIdRef = useRef(0);
   const [creationError, setCreationError] = useState<string | null>(null);
+  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      onClose();
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('project-modal-open'));
+    } else {
+      window.dispatchEvent(new CustomEvent('project-modal-close'));
+    }
+    return undefined;
+  }, [isOpen]);
   const normalizeInitialObjetivos = (src?: ObjetivosInput) => {
     if (!src) return [] as SpecificObjective[];
     if (Array.isArray(src) && src.length > 0 && typeof src[0] === 'string') {
@@ -398,8 +414,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     const doc = document.documentElement;
     const scrollTop = window.scrollY || doc.scrollTop || 0;
     const height = Math.max(doc.scrollHeight, doc.clientHeight);
-    const desiredTop = scrollTop + 80;
-    const maxTop = Math.max(24, height - 720);
+    const isSmallScreen = window.innerWidth < 640;
+    const desiredTop = scrollTop + (isSmallScreen ? 20 : 80);
+    const modalHeight = isSmallScreen
+      ? Math.min(window.innerHeight * 0.82, height)
+      : 650;
+    const minTop = isSmallScreen ? 20 : 24;
+    const maxTop = Math.max(minTop, height - modalHeight);
     return {
       overlayHeight: height,
       modalTop: Math.min(desiredTop, maxTop),
@@ -2977,31 +2998,32 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   return (
     <div
-      className="absolute right-0 left-0 z-50 bg-black/80 p-4"
+      className="absolute right-0 left-0 z-50 bg-black/80 p-2 sm:p-4"
       style={{ top: 0, height: modalMetrics.overlayHeight || '100%' }}
+      onClick={handleOverlayClick}
     >
       <div
         role="dialog"
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
-        className="absolute left-1/2 flex h-[75vh] max-h-[650px] w-full max-w-2xl translate-x-[-50%] gap-4 overflow-hidden rounded-[16px] border bg-background p-0 shadow-lg duration-200"
+        className="absolute left-1/2 flex h-[82vh] max-h-[82vh] w-[96vw] max-w-[96vw] translate-x-[-50%] flex-col gap-0 overflow-hidden rounded-[12px] border bg-background p-0 shadow-lg duration-200 sm:h-[75vh] sm:max-h-[650px] sm:w-full sm:max-w-2xl sm:flex-row sm:gap-4 sm:rounded-[16px]"
         style={{ pointerEvents: 'auto', top: modalMetrics.modalTop }}
       >
         {/* Layout principal con sidebar y contenido */}
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
           {/* Sidebar de navegación */}
-          <div className="flex w-12 shrink-0 flex-col items-center border-r border-border/50 bg-muted/30 py-4">
+          <div className="flex w-full shrink-0 flex-row items-center justify-between border-b border-border/50 bg-muted/30 px-3 py-2 sm:w-12 sm:flex-col sm:border-r sm:border-b-0 sm:px-0 sm:py-4">
             <button
               onClick={handlePrevious}
               disabled={currentStep === 1 || isAutoSaving}
-              className="inline-flex h-8 w-8 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex h-8 w-8 shrink-0 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               title="Paso anterior"
             >
-              <ChevronLeft className="h-4 w-4 rotate-90" />
+              <ChevronLeft className="h-4 w-4 sm:rotate-90" />
             </button>
 
             {/* Indicadores de pasos */}
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4">
+            <div className="flex w-full flex-1 flex-row items-center justify-center gap-2 overflow-x-auto px-2 py-2 sm:w-auto sm:flex-col sm:overflow-visible sm:px-0 sm:py-4">
               {steps.map((step) => (
                 <button
                   key={step.id}
@@ -3030,17 +3052,17 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 (!isProjectCreated && currentStep === 1) ||
                 isAutoSaving
               }
-              className="inline-flex h-8 w-8 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex h-8 w-8 shrink-0 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               title="Paso siguiente"
             >
-              <ChevronRight className="h-4 w-4 rotate-90" />
+              <ChevronRight className="h-4 w-4 sm:rotate-90" />
             </button>
           </div>
 
           {/* Área de contenido */}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {/* Header del modal */}
-            <div className="relative shrink-0 border-b border-border/50 p-6 pb-4">
+            <div className="relative shrink-0 border-b border-border/50 p-4 pb-3 sm:p-6 sm:pb-4">
               <div className="flex flex-col space-y-1.5 text-center sm:text-left">
                 <h2
                   id="modal-title"
@@ -3053,7 +3075,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   </div>
                   {/* Indicador de guardado */}
                   {isProjectCreated && (
-                    <div className="absolute top-4 right-12 flex items-center">
+                    <div className="absolute top-3 right-10 flex items-center sm:top-4 sm:right-12">
                       {isAutoSaving ? (
                         <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
                       ) : (
@@ -3102,26 +3124,26 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </div>
 
             {/* Contenido del paso actual */}
-            <div className="min-h-0 flex-1 overflow-y-auto p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
               {renderStepContent()}
             </div>
 
             {/* Footer con botones de navegación */}
-            <div className="flex items-center justify-between border-t border-border/50 bg-card/50 p-4">
+            <div className="flex flex-row items-center justify-between gap-2 border-t border-border/50 bg-card/50 p-3 sm:p-4">
               <button
                 onClick={handlePrevious}
                 disabled={currentStep === 1 || isAutoSaving}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-[16px] bg-[#22c4d3] px-4 py-2 text-sm font-medium whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="inline-flex h-8 flex-1 items-center justify-center gap-2 rounded-[14px] bg-[#22c4d3] px-3 py-2 text-xs font-semibold whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 sm:h-10 sm:flex-none sm:rounded-[16px] sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <ChevronLeft className="h-4 w-4" />
                 <span className="relative mr-1 mb-1">Anterior</span>
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-1 items-center gap-2 sm:flex-none">
                 <button
                   onClick={handleMainButtonClick}
                   disabled={nextDisabled || isAutoSaving}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[16px] bg-[#22c4d3] px-4 py-2 text-sm font-medium whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="inline-flex h-8 flex-1 items-center justify-center gap-2 rounded-[14px] bg-[#22c4d3] px-3 py-2 text-xs font-semibold whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 sm:h-10 sm:flex-none sm:rounded-[16px] sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   {isCreateStep ? (
                     <>
@@ -3147,7 +3169,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           type="button"
           onClick={onClose}
           disabled={isAutoSaving}
-          className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-40 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+          className="absolute top-1 right-2 hidden rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-40 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground sm:top-4 sm:right-4 sm:inline-flex"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Cerrar</span>

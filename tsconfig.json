@@ -38,11 +38,23 @@
     "src/types/**/*.d.ts",
     "src/types/**/*.ts",
     "video.d.ts",
-    ".next\\dev/types/**/*.ts",
-    ".next\\dev/types/**/*.ts",
+    ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     ".next/types/**/*.ts",
     "new-types.d.ts"
   ],
-  "exclude": ["node_modules", ".next", "build", "dist", ".vercel", "coverage"]
+  "exclude": [
+    "node_modules",
+    ".next",
+    "build",
+    "dist",
+    ".vercel",
+    "coverage",
+    ".agents",
+    ".github",
+    ".agents/**",
+    ".github/**",
+    "**/.agents/**",
+    "**/.github/**"
+  ]
 }

@@ -327,9 +327,9 @@ const LessonCards = ({
       : 0;
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-full flex-col">
       {/* Progress section at top */}
-      <div className="bg-[#061c37cc ] sticky top-2 z-10 border-b border-border px-6 pt-1 pb-4 backdrop-blur-xl">
+      <div className="sticky top-0 z-10 border-b border-border bg-[#061c37cc] px-5 py-3 backdrop-blur-xl">
         <div className="flex items-center gap-4">
           <div className="relative h-14 w-14">
             <svg className="h-14 w-14 -rotate-90">
@@ -369,7 +369,7 @@ const LessonCards = ({
       </div>
 
       {/* Lista de lecciones */}
-      <div className="flex-1 overflow-y-visible p-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-4">
         <div className="mb-2">
           <button className="group flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all hover:bg-secondary/50">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-green-600 bg-green-200 transition-colors group-hover:bg-green-300">

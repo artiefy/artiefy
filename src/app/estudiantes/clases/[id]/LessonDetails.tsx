@@ -857,7 +857,7 @@ export default function LessonDetails({
 
   return (
     <div
-      className="flex min-h-screen flex-col"
+      className="flex min-h-screen flex-col overflow-x-hidden"
       style={{ backgroundColor: '#01152d' }}
     >
       {/* Top Navigation Bar - ahora debajo del header global */}
@@ -904,7 +904,7 @@ export default function LessonDetails({
         {/* Left Sidebar - LessonCards */}
         {!isMobile && isSidebarOpen && (
           <aside
-            className="hide-scrollbar sticky top-[calc(4rem+3.5rem)] z-[50] h-[calc(100vh-4rem-3.5rem)] w-80 flex-shrink-0 overflow-y-hidden"
+            className="hide-scrollbar sticky top-[calc(4rem-0.75rem)] z-[50] h-[calc(100vh-4rem+0.75rem)] w-80 flex-shrink-0 overflow-y-auto"
             style={{ backgroundColor: '#061c37cc' }}
           >
             <LessonCards
@@ -921,76 +921,18 @@ export default function LessonDetails({
           </aside>
         )}
 
-        {/* Mobile Drawer Overlay */}
-        {isMobile && isMobileDrawerOpen && (
-          <>
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
-              onClick={() => setIsMobileDrawerOpen(false)}
-            />
-            {/* Drawer */}
-            <aside
-              className="hide-scrollbar fixed top-0 left-0 z-[101] h-full w-80 overflow-y-auto shadow-2xl transition-transform"
-              style={{ backgroundColor: '#061c37' }}
-            >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-[#061c37] px-4 py-3">
-                <span className="text-sm font-semibold text-foreground">
-                  Clases
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsMobileDrawerOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M18 6 6 18" />
-                    <path d="m6 6 12 12" />
-                  </svg>
-                </button>
-              </div>
-              <LessonCards
-                lessons={lessonsState}
-                selectedLessonId={selectedLessonId}
-                onLessonClick={(id) => {
-                  handleCardClick(id);
-                  setIsMobileDrawerOpen(false);
-                }}
-                progress={progress}
-                isNavigating={isNavigating}
-                setLessonsState={setLessonsState}
-                courseId={lesson.courseId}
-                userId={userId}
-                isMobile={false}
-              />
-            </aside>
-          </>
-        )}
-
         {/* Main Content Area */}
         <main className="flex min-w-0 flex-1 flex-col overflow-y-auto p-0">
           {/* Video Player Section */}
-          {lesson.coverVideoKey !== 'none' && (
-            <div className="w-full">
-              <LessonPlayer
-                lesson={lesson}
-                progress={progress}
-                handleVideoEnd={handleVideoEnd}
-                handleProgressUpdate={handleProgressUpdate}
-                onTimeUpdate={handleTimeUpdate}
-              />
-            </div>
-          )}
+          <div className="w-full">
+            <LessonPlayer
+              lesson={lesson}
+              progress={progress}
+              handleVideoEnd={handleVideoEnd}
+              handleProgressUpdate={handleProgressUpdate}
+              onTimeUpdate={handleTimeUpdate}
+            />
+          </div>
 
           {/* Content Tabs Navigation */}
           <div
@@ -1066,6 +1008,62 @@ export default function LessonDetails({
           </div>
         </main>
       </div>
+
+      {/* Mobile Drawer Overlay */}
+      {isMobile && isMobileDrawerOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+            onClick={() => setIsMobileDrawerOpen(false)}
+          />
+          {/* Drawer */}
+          <aside
+            className="hide-scrollbar fixed top-0 left-0 z-[101] h-full w-80 overflow-y-auto shadow-2xl"
+            style={{ backgroundColor: '#061c37' }}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-[#061c37] px-4 py-3">
+              <span className="text-sm font-semibold text-foreground">
+                Clases
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsMobileDrawerOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
+              </button>
+            </div>
+            <LessonCards
+              lessons={lessonsState}
+              selectedLessonId={selectedLessonId}
+              onLessonClick={(id) => {
+                handleCardClick(id);
+                setIsMobileDrawerOpen(false);
+              }}
+              progress={progress}
+              isNavigating={isNavigating}
+              setLessonsState={setLessonsState}
+              courseId={lesson.courseId}
+              userId={userId}
+              isMobile={false}
+            />
+          </aside>
+        </>
+      )}
 
       {/* Modal de actividad montado directamente en LessonDetails */}
       {selectedActivityForModal && (

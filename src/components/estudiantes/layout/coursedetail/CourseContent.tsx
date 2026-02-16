@@ -1216,7 +1216,7 @@ export function CourseContent({
                                 </div>
                                 {/* Chips fecha+hora y duracion (móvil) en una sola línea */}
                                 <div
-                                  className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                  className="flex flex-wrap items-center gap-2 text-xs sm:text-sm sm:whitespace-nowrap"
                                   style={{ color: '#94a3b8' }}
                                 >
                                   <span className="inline-flex items-center gap-1.5">
@@ -1384,7 +1384,7 @@ export function CourseContent({
                                 </div>
                               </div>
                               <div
-                                className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                className="flex flex-wrap items-center gap-2 text-xs sm:text-sm sm:whitespace-nowrap"
                                 style={{
                                   color: '#94a3b8',
                                   background: '#061c3799',

@@ -146,6 +146,9 @@ export default function ProjectDetailView({
     name: string;
     isCustom: boolean;
   } | null>(null);
+  const [expandedTextBlocks, setExpandedTextBlocks] = useState<
+    Record<string, boolean>
+  >({});
 
   const { generateContent } = useGenerateContent();
 
@@ -605,6 +608,65 @@ export default function ProjectDetailView({
     });
   };
 
+  const splitIntoParagraphs = (value: string) => {
+    const normalized = value.replace(/\r\n/g, '\n').trim();
+    if (!normalized) return [];
+    const byBlankLine = normalized.split(/\n\s*\n/);
+    const paragraphs =
+      byBlankLine.length > 1 ? byBlankLine : normalized.split(/\n/);
+    return paragraphs.map((p) => p.trim()).filter(Boolean);
+  };
+
+  const renderLimitedText = (
+    text: string,
+    key: string,
+    className = 'text-muted-foreground'
+  ) => {
+    const paragraphs = splitIntoParagraphs(text);
+    if (paragraphs.length === 0) return null;
+    const isExpanded = expandedTextBlocks[key] ?? false;
+    const isLongText =
+      paragraphs.length > 3 ||
+      paragraphs.join(' ').length > 700 ||
+      text.length > 700;
+    let visibleParagraphs = paragraphs;
+
+    if (!isExpanded) {
+      if (paragraphs.length > 3) {
+        visibleParagraphs = paragraphs.slice(0, 3);
+      } else if (isLongText) {
+        const first = paragraphs[0] ?? '';
+        const truncated =
+          first.length > 700 ? `${first.slice(0, 700).trim()}…` : first;
+        visibleParagraphs = [truncated];
+      }
+    }
+
+    return (
+      <div className="space-y-3">
+        {visibleParagraphs.map((paragraph, index) => (
+          <p key={`${key}-${index}`} className={`leading-relaxed ${className}`}>
+            {paragraph}
+          </p>
+        ))}
+        {isLongText && (
+          <button
+            type="button"
+            onClick={() =>
+              setExpandedTextBlocks((prev) => ({
+                ...prev,
+                [key]: !prev[key],
+              }))
+            }
+            className="inline-flex items-center text-xs font-semibold text-[#22c4d3] hover:text-[#1eaab7] hover:underline"
+          >
+            {isExpanded ? 'Ver menos' : 'Ver más'}
+          </button>
+        )}
+      </div>
+    );
+  };
+
   const parseTimelineDate = (value?: string | null) => {
     if (!value) return null;
     const [datePart] = value.split(/[T ]/u);
@@ -752,7 +814,7 @@ export default function ProjectDetailView({
   return (
     <section className="space-y-6">
       {/* Header del proyecto */}
-      <div className="rounded-xl border border-border/50 bg-card/50 p-6">
+      <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-6">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex-1">
             {/* Badges de Estado, Tipo y Categoría */}
@@ -796,33 +858,42 @@ export default function ProjectDetailView({
             </div>
 
             {/* Colaboradores */}
-            <div className="mb-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <div className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
               <span>0 colaboradores</span>
+              <button
+                type="button"
+                onClick={() => onEditSection?.(1, addedSections)}
+                className="ml-auto inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:hidden"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>Entrega: {formatDate(project.createdAt)}</span>
             </div>
 
             <h2 className="mb-3 text-xl font-bold text-foreground md:text-2xl">
               {project.name}
             </h2>
             {project.description?.trim() ? (
-              <p className="leading-relaxed text-muted-foreground">
-                {project.description}
-              </p>
+              renderLimitedText(
+                project.description,
+                'project-description',
+                'text-muted-foreground'
+              )
             ) : (
               <p className="text-muted-foreground">
                 No hay descripcion definida aun.
               </p>
             )}
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-4 py-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>Entrega: {formatDate(project.createdAt)}</span>
-            </div>
+          <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end">
             <button
               type="button"
               onClick={() => onEditSection?.(1, addedSections)}
-              className="inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+              className="hidden h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:inline-flex"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -857,38 +928,38 @@ export default function ProjectDetailView({
       </div>
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="inline-flex h-auto items-center justify-center rounded-md border border-border/50 bg-card/50 p-1 text-muted-foreground">
+        <TabsList className="flex h-auto w-full flex-wrap items-center justify-start gap-1 rounded-md border border-border/50 bg-card/50 p-1 text-muted-foreground sm:w-auto sm:flex-nowrap sm:justify-center">
           <TabsTrigger
             value="overview"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <FileText className="h-3.5 w-3.5" />
             Resumen
           </TabsTrigger>
           <TabsTrigger
             value="submissions"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <Upload className="h-3.5 w-3.5" />
             Entregas
           </TabsTrigger>
           <TabsTrigger
             value="feedback"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <MessageSquare className="h-3.5 w-3.5" />
             Retroalimentación
           </TabsTrigger>
           <TabsTrigger
             value="timeline"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <Calendar className="h-3.5 w-3.5" />
             Cronograma
           </TabsTrigger>
           <TabsTrigger
             value="code"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <Code className="h-3.5 w-3.5" />
             Código
@@ -905,7 +976,7 @@ export default function ProjectDetailView({
           </div>
 
           {/* Problema */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/20">
@@ -924,9 +995,11 @@ export default function ProjectDetailView({
               </button>
             </div>
             {project.planteamiento && project.planteamiento.trim() !== '' ? (
-              <p className="leading-relaxed text-muted-foreground">
-                {project.planteamiento}
-              </p>
+              renderLimitedText(
+                project.planteamiento,
+                'project-planteamiento',
+                'text-muted-foreground'
+              )
             ) : (
               <p className="text-muted-foreground">
                 No hay problema definido aún.
@@ -936,7 +1009,7 @@ export default function ProjectDetailView({
 
           {/* Justificación - Solo si existe */}
           {(project.justificacion || addedSections['justificacion']) && (
-            <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+            <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/20">
@@ -949,10 +1022,13 @@ export default function ProjectDetailView({
               </div>
               {project.justificacion ||
               addedSections['justificacion']?.content ? (
-                <p className="leading-relaxed text-muted-foreground">
-                  {project.justificacion ||
-                    addedSections['justificacion']?.content}
-                </p>
+                renderLimitedText(
+                  project.justificacion ||
+                    addedSections['justificacion']?.content ||
+                    '',
+                  'project-justificacion',
+                  'text-muted-foreground'
+                )
               ) : (
                 <p className="text-muted-foreground">
                   No hay contenido definido aún.
@@ -962,7 +1038,7 @@ export default function ProjectDetailView({
           )}
 
           {/* Objetivo General */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
@@ -984,9 +1060,11 @@ export default function ProjectDetailView({
               </button>
             </div>
             {project.objetivo_general ? (
-              <p className="leading-relaxed text-muted-foreground">
-                {project.objetivo_general}
-              </p>
+              renderLimitedText(
+                project.objetivo_general,
+                'project-objetivo-general',
+                'text-muted-foreground'
+              )
             ) : (
               <p className="text-muted-foreground">
                 No hay objetivo general definido aún.
@@ -995,7 +1073,7 @@ export default function ProjectDetailView({
           </div>
 
           {/* Requisitos */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20">
@@ -1048,7 +1126,7 @@ export default function ProjectDetailView({
           </div>
 
           {/* Objetivos Específicos */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
@@ -1107,50 +1185,87 @@ export default function ProjectDetailView({
                       <button
                         type="button"
                         onClick={() => toggleObjective(objetivo.id)}
-                        className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/30"
+                        className="w-full p-4 text-left transition-colors hover:bg-muted/30"
                       >
-                        <div
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
-                            objetivoCompletado
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-muted text-muted-foreground'
-                          }`}
-                        >
-                          {objetivoCompletado ? (
-                            <CircleCheckBig className="h-4 w-4" />
-                          ) : (
-                            idx + 1
-                          )}
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                              objetivoCompletado
+                                ? 'bg-green-500/20 text-green-400'
+                                : 'bg-muted text-muted-foreground'
+                            }`}
+                          >
+                            {objetivoCompletado ? (
+                              <CircleCheckBig className="h-4 w-4" />
+                            ) : (
+                              idx + 1
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2 sm:hidden">
+                              <span
+                                className={`text-sm ${
+                                  objetivoCompletado
+                                    ? 'text-foreground'
+                                    : 'text-muted-foreground'
+                                }`}
+                              >
+                                {objetivo.description}
+                              </span>
+                              <ChevronDown
+                                className={`h-4 w-4 text-muted-foreground transition-transform ${
+                                  expandedObjectives[objetivo.id]
+                                    ? 'rotate-180'
+                                    : 'rotate-0'
+                                }`}
+                              />
+                            </div>
+                            <span
+                              className={`hidden text-sm sm:inline ${
+                                objetivoCompletado
+                                  ? 'text-foreground'
+                                  : 'text-muted-foreground'
+                              }`}
+                            >
+                              {objetivo.description}
+                            </span>
+                            <div className="mt-2 flex flex-col gap-1 sm:hidden">
+                              <span className="text-xs text-muted-foreground">
+                                {actividadesCompletadas}/{actividades.length}{' '}
+                                actividades
+                              </span>
+                              <span
+                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                  objetivoCompletado
+                                    ? 'border-transparent bg-green-500/20 text-green-400'
+                                    : 'border-transparent bg-blue-500/20 text-blue-400'
+                                }`}
+                              >
+                                {estadoObjetivo}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="mr-2 hidden text-xs text-muted-foreground sm:inline">
+                            {actividadesCompletadas}/{actividades.length}{' '}
+                            actividades
+                          </span>
+                          <span
+                            className={`hidden items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold sm:inline-flex ${
+                              objetivoCompletado
+                                ? 'border-transparent bg-green-500/20 text-green-400'
+                                : 'border-transparent bg-blue-500/20 text-blue-400'
+                            }`}
+                          >
+                            {estadoObjetivo}
+                          </span>
+                          <ChevronDown
+                            className={`hidden h-4 w-4 text-muted-foreground transition-transform sm:block ${
+                              expandedObjectives[objetivo.id]
+                                ? 'rotate-180'
+                                : 'rotate-0'
+                            }`}
+                          />
                         </div>
-                        <span
-                          className={`flex-1 text-sm ${
-                            objetivoCompletado
-                              ? 'text-foreground'
-                              : 'text-muted-foreground'
-                          }`}
-                        >
-                          {objetivo.description}
-                        </span>
-                        <span className="mr-2 text-xs text-muted-foreground">
-                          {actividadesCompletadas}/{actividades.length}{' '}
-                          actividades
-                        </span>
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                            objetivoCompletado
-                              ? 'border-transparent bg-green-500/20 text-green-400'
-                              : 'border-transparent bg-blue-500/20 text-blue-400'
-                          }`}
-                        >
-                          {estadoObjetivo}
-                        </span>
-                        <ChevronDown
-                          className={`h-4 w-4 text-muted-foreground transition-transform ${
-                            expandedObjectives[objetivo.id]
-                              ? 'rotate-180'
-                              : 'rotate-0'
-                          }`}
-                        />
                       </button>
 
                       {expandedObjectives[objetivo.id] &&
@@ -1235,48 +1350,104 @@ export default function ProjectDetailView({
                                     }
                                     className="w-full p-4 text-left transition-colors hover:bg-muted/30"
                                   >
-                                    <div className="mb-1 flex items-center gap-2">
-                                      <span className="text-xs text-muted-foreground">
-                                        Actividad {actIdx + 1}
-                                      </span>
-                                      <span
-                                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                                          actividadCompletada
-                                            ? 'border-transparent bg-green-500/20 text-green-400'
-                                            : 'border-transparent bg-blue-500/20 text-blue-400'
-                                        }`}
-                                      >
-                                        {estadoActividad}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                        <h4 className="text-sm font-medium text-foreground">
-                                          {actividad.descripcion}
-                                        </h4>
-                                        {(actividad.startDate ||
-                                          actividad.endDate) && (
-                                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                            {actividad.startDate && (
-                                              <span className="flex items-center gap-1">
-                                                <Calendar className="h-3 w-3" />
-                                                {formatDate(
-                                                  actividad.startDate
-                                                )}
-                                              </span>
-                                            )}
-                                            {actividad.startDate &&
-                                              actividad.endDate && (
-                                                <span>-</span>
-                                              )}
-                                            {actividad.endDate && (
-                                              <span className="flex items-center gap-1">
-                                                <Clock className="h-3 w-3" />
-                                                {formatDate(actividad.endDate)}
-                                              </span>
-                                            )}
-                                          </div>
+                                    <div className="sm:hidden">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-xs text-muted-foreground">
+                                          Actividad {actIdx + 1}
+                                        </span>
+                                        <ChevronDown
+                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                            expandedActivities[activityKey]
+                                              ? 'rotate-180'
+                                              : 'rotate-0'
+                                          }`}
+                                        />
+                                      </div>
+                                      <h4 className="mt-1 text-sm font-medium text-foreground">
+                                        {actividad.descripcion}
+                                      </h4>
+                                      {(actividad.startDate ||
+                                        actividad.endDate) && (
+                                        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                                          {actividad.startDate && (
+                                            <span className="flex items-center gap-1">
+                                              <Calendar className="h-3 w-3" />
+                                              {formatDate(actividad.startDate)}
+                                            </span>
+                                          )}
+                                          {actividad.startDate &&
+                                            actividad.endDate && <span>-</span>}
+                                          {actividad.endDate && (
+                                            <span className="flex items-center gap-1">
+                                              <Clock className="h-3 w-3" />
+                                              {formatDate(actividad.endDate)}
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                      <div className="mt-2 flex flex-col gap-2">
+                                        <span
+                                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                            actividadCompletada
+                                              ? 'border-transparent bg-green-500/20 text-green-400'
+                                              : 'border-transparent bg-blue-500/20 text-blue-400'
+                                          }`}
+                                        >
+                                          {estadoActividad}
+                                        </span>
+                                        {!actividadCompletada && (
+                                          <span className="animate-pulse rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
+                                            Entregar
+                                          </span>
                                         )}
+                                      </div>
+                                    </div>
+                                    <div className="hidden sm:flex sm:items-center sm:justify-between">
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs text-muted-foreground">
+                                            Actividad {actIdx + 1}
+                                          </span>
+                                          <span
+                                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                              actividadCompletada
+                                                ? 'border-transparent bg-green-500/20 text-green-400'
+                                                : 'border-transparent bg-blue-500/20 text-blue-400'
+                                            }`}
+                                          >
+                                            {estadoActividad}
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                          <h4 className="text-sm font-medium text-foreground">
+                                            {actividad.descripcion}
+                                          </h4>
+                                          {(actividad.startDate ||
+                                            actividad.endDate) && (
+                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                              {actividad.startDate && (
+                                                <span className="flex items-center gap-1">
+                                                  <Calendar className="h-3 w-3" />
+                                                  {formatDate(
+                                                    actividad.startDate
+                                                  )}
+                                                </span>
+                                              )}
+                                              {actividad.startDate &&
+                                                actividad.endDate && (
+                                                  <span>-</span>
+                                                )}
+                                              {actividad.endDate && (
+                                                <span className="flex items-center gap-1">
+                                                  <Clock className="h-3 w-3" />
+                                                  {formatDate(
+                                                    actividad.endDate
+                                                  )}
+                                                </span>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         {!actividadCompletada && (
@@ -1455,9 +1626,13 @@ export default function ProjectDetailView({
                                                 <span className="text-xs text-muted-foreground">
                                                   Retroalimentación:
                                                 </span>
-                                                <p className="mt-1 text-sm text-foreground">
-                                                  {activityDescription}
-                                                </p>
+                                                <div className="mt-1">
+                                                  {renderLimitedText(
+                                                    activityDescription,
+                                                    `activity-feedback-${activityKey}`,
+                                                    'text-foreground'
+                                                  )}
+                                                </div>
                                               </div>
                                             )}
                                           </div>
@@ -1482,7 +1657,7 @@ export default function ProjectDetailView({
           </div>
 
           {/* Cronograma */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
@@ -1776,7 +1951,7 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="submissions">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-6 text-center">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 text-center sm:p-6">
             <p className="text-muted-foreground">
               No hay entregas registradas aún.
             </p>
@@ -1784,7 +1959,7 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="feedback">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-6 text-center">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 text-center sm:p-6">
             <p className="text-muted-foreground">
               No hay retroalimentación disponible aún.
             </p>
@@ -1792,7 +1967,7 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-4">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
@@ -2086,7 +2261,7 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="code">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-6 text-center">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 text-center sm:p-6">
             <p className="text-muted-foreground">
               El repositorio de código se mostrará aquí próximamente.
             </p>
@@ -2098,7 +2273,7 @@ export default function ProjectDetailView({
       {Object.entries(addedSections).map(([sectionId, section]) => (
         <div
           key={sectionId}
-          className="mt-4 rounded-xl border border-border/50 bg-card/50 p-5"
+          className="mt-4 rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5"
         >
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-foreground">
@@ -2125,9 +2300,11 @@ export default function ProjectDetailView({
             </div>
           </div>
           {section.content ? (
-            <p className="leading-relaxed text-muted-foreground">
-              {section.content}
-            </p>
+            renderLimitedText(
+              section.content,
+              `section-${sectionId}`,
+              'text-muted-foreground'
+            )
           ) : (
             <p className="text-muted-foreground">Sin contenido.</p>
           )}

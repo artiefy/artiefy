@@ -222,6 +222,7 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [extrasHovered, setExtrasHovered] = useState(false);
   const [showAnim, setShowAnim] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const ANIMATION_DURATION = 350; // ms (coincide con otros componentes)
   const hideTimeoutRef = useRef<number | null>(null);
 
@@ -266,6 +267,21 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
       window.removeEventListener('extras-hover-leave', handleLeave);
     };
   }, [isHovered, extrasHovered, show, hide]);
+
+  // Ocultar botones flotantes cuando se abre el modal de proyecto
+  useEffect(() => {
+    const handleProjectModalOpen = () => setIsProjectModalOpen(true);
+    const handleProjectModalClose = () => setIsProjectModalOpen(false);
+    window.addEventListener('project-modal-open', handleProjectModalOpen);
+    window.addEventListener('project-modal-close', handleProjectModalClose);
+    return () => {
+      window.removeEventListener('project-modal-open', handleProjectModalOpen);
+      window.removeEventListener(
+        'project-modal-close',
+        handleProjectModalClose
+      );
+    };
+  }, []);
 
   const ideaRef = useRef(idea);
   useEffect(() => {
@@ -3175,7 +3191,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           className={`${className ?? ''} fixed`}
           style={{ zIndex: shouldLowerFloatingButtons ? 40 : 99999 }}
         >
-          {isAlwaysVisible && (
+          {isAlwaysVisible && !isProjectModalOpen && (
             <div
               className={`${floatingMainWrapperClass}`}
               style={floatingButtonStyle}

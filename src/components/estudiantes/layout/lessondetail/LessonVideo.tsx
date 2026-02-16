@@ -52,7 +52,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     ref
   ) => {
     const [isLoading, setIsLoading] = useState(() =>
-      !videoKey || videoKey === 'null' || isLocked ? false : true
+      !videoKey || videoKey === 'null' || videoKey === 'none' || isLocked
+        ? false
+        : true
     );
     const [useNativePlayer, setUseNativePlayer] = useState(false);
     const [playerError, setPlayerError] = useState<string | null>(null);
@@ -79,7 +81,8 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
 
     // Derivar la URL del video del prop en lugar de mantenerla en estado para evitar setState en effects
     const videoUrl = useMemo(() => {
-      if (!videoKey || videoKey === 'null' || isLocked) return '';
+      if (!videoKey || videoKey === 'null' || videoKey === 'none' || isLocked)
+        return '';
       return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
     }, [videoKey, isLocked]);
 
@@ -242,10 +245,10 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           isLocked ? (
             <>
               <h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
-                Video de la Clase
+                Video no disponible
               </h2>
               <p className="text-lg font-medium text-white">
-                Disponible muy pronto
+                Este video aún no está disponible para esta clase
               </p>
               <div className="mt-4 flex items-center space-x-2">
                 <div className="h-2 w-2 animate-bounce rounded-full bg-white delay-100" />

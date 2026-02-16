@@ -288,7 +288,7 @@ export function ProjectsSection({
           {/* Botón volver */}
           <button
             onClick={handleBackToList}
-            className="-ml-2 inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+            className="-ml-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground ring-offset-background transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:whitespace-nowrap"
           >
             <FaArrowLeft className="mr-2 h-4 w-4" />
             Volver a proyectos
@@ -363,7 +363,7 @@ export function ProjectsSection({
     <>
       <div className="space-y-6">
         {/* Header con título e icono */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
           <div className="flex items-start gap-4">
             <div
               className="flex h-10 w-10 items-center justify-center rounded-xl"
@@ -386,7 +386,7 @@ export function ProjectsSection({
             onClick={handleCreateProject}
             disabled={!isEnrolled || _isCreating}
             style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
           >
             <FaPlus className="h-4 w-4" />
             {_isCreating ? 'Creando...' : 'Crear Proyecto'}
@@ -470,7 +470,7 @@ export function ProjectsSection({
                 <div
                   key={project.id}
                   onClick={() => handleEnterProject(project)}
-                  className="group cursor-pointer rounded-xl border border-border/50 bg-card/50 p-5 transition-all duration-200 hover:border-border hover:bg-card/80"
+                  className="group cursor-pointer rounded-xl border border-border/50 bg-card/50 p-4 transition-all duration-200 hover:border-border hover:bg-card/80 sm:p-5"
                 >
                   {/* Header con título y estado */}
                   <div className="mb-3 flex items-start justify-between">
@@ -579,7 +579,7 @@ export function ProjectsSection({
                 onClick={handleCreateProject}
                 disabled={_isCreating}
                 style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium whitespace-nowrap ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:whitespace-nowrap"
               >
                 <FaPlus className="h-4 w-4" />
                 {_isCreating ? 'Creando...' : 'Crear Primer Proyecto'}

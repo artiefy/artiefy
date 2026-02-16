@@ -107,7 +107,7 @@
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "typescript.tsserver.maxTsServerMemory": 8192,
   // ESLint Configuration
-  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/18656_1768816064791/node",
+  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/42288_1771013362460/node",
   "eslint.validate": [
     "javascript",
     "javascriptreact",
@@ -440,6 +440,37 @@
   },
   // Nuevas configuraciones recomendadas de VS Code 1.108
   "chat.useAgentSkills": true,
+  "chat.agentSkillsLocations": {
+    ".github/skills": true,
+    ".claude/skills": true,
+    "~/.copilot/skills": true,
+    ".agents/skills": true
+  },
+  "chat.agentFilesLocations": {
+    ".github/agents": true,
+    ".agents": true,
+    "~/.vscode/agents": true
+  },
+  "chat.agentCustomizationSkill.enabled": true,
+  "chat.askQuestions.enabled": true,
+  "github.copilot.chat.searchSubagent.enabled": true,
+  "github.copilot.chat.copilotMemory.enabled": true,
+  "chat.thinking.style": "compact",
+  "chat.tools.autoExpandFailures": true,
+  "workbench.browser.openLocalhostLinks": true,
+  "simpleBrowser.useIntegratedBrowser": true,
+  "livePreview.useIntegratedBrowser": true,
+  "inlineChat.defaultModel": "GPT-5 (copilot)",
+  "github.copilot.chat.implementAgent.model": "GPT-5 (copilot)",
+  "terminal.integrated.stickyScroll.ignoredCommands": [
+    "clear",
+    "copilot",
+    "claude",
+    "codex",
+    "gemini"
+  ],
+  "task.allowAutomaticTasks": "off",
+  "workbench.editor.restoreEditors": true,
   "chat.restoreLastPanelSession": false,
   "chat.tools.terminal.enableAutoApprove": true,
   "chat.tools.terminal.autoApproveWorkspaceNpmScripts": true,

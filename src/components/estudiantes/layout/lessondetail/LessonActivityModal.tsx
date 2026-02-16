@@ -135,6 +135,19 @@ const formatFileSize = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 };
 
+const getFileSubtypeLabel = (file: File): string => {
+  if (file.type && file.type.includes('/')) {
+    const subtype = file.type.split('/')[1];
+    if (subtype) return subtype.toUpperCase();
+  }
+
+  const extension = file.name.split('.').pop();
+  return extension ? extension.toUpperCase() : 'FILE';
+};
+
+const getSafeUploadFilename = (fileName: string): string =>
+  fileName.trim().replace(/\s+/g, '_');
+
 const getFileIcon = (fileType: string) => {
   const type = fileType.toLowerCase();
 
@@ -587,7 +600,7 @@ export function LessonActivityModal({
 
   const renderLoadingState = (message: string) => (
     <div className="flex flex-col items-center justify-center p-8">
-      <Icons.blocks className="fill-primary size-22 animate-pulse" />
+      <Icons.blocks className="size-22 animate-pulse fill-primary" />
       <p className="mt-6 text-center text-xl text-white">{message}</p>
     </div>
   );
@@ -707,7 +720,7 @@ export function LessonActivityModal({
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
           <h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
             <div className="flex items-center">
-              <span className="bg-primary/20 text-background mr-2 flex h-8 w-8 items-center justify-center rounded-full font-bold">
+              <span className="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 font-bold text-background">
                 {currentQuestionIndex + 1}
               </span>
               {currentQuestion.text}
@@ -720,7 +733,7 @@ export function LessonActivityModal({
                 type="text"
                 value={userAnswers[currentQuestion.id]?.answer ?? ''} // Changed || to ??
                 onChange={(e) => handleAnswer(e.target.value)}
-                className="text-background w-full rounded-md border border-gray-300 p-3 shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
+                className="w-full rounded-md border border-gray-300 p-3 text-background shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
                 placeholder="Escribe tu respuesta..."
               />
             ) : (
@@ -738,7 +751,7 @@ export function LessonActivityModal({
                         userAnswers[currentQuestion.id]?.answer === option.id
                       }
                       onChange={(e) => handleAnswer(e.target.value)}
-                      className="text-primary focus:ring-primary h-4 w-4"
+                      className="h-4 w-4 text-primary focus:ring-primary"
                     />
                     <span className="ml-3 text-gray-700">{option.text}</span>
                   </label>
@@ -822,7 +835,7 @@ export function LessonActivityModal({
       return (
         <Button
           onClick={onCloseAction}
-          className="text-background mt-3 w-full bg-blue-500 font-bold transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+          className="mt-3 w-full bg-blue-500 font-bold text-background transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
         >
           CERRAR
         </Button>
@@ -847,7 +860,7 @@ export function LessonActivityModal({
                 setUserAnswers({});
                 setShowResults(false);
               }}
-              className="text-background w-full bg-yellow-500 font-bold hover:bg-yellow-600"
+              className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
             >
               Intentar Nuevamente
             </Button>
@@ -892,7 +905,7 @@ export function LessonActivityModal({
               setUserAnswers({});
               setShowResults(false);
             }}
-            className="text-background w-full bg-yellow-500 font-bold hover:bg-yellow-600"
+            className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
           >
             Intentar Nuevamente
           </Button>
@@ -963,7 +976,7 @@ export function LessonActivityModal({
                 setUserAnswers({});
                 setShowResults(false);
               }}
-              className="text-background w-full bg-yellow-500 font-bold hover:bg-yellow-600 active:scale-[0.98]"
+              className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600 active:scale-[0.98]"
             >
               Intentar Nuevamente
             </Button>
@@ -1006,7 +1019,7 @@ export function LessonActivityModal({
               setUserAnswers({});
               setShowResults(false);
             }}
-            className="text-background w-full bg-yellow-500 font-bold hover:bg-yellow-600"
+            className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
           >
             Intentar Nuevamente
           </Button>
@@ -1226,7 +1239,7 @@ export function LessonActivityModal({
     setSelectedFile(file);
     setFilePreview({
       file,
-      type: file.type.split('/')[1].toUpperCase(),
+      type: getFileSubtypeLabel(file),
       size: formatFileSize(file.size),
       progress: 0,
       status: 'uploading',
@@ -1776,7 +1789,7 @@ export function LessonActivityModal({
             {' '}
             {/* Add right padding */}
             <div className="mb-8 flex flex-col items-center justify-center text-center">
-              <span className="text-primary text-2xl font-bold">
+              <span className="text-2xl font-bold text-primary">
                 {getQuestionTypeLabel(currentQuestion?.type ?? '')}
               </span>
               <span className="mt-2 text-sm text-gray-500">
@@ -1891,7 +1904,7 @@ export function LessonActivityModal({
             </DialogTitle>
           </DialogHeader>
           <div className="flex flex-col items-center justify-center p-8">
-            <Icons.blocks className="fill-primary size-22 animate-pulse" />
+            <Icons.blocks className="size-22 animate-pulse fill-primary" />
             <p className="mt-6 text-center text-xl text-white">
               No hay preguntas disponibles para esta actividad.
             </p>
@@ -1921,10 +1934,10 @@ export function LessonActivityModal({
         aria-modal="true"
         aria-labelledby={modalTitleId}
         aria-describedby={modalDescId}
-        className={`[&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background flex flex-col overflow-hidden ${
+        className={`flex flex-col overflow-hidden [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background ${
           isMobile
-            ? 'w-full max-w-full rounded-none p-1'
-            : 'max-h-[90vh] sm:max-w-[500px]'
+            ? 'mx-2 w-[calc(100%-1rem)] max-w-[520px] rounded-2xl p-1'
+            : 'max-h-[90vh] rounded-2xl sm:max-w-[500px]'
         }`}
       >
         {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
@@ -1938,7 +1951,7 @@ export function LessonActivityModal({
             <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
           </div>
         </button>
-        <DialogHeader className="bg-background sticky top-0 z-40">
+        <DialogHeader className="sticky top-0 z-40 bg-background">
           <DialogTitle
             id={modalTitleId}
             className="text-center text-3xl font-bold"
@@ -1981,7 +1994,7 @@ export function LessonActivityModal({
               ) : (
                 <div>
                   <div className="mb-8 flex flex-col items-center justify-center text-center">
-                    <span className="text-primary text-2xl font-bold">
+                    <span className="text-2xl font-bold text-primary">
                       {getQuestionTypeLabel(currentQuestion?.type ?? '')}
                     </span>
                     <span className="mt-2 text-sm text-gray-500">
@@ -2066,7 +2079,7 @@ async function handleUpload({
   ): void => {
     setFilePreview({
       file: selectedFile,
-      type: selectedFile.type.split('/')[1].toUpperCase(),
+      type: getFileSubtypeLabel(selectedFile),
       size: formatFileSize(selectedFile.size),
       progress,
       status,
@@ -2104,7 +2117,11 @@ async function handleUpload({
     Object.entries(fields).forEach(([fieldKey, value]) => {
       formData.append(fieldKey, String(value));
     });
-    formData.append('file', selectedFile);
+    formData.append(
+      'file',
+      selectedFile,
+      getSafeUploadFilename(selectedFile.name)
+    );
 
     const uploadResponse = await fetch(url, {
       method: 'POST',
@@ -2161,7 +2178,7 @@ async function handleUpload({
     if (setFilePreview) {
       setFilePreview({
         file: selectedFile,
-        type: selectedFile.type.split('/')[1].toUpperCase(),
+        type: getFileSubtypeLabel(selectedFile),
         size: formatFileSize(selectedFile.size),
         progress: 0,
         status: 'error',

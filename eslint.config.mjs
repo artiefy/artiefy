@@ -87,6 +87,8 @@ export default defineConfig([
   {
     ignores: [
       '**/node_modules/**',
+      '.agents/**',
+      '.github/**',
       'Docs/**',
       '.next/**',
       'out/**',
