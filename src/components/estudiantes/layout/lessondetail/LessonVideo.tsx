@@ -259,12 +259,14 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           ) : (
             <>
               <div className="hourglassBackground">
-                <div className="hourglassCurves" />
-                <div className="hourglassCapTop" />
-                <div className="hourglassSand" />
-                <div className="hourglassSandStream" />
-                <div className="hourglassCapBottom" />
-                <div className="hourglassGlass" />
+                <div className="hourglassContainer">
+                  <div className="hourglassCurves" />
+                  <div className="hourglassCapTop" />
+                  <div className="hourglassSand" />
+                  <div className="hourglassSandStream" />
+                  <div className="hourglassCapBottom" />
+                  <div className="hourglassGlass" />
+                </div>
               </div>
               <p className="text-lg font-medium text-white">
                 Preparando video de la clase...
