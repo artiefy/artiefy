@@ -15,6 +15,7 @@ import {
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 import { Search, X } from 'lucide-react';
+import useSWR from 'swr';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
@@ -24,6 +25,7 @@ import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
 import { NotificationHeader } from './NotificationHeader';
 
+import type { EnrolledCourse } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 import type { Course, Program } from '~/types';
 
 import '~/styles/barsicon.css';
@@ -46,6 +48,7 @@ export function Header({
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
   const pathname = usePathname();
+  const isSignedIn = Boolean(user);
 
   const navItems = [
     { href: '/', label: 'Inicio' },
@@ -253,6 +256,28 @@ export function Header({
     );
   };
 
+  const getCourseImageUrl = (coverImageKey?: string | null) => {
+    if (!coverImageKey || coverImageKey === 'NULL') {
+      return 'https://placehold.co/600x400/01152D/3AF4EF?text=Artiefy&font=MONTSERRAT';
+    }
+    const s3Url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`;
+    return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
+  };
+
+  const coursesFetcher = (url: string) =>
+    fetch(url).then((r) => {
+      if (!r.ok) throw new Error('No se pudo cargar los cursos');
+      return r.json();
+    });
+
+  const { data: enrolledData } = useSWR<{ courses?: EnrolledCourse[] }>(
+    isSignedIn ? '/api/enrolled-courses' : null,
+    coursesFetcher,
+    { revalidateOnFocus: false }
+  );
+  const enrolledCourses = enrolledData?.courses ?? [];
+  const continueCourses = enrolledCourses.slice(0, 3);
+
   const handleEspaciosClick = (e?: React.MouseEvent) => {
     e?.preventDefault();
     setShowEspaciosModal(true);
@@ -374,16 +399,180 @@ export function Header({
 
                 return (
                   <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                        isActive
-                          ? 'bg-[#1D283A80] text-white hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
-                          : 'text-[#94A3B8] hover:bg-[#1D283A80] focus:bg-[#1D283A80]'
-                      }`}
-                    >
-                      {item.label}
-                    </Link>
+                    {item.label === 'Cursos' ? (
+                      <div className="group relative">
+                        <Link
+                          href={item.href}
+                          className={`inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none ${
+                            isActive
+                              ? 'border-[#22C4D333] bg-[#22c4d31a] text-[#22C4D3]'
+                              : 'border-transparent text-[#94A3B8] hover:border-[#22C4D333] hover:bg-[#22c4d31a] hover:text-[#22C4D3] focus-visible:border-[#22C4D333] focus-visible:bg-[#22c4d31a] focus-visible:text-[#22C4D3]'
+                          }`}
+                        >
+                          {item.label}
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="mt-0.5 h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-180"
+                          >
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </Link>
+
+                        <div className="invisible absolute top-full left-0 z-50 mt-3 w-[360px] rounded-xl border border-border/60 bg-[#061c37] p-3 opacity-0 shadow-2xl transition-all duration-200 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                          <div className="space-y-1">
+                            <Link
+                              href="/estudiantes/myaccount"
+                              className="group/item flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-primary/10"
+                            >
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 transition-colors group-hover/item:bg-primary/25">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="24"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="h-4 w-4 text-primary"
+                                >
+                                  <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+                                  <path d="M22 10v6" />
+                                  <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+                                </svg>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-foreground">
+                                  Mi Aprendizaje
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  Cursos y programas inscritos
+                                </p>
+                              </div>
+                            </Link>
+
+                            <div className="mx-2 my-1 h-px bg-border/40" />
+
+                            <p className="px-3 pt-1 pb-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                              Continuar viendo
+                            </p>
+
+                            {continueCourses.length > 0 ? (
+                              continueCourses.map((course) => {
+                                const targetLessonId =
+                                  course.lastUnlockedLessonId ??
+                                  course.continueLessonId ??
+                                  course.firstLessonId ??
+                                  null;
+                                const courseHref = targetLessonId
+                                  ? `/estudiantes/clases/${targetLessonId}`
+                                  : `/estudiantes/cursos/${course.id}`;
+                                const progress = Math.min(
+                                  Math.max(Math.round(course.progress ?? 0), 0),
+                                  100
+                                );
+                                return (
+                                  <Link
+                                    key={course.id}
+                                    href={courseHref}
+                                    className="group/item flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-secondary/60"
+                                  >
+                                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border/30">
+                                      <Image
+                                        src={getCourseImageUrl(
+                                          course.coverImageKey
+                                        )}
+                                        alt={course.title ?? 'Curso'}
+                                        width={40}
+                                        height={40}
+                                        className="h-full w-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="truncate text-xs font-medium text-foreground">
+                                        {course.title ?? 'Curso'}
+                                      </p>
+                                      <div className="mt-0.5 flex items-center gap-2">
+                                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                                          <div
+                                            className="h-full rounded-full bg-primary"
+                                            style={{ width: `${progress}%` }}
+                                          />
+                                        </div>
+                                        <span className="text-[10px] text-muted-foreground">
+                                          {progress}%
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="h-3.5 w-3.5 text-primary opacity-0 transition-opacity group-hover/item:opacity-100"
+                                    >
+                                      <polygon points="6 3 20 12 6 21 6 3" />
+                                    </svg>
+                                  </Link>
+                                );
+                              })
+                            ) : (
+                              <div className="px-3 py-2 text-xs text-muted-foreground">
+                                Aún no tienes cursos en progreso.
+                              </div>
+                            )}
+
+                            <div className="mx-2 my-1 h-px bg-border/40" />
+
+                            <Link
+                              href="/estudiantes/myaccount"
+                              className="flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                            >
+                              Ver todo mi aprendizaje
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-3 w-3 -rotate-90"
+                              >
+                                <path d="m6 9 6 6 6-6" />
+                              </svg>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Link
+                        href={item.href}
+                        className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none ${
+                          isActive
+                            ? 'border-[#22C4D333] bg-[#22c4d31a] text-[#22C4D3]'
+                            : 'border-transparent text-[#94A3B8] hover:border-[#22C4D333] hover:bg-[#22c4d31a] hover:text-[#22C4D3] focus-visible:border-[#22C4D333] focus-visible:bg-[#22c4d31a] focus-visible:text-[#22C4D3]'
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    )}
                   </li>
                 );
               })}

@@ -3406,7 +3406,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         role="dialog"
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
-        className="absolute left-1/2 flex h-[82vh] max-h-[82vh] w-[96vw] max-w-[96vw] translate-x-[-50%] flex-col gap-0 overflow-hidden rounded-[12px] border bg-background p-0 shadow-lg duration-200 sm:h-[75vh] sm:max-h-[650px] sm:w-full sm:max-w-2xl sm:flex-row sm:gap-4 sm:rounded-[16px]"
+        className="absolute left-1/2 flex h-[82vh] max-h-[82vh] w-[96vw] max-w-[96vw] translate-x-[-50%] flex-col gap-0 overflow-hidden rounded-[12px] border bg-background p-0 shadow-lg duration-200 sm:h-[80vh] sm:max-h-[80vh] sm:w-[95vw] sm:max-w-6xl sm:flex-row sm:gap-4 sm:rounded-[16px] xl:max-w-7xl"
         style={{ pointerEvents: 'auto', top: modalMetrics.modalTop }}
       >
         {/* Layout principal con sidebar y contenido */}
