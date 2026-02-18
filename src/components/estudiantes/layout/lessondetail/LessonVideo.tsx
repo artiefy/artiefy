@@ -21,6 +21,7 @@ interface VideoPlayerProps {
   // Nuevo prop para sincronizar transcripción
   onTimeUpdate?: (currentTime: number) => void;
   resumeProgress?: number;
+  resumeTimeSeconds?: number;
   onPlaybackChange?: (isPlaying: boolean) => void;
 }
 
@@ -45,23 +46,33 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       isLocked = false,
       onTimeUpdate,
       resumeProgress = 0,
+      resumeTimeSeconds = 0,
       onPlaybackChange,
     },
     ref
   ) => {
     const [isLoading, setIsLoading] = useState(() =>
-      !videoKey || videoKey === 'null' || isLocked ? false : true
+      !videoKey || videoKey === 'null' || videoKey === 'none' || isLocked
+        ? false
+        : true
     );
     const [useNativePlayer, setUseNativePlayer] = useState(false);
     const [playerError, setPlayerError] = useState<string | null>(null);
+    const [isBuffering, setIsBuffering] = useState(false);
     // Usa el tipo correcto para el ref de Player
     const playerRef = useRef<HTMLVideoElement | null>(null);
     const containerRef = useRef<HTMLDivElement | null>(null);
     const hasAppliedResumeRef = useRef(false);
+    const maxWatchedTimeRef = useRef(0);
+    const lastProgressRef = useRef(0);
+    const SEEK_TOLERANCE_SECONDS = 1;
 
     useImperativeHandle(ref, () => ({
       play: () => {
-        playerRef.current?.play();
+        const playPromise = playerRef.current?.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+          playPromise.catch(() => {});
+        }
       },
       pause: () => {
         playerRef.current?.pause();
@@ -70,41 +81,48 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
 
     // Derivar la URL del video del prop en lugar de mantenerla en estado para evitar setState en effects
     const videoUrl = useMemo(() => {
-      if (!videoKey || videoKey === 'null' || isLocked) return '';
+      if (!videoKey || videoKey === 'null' || videoKey === 'none' || isLocked)
+        return '';
       return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
     }, [videoKey, isLocked]);
 
     const applyResumeTime = useCallback(
       (video: HTMLVideoElement | null) => {
         if (!video || hasAppliedResumeRef.current) return;
+        const duration = video.duration;
+        if (!Number.isFinite(duration) || duration <= 0) return;
+
+        const safeResumeSeconds = Math.max(0, resumeTimeSeconds ?? 0);
         const normalizedProgress = Math.min(
           100,
           Math.max(0, resumeProgress ?? 0)
         );
 
-        if (normalizedProgress <= 0 || normalizedProgress >= 100) {
+        const targetTime = safeResumeSeconds > 0 ? safeResumeSeconds : null;
+        const derivedTime =
+          targetTime !== null
+            ? Math.min(duration - 0.5, targetTime)
+            : Math.min(duration - 0.5, (normalizedProgress / 100) * duration);
+
+        if (
+          (safeResumeSeconds <= 0 &&
+            (normalizedProgress <= 0 || normalizedProgress >= 100)) ||
+          derivedTime <= 0
+        ) {
           hasAppliedResumeRef.current = true;
           return;
         }
 
-        const duration = video.duration;
-        if (!Number.isFinite(duration) || duration <= 0) return;
-
-        const targetTime = Math.min(
-          duration - 0.5,
-          (normalizedProgress / 100) * duration
+        if (Math.abs(video.currentTime - derivedTime) > 1) {
+          video.currentTime = derivedTime;
+        }
+        maxWatchedTimeRef.current = Math.max(
+          maxWatchedTimeRef.current,
+          derivedTime
         );
-        if (targetTime <= 0) {
-          hasAppliedResumeRef.current = true;
-          return;
-        }
-
-        if (Math.abs(video.currentTime - targetTime) > 1) {
-          video.currentTime = targetTime;
-        }
         hasAppliedResumeRef.current = true;
       },
-      [resumeProgress]
+      [resumeProgress, resumeTimeSeconds]
     );
 
     const handleReplay = useCallback(() => {
@@ -118,7 +136,6 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       const shouldUseNative = videoKey
         ? FORCE_NATIVE_PLAYER_VIDEOS.some((v) => videoKey.endsWith(v))
         : false;
-      // Actualizar flags que sí son estados locales (estas actualizaciones pueden ser asíncronas)
       const t = setTimeout(() => {
         setUseNativePlayer(shouldUseNative);
         setPlayerError(
@@ -126,13 +143,14 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
             ? 'Usando reproductor nativo para mejor compatibilidad'
             : null
         );
-        setIsLoading(false);
       }, 0);
       return () => clearTimeout(t);
     }, [videoKey, isLocked]);
 
     useEffect(() => {
       hasAppliedResumeRef.current = false;
+      maxWatchedTimeRef.current = 0;
+      lastProgressRef.current = 0;
     }, [videoKey]);
 
     const playerStyle = useMemo(
@@ -153,6 +171,49 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     );
 
     const showCompletedIndicator = !!videoUrl && !isLocked && isVideoCompleted;
+
+    const handleSeeking = useCallback(
+      (video: HTMLVideoElement | null) => {
+        if (!video || isVideoCompleted) return;
+        const maxAllowed = maxWatchedTimeRef.current + SEEK_TOLERANCE_SECONDS;
+        if (video.currentTime > maxAllowed) {
+          video.currentTime = maxWatchedTimeRef.current;
+        }
+      },
+      [isVideoCompleted]
+    );
+
+    const handleTimeUpdate = useCallback(
+      (video: HTMLVideoElement) => {
+        const safeCurrent = Math.max(video.currentTime, 0);
+        if (!isVideoCompleted) {
+          const maxAllowed = maxWatchedTimeRef.current + SEEK_TOLERANCE_SECONDS;
+          if (safeCurrent > maxAllowed) {
+            video.currentTime = maxWatchedTimeRef.current;
+            return;
+          }
+        }
+        if (safeCurrent > maxWatchedTimeRef.current) {
+          maxWatchedTimeRef.current = safeCurrent;
+        }
+
+        if (!isVideoCompleted && video.duration > 0) {
+          const progress = Math.round(
+            (maxWatchedTimeRef.current / video.duration) * 100
+          );
+          const clamped = Math.max(progress, lastProgressRef.current);
+          if (clamped !== lastProgressRef.current) {
+            lastProgressRef.current = clamped;
+            onProgressUpdate(clamped);
+          }
+        }
+
+        if (onTimeUpdate) {
+          onTimeUpdate(safeCurrent);
+        }
+      },
+      [isVideoCompleted, onProgressUpdate, onTimeUpdate]
+    );
 
     useEffect(() => {
       if (!videoUrl || isLocked || !useNativePlayer) return;
@@ -184,10 +245,10 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           isLocked ? (
             <>
               <h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
-                Video de la Clase
+                Video no disponible
               </h2>
               <p className="text-lg font-medium text-white">
-                Disponible muy pronto
+                Este video aún no está disponible para esta clase
               </p>
               <div className="mt-4 flex items-center space-x-2">
                 <div className="h-2 w-2 animate-bounce rounded-full bg-white delay-100" />
@@ -198,12 +259,14 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           ) : (
             <>
               <div className="hourglassBackground">
-                <div className="hourglassCurves" />
-                <div className="hourglassCapTop" />
-                <div className="hourglassSand" />
-                <div className="hourglassSandStream" />
-                <div className="hourglassCapBottom" />
-                <div className="hourglassGlass" />
+                <div className="hourglassContainer">
+                  <div className="hourglassCurves" />
+                  <div className="hourglassCapTop" />
+                  <div className="hourglassSand" />
+                  <div className="hourglassSandStream" />
+                  <div className="hourglassCapBottom" />
+                  <div className="hourglassGlass" />
+                </div>
               </div>
               <p className="text-lg font-medium text-white">
                 Preparando video de la clase...
@@ -213,6 +276,36 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
         </div>
       </div>
     );
+
+    const handleLoadedMetadata = useCallback(
+      (video: HTMLVideoElement) => {
+        applyResumeTime(video);
+        setIsLoading(false);
+        setIsBuffering(false);
+      },
+      [applyResumeTime]
+    );
+
+    const handleLoadStart = useCallback(() => {
+      if (videoUrl) {
+        setIsLoading(true);
+      }
+    }, [videoUrl]);
+
+    const handleCanPlay = useCallback(() => {
+      setIsLoading(false);
+      setIsBuffering(false);
+    }, []);
+
+    const handleWaiting = useCallback(() => {
+      if (videoUrl) setIsBuffering(true);
+    }, [videoUrl]);
+
+    const handlePlaying = useCallback(() => {
+      setIsBuffering(false);
+    }, []);
+
+    const shouldShowLoading = !videoUrl || isLoading || isBuffering;
 
     return (
       <div className="relative aspect-video w-full" ref={containerRef}>
@@ -226,20 +319,15 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
             ref={playerRef as React.RefObject<HTMLVideoElement>}
             onPlay={() => onPlaybackChange?.(true)}
             onPause={() => onPlaybackChange?.(false)}
-            onLoadedMetadata={(e) => {
-              applyResumeTime(e.currentTarget);
-            }}
+            onLoadStart={handleLoadStart}
+            onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
+            onCanPlay={handleCanPlay}
+            onWaiting={handleWaiting}
+            onPlaying={handlePlaying}
+            onSeeking={(e) => handleSeeking(e.currentTarget)}
+            onSeeked={(e) => handleSeeking(e.currentTarget)}
             onTimeUpdate={(e) => {
-              const video = e.currentTarget;
-              if (video && !isVideoCompleted) {
-                const progress = Math.round(
-                  (video.currentTime / video.duration) * 100
-                );
-                onProgressUpdate(progress);
-              }
-              if (onTimeUpdate) {
-                onTimeUpdate(video.currentTime);
-              }
+              handleTimeUpdate(e.currentTarget);
             }}
             style={playerStyle}
           />
@@ -260,24 +348,19 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
             }}
             onPlay={() => onPlaybackChange?.(true)}
             onPause={() => onPlaybackChange?.(false)}
-            onLoadedMetadata={(e) => {
-              applyResumeTime(e.currentTarget);
-            }}
+            onLoadStart={handleLoadStart}
+            onLoadedMetadata={(e) => handleLoadedMetadata(e.currentTarget)}
+            onCanPlay={handleCanPlay}
+            onWaiting={handleWaiting}
+            onPlaying={handlePlaying}
+            onSeeking={(e) => handleSeeking(e.currentTarget)}
+            onSeeked={(e) => handleSeeking(e.currentTarget)}
             onTimeUpdate={(e) => {
-              const video = e.currentTarget;
-              if (video && !isVideoCompleted) {
-                const progress = Math.round(
-                  (video.currentTime / video.duration) * 100
-                );
-                onProgressUpdate(progress);
-              }
-              if (onTimeUpdate) {
-                onTimeUpdate(video.currentTime);
-              }
+              handleTimeUpdate(e.currentTarget);
             }}
           />
         ) : null}
-        {(!videoUrl || isLoading) && renderLoadingState()}
+        {shouldShowLoading && renderLoadingState()}
         {showCompletedIndicator && (
           <div className="pointer-events-none absolute top-3 left-3 rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-emerald-950 shadow">
             Completado

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   Calendar,
@@ -19,6 +19,7 @@ import {
   Upload,
   Users,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import {
   Tabs,
@@ -26,19 +27,31 @@ import {
   TabsList,
   TabsTrigger,
 } from '~/components/projects/ui/tabs';
+import { useGenerateContent } from '~/hooks/useGenerateContent';
 
 import { Progress } from './ui/progress';
+import AddCustomSectionModal from './AddCustomSectionModal';
+import AddSectionDropdown from './AddSectionDropdown';
 
 import type { Project } from '~/types/project';
 
 interface ProjectDetailViewProps {
   project: Project;
-  onEditSection?: (step: number) => void;
+  onEditSection?: (
+    step: number,
+    addedSections?: Record<string, { name: string; content: string }>
+  ) => void;
+  addedSections?: Record<string, { name: string; content: string }>;
+  onAddedSectionsChange?: (
+    sections: Record<string, { name: string; content: string }>
+  ) => void;
 }
 
 export default function ProjectDetailView({
   project,
   onEditSection,
+  addedSections: initialAddedSections = {},
+  onAddedSectionsChange,
 }: ProjectDetailViewProps) {
   const totalSections = 7;
   const hasBasicInfo = Boolean(
@@ -119,6 +132,217 @@ export default function ProjectDetailView({
   const [deliverableOverrides, setDeliverableOverrides] = useState<
     Record<number, { url: string; name: string; submittedAt: string }>
   >({});
+  const [addedSections, setAddedSectionsState] =
+    useState<Record<string, { name: string; content: string }>>(
+      initialAddedSections
+    );
+  const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [isAddingSectionLoading, setIsAddingSectionLoading] = useState(false);
+  const [isDeletingSection, setIsDeletingSection] = useState<string | null>(
+    null
+  );
+  const [pendingSection, setPendingSection] = useState<{
+    id: string;
+    name: string;
+    isCustom: boolean;
+  } | null>(null);
+  const [expandedTextBlocks, setExpandedTextBlocks] = useState<
+    Record<string, boolean>
+  >({});
+
+  const { generateContent } = useGenerateContent();
+
+  // Sincronizar estado local con cambios de prop del padre
+  useEffect(() => {
+    console.log(
+      `📋 ProjectDetailView: Sincronizando secciones desde prop:`,
+      initialAddedSections
+    );
+    setAddedSectionsState(initialAddedSections);
+  }, [initialAddedSections]);
+
+  const setAddedSections = (
+    sections:
+      | Record<string, { name: string; content: string }>
+      | ((
+          prev: Record<string, { name: string; content: string }>
+        ) => Record<string, { name: string; content: string }>)
+  ) => {
+    const newSections =
+      typeof sections === 'function' ? sections(addedSections) : sections;
+    setAddedSectionsState(newSections);
+    onAddedSectionsChange?.(newSections);
+  };
+
+  const handleSectionSelect = async (sectionId: string, isCustom?: boolean) => {
+    if (isCustom) {
+      setPendingSection({ id: 'custom', name: '', isCustom: true });
+      setShowAddCustomModal(true);
+      return;
+    }
+
+    if (!addedSections[sectionId]) {
+      setPendingSection({
+        id: sectionId,
+        name: getSectionLabel(sectionId),
+        isCustom: false,
+      });
+      setShowAddCustomModal(true);
+    }
+  };
+
+  const getSectionLabel = (sectionId: string): string => {
+    const labels: Record<string, string> = {
+      introduccion: 'Introducción',
+      justificacion: 'Justificación',
+      'marco-teorico': 'Marco Teórico',
+      metodologia: 'Metodología',
+      alcance: 'Alcance',
+      equipo: 'Equipo',
+    };
+    return labels[sectionId] ?? sectionId;
+  };
+
+  const handleAddCustomSection = async (name: string, description: string) => {
+    setIsAddingSectionLoading(true);
+    try {
+      const sectionId = pendingSection?.isCustom
+        ? `custom-${Date.now()}`
+        : (pendingSection?.id ?? `custom-${Date.now()}`);
+      const sectionName = pendingSection?.isCustom
+        ? name
+        : (pendingSection?.name ?? name);
+      const newSections = {
+        ...addedSections,
+        [sectionId]: { name: sectionName, content: description },
+      };
+
+      console.log(`📝 handleAddCustomSection: Guardando sección personalizada`);
+      // Guardar en BD de forma silenciosa
+      const response = await fetch('/api/project-sections-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          sections: newSections,
+        }),
+      });
+
+      if (response.ok) {
+        // Actualizar estado local solo si se guardó exitosamente
+        setAddedSections(newSections);
+        setShowAddCustomModal(false);
+        setPendingSection(null);
+        toast.success('Sección personalizada agregada correctamente');
+        console.log(
+          `✅ handleAddCustomSection: Sección personalizada guardada`
+        );
+      } else {
+        const error = await response.json();
+        console.error(`❌ handleAddCustomSection: ${error.error}`);
+        toast.error(error.error || 'Error al agregar sección');
+      }
+    } catch (error) {
+      console.error('❌ handleAddCustomSection: Error:', error);
+      toast.error('Error al agregar sección');
+    } finally {
+      setIsAddingSectionLoading(false);
+    }
+  };
+
+  const sectionContext = useMemo(() => {
+    const parts = [
+      project.name?.trim() ? `Título del proyecto: ${project.name.trim()}` : '',
+      project.description?.trim()
+        ? `Descripción del proyecto: ${project.description.trim()}`
+        : project.planteamiento?.trim()
+          ? `Descripción del proyecto: ${project.planteamiento.trim()}`
+          : '',
+      project.planteamiento?.trim()
+        ? `Problema: ${project.planteamiento.trim()}`
+        : '',
+      project.justificacion?.trim()
+        ? `Justificación: ${project.justificacion.trim()}`
+        : '',
+      project.objetivo_general?.trim()
+        ? `Objetivo general: ${project.objetivo_general.trim()}`
+        : '',
+    ].filter(Boolean);
+
+    const extraSections = Object.entries(addedSections)
+      .map(([id, section]) => {
+        const label = section.name?.trim() || id;
+        const content = section.content?.trim() || '';
+        if (!content) return `Sección ${label}: (sin contenido)`;
+        return `Sección ${label}: ${content}`;
+      })
+      .filter(Boolean)
+      .slice(0, 6);
+
+    const context = [...parts, ...extraSections].join('\n');
+    return context.length > 2000 ? context.slice(0, 2000) : context;
+  }, [project, addedSections]);
+
+  const handleGenerateSectionDescription = async (
+    currentText: string,
+    sectionTitleOverride: string
+  ) => {
+    if (!pendingSection) return null;
+    const sectionTitle =
+      sectionTitleOverride.trim() || pendingSection.name || 'Sección';
+    const basePrompt = currentText.trim()
+      ? `Mejora y reescribe el contenido de la sección "${sectionTitle}" manteniendo el significado.`
+      : `Genera el contenido para la sección "${sectionTitle}" de un proyecto educativo.`;
+    const prompt = `${basePrompt}\n\nContexto del proyecto:\n${sectionContext}\n\nResponde solo con el contenido de la sección.`;
+
+    const result = await generateContent({
+      type: 'descripcion',
+      prompt,
+      titulo: project.name ?? '',
+      descripcion: project.description ?? project.planteamiento ?? '',
+      existingText: currentText,
+      sectionTitle,
+      sectionsContext: sectionContext,
+    });
+
+    return result;
+  };
+
+  const handleDeleteSection = async (sectionId: string) => {
+    try {
+      setIsDeletingSection(sectionId);
+      console.log(`🗑️ Eliminando sección: ${sectionId}`);
+
+      const response = await fetch('/api/project-sections-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          sectionId,
+        }),
+      });
+
+      if (response.ok) {
+        // Eliminar del estado local
+        setAddedSections((prev) => {
+          const newSections = { ...prev };
+          delete newSections[sectionId];
+          return newSections;
+        });
+        toast.success('Sección eliminada correctamente');
+        console.log(`✅ Sección eliminada: ${sectionId}`);
+      } else {
+        const error = await response.json();
+        console.error(`❌ Error al eliminar: ${error.error}`);
+        toast.error(error.error || 'Error al eliminar sección');
+      }
+    } catch (error) {
+      console.error('❌ Error al eliminar sección:', error);
+      toast.error('Error al eliminar sección');
+    } finally {
+      setIsDeletingSection(null);
+    }
+  };
 
   const normalizeActivityId = (value: unknown) => {
     if (typeof value === 'number' && Number.isFinite(value)) return value;
@@ -372,6 +596,27 @@ export default function ProjectDetailView({
     });
   };
 
+  const formatActivityDate = (dateString: string) => {
+    const parsed = parseDateForDisplay(dateString);
+    if (!parsed) return '';
+    const day = parsed.toLocaleDateString('es-CO', {
+      day: 'numeric',
+      timeZone: 'America/Bogota',
+    });
+    const month = parsed
+      .toLocaleDateString('es-CO', {
+        month: 'short',
+        timeZone: 'America/Bogota',
+      })
+      .replace('.', '')
+      .toLowerCase();
+    const year = parsed.toLocaleDateString('es-CO', {
+      year: '2-digit',
+      timeZone: 'America/Bogota',
+    });
+    return `${day} de ${month}, ${year}`;
+  };
+
   const formatDateTime = (dateString?: string | null) => {
     if (!dateString) return '';
     return new Date(dateString).toLocaleString('es-CO', {
@@ -382,6 +627,67 @@ export default function ProjectDetailView({
       minute: '2-digit',
       timeZone: 'America/Bogota',
     });
+  };
+
+  const splitIntoParagraphs = (value: string) => {
+    const normalized = value.replace(/\r\n/g, '\n').trim();
+    if (!normalized) return [];
+    const byBlankLine = normalized.split(/\n\s*\n/);
+    const paragraphs =
+      byBlankLine.length > 1 ? byBlankLine : normalized.split(/\n/);
+    return paragraphs.map((p) => p.trim()).filter(Boolean);
+  };
+
+  const renderLimitedText = (
+    text: string,
+    key: string,
+    className = 'text-muted-foreground'
+  ) => {
+    const paragraphs = splitIntoParagraphs(text);
+    if (paragraphs.length === 0) return null;
+    const isExpanded = expandedTextBlocks[key] ?? false;
+    const isLongText =
+      paragraphs.length > 3 ||
+      paragraphs.join(' ').length > 700 ||
+      text.length > 700;
+    let visibleParagraphs = paragraphs;
+
+    if (!isExpanded) {
+      if (paragraphs.length > 3) {
+        visibleParagraphs = paragraphs.slice(0, 3);
+      } else if (isLongText) {
+        const first = paragraphs[0] ?? '';
+        const truncated =
+          first.length > 700 ? `${first.slice(0, 700).trim()}…` : first;
+        visibleParagraphs = [truncated];
+      }
+    }
+
+    return (
+      <div className="space-y-3">
+        {visibleParagraphs.map((paragraph, index) => (
+          <p key={`${key}-${index}`} className={`leading-relaxed ${className}`}>
+            {paragraph}
+          </p>
+        ))}
+        {isLongText && (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() =>
+                setExpandedTextBlocks((prev) => ({
+                  ...prev,
+                  [key]: !prev[key],
+                }))
+              }
+              className="inline-flex items-center text-xs font-semibold text-muted-foreground hover:text-purple-400 hover:underline"
+            >
+              {isExpanded ? 'Ver menos' : 'Ver más'}
+            </button>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const parseTimelineDate = (value?: string | null) => {
@@ -531,7 +837,7 @@ export default function ProjectDetailView({
   return (
     <section className="space-y-6">
       {/* Header del proyecto */}
-      <div className="rounded-xl border border-border/50 bg-card/50 p-6">
+      <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-6">
         <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex-1">
             {/* Badges de Estado, Tipo y Categoría */}
@@ -575,33 +881,42 @@ export default function ProjectDetailView({
             </div>
 
             {/* Colaboradores */}
-            <div className="mb-3 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <div className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground">
               <Users className="h-4 w-4" />
               <span>0 colaboradores</span>
+              <button
+                type="button"
+                onClick={() => onEditSection?.(1, addedSections)}
+                className="ml-auto inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:hidden"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4" />
+              <span>Entrega: {formatDate(project.createdAt)}</span>
             </div>
 
             <h2 className="mb-3 text-xl font-bold text-foreground md:text-2xl">
               {project.name}
             </h2>
             {project.description?.trim() ? (
-              <p className="leading-relaxed text-muted-foreground">
-                {project.description}
-              </p>
+              renderLimitedText(
+                project.description,
+                'project-description',
+                'text-muted-foreground'
+              )
             ) : (
               <p className="text-muted-foreground">
                 No hay descripcion definida aun.
               </p>
             )}
           </div>
-          <div className="flex shrink-0 flex-col items-end gap-2">
-            <div className="flex items-center gap-2 rounded-lg bg-muted/30 px-4 py-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>Entrega: {formatDate(project.createdAt)}</span>
-            </div>
+          <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end">
             <button
               type="button"
-              onClick={() => onEditSection?.(1)}
-              className="inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+              onClick={() => onEditSection?.(1, addedSections)}
+              className="hidden h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:inline-flex"
             >
               <Pencil className="h-3.5 w-3.5" />
             </button>
@@ -636,38 +951,38 @@ export default function ProjectDetailView({
       </div>
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="inline-flex h-auto items-center justify-center rounded-md border border-border/50 bg-card/50 p-1 text-muted-foreground">
+        <TabsList className="flex h-auto w-full flex-wrap items-center justify-start gap-1 rounded-md border border-border/50 bg-card/50 p-1 text-muted-foreground sm:w-auto sm:flex-nowrap sm:justify-center">
           <TabsTrigger
             value="overview"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <FileText className="h-3.5 w-3.5" />
             Resumen
           </TabsTrigger>
           <TabsTrigger
             value="submissions"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <Upload className="h-3.5 w-3.5" />
             Entregas
           </TabsTrigger>
           <TabsTrigger
             value="feedback"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <MessageSquare className="h-3.5 w-3.5" />
             Retroalimentación
           </TabsTrigger>
           <TabsTrigger
             value="timeline"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <Calendar className="h-3.5 w-3.5" />
             Cronograma
           </TabsTrigger>
           <TabsTrigger
             value="code"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
             <Code className="h-3.5 w-3.5" />
             Código
@@ -675,8 +990,16 @@ export default function ProjectDetailView({
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
+          {/* Botón Agregar Sección */}
+          <div className="flex justify-end">
+            <AddSectionDropdown
+              addedSections={Object.keys(addedSections)}
+              onSectionSelect={handleSectionSelect}
+            />
+          </div>
+
           {/* Problema */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/20">
@@ -688,16 +1011,18 @@ export default function ProjectDetailView({
               </div>
               <button
                 type="button"
-                onClick={() => onEditSection?.(2)}
+                onClick={() => onEditSection?.(2, addedSections)}
                 className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Pencil className="h-4 w-4" />
               </button>
             </div>
             {project.planteamiento && project.planteamiento.trim() !== '' ? (
-              <p className="leading-relaxed text-muted-foreground">
-                {project.planteamiento}
-              </p>
+              renderLimitedText(
+                project.planteamiento,
+                'project-planteamiento',
+                'text-muted-foreground'
+              )
             ) : (
               <p className="text-muted-foreground">
                 No hay problema definido aún.
@@ -705,38 +1030,38 @@ export default function ProjectDetailView({
             )}
           </div>
 
-          {/* Justificación */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/20">
-                  <Lightbulb className="h-4 w-4 text-yellow-400" />
+          {/* Justificación - Solo si existe */}
+          {(project.justificacion || addedSections['justificacion']) && (
+            <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/20">
+                    <Lightbulb className="h-4 w-4 text-yellow-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Justificación
+                  </h3>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  Justificación
-                </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => onEditSection?.(2)}
-                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {project.justificacion ||
+              addedSections['justificacion']?.content ? (
+                renderLimitedText(
+                  project.justificacion ||
+                    addedSections['justificacion']?.content ||
+                    '',
+                  'project-justificacion',
+                  'text-muted-foreground'
+                )
+              ) : (
+                <p className="text-muted-foreground">
+                  No hay contenido definido aún.
+                </p>
+              )}
             </div>
-            {project.justificacion ? (
-              <p className="leading-relaxed text-muted-foreground">
-                {project.justificacion}
-              </p>
-            ) : (
-              <p className="text-muted-foreground">
-                No hay justificación definida aún.
-              </p>
-            )}
-          </div>
+          )}
 
           {/* Objetivo General */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
@@ -751,16 +1076,18 @@ export default function ProjectDetailView({
               </div>
               <button
                 type="button"
-                onClick={() => onEditSection?.(3)}
+                onClick={() => onEditSection?.(3, addedSections)}
                 className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Pencil className="h-4 w-4" />
               </button>
             </div>
             {project.objetivo_general ? (
-              <p className="leading-relaxed text-muted-foreground">
-                {project.objetivo_general}
-              </p>
+              renderLimitedText(
+                project.objetivo_general,
+                'project-objetivo-general',
+                'text-muted-foreground'
+              )
             ) : (
               <p className="text-muted-foreground">
                 No hay objetivo general definido aún.
@@ -769,7 +1096,7 @@ export default function ProjectDetailView({
           </div>
 
           {/* Requisitos */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20">
@@ -781,7 +1108,7 @@ export default function ProjectDetailView({
               </div>
               <button
                 type="button"
-                onClick={() => onEditSection?.(4)}
+                onClick={() => onEditSection?.(4, addedSections)}
                 className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Pencil className="h-4 w-4" />
@@ -799,20 +1126,41 @@ export default function ProjectDetailView({
               const filtered = reqs.filter(
                 (r) => typeof r === 'string' && r.trim() !== ''
               );
+              const requisitosKey = 'project-requisitos';
+              const isExpanded = expandedTextBlocks[requisitosKey] ?? false;
+              const visible = isExpanded ? filtered : filtered.slice(0, 8);
               return filtered.length > 0 ? (
-                <ul className="space-y-3">
-                  {filtered.map((req, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-3 text-sm text-muted-foreground"
-                    >
-                      <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-medium text-accent">
-                        {idx + 1}
-                      </div>
-                      {req}
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  <ul className="space-y-3">
+                    {visible.map((req, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-start gap-3 text-sm text-muted-foreground"
+                      >
+                        <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-medium text-accent">
+                          {idx + 1}
+                        </div>
+                        {req}
+                      </li>
+                    ))}
+                  </ul>
+                  {filtered.length > 8 && (
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedTextBlocks((prev) => ({
+                            ...prev,
+                            [requisitosKey]: !isExpanded,
+                          }))
+                        }
+                        className="inline-flex items-center text-xs font-semibold text-muted-foreground hover:text-purple-400 hover:underline"
+                      >
+                        {isExpanded ? 'Ver menos' : 'Ver más'}
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <p className="text-muted-foreground">
                   No hay requisitos definidos aún.
@@ -822,33 +1170,35 @@ export default function ProjectDetailView({
           </div>
 
           {/* Objetivos Específicos */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
+            <div className="relative mb-4 sm:flex sm:items-start sm:justify-between sm:gap-3">
+              <div className="flex items-start gap-3 pr-10 sm:pr-0">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
                   <ListChecks className="h-4 w-4 text-blue-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  Objetivos Específicos
-                </h3>
-                <span className="text-sm text-muted-foreground">
-                  {(() => {
-                    const objetivos = project.objetivos_especificos ?? [];
-                    const completados = objetivos.filter(
-                      (obj) =>
-                        (obj.actividades ?? []).length > 0 &&
-                        (obj.actividades ?? []).every(
-                          (act) => act.startDate && act.endDate
-                        )
-                    ).length;
-                    return `${completados}/${objetivos.length} completados`;
-                  })()}
-                </span>
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Objetivos Específicos
+                  </h3>
+                  <span className="mt-1 block text-sm text-muted-foreground sm:mt-0 sm:inline">
+                    {(() => {
+                      const objetivos = project.objetivos_especificos ?? [];
+                      const completados = objetivos.filter(
+                        (obj) =>
+                          (obj.actividades ?? []).length > 0 &&
+                          (obj.actividades ?? []).every(
+                            (act) => act.startDate && act.endDate
+                          )
+                      ).length;
+                      return `${completados}/${objetivos.length} completados`;
+                    })()}
+                  </span>
+                </div>
               </div>
               <button
                 type="button"
-                onClick={() => onEditSection?.(6)}
-                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                onClick={() => onEditSection?.(6, addedSections)}
+                className="absolute top-0 right-0 inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <Pencil className="h-4 w-4" />
               </button>
@@ -881,45 +1231,80 @@ export default function ProjectDetailView({
                       <button
                         type="button"
                         onClick={() => toggleObjective(objetivo.id)}
-                        className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/30"
+                        className="relative w-full p-4 text-left transition-colors hover:bg-muted/30"
                       >
-                        <div
-                          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
-                            objetivoCompletado
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-muted text-muted-foreground'
-                          }`}
-                        >
-                          {objetivoCompletado ? (
-                            <CircleCheckBig className="h-4 w-4" />
-                          ) : (
-                            idx + 1
-                          )}
+                        <div className="flex items-start gap-3">
+                          <div
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                              objetivoCompletado
+                                ? 'bg-green-500/20 text-green-400'
+                                : 'bg-muted text-muted-foreground'
+                            }`}
+                          >
+                            {objetivoCompletado ? (
+                              <CircleCheckBig className="h-4 w-4" />
+                            ) : (
+                              idx + 1
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1 pr-8 sm:pr-0">
+                            <span
+                              className={`block text-sm sm:hidden ${
+                                objetivoCompletado
+                                  ? 'text-foreground'
+                                  : 'text-muted-foreground'
+                              }`}
+                            >
+                              {objetivo.description}
+                            </span>
+                            <span
+                              className={`hidden text-sm sm:inline ${
+                                objetivoCompletado
+                                  ? 'text-foreground'
+                                  : 'text-muted-foreground'
+                              }`}
+                            >
+                              {objetivo.description}
+                            </span>
+                            <div className="mt-2 flex flex-col gap-1 sm:hidden">
+                              <span className="text-xs text-muted-foreground">
+                                {actividadesCompletadas}/{actividades.length}{' '}
+                                actividades
+                              </span>
+                              <span
+                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                  objetivoCompletado
+                                    ? 'border-transparent bg-green-500/20 text-green-400'
+                                    : 'border-transparent bg-blue-500/20 text-blue-400'
+                                }`}
+                              >
+                                {estadoObjetivo}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="mr-2 hidden text-xs text-muted-foreground sm:inline">
+                            {actividadesCompletadas}/{actividades.length}{' '}
+                            actividades
+                          </span>
+                          <span
+                            className={`hidden items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold sm:inline-flex ${
+                              objetivoCompletado
+                                ? 'border-transparent bg-green-500/20 text-green-400'
+                                : 'border-transparent bg-blue-500/20 text-blue-400'
+                            }`}
+                          >
+                            {estadoObjetivo}
+                          </span>
+                          <ChevronDown
+                            className={`hidden h-4 w-4 text-muted-foreground transition-transform sm:block ${
+                              expandedObjectives[objetivo.id]
+                                ? 'rotate-180'
+                                : 'rotate-0'
+                            }`}
+                          />
                         </div>
-                        <span
-                          className={`flex-1 text-sm ${
-                            objetivoCompletado
-                              ? 'text-foreground'
-                              : 'text-muted-foreground'
-                          }`}
-                        >
-                          {objetivo.description}
-                        </span>
-                        <span className="mr-2 text-xs text-muted-foreground">
-                          {actividadesCompletadas}/{actividades.length}{' '}
-                          actividades
-                        </span>
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                            objetivoCompletado
-                              ? 'border-transparent bg-green-500/20 text-green-400'
-                              : 'border-transparent bg-blue-500/20 text-blue-400'
-                          }`}
-                        >
-                          {estadoObjetivo}
-                        </span>
                         <ChevronDown
-                          className={`h-4 w-4 text-muted-foreground transition-transform ${
+                          className={`absolute top-4 right-2 h-4 w-4 text-muted-foreground transition-transform sm:hidden ${
                             expandedObjectives[objetivo.id]
                               ? 'rotate-180'
                               : 'rotate-0'
@@ -1009,55 +1394,105 @@ export default function ProjectDetailView({
                                     }
                                     className="w-full p-4 text-left transition-colors hover:bg-muted/30"
                                   >
-                                    <div className="mb-1 flex items-center gap-2">
-                                      <span className="text-xs text-muted-foreground">
-                                        Actividad {actIdx + 1}
-                                      </span>
-                                      <span
-                                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                                          actividadCompletada
-                                            ? 'border-transparent bg-green-500/20 text-green-400'
-                                            : 'border-transparent bg-blue-500/20 text-blue-400'
-                                        }`}
-                                      >
-                                        {estadoActividad}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                        <h4 className="text-sm font-medium text-foreground">
-                                          {actividad.descripcion}
-                                        </h4>
-                                        {(actividad.startDate ||
-                                          actividad.endDate) && (
-                                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                            {actividad.startDate && (
-                                              <span className="flex items-center gap-1">
-                                                <Calendar className="h-3 w-3" />
-                                                {formatDate(
-                                                  actividad.startDate
-                                                )}
-                                              </span>
-                                            )}
-                                            {actividad.startDate &&
-                                              actividad.endDate && (
-                                                <span>-</span>
+                                    <div className="sm:hidden">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="text-xs text-muted-foreground">
+                                          Actividad {actIdx + 1}
+                                        </span>
+                                        <ChevronDown
+                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                            expandedActivities[activityKey]
+                                              ? 'rotate-180'
+                                              : 'rotate-0'
+                                          }`}
+                                        />
+                                      </div>
+                                      <h4 className="mt-1 text-sm font-medium text-foreground">
+                                        {actividad.descripcion}
+                                      </h4>
+                                      {(actividad.startDate ||
+                                        actividad.endDate) && (
+                                        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                                          {actividad.startDate && (
+                                            <span className="flex items-center gap-1">
+                                              <Calendar className="h-3 w-3" />
+                                              {formatActivityDate(
+                                                actividad.startDate
                                               )}
-                                            {actividad.endDate && (
-                                              <span className="flex items-center gap-1">
-                                                <Clock className="h-3 w-3" />
-                                                {formatDate(actividad.endDate)}
-                                              </span>
-                                            )}
-                                          </div>
-                                        )}
+                                            </span>
+                                          )}
+                                          {actividad.startDate &&
+                                            actividad.endDate && <span>-</span>}
+                                          {actividad.endDate && (
+                                            <span className="flex items-center gap-1">
+                                              <Clock className="h-3 w-3" />
+                                              {formatActivityDate(
+                                                actividad.endDate
+                                              )}
+                                            </span>
+                                          )}
+                                        </div>
+                                      )}
+                                      <div className="mt-2 flex flex-col gap-2">
+                                        <span
+                                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                            actividadCompletada
+                                              ? 'border-transparent bg-green-500/20 text-green-400'
+                                              : 'border-transparent bg-blue-500/20 text-blue-400'
+                                          }`}
+                                        >
+                                          {estadoActividad}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="hidden sm:flex sm:items-center sm:justify-between">
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-xs text-muted-foreground">
+                                            Actividad {actIdx + 1}
+                                          </span>
+                                          <span
+                                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                              actividadCompletada
+                                                ? 'border-transparent bg-green-500/20 text-green-400'
+                                                : 'border-transparent bg-blue-500/20 text-blue-400'
+                                            }`}
+                                          >
+                                            {estadoActividad}
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                          <h4 className="text-sm font-medium text-foreground">
+                                            {actividad.descripcion}
+                                          </h4>
+                                          {(actividad.startDate ||
+                                            actividad.endDate) && (
+                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                              {actividad.startDate && (
+                                                <span className="flex items-center gap-1">
+                                                  <Calendar className="h-3 w-3" />
+                                                  {formatActivityDate(
+                                                    actividad.startDate
+                                                  )}
+                                                </span>
+                                              )}
+                                              {actividad.startDate &&
+                                                actividad.endDate && (
+                                                  <span>-</span>
+                                                )}
+                                              {actividad.endDate && (
+                                                <span className="flex items-center gap-1">
+                                                  <Clock className="h-3 w-3" />
+                                                  {formatActivityDate(
+                                                    actividad.endDate
+                                                  )}
+                                                </span>
+                                              )}
+                                            </div>
+                                          )}
+                                        </div>
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        {!actividadCompletada && (
-                                          <span className="animate-pulse rounded-full bg-blue-500/20 px-2 py-0.5 text-xs font-medium text-blue-400">
-                                            Entregar
-                                          </span>
-                                        )}
                                         <ChevronDown
                                           className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
@@ -1229,9 +1664,13 @@ export default function ProjectDetailView({
                                                 <span className="text-xs text-muted-foreground">
                                                   Retroalimentación:
                                                 </span>
-                                                <p className="mt-1 text-sm text-foreground">
-                                                  {activityDescription}
-                                                </p>
+                                                <div className="mt-1">
+                                                  {renderLimitedText(
+                                                    activityDescription,
+                                                    `activity-feedback-${activityKey}`,
+                                                    'text-foreground'
+                                                  )}
+                                                </div>
                                               </div>
                                             )}
                                           </div>
@@ -1256,8 +1695,8 @@ export default function ProjectDetailView({
           </div>
 
           {/* Cronograma */}
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
+            <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
                   <Calendar className="h-4 w-4 text-purple-400" />
@@ -1266,7 +1705,7 @@ export default function ProjectDetailView({
                   Cronograma
                 </h3>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 sm:justify-end">
                 <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-1">
                   {(['dias', 'semanas', 'meses'] as const).map((view) => (
                     <button
@@ -1289,7 +1728,7 @@ export default function ProjectDetailView({
                 </div>
                 <button
                   type="button"
-                  onClick={() => onEditSection?.(7)}
+                  onClick={() => onEditSection?.(7, addedSections)}
                   className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   <Pencil className="h-4 w-4" />
@@ -1550,7 +1989,7 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="submissions">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-6 text-center">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 text-center sm:p-6">
             <p className="text-muted-foreground">
               No hay entregas registradas aún.
             </p>
@@ -1558,7 +1997,7 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="feedback">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-6 text-center">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 text-center sm:p-6">
             <p className="text-muted-foreground">
               No hay retroalimentación disponible aún.
             </p>
@@ -1566,8 +2005,8 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="timeline" className="space-y-4">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-5">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
+            <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <div className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
                   <Calendar className="h-4 w-4 text-purple-400" />
@@ -1576,7 +2015,7 @@ export default function ProjectDetailView({
                   Cronograma
                 </h3>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 sm:justify-end">
                 <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-1">
                   {(['dias', 'semanas', 'meses'] as const).map((view) => (
                     <button
@@ -1599,7 +2038,7 @@ export default function ProjectDetailView({
                 </div>
                 <button
                   type="button"
-                  onClick={() => onEditSection?.(7)}
+                  onClick={() => onEditSection?.(7, addedSections)}
                   className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   <Pencil className="h-4 w-4" />
@@ -1860,13 +2299,69 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="code">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-6 text-center">
+          <div className="rounded-xl border border-border/50 bg-card/50 p-4 text-center sm:p-6">
             <p className="text-muted-foreground">
               El repositorio de código se mostrará aquí próximamente.
             </p>
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Secciones Agregadas */}
+      {Object.entries(addedSections).map(([sectionId, section]) => (
+        <div
+          key={sectionId}
+          className="mt-4 rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">
+              {section.name}
+            </h3>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => onEditSection?.(8, addedSections)}
+                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                title="Editar sección en modal"
+              >
+                <Pencil size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteSection(sectionId)}
+                disabled={isDeletingSection === sectionId}
+                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-red-500 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
+                title="Eliminar sección"
+              >
+                {isDeletingSection === sectionId ? '⏳' : '×'}
+              </button>
+            </div>
+          </div>
+          {section.content ? (
+            renderLimitedText(
+              section.content,
+              `section-${sectionId}`,
+              'text-muted-foreground'
+            )
+          ) : (
+            <p className="text-muted-foreground">Sin contenido.</p>
+          )}
+        </div>
+      ))}
+
+      {/* Modal Agregar Sección */}
+      <AddCustomSectionModal
+        isOpen={showAddCustomModal}
+        onClose={() => {
+          setShowAddCustomModal(false);
+          setPendingSection(null);
+        }}
+        onAdd={handleAddCustomSection}
+        isLoading={isAddingSectionLoading}
+        initialName={pendingSection?.name ?? ''}
+        nameLocked={Boolean(pendingSection && !pendingSection.isCustom)}
+        onGenerateDescription={handleGenerateSectionDescription}
+      />
     </section>
   );
 }

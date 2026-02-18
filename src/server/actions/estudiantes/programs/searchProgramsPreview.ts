@@ -1,6 +1,6 @@
 'use server';
 
-import { eq, ilike, or } from 'drizzle-orm';
+import { eq, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { categories, programas } from '~/server/db/schema';
@@ -9,7 +9,16 @@ import type { Program } from '~/types';
 
 export async function searchProgramsPreview(query: string): Promise<Program[]> {
   if (!query || query.trim().length < 2) return [];
-  const normalizedQuery = query.trim().toLowerCase();
+  const normalizedQuery = query
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+  const accentFrom = 'áàäâãåÁÀÄÂÃÅéèëêÉÈËÊíìïîÍÌÏÎóòöôõÓÒÖÔÕúùüûÚÙÜÛñÑçÇ';
+  const accentTo = 'aaaaaaAAAAAAeeeeEEEEiiiiIIIIoooooOOOOOuuuuUUUUnNcC';
+  const searchPattern = `%${normalizedQuery}%`;
+  const normalizeColumn = (column: unknown) =>
+    sql`translate(lower(${column}), ${accentFrom}, ${accentTo})`;
 
   const results = await db
     .select({
@@ -28,9 +37,9 @@ export async function searchProgramsPreview(query: string): Promise<Program[]> {
     .leftJoin(categories, eq(programas.categoryid, categories.id))
     .where(
       or(
-        ilike(programas.title, `%${normalizedQuery}%`),
-        ilike(categories.name, `%${normalizedQuery}%`),
-        ilike(programas.description, `%${normalizedQuery}%`)
+        sql`${normalizeColumn(programas.title)} ilike ${searchPattern}`,
+        sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
+        sql`${normalizeColumn(programas.description)} ilike ${searchPattern}`
       )
     )
     .limit(8);

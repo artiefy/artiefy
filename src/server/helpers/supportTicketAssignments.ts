@@ -4,7 +4,10 @@ import { randomUUID } from 'node:crypto';
 import { db } from '~/server/db';
 import { ticketAssignees, users } from '~/server/db/schema';
 
-export const SUPPORT_AUTO_ASSIGN_EMAILS = ['direcciontecnologica@ciadet.co'];
+export const SUPPORT_AUTO_ASSIGN_EMAILS = [
+  'direcciontecnologica@ciadet.co',
+  'gotopoluis19@gmail.com',
+];
 
 export async function getOrCreateUserByEmail(
   email: string,

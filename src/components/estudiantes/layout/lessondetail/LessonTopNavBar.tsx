@@ -50,7 +50,7 @@ const LessonTopNavBar = ({
 
   return (
     <div className="fixed top-16 right-0 left-0 z-[60] w-full px-4 py-2">
-      <div className="mx-auto grid max-w-[1800px] grid-cols-1 items-center gap-3 md:grid-cols-[auto_1fr_auto] md:gap-4">
+      <div className="mx-auto grid max-w-[1800px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[auto_1fr_auto] md:gap-4">
         {/* Left: Close button */}
         <div className="flex min-w-0 items-center gap-2">
           {/* Desktop close X */}
@@ -196,7 +196,7 @@ const LessonTopNavBar = ({
         </div>
 
         {/* Right: Complete button + Navigation */}
-        <div className="flex flex-nowrap items-center gap-2 justify-self-end">
+        <div className="flex flex-wrap items-center gap-2 justify-self-end">
           {/* Complete button */}
           <button
             type="button"

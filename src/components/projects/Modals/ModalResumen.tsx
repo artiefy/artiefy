@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -10,17 +10,20 @@ import {
   ChevronRight,
   FileText,
   Globe,
+  Pencil,
   Plus,
   RefreshCw,
-  Sparkles,
   Target,
   Upload,
   Users,
   X,
 } from 'lucide-react';
+import { FaWandMagicSparkles } from 'react-icons/fa6';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
 
+import AddCustomSectionModal from '~/components/estudiantes/projects/AddCustomSectionModal';
+import AddSectionDropdown from '~/components/estudiantes/projects/AddSectionDropdown';
 import {
   Select,
   SelectContent,
@@ -118,9 +121,263 @@ const dedupeRequirements = (items: string[]) => {
   });
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+type ObjectivesParseOptions = {
+  projectStart?: string;
+  projectEnd?: string;
+  durationEstimate?: number;
+  durationUnit?: 'dias' | 'semanas' | 'meses' | 'anos';
+};
+
+const normalizeDateValue = (value: unknown) => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return '';
+    const normalized = trimmed.replace(/\//gu, '-');
+    const datePart = normalizeDateInput(normalized);
+    if (datePart) return datePart;
+    const parsed = new Date(trimmed);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return formatDateInput(
+      new Date(
+        Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+      )
+    );
+  }
+  if (typeof value === 'number') {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return '';
+    return formatDateInput(
+      new Date(
+        Date.UTC(parsed.getFullYear(), parsed.getMonth(), parsed.getDate())
+      )
+    );
+  }
+  return '';
+};
+
+const extractJsonPayload = (content: string) => {
+  const trimmed = content.trim();
+  if (!trimmed) return null;
+  const withoutFence = trimmed
+    .replace(/^```(?:json)?/iu, '')
+    .replace(/```$/iu, '')
+    .trim();
+  const firstBrace = withoutFence.indexOf('{');
+  const lastBrace = withoutFence.lastIndexOf('}');
+  const firstBracket = withoutFence.indexOf('[');
+  const lastBracket = withoutFence.lastIndexOf(']');
+  let candidate = '';
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    candidate = withoutFence.slice(firstBrace, lastBrace + 1);
+  } else if (firstBracket !== -1 && lastBracket > firstBracket) {
+    candidate = withoutFence.slice(firstBracket, lastBracket + 1);
+  } else if (withoutFence.startsWith('{') || withoutFence.startsWith('[')) {
+    candidate = withoutFence;
+  }
+  if (!candidate) return null;
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    return null;
+  }
+};
+
+const parseObjectivesFromJson = (
+  payload: unknown
+): SpecificObjective[] | null => {
+  const pickString = (obj: Record<string, unknown>, keys: string[]) => {
+    for (const key of keys) {
+      const value = obj[key];
+      if (typeof value === 'string' && value.trim()) return value.trim();
+    }
+    return '';
+  };
+
+  const getArray = (obj: Record<string, unknown>, keys: string[]) => {
+    for (const key of keys) {
+      const value = obj[key];
+      if (Array.isArray(value)) return value;
+    }
+    return null;
+  };
+
+  const rawObjectives = Array.isArray(payload)
+    ? payload
+    : isRecord(payload)
+      ? (payload.objetivos ??
+        payload.objectives ??
+        payload.objetivos_especificos ??
+        payload.data ??
+        payload.result)
+      : null;
+
+  if (!Array.isArray(rawObjectives)) return null;
+
+  const objetivos = rawObjectives
+    .map((obj, index) => {
+      if (!isRecord(obj)) {
+        if (typeof obj === 'string' && obj.trim()) {
+          return {
+            id: `${Date.now()}_${index}`,
+            title: obj.trim(),
+            activities: [],
+          } as SpecificObjective;
+        }
+        return null;
+      }
+      const title = pickString(obj, [
+        'title',
+        'objetivo',
+        'description',
+        'name',
+      ]);
+      const rawActivities =
+        getArray(obj, ['activities', 'actividades', 'tareas']) ?? [];
+      const activities = rawActivities
+        .map((act, actIndex) => {
+          if (typeof act === 'string') {
+            return { title: act.trim(), startDate: '', endDate: '' };
+          }
+          if (!isRecord(act)) return null;
+          const actTitle = pickString(act, [
+            'title',
+            'actividad',
+            'descripcion',
+            'description',
+            'name',
+          ]);
+          const startDate = normalizeDateValue(
+            act.startDate ?? act.start_date ?? act.fecha_inicio ?? act.inicio
+          );
+          const endDate = normalizeDateValue(
+            act.endDate ?? act.end_date ?? act.fecha_fin ?? act.fin
+          );
+          return {
+            title: actTitle,
+            startDate,
+            endDate,
+          };
+        })
+        .filter(
+          (act): act is { title: string; startDate: string; endDate: string } =>
+            Boolean(act && act.title.trim())
+        );
+
+      if (!title) return null;
+      return {
+        id: String(obj.id ?? `${Date.now()}_${index}`),
+        title,
+        activities,
+      } as SpecificObjective;
+    })
+    .filter((obj): obj is SpecificObjective => Boolean(obj));
+
+  return objetivos.length > 0 ? objetivos : null;
+};
+
+const applyFallbackDates = (
+  objetivos: SpecificObjective[],
+  options: ObjectivesParseOptions
+) => {
+  const hasAnyDates = objetivos.some((obj) =>
+    obj.activities?.some((act) => act.startDate || act.endDate)
+  );
+  if (hasAnyDates) return objetivos;
+
+  const start = options.projectStart ?? '';
+  const end =
+    options.projectEnd ??
+    (start && options.durationEstimate
+      ? addDurationToDate(
+          start,
+          options.durationEstimate,
+          options.durationUnit ?? 'dias'
+        )
+      : '');
+  if (!start || !end) return objetivos;
+
+  const startDate = parseDateInputToUTC(start);
+  const endDate = parseDateInputToUTC(end);
+  if (!startDate || !endDate) return objetivos;
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const totalDays =
+    Math.floor((endDate.getTime() - startDate.getTime()) / msPerDay) + 1;
+
+  const flatActivities: Array<{
+    objectiveIndex: number;
+    activityIndex: number;
+  }> = [];
+  objetivos.forEach((obj, objIndex) => {
+    obj.activities.forEach((_, actIndex) => {
+      flatActivities.push({
+        objectiveIndex: objIndex,
+        activityIndex: actIndex,
+      });
+    });
+  });
+
+  if (flatActivities.length === 0 || totalDays <= 0) return objetivos;
+
+  const cloned = objetivos.map((obj) => ({
+    ...obj,
+    activities: obj.activities.map((act) => ({ ...act })),
+  }));
+
+  if (totalDays < flatActivities.length) {
+    flatActivities.forEach((ref, idx) => {
+      const offset = Math.min(idx, totalDays - 1);
+      const date = new Date(startDate);
+      date.setUTCDate(date.getUTCDate() + offset);
+      const safeDate = date > endDate ? endDate : date;
+      const formatted = formatDateInput(safeDate);
+      cloned[ref.objectiveIndex].activities[ref.activityIndex].startDate =
+        formatted;
+      cloned[ref.objectiveIndex].activities[ref.activityIndex].endDate =
+        formatted;
+    });
+    return cloned;
+  }
+
+  const baseDays = Math.floor(totalDays / flatActivities.length);
+  let remainder = totalDays % flatActivities.length;
+  const cursor = new Date(startDate);
+
+  flatActivities.forEach((ref) => {
+    const span = Math.max(1, baseDays + (remainder > 0 ? 1 : 0));
+    if (remainder > 0) remainder -= 1;
+
+    const startValue = new Date(cursor);
+    const endValue = new Date(cursor);
+    endValue.setUTCDate(endValue.getUTCDate() + span - 1);
+
+    const safeEnd = endValue > endDate ? endDate : endValue;
+    cloned[ref.objectiveIndex].activities[ref.activityIndex].startDate =
+      formatDateInput(startValue);
+    cloned[ref.objectiveIndex].activities[ref.activityIndex].endDate =
+      formatDateInput(safeEnd);
+
+    cursor.setUTCDate(cursor.getUTCDate() + span);
+  });
+
+  return cloned;
+};
+
 const parseObjectivesWithActivities = (
-  content: string
+  content: string,
+  options: ObjectivesParseOptions = {}
 ): SpecificObjective[] => {
+  const jsonPayload = extractJsonPayload(content);
+  const jsonObjectives = jsonPayload
+    ? parseObjectivesFromJson(jsonPayload)
+    : null;
+  if (jsonObjectives && jsonObjectives.length > 0) {
+    return applyFallbackDates(jsonObjectives, options);
+  }
+
   const lines = content
     .split('\n')
     .map((line) => line.trim())
@@ -181,18 +438,41 @@ const parseObjectivesWithActivities = (
 
   finishCurrent();
 
-  if (objetivos.length > 0) return objetivos;
+  if (objetivos.length > 0) {
+    return applyFallbackDates(objetivos, options);
+  }
 
-  return lines.map((line, index) => ({
+  const fallback = lines.map((line, index) => ({
     id: `${Date.now()}_${index}`,
     title: line,
     activities: [],
   }));
+
+  return applyFallbackDates(fallback, options);
 };
 
 // Activity and SpecificObjective types are imported from src/types/objectives.ts
 
 type UpdatedProjectData = Record<string, unknown>;
+type Section = { name: string; content: string };
+
+const areSectionsEqual = (
+  a: Record<string, Section>,
+  b: Record<string, Section>
+) => {
+  if (a === b) return true;
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    const aSection = a[key];
+    const bSection = b[key];
+    if (!aSection || !bSection) return false;
+    if (aSection.name !== bSection.name) return false;
+    if (aSection.content !== bSection.content) return false;
+  }
+  return true;
+};
 
 interface ModalResumenProps {
   isOpen: boolean;
@@ -241,6 +521,10 @@ interface ModalResumenProps {
   setObjetivoGen?: (value: string) => void;
   setObjetivosEspProp?: (value: ObjetivosInput) => void;
   cronograma?: unknown;
+  addedSections?: Record<string, { name: string; content: string }>;
+  onAddedSectionsChange?: (
+    sections: Record<string, { name: string; content: string }>
+  ) => void;
 }
 
 const steps = [
@@ -251,7 +535,7 @@ const steps = [
   },
   {
     id: 2,
-    title: 'Problema y Justificación',
+    title: 'Problema',
     description: 'Define el problema a resolver',
   },
   {
@@ -271,6 +555,11 @@ const steps = [
     description: 'Detalla objetivos específicos y actividades',
   },
   { id: 7, title: 'Cronograma', description: 'Planifica el cronograma' },
+  {
+    id: 8,
+    title: 'Secciones Personalizadas',
+    description: 'Agrega contenido personalizado',
+  },
 ];
 
 const ModalResumen: React.FC<ModalResumenProps> = ({
@@ -294,6 +583,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   actividades,
   courseId,
   onProjectCreated,
+  addedSections = {},
+  onAddedSectionsChange,
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [timelineView, setTimelineView] = useState<
@@ -303,10 +594,104 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     projectId
   );
   const [isProjectCreated, setIsProjectCreated] = useState(Boolean(projectId));
+  const [localAddedSections, setLocalAddedSections] = useState(addedSections);
+  const [showAddCustomSectionModal, setShowAddCustomSectionModal] =
+    useState(false);
+  const [isAddingCustomSection, setIsAddingCustomSection] = useState(false);
+  const [pendingSection, setPendingSection] = useState<{
+    id: string;
+    name: string;
+    isCustom: boolean;
+  } | null>(null);
+  const [isSavingSections, setIsSavingSections] = useState(false);
   const lastLoadedProjectId = useRef<number | undefined>(undefined);
   const hasInitializedRef = useRef(false); // Para evitar resetear currentStep en cada cambio de datos
   const activitiesDirtyRef = useRef(false);
+  const hasEditedSectionsRef = useRef(false);
+  const hadSectionsRef = useRef(false);
+  const lastSectionsProjectIdRef = useRef<number | undefined>(undefined);
+  const lastSectionsSaveIdRef = useRef(0);
   const [creationError, setCreationError] = useState<string | null>(null);
+  const typingTimersRef = useRef<Record<string, number>>({});
+  const typingTokensRef = useRef<Record<string, number>>({});
+
+  const stopTyping = (key: string) => {
+    const timer = typingTimersRef.current[key];
+    if (typeof timer === 'number') {
+      window.clearTimeout(timer);
+      delete typingTimersRef.current[key];
+    }
+    typingTokensRef.current[key] = (typingTokensRef.current[key] ?? 0) + 1;
+  };
+
+  const shouldReduceMotion = () => {
+    if (typeof window === 'undefined') return true;
+    return (
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    );
+  };
+
+  const typeIntoField = (
+    key: string,
+    fullText: string,
+    apply: (value: string) => void
+  ) => {
+    stopTyping(key);
+    if (!fullText) {
+      apply('');
+      return;
+    }
+    if (shouldReduceMotion()) {
+      apply(fullText);
+      return;
+    }
+
+    const token = (typingTokensRef.current[key] ?? 0) + 1;
+    typingTokensRef.current[key] = token;
+    const total = fullText.length;
+    const intervalMs = 12;
+    const chunk = Math.max(1, Math.ceil(total / 180));
+    let index = 0;
+
+    const step = () => {
+      if (typingTokensRef.current[key] !== token) return;
+      index = Math.min(total, index + chunk);
+      apply(fullText.slice(0, index));
+      if (index < total) {
+        typingTimersRef.current[key] = window.setTimeout(step, intervalMs);
+      }
+    };
+
+    step();
+  };
+
+  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (typeof window !== 'undefined' && window.innerWidth < 640) {
+      onClose();
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    if (isOpen) {
+      window.dispatchEvent(new CustomEvent('project-modal-open'));
+    } else {
+      window.dispatchEvent(new CustomEvent('project-modal-close'));
+    }
+    return undefined;
+  }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(typingTimersRef.current).forEach((timer) => {
+        window.clearTimeout(timer);
+      });
+      typingTimersRef.current = {};
+      typingTokensRef.current = {};
+    };
+  }, []);
   const normalizeInitialObjetivos = (src?: ObjetivosInput) => {
     if (!src) return [] as SpecificObjective[];
     if (Array.isArray(src) && src.length > 0 && typeof src[0] === 'string') {
@@ -343,6 +728,220 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       key?: string;
     }>,
   });
+
+  const modalMetrics = useMemo(() => {
+    if (!isOpen || typeof window === 'undefined') {
+      return { overlayHeight: 0, modalTop: 0 };
+    }
+    const doc = document.documentElement;
+    const scrollTop = window.scrollY || doc.scrollTop || 0;
+    const height = Math.max(doc.scrollHeight, doc.clientHeight);
+    const isSmallScreen = window.innerWidth < 640;
+    const desiredTop = scrollTop + (isSmallScreen ? 20 : 80);
+    const modalHeight = isSmallScreen
+      ? Math.min(window.innerHeight * 0.82, height)
+      : 650;
+    const minTop = isSmallScreen ? 20 : 24;
+    const maxTop = Math.max(minTop, height - modalHeight);
+    return {
+      overlayHeight: height,
+      modalTop: Math.min(desiredTop, maxTop),
+    };
+  }, [isOpen]);
+
+  const getSectionLabel = (sectionId: string): string => {
+    const labels: Record<string, string> = {
+      introduccion: 'Introducción',
+      justificacion: 'Justificación',
+      'marco-teorico': 'Marco Teórico',
+      metodologia: 'Metodología',
+      alcance: 'Alcance',
+      equipo: 'Equipo',
+    };
+    return labels[sectionId] ?? sectionId;
+  };
+
+  const createCustomSectionId = (
+    existing: Record<string, { name: string; content: string }>
+  ) => {
+    let newId = `custom-${Date.now()}`;
+    while (existing[newId]) {
+      newId = `custom-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    }
+    return newId;
+  };
+
+  const updateLocalSections = (
+    next:
+      | Record<string, { name: string; content: string }>
+      | ((
+          prev: Record<string, { name: string; content: string }>
+        ) => Record<string, { name: string; content: string }>)
+  ) => {
+    const resolved =
+      typeof next === 'function' ? next(localAddedSections) : next;
+    setLocalAddedSections(resolved);
+    onAddedSectionsChange?.(resolved);
+    hasEditedSectionsRef.current = true;
+  };
+
+  const buildSectionContext = () => {
+    const parts = [
+      formData.titulo?.trim()
+        ? `Título del proyecto: ${formData.titulo.trim()}`
+        : '',
+      formData.description?.trim()
+        ? `Descripción del proyecto: ${formData.description.trim()}`
+        : '',
+      formData.planteamiento?.trim()
+        ? `Problema: ${formData.planteamiento.trim()}`
+        : '',
+      formData.justificacion?.trim()
+        ? `Justificación: ${formData.justificacion.trim()}`
+        : '',
+      formData.objetivoGen?.trim()
+        ? `Objetivo general: ${formData.objetivoGen.trim()}`
+        : '',
+      formData.requirements?.length
+        ? `Requisitos: ${formData.requirements.join(', ')}`
+        : '',
+    ].filter(Boolean);
+
+    const extraSections = Object.entries(localAddedSections)
+      .map(([id, section]) => {
+        const label = section.name?.trim() || id;
+        const content = section.content?.trim() || '';
+        if (!content) return `Sección ${label}: (sin contenido)`;
+        return `Sección ${label}: ${content}`;
+      })
+      .filter(Boolean)
+      .slice(0, 6);
+
+    const context = [...parts, ...extraSections].join('\n');
+    return context.length > 2000 ? context.slice(0, 2000) : context;
+  };
+
+  const handleAddSectionFromModal = (sectionId: string, isCustom?: boolean) => {
+    if (isCustom) {
+      setPendingSection({ id: 'custom', name: '', isCustom: true });
+      setShowAddCustomSectionModal(true);
+      return;
+    }
+
+    if (localAddedSections[sectionId]) return;
+
+    setPendingSection({
+      id: sectionId,
+      name: getSectionLabel(sectionId),
+      isCustom: false,
+    });
+    setShowAddCustomSectionModal(true);
+  };
+
+  const handleAddCustomSectionFromModal = (
+    name: string,
+    description: string
+  ) => {
+    setIsAddingCustomSection(true);
+    const sectionId = pendingSection?.isCustom
+      ? createCustomSectionId(localAddedSections)
+      : (pendingSection?.id ?? createCustomSectionId(localAddedSections));
+    const sectionName = pendingSection?.isCustom
+      ? name
+      : (pendingSection?.name ?? name);
+    updateLocalSections({
+      ...localAddedSections,
+      [sectionId]: {
+        name: sectionName,
+        content: description,
+      },
+    });
+    setShowAddCustomSectionModal(false);
+    setPendingSection(null);
+    setIsAddingCustomSection(false);
+  };
+
+  const handleGenerateSectionDescription = async (
+    currentText: string,
+    sectionTitleOverride: string
+  ) => {
+    if (!pendingSection) return null;
+    const sectionTitle =
+      sectionTitleOverride.trim() || pendingSection.name || 'Sección';
+    const context = buildSectionContext();
+    const basePrompt = currentText.trim()
+      ? `Mejora y reescribe el contenido de la sección "${sectionTitle}" manteniendo el significado.`
+      : `Genera el contenido para la sección "${sectionTitle}" de un proyecto educativo.`;
+    const prompt = `${basePrompt}\n\nContexto del proyecto:\n${context}\n\nResponde solo con el contenido de la sección.`;
+
+    const result = await generateContent({
+      type: 'descripcion',
+      prompt,
+      titulo: formData.titulo ?? '',
+      descripcion: formData.description ?? '',
+      existingText: currentText,
+      sectionTitle,
+      sectionsContext: context,
+    });
+
+    return result;
+  };
+
+  const renderSectionCard = (sectionId: string, section: Section) => (
+    <div
+      key={sectionId}
+      className="rounded-lg border border-border/50 bg-card/30 p-4"
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex-1">
+          <input
+            type="text"
+            value={section.name}
+            onChange={(e) => {
+              updateLocalSections({
+                ...localAddedSections,
+                [sectionId]: {
+                  ...section,
+                  name: e.target.value,
+                },
+              });
+            }}
+            className="mb-2 flex h-9 w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm font-semibold ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            placeholder="Nombre de la sección"
+          />
+          <div className="text-xs text-muted-foreground">
+            Se guarda automáticamente mientras escribes
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            const next = { ...localAddedSections };
+            delete next[sectionId];
+            updateLocalSections(next);
+          }}
+          className="ml-2 inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/20 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+          title="Eliminar sección"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <textarea
+        className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        placeholder={`Contenido de ${section.name}...`}
+        value={section.content}
+        onChange={(e) => {
+          updateLocalSections({
+            ...localAddedSections,
+            [sectionId]: {
+              ...section,
+              content: e.target.value,
+            },
+          });
+        }}
+      />
+    </div>
+  );
 
   // Cargar tipos de proyecto desde el backend
   const { data: _projectTypes = [] } = useSWR<
@@ -412,6 +1011,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     enabled: isProjectCreated && Boolean(currentProjectId),
     debounceMs: 2000,
   });
+  const isAutoSaving = isSaving || isSavingSections;
 
   // Auto-guardar cuando cambian los datos (después de que el proyecto fue creado)
   // Incluye todos los campos de info básica: título, descripción, categoría, tipo de proyecto, etc.
@@ -499,6 +1099,83 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     isProjectCreated,
     currentProjectId,
   ]);
+
+  // Auto-save para secciones agregadas (debounce 1.2s)
+  useEffect(() => {
+    if (!isOpen || !isProjectCreated || !currentProjectId) return;
+    if (!hasEditedSectionsRef.current) return;
+    if (
+      Object.keys(localAddedSections).length === 0 &&
+      !hadSectionsRef.current
+    ) {
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      const saveId = lastSectionsSaveIdRef.current + 1;
+      lastSectionsSaveIdRef.current = saveId;
+      setIsSavingSections(true);
+      try {
+        console.log(
+          `💾 Modal: Auto-guardando ${Object.keys(localAddedSections).length} secciones`
+        );
+        const response = await fetch('/api/project-sections-save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            projectId: currentProjectId,
+            sections: localAddedSections,
+          }),
+        });
+
+        if (response.ok) {
+          console.log(`✅ Modal: Secciones auto-guardadas correctamente`);
+        } else {
+          const error = await response.json();
+          console.error(`❌ Modal: Error al auto-guardar:`, error);
+        }
+      } catch (error) {
+        console.error('❌ Modal: Error al auto-guardar secciones:', error);
+      } finally {
+        if (lastSectionsSaveIdRef.current === saveId) {
+          setIsSavingSections(false);
+        }
+      }
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, isProjectCreated, currentProjectId, localAddedSections]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      hasEditedSectionsRef.current = false;
+      hadSectionsRef.current = false;
+      lastSectionsProjectIdRef.current = undefined;
+      setIsSavingSections(false);
+      if (!areSectionsEqual(localAddedSections, addedSections)) {
+        setLocalAddedSections(addedSections);
+      }
+      return;
+    }
+
+    const shouldSync =
+      lastSectionsProjectIdRef.current !== projectId ||
+      !hasEditedSectionsRef.current;
+
+    if (shouldSync) {
+      if (!areSectionsEqual(localAddedSections, addedSections)) {
+        setLocalAddedSections(addedSections);
+      }
+      hadSectionsRef.current = Object.keys(addedSections).length > 0;
+      lastSectionsProjectIdRef.current = projectId;
+    }
+  }, [isOpen, projectId, addedSections, localAddedSections]);
+
+  useEffect(() => {
+    if (Object.keys(localAddedSections).length > 0) {
+      hadSectionsRef.current = true;
+    }
+  }, [localAddedSections]);
 
   // Sincronizar estado SOLO cuando se abre el modal por primera vez
   useEffect(() => {
@@ -706,6 +1383,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       const content = await generateContent({
         type: 'titulo',
         prompt: `Basándote en este título: "${formData.titulo}", genera un título alternativo SOBRE EL MISMO TEMA pero redactado de forma más profesional, clara y atractiva. Mantén el tema principal y el contexto. Solo responde con el título mejorado, sin comillas ni explicaciones.`,
+        existingText: formData.titulo,
+        titulo: formData.titulo,
       });
 
       if (content) {
@@ -725,10 +1404,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     const content = await generateContent({
       type: 'descripcion',
       prompt: `Genera una descripción BREVE (120-150 palabras, un párrafo) para un proyecto estudiantil con el título: "${formData.titulo}". Describe desde la perspectiva del ESTUDIANTE: qué problema va a resolver, qué va a crear/desarrollar, qué habilidades aplicará, y quién se beneficiará. Usa lenguaje directo y motivador. Solo responde con la descripción, sin títulos.`,
+      existingText: formData.description,
+      titulo: formData.titulo,
+      descripcion: formData.description,
     });
 
     if (content) {
-      setFormData((prev) => ({ ...prev, description: content }));
+      typeIntoField('description', content, (value) => {
+        setFormData((prev) => ({ ...prev, description: value }));
+      });
     }
   };
 
@@ -742,10 +1426,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     const content = await generateContent({
       type: 'justificacion',
       prompt,
+      existingText: formData.justificacion,
+      titulo: formData.titulo,
+      descripcion: formData.description,
     });
 
     if (content) {
-      setFormData((prev) => ({ ...prev, justificacion: content }));
+      typeIntoField('justificacion', content, (value) => {
+        setFormData((prev) => ({ ...prev, justificacion: value }));
+      });
     }
   };
 
@@ -759,10 +1448,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     const content = await generateContent({
       type: 'objetivoGen',
       prompt,
+      existingText: formData.objetivoGen,
+      titulo: formData.titulo,
+      descripcion: formData.description,
     });
 
     if (content) {
-      setFormData((prev) => ({ ...prev, objetivoGen: content }));
+      typeIntoField('objetivoGen', content, (value) => {
+        setFormData((prev) => ({ ...prev, objetivoGen: value }));
+      });
     }
   };
 
@@ -870,7 +1564,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     formData.tipoProyecto?.trim() || tipoProyecto?.trim() || '';
 
   const handleNext = () => {
-    if (isSaving) return;
+    if (isAutoSaving) return;
     if (currentStep < steps.length) {
       if (!isProjectCreated && currentStep === 1) return;
       setCurrentStep(currentStep + 1);
@@ -878,7 +1572,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   };
 
   const handlePrevious = () => {
-    if (isSaving) return;
+    if (isAutoSaving) return;
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
@@ -1132,6 +1826,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   // Handler unificado para el botón principal
   const handleMainButtonClick = async () => {
+    if (isAutoSaving) return;
     if (isCreateStep) {
       await handleCreateProject();
     } else {
@@ -1144,17 +1839,17 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       case 1:
         return (
           <div className="space-y-4">
-            <div className="mb-4 rounded-lg border border-accent/30 bg-gradient-to-r from-accent/10 via-primary/10 to-accent/10 p-4">
+            <div className="mb-4 rounded-[16px] border border-[#22c4d34d] bg-[#22c4d31a] from-accent/10 via-primary/10 to-accent/10 p-4">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/20">
-                  <Sparkles className="h-5 w-5 text-accent" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#22c4d333]">
+                  <FaWandMagicSparkles className="h-5 w-5 text-[#22c4d3]" />
                 </div>
                 <div className="flex-1">
                   <div className="mb-1 flex items-center gap-2">
                     <h4 className="text-sm font-semibold text-foreground">
                       Asistente de IA
                     </h4>
-                    <div className="inline-flex items-center rounded-full border border-accent/30 bg-accent/20 px-2.5 py-0.5 text-xs font-semibold text-accent transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                    <div className="inline-flex items-center rounded-full border border-[#22c4d34d] bg-[#22c4d333] px-2.5 py-0.5 text-xs font-semibold text-accent transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
                       Nuevo
                     </div>
                   </div>
@@ -1167,12 +1862,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       runGenerate('descripcion-card', handleGenerateDescripcion)
                     }
                     disabled={isGenerating}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-3 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-[14px] border border-[#22c4d3]/30 bg-[#22c4d3]/10 px-3 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-[#22c4d3]/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                   >
                     {isGeneratingFor('descripcion-card') ? (
                       <span className="ai-generate-loader" aria-hidden />
                     ) : (
-                      <Sparkles className="mr-2 h-4 w-4" />
+                      <FaWandMagicSparkles className="mr-2 h-4 w-4" />
                     )}
                     <span
                       className={
@@ -1183,7 +1878,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     >
                       {isGeneratingFor('descripcion-card')
                         ? 'Generando...'
-                        : 'Generar con IA'}
+                        : formData.description.trim()
+                          ? 'Regenerar con IA'
+                          : 'Generar con IA'}
                     </span>
                   </button>
                 </div>
@@ -1213,17 +1910,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   title="Generar títulos alternativos con IA basados en tu título"
                   className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
-                  <RefreshCw
-                    className={
-                      isGeneratingFor('titulo')
-                        ? 'h-4 w-4 animate-spin transition-transform'
-                        : 'h-4 w-4 transition-transform'
-                    }
-                  />
+                  {isGeneratingFor('titulo') ? (
+                    <RefreshCw className="h-4 w-4 animate-spin transition-transform" />
+                  ) : (
+                    <Pencil className="h-4 w-4 transition-transform" />
+                  )}
                 </button>
               </div>
               <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
-                <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
                 <span>
                   Escribe tu título manualmente. Usa el botón 🔄 para generar
                   títulos alternativos sobre el mismo tema.
@@ -1249,7 +1944,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {isGeneratingFor('descripcion-field') ? (
                     <span className="ai-generate-loader" aria-hidden />
                   ) : (
-                    <RefreshCw className="h-3 w-3" />
+                    <FaWandMagicSparkles className="h-3 w-3" />
                   )}
                   <span
                     className={
@@ -1258,7 +1953,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         : ''
                     }
                   >
-                    Generar con IA
+                    {formData.description.trim()
+                      ? 'Regenerar con IA'
+                      : 'Generar con IA'}
                   </span>
                 </button>
               </div>
@@ -1267,9 +1964,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 id="description"
                 placeholder="Escribe una idea básica y Artie te ayudará a completarla. Ej: Quiero crear una app para gestionar tareas..."
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                onChange={(e) => {
+                  stopTyping('description');
+                  setFormData({ ...formData, description: e.target.value });
+                }}
               />
               {generationError && (
                 <div className="mt-2 rounded-md border border-destructive/30 bg-destructive/10 p-2 text-xs text-destructive">
@@ -1543,7 +2241,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <label className="text-sm font-medium">Problema</label>
+                <label className="text-sm font-medium">
+                  Problema a Resolver *
+                </label>
                 <button
                   type="button"
                   onClick={() =>
@@ -1567,12 +2267,17 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         const result = await generateContent({
                           type: 'problema',
                           prompt,
+                          existingText: formData.planteamiento,
+                          titulo: formData.titulo,
+                          descripcion: formData.description,
                         });
                         if (result) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            planteamiento: result,
-                          }));
+                          typeIntoField('planteamiento', result, (value) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              planteamiento: value,
+                            }));
+                          });
                         }
                       } catch (error) {
                         console.error('Error generando problema:', error);
@@ -1584,7 +2289,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {isGeneratingFor('problema') ? (
                     <span className="ai-generate-loader" aria-hidden />
                   ) : (
-                    <RefreshCw className="mr-1.5 h-3 w-3" />
+                    <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
                   )}
                   <span
                     className={
@@ -1593,83 +2298,43 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         : 'text-xs'
                     }
                   >
-                    Generar con IA
+                    {formData.planteamiento?.trim()
+                      ? 'Regenerar con IA'
+                      : 'Generar con IA'}
                   </span>
                 </button>
               </div>
               <textarea
                 className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 value={formData.planteamiento}
-                onChange={(e) =>
-                  setFormData({ ...formData, planteamiento: e.target.value })
-                }
+                onChange={(e) => {
+                  stopTyping('planteamiento');
+                  setFormData({ ...formData, planteamiento: e.target.value });
+                }}
                 placeholder="Describe el problema que resolverá el proyecto..."
               />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <label className="text-sm font-medium">Justificación</label>
-                <button
-                  type="button"
-                  onClick={() =>
-                    runGenerate('justificacion', async () => {
-                      try {
-                        const context = buildProjectContext(
-                          formData.titulo,
-                          formData.description
-                        );
-                        if (!context) {
-                          alert(
-                            'Completa el título o la descripción del proyecto antes de generar con IA.'
-                          );
-                          return;
-                        }
-
-                        const prompt = (formData.justificacion ?? '').trim()
-                          ? `Mejora y reescribe la justificación del proyecto manteniendo el significado. Contexto del proyecto: "${context}". Problema: "${formData.planteamiento || 'No especificado'}". Justificación actual: "${formData.justificacion}". Responde solo con la justificación mejorada.`
-                          : `Genera una justificación clara para un proyecto educativo. Contexto del proyecto: "${context}". Problema: "${formData.planteamiento || 'No especificado'}". Responde solo con la justificación.`;
-
-                        const result = await generateContent({
-                          type: 'justificacion',
-                          prompt,
-                        });
-                        if (result) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            justificacion: result,
-                          }));
-                        }
-                      } catch (error) {
-                        console.error('Error generando justificación:', error);
-                      }
-                    })
-                  }
-                  className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/10 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-3.5 w-3.5 shrink-0 text-amber-500"
                 >
-                  {isGeneratingFor('justificacion') ? (
-                    <span className="ai-generate-loader" aria-hidden />
-                  ) : (
-                    <RefreshCw className="mr-1.5 h-3 w-3" />
-                  )}
-                  <span
-                    className={
-                      isGeneratingFor('justificacion')
-                        ? 'ai-generate-text-pulse text-xs'
-                        : 'text-xs'
-                    }
-                  >
-                    Generar con IA
-                  </span>
-                </button>
+                  <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                  <path d="M9 18h6" />
+                  <path d="M10 22h4" />
+                </svg>
+                <span>
+                  Define claramente quién tiene el problema, cuál es el problema
+                  y por qué es importante resolverlo.
+                </span>
               </div>
-              <textarea
-                className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                value={formData.justificacion}
-                onChange={(e) =>
-                  setFormData({ ...formData, justificacion: e.target.value })
-                }
-                placeholder="Explica por qué es importante resolver este problema..."
-              />
             </div>
           </div>
         );
@@ -1701,12 +2366,17 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       const result = await generateContent({
                         type: 'objetivoGen',
                         prompt,
+                        existingText: formData.objetivoGen,
+                        titulo: formData.titulo,
+                        descripcion: formData.description,
                       });
                       if (result) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          objetivoGen: result,
-                        }));
+                        typeIntoField('objetivoGen', result, (value) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            objetivoGen: value,
+                          }));
+                        });
                       }
                     } catch (error) {
                       console.error('Error generando objetivo:', error);
@@ -1718,7 +2388,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 {isGeneratingFor('objetivoGen') ? (
                   <span className="ai-generate-loader" aria-hidden />
                 ) : (
-                  <RefreshCw className="mr-1.5 h-3 w-3" />
+                  <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
                 )}
                 <span
                   className={
@@ -1727,7 +2397,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       : 'text-xs'
                   }
                 >
-                  Generar con IA
+                  {formData.objetivoGen?.trim()
+                    ? 'Regenerar con IA'
+                    : 'Generar con IA'}
                 </span>
               </button>
             </div>
@@ -1735,12 +2407,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               className="flex min-h-[120px] w-full rounded-md border border-input bg-background/50 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Describa el objetivo general del proyecto..."
               value={formData.objetivoGen}
-              onChange={(e) =>
-                setFormData({ ...formData, objetivoGen: e.target.value })
-              }
+              onChange={(e) => {
+                stopTyping('objetivoGen');
+                setFormData({ ...formData, objetivoGen: e.target.value });
+              }}
             />
             <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
-              <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
               <span>
                 El objetivo general debe ser claro, alcanzable y alineado con el
                 problema que se busca resolver.
@@ -1792,6 +2465,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       const result = await generateContent({
                         type: 'requisitos',
                         prompt,
+                        existingText: formData.requirements?.join('\n'),
+                        titulo: formData.titulo,
+                        descripcion: formData.description,
                       });
                       if (result) {
                         const requirements = dedupeRequirements(
@@ -1815,7 +2491,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 {isGeneratingFor('requisitos') ? (
                   <span className="ai-generate-loader" aria-hidden />
                 ) : (
-                  <RefreshCw className="mr-1.5 h-3 w-3" />
+                  <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
                 )}
                 <span
                   className={
@@ -1824,7 +2500,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       : 'text-xs'
                   }
                 >
-                  Generar con IA
+                  {formData.requirements && formData.requirements.length > 0
+                    ? 'Regenerar con IA'
+                    : 'Generar con IA'}
                 </span>
               </button>
             </div>
@@ -1885,7 +2563,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               </button>
             </div>
             <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
-              <RefreshCw className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
               <span>
                 Los requisitos deben ser específicos, medibles y alineados con
                 los objetivos del proyecto.
@@ -1990,14 +2668,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </div>
 
             {/* Fechas de inicio y fin */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6">
               <div className="mt-3 space-y-2">
                 <label className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Fecha de inicio
                 </label>
                 <input
                   type="date"
-                  className="mt-2 flex h-10 w-full rounded-md border border-input bg-background/50 px-4 py-2 text-left text-sm font-normal text-foreground ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none [&::-webkit-calendar-picker-indicator]:opacity-90 [&::-webkit-calendar-picker-indicator]:invert"
+                  className="mt-2 flex h-10 w-full rounded-md border border-input bg-background/50 px-4 py-2 pr-10 text-left text-sm font-normal text-foreground ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none sm:pr-4 [&::-webkit-calendar-picker-indicator]:-translate-x-1 [&::-webkit-calendar-picker-indicator]:opacity-90 [&::-webkit-calendar-picker-indicator]:invert sm:[&::-webkit-calendar-picker-indicator]:translate-x-0"
                   value={formData.fechaInicio || ''}
                   onChange={(e) =>
                     setFormData((prev) => {
@@ -2024,7 +2702,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 </label>
                 <input
                   type="date"
-                  className="mt-2 flex h-10 w-full rounded-md border border-input bg-background/50 px-4 py-2 text-left text-sm font-normal text-foreground ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none [&::-webkit-calendar-picker-indicator]:opacity-90 [&::-webkit-calendar-picker-indicator]:invert"
+                  className="mt-2 flex h-10 w-full rounded-md border border-input bg-background/50 px-4 py-2 pr-10 text-left text-sm font-normal text-foreground ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none sm:pr-4 [&::-webkit-calendar-picker-indicator]:-translate-x-1 [&::-webkit-calendar-picker-indicator]:opacity-90 [&::-webkit-calendar-picker-indicator]:invert sm:[&::-webkit-calendar-picker-indicator]:translate-x-0"
                   value={formData.fechaFin || ''}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -2088,6 +2766,26 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           : '',
                       ].filter(Boolean);
                       const context = contextParts.join('\n');
+                      const scheduleParts = [
+                        formData.fechaInicio?.trim()
+                          ? `Fecha de inicio del proyecto: ${formData.fechaInicio}`
+                          : '',
+                        formData.fechaFin?.trim()
+                          ? `Fecha de fin del proyecto: ${formData.fechaFin}`
+                          : '',
+                        typeof formData.durationEstimate === 'number' &&
+                        formData.durationEstimate > 0
+                          ? `Duración estimada: ${formData.durationEstimate} ${
+                              formData.durationUnit ?? 'dias'
+                            }`
+                          : '',
+                      ].filter(Boolean);
+                      const scheduleContext =
+                        scheduleParts.length > 0
+                          ? `\nCronograma del proyecto:\n${scheduleParts.join(
+                              '\n'
+                            )}`
+                          : '\nCronograma del proyecto:\nNo hay fechas definidas. Estima un cronograma razonable (6 a 8 semanas desde hoy).';
                       if (!context) {
                         alert(
                           'Completa el titulo, descripcion o el objetivo general antes de generar con IA.'
@@ -2098,17 +2796,50 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       const hasExisting =
                         formData.objetivosEsp &&
                         formData.objetivosEsp.length > 0;
-                      const prompt = hasExisting
-                        ? `Mejora y reescribe los objetivos especificos y sus actividades manteniendo el significado.\n\n${context}\n\nFormato exacto por objetivo:\nObjetivo 1: [texto]\nActividad: [texto]\nActividad: [texto]\n\nNo incluyas subtitulos ni explicaciones.`
-                        : `Genera entre 3 y 5 objetivos especificos para este proyecto y, para cada objetivo, 2 a 3 actividades claras y medibles.\n\n${context}\n\nFormato exacto por objetivo:\nObjetivo 1: [texto]\nActividad: [texto]\nActividad: [texto]\n\nNo incluyas subtitulos ni explicaciones.`;
+                      const basePrompt = hasExisting
+                        ? 'Mejora y reescribe los objetivos especificos y sus actividades manteniendo el significado.'
+                        : 'Genera entre 3 y 5 objetivos especificos para este proyecto y, para cada objetivo, 2 a 3 actividades claras y medibles.';
+                      const prompt = `${basePrompt}\n\n${context}${scheduleContext}\n\nDevuelve SOLO JSON válido con este formato:\n{"objetivos":[{"title":"Objetivo 1","activities":[{"title":"Actividad 1","startDate":"YYYY-MM-DD","endDate":"YYYY-MM-DD"}]}]}`;
 
                       const result = await generateContent({
                         type: 'objetivosEsp',
                         prompt,
+                        existingText: (formData.objetivosEsp || [])
+                          .map((obj, index) => {
+                            const title = obj.title || `Objetivo ${index + 1}`;
+                            const acts = (obj.activities || [])
+                              .map((act) => {
+                                const dateInfo = [
+                                  act.startDate
+                                    ? `Inicio: ${act.startDate}`
+                                    : '',
+                                  act.endDate ? `Fin: ${act.endDate}` : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(', ');
+                                const suffix = dateInfo ? ` (${dateInfo})` : '';
+                                return `Actividad: ${act.title || ''}${suffix}`;
+                              })
+                              .filter(Boolean)
+                              .join('\n');
+                            return acts ? `${title}\n${acts}` : title;
+                          })
+                          .join('\n\n'),
+                        titulo: formData.titulo,
+                        descripcion: formData.description,
+                        fechaInicio: formData.fechaInicio,
+                        fechaFin: formData.fechaFin,
+                        durationEstimate: formData.durationEstimate,
+                        durationUnit: formData.durationUnit,
                       });
                       if (result) {
                         activitiesDirtyRef.current = true;
-                        const parsed = parseObjectivesWithActivities(result);
+                        const parsed = parseObjectivesWithActivities(result, {
+                          projectStart: formData.fechaInicio,
+                          projectEnd: formData.fechaFin,
+                          durationEstimate: formData.durationEstimate,
+                          durationUnit: formData.durationUnit,
+                        });
                         setFormData((prev) => ({
                           ...prev,
                           objetivosEsp: parsed,
@@ -2124,7 +2855,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 {isGeneratingFor('objetivosEsp') ? (
                   <span className="ai-generate-loader" aria-hidden />
                 ) : (
-                  <RefreshCw className="mr-1.5 h-3 w-3" />
+                  <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
                 )}
                 <span
                   className={
@@ -2133,7 +2864,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       : 'text-xs'
                   }
                 >
-                  Generar con IA
+                  {formData.objetivosEsp && formData.objetivosEsp.length > 0
+                    ? 'Regenerar con IA'
+                    : 'Generar con IA'}
                 </span>
               </button>
             </div>
@@ -2591,44 +3324,117 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           );
         })();
 
+      case 8: {
+        const predefinedSections = Object.entries(localAddedSections).filter(
+          ([sectionId]) => !sectionId.startsWith('custom-')
+        );
+        const customSections = Object.entries(localAddedSections).filter(
+          ([sectionId]) => sectionId.startsWith('custom-')
+        );
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                Agrega y personaliza secciones. Se guardan automáticamente.
+              </p>
+              <AddSectionDropdown
+                addedSections={Object.keys(localAddedSections)}
+                onSectionSelect={handleAddSectionFromModal}
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Secciones predefinidas
+                  </h4>
+                  <span className="text-xs text-muted-foreground">
+                    {predefinedSections.length}
+                  </span>
+                </div>
+                {predefinedSections.length > 0 ? (
+                  predefinedSections.map(([sectionId, section]) =>
+                    renderSectionCard(sectionId, section)
+                  )
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-border/50 p-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No hay secciones predefinidas agregadas.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold text-foreground">
+                    Secciones personalizadas
+                  </h4>
+                  <span className="text-xs text-muted-foreground">
+                    {customSections.length}
+                  </span>
+                </div>
+                {customSections.length > 0 ? (
+                  customSections.map(([sectionId, section]) =>
+                    renderSectionCard(sectionId, section)
+                  )
+                ) : (
+                  <div className="rounded-lg border-2 border-dashed border-border/50 p-4 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      No hay secciones personalizadas agregadas aún.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       default:
         return null;
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+    <div
+      className="absolute right-0 left-0 z-50 bg-black/80 p-2 sm:p-4"
+      style={{ top: 0, height: modalMetrics.overlayHeight || '100%' }}
+      onClick={handleOverlayClick}
+    >
       <div
         role="dialog"
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
-        className="relative flex h-[75vh] max-h-[650px] w-full max-w-2xl gap-4 overflow-hidden border bg-background p-0 shadow-lg duration-200 sm:rounded-lg"
-        style={{ pointerEvents: 'auto' }}
+        className="absolute left-1/2 flex h-[82vh] max-h-[82vh] w-[96vw] max-w-[96vw] translate-x-[-50%] flex-col gap-0 overflow-hidden rounded-[12px] border bg-background p-0 shadow-lg duration-200 sm:h-[75vh] sm:max-h-[650px] sm:w-full sm:max-w-2xl sm:flex-row sm:gap-4 sm:rounded-[16px]"
+        style={{ pointerEvents: 'auto', top: modalMetrics.modalTop }}
       >
         {/* Layout principal con sidebar y contenido */}
-        <div className="flex min-h-0 flex-1">
+        <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
           {/* Sidebar de navegación */}
-          <div className="flex w-12 shrink-0 flex-col items-center border-r border-border/50 bg-muted/30 py-4">
+          <div className="flex w-full shrink-0 flex-row items-center justify-between border-b border-border/50 bg-muted/30 px-3 py-2 sm:w-12 sm:flex-col sm:border-r sm:border-b-0 sm:px-0 sm:py-4">
             <button
               onClick={handlePrevious}
-              disabled={currentStep === 1 || isSaving}
-              className="inline-flex h-8 w-8 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              disabled={currentStep === 1 || isAutoSaving}
+              className="inline-flex h-8 w-8 shrink-0 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               title="Paso anterior"
             >
-              <ChevronLeft className="h-4 w-4 rotate-90" />
+              <ChevronLeft className="h-4 w-4 sm:rotate-90" />
             </button>
 
             {/* Indicadores de pasos */}
-            <div className="flex flex-1 flex-col items-center justify-center gap-2 py-4">
+            <div className="flex w-full flex-1 flex-row items-center justify-center gap-2 overflow-x-auto px-2 py-2 sm:w-auto sm:flex-col sm:overflow-visible sm:px-0 sm:py-4">
               {steps.map((step) => (
                 <button
                   key={step.id}
                   onClick={() => {
-                    if (!isSaving && (isProjectCreated || step.id === 1)) {
+                    if (!isAutoSaving && (isProjectCreated || step.id === 1)) {
                       setCurrentStep(step.id);
                     }
                   }}
-                  disabled={isSaving || (!isProjectCreated && step.id !== 1)}
+                  disabled={
+                    isAutoSaving || (!isProjectCreated && step.id !== 1)
+                  }
                   className={`h-2.5 w-2.5 rounded-full transition-all ${
                     step.id === currentStep
                       ? 'scale-125 bg-[#22c4d3]'
@@ -2644,19 +3450,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               disabled={
                 currentStep === steps.length ||
                 (!isProjectCreated && currentStep === 1) ||
-                isSaving
+                isAutoSaving
               }
-              className="inline-flex h-8 w-8 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex h-8 w-8 shrink-0 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               title="Paso siguiente"
             >
-              <ChevronRight className="h-4 w-4 rotate-90" />
+              <ChevronRight className="h-4 w-4 sm:rotate-90" />
             </button>
           </div>
 
           {/* Área de contenido */}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             {/* Header del modal */}
-            <div className="relative shrink-0 border-b border-border/50 p-6 pb-4">
+            <div className="relative shrink-0 border-b border-border/50 p-4 pb-3 sm:p-6 sm:pb-4">
               <div className="flex flex-col space-y-1.5 text-center sm:text-left">
                 <h2
                   id="modal-title"
@@ -2669,8 +3475,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   </div>
                   {/* Indicador de guardado */}
                   {isProjectCreated && (
-                    <div className="absolute top-4 right-12 flex items-center">
-                      {isSaving ? (
+                    <div className="absolute top-3 right-10 flex items-center sm:top-4 sm:right-12">
+                      {isAutoSaving ? (
                         <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
                       ) : (
                         <svg
@@ -2718,26 +3524,26 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </div>
 
             {/* Contenido del paso actual */}
-            <div className="min-h-0 flex-1 overflow-y-auto p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
               {renderStepContent()}
             </div>
 
             {/* Footer con botones de navegación */}
-            <div className="flex items-center justify-between border-t border-border/50 bg-card/50 p-4">
+            <div className="flex flex-row items-center justify-between gap-2 border-t border-border/50 bg-card/50 p-3 sm:p-4">
               <button
                 onClick={handlePrevious}
-                disabled={currentStep === 1 || isSaving}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-[16px] bg-[#22c4d3] px-4 py-2 text-sm font-medium whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                disabled={currentStep === 1 || isAutoSaving}
+                className="inline-flex h-8 flex-1 items-center justify-center gap-2 rounded-[14px] bg-[#22c4d3] px-3 py-2 text-xs font-semibold whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 sm:h-10 sm:flex-none sm:rounded-[16px] sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
                 <ChevronLeft className="h-4 w-4" />
                 <span className="relative mr-1 mb-1">Anterior</span>
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-1 items-center gap-2 sm:flex-none">
                 <button
                   onClick={handleMainButtonClick}
-                  disabled={nextDisabled || isSaving}
-                  className="inline-flex h-10 items-center justify-center gap-2 rounded-[16px] bg-[#22c4d3] px-4 py-2 text-sm font-medium whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  disabled={nextDisabled || isAutoSaving}
+                  className="inline-flex h-8 flex-1 items-center justify-center gap-2 rounded-[14px] bg-[#22c4d3] px-3 py-2 text-xs font-semibold whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 sm:h-10 sm:flex-none sm:rounded-[16px] sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   {isCreateStep ? (
                     <>
@@ -2762,13 +3568,26 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         <button
           type="button"
           onClick={onClose}
-          disabled={isSaving}
-          className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-40 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+          disabled={isAutoSaving}
+          className="absolute top-1 right-2 hidden rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-40 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground sm:top-4 sm:right-4 sm:inline-flex"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Cerrar</span>
         </button>
       </div>
+
+      <AddCustomSectionModal
+        isOpen={showAddCustomSectionModal}
+        onClose={() => {
+          setShowAddCustomSectionModal(false);
+          setPendingSection(null);
+        }}
+        onAdd={handleAddCustomSectionFromModal}
+        isLoading={isAddingCustomSection}
+        initialName={pendingSection?.name ?? ''}
+        nameLocked={Boolean(pendingSection && !pendingSection.isCustom)}
+        onGenerateDescription={handleGenerateSectionDescription}
+      />
     </div>
   );
 };

@@ -58,6 +58,8 @@ next-env.d.ts
 
 # editor folders
 .vscode/
+!.vscode/settings.json
+.vscode/mcp.json
 .idea/
 
 # system files

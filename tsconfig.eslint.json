@@ -12,6 +12,12 @@
   ],
   "exclude": [
     "node_modules",
+    ".agents",
+    ".github",
+    ".agents/**",
+    ".github/**",
+    "**/.agents/**",
+    "**/.github/**",
     ".next",
     "dist",
     "build",

@@ -10,6 +10,15 @@ interface GenerateContentOptions {
     | 'objetivosEsp'
     | 'requisitos';
   prompt: string;
+  titulo?: string;
+  descripcion?: string;
+  existingText?: string;
+  sectionTitle?: string;
+  sectionsContext?: string;
+  fechaInicio?: string;
+  fechaFin?: string;
+  durationEstimate?: number;
+  durationUnit?: 'dias' | 'semanas' | 'meses' | 'anos';
 }
 
 interface GenerateContentResponse {
@@ -113,6 +122,15 @@ export const useGenerateContent = () => {
       const payload = {
         type: options.type,
         prompt: options.prompt,
+        titulo: options.titulo,
+        descripcion: options.descripcion,
+        existingText: options.existingText,
+        sectionTitle: options.sectionTitle,
+        sectionsContext: options.sectionsContext,
+        fechaInicio: options.fechaInicio,
+        fechaFin: options.fechaFin,
+        durationEstimate: options.durationEstimate,
+        durationUnit: options.durationUnit,
         timestamp: new Date().toISOString(),
       };
 

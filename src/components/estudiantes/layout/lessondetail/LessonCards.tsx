@@ -3,9 +3,8 @@ import { type Dispatch, type SetStateAction, useEffect } from 'react';
 
 import Link from 'next/link';
 
-import { FaCheckCircle, FaClock, FaLock } from 'react-icons/fa';
+import { FaCheckCircle, FaClock } from 'react-icons/fa';
 import { SiGoogleclassroom } from 'react-icons/si';
-import { toast } from 'sonner';
 import useSWR from 'swr';
 
 import {
@@ -48,12 +47,6 @@ interface LessonCardsProps {
   courseId?: number;
   userId?: string;
   isMobile?: boolean; // <-- nuevo prop
-}
-
-interface UnlockResponse {
-  success: boolean;
-  nextLessonId?: number;
-  error?: string;
 }
 
 const LessonCards = ({
@@ -103,96 +96,7 @@ const LessonCards = ({
     }
   }, [selectedLessonId, progress, setLessonsState]);
 
-  useEffect(() => {
-    const unlockNextLesson = async () => {
-      if (!selectedLessonId) return;
-
-      const currentLesson = orderedLessons.find(
-        (l) => l.id === selectedLessonId
-      );
-      if (!currentLesson) return;
-
-      const activities = currentLesson.activities ?? [];
-      const hasActivities = activities.length > 0;
-      const isVideoLesson = currentLesson.coverVideoKey !== 'none';
-
-      // Determine if we should attempt to unlock the next lesson
-      const allActivitiesCompleted = hasActivities
-        ? activities.every((a) => a.isCompleted)
-        : false;
-
-      const shouldUnlock =
-        // Video lesson completed (and activities completed if present)
-        (isVideoLesson &&
-          currentLesson.porcentajecompletado === 100 &&
-          (!hasActivities || allActivitiesCompleted)) ||
-        // No video but has activities and they're all completed
-        (!isVideoLesson && hasActivities && allActivitiesCompleted) ||
-        // Neither video nor activities => unlock automatically
-        (!isVideoLesson && !hasActivities);
-
-      if (!shouldUnlock) return;
-
-      // Find the next lesson to ensure we update state after server unlock
-      const currentIndex = orderedLessons.findIndex(
-        (l) => l.id === selectedLessonId
-      );
-      const nextLesson =
-        currentIndex >= 0 ? orderedLessons[currentIndex + 1] : undefined;
-      if (!nextLesson?.isLocked) return;
-
-      try {
-        const res = await fetch('/api/lessons/unlock', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            currentLessonId: selectedLessonId,
-            hasActivities,
-            allActivitiesCompleted,
-          }),
-        });
-
-        const result = (await res.json()) as UnlockResponse;
-        if (!res.ok || !result.success) {
-          throw new Error(result.error ?? 'Failed to unlock next lesson');
-        }
-
-        // Update state to reflect unlocked lesson from DB
-        setLessonsState((prev) =>
-          prev.map((lesson) =>
-            result.nextLessonId && lesson.id === result.nextLessonId
-              ? { ...lesson, isLocked: false, isNew: true }
-              : lesson
-          )
-        );
-
-        toast.success('¡Nueva clase desbloqueada!', {
-          id: 'lesson-unlocked',
-          duration: 3000,
-        });
-      } catch (error) {
-        console.error('Error unlocking next lesson:', error);
-        toast.error('Error al desbloquear la siguiente clase');
-      }
-    };
-
-    const timeoutId = setTimeout(() => {
-      void unlockNextLesson();
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [selectedLessonId, orderedLessons, setLessonsState]);
-
   const getActivityStatus = (lessonItem: LessonWithProgress) => {
-    // Siempre usar el estado isLocked de la base de datos
-    if (lessonItem.isLocked) {
-      return {
-        icon: <FaLock className="text-gray-400" />,
-        isAccessible: false,
-        className: 'cursor-not-allowed bg-gray-50/95 opacity-75 shadow-sm',
-      };
-    }
-
     const completed = isLessonCompleted(lessonItem);
 
     if (completed) {
@@ -216,14 +120,7 @@ const LessonCards = ({
 
   const handleClick = (lessonItem: LessonWithProgress) => {
     if (isNavigating) return;
-    // Usar directamente isLocked de la base de datos
-    if (!lessonItem.isLocked) {
-      onLessonClick(lessonItem.id);
-    } else {
-      toast.error('Clase Bloqueada', {
-        description: 'Completa la actividad anterior y desbloquea esta clase.',
-      });
-    }
+    onLessonClick(lessonItem.id);
   };
 
   const renderLessonCard = (lessonItem: LessonWithProgress, index: number) => {
@@ -237,19 +134,13 @@ const LessonCards = ({
       (isCurrentLesson ? progress > 0 : lessonItem.porcentajecompletado > 0) ||
       activitiesCompleted;
 
-    const shouldShowNew =
-      lessonItem.isLocked === false && lessonItem.isNew && !hasSeenOrInteracted;
+    const shouldShowNew = lessonItem.isNew && !hasSeenOrInteracted;
 
     // Calcular si está completada
     const isCompleted = isLessonCompleted(lessonItem);
 
     // Renderizar ícono de estado
     const renderStatusIcon = () => {
-      if (lessonItem.isLocked) {
-        return (
-          <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 bg-[#01152d] transition-colors" />
-        );
-      }
       if (isCompleted) {
         return (
           <svg
@@ -281,20 +172,18 @@ const LessonCards = ({
         onClick={() => handleClick(lessonItem)}
         className={`group/lesson relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
           isNavigating ? 'cursor-not-allowed opacity-70' : ''
-        } ${
-          isCurrentLesson ? 'bg-accent/10' : ''
-        } ${lessonItem.isLocked ? 'opacity-60' : ''}`}
+        } ${isCurrentLesson ? 'bg-accent/10' : ''}`}
         onMouseEnter={(e) => {
-          if (!isCurrentLesson && !lessonItem.isLocked) {
+          if (!isCurrentLesson) {
             e.currentTarget.style.backgroundColor = '#1a2333';
           }
         }}
         onMouseLeave={(e) => {
-          if (!isCurrentLesson && !lessonItem.isLocked) {
+          if (!isCurrentLesson) {
             e.currentTarget.style.backgroundColor = '';
           }
         }}
-        disabled={isNavigating || lessonItem.isLocked}
+        disabled={isNavigating}
       >
         {/* Indicador lateral activo */}
         {isCurrentLesson && (
@@ -401,10 +290,7 @@ const LessonCards = ({
                   ? progress > 0
                   : lesson.porcentajecompletado > 0) || activitiesCompleted;
 
-              const shouldShowNew =
-                lesson.isLocked === false &&
-                lesson.isNew &&
-                !hasSeenOrInteracted;
+              const shouldShowNew = lesson.isNew && !hasSeenOrInteracted;
 
               const status = getActivityStatus(lesson);
 
@@ -441,9 +327,9 @@ const LessonCards = ({
       : 0;
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-full flex-col">
       {/* Progress section at top */}
-      <div className="bg-[#061c37cc ] sticky top-2 z-10 border-b border-border px-6 pt-1 pb-4 backdrop-blur-xl">
+      <div className="sticky top-0 z-10 border-b border-border bg-[#061c37cc] px-5 py-3 backdrop-blur-xl">
         <div className="flex items-center gap-4">
           <div className="relative h-14 w-14">
             <svg className="h-14 w-14 -rotate-90">
@@ -483,7 +369,7 @@ const LessonCards = ({
       </div>
 
       {/* Lista de lecciones */}
-      <div className="flex-1 overflow-y-visible p-3">
+      <div className="flex-1 overflow-y-auto px-3 pb-4">
         <div className="mb-2">
           <button className="group flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all hover:bg-secondary/50">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-green-600 bg-green-200 transition-colors group-hover:bg-green-300">

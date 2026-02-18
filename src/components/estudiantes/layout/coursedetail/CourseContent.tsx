@@ -54,6 +54,11 @@ interface CourseContentProps {
   gradeSummary?: {
     finalGrade: number;
     courseCompleted?: boolean;
+    hasParameters?: boolean;
+    isFullyGraded?: boolean;
+    totalParameterActivities?: number;
+    gradedParameterActivities?: number;
+    ungradedParameterActivities?: number;
     parameters: {
       name: string;
       grade: number;
@@ -404,14 +409,15 @@ export function CourseContent({
       const isUnlocked =
         isEnrolled &&
         (course.courseType?.requiredSubscriptionLevel === 'none' ||
-          isSubscriptionActive) &&
-        !lesson.isLocked;
+          isSubscriptionActive);
       const displayProgress = getLessonDisplayProgress(lesson);
 
       const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         e.preventDefault();
         router.push(`/estudiantes/clases/${lesson.id}`);
       };
+
+      const isCompleted = isLessonFullyCompleted(lesson);
 
       return (
         <div
@@ -433,10 +439,12 @@ export function CourseContent({
             <div className="flex w-full items-center justify-between">
               <div className="flex flex-col space-y-1">
                 <div className="flex items-center space-x-2">
-                  {isUnlocked ? (
+                  {!isUnlocked ? (
+                    <FaLock className="mr-2 size-5 text-gray-400" />
+                  ) : isCompleted ? (
                     <FaCheckCircle className="mr-2 size-5 text-green-500" />
                   ) : (
-                    <FaLock className="mr-2 size-5 text-gray-400" />
+                    <FaClock className="mr-2 size-5 text-gray-400" />
                   )}
                   <span className="font-medium text-white">{lesson.title}</span>
                   <span className="ml-2 text-sm text-gray-300">
@@ -1212,7 +1220,7 @@ export function CourseContent({
                                 </div>
                                 {/* Chips fecha+hora y duracion (móvil) en una sola línea */}
                                 <div
-                                  className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                  className="flex flex-wrap items-center gap-2 text-xs sm:text-sm sm:whitespace-nowrap"
                                   style={{ color: '#94a3b8' }}
                                 >
                                   <span className="inline-flex items-center gap-1.5">
@@ -1380,7 +1388,7 @@ export function CourseContent({
                                 </div>
                               </div>
                               <div
-                                className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                className="flex flex-wrap items-center gap-2 text-xs sm:text-sm sm:whitespace-nowrap"
                                 style={{
                                   color: '#94a3b8',
                                   background: '#061c3799',
@@ -1643,8 +1651,27 @@ export function CourseContent({
                                     {meeting.title ?? `Clase ${indexLabel}`}
                                   </h4>
                                 </div>
+                                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:hidden">
+                                  <div className="flex items-center gap-1">
+                                    <FaCalendarAlt className="h-3.5 w-3.5" />
+                                    <span>{dateLabel}</span>
+                                  </div>
+                                  {timeLabel && (
+                                    <div className="flex items-center gap-1">
+                                      <FaClock className="h-3.5 w-3.5" />
+                                      <span>{timeLabel}</span>
+                                    </div>
+                                  )}
+                                  {isCompleted ? (
+                                    <FaCheckCircle className="h-4 w-4 text-accent" />
+                                  ) : (
+                                    <span className="text-xs font-semibold text-accent">
+                                      {currentProgress}%
+                                    </span>
+                                  )}
+                                </div>
                               </div>
-                              <div className="flex shrink-0 items-center gap-3 text-muted-foreground">
+                              <div className="hidden shrink-0 items-center gap-3 text-muted-foreground sm:flex">
                                 <div className="flex items-center gap-1 text-xs">
                                   <FaCalendarAlt className="h-3.5 w-3.5" />
                                   <span>{dateLabel}</span>

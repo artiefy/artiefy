@@ -305,7 +305,7 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
                 key={index}
                 className="group flex items-center justify-between border p-3 transition-all duration-200 hover:cursor-pointer"
                 style={{
-                  backgroundColor: '#061c3799',
+                  backgroundColor: '#01152d',
                   borderColor: 'hsla(217, 33%, 17%, 0.5)',
                   borderRadius: '12px',
                 }}

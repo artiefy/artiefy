@@ -10,48 +10,6 @@ import {
   userActivitiesProgress,
   userLessonsProgress,
 } from '~/server/db/schema';
-import { sortLessons } from '~/utils/lessonSorting';
-
-const unlockNextLesson = async (lessonId: number, userId: string) => {
-  // Obtener información de la lección actual
-  const currentLesson = await db.query.lessons.findFirst({
-    where: eq(lessons.id, lessonId),
-  });
-
-  if (!currentLesson) return;
-
-  // Obtener todas las lecciones del curso
-  const courseLessons = await db.query.lessons.findMany({
-    where: eq(lessons.courseId, currentLesson.courseId),
-  });
-
-  // Ordenar las lecciones usando sortLessons
-  const sortedLessons = sortLessons(courseLessons);
-
-  // Encontrar la siguiente lección en el orden correcto
-  const currentIndex = sortedLessons.findIndex((l) => l.id === lessonId);
-  const nextLesson = sortedLessons[currentIndex + 1];
-
-  if (!nextLesson) return;
-
-  // Verificar si hay actividades en la lección actual
-  const lessonActivities = await db.query.activities.findMany({
-    where: eq(activities.lessonsId, lessonId),
-  });
-
-  if (lessonActivities.length === 0) {
-    // Si no hay actividades, desbloquear automáticamente la siguiente lección
-    await db
-      .update(userLessonsProgress)
-      .set({ isLocked: false })
-      .where(
-        and(
-          eq(userLessonsProgress.userId, userId),
-          eq(userLessonsProgress.lessonId, nextLesson.id)
-        )
-      );
-  }
-};
 
 /**
  * Verifica si el usuario completó todas las actividades de una lección.
@@ -170,16 +128,11 @@ export async function updateLessonProgress(
 
   await db
     .update(userLessonsProgress)
-    .set({ isLocked: progress === 0 })
+    .set({ isLocked: false })
     .where(
       and(
         eq(userLessonsProgress.userId, userId),
         eq(userLessonsProgress.lessonId, lessonId)
       )
     );
-
-  // Solo desbloquear la siguiente lección si esta lección está completada
-  if (isCompleted) {
-    await unlockNextLesson(lessonId, user.id);
-  }
 }

@@ -152,6 +152,7 @@ export default async function MyCoursesStudent() {
                           <Button asChild className="w-fit shrink-0">
                             <Link
                               href={`/estudiantes/programas/${program.id}`}
+                              prefetch={false}
                               className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background px-3 text-primary active:scale-95"
                             >
                               <p className="font-bold">Ver Programa</p>
@@ -414,6 +415,7 @@ export default async function MyCoursesStudent() {
                         >
                           <Link
                             href={`/estudiantes/cursos/${course.id}`}
+                            prefetch={false}
                             className="group/button relative inline-flex h-9 items-center justify-center overflow-hidden rounded-md border border-white/20 px-3 text-white active:scale-95"
                           >
                             <p className="font-bold">Ver Curso</p>

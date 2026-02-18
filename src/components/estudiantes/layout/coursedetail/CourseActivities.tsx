@@ -177,10 +177,10 @@ export function CourseActivities({
   if (!lessonsWithActivities.length) {
     return (
       <div
-        className="border-border/50 flex flex-col items-center justify-center rounded-xl border border-dashed py-12"
+        className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
         style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
       >
-        <div className="bg-muted/50 mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
           <CircleHelp className="h-8 w-8 text-black" />
         </div>
         <h3 className="mb-2 text-lg font-semibold text-slate-100">
@@ -195,7 +195,7 @@ export function CourseActivities({
   return (
     <div className="space-y-6 rounded-2xl">
       <div className="space-y-1">
-        <h3 className="text-foreground text-xl font-semibold">
+        <h3 className="text-xl font-semibold text-foreground">
           Actividades del curso
         </h3>
         <p className="text-sm text-[#94A3B8]">
@@ -232,9 +232,7 @@ export function CourseActivities({
 
       <div className="space-y-6">
         {lessonsWithActivities.map((lesson, lessonIndex) => {
-          const isLessonLocked =
-            (!isEnrolled && lesson.isLocked !== false) ||
-            lesson.isLocked === true;
+          const isLessonLocked = !isEnrolled;
           const totalActivities = lesson.activities?.length ?? 0;
           const completedActivities =
             lesson.activities?.filter(
@@ -245,8 +243,8 @@ export function CourseActivities({
           return (
             <div key={lesson.id} className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="bg-accent/20 flex h-6 w-6 items-center justify-center rounded-full">
-                  <span className="text-accent text-xs font-medium">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/20">
+                  <span className="text-xs font-medium text-accent">
                     {lessonIndex + 1}
                   </span>
                 </div>
@@ -306,7 +304,7 @@ export function CourseActivities({
                           <Icon className="h-4 w-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-foreground truncate text-sm font-medium">
+                          <p className="truncate text-sm font-medium text-foreground">
                             {activity.name}
                           </p>
                           <div className="flex items-center gap-2 text-xs text-[#94A3B8]">

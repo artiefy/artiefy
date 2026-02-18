@@ -148,7 +148,7 @@ const LessonContentTabs = ({
     >
       <nav
         ref={navRef}
-        className="flex items-center gap-2 overflow-x-auto px-10"
+        className="flex items-center gap-2 overflow-x-auto px-10 lg:justify-start lg:px-0"
         style={{ scrollbarWidth: 'none' }}
       >
         {tabs.map((tab) => (
@@ -174,7 +174,7 @@ const LessonContentTabs = ({
       {/* Left Arrow */}
       <button
         onClick={scrollLeft}
-        className={`absolute top-1/2 left-0 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-card ${
+        className={`absolute top-1/2 left-0 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-card lg:hidden ${
           isHovered ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
       >
@@ -196,7 +196,7 @@ const LessonContentTabs = ({
       {/* Right Arrow */}
       <button
         onClick={scrollRight}
-        className={`absolute top-1/2 right-0 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-card ${
+        className={`absolute top-1/2 right-0 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-card lg:hidden ${
           isHovered ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
       >

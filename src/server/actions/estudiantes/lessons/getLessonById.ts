@@ -59,10 +59,12 @@ export async function getLessonById(
         lessonsProgress.find((p) => p.lessonId === l.id)?.progress ?? 0,
       userProgress:
         lessonsProgress.find((p) => p.lessonId === l.id)?.progress ?? 0,
+      lastPositionSeconds:
+        lessonsProgress.find((p) => p.lessonId === l.id)?.lastPositionSeconds ??
+        0,
       isCompleted:
         lessonsProgress.find((p) => p.lessonId === l.id)?.isCompleted ?? false,
-      isLocked:
-        lessonsProgress.find((p) => p.lessonId === l.id)?.isLocked ?? true,
+      isLocked: false,
       isNew: lessonsProgress.find((p) => p.lessonId === l.id)?.isNew ?? true,
       resourceNames: l.resourceNames ? l.resourceNames.split(',') : [],
     }));
@@ -107,8 +109,9 @@ export async function getLessonById(
     const transformedLesson: Lesson = {
       ...lesson,
       porcentajecompletado: lessonProgress?.progress ?? 0,
-      isLocked: lessonProgress?.isLocked ?? true,
+      isLocked: false,
       userProgress: lessonProgress?.progress ?? 0,
+      lastPositionSeconds: lessonProgress?.lastPositionSeconds ?? 0,
       isCompleted: lessonProgress?.isCompleted ?? false,
       isNew: lessonProgress?.isNew ?? true,
       resourceNames: lesson.resourceNames

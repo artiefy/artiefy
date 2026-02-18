@@ -98,7 +98,7 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
         ...lessonItem,
         courseTitle: course.title,
         porcentajecompletado: lessonProgress?.progress ?? 0,
-        isLocked: lessonProgress?.isLocked ?? true,
+        isLocked: false,
         isCompleted: lessonProgress?.isCompleted ?? false,
         isNew: lessonProgress?.isNew ?? true,
         activities: lessonItem.activities ?? [],
@@ -111,9 +111,7 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
     // Now create lesson with course data and ensure all properties are initialized
     const lesson: LessonWithProgress = {
       ...lessonData,
-      isLocked:
-        lessonsProgress.find((p) => p.lessonId === lessonData.id)?.isLocked ??
-        false,
+      isLocked: false,
       courseTitle: course.title,
       activities: lessonData.activities ?? [],
       porcentajecompletado:

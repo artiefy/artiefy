@@ -504,7 +504,7 @@ const LessonActivities = ({
     );
   };
 
-  const getActivityStatus = (activity: Activity, index: number) => {
+  const getActivityStatus = (activity: Activity, _index: number) => {
     const activityState = activitiesState[activity.id];
 
     if (isButtonLoading) {
@@ -523,51 +523,10 @@ const LessonActivities = ({
       };
     }
 
-    const currentLesson = activity.lessonsId
-      ? lessons.find((l) => l.id === activity.lessonsId)
-      : null;
-    const hasNoVideo = currentLesson?.coverVideoKey === 'none';
-    const isFirstActivity = index === 0;
-    const previousActivity = activities[index - 1];
-    const isPreviousCompleted = previousActivity
-      ? activitiesState[previousActivity.id]?.isCompleted
-      : true;
-    const baseUnlocked = hasNoVideo || isVideoCompleted;
-    const sequentialUnlocked = isFirstActivity || isPreviousCompleted;
-    const canAccess = baseUnlocked && sequentialUnlocked;
-
-    if (!baseUnlocked) {
-      return {
-        icon: <FaLock className="text-gray-400" />,
-        bgColor: 'bg-gray-200',
-        isActive: false,
-      };
-    }
-
-    if (isFirstActivity) {
-      return {
-        icon: <TbClockFilled className="text-blue-500" />,
-        bgColor: 'bg-blue-100',
-        isActive: true,
-      };
-    }
-
-    if (!sequentialUnlocked) {
-      return {
-        icon: <FaLock className="text-gray-400" />,
-        bgColor: 'bg-gray-200',
-        isActive: false,
-      };
-    }
-
     return {
-      icon: canAccess ? (
-        <TbClockFilled className="text-blue-500" />
-      ) : (
-        <FaLock className="text-gray-400" />
-      ),
-      bgColor: canAccess ? 'bg-blue-100' : 'bg-gray-200',
-      isActive: canAccess,
+      icon: <TbClockFilled className="text-blue-500" />,
+      bgColor: 'bg-blue-100',
+      isActive: true,
     };
   };
 
@@ -610,20 +569,13 @@ const LessonActivities = ({
     const activityType = resolveActivityType(activity);
     const ActivityIcon = activityType.icon;
     const deadlineText = formatDeadline(activity.fechaMaximaEntrega);
-    const isFirstActivity = index === 0;
-    const previousActivity = index > 0 ? activities[index - 1] : null;
-    const isPreviousCompleted =
-      !previousActivity || activitiesState[previousActivity.id]?.isCompleted;
     const currentLesson = activity.lessonsId
       ? lessons.find((l) => l.id === activity.lessonsId)
       : null;
-    const hasNoVideo = currentLesson?.coverVideoKey === 'none';
-    const baseUnlocked = hasNoVideo || isVideoCompleted;
-    const sequentialUnlocked = isFirstActivity || isPreviousCompleted;
-    const canAccess = baseUnlocked && sequentialUnlocked;
+    const canAccess = true;
     const _isNextLessonAvailable =
       !isLastLesson && isLastActivityInLesson(activity);
-    const isLocked = !activityState?.isCompleted && !canAccess;
+    const isLocked = false;
 
     return (
       <div
@@ -688,9 +640,7 @@ const LessonActivities = ({
                     ? () => handleCompletedActivityClick(activity)
                     : () => handleOpenActivity(activity)
                 }
-                disabled={
-                  !activityState?.isCompleted && (isButtonLoading || !canAccess)
-                }
+                disabled={!activityState?.isCompleted && isButtonLoading}
                 className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium transition-all ${getButtonClasses(activity, isLocked)} ${
                   !canAccess && !isButtonLoading && !activityState?.isCompleted
                     ? 'cursor-not-allowed'
@@ -765,35 +715,31 @@ const LessonActivities = ({
       );
 
       if (allActivitiesCompleted) {
-        // Actualizar progreso de la lección a 100% (si hay video, el backend validará)
-        const lessonProgressResponse = await fetch(
-          '/api/lessons/update-progress',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              lessonId,
-              progress: 100,
-              allActivitiesCompleted: true,
-            }),
-          }
-        );
+        const canSyncLessonProgress =
+          lessonCoverVideoKey === 'none' || isVideoCompleted;
 
-        if (lessonProgressResponse.ok) {
-          // Intentar desbloquear la siguiente clase estrictamente en orden
-          await fetch('/api/lessons/unlock', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              currentLessonId: lessonId,
-              hasActivities: true,
-              allActivitiesCompleted: true,
-            }),
-          }).catch(() => undefined);
-
-          toast.success(
-            '¡Todas las actividades completadas! Clase finalizada.'
+        if (canSyncLessonProgress) {
+          // Actualizar progreso de la lección a 100% cuando no hay video o ya fue completado
+          const lessonProgressResponse = await fetch(
+            '/api/lessons/update-progress',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                lessonId,
+                progress: 100,
+                allActivitiesCompleted: true,
+              }),
+            }
           );
+
+          if (lessonProgressResponse.ok) {
+            toast.success(
+              '¡Todas las actividades completadas! Clase finalizada.'
+            );
+          }
+        } else {
+          toast.success('¡Actividades completadas! Ahora termina el video.');
         }
       } else {
         toast.success('¡Actividad completada!');
@@ -944,34 +890,6 @@ const LessonActivities = ({
             {(showAll ? activities : activities.slice(0, 3)).map(
               (activity, index) => renderActivityCard(activity, index)
             )}
-          </div>
-        ) : // Para clases sin video, mostrar la flecha apuntando a la izquierda
-        !inMainContent && !isMobile && lessonCoverVideoKey === 'none' ? (
-          <div className="flex flex-col items-center justify-center rounded-lg bg-white p-4 shadow-lg">
-            <p className="mb-2 font-semibold text-blue-600">
-              Actividad disponible
-            </p>
-            <div className="animate-bounce">
-              <svg
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="text-blue-500"
-                style={{ transform: 'rotate(180deg)' }}
-              >
-                <path
-                  d="M12 19V5M12 19L5 12M12 19L19 12"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <span className="mt-2 text-center text-xs text-gray-500">
-              Las actividades están en el centro de la página
-            </span>
           </div>
         ) : (
           <div className="rounded-lg bg-white p-4 shadow-lg">
