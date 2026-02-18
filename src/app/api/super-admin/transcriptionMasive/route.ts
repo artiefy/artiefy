@@ -5,6 +5,7 @@ import axios, { isAxiosError } from 'axios';
 
 import { db } from '~/server/db';
 import { lessons } from '~/server/db/schema';
+import { eq } from 'drizzle-orm';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -31,15 +32,107 @@ export async function GET(req: NextRequest) {
     }
 
     const redisKey = `transcription:lesson:${lessonId}`;
-    const transcription = await redis.get<TranscriptionItem[] | string>(
-      redisKey
-    );
+    let transcription = await redis.get<TranscriptionItem[] | string>(redisKey);
 
+    // Si no existe, la genera, la guarda y la retorna
     if (!transcription) {
-      return NextResponse.json(
-        { error: 'Transcripción no encontrada para esta lección' },
-        { status: 404 }
+      // Buscar la lección en la base de datos
+      console.log(
+        `[TRANSCRIPCIÓN] Buscando lección ${lessonId} en la base de datos...`
       );
+      const lesson = await db
+        .select({
+          id: lessons.id,
+          coverVideoKey: lessons.coverVideoKey,
+        })
+        .from(lessons)
+        .where(eq(lessons.id, Number(lessonId)))
+        .then((res) => res[0]);
+
+      if (!lesson || !lesson.coverVideoKey) {
+        console.error(
+          `[TRANSCRIPCIÓN] No se encontró la lección o no tiene video. lessonId=${lessonId}`
+        );
+        return NextResponse.json(
+          { error: 'No se encontró la lección o no tiene video.' },
+          { status: 404 }
+        );
+      }
+
+      const videoUrl = `https://s3.us-east-2.amazonaws.com/artiefy-upload/${lesson.coverVideoKey}`;
+      console.log(`[TRANSCRIPCIÓN] Verificando acceso al video: ${videoUrl}`);
+
+      // Verificar que el video se pueda acceder
+      try {
+        const check = await fetch(videoUrl, { method: 'HEAD' });
+        if (!check.ok) {
+          console.error(
+            `[TRANSCRIPCIÓN] Video no accesible. Status: ${check.status}`
+          );
+          return NextResponse.json(
+            { error: `Video no accesible (status ${check.status})` },
+            { status: 400 }
+          );
+        }
+      } catch (err) {
+        console.error(`[TRANSCRIPCIÓN] Error al verificar el video:`, err);
+        return NextResponse.json(
+          { error: 'Error al verificar el video' },
+          { status: 400 }
+        );
+      }
+
+      // Llamar al backend local para transcribir
+      try {
+        console.log(
+          `[TRANSCRIPCIÓN] Solicitando transcripción a backend local para: ${videoUrl}`
+        );
+        const response = await axios.post(
+          'http://localhost:8000/video2text',
+          { url: videoUrl },
+          {
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 20 * 60 * 1000,
+          }
+        );
+
+        if (!Array.isArray(response.data)) {
+          console.error(
+            `[TRANSCRIPCIÓN] Formato de transcripción no válido:`,
+            response.data
+          );
+          return NextResponse.json(
+            { error: 'Formato de transcripción no válido' },
+            { status: 422 }
+          );
+        }
+
+        await redis.set(redisKey, response.data);
+        transcription = response.data;
+        console.log(
+          `[TRANSCRIPCIÓN] Transcripción guardada en Redis para lección ${lessonId}`
+        );
+      } catch (err) {
+        if (isAxiosError(err)) {
+          console.error(
+            `[TRANSCRIPCIÓN] Error Axios:`,
+            err.message,
+            err.response?.data
+          );
+          return NextResponse.json(
+            { error: err.message, details: err.response?.data },
+            { status: err.response?.status || 500 }
+          );
+        }
+        console.error(
+          `[TRANSCRIPCIÓN] Error procesando la transcripción:`,
+          err
+        );
+        return NextResponse.json(
+          { error: 'Error procesando la transcripción', details: String(err) },
+          { status: 500 }
+        );
+      }
     }
 
     const formatTime = (seconds: number): string => {
@@ -78,15 +171,14 @@ export async function GET(req: NextRequest) {
 export async function POST() {
   try {
     // ✅ CONFIGURA TU VIDEO MANUAL AQUÍ
-    const manualLessonId = 265; // 👈 Cambia a 0 para usar modo masivo
+    const manualLessonId = 265; // Cambia a 0 para modo masivo
     const manualVideoUrl =
-      'https://s3.us-east-2.amazonaws.com/artiefy-upload/uploads/video-corporativo1080-1747179011696-ab77ff51-074d-4f6c-abdf-1be20e8a79fc-1747786015742-3f62f9ed-eaeb-4442-b444-3bd66610bdc4.mp4'; // 👈 Tu video URL
+      'https://s3.us-east-2.amazonaws.com/artiefy-upload/uploads/video-corporativo1080-1747179011696-ab77ff51-074d-4f6c-abdf-1be20e8a79fc-1747786015742-3f62f9ed-eaeb-4442-b444-3bd66610bdc4.mp4';
 
-    // 🔹 MODO MANUAL: solo si lessonId !== 0 y URL no está vacío
+    // MODO MANUAL: solo si lessonId !== 0 y URL no está vacío
     if (Number(manualLessonId) !== 0 && manualVideoUrl.trim()) {
       const redisKey = `transcription:lesson:${manualLessonId}`;
       const alreadyExists = await redis.get(redisKey);
-
       if (alreadyExists) {
         console.log(
           `[TRANSCRIPCIÓN] 🟡 Ya existe transcripción para lección ${manualLessonId}`
@@ -119,10 +211,10 @@ export async function POST() {
         );
       }
 
-      // Procesar el video manual
+      // Procesar el video manual usando el backend local
       try {
         const response = await axios.post(
-          'http://3.148.245.81:8000/video2text',
+          'http://localhost:8000/video2text',
           { url: manualVideoUrl },
           {
             headers: { 'Content-Type': 'application/json' },
@@ -164,7 +256,7 @@ export async function POST() {
       }
     }
 
-    // 🔹 MODO MASIVO: solo se ejecuta si manualLessonId === 0
+    // MODO MASIVO: solo se ejecuta si manualLessonId === 0
     const allLessons = await db
       .select({
         id: lessons.id,
@@ -216,7 +308,7 @@ export async function POST() {
 
       try {
         const response = await axios.post(
-          'http://3.148.245.81:8000/video2text',
+          'http://localhost:8000/video2text',
           { url: videoUrl },
           {
             headers: { 'Content-Type': 'application/json' },
