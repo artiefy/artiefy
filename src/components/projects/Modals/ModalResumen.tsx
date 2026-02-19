@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -18,6 +18,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { FaWandMagicSparkles } from 'react-icons/fa6';
 import useSWR from 'swr';
 import useSWRMutation from 'swr/mutation';
@@ -587,6 +588,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   onAddedSectionsChange,
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isMounted, setIsMounted] = useState(false);
   const [timelineView, setTimelineView] = useState<
     'dias' | 'semanas' | 'meses'
   >('semanas');
@@ -684,6 +686,24 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   }, [isOpen]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    if (!isOpen) return undefined;
+    const { body } = document;
+    const originalOverflow = body.style.overflow;
+    const originalPaddingRight = body.style.paddingRight;
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+    body.style.overflow = 'hidden';
+    if (scrollbarWidth > 0) {
+      body.style.paddingRight = `${scrollbarWidth}px`;
+    }
+    return () => {
+      body.style.overflow = originalOverflow;
+      body.style.paddingRight = originalPaddingRight;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     return () => {
       Object.values(typingTimersRef.current).forEach((timer) => {
         window.clearTimeout(timer);
@@ -691,6 +711,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       typingTimersRef.current = {};
       typingTokensRef.current = {};
     };
+  }, []);
+
+  useEffect(() => {
+    setIsMounted(true);
   }, []);
   const normalizeInitialObjetivos = (src?: ObjetivosInput) => {
     if (!src) return [] as SpecificObjective[];
@@ -728,26 +752,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       key?: string;
     }>,
   });
-
-  const modalMetrics = useMemo(() => {
-    if (!isOpen || typeof window === 'undefined') {
-      return { overlayHeight: 0, modalTop: 0 };
-    }
-    const doc = document.documentElement;
-    const scrollTop = window.scrollY || doc.scrollTop || 0;
-    const height = Math.max(doc.scrollHeight, doc.clientHeight);
-    const isSmallScreen = window.innerWidth < 640;
-    const desiredTop = scrollTop + (isSmallScreen ? 20 : 80);
-    const modalHeight = isSmallScreen
-      ? Math.min(window.innerHeight * 0.82, height)
-      : 650;
-    const minTop = isSmallScreen ? 20 : 24;
-    const maxTop = Math.max(minTop, height - modalHeight);
-    return {
-      overlayHeight: height,
-      modalTop: Math.min(desiredTop, maxTop),
-    };
-  }, [isOpen]);
 
   const getSectionLabel = (sectionId: string): string => {
     const labels: Record<string, string> = {
@@ -1549,7 +1553,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   };
 
   // Return condicional DESPUÉS de todos los hooks
-  if (!isOpen) return null;
+  if (!isOpen || !isMounted) return null;
 
   const progress = (currentStep / steps.length) * 100;
   const normalizedTipoVisualizacion =
@@ -3396,23 +3400,21 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     }
   };
 
-  return (
+  return createPortal(
     <div
-      className="absolute right-0 left-0 z-50 bg-black/80 p-2 sm:p-4"
-      style={{ top: 0, height: modalMetrics.overlayHeight || '100%' }}
+      className="fixed inset-x-0 top-16 bottom-0 z-50 flex items-start justify-center bg-black/80 px-2 pt-3 pb-2 sm:items-center sm:px-4 sm:pt-4 sm:pb-4"
       onClick={handleOverlayClick}
     >
       <div
         role="dialog"
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
-        className="absolute left-1/2 flex h-[82vh] max-h-[82vh] w-[96vw] max-w-[96vw] translate-x-[-50%] flex-col gap-0 overflow-hidden rounded-[12px] border bg-background p-0 shadow-lg duration-200 sm:h-[80vh] sm:max-h-[80vh] sm:w-[95vw] sm:max-w-6xl sm:flex-row sm:gap-4 sm:rounded-[16px] xl:max-w-7xl"
-        style={{ pointerEvents: 'auto', top: modalMetrics.modalTop }}
+        className="relative flex h-[82vh] max-h-[82vh] w-[96vw] max-w-[96vw] flex-col gap-0 overflow-hidden rounded-[12px] border bg-background p-0 shadow-lg duration-200 sm:h-[80vh] sm:max-h-[80vh] sm:w-[95vw] sm:max-w-6xl sm:flex-row sm:gap-4 sm:rounded-[16px] xl:max-w-7xl"
       >
         {/* Layout principal con sidebar y contenido */}
         <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
           {/* Sidebar de navegación */}
-          <div className="flex w-full shrink-0 flex-row items-center justify-between border-b border-border/50 bg-muted/30 px-3 py-2 sm:w-12 sm:flex-col sm:border-r sm:border-b-0 sm:px-0 sm:py-4">
+          <div className="relative flex w-full shrink-0 flex-row items-center justify-center gap-3 border-b border-border/50 bg-muted/30 px-3 py-2 pr-12 sm:w-12 sm:flex-col sm:justify-between sm:gap-2 sm:border-r sm:border-b-0 sm:px-0 sm:py-4 sm:pr-0">
             <button
               onClick={handlePrevious}
               disabled={currentStep === 1 || isAutoSaving}
@@ -3569,7 +3571,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           type="button"
           onClick={onClose}
           disabled={isAutoSaving}
-          className="absolute top-1 right-2 hidden rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-40 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground sm:top-4 sm:right-4 sm:inline-flex"
+          className="absolute top-3 right-2 inline-flex rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-40 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground sm:top-4 sm:right-4"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Cerrar</span>
@@ -3588,7 +3590,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         nameLocked={Boolean(pendingSection && !pendingSection.isCustom)}
         onGenerateDescription={handleGenerateSectionDescription}
       />
-    </div>
+    </div>,
+    document.body
   );
 };
 export default ModalResumen;
