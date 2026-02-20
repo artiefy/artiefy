@@ -244,6 +244,9 @@ export async function GET(req: Request) {
         utilityBillKey: users.utilityBillKey,
         diplomaKey: users.diplomaKey,
         pagareKey: users.pagareKey,
+
+        // 🆕 courseTitle desde el último enrollment
+        courseTitle: courses.title,
       })
       .from(users)
       // ⬇️ dejamos los joins para que el filtro por programId siga funcionando, aunque no traigamos columnas externas

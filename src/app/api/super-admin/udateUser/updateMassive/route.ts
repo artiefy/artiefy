@@ -26,9 +26,39 @@ export async function PATCH(req: Request) {
     }
 
     const { userIds, fields } = parsed.data;
-    console.log('✅ Payload recibido del FRONTEND:');
-    console.log('➡️ userIds:', userIds);
-    console.log('➡️ fields:', fields);
+    console.log(
+      '═══════════════════════════════════════════════════════════════'
+    );
+    console.log('✅ INICIANDO ACTUALIZACIÓN MASIVA');
+    console.log(
+      '═══════════════════════════════════════════════════════════════'
+    );
+    console.log('👥 Usuarios a actualizar:', userIds);
+    console.log('📝 Campos a actualizar:', JSON.stringify(fields, null, 2));
+
+    // ✅ Convertir courseId a número si viene
+    let parsedCourseId: number | null = null;
+    if (fields.courseId !== undefined && fields.courseId !== null) {
+      parsedCourseId = Number(fields.courseId);
+      if (isNaN(parsedCourseId)) {
+        console.warn(`⚠️ courseId inválido: ${fields.courseId}`);
+        parsedCourseId = null;
+      } else {
+        console.log(`📚 Matriculando en CURSO: ${parsedCourseId}`);
+      }
+    }
+
+    // ✅ Convertir programId a número si viene
+    let parsedProgramId: number | null = null;
+    if (fields.programId !== undefined && fields.programId !== null) {
+      parsedProgramId = Number(fields.programId);
+      if (isNaN(parsedProgramId)) {
+        console.warn(`⚠️ programId inválido: ${fields.programId}`);
+        parsedProgramId = null;
+      } else {
+        console.log(`🎓 Matriculando en PROGRAMA: ${parsedProgramId}`);
+      }
+    }
 
     // Claves reservadas que NO se mandan tal cual a DB (las procesamos con lógica específica)
     const RESERVED_KEYS = new Set([
@@ -50,7 +80,14 @@ export async function PATCH(req: Request) {
     ]);
 
     for (const userId of userIds) {
-      console.log(`\n🔄 Procesando usuario: ${userId}`);
+      console.log('\n');
+      console.log(
+        '───────────────────────────────────────────────────────────────'
+      );
+      console.log(`🔄 PROCESANDO USUARIO #${userId}`);
+      console.log(
+        '───────────────────────────────────────────────────────────────'
+      );
 
       // Extraemos campos de Clerk / negocio
       const {
@@ -60,9 +97,17 @@ export async function PATCH(req: Request) {
         permissions,
         planType,
         subscriptionEndDate,
-        programId,
-        courseId,
+        enrollmentStatus,
       } = fields as Record<string, unknown>;
+
+      console.log('📋 Campos enviados:');
+      console.log(`  • enrollmentStatus: ${enrollmentStatus}`);
+      console.log(`  • status: ${status}`);
+      console.log(`  • name: ${name}`);
+      console.log(`  • role: ${role}`);
+      console.log(`  • planType: ${planType}`);
+      console.log(`  • courseId: ${parsedCourseId}`);
+      console.log(`  • programId: ${parsedProgramId}`);
 
       // Derivar firstName / lastName si viene name
       let firstName: string | undefined;
@@ -158,7 +203,13 @@ export async function PATCH(req: Request) {
       for (const [key, value] of Object.entries(
         fields as Record<string, unknown>
       )) {
-        if (RESERVED_KEYS.has(key)) continue; // programId, courseId, etc. ya tratados
+        if (RESERVED_KEYS.has(key)) continue; // programId, courseId, status, etc. ya tratados
+        // ✅ enrollmentStatus va DIRECTO a la BD (sin mapeo)
+        if (key === 'enrollmentStatus' && typeof value === 'string') {
+          userUpdateFields.enrollmentStatus = value;
+          console.log(`📝 Actualizando enrollmentStatus: ${value}`);
+          continue;
+        }
         if (key === 'subscriptionEndDate') {
           userUpdateFields.subscriptionEndDate =
             value != null
@@ -190,50 +241,83 @@ export async function PATCH(req: Request) {
       }
       console.log('🚀 SET (users):', userUpdateFields);
 
+      console.log('💾 Guardando en BD...');
       await db.update(users).set(userUpdateFields).where(eq(users.id, userId));
-      console.log(`✅ DB users actualizado para ${userId}`);
+      console.log(`✅ Usuario ${userId} actualizado en BD`);
+      console.log(
+        `   ├─ enrollmentStatus: ${userUpdateFields.enrollmentStatus ?? '(no cambiado)'}`
+      );
+      console.log(
+        `   ├─ subscriptionStatus: ${userUpdateFields.subscriptionStatus ?? '(no cambiado)'}`
+      );
+      console.log(
+        `   ├─ planType: ${userUpdateFields.planType ?? '(no cambiado)'}`
+      );
+      console.log(`   └─ nombre: ${userUpdateFields.name ?? '(no cambiado)'}`);
 
-      // === Matriculación opcional (se mantiene como estaba) ===
-      if (programId != null) {
+      // === Matriculación opcional ===
+      console.log('\n🎓 PROCESANDO MATRICULACIÓN:');
+
+      if (parsedProgramId !== null) {
+        console.log(`  ➕ Matriculando en PROGRAMA ${parsedProgramId}...`);
         await db.insert(enrollmentPrograms).values({
           userId,
-          programaId: programId as number,
+          programaId: parsedProgramId,
           enrolledAt: new Date(),
           completed: false,
         });
+        console.log(`  ✅ Usuario matriculado en programa ${parsedProgramId}`);
+      } else {
+        console.log(`  ⏭️  Sin programa para matricular`);
       }
 
-      if (courseId != null) {
+      if (parsedCourseId !== null) {
+        console.log(`  ➕ Matriculando en CURSO ${parsedCourseId}...`);
         const exists = await db
           .select()
           .from(enrollments)
           .where(
             and(
               eq(enrollments.userId, userId),
-              eq(enrollments.courseId, courseId as number)
+              eq(enrollments.courseId, parsedCourseId)
             )
           )
           .limit(1);
 
         if (exists.length === 0) {
-          console.log('➕ Inscribiendo en nuevo curso');
+          console.log(`    📝 Creando nueva inscripción en curso...`);
           await db.insert(enrollments).values({
             userId,
-            courseId: courseId as number,
+            courseId: parsedCourseId,
             enrolledAt: new Date(),
             completed: false,
           });
+          console.log(`    ✅ Usuario inscrito en curso ${parsedCourseId}`);
+        } else {
+          console.log(
+            `    ℹ️  Usuario ya estaba inscrito en curso ${parsedCourseId}`
+          );
         }
 
-        console.log('🔄 Sync Clerk metadata por inscripción en curso');
-        await client.users.updateUserMetadata(userId, {
-          publicMetadata: {
-            planType: 'Premium',
-            subscriptionStatus: 'active',
-            subscriptionEndDate: endDateIso,
-          },
-        });
+        // ✅ Solo actualizar Clerk si el usuario existe en Clerk
+        if (userExistsInClerk) {
+          console.log(`    🌐 Actualizando metadata en Clerk...`);
+          await client.users.updateUserMetadata(userId, {
+            publicMetadata: {
+              planType: 'Premium',
+              subscriptionStatus: 'active',
+              subscriptionEndDate: endDateIso,
+            },
+          });
+          console.log(`    ✅ Metadata actualizada en Clerk`);
+        } else {
+          console.log(
+            `    ⚠️  Usuario NO existe en Clerk (omitiendo actualización)`
+          );
+        }
 
+        // 🔹 Siempre actualizar DB (independiente de Clerk)
+        console.log(`    💾 Actualizando planType/subscriptionStatus en BD...`);
         await db
           .update(users)
           .set({
@@ -245,16 +329,40 @@ export async function PATCH(req: Request) {
                 : null,
           })
           .where(eq(users.id, userId));
+        console.log(`    ✅ Plan y estado actualizado en BD`);
+      } else {
+        console.log(`  ⏭️  Sin curso para matricular`);
       }
 
+      console.log('\n✅ USUARIO FINALIZADO');
       console.log(
-        `✅ Usuario ${userId} actualizado completamente (solo users.*)`
+        '═══════════════════════════════════════════════════════════════'
       );
     }
 
+    console.log('\n');
+    console.log(
+      '═══════════════════════════════════════════════════════════════'
+    );
+    console.log('🎉 ¡ACTUALIZACIÓN MASIVA COMPLETADA EXITOSAMENTE!');
+    console.log(`   Total usuarios actualizados: ${userIds.length}`);
+    console.log(
+      '═══════════════════════════════════════════════════════════════'
+    );
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error('❌ Error en updateMassive:', err);
+    console.error('\n');
+    console.error(
+      '═══════════════════════════════════════════════════════════════'
+    );
+    console.error('❌ ERROR EN ACTUALIZACIÓN MASIVA');
+    console.error(
+      '═══════════════════════════════════════════════════════════════'
+    );
+    console.error('Error:', err);
+    console.error(
+      '═══════════════════════════════════════════════════════════════'
+    );
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

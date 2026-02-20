@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 
 import CourseDetail from './CourseDetail';
 
@@ -13,7 +12,6 @@ export default async function Page({
   const resolvedParams = await params;
   return (
     <div className="min-h-screen bg-background pt-0">
-      <Header />
       <Suspense fallback={<div className="min-h-[800px]" />}>
         {' '}
         {/* Skeleton opcional */}

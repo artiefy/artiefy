@@ -1992,8 +1992,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       className="relative min-h-screen w-full overflow-hidden"
       style={{
         backgroundColor: 'rgb(1, 11, 23)',
-        backgroundImage:
-          'url("https://s3.us-east-2.amazonaws.com/artiefy-upload/uploads/imagen-de-whatsapp-2025-06-17-a-las-16-1753825003790-932d6a05-289c-4eac-b6b2-cd75d810328c.jpg")',
         backgroundSize: 'cover',
         backgroundPosition: 'center center',
       }}
