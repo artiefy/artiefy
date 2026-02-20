@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 
 export type TabType = 'transcription' | 'resources' | 'activities' | 'grades';
 
@@ -19,19 +19,16 @@ const LessonContentTabs = ({
   resourcesCount = 0,
   activitiesCount = 0,
 }: LessonContentTabsProps) => {
-  const navRef = useRef<HTMLElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
+  const navRef = useRef<HTMLDivElement>(null);
 
-  const scrollLeft = () => {
-    if (navRef.current) {
-      navRef.current.scrollBy({ left: -100, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (navRef.current) {
-      navRef.current.scrollBy({ left: 100, behavior: 'smooth' });
-    }
+  const scrollTabs = (direction: 'left' | 'right') => {
+    const container = navRef.current;
+    if (!container) return;
+    const amount = container.clientWidth * 0.65;
+    container.scrollBy({
+      left: direction === 'left' ? -amount : amount,
+      behavior: 'smooth',
+    });
   };
   const tabs: Array<{
     id: TabType;
@@ -141,16 +138,79 @@ const LessonContentTabs = ({
   ];
 
   return (
-    <div
-      className="relative"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <nav
-        ref={navRef}
-        className="flex items-center gap-2 overflow-x-auto px-10 lg:justify-start lg:px-0"
-        style={{ scrollbarWidth: 'none' }}
-      >
+    <div className="w-full">
+      {/* Mobile: menu con flechas */}
+      <div className="flex items-center gap-2 sm:hidden">
+        <button
+          type="button"
+          onClick={() => scrollTabs('left')}
+          className="inline-flex aspect-square h-9 w-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
+          aria-label="Anterior"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+        </button>
+        <div
+          ref={navRef}
+          className="relative flex w-full gap-2 overflow-x-auto px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ scrollSnapType: 'x mandatory' }}
+        >
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className={`flex shrink-0 items-center gap-2 rounded-full border px-[20px] py-[10px] text-sm font-semibold whitespace-nowrap transition-all ${
+                activeTab === tab.id
+                  ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
+                  : 'border-transparent bg-transparent text-white/80 hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50 hover:text-white'
+              }`}
+              style={{ scrollSnapAlign: 'start' }}
+            >
+              {tab.icon}
+              {tab.label}
+              {tab.count !== undefined && (
+                <span className="inline-flex aspect-square h-6 w-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={() => scrollTabs('right')}
+          className="inline-flex aspect-square h-9 w-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
+          aria-label="Siguiente"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Desktop */}
+      <nav className="hidden items-center gap-2 sm:flex">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -171,50 +231,6 @@ const LessonContentTabs = ({
           </button>
         ))}
       </nav>
-      {/* Left Arrow */}
-      <button
-        onClick={scrollLeft}
-        className={`absolute top-1/2 left-0 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-card lg:hidden ${
-          isHovered ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
-        }`}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="lucide lucide-chevron-left h-4 w-4"
-        >
-          <path d="m15 18-6-6 6-6" />
-        </svg>
-      </button>
-      {/* Right Arrow */}
-      <button
-        onClick={scrollRight}
-        className={`absolute top-1/2 right-0 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border/50 bg-background/90 text-foreground shadow-lg backdrop-blur-sm transition-all duration-200 hover:bg-card lg:hidden ${
-          isHovered ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
-        }`}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="lucide lucide-chevron-right h-4 w-4"
-        >
-          <path d="m9 18 6-6-6-6" />
-        </svg>
-      </button>
     </div>
   );
 };

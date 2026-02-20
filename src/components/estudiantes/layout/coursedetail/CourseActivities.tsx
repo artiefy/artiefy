@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   CheckCircle2,
@@ -12,13 +12,19 @@ import {
 } from 'lucide-react';
 
 import { cn } from '~/lib/utils';
+import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
+import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { sortLessons } from '~/utils/lessonSorting';
+
+import { LessonActivityModal } from '../lessondetail/LessonActivityModal';
 
 import type { Activity, Lesson } from '~/types';
 
 interface CourseActivitiesProps {
   lessons?: Lesson[];
   isEnrolled: boolean;
+  courseId: number;
+  userId?: string | null;
 }
 
 interface ActivityTypeMeta {
@@ -145,8 +151,10 @@ const formatDeadline = (
 export function CourseActivities({
   lessons = [],
   isEnrolled,
+  courseId,
+  userId,
 }: CourseActivitiesProps) {
-  const lessonsWithActivities = useMemo(() => {
+  const initialLessonsWithActivities = useMemo(() => {
     const sortedLessons = sortLessons(Array.isArray(lessons) ? lessons : []);
     return sortedLessons.filter(
       (lesson) =>
@@ -154,13 +162,29 @@ export function CourseActivities({
     );
   }, [lessons]);
 
+  const [lessonsState, setLessonsState] = useState<Lesson[]>(
+    initialLessonsWithActivities
+  );
+  const [lessonActivitiesCache, setLessonActivitiesCache] = useState<
+    Record<number, Activity[]>
+  >({});
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(
+    null
+  );
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    setLessonsState(initialLessonsWithActivities);
+  }, [initialLessonsWithActivities]);
+
   const stats = useMemo(() => {
-    const total = lessonsWithActivities.reduce(
+    const total = lessonsState.reduce(
       (acc, lesson) => acc + (lesson.activities?.length ?? 0),
       0
     );
 
-    const completed = lessonsWithActivities.reduce((acc, lesson) => {
+    const completed = lessonsState.reduce((acc, lesson) => {
       const completedPerLesson =
         lesson.activities?.filter(
           (activity) =>
@@ -172,9 +196,49 @@ export function CourseActivities({
     const pending = Math.max(total - completed, 0);
 
     return { total, completed, pending };
-  }, [lessonsWithActivities]);
+  }, [lessonsState]);
 
-  if (!lessonsWithActivities.length) {
+  const sortedLessonsState = useMemo(
+    () => sortLessons(lessonsState),
+    [lessonsState]
+  );
+  const lastLessonId = sortedLessonsState.at(-1)?.id;
+
+  const openActivityModal = async (activity: Activity, lesson: Lesson) => {
+    if (!userId) return;
+
+    setSelectedLesson(lesson);
+    setSelectedActivity({
+      ...activity,
+      content: activity.content ?? { questions: [] },
+    });
+    setIsModalOpen(true);
+
+    try {
+      const cached = lessonActivitiesCache[lesson.id];
+      const activitiesWithContent =
+        cached ?? (await getActivityContent(lesson.id, userId));
+
+      if (!cached) {
+        setLessonActivitiesCache((prev) => ({
+          ...prev,
+          [lesson.id]: activitiesWithContent,
+        }));
+      }
+
+      const fullActivity = activitiesWithContent.find(
+        (item) => item.id === activity.id
+      );
+
+      if (fullActivity) {
+        setSelectedActivity(fullActivity);
+      }
+    } catch (error) {
+      console.error('Error cargando contenido de la actividad:', error);
+    }
+  };
+
+  if (!lessonsState.length) {
     return (
       <div
         className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
@@ -231,7 +295,7 @@ export function CourseActivities({
       </div>
 
       <div className="space-y-6">
-        {lessonsWithActivities.map((lesson, lessonIndex) => {
+        {lessonsState.map((lesson, lessonIndex) => {
           const isLessonLocked = !isEnrolled;
           const totalActivities = lesson.activities?.length ?? 0;
           const completedActivities =
@@ -270,6 +334,7 @@ export function CourseActivities({
                     activity.fechaMaximaEntrega ?? null
                   );
                   const Icon = activityType.icon;
+                  const isLocked = statusBadge.state === 'locked';
 
                   return (
                     <div
@@ -282,6 +347,10 @@ export function CourseActivities({
                         backgroundColor: '#061c3799',
                         borderColor: 'hsla(217, 33%, 17%, 0.5)',
                         borderRadius: '12px',
+                      }}
+                      onClick={() => {
+                        if (isLocked || !userId) return;
+                        void openActivityModal(activity, lesson);
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = '#082345';
@@ -344,6 +413,93 @@ export function CourseActivities({
           );
         })}
       </div>
+
+      {selectedActivity && selectedLesson && userId && (
+        <LessonActivityModal
+          isOpen={isModalOpen}
+          onCloseAction={() => setIsModalOpen(false)}
+          activity={selectedActivity}
+          userId={userId}
+          onQuestionsAnsweredAction={() => {
+            setLessonsState((prev) =>
+              prev.map((lesson) =>
+                lesson.id === selectedLesson.id
+                  ? {
+                      ...lesson,
+                      activities: lesson.activities?.map((act) =>
+                        act.id === selectedActivity.id
+                          ? {
+                              ...act,
+                              isCompleted: true,
+                              userProgress: 100,
+                            }
+                          : act
+                      ),
+                    }
+                  : lesson
+              )
+            );
+          }}
+          markActivityAsCompletedAction={async () => {
+            setLessonsState((prev) =>
+              prev.map((lesson) =>
+                lesson.id === selectedLesson.id
+                  ? {
+                      ...lesson,
+                      activities: lesson.activities?.map((act) =>
+                        act.id === selectedActivity.id
+                          ? {
+                              ...act,
+                              isCompleted: true,
+                              userProgress: 100,
+                            }
+                          : act
+                      ),
+                    }
+                  : lesson
+              )
+            );
+          }}
+          onActivityCompletedAction={async () => {
+            if (!selectedActivity) return;
+            await completeActivity(selectedActivity.id, userId);
+            setLessonsState((prev) =>
+              prev.map((lesson) =>
+                lesson.id === selectedLesson.id
+                  ? {
+                      ...lesson,
+                      activities: lesson.activities?.map((act) =>
+                        act.id === selectedActivity.id
+                          ? {
+                              ...act,
+                              isCompleted: true,
+                              userProgress: 100,
+                            }
+                          : act
+                      ),
+                    }
+                  : lesson
+              )
+            );
+          }}
+          savedResults={null}
+          onLessonUnlockedAction={() => {}}
+          isLastLesson={lastLessonId === selectedLesson.id}
+          courseId={courseId}
+          isLastActivity={
+            lastLessonId === selectedLesson.id &&
+            selectedLesson.activities?.at(-1)?.id === selectedActivity.id
+          }
+          onViewHistoryAction={() => {}}
+          onActivityCompleteAction={async () => {
+            if (!selectedActivity) return;
+            await completeActivity(selectedActivity.id, userId);
+          }}
+          isLastActivityInLesson={
+            selectedLesson.activities?.at(-1)?.id === selectedActivity.id
+          }
+        />
+      )}
     </div>
   );
 }

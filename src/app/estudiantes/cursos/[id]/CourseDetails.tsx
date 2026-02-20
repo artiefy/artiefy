@@ -1934,6 +1934,8 @@ export default function CourseDetails({
                           <CourseActivities
                             lessons={lessonsWithActivities}
                             isEnrolled={isEnrolled}
+                            courseId={course.id}
+                            userId={userId}
                           />
                         ) : (
                           renderAccessGuard('actividades')

@@ -8,7 +8,8 @@ import {
   FolderIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/solid';
-import { FaCrown, FaRegCalendarAlt } from 'react-icons/fa';
+import { FaCrown, FaRegCalendarAlt, FaStar } from 'react-icons/fa';
+import { IoGiftOutline } from 'react-icons/io5';
 
 export function UserButtonWrapper() {
   const { user } = useUser();
@@ -22,7 +23,11 @@ export function UserButtonWrapper() {
 
   // Detectar si la suscripción está vencida o inactiva
   let isExpired = false;
-  if (planType === 'Premium' || planType === 'Pro') {
+  if (
+    planType === 'Premium' ||
+    planType === 'Pro' ||
+    planType === 'Enterprise'
+  ) {
     if (subscriptionStatus !== 'active') {
       isExpired = true;
     }
@@ -33,79 +38,74 @@ export function UserButtonWrapper() {
   }
 
   // Badge visual para planType
+  const getPlanBadgeConfig = (type?: string) => {
+    if (!type) return null;
+    const normalized = type.toLowerCase();
+    if (normalized === 'premium') {
+      return {
+        label: 'Premium',
+        icon: FaCrown,
+        classes: 'border-amber-500/30 bg-amber-500/20 text-amber-400',
+      };
+    }
+    if (normalized === 'pro') {
+      return {
+        label: 'Pro',
+        icon: FaStar,
+        classes: 'border-blue-500/30 bg-blue-500/20 text-blue-400',
+      };
+    }
+    if (normalized === 'enterprise') {
+      return {
+        label: 'Enterprise',
+        icon: FaCrown,
+        classes: 'border-indigo-500/30 bg-indigo-500/20 text-indigo-300',
+      };
+    }
+    if (
+      normalized === 'gratuito' ||
+      normalized === 'free' ||
+      normalized === 'none'
+    ) {
+      return {
+        label: 'Gratuito',
+        icon: IoGiftOutline,
+        classes: 'border-emerald-500/30 bg-emerald-500/20 text-emerald-400',
+      };
+    }
+    return {
+      label: type,
+      icon: null,
+      classes: 'border-slate-500/30 bg-slate-500/20 text-slate-200',
+    };
+  };
+
   const renderPlanBadge = () => {
     if (isMobile) return null;
-    if (planType === 'Premium') {
-      return (
-        <span
-          className={`ml-2 inline-flex cursor-pointer items-center rounded px-2 py-0.5 text-xs font-bold text-white ${
-            isExpired ? 'bg-gray-500' : 'bg-purple-500'
-          }`}
-          onClick={
-            isExpired ? () => window.open('/planes', '_blank') : undefined
-          }
-          title={
-            isExpired
-              ? 'Suscripción vencida. Haz click para renovar.'
-              : 'Premium activo'
-          }
-        >
-          <FaCrown className="mr-1 text-yellow-300" />
-          <span
-            className={
-              isExpired ? 'relative hidden md:inline' : 'hidden md:inline'
-            }
-            style={
-              isExpired
-                ? {
-                    textDecoration: 'line-through',
-                    textDecorationColor: '#000',
-                    textDecorationThickness: '2.5px',
-                  }
-                : undefined
-            }
-          >
-            PREMIUM
-          </span>
-        </span>
-      );
-    }
-    if (planType === 'Pro') {
-      return (
-        <span
-          className={`ml-2 inline-flex cursor-pointer items-center rounded px-2 py-0.5 text-xs font-bold text-white ${
-            isExpired ? 'bg-gray-500' : 'bg-orange-500'
-          }`}
-          onClick={
-            isExpired ? () => window.open('/planes', '_blank') : undefined
-          }
-          title={
-            isExpired
-              ? 'Suscripción vencida. Haz click para renovar.'
-              : 'Pro activo'
-          }
-        >
-          <FaCrown className="mr-1 text-yellow-300" />
-          <span
-            className={
-              isExpired ? 'relative hidden md:inline' : 'hidden md:inline'
-            }
-            style={
-              isExpired
-                ? {
-                    textDecoration: 'line-through',
-                    textDecorationColor: '#000',
-                    textDecorationThickness: '2.5px',
-                  }
-                : undefined
-            }
-          >
-            PRO
-          </span>
-        </span>
-      );
-    }
-    return null;
+    if (!planType) return null;
+    const config = getPlanBadgeConfig(planType);
+    if (!config) return null;
+    const Icon = config.icon;
+    const baseClasses =
+      'ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium';
+    const stateClasses = isExpired
+      ? 'border-gray-500/30 bg-gray-500/20 text-gray-300'
+      : config.classes;
+    const clickableClasses = isExpired ? 'cursor-pointer' : 'cursor-default';
+    return (
+      <span
+        className={`${baseClasses} ${stateClasses} ${clickableClasses}`}
+        onClick={isExpired ? () => window.open('/planes', '_blank') : undefined}
+        title={
+          isExpired
+            ? 'Suscripción vencida. Haz click para renovar.'
+            : `Plan ${config.label}`
+        }
+      >
+        {Icon ? <Icon className="h-3 w-3" /> : null}
+        {config.label}
+      </span>
+    );
   };
 
   // Estado para los detalles de suscripción y si la página está abierta

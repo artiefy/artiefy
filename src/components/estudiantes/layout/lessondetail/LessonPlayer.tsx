@@ -22,6 +22,9 @@ export default function LessonPlayer({
   onTimeUpdate,
 }: LessonPlayerProps) {
   const isLocked = false;
+  const hasVideo = Boolean(
+    lesson.coverVideoKey && lesson.coverVideoKey !== 'none'
+  );
   const playerRef = useRef<VideoPlayerHandle | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
@@ -37,57 +40,59 @@ export default function LessonPlayer({
         <div className="px-4 pt-12 lg:px-8">
           <div className="mx-auto max-w-6xl">
             {/* Video Player con overlay */}
-            <div className="group relative aspect-video w-full overflow-hidden rounded-3xl bg-black shadow-2xl">
-              <VideoPlayer
-                videoKey={lesson.coverVideoKey}
-                onVideoEnd={handleVideoEndWrapper}
-                onProgressUpdate={handleProgressUpdate}
-                onTimeUpdate={onTimeUpdate}
-                isVideoCompleted={progress === 100}
-                isLocked={isLocked}
-                resumeProgress={progress}
-                resumeTimeSeconds={
-                  progress === 100 ? 0 : (lesson.lastPositionSeconds ?? 0)
-                }
-                onPlaybackChange={setIsPlaying}
-                ref={playerRef}
-              />
+            {hasVideo && (
+              <div className="group relative aspect-video w-full overflow-hidden rounded-3xl bg-black shadow-2xl">
+                <VideoPlayer
+                  videoKey={lesson.coverVideoKey}
+                  onVideoEnd={handleVideoEndWrapper}
+                  onProgressUpdate={handleProgressUpdate}
+                  onTimeUpdate={onTimeUpdate}
+                  isVideoCompleted={progress === 100}
+                  isLocked={isLocked}
+                  resumeProgress={progress}
+                  resumeTimeSeconds={
+                    progress === 100 ? 0 : (lesson.lastPositionSeconds ?? 0)
+                  }
+                  onPlaybackChange={setIsPlaying}
+                  ref={playerRef}
+                />
 
-              {/* Overlay gradients */}
-              <div className="pointer-events-none absolute inset-0 opacity-100 transition-opacity duration-500">
-                <div className="absolute top-0 right-0 left-0 h-32 bg-gradient-to-b from-black/60 to-transparent" />
-                <div className="absolute right-0 bottom-0 left-0 h-48 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-              </div>
+                {/* Overlay gradients */}
+                <div className="pointer-events-none absolute inset-0 opacity-100 transition-opacity duration-500">
+                  <div className="absolute top-0 right-0 left-0 h-32 bg-gradient-to-b from-black/60 to-transparent" />
+                  <div className="absolute right-0 bottom-0 left-0 h-48 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                </div>
 
-              {/* Botón play central */}
-              <div
-                className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
-                  isPlaying ? 'pointer-events-none opacity-0' : 'opacity-100'
-                }`}
-              >
-                <button
-                  type="button"
-                  onClick={() => playerRef.current?.play()}
-                  className="group/play flex h-20 w-20 items-center justify-center rounded-full bg-[#22c4d3e6] shadow-2xl transition-all hover:scale-110 hover:bg-[#22c4d3e6]/90 md:h-24 md:w-24"
-                  aria-label="Reproducir video"
+                {/* Botón play central */}
+                <div
+                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${
+                    isPlaying ? 'pointer-events-none opacity-0' : 'opacity-100'
+                  }`}
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="ml-1 h-8 w-8 text-accent-foreground transition-transform group-hover/play:scale-110 md:h-10 md:w-10"
+                  <button
+                    type="button"
+                    onClick={() => playerRef.current?.play()}
+                    className="group/play flex h-20 w-20 items-center justify-center rounded-full bg-[#22c4d3e6] shadow-2xl transition-all hover:scale-110 hover:bg-[#22c4d3e6]/90 md:h-24 md:w-24"
+                    aria-label="Reproducir video"
                   >
-                    <polygon points="6 3 20 12 6 21 6 3" />
-                  </svg>
-                </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="ml-1 h-8 w-8 text-accent-foreground transition-transform group-hover/play:scale-110 md:h-10 md:w-10"
+                    >
+                      <polygon points="6 3 20 12 6 21 6 3" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Header info debajo del video */}
             <div className="mt-4 mb-4 pl-0">
