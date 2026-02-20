@@ -2,10 +2,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { Redis } from '@upstash/redis';
 import axios, { isAxiosError } from 'axios';
+import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { lessons } from '~/server/db/schema';
-import { eq } from 'drizzle-orm';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,

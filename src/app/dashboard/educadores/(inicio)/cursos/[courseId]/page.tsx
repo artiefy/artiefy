@@ -1,14 +1,27 @@
+import { Suspense } from 'react';
+
+import Footer from '~/components/estudiantes/layout/Footer';
+import { Header } from '~/components/estudiantes/layout/Header';
+
 import CourseDetail from './CourseDetail';
 
-export default function CourseDetailPage({
+export default async function Page({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ courseId: number }>;
 }) {
-  // Renderiza el detallado del curso y se le pasa el id de este
+  const resolvedParams = await params;
   return (
-    <>
-      <CourseDetail courseId={parseInt(params.id)} />
-    </>
+    <div className="min-h-screen bg-background pt-0">
+      <Header />
+      <Suspense fallback={<div className="min-h-[800px]" />}>
+        {' '}
+        {/* Skeleton opcional */}
+        <section className="mx-auto max-w-7xl px-4 py-2 md:px-6 md:py-8 lg:px-8">
+          <CourseDetail courseId={resolvedParams.courseId} />
+        </section>
+      </Suspense>
+      <Footer />
+    </div>
   );
 }
