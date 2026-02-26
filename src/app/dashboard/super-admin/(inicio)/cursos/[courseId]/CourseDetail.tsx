@@ -56,6 +56,8 @@ import {
   BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
 
+import '~/styles/course-detail-system.css';
+
 // Definir la interfaz del curso
 interface Course {
   id: number;
@@ -803,12 +805,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
           const meetingId =
             getStr(r, 'meeting_id') ?? getStr(r, 'meetingId') ?? '';
+          const meetingIdAsNum = parseInt(meetingId, 10);
+          const numericId =
+            !isNaN(meetingIdAsNum) && meetingIdAsNum > 0 ? meetingIdAsNum : 0;
 
           return {
-            ...(r as Partial<ScheduledMeeting>), // conserva campos extra si existen
-            id: Number(r.id) || 0,
-            meetingId,
-            joinUrl: getStr(r, 'join_url') ?? getStr(r, 'joinUrl'),
+            id: numericId,
+            meetingId: meetingId,
             recordingContentUrl: getStr(r, 'recordingContentUrl'),
             video_key: getStr(r, 'video_key') ?? getStr(r, 'videoKey'),
             video_key_2: getStr(r, 'video_key_2') ?? getStr(r, 'videoKey2'),
@@ -1696,7 +1699,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     };
 
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-6">
         {/* Mostrar educador actual cuando no hay búsqueda abierta */}
         {!isOpen && (
           <div className="rounded border border-cyan-500/25 bg-cyan-500/5 px-2 py-1.5 sm:px-3 sm:py-2">
@@ -2063,38 +2066,54 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Renderizar el componente
   return (
-    <div className="h-auto w-full p-4">
-      {/* Tarjeta Mini Sticky - Aparece al hacer scroll */}
+    <div
+      className="relative min-h-screen w-full overflow-hidden px-1 py-2 md:px-3 md:py-4"
+      style={{
+        backgroundColor: 'rgb(1, 11, 23)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center center',
+      }}
+    >
+      {/* Overlay oscuro para mejorar legibilidad */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/70 via-[#010b17]/60 to-black/70" />
+
+      {/* Fondo decorativo con patrón */}
+      <div className="pointer-events-none absolute inset-0 opacity-20">
+        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-green-500 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-purple-500 blur-3xl" />
+      </div>
+
+      {/* Tarjeta Mini Sticky - Premium Glass */}
       {showStickyCard && course && (
-        <div className="animate-in fade-in slide-in-from-top-4 fixed top-4 right-4 left-4 z-50 mx-auto flex max-w-2xl items-center justify-between gap-4 rounded-xl border border-cyan-500/40 bg-slate-950 p-4 shadow-2xl shadow-cyan-500/20 backdrop-blur-sm duration-500 md:right-8 md:left-8">
+        <div className="surface-glass animate-slideInDown fixed inset-x-0 top-4 z-[9999] flex max-w-full items-center justify-between gap-4 px-2 py-3 shadow-lg md:top-6 md:px-4 md:py-3">
           {/* Mini Imagen y Info */}
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            {/* Mini Imagen */}
-            <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg">
+            {/* Mini Imagen - Premium */}
+            <div className="card-premium relative h-20 w-20 flex-shrink-0">
               <Image
                 src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
                 alt={course.title}
-                width={64}
-                height={64}
+                width={80}
+                height={80}
                 className="h-full w-full object-cover"
-                quality={60}
+                quality={75}
               />
             </div>
 
             {/* Información compacta */}
             <div className="min-w-0 flex-1">
-              <h3 className="truncate text-sm font-bold text-white">
+              <h3 className="line-clamp-1 text-sm font-semibold text-white md:text-base">
                 {course.title}
               </h3>
-              <p className="truncate text-xs font-semibold text-cyan-400">
+              <p className="line-clamp-1 text-xs font-medium text-green-400 md:text-sm">
                 {course.categoryName ?? 'Curso'} • {course.nivelName ?? 'Nivel'}
               </p>
-              <div className="mt-1 flex gap-2">
-                <Badge className="border-cyan-500/50 bg-cyan-500/30 text-xs text-cyan-300">
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Badge className="badge-new text-xs">
                   {course.modalidadesName ?? 'Modalidad'}
                 </Badge>
                 {course.instructorName && (
-                  <Badge className="border-purple-500/50 bg-purple-500/30 text-xs text-purple-300">
+                  <Badge className="badge-active text-xs">
                     👨‍🏫 {course.instructorName}
                   </Badge>
                 )}
@@ -2102,19 +2121,29 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
           </div>
 
-          {/* Botón Volver arriba */}
-          <Button
-            onClick={() => {
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            className="flex-shrink-0 bg-cyan-500 px-4 py-2 text-xs font-semibold text-slate-950 transition-all hover:bg-cyan-600"
-          >
-            ↑ Arriba
-          </Button>
+          {/* Botones de acción */}
+          <div className="flex flex-shrink-0 gap-2">
+            <Button
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="btn-primary hidden px-4 py-2 sm:flex"
+            >
+              ↑ Arriba
+            </Button>
+            <Button
+              onClick={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className="btn-primary px-3 py-2 sm:hidden"
+            >
+              ↑
+            </Button>
+          </div>
         </div>
       )}
 
-      <Breadcrumb className="animate-in fade-in slide-in-from-top-4 mb-8 duration-500">
+      <Breadcrumb className="animate-slideInDown relative z-10 mb-8">
         <BreadcrumbList className="flex flex-wrap gap-2">
           <BreadcrumbItem>
             <BreadcrumbLink
@@ -2139,7 +2168,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="group relative h-auto w-full">
+      <div className="relative w-full">
         <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-cyan-300 to-teal-400 opacity-0 blur-3xl transition-all duration-700 group-hover:opacity-100" />
         <Card className="zoom-in sticky top-0 z-30 mt-3 h-auto overflow-hidden border-2 border-cyan-500/30 bg-slate-950 p-4 shadow-2xl transition-all duration-500 ease-out hover:border-cyan-500/60 hover:shadow-cyan-500/30 sm:p-8">
           <CardHeader className="grid w-full grid-cols-1 gap-6 border-b border-cyan-500/20 p-0 pb-8 md:grid-cols-2 md:gap-12">
@@ -2173,33 +2202,37 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
           </CardHeader>
           <div className="mt-8 grid gap-8 md:grid-cols-2">
-            {/* Left Column - Image */}
-            <div className="animate-in fade-in slide-in-from-left-8 flex w-full flex-col space-y-5 duration-700">
-              <div className="relative aspect-video w-full overflow-hidden rounded-2xl">
+            {/* Left Column - Cover Image */}
+            <div className="animate-slideInLeft order-2 flex w-full flex-col space-y-6 md:order-1">
+              {/* Image Container - Premium Glass */}
+              <div className="card-premium group relative aspect-video w-full overflow-hidden">
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-40 transition-opacity duration-300 group-hover:opacity-20" />
                 <Image
                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
                   alt={course.title}
-                  width={300}
-                  height={100}
-                  className="mx-auto h-full w-full rounded-2xl object-contain"
+                  width={400}
+                  height={225}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   priority
-                  quality={75}
+                  quality={85}
                 />
               </div>
-              <div className="grid w-full grid-cols-2 gap-2 md:grid-cols-5 md:gap-3">
+
+              {/* Action Buttons Grid */}
+              <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 md:gap-3 lg:gap-4">
                 <Button
                   onClick={handleEnrollAndRedirect}
-                  className="w-full bg-cyan-500 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-cyan-600 md:px-4 md:py-3 md:text-sm"
+                  className="btn-primary w-full"
                 >
                   Ver
                 </Button>
                 <Button
                   onClick={() => setIsSearchModalOpen(true)}
-                  className="flex w-full items-center justify-center gap-1 bg-purple-600 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-purple-700 md:px-4 md:py-3 md:text-sm"
+                  className="btn-secondary flex w-full items-center justify-center gap-1"
                   title="Buscar información del curso con IA"
                 >
                   <Brain className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Preguntar</span>
+                  <span className="hidden sm:inline">IA</span>
                 </Button>
                 <Button
                   onClick={handleGenerateEmbeddings}
@@ -2477,12 +2510,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         <LoadingCourses />
       ) : (
         courseIdNumber !== null && (
-          <div className="mt-16 space-y-8">
+          <div className="-mx-1 mt-16 space-y-8 px-1 md:-mx-3 md:px-3">
             {/* TABS MENU HORIZONTAL */}
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
               {/* Tabs Navigation */}
-              <div className="mb-8 border-b border-cyan-500/20">
-                <div className="flex gap-8 overflow-x-auto pb-4">
+              <div className="-mx-1 mb-8 border-b border-cyan-500/20 px-1 md:-mx-3 md:px-3">
+                <div className="flex gap-4 overflow-x-auto pb-4 md:gap-6 lg:gap-8">
                   <button
                     onClick={() => setActiveTab('lecciones')}
                     className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
@@ -2596,7 +2629,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
 
               {/* TAB CONTENT */}
-              <div className="space-y-6">
+              <div className="-mx-1 space-y-6 px-1 md:-mx-3 md:px-3">
                 {/* Curso Tab - Solo Clase en Vivo */}
                 {activeTab === 'curso' && (
                   <div className="animate-in fade-in space-y-8 duration-500">
@@ -2679,7 +2712,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Lista de Clases Tab */}
                 {activeTab === 'lecciones' && (
-                  <div className="animate-in fade-in duration-500">
+                  <div className="animate-in fade-in -mx-1 px-1 duration-500 md:-mx-3 md:px-3">
                     <LessonsListEducator
                       courseId={courseIdNumber}
                       selectedColor={selectedColor}
@@ -2688,7 +2721,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Clases en Vivo Tab */}
                 {activeTab === 'en-vivo' && (
-                  <div className="animate-in fade-in space-y-8 duration-500">
+                  <div className="animate-in fade-in -mx-1 space-y-8 px-1 duration-500 md:-mx-3 md:px-3">
                     {/* Sobre el educador */}
                     {course.instructorProfileImageKey && (
                       <div className="group relative overflow-hidden rounded-2xl border-2 border-cyan-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-8 shadow-xl transition-all duration-300 hover:border-cyan-500/60 hover:shadow-2xl hover:shadow-cyan-500/20">
@@ -2768,7 +2801,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Estudiantes Tab */}
                 {activeTab === 'estudiantes' && (
-                  <div className="animate-in fade-in duration-500">
+                  <div className="animate-in fade-in -mx-1 px-1 duration-500 md:-mx-3 md:px-3">
                     <DashboardEstudiantes
                       courseId={courseIdNumber}
                       selectedColor={selectedColor}
@@ -2777,7 +2810,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Clases Grabadas Tab */}
                 {activeTab === 'grabadas' && (
-                  <div className="animate-in fade-in duration-500">
+                  <div className="animate-in fade-in -mx-1 px-1 duration-500 md:-mx-3 md:px-3">
                     <h2 className="mb-6 text-2xl font-bold text-white">
                       Clases Grabadas ({meetingsForList.length})
                     </h2>

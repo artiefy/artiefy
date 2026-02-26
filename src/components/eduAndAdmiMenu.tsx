@@ -268,9 +268,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     sizes="32px"
                   />
                 </div>
-                <span className="self-center text-lg font-semibold tracking-tight sm:text-xl">
-                  Artiefy
-                </span>
               </div>
             </div>
             <div className="flex items-center gap-3">

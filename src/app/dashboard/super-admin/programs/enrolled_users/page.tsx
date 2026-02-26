@@ -1995,7 +1995,6 @@ export default function EnrolledUsersPage() {
     [columnsWithOptions, dynamicColumns]
   );
   const [successMessage, setSuccessMessage] = useState('');
-  void successMessage;
   const [searchFieldTerm, setSearchFieldTerm] = useState('');
   const filteredColumns = totalColumns.filter((col) =>
     col.label.toLowerCase().includes(searchFieldTerm.toLowerCase())
@@ -3224,29 +3223,24 @@ export default function EnrolledUsersPage() {
       }
     }
 
-    try {
-      const res = await fetch('/api/super-admin/udateUser/updateMassive', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const res = await fetch('/api/super-admin/udateUser/updateMassive', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-      if (!res.ok) {
-        const data: unknown = await res.json();
-        const errorData = errorResponseSchema.parse(data);
-        alert(`❌ Error masivo: ${errorData.error}`);
-      } else {
-        await fetchData();
-        setShowMassiveEditModal(false);
-        setSuccessMessage(
-          `✅ Cambios aplicados a ${selectedStudents.length} usuarios`
-        );
-        setTimeout(() => setSuccessMessage(''), 3000);
-      }
-    } catch (err) {
-      console.error('❌ Error inesperado:', err);
-      alert('❌ Error inesperado al actualizar masivamente');
+    if (!res.ok) {
+      const data: unknown = await res.json();
+      const errorData = errorResponseSchema.parse(data);
+      throw new Error(errorData.error);
     }
+
+    // ✅ Recarga datos FRESCOS desde el servidor después del éxito
+    // Esto trae el courseTitle actualizado del backend
+    await fetchData();
+
+    // 🎉 Retorna el número de usuarios actualizados para mostrar en el mensaje
+    return selectedStudents.length;
   };
 
   const headerRef = useRef<HTMLDivElement>(null);
@@ -3274,6 +3268,13 @@ export default function EnrolledUsersPage() {
         message={infoDialogMessage}
         onClose={() => setInfoDialogOpen(false)}
       />
+
+      {/* ✅ Toast de mensaje de éxito */}
+      {successMessage && (
+        <div className="animate-in fade-in fixed right-6 bottom-6 z-50 rounded-lg bg-green-600 px-6 py-3 text-white shadow-lg">
+          {successMessage}
+        </div>
+      )}
 
       <div className="min-h-screen space-y-8 bg-gray-900 p-6 text-white print:hidden">
         <div
@@ -3815,8 +3816,8 @@ export default function EnrolledUsersPage() {
                               className="px-4 py-2 align-top whitespace-nowrap"
                             >
                               <select
-                                defaultValue={raw}
-                                onBlur={(e) =>
+                                value={raw}
+                                onChange={(e) =>
                                   updateStudentField(
                                     student.id,
                                     col.id,
@@ -3825,6 +3826,7 @@ export default function EnrolledUsersPage() {
                                 }
                                 className="min-w-[120px] rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
                               >
+                                <option value="">-- Seleccionar --</option>
                                 {col.options?.map((opt) => (
                                   <option key={opt} value={opt}>
                                     {opt}
@@ -3934,8 +3936,8 @@ export default function EnrolledUsersPage() {
                               className="px-4 py-2 align-top whitespace-nowrap"
                             >
                               <select
-                                defaultValue={raw}
-                                onBlur={(e) =>
+                                value={raw}
+                                onChange={(e) =>
                                   updateStudentField(
                                     student.id,
                                     col.id,
@@ -3944,6 +3946,7 @@ export default function EnrolledUsersPage() {
                                 }
                                 className="min-w-[120px] rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
                               >
+                                <option value="">-- Seleccionar --</option>
                                 {col.options?.map((opt) => (
                                   <option key={opt} value={opt}>
                                     {opt}
@@ -3972,8 +3975,8 @@ export default function EnrolledUsersPage() {
                           >
                             {col.type === 'select' && col.options ? (
                               <select
-                                defaultValue={raw}
-                                onBlur={(e) =>
+                                value={raw}
+                                onChange={(e) =>
                                   updateStudentField(
                                     student.id,
                                     col.id,
@@ -3982,6 +3985,7 @@ export default function EnrolledUsersPage() {
                                 }
                                 className="w-full rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
                               >
+                                <option value="">-- Seleccionar --</option>
                                 {col.options.map((opt) => (
                                   <option key={opt} value={opt}>
                                     {opt}
@@ -4827,16 +4831,20 @@ export default function EnrolledUsersPage() {
                 <button
                   onClick={() => {
                     updateStudentsMassiveField(massiveEditFields)
-                      .then(() => {
+                      .then((count) => {
                         setShowMassiveEditModal(false);
+                        setMassiveEditFields({});
+                        setSelectedMassiveFields([]);
                         setSuccessMessage(
-                          `✅ Cambios aplicados a ${selectedStudents.length} usuarios`
+                          `✅ Cambios aplicados a ${count} usuarios`
                         );
                         setTimeout(() => setSuccessMessage(''), 3000);
                       })
                       .catch((err) => {
                         console.error('❌ Error masivo:', err);
-                        alert('❌ Ocurrió un error al actualizar masivamente');
+                        alert(
+                          `❌ ${err instanceof Error ? err.message : 'Error al actualizar masivamente'}`
+                        );
                       });
                   }}
                   className="hover:bg-primary-700 focus:ring-primary-400 w-full rounded bg-primary px-4 py-2 font-semibold text-white transition focus:ring-2 focus:outline-none sm:w-auto"
