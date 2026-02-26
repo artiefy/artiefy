@@ -43,7 +43,9 @@ export async function createNotification({
       : [];
     const cleanedMetadata =
       cleanedEntries.length > 0
-        ? (Object.fromEntries(cleanedEntries) as ParticipationNotificationMetadata)
+        ? (Object.fromEntries(
+            cleanedEntries
+          ) as ParticipationNotificationMetadata)
         : undefined;
 
     let whereClause = and(

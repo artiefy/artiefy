@@ -2,17 +2,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 
-/**
- * Loading screen con ilusión de movimiento:
- * - Cohete/ícono centrado (semi-estático con leve "float").
- * - Estrellas se desplazan (starfield) para simular navegación espacial.
- *
- * Ajustes recientes:
- * - Eliminado next/image (se usa <img> defensivo).
- * - Eliminadas "bandas diagonales" (streaks tiled).
- * - Nuevo ícono de cohete tipo "paper plane" (como tu ejemplo) pero NO pixelado.
- */
-
 // --- INTERFAZ PARA LAS ESTRELLAS ---
 interface Star {
   id: number;
@@ -395,7 +384,7 @@ export default function Loading() {
       <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
         <div className="rocketWrap mt-40 -mb-15">
           {/* Apunta a la esquina superior derecha */}
-          <ArtiefyRocketIcon className="h-28 w-28" />
+          <ArtiefyRocketIcon className="size-28" />
         </div>
 
         <div className="mt-48 flex items-center gap-3 font-mono text-lg tracking-widest text-white/90 uppercase">

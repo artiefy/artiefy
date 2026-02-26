@@ -244,8 +244,8 @@ export function CourseActivities({
         className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
         style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
       >
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
-          <CircleHelp className="h-8 w-8 text-black" />
+        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50">
+          <CircleHelp className="size-8 text-black" />
         </div>
         <h3 className="mb-2 text-lg font-semibold text-slate-100">
           No hay actividades disponibles
@@ -270,21 +270,21 @@ export function CourseActivities({
         <div className="my-6 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-purple-400/10 p-1.5 text-purple-400">
-              <CircleHelp className="h-3.5 w-3.5" />
+              <CircleHelp className="size-3.5" />
             </div>
             <span className="text-xs text-[#94A3B8]">Cuestionario</span>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-blue-400/10 p-1.5 text-blue-400">
-              <FileUp className="h-3.5 w-3.5" />
+              <FileUp className="size-3.5" />
             </div>
             <span className="text-xs text-[#94A3B8]">Entrega de documento</span>
           </div>
 
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-emerald-400/10 p-1.5 text-emerald-400">
-              <Rocket className="h-3.5 w-3.5" />
+              <Rocket className="size-3.5" />
             </div>
             {/* On small screens move this item to its own line */}
             <span className="w-full text-xs text-[#94A3B8] sm:w-auto">
@@ -307,7 +307,7 @@ export function CourseActivities({
           return (
             <div key={lesson.id} className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent/20">
+                <div className="flex size-6 items-center justify-center rounded-full bg-accent/20">
                   <span className="text-xs font-medium text-accent">
                     {lessonIndex + 1}
                   </span>
@@ -370,7 +370,7 @@ export function CourseActivities({
                             activityType.color
                           )}
                         >
-                          <Icon className="h-4 w-4" />
+                          <Icon className="size-4" />
                         </div>
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-foreground">
@@ -396,11 +396,11 @@ export function CourseActivities({
                           )}
                         >
                           {statusBadge.state === 'locked' ? (
-                            <Lock className="mr-1 h-3 w-3" />
+                            <Lock className="mr-1 size-3" />
                           ) : statusBadge.state === 'completed' ? (
-                            <CheckCircle2 className="mr-1 h-3 w-3" />
+                            <CheckCircle2 className="mr-1 size-3" />
                           ) : (
-                            <Clock3 className="mr-1 h-3 w-3" />
+                            <Clock3 className="mr-1 size-3" />
                           )}
                           {statusBadge.label}
                         </div>

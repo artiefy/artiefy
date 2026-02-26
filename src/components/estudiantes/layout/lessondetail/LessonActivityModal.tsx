@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
   CheckCircleIcon,
@@ -14,6 +13,7 @@ import {
   XCircleIcon,
   XMarkIcon, // <-- asegúrate de importar esto
 } from '@heroicons/react/24/solid';
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
 import { BsFiletypeXls } from 'react-icons/bs';
@@ -32,9 +32,9 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
   DialogOverlay,
   DialogPortal,
+  DialogTitle,
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { type Activity, type Question, type SavedAnswer } from '~/types';
@@ -154,23 +154,23 @@ const getFileIcon = (fileType: string) => {
 
   switch (type) {
     case 'pdf':
-      return <FaFilePdf className="h-6 w-6 text-red-500" />;
+      return <FaFilePdf className="size-6 text-red-500" />;
     case 'doc':
     case 'docx':
-      return <FaFileWord className="h-6 w-6 text-blue-500" />;
+      return <FaFileWord className="size-6 text-blue-500" />;
     case 'ppt':
     case 'pptx':
-      return <FaFilePowerpoint className="h-6 w-6 text-orange-500" />;
+      return <FaFilePowerpoint className="size-6 text-orange-500" />;
     case 'xls':
     case 'xlsx':
-      return <BsFiletypeXls className="h-6 w-6 text-green-600" />;
+      return <BsFiletypeXls className="size-6 text-green-600" />;
     case 'png':
     case 'jpg':
     case 'jpeg':
     case 'gif':
-      return <FaRegFileImage className="h-6 w-6 text-purple-500" />; // Using updated icon
+      return <FaRegFileImage className="size-6 text-purple-500" />; // Using updated icon
     default:
-      return <FaLink className="h-6 w-6 text-blue-500" />;
+      return <FaLink className="size-6 text-blue-500" />;
   }
 };
 
@@ -186,12 +186,12 @@ const submissionTabs: SubmissionTab[] = [
   {
     id: 'local',
     label: 'Archivo Local',
-    icon: <Icons.arrowUpTray className="h-4 w-4" />,
+    icon: <Icons.arrowUpTray className="size-4" />,
   },
   {
     id: 'drive', // Keep the id the same for compatibility
     label: 'Archivo URL',
-    icon: <FaLink className="h-4 w-4" />, // Changed from FaGoogleDrive to FaLink
+    icon: <FaLink className="size-4" />, // Changed from FaGoogleDrive to FaLink
   },
 ];
 
@@ -696,7 +696,7 @@ export function LessonActivityModal({
         {/* Add container for positioning */}
         <div className="absolute -top-2 right-0 translate-y-[-100%] transform">
           <LightBulbIcon
-            className={`h-8 w-8 transition-all duration-300 ${
+            className={`size-8 transition-all duration-300 ${
               isQuestionAnswered
                 ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]'
                 : 'text-gray-300'
@@ -706,7 +706,7 @@ export function LessonActivityModal({
         <div className="max-w-full min-w-0 rounded-lg border border-gray-200 bg-white p-4 break-words shadow-sm transition-all hover:shadow-md sm:p-6">
           <h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
             <div className="flex items-center">
-              <span className="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 font-bold text-background">
+              <span className="mr-2 flex size-8 items-center justify-center rounded-full bg-primary/20 font-bold text-background">
                 {currentQuestionIndex + 1}
               </span>
               {currentQuestion.text}
@@ -737,7 +737,7 @@ export function LessonActivityModal({
                         userAnswers[currentQuestion.id]?.answer === option.id
                       }
                       onChange={(e) => handleAnswer(e.target.value)}
-                      className="h-4 w-4 text-primary focus:ring-primary"
+                      className="size-4 text-primary focus:ring-primary"
                     />
                     <span className="ml-3 break-words whitespace-normal text-gray-700">
                       {option.text}
@@ -768,9 +768,9 @@ export function LessonActivityModal({
       <div className="flex justify-center gap-1">
         {Array.from({ length: totalStars }, (_, index) =>
           index < starScore ? (
-            <StarSolidIcon key={index} className="h-8 w-8 text-yellow-400" />
+            <StarSolidIcon key={index} className="size-8 text-yellow-400" />
           ) : (
-            <StarOutlineIcon key={index} className="h-8 w-8 text-gray-300" />
+            <StarOutlineIcon key={index} className="size-8 text-gray-300" />
           )
         )}
       </div>
@@ -785,7 +785,7 @@ export function LessonActivityModal({
           disabled
           className="mt-4 w-full cursor-not-allowed bg-gradient-to-r from-blue-400/70 to-blue-600/70"
         >
-          <Icons.spinner className="mr-2 h-5 w-5" />
+          <Icons.spinner className="mr-2 size-5" />
           <span>Cargando resultados...</span>
         </Button>
       );
@@ -865,7 +865,7 @@ export function LessonActivityModal({
           >
             <span className="flex items-center justify-center gap-2 py-4">
               Desbloquear Siguiente CLASE
-              <Unlock className="h-4 w-4" />
+              <Unlock className="size-4" />
             </span>
           </Button>
         );
@@ -905,7 +905,7 @@ export function LessonActivityModal({
             >
               <span className="flex items-center justify-center gap-2 py-4">
                 Desbloquear Siguiente CLASE
-                <Unlock className="h-4 w-4" />
+                <Unlock className="size-4" />
               </span>
             </Button>
           ) : (
@@ -932,7 +932,7 @@ export function LessonActivityModal({
           >
             <span className="flex items-center justify-center gap-2 py-4">
               Desbloquear Siguiente CLASE
-              <Unlock className="h-4 w-4" />
+              <Unlock className="size-4" />
             </span>
           </Button>
         );
@@ -979,7 +979,7 @@ export function LessonActivityModal({
           >
             <span className="flex items-center justify-center gap-2 py-4">
               Desbloquear Siguiente CLASE
-              <Unlock className="h-4 w-4" />
+              <Unlock className="size-4" />
             </span>
           </Button>
         );
@@ -1020,7 +1020,7 @@ export function LessonActivityModal({
             >
               <span className="flex items-center justify-center gap-2 py-4">
                 Desbloquear Siguiente CLASE
-                <Unlock className="h-4 w-4" />
+                <Unlock className="size-4" />
               </span>
             </Button>
           )}
@@ -1047,7 +1047,7 @@ export function LessonActivityModal({
           >
             <span className="flex items-center justify-center gap-2 py-4">
               Desbloquear Siguiente CLASE
-              <Unlock className="h-4 w-4" />
+              <Unlock className="size-4" />
             </span>
           </Button>
         );
@@ -1088,7 +1088,7 @@ export function LessonActivityModal({
             {/* Add loading state here */}
             {isLoadingDocument ? (
               <div className="flex flex-col items-center justify-center space-y-3 p-8">
-                <Icons.spinner className="h-8 w-8 text-blue-500" />
+                <Icons.spinner className="size-8 text-blue-500" />
                 <p className="text-base text-gray-600">Cargando documento...</p>
               </div>
             ) : (
@@ -1158,9 +1158,9 @@ export function LessonActivityModal({
                             </p>
                           </div>
                           {isCorrect ? (
-                            <CheckCircleIcon className="h-6 w-6 text-green-600" />
+                            <CheckCircleIcon className="size-6 text-green-600" />
                           ) : (
-                            <XCircleIcon className="h-6 w-6 text-red-600" />
+                            <XCircleIcon className="size-6 text-red-600" />
                           )}
                         </div>
 
@@ -1282,7 +1282,7 @@ export function LessonActivityModal({
                 aria-label="Remove file"
               >
                 <svg
-                  className="h-5 w-5"
+                  className="size-5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -1303,7 +1303,7 @@ export function LessonActivityModal({
               className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-sky-500 transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}
             >
-              <div className="h-full w-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+              <div className="size-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
             </div>
           </div>
         </div>
@@ -1315,7 +1315,7 @@ export function LessonActivityModal({
     if (isLoadingDocument) {
       return (
         <div className="mt-4 flex flex-col items-center justify-center space-y-2 p-4">
-          <Icons.spinner className="h-8 w-8 text-blue-500" />
+          <Icons.spinner className="size-8 text-blue-500" />
           <p className="text-sm text-gray-400">Cargando documento subido...</p>
         </div>
       );
@@ -1436,7 +1436,7 @@ export function LessonActivityModal({
         <div className="flex items-center gap-3">
           {/* Ícono más grande */}
           <span className="flex items-center justify-center">
-            <span className="flex h-10 w-10 items-center justify-center">
+            <span className="flex size-10 items-center justify-center">
               {getFileIcon(fileExtension)}
             </span>
           </span>
@@ -1470,8 +1470,8 @@ export function LessonActivityModal({
           <div className="group relative w-full">
             <div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl">
               {/* Background gradients */}
-              <div className="absolute -top-16 -left-16 h-32 w-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
-              <div className="absolute -right-16 -bottom-16 h-32 w-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
+              <div className="absolute -top-16 -left-16 size-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
+              <div className="absolute -right-16 -bottom-16 size-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
 
               <div className="relative p-6">
                 {/* Botón de subir documento/URL nuevamente arriba del bloque de ayuda */}
@@ -1500,7 +1500,7 @@ export function LessonActivityModal({
                           ? 'Subir documento nuevamente'
                           : 'Subir URL nuevamente'}
                         <svg
-                          className="h-4 w-4"
+                          className="size-4"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1519,7 +1519,7 @@ export function LessonActivityModal({
                 {/* Renderiza el archivo de ayuda antes de los tabs */}
                 {isLoadingHelpFile ? (
                   <div className="mb-4 flex items-center gap-2">
-                    <Icons.spinner className="h-5 w-5 text-blue-500" />
+                    <Icons.spinner className="size-5 text-blue-500" />
                     <span className="text-sm text-blue-500">
                       Cargando archivo de ayuda...
                     </span>
@@ -1536,7 +1536,7 @@ export function LessonActivityModal({
                       </h3>
                       <div className="rounded-lg bg-cyan-500/10 p-2">
                         <svg
-                          className="h-6 w-6 text-cyan-500"
+                          className="size-6 text-cyan-500"
                           fill="none"
                           viewBox="0 0 24 24"
                           stroke="currentColor"
@@ -1594,7 +1594,7 @@ export function LessonActivityModal({
                           <input
                             type="file"
                             aria-label="Seleccionar archivo para subir"
-                            className="absolute inset-0 z-50 h-full w-full cursor-pointer opacity-0"
+                            className="absolute inset-0 z-50 size-full cursor-pointer opacity-0"
                             onChange={(e) => {
                               if (e.target.files?.[0]) {
                                 handleFileUpload(e.target.files[0]);
@@ -1604,9 +1604,9 @@ export function LessonActivityModal({
                             tabIndex={0}
                           />
                           <div className="space-y-6 text-center">
-                            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-slate-900">
+                            <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-slate-900">
                               <svg
-                                className={`h-10 w-10 ${
+                                className={`size-10 ${
                                   uploadedFileInfo
                                     ? 'text-gray-500'
                                     : 'text-cyan-500'
@@ -1667,7 +1667,7 @@ export function LessonActivityModal({
                       <span className="relative flex items-center justify-center gap-2 rounded-xl bg-slate-950/50 px-4 py-2 transition-colors group-hover/btn:bg-transparent">
                         {isUploading ? (
                           <>
-                            <Icons.spinner className="mr-2 h-4 w-4" />
+                            <Icons.spinner className="mr-2 size-4" />
                             Subiendo...
                           </>
                         ) : uploadedFileInfo ? (
@@ -1681,7 +1681,7 @@ export function LessonActivityModal({
                     {/* Add loading indicator below upload button */}
                     {isLoadingDocument && (
                       <div className="mt-4 flex items-center justify-center space-x-2 text-center">
-                        <Icons.spinner className="h-5 w-5 text-cyan-500" />
+                        <Icons.spinner className="size-5 text-cyan-500" />
                         <span className="text-sm text-gray-400">
                           Cargando documento...
                         </span>
@@ -1747,7 +1747,7 @@ export function LessonActivityModal({
                     >
                       {isUploadingUrl ? (
                         <div className="flex items-center justify-center">
-                          <Icons.spinner className="mr-2 h-4 w-4" />
+                          <Icons.spinner className="mr-2 size-4" />
                           <span>Guardando URL...</span>
                         </div>
                       ) : uploadedFileInfo ? (
@@ -1864,7 +1864,7 @@ export function LessonActivityModal({
             </DialogTitle>
           </DialogHeader>
           <div className="flex justify-center">
-            <Icons.spinner className="h-8 w-8" />
+            <Icons.spinner className="size-8" />
           </div>
         </DialogContent>
       </Dialog>
@@ -1924,7 +1924,7 @@ export function LessonActivityModal({
           aria-modal="true"
           aria-labelledby={modalTitleId}
           aria-describedby={modalDescId}
-          className={`data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-[100004] flex translate-x-[-50%] translate-y-[-50%] flex-col gap-4 overflow-hidden rounded-lg border bg-background shadow-lg duration-200 [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background ${
+          className={`data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-[100004] flex translate-[-50%] flex-col gap-4 overflow-hidden rounded-lg border bg-background shadow-lg duration-200 [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background ${
             isMobile
               ? 'max-h-[90vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl p-4'
               : 'max-h-[90vh] w-full overflow-y-auto rounded-2xl p-6 sm:max-w-[500px]'
@@ -1942,7 +1942,7 @@ export function LessonActivityModal({
             className="absolute top-4 right-4 z-50 rounded-full p-2 transition-colors hover:bg-gray-800"
           >
             <div className="flex items-center justify-center">
-              <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
+              <XMarkIcon className="size-6 text-white" aria-hidden="true" />
             </div>
           </button>
           <DialogHeader className="sticky top-0 z-40 bg-background">

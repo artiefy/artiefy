@@ -467,7 +467,7 @@ const LessonActivities = ({
     if (isButtonLoading) {
       return (
         <div className="flex items-center gap-2">
-          <Icons.spinner className="h-4 w-4 text-gray-800" />
+          <Icons.spinner className="size-4 text-gray-800" />
           <span className="font-semibold text-gray-800">Cargando...</span>
         </div>
       );
@@ -476,9 +476,7 @@ const LessonActivities = ({
     if (activityState?.isCompleted && activityState?.savedResults) {
       return (
         <>
-          {activityState.isLoading && (
-            <Icons.spinner className="mr-2 h-4 w-4" />
-          )}
+          {activityState.isLoading && <Icons.spinner className="mr-2 size-4" />}
           <span className="font-semibold">
             {activity.typeid === 1 ? 'Ver Documento' : 'Ver Resultados'}
           </span>
@@ -489,10 +487,10 @@ const LessonActivities = ({
 
     return (
       <>
-        {activityState?.isLoading && <Icons.spinner className="mr-2 h-4 w-4" />}
+        {activityState?.isLoading && <Icons.spinner className="mr-2 size-4" />}
         {isLocked ? (
           <span className="flex items-center gap-2 font-semibold">
-            <FaLock className="h-4 w-4" />
+            <FaLock className="size-4" />
             Bloqueada
           </span>
         ) : (
@@ -592,9 +590,9 @@ const LessonActivities = ({
           <div className="flex w-full flex-col items-center justify-between gap-4 text-center md:flex-row md:items-center md:text-left">
             <div className="flex min-w-0 flex-1 flex-col items-center gap-2 md:flex-row md:gap-4">
               <div
-                className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${activityType.bg} ${activityType.color}`}
+                className={`flex size-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${activityType.bg} ${activityType.color}`}
               >
-                <ActivityIcon className="h-4 w-4" />
+                <ActivityIcon className="size-4" />
               </div>
               <div className="flex flex-col items-center gap-1 md:items-start md:gap-0">
                 <span
@@ -613,7 +611,7 @@ const LessonActivities = ({
                     }}
                     title={deadlineText}
                   >
-                    <Clock className="h-3 w-3" />
+                    <Clock className="size-3" />
                     {deadlineText}
                   </span>
                 )}
@@ -776,7 +774,7 @@ const LessonActivities = ({
       {activities.length > 0 && !inMainContent && (
         <div className="mb-6 flex items-center justify-start gap-4">
           <div className="relative">
-            <svg className="h-20 w-20 -rotate-90 transform">
+            <svg className="size-20 -rotate-90 transform">
               <circle
                 cx="40"
                 cy="40"

@@ -155,8 +155,8 @@ const ModalIntegrantesProyectoInfo: React.FC<
           {/* Header del Modal */}
           <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-slate-900/80 to-blue-900/80 p-3 sm:p-4">
             <div className="flex min-w-0 flex-1 items-center gap-2 pr-2 sm:gap-3 sm:pr-4">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-cyan-300 sm:h-12 sm:w-12">
-                <Users className="h-5 w-5 text-slate-900 sm:h-6 sm:w-6" />
+              <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-cyan-300 sm:size-12">
+                <Users className="size-5 text-slate-900 sm:size-6" />
               </div>
               <div className="min-w-0 flex-1">
                 <h1 className="mb-0.5 text-base font-bold break-words text-white sm:text-lg md:text-xl">
@@ -175,11 +175,11 @@ const ModalIntegrantesProyectoInfo: React.FC<
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 flex-shrink-0 text-white hover:bg-white/10 sm:h-10 sm:w-10"
+              className="size-8 flex-shrink-0 text-white hover:bg-white/10 sm:size-10"
               onClick={onClose}
               aria-label="Cerrar"
             >
-              <X className="h-4 w-4 sm:h-5 sm:w-5" />
+              <X className="size-4 sm:size-5" />
             </Button>
           </div>
 
@@ -188,20 +188,20 @@ const ModalIntegrantesProyectoInfo: React.FC<
             {/* Sección de Integrantes */}
             <div className="mb-3">
               <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-white sm:text-lg">
-                <Users className="h-4 w-4 flex-shrink-0 text-teal-400 sm:h-5 sm:w-5" />
+                <Users className="size-4 flex-shrink-0 text-teal-400 sm:size-5" />
                 Integrantes del Proyecto ({safeIntegrantes.length})
               </h2>
 
               {loading ? (
                 <div className="py-6 text-center sm:py-8">
-                  <Loader2 className="mx-auto mb-2 h-10 w-10 animate-spin text-teal-400 sm:mb-3 sm:h-12 sm:w-12" />
+                  <Loader2 className="mx-auto mb-2 size-10 animate-spin text-teal-400 sm:mb-3 sm:size-12" />
                   <p className="text-sm text-gray-400 sm:text-base">
                     Cargando integrantes...
                   </p>
                 </div>
               ) : error ? (
                 <div className="py-6 text-center sm:py-8">
-                  <Users className="mx-auto mb-2 h-10 w-10 text-red-500 sm:mb-3 sm:h-12 sm:w-12" />
+                  <Users className="mx-auto mb-2 size-10 text-red-500 sm:mb-3 sm:size-12" />
                   <p className="mb-1.5 text-sm text-red-400 sm:mb-2 sm:text-base">
                     {error}
                   </p>
@@ -211,7 +211,7 @@ const ModalIntegrantesProyectoInfo: React.FC<
                 </div>
               ) : safeIntegrantes.length === 0 ? (
                 <div className="py-6 text-center sm:py-8">
-                  <Users className="mx-auto mb-2 h-10 w-10 text-gray-500 sm:mb-3 sm:h-12 sm:w-12" />
+                  <Users className="mx-auto mb-2 size-10 text-gray-500 sm:mb-3 sm:size-12" />
                   <p className="mb-1.5 text-sm text-gray-400 sm:mb-2 sm:text-base">
                     No hay integrantes inscritos
                   </p>
@@ -229,7 +229,7 @@ const ModalIntegrantesProyectoInfo: React.FC<
                       <CardContent className="p-3 sm:p-4">
                         <div className="flex flex-col items-center space-y-2 text-center">
                           {/* Avatar con iniciales del nombre */}
-                          <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-sm font-semibold text-slate-900 sm:h-16 sm:w-16 sm:text-base">
+                          <div className="flex size-14 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-sm font-semibold text-slate-900 sm:size-16 sm:text-base">
                             {integrante.nombre?.trim()
                               ? integrante.nombre
                                   .trim()
@@ -285,7 +285,7 @@ const ModalIntegrantesProyectoInfo: React.FC<
                                   target="_blank"
                                   rel="noopener noreferrer"
                                 >
-                                  <Mail className="h-4 w-4" />
+                                  <Mail className="size-4" />
                                 </a>
                               </Button>
                             )}
@@ -303,9 +303,9 @@ const ModalIntegrantesProyectoInfo: React.FC<
                                   disabled={deletingId === integrante.id}
                                 >
                                   {deletingId === integrante.id ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                    <Loader2 className="size-4 animate-spin" />
                                   ) : (
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="size-4" />
                                   )}
                                 </Button>
                               )}
@@ -324,7 +324,7 @@ const ModalIntegrantesProyectoInfo: React.FC<
                       aria-label="Invitar nuevo integrante"
                     >
                       <CardContent className="flex h-full min-h-[150px] flex-col items-center justify-center p-3 sm:p-4">
-                        <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-2xl font-bold text-slate-900 sm:mb-3 sm:h-16 sm:w-16 sm:text-3xl">
+                        <div className="mb-2 flex size-14 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-2xl font-bold text-slate-900 sm:mb-3 sm:size-16 sm:text-3xl">
                           +
                         </div>
                         <div className="text-center">

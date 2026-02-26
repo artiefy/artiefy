@@ -117,7 +117,7 @@ export const TourComponent = () => {
               console.log('Botón de tour clickeado');
               window.dispatchEvent(new Event('start-tour'));
             }}
-            className={`relative flex items-center justify-center rounded-full border border-green-400 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-emerald-500 hover:to-green-600 hover:shadow-[0_0_20px_#00c951] ${isDesktop ? 'gap-2 px-2.5 py-2.5 sm:text-sm' : 'h-12 w-12 p-0'}`}
+            className={`relative flex items-center justify-center rounded-full border border-green-400 bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md transition-all duration-300 ease-in-out hover:scale-105 hover:from-emerald-500 hover:to-green-600 hover:shadow-[0_0_20px_#00c951] ${isDesktop ? 'gap-2 p-2.5 sm:text-sm' : 'size-12 p-0'}`}
             aria-label="Tour por la Aplicación"
           >
             <LuInfo
@@ -130,7 +130,7 @@ export const TourComponent = () => {
                 </span>
                 {/* Triángulo tipo burbuja. Si el botón está en la izquierda, mostrar triángulo apuntando a la derecha */}
                 <span
-                  className={`absolute bottom-[14px] hidden h-0 w-0 sm:inline ${isClassRoute ? 'right-1/2 translate-x-1 rotate-90' : 'left-1/2 -translate-x-1 rotate-[270deg]'} transform border-t-[8px] border-r-[6px] border-l-[6px]`}
+                  className={`absolute bottom-[14px] hidden size-0 sm:inline ${isClassRoute ? 'right-1/2 translate-x-1 rotate-90' : 'left-1/2 -translate-x-1 rotate-[270deg]'} transform border-x-[6px] border-t-[8px]`}
                   style={{
                     borderTopColor: '#10b981',
                     borderRightColor: isClassRoute

@@ -318,8 +318,8 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
             {/* Header del Modal */}
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-4 pr-4">
-                <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-cyan-300">
-                  <UserPlus className="h-8 w-8 text-slate-900" />
+                <div className="flex size-16 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-cyan-300">
+                  <UserPlus className="size-8 text-slate-900" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="mb-2 text-2xl font-bold break-words text-white md:text-3xl">
@@ -342,7 +342,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                   title="Búsqueda automática por email"
                   disabled={true}
                 >
-                  <RefreshCw className="h-6 w-6" />
+                  <RefreshCw className="size-6" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -351,7 +351,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                   onClick={onClose}
                   aria-label="Cerrar"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="size-6" />
                 </Button>
               </div>
             </div>
@@ -372,7 +372,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                   onClick={handleClear}
                   title="Limpiar búsqueda"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="size-5" />
                 </Button>
               )}
             </div>
@@ -382,7 +382,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
         <div className="p-4">
           {loading ? (
             <div className="py-12 text-center">
-              <Loader2 className="mx-auto mb-4 h-16 w-16 animate-spin text-teal-400" />
+              <Loader2 className="mx-auto mb-4 size-16 animate-spin text-teal-400" />
               <p className="text-lg text-gray-400">Cargando usuarios...</p>
             </div>
           ) : (
@@ -437,7 +437,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                     <CardContent className="p-4">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-sm font-semibold text-slate-900">
+                          <div className="flex size-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-sm font-semibold text-slate-900">
                             {avatarText}
                           </div>
                           <div className="min-w-0">

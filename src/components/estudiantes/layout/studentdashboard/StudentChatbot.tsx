@@ -2736,7 +2736,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         // Render estilizado conservando los colores actuales
         if (title || description) {
           return (
-            <div className="max-w-[90%] rounded-2xl bg-background px-4 py-4 shadow">
+            <div className="max-w-[90%] rounded-2xl bg-background p-4 shadow">
               {title && (
                 <h3 className="mb-2 text-xl leading-tight font-extrabold text-white">
                   {title}
@@ -3029,7 +3029,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         alt="WhatsApp"
                         width={24}
                         height={24}
-                        className="h-6 w-6"
+                        className="size-6"
                       />
                     )}
                     <span
@@ -3198,7 +3198,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
             >
               <div className="relative">
                 <button
-                  className={`relative h-16 w-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out ${isOpen ? 'minimized' : ''}`}
+                  className={`relative size-16 rounded-full bg-gradient-to-br from-cyan-400 via-teal-500 to-emerald-600 shadow-lg shadow-cyan-500/25 transition-all duration-300 ease-out ${isOpen ? 'minimized' : ''}`}
                   onMouseEnter={() => {
                     if (hideTimeoutRef.current) {
                       window.clearTimeout(hideTimeoutRef.current);
@@ -3227,7 +3227,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         width={32}
                         height={32}
                         unoptimized
-                        className={`h-8 w-8 -translate-y-1 transform transition-all duration-300 ${isHovered ? 'scale-105' : ''}`}
+                        className={`size-8 -translate-y-1 transform transition-all duration-300 ${isHovered ? 'scale-105' : ''}`}
                       />
                     </div>
                   </div>
@@ -3300,7 +3300,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                     className={`relative flex items-center rounded-full border border-blue-400 text-white shadow-md transition-all duration-300 ease-in-out hover:from-cyan-500 hover:to-blue-600 hover:shadow-[0_0_20px_#38bdf8] ${
                       isDesktop
                         ? 'gap-2 bg-gradient-to-r from-blue-500 to-cyan-600 px-5 py-2 hover:scale-105'
-                        : 'h-12 w-12 justify-center bg-gradient-to-br from-blue-500 to-cyan-600 hover:scale-110'
+                        : 'size-12 justify-center bg-gradient-to-br from-blue-500 to-cyan-600 hover:scale-110'
                     }`}
                     aria-label="Soporte técnico"
                   >
@@ -3322,7 +3322,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
 
           {isOpen && (
             <div
-              className={`fixed ${isDesktop ? 'top-0 right-0 bottom-0 left-auto' : 'inset-0 top-0 right-0 bottom-0 left-0'} z-[100001]`}
+              className={`fixed ${isDesktop ? 'top-0 right-0 bottom-0 left-auto' : 'inset-0'} z-[100001]`}
               ref={chatContainerRef}
               style={
                 isDesktop
@@ -3372,7 +3372,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 }
               >
                 <div
-                  className={`relative flex h-full min-h-0 w-full flex-col ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
+                  className={`relative flex size-full min-h-0 flex-col ${isDesktop ? 'justify-end rounded-lg border border-gray-700' : ''} bg-[#071024]`}
                   style={isDesktop ? { height: '100%' } : undefined}
                 >
                   {/* Header */}
@@ -3397,7 +3397,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                               className={`status-dot ${isSignedIn ? 'glow-pulse' : ''} inline-flex`}
                             >
                               <span
-                                className={`h-2 w-2 rounded-full ${isSignedIn ? 'bg-green-500' : 'bg-gray-500'}`}
+                                className={`size-2 rounded-full ${isSignedIn ? 'bg-green-500' : 'bg-gray-500'}`}
                               />
                             </span>
                           </h2>
@@ -3453,7 +3453,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         </button>
                       </div>
                     </div>
-                    <div className="px-2 pt-0 pb-0 md:px-3">
+                    <div className="px-2 py-0 md:px-3">
                       <ChatNavigation
                         activeSection={activeSection}
                         onSectionChange={setActiveSection}
@@ -3497,11 +3497,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                 activeType="tickets"
                               />
                             ) : !isSignedIn ? (
-                              <div className="flex h-full w-full flex-col items-center justify-center p-8 text-center">
+                              <div className="flex size-full flex-col items-center justify-center p-8 text-center">
                                 <div className="mb-6">
-                                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-background/20">
+                                  <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-background/20">
                                     <svg
-                                      className="h-8 w-8 text-[#3AF4EF]"
+                                      className="size-8 text-[#3AF4EF]"
                                       fill="none"
                                       stroke="currentColor"
                                       viewBox="0 0 24 24"
@@ -3807,7 +3807,7 @@ const CoursesCardsWithModalidad = React.memo(
                 >
                   <span className="font-bold">Ir al Curso</span>
                   <svg
-                    className="ml-2 h-5 w-5 animate-bounce-right text-[#3AF4EF]"
+                    className="ml-2 size-5 animate-bounce-right text-[#3AF4EF]"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2"

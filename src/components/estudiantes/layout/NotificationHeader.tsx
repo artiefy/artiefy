@@ -367,7 +367,7 @@ export function NotificationHeader() {
         {unreadCount > 0 ? (
           <>
             <BellRing className="size-6 text-primary transition-colors group-hover:text-background" />
-            <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+            <span className="absolute top-0 right-0 flex size-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
               {unreadCount}
             </span>
           </>
@@ -422,7 +422,7 @@ export function NotificationHeader() {
                 type="button"
               >
                 <svg
-                  className="h-5 w-5 text-red-500 hover:text-red-700"
+                  className="size-5 text-red-500 hover:text-red-700"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

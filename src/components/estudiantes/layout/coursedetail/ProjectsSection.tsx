@@ -327,7 +327,7 @@ export function ProjectsSection({
             onClick={handleBackToList}
             className="-ml-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground ring-offset-background transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:whitespace-nowrap"
           >
-            <FaArrowLeft className="mr-2 h-4 w-4" />
+            <FaArrowLeft className="mr-2 size-4" />
             Volver a proyectos
           </button>
 
@@ -404,10 +404,10 @@ export function ProjectsSection({
         <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
           <div className="flex items-start gap-4">
             <div
-              className="flex h-10 w-10 items-center justify-center rounded-xl"
+              className="flex size-10 items-center justify-center rounded-xl"
               style={{ backgroundColor: 'rgba(34, 196, 211, 0.2)' }}
             >
-              <FaFolderOpen className="h-5 w-5" style={{ color: '#22c4d3' }} />
+              <FaFolderOpen className="size-5" style={{ color: '#22c4d3' }} />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-foreground">
@@ -426,7 +426,7 @@ export function ProjectsSection({
             style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
             className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
           >
-            <FaPlus className="h-4 w-4" />
+            <FaPlus className="size-4" />
             {_isCreating ? 'Creando...' : 'Crear Proyecto'}
           </button>
         </div>
@@ -528,7 +528,7 @@ export function ProjectsSection({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="mr-1 h-3 w-3"
+                          className="mr-1 size-3"
                         >
                           <circle cx="12" cy="12" r="10"></circle>
                           <path d="m9 12 2 2 4-4"></path>
@@ -537,7 +537,7 @@ export function ProjectsSection({
                       </div>
                     ) : (
                       <div className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs font-semibold text-blue-400 transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
-                        <Clock className="mr-1 h-3 w-3" />
+                        <Clock className="mr-1 size-3" />
                         En progreso
                       </div>
                     )}
@@ -580,13 +580,13 @@ export function ProjectsSection({
                   <div className="flex items-center justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5" />
+                        <Users className="size-3.5" />
                         <span>
                           {collaboratorCounts[project.id] ?? 0} colaboradores
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <FaCalendarAlt className="h-3.5 w-3.5" />
+                        <FaCalendarAlt className="size-3.5" />
                         <span>{formatDate(project.createdAt)}</span>
                       </div>
                     </div>
@@ -596,7 +596,7 @@ export function ProjectsSection({
                       style={{ color: '#22c4d3' }}
                     >
                       <span>Entrar</span>
-                      <FaExternalLinkAlt className="h-3.5 w-3.5" />
+                      <FaExternalLinkAlt className="size-3.5" />
                     </div>
                   </div>
                 </div>
@@ -609,8 +609,8 @@ export function ProjectsSection({
             className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
             style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
           >
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
-              <FaFolderOpen className="h-8 w-8 text-black" />
+            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50">
+              <FaFolderOpen className="size-8 text-black" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-100">
               No hay proyectos creados
@@ -627,7 +627,7 @@ export function ProjectsSection({
                 style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
                 className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:whitespace-nowrap"
               >
-                <FaPlus className="h-4 w-4" />
+                <FaPlus className="size-4" />
                 {_isCreating ? 'Creando...' : 'Crear Primer Proyecto'}
               </button>
             )}

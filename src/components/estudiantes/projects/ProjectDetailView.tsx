@@ -22,13 +22,13 @@ import {
 import { toast } from 'sonner';
 import { useSWRConfig } from 'swr';
 
+import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from '~/components/projects/ui/tabs';
-import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
 import { useGenerateContent } from '~/hooks/useGenerateContent';
 
 import { Progress } from './ui/progress';
@@ -1052,7 +1052,7 @@ export default function ProjectDetailView({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="mr-1 h-3 w-3"
+                    className="mr-1 size-3"
                   >
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="m9 12 2 2 4-4"></path>
@@ -1061,7 +1061,7 @@ export default function ProjectDetailView({
                 </div>
               ) : (
                 <div className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs font-semibold text-blue-400 transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
-                  <Clock className="mr-1 h-3 w-3" />
+                  <Clock className="mr-1 size-3" />
                   En progreso
                 </div>
               )}
@@ -1079,7 +1079,7 @@ export default function ProjectDetailView({
 
             {/* Colaboradores */}
             <div className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
+              <Users className="size-4" />
               <span>
                 {collaboratorsLoading
                   ? '... colaboradores'
@@ -1098,12 +1098,12 @@ export default function ProjectDetailView({
                   onClick={() => onEditSection?.(1, addedSections)}
                   className="ml-auto inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:hidden"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <Pencil className="size-3.5" />
                 </button>
               )}
             </div>
             <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="size-4" />
               <span>Entrega: {formatDate(project.createdAt)}</span>
             </div>
 
@@ -1129,7 +1129,7 @@ export default function ProjectDetailView({
                 onClick={() => onEditSection?.(1, addedSections)}
                 className="hidden h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:inline-flex"
               >
-                <Pencil className="h-3.5 w-3.5" />
+                <Pencil className="size-3.5" />
               </button>
             )}
           </div>
@@ -1168,28 +1168,28 @@ export default function ProjectDetailView({
             value="overview"
             className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
-            <FileText className="h-3.5 w-3.5" />
+            <FileText className="size-3.5" />
             Resumen
           </TabsTrigger>
           <TabsTrigger
             value="submissions"
             className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
-            <Upload className="h-3.5 w-3.5" />
+            <Upload className="size-3.5" />
             Entregas
           </TabsTrigger>
           <TabsTrigger
             value="feedback"
             className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
-            <MessageSquare className="h-3.5 w-3.5" />
+            <MessageSquare className="size-3.5" />
             Retroalimentación
           </TabsTrigger>
           <TabsTrigger
             value="timeline"
             className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
-            <Calendar className="h-3.5 w-3.5" />
+            <Calendar className="size-3.5" />
             Cronograma
           </TabsTrigger>
         </TabsList>
@@ -1209,8 +1209,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/20">
-                  <TriangleAlert className="h-4 w-4 text-red-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-red-500/20">
+                  <TriangleAlert className="size-4 text-red-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Problema
@@ -1220,9 +1220,9 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(2, addedSections)}
-                  className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="size-4" />
                 </button>
               )}
             </div>
@@ -1244,8 +1244,8 @@ export default function ProjectDetailView({
             <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/20">
-                    <Lightbulb className="h-4 w-4 text-yellow-400" />
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-yellow-500/20">
+                    <Lightbulb className="size-4 text-yellow-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground">
                     Justificación
@@ -1274,10 +1274,10 @@ export default function ProjectDetailView({
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg"
+                  className="flex size-8 items-center justify-center rounded-lg"
                   style={{ backgroundColor: 'rgba(34, 196, 211, 0.2)' }}
                 >
-                  <Target className="h-4 w-4" style={{ color: '#22c4d3' }} />
+                  <Target className="size-4" style={{ color: '#22c4d3' }} />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Objetivo General
@@ -1287,9 +1287,9 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(3, addedSections)}
-                  className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="size-4" />
                 </button>
               )}
             </div>
@@ -1310,8 +1310,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20">
-                  <ClipboardList className="h-4 w-4 text-amber-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/20">
+                  <ClipboardList className="size-4 text-amber-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Requisitos
@@ -1321,9 +1321,9 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(4, addedSections)}
-                  className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="size-4" />
                 </button>
               )}
             </div>
@@ -1357,7 +1357,7 @@ export default function ProjectDetailView({
                           key={idx}
                           className="flex items-start gap-3 text-sm text-muted-foreground"
                         >
-                          <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-medium text-accent">
+                          <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-medium text-accent">
                             {idx + 1}
                           </div>
                           {req}
@@ -1394,8 +1394,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="relative mb-4 sm:flex sm:items-start sm:justify-between sm:gap-3">
               <div className="flex items-start gap-3 pr-10 sm:pr-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
-                  <ListChecks className="h-4 w-4 text-blue-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/20">
+                  <ListChecks className="size-4 text-blue-400" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-foreground">
@@ -1420,9 +1420,9 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(6, addedSections)}
-                  className="absolute top-0 right-0 inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="absolute top-0 right-0 inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="size-4" />
                 </button>
               )}
             </div>
@@ -1455,14 +1455,14 @@ export default function ProjectDetailView({
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                            className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
                               objetivoCompletado
                                 ? 'bg-green-500/20 text-green-400'
                                 : 'bg-muted text-muted-foreground'
                             }`}
                           >
                             {objetivoCompletado ? (
-                              <CircleCheckBig className="h-4 w-4" />
+                              <CircleCheckBig className="size-4" />
                             ) : (
                               idx + 1
                             )}
@@ -1516,7 +1516,7 @@ export default function ProjectDetailView({
                             {estadoObjetivo}
                           </span>
                           <ChevronDown
-                            className={`hidden h-4 w-4 text-muted-foreground transition-transform sm:block ${
+                            className={`hidden size-4 text-muted-foreground transition-transform sm:block ${
                               expandedObjectives[objetivo.id]
                                 ? 'rotate-180'
                                 : 'rotate-0'
@@ -1524,7 +1524,7 @@ export default function ProjectDetailView({
                           />
                         </div>
                         <ChevronDown
-                          className={`absolute top-4 right-2 h-4 w-4 text-muted-foreground transition-transform sm:hidden ${
+                          className={`absolute top-4 right-2 size-4 text-muted-foreground transition-transform sm:hidden ${
                             expandedObjectives[objetivo.id]
                               ? 'rotate-180'
                               : 'rotate-0'
@@ -1626,7 +1626,7 @@ export default function ProjectDetailView({
                                           Actividad {actIdx + 1}
                                         </span>
                                         <ChevronDown
-                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
@@ -1641,7 +1641,7 @@ export default function ProjectDetailView({
                                         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                                           {actividad.startDate && (
                                             <span className="flex items-center gap-1">
-                                              <Calendar className="h-3 w-3" />
+                                              <Calendar className="size-3" />
                                               {formatActivityDate(
                                                 actividad.startDate
                                               )}
@@ -1651,7 +1651,7 @@ export default function ProjectDetailView({
                                             actividad.endDate && <span>-</span>}
                                           {actividad.endDate && (
                                             <span className="flex items-center gap-1">
-                                              <Clock className="h-3 w-3" />
+                                              <Clock className="size-3" />
                                               {formatActivityDate(
                                                 actividad.endDate
                                               )}
@@ -1696,7 +1696,7 @@ export default function ProjectDetailView({
                                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                               {actividad.startDate && (
                                                 <span className="flex items-center gap-1">
-                                                  <Calendar className="h-3 w-3" />
+                                                  <Calendar className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.startDate
                                                   )}
@@ -1708,7 +1708,7 @@ export default function ProjectDetailView({
                                                 )}
                                               {actividad.endDate && (
                                                 <span className="flex items-center gap-1">
-                                                  <Clock className="h-3 w-3" />
+                                                  <Clock className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.endDate
                                                   )}
@@ -1720,7 +1720,7 @@ export default function ProjectDetailView({
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <ChevronDown
-                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
@@ -1804,7 +1804,7 @@ export default function ProjectDetailView({
                                           Entrega
                                         </span>
                                         <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[13px] bg-[#22c4d3] px-3 text-sm font-medium text-[#01152d] transition-colors hover:bg-[#1fb4c2]">
-                                          <Upload className="h-4 w-4" />
+                                          <Upload className="size-4" />
                                           {isUploading
                                             ? 'Subiendo...'
                                             : 'Subir entregable'}
@@ -1832,7 +1832,7 @@ export default function ProjectDetailView({
                                         {isUploading && (
                                           <div className="mt-3 rounded-lg border border-border/40 bg-background/60 p-3">
                                             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <span className="h-2 w-2 animate-pulse rounded-full bg-[#22c4d3]" />
+                                              <span className="size-2 animate-pulse rounded-full bg-[#22c4d3]" />
                                               Subiendo archivo...{' '}
                                               {uploadProgressValue}%
                                             </div>
@@ -1846,7 +1846,7 @@ export default function ProjectDetailView({
                                           <div className="mt-3 rounded-lg border border-green-500/20 bg-green-500/10 p-3">
                                             <div className="mb-2 flex items-center justify-between">
                                               <span className="flex items-center gap-2 text-sm font-medium text-green-400">
-                                                <CircleCheckBig className="h-4 w-4" />
+                                                <CircleCheckBig className="size-4" />
                                                 Entregado
                                               </span>
                                               <div className="flex items-center gap-2">
@@ -1877,7 +1877,7 @@ export default function ProjectDetailView({
                                               </div>
                                             </div>
                                             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <FileText className="h-4 w-4" />
+                                              <FileText className="size-4" />
                                               {(activityId
                                                 ? deliverableOverrides[
                                                     activityId
@@ -2012,9 +2012,9 @@ export default function ProjectDetailView({
                                                       })
                                                     );
                                                   }}
-                                                  className="ml-2 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black"
+                                                  className="ml-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black"
                                                 >
-                                                  <Pencil className="h-4 w-4" />
+                                                  <Pencil className="size-4" />
                                                 </button>
                                               )}
                                           </div>
@@ -2042,8 +2042,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
-                  <Calendar className="h-4 w-4 text-purple-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-purple-500/20">
+                  <Calendar className="size-4 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Cronograma
@@ -2074,9 +2074,9 @@ export default function ProjectDetailView({
                   <button
                     type="button"
                     onClick={() => onEditSection?.(7, addedSections)}
-                    className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                    className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Pencil className="size-4" />
                   </button>
                 )}
               </div>
@@ -2305,25 +2305,25 @@ export default function ProjectDetailView({
                       Estado:
                     </span>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-green-500" />
+                      <div className="size-3 rounded-full bg-green-500" />
                       <span className="text-xs text-muted-foreground">
                         Completado
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-accent" />
+                      <div className="size-3 rounded-full bg-accent" />
                       <span className="text-xs text-muted-foreground">
                         En progreso
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-muted-foreground/50" />
+                      <div className="size-3 rounded-full bg-muted-foreground/50" />
                       <span className="text-xs text-muted-foreground">
                         Pendiente
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-red-500" />
+                      <div className="size-3 rounded-full bg-red-500" />
                       <span className="text-xs text-muted-foreground">
                         Atrasado
                       </span>
@@ -2339,8 +2339,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="relative mb-4 sm:flex sm:items-start sm:justify-between sm:gap-3">
               <div className="flex items-start gap-3 pr-10 sm:pr-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
-                  <ListChecks className="h-4 w-4 text-blue-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/20">
+                  <ListChecks className="size-4 text-blue-400" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-foreground">
@@ -2365,9 +2365,9 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(6, addedSections)}
-                  className="absolute top-0 right-0 inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="absolute top-0 right-0 inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
-                  <Pencil className="h-4 w-4" />
+                  <Pencil className="size-4" />
                 </button>
               )}
             </div>
@@ -2400,14 +2400,14 @@ export default function ProjectDetailView({
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                            className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
                               objetivoCompletado
                                 ? 'bg-green-500/20 text-green-400'
                                 : 'bg-muted text-muted-foreground'
                             }`}
                           >
                             {objetivoCompletado ? (
-                              <CircleCheckBig className="h-4 w-4" />
+                              <CircleCheckBig className="size-4" />
                             ) : (
                               idx + 1
                             )}
@@ -2461,7 +2461,7 @@ export default function ProjectDetailView({
                             {estadoObjetivo}
                           </span>
                           <ChevronDown
-                            className={`hidden h-4 w-4 text-muted-foreground transition-transform sm:block ${
+                            className={`hidden size-4 text-muted-foreground transition-transform sm:block ${
                               expandedObjectives[objetivo.id]
                                 ? 'rotate-180'
                                 : 'rotate-0'
@@ -2469,7 +2469,7 @@ export default function ProjectDetailView({
                           />
                         </div>
                         <ChevronDown
-                          className={`absolute top-4 right-2 h-4 w-4 text-muted-foreground transition-transform sm:hidden ${
+                          className={`absolute top-4 right-2 size-4 text-muted-foreground transition-transform sm:hidden ${
                             expandedObjectives[objetivo.id]
                               ? 'rotate-180'
                               : 'rotate-0'
@@ -2571,7 +2571,7 @@ export default function ProjectDetailView({
                                           Actividad {actIdx + 1}
                                         </span>
                                         <ChevronDown
-                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
@@ -2586,7 +2586,7 @@ export default function ProjectDetailView({
                                         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                                           {actividad.startDate && (
                                             <span className="flex items-center gap-1">
-                                              <Calendar className="h-3 w-3" />
+                                              <Calendar className="size-3" />
                                               {formatActivityDate(
                                                 actividad.startDate
                                               )}
@@ -2596,7 +2596,7 @@ export default function ProjectDetailView({
                                             actividad.endDate && <span>-</span>}
                                           {actividad.endDate && (
                                             <span className="flex items-center gap-1">
-                                              <Clock className="h-3 w-3" />
+                                              <Clock className="size-3" />
                                               {formatActivityDate(
                                                 actividad.endDate
                                               )}
@@ -2641,7 +2641,7 @@ export default function ProjectDetailView({
                                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                               {actividad.startDate && (
                                                 <span className="flex items-center gap-1">
-                                                  <Calendar className="h-3 w-3" />
+                                                  <Calendar className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.startDate
                                                   )}
@@ -2653,7 +2653,7 @@ export default function ProjectDetailView({
                                                 )}
                                               {actividad.endDate && (
                                                 <span className="flex items-center gap-1">
-                                                  <Clock className="h-3 w-3" />
+                                                  <Clock className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.endDate
                                                   )}
@@ -2665,7 +2665,7 @@ export default function ProjectDetailView({
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <ChevronDown
-                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
@@ -2749,7 +2749,7 @@ export default function ProjectDetailView({
                                           Entrega
                                         </span>
                                         <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[13px] bg-[#22c4d3] px-3 text-sm font-medium text-[#01152d] transition-colors hover:bg-[#1fb4c2]">
-                                          <Upload className="h-4 w-4" />
+                                          <Upload className="size-4" />
                                           {isUploading
                                             ? 'Subiendo...'
                                             : 'Subir entregable'}
@@ -2777,7 +2777,7 @@ export default function ProjectDetailView({
                                         {isUploading && (
                                           <div className="mt-3 rounded-lg border border-border/40 bg-background/60 p-3">
                                             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <span className="h-2 w-2 animate-pulse rounded-full bg-[#22c4d3]" />
+                                              <span className="size-2 animate-pulse rounded-full bg-[#22c4d3]" />
                                               Subiendo archivo...{' '}
                                               {uploadProgressValue}%
                                             </div>
@@ -2791,7 +2791,7 @@ export default function ProjectDetailView({
                                           <div className="mt-3 rounded-lg border border-green-500/20 bg-green-500/10 p-3">
                                             <div className="mb-2 flex items-center justify-between">
                                               <span className="flex items-center gap-2 text-sm font-medium text-green-400">
-                                                <CircleCheckBig className="h-4 w-4" />
+                                                <CircleCheckBig className="size-4" />
                                                 Entregado
                                               </span>
                                               <div className="flex items-center gap-2">
@@ -2822,7 +2822,7 @@ export default function ProjectDetailView({
                                               </div>
                                             </div>
                                             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <FileText className="h-4 w-4" />
+                                              <FileText className="size-4" />
                                               {(activityId
                                                 ? deliverableOverrides[
                                                     activityId
@@ -2878,8 +2878,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
-                  <Calendar className="h-4 w-4 text-purple-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-purple-500/20">
+                  <Calendar className="size-4 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Cronograma
@@ -2910,9 +2910,9 @@ export default function ProjectDetailView({
                   <button
                     type="button"
                     onClick={() => onEditSection?.(7, addedSections)}
-                    className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                    className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                   >
-                    <Pencil className="h-4 w-4" />
+                    <Pencil className="size-4" />
                   </button>
                 )}
               </div>
@@ -3141,25 +3141,25 @@ export default function ProjectDetailView({
                       Estado:
                     </span>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-green-500" />
+                      <div className="size-3 rounded-full bg-green-500" />
                       <span className="text-xs text-muted-foreground">
                         Completado
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-accent" />
+                      <div className="size-3 rounded-full bg-accent" />
                       <span className="text-xs text-muted-foreground">
                         En progreso
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-muted-foreground/50" />
+                      <div className="size-3 rounded-full bg-muted-foreground/50" />
                       <span className="text-xs text-muted-foreground">
                         Pendiente
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-red-500" />
+                      <div className="size-3 rounded-full bg-red-500" />
                       <span className="text-xs text-muted-foreground">
                         Atrasado
                       </span>
@@ -3187,7 +3187,7 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(8, addedSections)}
-                  className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                   title="Editar sección en modal"
                 >
                   <Pencil size={16} />
@@ -3196,7 +3196,7 @@ export default function ProjectDetailView({
                   type="button"
                   onClick={() => handleDeleteSection(sectionId)}
                   disabled={isDeletingSection === sectionId}
-                  className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-red-500 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-red-500 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
                   title="Eliminar sección"
                 >
                   {isDeletingSection === sectionId ? '⏳' : '×'}
