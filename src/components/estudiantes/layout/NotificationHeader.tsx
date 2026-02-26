@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { Bell, BellRing } from 'lucide-react';
@@ -17,6 +17,7 @@ import {
   getUnreadCount,
 } from '~/server/actions/estudiantes/notifications/getNotifications';
 import { markNotificationsAsRead } from '~/server/actions/estudiantes/notifications/markNotificationsAsRead';
+import { checkProjectActivitiesDueForUser } from '~/server/actions/estudiantes/projects/checkProjectActivitiesDue';
 
 import type {
   Notification as BaseNotification,
@@ -47,13 +48,16 @@ type NotificationType =
   | 'participation-request'
   | 'PROJECT_INVITATION'
   | 'TICKET_REPLY'
-  | 'TICKET_STATUS_CHANGED';
+  | 'TICKET_STATUS_CHANGED'
+  | 'PROJECT_ACTIVITY_DUE';
 
 // Extiende NotificationMetadata para permitir projectId y requestType
 type NotificationMetadata = BaseNotificationMetadata & {
   projectId?: number;
+  projectName?: string;
   requestType?: 'participation' | 'resignation';
   ticketId?: number;
+  daysLeft?: number;
 };
 
 // Extiende Notification para usar los tipos ampliados
@@ -62,8 +66,36 @@ type Notification = Omit<BaseNotification, 'type' | 'metadata'> & {
   metadata?: NotificationMetadata;
 };
 
+const renderNotificationTitle = (notification: Notification) =>
+  notification.title.replace('lección', 'clase');
+
+const renderNotificationDescription = (notification: Notification) => {
+  const baseMessage = notification.message.replace('lección', 'clase');
+  if (
+    notification.type === 'PROJECT_ACTIVITY_DUE' &&
+    notification.metadata?.projectName &&
+    baseMessage.includes(notification.metadata.projectName)
+  ) {
+    const [before, ...rest] = baseMessage.split(
+      notification.metadata.projectName
+    );
+    const after = rest.join(notification.metadata.projectName);
+    return (
+      <>
+        {before}
+        <span className="font-semibold text-foreground">
+          {notification.metadata.projectName}
+        </span>
+        {after}
+      </>
+    );
+  }
+  return baseMessage;
+};
+
 export function NotificationHeader() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -71,6 +103,10 @@ export function NotificationHeader() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [modalProyectoId, setModalProyectoId] = useState<number | null>(null);
   const [modalInvitacionesOpen, setModalInvitacionesOpen] = useState(false);
+  const hasCheckedDueRef = useRef(false);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef(true);
+  const hasCheckedInvitationParamRef = useRef(false);
 
   // SWR para notificaciones y contador de no leídas (actualiza cada 10s)
   // Cambia el límite en getNotifications para traer todas las notificaciones del usuario
@@ -89,6 +125,66 @@ export function NotificationHeader() {
   useEffect(() => {
     // Ya no necesitas setNotifications ni setUnreadCount aquí, SWR se encarga
   }, [user?.id]);
+
+  // Detectar parámetro acceptInvitation en la URL y abrir modal
+  useEffect(() => {
+    if (hasCheckedInvitationParamRef.current) return;
+
+    const acceptInvitation = searchParams.get('acceptInvitation');
+    if (acceptInvitation && user?.id) {
+      hasCheckedInvitationParamRef.current = true;
+      setModalInvitacionesOpen(true);
+
+      // Limpiar el parámetro de la URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('acceptInvitation');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams, user?.id]);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id || hasCheckedDueRef.current) return;
+    hasCheckedDueRef.current = true;
+
+    const runCheck = async () => {
+      try {
+        const result = await checkProjectActivitiesDueForUser(user.id);
+
+        if (!isMountedRef.current) return;
+
+        if (result?.nextRunAt) {
+          const nextTime = new Date(result.nextRunAt).getTime();
+          const delayMs = Math.max(0, nextTime - Date.now());
+          if (delayMs > 0) {
+            retryTimeoutRef.current = setTimeout(() => {
+              if (!isMountedRef.current) return;
+              void checkProjectActivitiesDueForUser(user.id).finally(() => {
+                mutate();
+                mutateUnread();
+              });
+            }, delayMs);
+            return;
+          }
+        }
+
+        mutate();
+        mutateUnread();
+      } catch (error) {
+        console.error('Error verificando actividades de proyecto:', error);
+      }
+    };
+
+    void runCheck();
+  }, [user?.id, mutate, mutateUnread]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -193,6 +289,16 @@ export function NotificationHeader() {
           );
         }
         break;
+      case 'PROJECT_ACTIVITY_DUE':
+        if (notification.metadata?.projectId) {
+          const activityQuery = notification.metadata?.activityId
+            ? `?activityId=${notification.metadata.activityId}`
+            : '';
+          void router.push(
+            `/estudiantes/projects/${notification.metadata.projectId}${activityQuery}`
+          );
+        }
+        break;
       default:
         console.log('Tipo de notificación no manejado:', notification.type);
     }
@@ -234,7 +340,8 @@ export function NotificationHeader() {
         (n) =>
           n.type === notif.type &&
           n.metadata?.activityId === notif.metadata?.activityId &&
-          n.metadata?.lessonId === notif.metadata?.lessonId
+          n.metadata?.lessonId === notif.metadata?.lessonId &&
+          n.metadata?.daysLeft === notif.metadata?.daysLeft
       );
       if (!isDuplicate) acc.push(notif);
       return acc;
@@ -247,7 +354,7 @@ export function NotificationHeader() {
   return (
     <div className="notification-menu">
       <button
-        className={`group md:hover:bg-primary notification-button relative ml-2 rounded-full p-2 transition-colors hover:bg-gray-800 ${
+        className={`group notification-button relative ml-2 rounded-full p-2 transition-colors hover:bg-gray-800 md:hover:bg-primary ${
           isAnimating ? 'active' : ''
         }`}
         type="button"
@@ -259,13 +366,13 @@ export function NotificationHeader() {
         </span>
         {unreadCount > 0 ? (
           <>
-            <BellRing className="text-primary group-hover:text-background size-6 transition-colors" />
+            <BellRing className="size-6 text-primary transition-colors group-hover:text-background" />
             <span className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs text-white">
               {unreadCount}
             </span>
           </>
         ) : (
-          <Bell className="text-primary group-hover:text-background size-6 transition-colors" />
+          <Bell className="size-6 text-primary transition-colors group-hover:text-background" />
         )}
       </button>
 
@@ -295,10 +402,10 @@ export function NotificationHeader() {
             >
               <div className="notification-content">
                 <div className="notification-title">
-                  {notification.title.replace('lección', 'clase')}
+                  {renderNotificationTitle(notification)}
                 </div>
                 <div className="notification-description">
-                  {notification.message.replace('lección', 'clase')}
+                  {renderNotificationDescription(notification)}
                 </div>
                 <div className="notification-time">
                   {formatRelativeTime(notification.createdAt)}
@@ -342,7 +449,7 @@ export function NotificationHeader() {
       {/* Modal de confirmación para eliminar notificación */}
       {deleteId !== null && (
         <Dialog open={true} onOpenChange={(open) => !open && setDeleteId(null)}>
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-24 sm:pt-32">
             <div className="w-full max-w-xs rounded-lg bg-white p-6 shadow-lg">
               <h2 className="mb-4 text-lg font-bold text-gray-900">
                 Eliminar notificación

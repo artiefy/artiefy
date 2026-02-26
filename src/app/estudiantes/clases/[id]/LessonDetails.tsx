@@ -824,17 +824,6 @@ export default function LessonDetails({
   //     (a.orderIndex ?? 1e9) - (b.orderIndex ?? 1e9) || (a.id ?? 0) - (b.id ?? 0)
   // );
 
-  // Function to handle lesson unlock
-  const handleLessonUnlocked = (lessonId: number) => {
-    setLessonsState((prevLessons) =>
-      prevLessons.map((lesson) =>
-        lesson.id === lessonId
-          ? { ...lesson, isLocked: false, isNew: true }
-          : lesson
-      )
-    );
-  };
-
   // Añade esta función para manejar el cierre del modal
   const handleActivityModalClose = () => {
     setIsActivityModalOpen(false);
@@ -975,7 +964,6 @@ export default function LessonDetails({
                   isActivityCompleted={isActivityCompleted}
                   handleActivityCompletion={handleActivityCompletion}
                   userId={userId}
-                  onLessonUnlocked={handleLessonUnlocked}
                   courseId={lesson.courseId}
                   lessonId={lesson.id}
                   isLastLesson={isLastLesson(lessonsState, lesson.id)}
@@ -1029,7 +1017,7 @@ export default function LessonDetails({
               <button
                 type="button"
                 onClick={() => setIsMobileDrawerOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                className="flex size-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -1083,7 +1071,6 @@ export default function LessonDetails({
           markActivityAsCompletedAction={markActivityAsCompletedAction}
           onActivityCompletedAction={handleActivityCompletion}
           savedResults={null}
-          onLessonUnlockedAction={handleLessonUnlocked}
           isLastLesson={isLastLesson(lessonsState, lesson.id)}
           courseId={lesson.courseId}
           isLastActivity={isLastActivity(lessonsState, activities, lesson)}

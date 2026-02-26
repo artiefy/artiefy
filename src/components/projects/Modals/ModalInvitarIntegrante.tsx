@@ -29,7 +29,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
   proyectoId,
   projectMembers,
 }) => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [_users, _setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -43,16 +43,16 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
   const [inviteAlready, setInviteAlready] = useState(false);
   const { user } = useUser(); // Ajusta según tu sistema de auth
 
-  const fetchUsers = () => {
-    setLoading(true);
-    fetch('/api/users')
-      .then((res) => res.json())
-      .then((data) => {
-        console.log('API /api/users response:', data); // <-- LOG: muestra la respuesta completa
-        setUsers(Array.isArray(data) ? data : []);
-      })
-      .finally(() => setLoading(false));
-  };
+  // fetchUsers no se utiliza - el componente busca por email usando filteredUsers
+  // const fetchUsers = () => {
+  //   setLoading(true);
+  //   fetch('/api/users')
+  //     .then((res) => res.json())
+  //     .then((data) => {
+  //       console.log('API /api/users response:', data);
+  //     })
+  //     .finally(() => setLoading(false));
+  // };
 
   // Nueva función para obtener invitaciones pendientes del proyecto
   const fetchPendingInvitations = async () => {
@@ -61,15 +61,27 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
         `/api/projects/invitaciones?projectId=${proyectoId}`
       );
       if (res.ok) {
-        const data: {
-          invitations: { invitedUserId: string; status: string }[];
-        } = await res.json();
+        const data: unknown = await res.json();
+        const invitations = Array.isArray(data)
+          ? data
+          : ((data as { invitations?: unknown })?.invitations ?? []);
         const pending: Record<string, string> = {};
-        data.invitations.forEach((inv) => {
-          if (inv.status === 'pending') {
-            pending[inv.invitedUserId] = inv.status;
-          }
-        });
+        if (Array.isArray(invitations)) {
+          invitations.forEach((inv) => {
+            const invitedId =
+              typeof (inv as { invitedUserId?: unknown }).invitedUserId ===
+              'string'
+                ? String((inv as { invitedUserId?: string }).invitedUserId)
+                : '';
+            const status =
+              typeof (inv as { status?: unknown }).status === 'string'
+                ? String((inv as { status?: string }).status)
+                : '';
+            if (invitedId && status === 'pending') {
+              pending[invitedId] = status;
+            }
+          });
+        }
         setPendingInvitations(pending);
       }
     } catch (_err) {
@@ -79,33 +91,62 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      fetchUsers();
+      // Do not fetch all users on open. Only show the search box.
+      setFilteredUsers([]);
       setSearch('');
       fetchPendingInvitations();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, proyectoId]);
 
+  // Search by email (debounced). Only query backend when input looks like an email.
   useEffect(() => {
-    if (!search) {
-      setFilteredUsers(users);
-    } else {
-      const s = search.toLowerCase();
-      setFilteredUsers(
-        users.filter(
-          (u) =>
-            u.firstName?.toLowerCase().includes(s) ??
-            u.lastName?.toLowerCase().includes(s) ??
-            u.name?.toLowerCase().includes(s) ??
-            u.email?.toLowerCase().includes(s)
-        )
-      );
+    if (!search || search.trim() === '') {
+      setFilteredUsers([]);
+      return;
     }
-    // LOG: muestra los usuarios filtrados y originales
-    console.log('Usuarios originales:', users);
-    console.log('Usuarios filtrados:', filteredUsers);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [users, search]);
+
+    const maybeEmail = search.trim();
+    // Simple email pattern check
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/u;
+    if (!emailPattern.test(maybeEmail)) {
+      // If not a valid email yet, don't search and clear results
+      setFilteredUsers([]);
+      return;
+    }
+
+    let mounted = true;
+    const id = setTimeout(async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(
+          `/api/users?email=${encodeURIComponent(maybeEmail)}`
+        );
+        if (!mounted) return;
+        if (!res.ok) {
+          setFilteredUsers([]);
+          return;
+        }
+        const data = await res.json();
+        // Expecting either a single user or an array
+        const found = Array.isArray(data) ? data : data ? [data] : [];
+        // Filter to only exact email matches
+        const exactMatches = (Array.isArray(found) ? found : []).filter(
+          (u: User) => u.email.toLowerCase() === maybeEmail.toLowerCase()
+        );
+        setFilteredUsers(exactMatches);
+      } catch (e) {
+        setFilteredUsers([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      mounted = false;
+      clearTimeout(id);
+    };
+  }, [search]);
 
   // Usa el tipo User en vez de any y accede de forma segura a las propiedades
   const getDisplayName = (user: User): string => {
@@ -226,10 +267,10 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
   const handleClear = () => setSearch('');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60">
       {/* Barra de progreso de invitación */}
       {isInviting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
+        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/60">
           <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">
@@ -270,7 +311,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
           </div>
         </div>
       )}
-      <div className="relative mx-auto max-h-[95vh] min-h-[60vh] w-full max-w-4xl overflow-y-auto rounded-xl bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800 p-0 shadow-2xl">
+      <div className="relative mx-auto max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800 p-0 shadow-2xl">
         {/* Header sticky y barra de búsqueda sticky, ocupando todo el ancho */}
         <div className="sticky top-0 z-10 w-full bg-gradient-to-br from-slate-900 to-blue-900 p-2 backdrop-blur-md">
           <div className="px-6 pt-6">
@@ -296,14 +337,12 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                   variant="ghost"
                   size="icon"
                   className="text-white hover:bg-white/10"
-                  onClick={fetchUsers}
+                  onClick={() => {}}
                   aria-label="Recargar lista"
-                  title="Recargar lista"
-                  disabled={loading}
+                  title="Búsqueda automática por email"
+                  disabled={true}
                 >
-                  <RefreshCw
-                    className={`h-6 w-6 ${loading ? 'animate-spin' : ''}`}
-                  />
+                  <RefreshCw className="h-6 w-6" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -340,14 +379,14 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
           </div>
         </div>
         {/* Contenido scrollable */}
-        <div className="p-6">
+        <div className="p-4">
           {loading ? (
             <div className="py-12 text-center">
               <Loader2 className="mx-auto mb-4 h-16 w-16 animate-spin text-teal-400" />
               <p className="text-lg text-gray-400">Cargando usuarios...</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-3">
               {filteredUsers.map((user) => {
                 const displayName = getDisplayName(user);
                 // LOG: muestra cada usuario y el displayName calculado
@@ -395,24 +434,24 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                     key={user.id}
                     className="group border-white/20 bg-white/10 backdrop-blur-sm transition-all duration-300 hover:bg-white/15"
                   >
-                    <CardContent className="p-6">
-                      <div className="flex h-full min-h-[260px] flex-col items-center space-y-4 text-center">
-                        {/* Avatar con iniciales */}
-                        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-lg font-semibold text-slate-900">
-                          {avatarText}
+                    <CardContent className="p-4">
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-sm font-semibold text-slate-900">
+                            {avatarText}
+                          </div>
+                          <div className="min-w-0">
+                            <h3 className="text-sm font-semibold break-words text-white transition-colors group-hover:text-teal-300">
+                              {displayName}
+                            </h3>
+                            <p className="text-xs break-words text-gray-300">
+                              {user.email}
+                            </p>
+                          </div>
                         </div>
-                        <div className="w-full min-w-0 space-y-2">
-                          <h3 className="text-lg font-semibold break-words text-white transition-colors group-hover:text-teal-300">
-                            {displayName}
-                          </h3>
-                          <p className="text-sm break-words text-gray-300">
-                            {user.email}
-                          </p>
-                        </div>
-                        <div className="flex-grow" />
                         <Button
                           variant="outline"
-                          className="mt-auto w-full border-teal-400/40 bg-white/10 text-teal-300 hover:bg-teal-500/20 hover:text-teal-200"
+                          className="border-teal-400/40 bg-white/10 text-teal-300 hover:bg-teal-500/20 hover:text-teal-200"
                           onClick={() => handleInvite(user.id)}
                           disabled={yaEnProyecto || invitacionPendiente}
                         >
@@ -428,7 +467,7 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                 );
               })}
               {filteredUsers.length === 0 && (
-                <div className="col-span-3 py-12 text-center text-gray-400">
+                <div className="py-12 text-center text-gray-400">
                   No hay usuarios disponibles para invitar.
                 </div>
               )}

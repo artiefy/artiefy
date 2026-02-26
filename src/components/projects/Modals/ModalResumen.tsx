@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
+import { useUser } from '@clerk/nextjs';
 import {
   Calendar,
   ChevronLeft,
@@ -25,6 +26,8 @@ import useSWRMutation from 'swr/mutation';
 
 import AddCustomSectionModal from '~/components/estudiantes/projects/AddCustomSectionModal';
 import AddSectionDropdown from '~/components/estudiantes/projects/AddSectionDropdown';
+import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
+import ModalInvitarIntegrante from '~/components/projects/Modals/ModalInvitarIntegrante';
 import {
   Select,
   SelectContent,
@@ -480,6 +483,7 @@ interface ModalResumenProps {
   onClose: () => void;
   initialStep?: number;
   titulo?: string;
+  description?: string;
   planteamiento?: string;
   justificacion?: string;
   objetivoGen?: string;
@@ -568,6 +572,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   onClose,
   initialStep,
   titulo = '',
+  description = '',
   planteamiento,
   justificacion,
   objetivoGen,
@@ -589,6 +594,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isMounted, setIsMounted] = useState(false);
+  const { user } = useUser();
   const [timelineView, setTimelineView] = useState<
     'dias' | 'semanas' | 'meses'
   >('semanas');
@@ -616,6 +622,34 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [creationError, setCreationError] = useState<string | null>(null);
   const typingTimersRef = useRef<Record<string, number>>({});
   const typingTokensRef = useRef<Record<string, number>>({});
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false);
+  const [projectMembers, setProjectMembers] = useState<string[]>([]);
+  const [collaborators, setCollaborators] = useState<
+    Array<{
+      id: string | number;
+      nombre?: string;
+      email?: string;
+      esResponsable?: boolean;
+    }>
+  >([]);
+  const [collaboratorsLoading, setCollaboratorsLoading] = useState(false);
+
+  const handleTimelineWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (typeof window === 'undefined') return;
+    if (window.innerWidth < 640) {
+      event.preventDefault();
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () => setIsSmallScreen(window.innerWidth < 640);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   const stopTyping = (key: string) => {
     const timer = typingTimersRef.current[key];
@@ -730,7 +764,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   const [formData, setFormData] = useState({
     titulo,
-    description: '', // Descripción general (generada por IA)
+    description: description ?? '', // Descripción general (generada por IA)
     planteamiento: planteamiento ?? '', // Problema a resolver
     requirements: [] as string[], // Requisitos
     justificacion: justificacion ?? '',
@@ -967,6 +1001,93 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     projectId ? `/api/projects/${projectId}?details=true` : null,
     fetcher
   );
+
+  useEffect(() => {
+    if (!currentProjectId) {
+      setProjectMembers(user?.id ? [user.id] : []);
+      return;
+    }
+    let isMounted = true;
+    const fetchMembers = async () => {
+      try {
+        const res = await fetch(
+          `/api/projects/taken/list?projectId=${currentProjectId}`
+        );
+        if (!res.ok) {
+          if (isMounted) setProjectMembers(user?.id ? [user.id] : []);
+          return;
+        }
+        const data: unknown = await res.json();
+        const ids = Array.isArray(data)
+          ? data
+              .map((item) => String((item as { id?: unknown }).id ?? ''))
+              .filter(Boolean)
+          : [];
+        const ownerId =
+          typeof (existingProject as Record<string, unknown>)?.userId ===
+          'string'
+            ? String((existingProject as Record<string, unknown>).userId)
+            : user?.id;
+        const next = new Set<string>();
+        if (ownerId) next.add(ownerId);
+        if (user?.id) next.add(user.id);
+        ids.forEach((id) => next.add(id));
+        if (isMounted) setProjectMembers(Array.from(next));
+      } catch {
+        if (isMounted) setProjectMembers(user?.id ? [user.id] : []);
+      }
+    };
+    void fetchMembers();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentProjectId, existingProject, user?.id]);
+
+  useEffect(() => {
+    if (!currentProjectId || !formData.needsCollaborators) {
+      setCollaborators([]);
+      return;
+    }
+    let isMounted = true;
+    const fetchCollaborators = async () => {
+      setCollaboratorsLoading(true);
+      try {
+        const res = await fetch(
+          `/api/projects/taken?projectId=${currentProjectId}`
+        );
+        if (!res.ok) {
+          if (isMounted) setCollaborators([]);
+          return;
+        }
+        const data: unknown = await res.json();
+        const integrantes = Array.isArray(
+          (data as { integrantes?: unknown })?.integrantes
+        )
+          ? (data as { integrantes: Array<Record<string, unknown>> })
+              .integrantes
+          : [];
+        if (isMounted) {
+          setCollaborators(
+            integrantes.map((item) => ({
+              id: String(item.id ?? ''),
+              nombre:
+                typeof item.nombre === 'string' ? String(item.nombre) : '',
+              email: typeof item.email === 'string' ? String(item.email) : '',
+              esResponsable: Boolean(item.esResponsable),
+            }))
+          );
+        }
+      } catch {
+        if (isMounted) setCollaborators([]);
+      } finally {
+        if (isMounted) setCollaboratorsLoading(false);
+      }
+    };
+    void fetchCollaborators();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentProjectId, formData.needsCollaborators, showInviteModal]);
 
   // Hook para generar contenido con IA
   const {
@@ -1319,6 +1440,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               objetivosEsp,
             categoriaId: dataToSet.category_id ?? categoriaId ?? undefined,
             tipoProyecto: dataToSet.type_project ?? tipoProyecto ?? '',
+            needsCollaborators:
+              typeof (dataToSet as { needsCollaborators?: unknown })
+                ?.needsCollaborators === 'boolean'
+                ? Boolean(
+                    (dataToSet as { needsCollaborators?: boolean })
+                      .needsCollaborators
+                  )
+                : prevData.needsCollaborators,
             requirements: parsedRequirements ?? prevData.requirements,
             durationEstimate:
               typeof dataToSet.tiempo_estimado === 'number'
@@ -2170,6 +2299,87 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   />
                 </button>
               </div>
+
+              {formData.needsCollaborators && (
+                <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        Invitar colaboradores
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Busca por correo en la base de Clerk y envía
+                        invitaciones al proyecto.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowInviteModal(true)}
+                      disabled={!currentProjectId}
+                      className="inline-flex h-9 items-center justify-center rounded-md bg-accent px-3 text-xs font-semibold text-background transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      Buscar colaboradores
+                    </button>
+                  </div>
+                  {!currentProjectId && (
+                    <p className="mt-2 text-xs text-amber-500">
+                      Guarda el proyecto para habilitar invitaciones.
+                    </p>
+                  )}
+                  {currentProjectId && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                          Colaboradores agregados
+                        </p>
+                        {collaborators.filter((c) => !c.esResponsable).length >
+                          0 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowCollaboratorsModal(true)}
+                            className="inline-flex h-7 items-center justify-center rounded-md px-2 text-xs font-semibold text-accent transition-colors hover:bg-accent/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                          >
+                            Ver todos
+                          </button>
+                        )}
+                      </div>
+                      {collaboratorsLoading ? (
+                        <p className="text-xs text-muted-foreground">
+                          Cargando colaboradores...
+                        </p>
+                      ) : collaborators.filter((c) => !c.esResponsable).length >
+                        0 ? (
+                        <div className="space-y-2">
+                          {collaborators
+                            .filter((c) => !c.esResponsable)
+                            .map((colab) => (
+                              <div
+                                key={colab.id}
+                                className="flex items-center justify-between rounded-md border border-border/50 bg-background/40 px-3 py-2 text-xs"
+                              >
+                                <div className="min-w-0">
+                                  <p className="font-medium text-foreground">
+                                    {colab.nombre || 'Sin nombre'}
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    {colab.email || 'Sin email'}
+                                  </p>
+                                </div>
+                                <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                                  Colaborador
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Aún no hay colaboradores aceptados.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Contenido Multimedia */}
               <div className="space-y-3 border-t border-border/50 pt-4">
@@ -3084,8 +3294,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             rangeEnd,
             timelineView
           );
-          const columnWidth = 80;
-          const labelColumnWidth = 208;
+          const columnWidth = isSmallScreen ? 68 : 80;
+          const labelColumnWidth = isSmallScreen ? 160 : 208;
           const gridWidth = Math.max(columns.length * columnWidth, 1);
           const totalWidth = labelColumnWidth + gridWidth;
           const msPerDay = 1000 * 60 * 60 * 24;
@@ -3158,10 +3368,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   cronograma.
                 </p>
               ) : (
-                <div className="scrollbar-thin w-full overflow-x-auto [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent">
+                <div
+                  className="scrollbar-thin relative w-full touch-pan-x overflow-x-auto [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent"
+                  onWheel={handleTimelineWheel}
+                >
                   <div className="flex" style={{ minWidth: totalWidth }}>
                     <div
-                      className="shrink-0 border-r border-border/30"
+                      className="sticky left-0 z-10 shrink-0 border-r border-border/30 bg-[#061c37] px-3 sm:bg-transparent sm:px-0 sm:backdrop-blur-none"
                       style={{ width: labelColumnWidth }}
                     >
                       <div className="mb-2 flex h-10 items-end border-b border-border/50 pr-3 pb-2">
@@ -3180,17 +3393,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                                 {row.key}
                               </span>
                               <span
-                                className="max-w-[140px] truncate text-xs text-foreground"
+                                className="max-w-[110px] text-xs text-foreground sm:max-w-[180px]"
                                 title={row.title}
                               >
-                                {row.title}
+                                <span className="block overflow-x-auto pr-2 whitespace-nowrap sm:truncate sm:overflow-hidden sm:pr-0">
+                                  {row.title}
+                                </span>
                               </span>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 pl-1 sm:pl-0">
                       <div style={{ minWidth: gridWidth }}>
                         <div className="mb-2 flex h-10 border-b border-border/50">
                           {columns.map((column, index) => (
@@ -3590,6 +3805,55 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         nameLocked={Boolean(pendingSection && !pendingSection.isCustom)}
         onGenerateDescription={handleGenerateSectionDescription}
       />
+
+      {showInviteModal && currentProjectId && (
+        <ModalInvitarIntegrante
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          proyectoId={currentProjectId}
+          projectMembers={projectMembers}
+        />
+      )}
+
+      {showCollaboratorsModal && currentProjectId && (
+        <ModalIntegrantesProyectoInfo
+          isOpen={showCollaboratorsModal}
+          onClose={() => setShowCollaboratorsModal(false)}
+          proyecto={{
+            id: currentProjectId,
+            titulo: formData.titulo || 'Proyecto sin título',
+            rama: formData.tipoProyecto || 'Sin especialidad',
+            especialidades: collaborators.filter((c) => !c.esResponsable)
+              .length,
+            participacion: formData.needsCollaborators
+              ? 'Grupal'
+              : 'Individual',
+          }}
+          isProjectOwner={true}
+          onInvitationRemoved={() => {
+            // Refrescar los colaboradores después de eliminar uno
+            if (currentProjectId) {
+              void fetch(`/api/projects/taken?projectId=${currentProjectId}`)
+                .then((res) => res.json())
+                .then(
+                  (data: {
+                    users?: Array<{
+                      id: string | number;
+                      nombre?: string;
+                      email?: string;
+                      esResponsable?: boolean;
+                    }>;
+                  }) => {
+                    setCollaborators(data.users ?? []);
+                  }
+                )
+                .catch((err) => {
+                  console.error('Error refrescando colaboradores:', err);
+                });
+            }
+          }}
+        />
+      )}
     </div>,
     document.body
   );

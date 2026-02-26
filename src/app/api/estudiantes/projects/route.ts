@@ -1,13 +1,14 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, or } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
   categories,
   projectActivities,
   projects,
+  projectsTaken,
   specificObjectives,
 } from '~/server/db/schema';
 
@@ -32,6 +33,43 @@ export async function GET(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    console.log(
+      '📂 Obteniendo proyectos para usuario:',
+      userId,
+      'curso:',
+      courseId
+    );
+
+    // Primero obtener IDs de proyectos donde el usuario está invitado
+    const invitedProjects = await db
+      .select({ projectId: projectsTaken.projectId })
+      .from(projectsTaken)
+      .where(
+        and(eq(projectsTaken.userId, userId), eq(projectsTaken.isInvited, true))
+      );
+
+    const invitedProjectIds = invitedProjects.map((p) => p.projectId);
+    console.log('📧 Proyectos donde está invitado:', invitedProjectIds);
+
+    // Construir WHERE clause según si hay invitaciones
+    const whereCondition =
+      invitedProjectIds.length > 0
+        ? and(
+            // Para proyectos propios: deben estar en el curso
+            or(
+              and(
+                eq(projects.userId, userId),
+                eq(projects.courseId, parseInt(courseId))
+              ),
+              // Para proyectos invitados: SI O SI mostrar (sin restricción courseId)
+              inArray(projects.id, invitedProjectIds)
+            )
+          )
+        : and(
+            eq(projects.courseId, parseInt(courseId)),
+            eq(projects.userId, userId)
+          );
 
     // Obtener proyectos del curso para este usuario con el nombre de la categoría
     let userProjects;
@@ -69,12 +107,7 @@ export async function GET(req: NextRequest) {
         })
         .from(projects)
         .leftJoin(categories, eq(projects.categoryId, categories.id))
-        .where(
-          and(
-            eq(projects.userId, userId),
-            eq(projects.courseId, parseInt(courseId))
-          )
-        );
+        .where(whereCondition);
     } catch (queryError) {
       const errorCode = (queryError as { cause?: { code?: string } })?.cause
         ?.code;
@@ -115,13 +148,10 @@ export async function GET(req: NextRequest) {
         })
         .from(projects)
         .leftJoin(categories, eq(projects.categoryId, categories.id))
-        .where(
-          and(
-            eq(projects.userId, userId),
-            eq(projects.courseId, parseInt(courseId))
-          )
-        );
+        .where(whereCondition);
     }
+
+    console.log('✅ Proyectos encontrados:', userProjects.length);
 
     const projectIds = userProjects.map((project) => project.id);
 
@@ -158,6 +188,9 @@ export async function GET(req: NextRequest) {
     }
 
     const projectsWithProgress = userProjects.map((project) => {
+      const isInvited = invitedProjectIds.includes(project.id);
+      const isOwner = project.userId === userId;
+
       const hasBasicInfo = Boolean(
         project.name?.trim() &&
         ((project.description ?? '').trim() ||
@@ -194,14 +227,20 @@ export async function GET(req: NextRequest) {
       return {
         ...project,
         progressPercentage: Math.round((completedSections / 7) * 100),
+        isInvited,
+        isOwner,
       };
     });
 
     return NextResponse.json(projectsWithProgress, { status: 200 });
   } catch (error) {
-    console.error('Error al obtener proyectos:', error);
+    console.error('❌ Error al obtener proyectos:', error);
+    console.error('❌ Error detallado:', JSON.stringify(error, null, 2));
     return NextResponse.json(
-      { error: 'Error al obtener proyectos' },
+      {
+        error: 'Error al obtener proyectos',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

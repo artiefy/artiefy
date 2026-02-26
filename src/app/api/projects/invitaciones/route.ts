@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Agrega import para crear notificación
+import { clerkClient } from '@clerk/nextjs/server';
 import { and, eq } from 'drizzle-orm';
 
-// Agrega import para crear notificación
+import { EmailTemplateProjectInvitation } from '~/components/estudiantes/layout/EmailTemplateProjectInvitation';
+import { sendTicketEmail } from '~/lib/emails/ticketEmails';
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
-import { projectInvitations } from '~/server/db/schema';
+import { projectInvitations, projects, users } from '~/server/db/schema';
 
 export async function POST(req: NextRequest) {
   try {
@@ -46,6 +49,59 @@ export async function POST(req: NextRequest) {
       });
       return NextResponse.json(
         { error: 'Parámetros inválidos' },
+        { status: 400 }
+      );
+    }
+
+    const ensureUserExists = async (userIdToEnsure: string) => {
+      const existingUser = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, userIdToEnsure))
+        .limit(1);
+
+      if (existingUser.length > 0) return;
+
+      const clerk = await clerkClient();
+      const clerkUser = await clerk.users.getUser(userIdToEnsure);
+      const email =
+        clerkUser.primaryEmailAddress?.emailAddress ??
+        clerkUser.emailAddresses?.[0]?.emailAddress ??
+        '';
+
+      if (!email) {
+        throw new Error('No se encontró email del usuario en Clerk');
+      }
+
+      const firstName = clerkUser.firstName?.trim() ?? '';
+      const lastName = clerkUser.lastName?.trim() ?? '';
+      const name = [firstName, lastName].filter(Boolean).join(' ') || email;
+      const roleRaw =
+        typeof clerkUser.publicMetadata?.role === 'string'
+          ? String(clerkUser.publicMetadata?.role).trim().toLowerCase()
+          : 'estudiante';
+      const role =
+        roleRaw === 'educador' ||
+        roleRaw === 'admin' ||
+        roleRaw === 'super-admin'
+          ? roleRaw
+          : 'estudiante';
+
+      await db.insert(users).values({
+        id: userIdToEnsure,
+        role,
+        name,
+        email,
+      });
+    };
+
+    try {
+      await ensureUserExists(invitedUserIdStr);
+      await ensureUserExists(invitedByUserIdStr);
+    } catch (error) {
+      console.error('Error verificando usuarios:', error);
+      return NextResponse.json(
+        { error: 'No se pudo validar el usuario invitado' },
         { status: 400 }
       );
     }
@@ -113,6 +169,74 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Enviar email de invitación
+    try {
+      // Obtener información del proyecto
+      const projectData = await db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, projectIdNum))
+        .limit(1);
+
+      const projectName = projectData[0]?.name ?? 'el proyecto';
+
+      // Obtener información del usuario invitado
+      const invitedUserData = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, invitedUserIdStr))
+        .limit(1);
+
+      const invitedUserEmail = invitedUserData[0]?.email ?? '';
+      const invitedUserName = invitedUserData[0]?.name ?? '';
+
+      // Obtener información del usuario que invita
+      const invitedByUserData = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, invitedByUserIdStr))
+        .limit(1);
+
+      const invitedByUserName = invitedByUserData[0]?.name ?? 'Un usuario';
+
+      if (invitedUserEmail) {
+        // Construir URL de aceptación
+        const baseUrl =
+          process.env.NEXT_PUBLIC_BASE_URL ?? 'https://artiefy.com';
+        const acceptUrl = `${baseUrl}/proyectos?acceptInvitation=${result[0]?.id}`;
+
+        const htmlContent = EmailTemplateProjectInvitation({
+          invitedUserName,
+          invitedByUserName,
+          projectName,
+          invitationMessage:
+            typeof invitationMessage === 'string'
+              ? invitationMessage
+              : undefined,
+          acceptUrl,
+        });
+
+        await sendTicketEmail({
+          to: invitedUserEmail,
+          subject: `Invitación al proyecto: ${projectName}`,
+          html: htmlContent,
+          attachments: [
+            {
+              filename: 'artiefy-logo2.png',
+              path: `${process.cwd()}/public/artiefy-logo2.png`,
+              cid: 'logo@artiefy.com',
+              contentType: 'image/png',
+            },
+          ],
+        });
+
+        console.log('✅ Email de invitación enviado a:', invitedUserEmail);
+      }
+    } catch (emailError) {
+      console.error('❌ Error al enviar email de invitación:', emailError);
+      // No falla el endpoint si el email falla
+    }
+
     return NextResponse.json(
       { success: true, invitation: result[0] },
       { status: 201 }
@@ -142,13 +266,22 @@ export async function GET(req: NextRequest) {
     if (userId) {
       // Buscar invitaciones para el usuario
       const invitaciones = await db
-        .select()
+        .select({
+          id: projectInvitations.id,
+          projectId: projectInvitations.projectId,
+          invitedByUserId: projectInvitations.invitedByUserId,
+          invitationMessage: projectInvitations.invitationMessage,
+          status: projectInvitations.status,
+          projectName: projects.name,
+        })
         .from(projectInvitations)
+        .leftJoin(projects, eq(projectInvitations.projectId, projects.id))
         .where(eq(projectInvitations.invitedUserId, userId));
       // Mapear al formato esperado por el frontend
       const mapped = invitaciones.map((inv) => ({
         id: inv.id,
-        projectName: String(inv.projectId), // Puedes hacer un join para obtener el nombre real si lo necesitas
+        projectId: inv.projectId,
+        projectName: inv.projectName ?? String(inv.projectId),
         fromUser: String(inv.invitedByUserId),
         message: inv.invitationMessage ?? '',
         status: inv.status,
@@ -171,7 +304,7 @@ export async function GET(req: NextRequest) {
         invitedUserId: inv.invitedUserId,
         status: inv.status,
       }));
-      return NextResponse.json(mapped);
+      return NextResponse.json({ invitations: mapped });
     }
     // Fallback
     return NextResponse.json([], { status: 200 });

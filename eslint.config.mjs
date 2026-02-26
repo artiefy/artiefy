@@ -1,3 +1,4 @@
+import betterTailwindCSS from 'eslint-plugin-better-tailwindcss';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
@@ -25,6 +26,7 @@ export default defineConfig([
     plugins: {
       'simple-import-sort': simpleImportSort,
       '@typescript-eslint': typescriptEslint,
+      'better-tailwindcss': betterTailwindCSS,
     },
     rules: {
       // TypeScript
@@ -77,6 +79,10 @@ export default defineConfig([
       'simple-import-sort/exports': 'off',
       'jsx-a11y/alt-text': 'off',
       'no-undef': 'off',
+      // Better Tailwind CSS
+      'better-tailwindcss/no-unnecessary-whitespace': 'warn',
+      'better-tailwindcss/no-duplicate-classes': 'warn',
+      'better-tailwindcss/enforce-shorthand-classes': 'warn',
       'react/display-name': 'off',
     },
   },

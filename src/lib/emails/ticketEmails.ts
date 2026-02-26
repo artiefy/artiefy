@@ -21,9 +21,15 @@ export async function sendTicketEmail(emailData: {
   to: string;
   subject: string;
   html: string;
+  attachments?: Array<{
+    filename: string;
+    path: string;
+    cid: string;
+    contentType: string;
+  }>;
 }): Promise<{ success: boolean; error?: EmailError }> {
   try {
-    const { to, subject, html } = emailData;
+    const { to, subject, html, attachments } = emailData;
     console.log('📧 Intentando enviar email a:', to);
     console.log('📧 Asunto:', subject);
 
@@ -43,6 +49,7 @@ export async function sendTicketEmail(emailData: {
       subject,
       html,
       replyTo: 'direcciongeneral@artiefy.com',
+      ...(attachments && { attachments }),
     };
 
     const info = await transporter.sendMail(mailOptions);

@@ -10,7 +10,10 @@ export async function GET(request: Request) {
   const userId = searchParams.get('userId');
   const projectId = searchParams.get('projectId');
   if (!userId || !projectId) {
-    return NextResponse.json({ taken: false }, { status: 400 });
+    return NextResponse.json(
+      { taken: false, isInvited: false },
+      { status: 400 }
+    );
   }
   try {
     const taken = await db
@@ -24,8 +27,14 @@ export async function GET(request: Request) {
       )
       .limit(1);
 
-    return NextResponse.json({ taken: taken.length > 0 });
+    const isTaken = taken.length > 0;
+    const isInvited = isTaken ? (taken[0]?.isInvited ?? false) : false;
+
+    return NextResponse.json({ taken: isTaken, isInvited });
   } catch {
-    return NextResponse.json({ taken: false }, { status: 500 });
+    return NextResponse.json(
+      { taken: false, isInvited: false },
+      { status: 500 }
+    );
   }
 }

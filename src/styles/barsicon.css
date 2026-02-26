@@ -8,10 +8,6 @@
   height: 85px;
 }
 
-.hamburger input {
-  display: none;
-}
-
 .hamburger svg {
   position: relative;
   width: 52px;
@@ -35,12 +31,12 @@
   stroke-dasharray: 12 63;
 }
 
-.hamburger input:checked + svg {
+.hamburger[data-open='true'] svg {
   transform: rotate(-45deg);
   transform-origin: center;
 }
 
-.hamburger input:checked + svg .line-top-bottom {
+.hamburger[data-open='true'] svg .line-top-bottom {
   stroke-dasharray: 20 300;
   stroke-dashoffset: -32.42;
 }

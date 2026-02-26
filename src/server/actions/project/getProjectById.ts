@@ -40,6 +40,7 @@ export interface ProjectDetail {
       meses: number[];
       startDate?: string;
       endDate?: string;
+      linkUrl?: string | null;
       deliverableKey?: string | null;
       deliverableUrl?: string | null;
       deliverableName?: string | null;
@@ -53,6 +54,7 @@ export interface ProjectDetail {
     meses: number[];
     startDate?: string;
     endDate?: string;
+    linkUrl?: string | null;
     deliverableKey?: string | null;
     deliverableUrl?: string | null;
     deliverableName?: string | null;
@@ -123,6 +125,7 @@ export async function getProjectById(
           ? new Date(a.startDate).toISOString()
           : undefined,
         endDate: a.endDate ? new Date(a.endDate).toISOString() : undefined,
+        linkUrl: a.linkUrl ?? null,
         deliverableKey: a.deliverableKey ?? null,
         deliverableUrl: a.deliverableUrl ?? null,
         deliverableName: a.deliverableName ?? null,
@@ -146,6 +149,7 @@ export async function getProjectById(
     meses: a.meses,
     startDate: a.startDate ? new Date(a.startDate).toISOString() : undefined,
     endDate: a.endDate ? new Date(a.endDate).toISOString() : undefined,
+    linkUrl: a.linkUrl ?? null,
     deliverableKey: a.deliverableKey ?? null,
     deliverableUrl: a.deliverableUrl ?? null,
     deliverableName: a.deliverableName ?? null,

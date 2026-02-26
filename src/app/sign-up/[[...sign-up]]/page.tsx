@@ -22,7 +22,8 @@ export default function Page() {
   return (
     <div className="mt-5 flex justify-center py-5">
       <SignUp
-        redirectUrl={finalRedirectUrl}
+        forceRedirectUrl={finalRedirectUrl}
+        signInForceRedirectUrl={finalRedirectUrl}
         appearance={{
           layout: {
             logoPlacement: 'inside', // Ubicación del logo: 'inside' o 'outside'

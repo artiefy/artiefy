@@ -483,7 +483,6 @@ export function CourseActivities({
             );
           }}
           savedResults={null}
-          onLessonUnlockedAction={() => {}}
           isLastLesson={lastLessonId === selectedLesson.id}
           courseId={courseId}
           isLastActivity={

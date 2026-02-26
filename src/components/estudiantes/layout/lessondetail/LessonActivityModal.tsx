@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
+import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
   CheckCircleIcon,
@@ -32,9 +33,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogOverlay,
+  DialogPortal,
 } from '~/components/estudiantes/ui/dialog';
 import { Icons } from '~/components/estudiantes/ui/icons';
-import { unlockNextLesson } from '~/server/actions/estudiantes/lessons/unlockNextLesson';
 import { type Activity, type Question, type SavedAnswer } from '~/types';
 import { formatScoreNumber } from '~/utils/formatScore';
 import { useMediaQuery } from '~/utils/useMediaQuery'; // <-- crea este hook util
@@ -56,7 +58,6 @@ interface ActivityModalProps {
     answers: Record<string, SavedAnswer>;
     isAlreadyCompleted?: boolean;
   } | null;
-  onLessonUnlockedAction: (lessonId: number) => void; // Renamed
   isLastLesson: boolean;
   courseId: number;
   isLastActivity: boolean;
@@ -219,7 +220,6 @@ export function LessonActivityModal({
   markActivityAsCompletedAction,
   onActivityCompletedAction,
   savedResults,
-  onLessonUnlockedAction,
   isLastLesson,
   courseId,
   isLastActivity,
@@ -239,7 +239,6 @@ export function LessonActivityModal({
   const [isLoading, setIsLoading] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [finalScore, setFinalScore] = useState(0);
-  const [isUnlocking, setIsUnlocking] = useState(false);
   const [isResultsLoaded, setIsResultsLoaded] = useState(false);
   const [attemptsLeft, setAttemptsLeft] = useState<number | null>(null);
   const [isSavingResults, setIsSavingResults] = useState(false);
@@ -607,8 +606,6 @@ export function LessonActivityModal({
 
   const handleFinishAndNavigate = async () => {
     try {
-      setIsUnlocking(true);
-
       // First mark activity as completed
       await markActivityAsCompletedAction();
 
@@ -618,22 +615,11 @@ export function LessonActivityModal({
       // Update the questions answered status
       onQuestionsAnsweredAction(true);
 
-      // Finally try to unlock next lesson
-      const result = await unlockNextLesson(activity.lessonsId);
-
-      if (result?.success && result.nextLessonId) {
-        onLessonUnlockedAction(result.nextLessonId);
-        toast.success('¡Siguiente clase desbloqueada!');
-        onCloseAction();
-      } else {
-        // Just close if it's the last lesson
-        onCloseAction();
-      }
+      // Close the modal
+      onCloseAction();
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error al completar la actividad');
-    } finally {
-      setIsUnlocking(false);
     }
   };
 
@@ -717,7 +703,7 @@ export function LessonActivityModal({
             }`}
           />
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md">
+        <div className="max-w-full min-w-0 rounded-lg border border-gray-200 bg-white p-4 break-words shadow-sm transition-all hover:shadow-md sm:p-6">
           <h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
             <div className="flex items-center">
               <span className="mr-2 flex h-8 w-8 items-center justify-center rounded-full bg-primary/20 font-bold text-background">
@@ -741,7 +727,7 @@ export function LessonActivityModal({
                 {currentQuestion.options?.map((option) => (
                   <label
                     key={option.id}
-                    className="flex cursor-pointer items-center rounded-lg border border-gray-200 p-4 transition-all hover:bg-gray-50"
+                    className="flex min-w-0 cursor-pointer items-start rounded-lg border border-gray-200 p-3 transition-all hover:bg-gray-50 sm:p-4"
                   >
                     <input
                       type="radio"
@@ -753,7 +739,9 @@ export function LessonActivityModal({
                       onChange={(e) => handleAnswer(e.target.value)}
                       className="h-4 w-4 text-primary focus:ring-primary"
                     />
-                    <span className="ml-3 text-gray-700">{option.text}</span>
+                    <span className="ml-3 break-words whitespace-normal text-gray-700">
+                      {option.text}
+                    </span>
                   </label>
                 ))}
               </div>
@@ -791,7 +779,7 @@ export function LessonActivityModal({
 
   const renderActionButton = () => {
     // Loading states checks
-    if (!isResultsLoaded || isUnlocking) {
+    if (!isResultsLoaded) {
       return (
         <Button
           disabled
@@ -1929,112 +1917,112 @@ export function LessonActivityModal({
         }
       }}
     >
-      <DialogContent
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={modalTitleId}
-        aria-describedby={modalDescId}
-        className={`flex flex-col overflow-hidden [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background ${
-          isMobile
-            ? 'mx-2 w-[calc(100%-1rem)] max-w-[520px] rounded-2xl p-1'
-            : 'max-h-[90vh] rounded-2xl sm:max-w-[500px]'
-        }`}
-      >
-        {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
-        <button
-          type="button"
-          aria-label="Cerrar modal"
-          onClick={handleRequestClose}
-          className="absolute top-2 right-4 z-50 rounded-full p-2 transition-colors hover:bg-gray-800"
+      <DialogPortal>
+        <DialogOverlay className="z-[100003]" />
+        <DialogPrimitive.Content
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={modalTitleId}
+          aria-describedby={modalDescId}
+          className={`data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-[100004] flex translate-x-[-50%] translate-y-[-50%] flex-col gap-4 overflow-hidden rounded-lg border bg-background shadow-lg duration-200 [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background ${
+            isMobile
+              ? 'max-h-[90vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl p-4'
+              : 'max-h-[90vh] w-full overflow-y-auto rounded-2xl p-6 sm:max-w-[500px]'
+          }`}
         >
-          <div className="flex items-center justify-center">
-            <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
-          </div>
-        </button>
-        <DialogHeader className="sticky top-0 z-40 bg-background">
-          <DialogTitle
-            id={modalTitleId}
-            className="text-center text-3xl font-bold"
-            tabIndex={0}
+          {/* Hidden title for accessibility */}
+          <DialogPrimitive.Title className="sr-only">
+            Actividad del curso
+          </DialogPrimitive.Title>
+          {/* Botón de cerrar (X) arriba a la derecha, color blanco */}
+          <button
+            type="button"
+            aria-label="Cerrar modal"
+            onClick={handleRequestClose}
+            className="absolute top-4 right-4 z-50 rounded-full p-2 transition-colors hover:bg-gray-800"
           >
-            {activity.content?.questionsFilesSubida?.[0] != null
-              ? 'SUBIDA DE DOCUMENTO'
-              : 'ACTIVIDAD'}
-          </DialogTitle>
-          <div
-            id={modalDescId}
-            className="sr-only"
-            aria-live="polite"
-            tabIndex={0}
-          >
-            {activity.description ?? 'Actividad del curso'}
-          </div>
-        </DialogHeader>
-        <div className="flex-1 overflow-y-auto px-4">
-          {isUnlocking ? (
-            <>
-              <div aria-live="assertive" className="sr-only">
-                Desbloqueando Siguiente Clase...
-              </div>
-              {renderLoadingState('Desbloqueando Siguiente Clase...')}
-            </>
-          ) : isSavingResults ? (
-            <>
-              <div aria-live="assertive" className="sr-only">
-                Cargando Resultados...
-              </div>
-              {renderLoadingState('Cargando Resultados...')}
-            </>
-          ) : activity.typeid === 1 ? (
-            renderContent()
-          ) : (
-            <div className="space-y-6">
-              {showResults ? (
-                renderResults()
-              ) : (
-                <div>
-                  <div className="mb-8 flex flex-col items-center justify-center text-center">
-                    <span className="text-2xl font-bold text-primary">
-                      {getQuestionTypeLabel(currentQuestion?.type ?? '')}
-                    </span>
-                    <span className="mt-2 text-sm text-gray-500">
-                      {/* Corrige el contador para mostrar "1 de N" */}
-                      {questions.length > 0
-                        ? `${currentQuestionIndex + 1} de ${questions.length}`
-                        : 'Sin preguntas'}
-                    </span>
-                  </div>
-                  {renderQuestion()}
-                  <div className="mt-6 flex justify-between">
-                    <button
-                      className="btn-arrow btn-arrow-prev"
-                      disabled={currentQuestionIndex === 0}
-                      onClick={() =>
-                        setCurrentQuestionIndex((prev) => prev - 1)
-                      }
-                    >
-                      <ChevronRightIcon />
-                      <span>Anterior</span>
-                    </button>
-                    <button
-                      className={`btn-arrow ${
-                        isLastQuestion ? 'btn-arrow-success' : ''
-                      }`}
-                      disabled={!canProceedToNext}
-                      onClick={isLastQuestion ? handleFinish : handleNext}
-                    >
-                      <span>
-                        {isLastQuestion ? 'Ver resultados' : 'Siguiente'}
-                      </span>
-                      <ChevronRightIcon />
-                    </button>
-                  </div>
-                </div>
-              )}
+            <div className="flex items-center justify-center">
+              <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
             </div>
-          )}
-        </div>
-      </DialogContent>
+          </button>
+          <DialogHeader className="sticky top-0 z-40 bg-background">
+            <DialogTitle
+              id={modalTitleId}
+              className="text-center text-3xl font-bold"
+              tabIndex={0}
+            >
+              {activity.content?.questionsFilesSubida?.[0] != null
+                ? 'SUBIDA DE DOCUMENTO'
+                : 'ACTIVIDAD'}
+            </DialogTitle>
+            <div
+              id={modalDescId}
+              className="sr-only"
+              aria-live="polite"
+              tabIndex={0}
+            >
+              {activity.description ?? 'Actividad del curso'}
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            {isSavingResults ? (
+              <>
+                <div aria-live="assertive" className="sr-only">
+                  Cargando Resultados...
+                </div>
+                {renderLoadingState('Cargando Resultados...')}
+              </>
+            ) : activity.typeid === 1 ? (
+              renderContent()
+            ) : (
+              <div className="space-y-6">
+                {showResults ? (
+                  renderResults()
+                ) : (
+                  <div>
+                    <div className="mb-8 flex flex-col items-center justify-center text-center">
+                      <span className="text-2xl font-bold text-primary">
+                        {getQuestionTypeLabel(currentQuestion?.type ?? '')}
+                      </span>
+                      <span className="mt-2 text-sm text-gray-500">
+                        {/* Corrige el contador para mostrar "1 de N" */}
+                        {questions.length > 0
+                          ? `${currentQuestionIndex + 1} de ${questions.length}`
+                          : 'Sin preguntas'}
+                      </span>
+                    </div>
+                    {renderQuestion()}
+                    <div className="mt-6 flex justify-between">
+                      <button
+                        className="btn-arrow btn-arrow-prev"
+                        disabled={currentQuestionIndex === 0}
+                        onClick={() =>
+                          setCurrentQuestionIndex((prev) => prev - 1)
+                        }
+                      >
+                        <ChevronRightIcon />
+                        <span>Anterior</span>
+                      </button>
+                      <button
+                        className={`btn-arrow ${
+                          isLastQuestion ? 'btn-arrow-success' : ''
+                        }`}
+                        disabled={!canProceedToNext}
+                        onClick={isLastQuestion ? handleFinish : handleNext}
+                      >
+                        <span>
+                          {isLastQuestion ? 'Ver resultados' : 'Siguiente'}
+                        </span>
+                        <ChevronRightIcon />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPortal>
     </Dialog>
   );
 }

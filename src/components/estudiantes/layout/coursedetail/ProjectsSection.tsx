@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 
-import { Clock } from 'lucide-react';
+import { Clock, Users } from 'lucide-react';
 import {
   FaArrowLeft,
   FaCalendarAlt,
@@ -39,6 +39,9 @@ export function ProjectsSection({
   const [addedSections, setAddedSections] = useState<
     Record<string, { name: string; content: string }>
   >({});
+  const [collaboratorCounts, setCollaboratorCounts] = useState<
+    Record<number, number>
+  >({});
   const selectedProjectId = selectedProject?.id;
 
   // Cargar proyectos al montar el componente
@@ -66,6 +69,40 @@ export function ProjectsSection({
 
     void fetchProjects();
   }, [courseId]);
+
+  useEffect(() => {
+    if (!projects.length) {
+      setCollaboratorCounts({});
+      return;
+    }
+    let isMounted = true;
+    const fetchCounts = async () => {
+      const entries = await Promise.all(
+        projects.map(async (project) => {
+          try {
+            const res = await fetch(
+              `/api/projects/taken/list?projectId=${project.id}`
+            );
+            if (!res.ok) return [project.id, 0] as const;
+            const data: unknown = await res.json();
+            return [project.id, Array.isArray(data) ? data.length : 0] as const;
+          } catch {
+            return [project.id, 0] as const;
+          }
+        })
+      );
+      if (!isMounted) return;
+      const next: Record<number, number> = {};
+      entries.forEach(([id, count]) => {
+        next[id] = count;
+      });
+      setCollaboratorCounts(next);
+    };
+    void fetchCounts();
+    return () => {
+      isMounted = false;
+    };
+  }, [projects]);
 
   // Cargar secciones del proyecto cuando se selecciona uno
   useEffect(() => {
@@ -309,6 +346,7 @@ export function ProjectsSection({
           onClose={handleModalClose}
           initialStep={modalStep}
           titulo={modalProject?.name ?? ''}
+          description={modalProject?.description ?? ''}
           planteamiento={modalProject?.planteamiento ?? ''}
           justificacion={modalProject?.justificacion ?? ''}
           objetivoGen={modalProject?.objetivo_general ?? ''}
@@ -540,9 +578,17 @@ export function ProjectsSection({
 
                   {/* Footer con fecha y botón entrar */}
                   <div className="flex items-center justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <FaCalendarAlt className="h-3.5 w-3.5" />
-                      <span>{formatDate(project.createdAt)}</span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5" />
+                        <span>
+                          {collaboratorCounts[project.id] ?? 0} colaboradores
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <FaCalendarAlt className="h-3.5 w-3.5" />
+                        <span>{formatDate(project.createdAt)}</span>
+                      </div>
                     </div>
 
                     <div
@@ -599,6 +645,7 @@ export function ProjectsSection({
         }}
         initialStep={modalStep}
         titulo={modalProject?.name ?? ''}
+        description={modalProject?.description ?? ''}
         planteamiento={modalProject?.planteamiento ?? ''}
         justificacion={modalProject?.justificacion ?? ''}
         objetivoGen={modalProject?.objetivo_general ?? ''}

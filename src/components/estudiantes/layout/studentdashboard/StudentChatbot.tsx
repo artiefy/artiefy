@@ -3067,10 +3067,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   const supportButtonWrapperClass = isDesktop
     ? _safePathname.startsWith('/estudiantes/clases/')
       ? 'animate-in fade-in-0 slide-in-from-bottom-2 fixed left-7 bottom-26 duration-200 sm:left-7'
-      : 'animate-in fade-in-0 slide-in-from-bottom-2 fixed right-7 bottom-26 duration-200 sm:right-7'
+      : 'animate-in fade-in-0 slide-in-from-bottom-2 fixed right-4 bottom-26 duration-200 sm:right-4'
     : _safePathname.startsWith('/estudiantes/clases/')
       ? 'fixed left-8.5 bottom-26'
-      : 'fixed right-8.5 bottom-26';
+      : 'fixed right-6 bottom-26';
   const supportButtonStyle: React.CSSProperties = {
     zIndex: floatingButtonsZIndex,
     pointerEvents: shouldLowerFloatingButtons ? 'none' : undefined,
@@ -3101,10 +3101,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     isDesktop && _safePathname.startsWith('/estudiantes/clases/')
       ? 'fixed left-6 bottom-6'
       : isDesktop
-        ? 'fixed right-6 bottom-6'
+        ? 'fixed right-4 bottom-6'
         : _safePathname.startsWith('/estudiantes/clases/')
           ? 'fixed left-6 bottom-6'
-          : 'fixed right-6 bottom-6';
+          : 'fixed right-4 bottom-6';
 
   function handleDeleteHistory(
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>

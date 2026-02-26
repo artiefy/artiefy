@@ -31,7 +31,6 @@ interface LessonActivitiesProps {
   isActivityCompleted: boolean;
   handleActivityCompletion: () => Promise<void>;
   userId: string;
-  onLessonUnlocked: (lessonId: number) => void;
   courseId: number;
   lessonId: number;
   isLastLesson: boolean;
@@ -205,7 +204,6 @@ const LessonActivities = ({
   isActivityCompleted: propIsActivityCompleted, // Rename to avoid confusion
   handleActivityCompletion: onActivityCompleted, // Rename the prop to avoid duplicate
   userId,
-  onLessonUnlocked,
   courseId,
   lessonId,
   isLastLesson,
@@ -914,7 +912,6 @@ const LessonActivities = ({
           onActivityCompletedAction={handleActivityCompletion}
           courseId={courseId}
           savedResults={activitiesState[selectedActivity.id]?.savedResults}
-          onLessonUnlockedAction={onLessonUnlocked}
           isLastLesson={isLastLesson}
           isLastActivity={isLastActivity}
           onViewHistoryAction={() => setIsGradeHistoryOpen(true)}

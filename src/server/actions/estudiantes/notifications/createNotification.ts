@@ -38,27 +38,23 @@ export async function createNotification({
     const skipDuplicateCheck =
       type === 'participation-request' || type === 'PROJECT_INVITATION';
 
+    const cleanedEntries = metadata
+      ? Object.entries(metadata).filter(([, value]) => value !== undefined)
+      : [];
+    const cleanedMetadata =
+      cleanedEntries.length > 0
+        ? (Object.fromEntries(cleanedEntries) as ParticipationNotificationMetadata)
+        : undefined;
+
     let whereClause = and(
       eq(notifications.userId, userId),
       eq(notifications.type, type as NotificationType)
     );
 
-    // Si hay activityId y lessonId, compara ambos en metadata
-    if (
-      metadata?.activityId !== undefined &&
-      metadata?.lessonId !== undefined
-    ) {
+    if (cleanedMetadata) {
       whereClause = and(
         whereClause,
-        eq(notifications.metadata, {
-          activityId: metadata.activityId,
-          lessonId: metadata.lessonId,
-        })
-      );
-    } else if (metadata?.lessonId !== undefined) {
-      whereClause = and(
-        whereClause,
-        eq(notifications.metadata, { lessonId: metadata.lessonId })
+        eq(notifications.metadata, cleanedMetadata)
       );
     }
 
@@ -78,7 +74,7 @@ export async function createNotification({
       type: type as NotificationType,
       title,
       message,
-      metadata,
+      metadata: cleanedMetadata,
       isRead: false,
       createdAt: new Date(),
     });

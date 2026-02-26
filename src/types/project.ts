@@ -1,6 +1,7 @@
 export interface Project {
   id: number;
   name: string;
+  userId?: string;
   description?: string; // Descripción general generada por IA
   planteamiento: string; // Problema a resolver
   justificacion?: string;
@@ -14,6 +15,7 @@ export interface Project {
       meses: number[];
       startDate?: string;
       endDate?: string;
+      linkUrl?: string | null;
       deliverableKey?: string | null;
       deliverableUrl?: string | null;
       deliverableName?: string | null;
@@ -27,6 +29,7 @@ export interface Project {
     meses: number[];
     startDate?: string;
     endDate?: string;
+    linkUrl?: string | null;
     deliverableKey?: string | null;
     deliverableUrl?: string | null;
     deliverableName?: string | null;
@@ -37,6 +40,7 @@ export interface Project {
   type_project: string;
   categoryId: number;
   categoryName?: string;
+  needsCollaborators?: boolean;
   progressPercentage?: number;
   coverImageKey?: string | null;
   fecha_inicio?: string;

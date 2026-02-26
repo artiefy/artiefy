@@ -98,7 +98,7 @@ export const TourComponent = () => {
     <>
       {!hideButton && (isDesktop ? showAnim : true) && (
         <div
-          className={`fixed z-50 translate-x-0 ${isDesktop ? (isClassRoute ? 'bottom-9 left-24' : 'right-24 bottom-9') : isClassRoute ? 'bottom-9 left-24' : 'right-24 bottom-9'}`}
+          className={`fixed z-50 translate-x-0 ${isDesktop ? (isClassRoute ? 'bottom-9 left-24' : 'right-22 bottom-9') : isClassRoute ? 'bottom-9 left-24' : 'right-22 bottom-9'}`}
           onMouseEnter={() =>
             window.dispatchEvent(new Event('extras-hover-enter'))
           }
