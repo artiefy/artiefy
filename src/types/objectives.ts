@@ -2,6 +2,7 @@ export interface Activity {
   title: string;
   startDate?: string;
   endDate?: string;
+  linkUrl?: string | null;
 }
 
 export interface SpecificObjective {

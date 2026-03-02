@@ -11,17 +11,20 @@ export async function GET(request: Request) {
   const projectId =
     searchParams.get('projectId') ?? searchParams.get('project_id');
   if (!projectId) {
-    return NextResponse.json([], { status: 400 });
+    return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
   }
   try {
+    console.log('🔍 [taken/list] Obteniendo usuarios del proyecto:', projectId);
+
     // Log: muestra todos los registros de projectsTaken para este proyecto
     const relaciones = await db
       .select()
       .from(projectsTaken)
       .where(eq(projectsTaken.projectId, Number(projectId)));
     console.log(
-      'Relaciones projectsTaken para el proyecto',
+      '📋 [taken/list] Relaciones projectsTaken para el proyecto',
       projectId,
+      ':',
       relaciones
     );
 
@@ -38,21 +41,25 @@ export async function GET(request: Request) {
         address: users.address,
         age: users.age,
         birthDate: users.birthDate,
-        // Si tienes campos personalizados, agrégalos aquí
+        isInvited: projectsTaken.isInvited,
       })
       .from(projectsTaken)
       .innerJoin(users, eq(users.id, projectsTaken.userId))
       .where(eq(projectsTaken.projectId, Number(projectId)));
 
-    // Log para depuración
     console.log(
-      'Integrantes encontrados para el proyecto',
+      '✅ [taken/list] Integrantes encontrados para el proyecto',
       projectId,
-      inscritos
+      ':',
+      inscritos.length
     );
 
     return NextResponse.json(inscritos);
-  } catch (_e) {
-    return NextResponse.json([], { status: 500 });
+  } catch (error) {
+    console.error('❌ [taken/list] Error al obtener integrantes:', error);
+    return NextResponse.json(
+      { error: 'Error al obtener integrantes', details: String(error) },
+      { status: 500 }
+    );
   }
 }

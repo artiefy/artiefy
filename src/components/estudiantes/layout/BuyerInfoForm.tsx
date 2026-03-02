@@ -41,16 +41,29 @@ export default function BuyerInfoForm({
       <div className="relative grid gap-1">
         <label className="label">
           <span className="title">Correo Electrónico *</span>
-          <input
-            type="email"
-            name="buyerEmail"
-            placeholder="ejemplo@correo.com"
-            value={formData.buyerEmail}
-            onChange={onChangeAction}
-            className={`input-field ${!formData.buyerEmail && showErrors ? 'border-2 border-red-400' : ''}`}
-            required
-            readOnly={readOnly}
-          />
+          {readOnly ? (
+            <div
+              className={`input-field flex items-center ${
+                !formData.buyerEmail && showErrors
+                  ? 'border-2 border-red-400'
+                  : ''
+              }`}
+              role="textbox"
+              aria-readonly="true"
+            >
+              {formData.buyerEmail || 'No disponible'}
+            </div>
+          ) : (
+            <input
+              type="email"
+              name="buyerEmail"
+              placeholder="ejemplo@correo.com"
+              value={formData.buyerEmail}
+              onChange={onChangeAction}
+              className={`input-field ${!formData.buyerEmail && showErrors ? 'border-2 border-red-400' : ''}`}
+              required
+            />
+          )}
           <FaEnvelope className="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400" />
         </label>
         {!formData.buyerEmail && showErrors && (
@@ -60,16 +73,29 @@ export default function BuyerInfoForm({
       <div className="relative grid gap-1">
         <label className="label">
           <span className="title">Nombre Completo *</span>
-          <input
-            type="text"
-            name="buyerFullName"
-            placeholder="Juan Pérez"
-            value={formData.buyerFullName}
-            onChange={onChangeAction}
-            className={`input-field ${!formData.buyerFullName && showErrors ? 'border-2 border-red-400' : ''}`}
-            required
-            readOnly={readOnly}
-          />
+          {readOnly ? (
+            <div
+              className={`input-field flex items-center ${
+                !formData.buyerFullName && showErrors
+                  ? 'border-2 border-red-400'
+                  : ''
+              }`}
+              role="textbox"
+              aria-readonly="true"
+            >
+              {formData.buyerFullName || 'No disponible'}
+            </div>
+          ) : (
+            <input
+              type="text"
+              name="buyerFullName"
+              placeholder="Juan Pérez"
+              value={formData.buyerFullName}
+              onChange={onChangeAction}
+              className={`input-field ${!formData.buyerFullName && showErrors ? 'border-2 border-red-400' : ''}`}
+              required
+            />
+          )}
           <FaUser className="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400" />
         </label>
         {!formData.buyerFullName && showErrors && (
@@ -86,6 +112,8 @@ export default function BuyerInfoForm({
             value={formData.telephone}
             onChange={onChangeAction}
             maxLength={14}
+            inputMode="numeric"
+            pattern="\\+57\\d{10,11}"
             className={`input-field ${showErrors && (errors.telephone || !formData.telephone) ? 'border-2 border-red-400' : ''}`}
             required
           />
@@ -139,7 +167,7 @@ export default function BuyerInfoForm({
         type="button"
         className={`checkout-btn ${!isFormValid && !loading ? 'cursor-not-allowed opacity-50' : ''}`}
         onClick={onSubmitAction}
-        disabled={loading || !isFormValid}
+        disabled={loading}
         title={
           !isFormValid ? 'Por favor completa todos los campos requeridos' : ''
         }

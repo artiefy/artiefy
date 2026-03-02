@@ -65,8 +65,7 @@ const PaymentForm: React.FC<{
     const nameValid = !!nameToValidate && nameToValidate.trim().length > 2;
 
     // Validar teléfono (debe tener al menos 10 caracteres y comenzar con +)
-    const telephoneValid =
-      !!telephone && telephone.startsWith('+') && telephone.length >= 10;
+    const telephoneValid = /^\+57\d{10,11}$/.test(telephone);
 
     // Validar términos y condiciones
     const termsValid = termsAccepted && privacyAccepted;
@@ -76,7 +75,18 @@ const PaymentForm: React.FC<{
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked } = e.target;
-    if (name === 'telephone') setTelephone(value);
+    if (name === 'telephone') {
+      const sanitized =
+        value === '+'
+          ? '+'
+          : value.startsWith('+')
+            ? `+${value.replace(/[^\d]/g, '')}`
+            : value.replace(/[^\d]/g, '');
+      const normalized = sanitized.startsWith('+')
+        ? `+${sanitized.replace(/\+/g, '')}`
+        : sanitized;
+      setTelephone(normalized);
+    }
     if (name === 'termsAndConditions') setTermsAccepted(checked);
     if (name === 'privacyPolicy') setPrivacyAccepted(checked);
 
@@ -286,7 +296,7 @@ const PaymentForm: React.FC<{
           errors={errors}
           onSubmitAction={handleSubmit}
           loading={loading}
-          readOnly={false}
+          readOnly={isLoggedIn}
           isFormValid={isFormValid()} // Nuevo: validar si el formulario está completo
         />
         {error && <p className="error">{error}</p>}

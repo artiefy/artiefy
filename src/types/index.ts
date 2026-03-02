@@ -256,6 +256,7 @@ export interface Activity {
   description: string | null;
   lastUpdated: Date;
   lessonsId: number;
+  linkUrl?: string | null;
   revisada: boolean | null; // Cambiado de boolean a boolean | null
   porcentaje: number | null;
   parametroId: number | null;
@@ -535,6 +536,7 @@ export type NotificationType =
   | 'TICKET_REPLY'
   | 'NEW_COURSE_ADDED'
   | 'ACTIVITY_COMPLETED'
+  | 'PROJECT_ACTIVITY_DUE'
   | 'COURSE_UNENROLLMENT'
   | 'CERTIFICATE_CREATED';
 
@@ -546,6 +548,10 @@ export interface NotificationMetadata {
   ticketId?: number;
   creatorId?: string;
   activityId?: number;
+  projectId?: number;
+  projectName?: string;
+  daysLeft?: number;
+  dueDate?: string;
   certificateId?: number;
   openModal?: boolean; // <-- agrega esta línea para permitir el flag openModal
 }

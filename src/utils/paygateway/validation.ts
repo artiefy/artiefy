@@ -11,11 +11,12 @@ export function validateFormData(
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
-  // Validar número telefónico: +XXXXXXXXXXX (donde X son dígitos y el código de país puede ser 1-3 dígitos)
-  const phonePattern = /^\+\d{1,3}\d{10}$/;
+  // Validar número telefónico: +57 + 10-11 dígitos, sin espacios
+  const phonePattern = /^\+57\d{10,11}$/;
 
   if (!phonePattern.test(telephone)) {
-    errors.telephone = 'Formato de teléfono inválido. Debe ser +573000000000';
+    errors.telephone =
+      'Formato de teléfono inválido. Debe ser +57 seguido de 10 o 11 dígitos, sin espacios.';
   }
   if (!termsAndConditions || !privacyPolicy) {
     errors.termsAndConditions =

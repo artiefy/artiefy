@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
+import { useUser } from '@clerk/nextjs';
 import {
   Calendar,
   ChevronLeft,
@@ -25,6 +26,8 @@ import useSWRMutation from 'swr/mutation';
 
 import AddCustomSectionModal from '~/components/estudiantes/projects/AddCustomSectionModal';
 import AddSectionDropdown from '~/components/estudiantes/projects/AddSectionDropdown';
+import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
+import ModalInvitarIntegrante from '~/components/projects/Modals/ModalInvitarIntegrante';
 import {
   Select,
   SelectContent,
@@ -480,6 +483,7 @@ interface ModalResumenProps {
   onClose: () => void;
   initialStep?: number;
   titulo?: string;
+  description?: string;
   planteamiento?: string;
   justificacion?: string;
   objetivoGen?: string;
@@ -568,6 +572,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   onClose,
   initialStep,
   titulo = '',
+  description = '',
   planteamiento,
   justificacion,
   objetivoGen,
@@ -589,6 +594,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isMounted, setIsMounted] = useState(false);
+  const { user } = useUser();
   const [timelineView, setTimelineView] = useState<
     'dias' | 'semanas' | 'meses'
   >('semanas');
@@ -616,6 +622,34 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [creationError, setCreationError] = useState<string | null>(null);
   const typingTimersRef = useRef<Record<string, number>>({});
   const typingTokensRef = useRef<Record<string, number>>({});
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false);
+  const [projectMembers, setProjectMembers] = useState<string[]>([]);
+  const [collaborators, setCollaborators] = useState<
+    Array<{
+      id: string | number;
+      nombre?: string;
+      email?: string;
+      esResponsable?: boolean;
+    }>
+  >([]);
+  const [collaboratorsLoading, setCollaboratorsLoading] = useState(false);
+
+  const handleTimelineWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    if (typeof window === 'undefined') return;
+    if (window.innerWidth < 640) {
+      event.preventDefault();
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const update = () => setIsSmallScreen(window.innerWidth < 640);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   const stopTyping = (key: string) => {
     const timer = typingTimersRef.current[key];
@@ -730,7 +764,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
   const [formData, setFormData] = useState({
     titulo,
-    description: '', // Descripción general (generada por IA)
+    description: description ?? '', // Descripción general (generada por IA)
     planteamiento: planteamiento ?? '', // Problema a resolver
     requirements: [] as string[], // Requisitos
     justificacion: justificacion ?? '',
@@ -924,10 +958,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             delete next[sectionId];
             updateLocalSections(next);
           }}
-          className="ml-2 inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/20 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+          className="ml-2 inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/20 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
           title="Eliminar sección"
         >
-          <X className="h-4 w-4" />
+          <X className="size-4" />
         </button>
       </div>
       <textarea
@@ -967,6 +1001,93 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
     projectId ? `/api/projects/${projectId}?details=true` : null,
     fetcher
   );
+
+  useEffect(() => {
+    if (!currentProjectId) {
+      setProjectMembers(user?.id ? [user.id] : []);
+      return;
+    }
+    let isMounted = true;
+    const fetchMembers = async () => {
+      try {
+        const res = await fetch(
+          `/api/projects/taken/list?projectId=${currentProjectId}`
+        );
+        if (!res.ok) {
+          if (isMounted) setProjectMembers(user?.id ? [user.id] : []);
+          return;
+        }
+        const data: unknown = await res.json();
+        const ids = Array.isArray(data)
+          ? data
+              .map((item) => String((item as { id?: unknown }).id ?? ''))
+              .filter(Boolean)
+          : [];
+        const ownerId =
+          typeof (existingProject as Record<string, unknown>)?.userId ===
+          'string'
+            ? String((existingProject as Record<string, unknown>).userId)
+            : user?.id;
+        const next = new Set<string>();
+        if (ownerId) next.add(ownerId);
+        if (user?.id) next.add(user.id);
+        ids.forEach((id) => next.add(id));
+        if (isMounted) setProjectMembers(Array.from(next));
+      } catch {
+        if (isMounted) setProjectMembers(user?.id ? [user.id] : []);
+      }
+    };
+    void fetchMembers();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentProjectId, existingProject, user?.id]);
+
+  useEffect(() => {
+    if (!currentProjectId || !formData.needsCollaborators) {
+      setCollaborators([]);
+      return;
+    }
+    let isMounted = true;
+    const fetchCollaborators = async () => {
+      setCollaboratorsLoading(true);
+      try {
+        const res = await fetch(
+          `/api/projects/taken?projectId=${currentProjectId}`
+        );
+        if (!res.ok) {
+          if (isMounted) setCollaborators([]);
+          return;
+        }
+        const data: unknown = await res.json();
+        const integrantes = Array.isArray(
+          (data as { integrantes?: unknown })?.integrantes
+        )
+          ? (data as { integrantes: Array<Record<string, unknown>> })
+              .integrantes
+          : [];
+        if (isMounted) {
+          setCollaborators(
+            integrantes.map((item) => ({
+              id: String(item.id ?? ''),
+              nombre:
+                typeof item.nombre === 'string' ? String(item.nombre) : '',
+              email: typeof item.email === 'string' ? String(item.email) : '',
+              esResponsable: Boolean(item.esResponsable),
+            }))
+          );
+        }
+      } catch {
+        if (isMounted) setCollaborators([]);
+      } finally {
+        if (isMounted) setCollaboratorsLoading(false);
+      }
+    };
+    void fetchCollaborators();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentProjectId, formData.needsCollaborators, showInviteModal]);
 
   // Hook para generar contenido con IA
   const {
@@ -1319,6 +1440,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               objetivosEsp,
             categoriaId: dataToSet.category_id ?? categoriaId ?? undefined,
             tipoProyecto: dataToSet.type_project ?? tipoProyecto ?? '',
+            needsCollaborators:
+              typeof (dataToSet as { needsCollaborators?: unknown })
+                ?.needsCollaborators === 'boolean'
+                ? Boolean(
+                    (dataToSet as { needsCollaborators?: boolean })
+                      .needsCollaborators
+                  )
+                : prevData.needsCollaborators,
             requirements: parsedRequirements ?? prevData.requirements,
             durationEstimate:
               typeof dataToSet.tiempo_estimado === 'number'
@@ -1845,8 +1974,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           <div className="space-y-4">
             <div className="mb-4 rounded-[16px] border border-[#22c4d34d] bg-[#22c4d31a] from-accent/10 via-primary/10 to-accent/10 p-4">
               <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#22c4d333]">
-                  <FaWandMagicSparkles className="h-5 w-5 text-[#22c4d3]" />
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#22c4d333]">
+                  <FaWandMagicSparkles className="size-5 text-[#22c4d3]" />
                 </div>
                 <div className="flex-1">
                   <div className="mb-1 flex items-center gap-2">
@@ -1871,7 +2000,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     {isGeneratingFor('descripcion-card') ? (
                       <span className="ai-generate-loader" aria-hidden />
                     ) : (
-                      <FaWandMagicSparkles className="mr-2 h-4 w-4" />
+                      <FaWandMagicSparkles className="mr-2 size-4" />
                     )}
                     <span
                       className={
@@ -1912,17 +2041,17 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   disabled={isGenerating || !formData.titulo.trim()}
                   type="button"
                   title="Generar títulos alternativos con IA basados en tu título"
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="inline-flex size-10 shrink-0 items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 text-sm font-medium whitespace-nowrap text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 >
                   {isGeneratingFor('titulo') ? (
-                    <RefreshCw className="h-4 w-4 animate-spin transition-transform" />
+                    <RefreshCw className="size-4 animate-spin transition-transform" />
                   ) : (
-                    <Pencil className="h-4 w-4 transition-transform" />
+                    <Pencil className="size-4 transition-transform" />
                   )}
                 </button>
               </div>
               <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
-                <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                <Pencil className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
                 <span>
                   Escribe tu título manualmente. Usa el botón 🔄 para generar
                   títulos alternativos sobre el mismo tema.
@@ -1948,7 +2077,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {isGeneratingFor('descripcion-field') ? (
                     <span className="ai-generate-loader" aria-hidden />
                   ) : (
-                    <FaWandMagicSparkles className="h-3 w-3" />
+                    <FaWandMagicSparkles className="size-3" />
                   )}
                   <span
                     className={
@@ -2090,8 +2219,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               {/* Switch: ¿Proyecto Público? */}
               <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/30 p-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
-                    <Globe className="h-4 w-4 text-accent" />
+                  <div className="flex size-8 items-center justify-center rounded-full bg-accent/10">
+                    <Globe className="size-4 text-accent" />
                   </div>
                   <div>
                     <label
@@ -2122,7 +2251,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 >
                   <span
                     data-state={formData.isPublic ? 'checked' : 'unchecked'}
-                    className="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+                    className="pointer-events-none block size-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
                   />
                 </button>
               </div>
@@ -2130,8 +2259,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               {/* Switch: ¿Necesitas Colaboradores? */}
               <div className="flex items-center justify-between rounded-lg border border-border/50 bg-muted/30 p-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
-                    <Users className="h-4 w-4 text-accent" />
+                  <div className="flex size-8 items-center justify-center rounded-full bg-accent/10">
+                    <Users className="size-4 text-accent" />
                   </div>
                   <div>
                     <label
@@ -2166,10 +2295,91 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     data-state={
                       formData.needsCollaborators ? 'checked' : 'unchecked'
                     }
-                    className="pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+                    className="pointer-events-none block size-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
                   />
                 </button>
               </div>
+
+              {formData.needsCollaborators && (
+                <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">
+                        Invitar colaboradores
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Busca por correo en la base de Clerk y envía
+                        invitaciones al proyecto.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowInviteModal(true)}
+                      disabled={!currentProjectId}
+                      className="inline-flex h-9 items-center justify-center rounded-md bg-accent px-3 text-xs font-semibold text-background transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50"
+                    >
+                      Buscar colaboradores
+                    </button>
+                  </div>
+                  {!currentProjectId && (
+                    <p className="mt-2 text-xs text-amber-500">
+                      Guarda el proyecto para habilitar invitaciones.
+                    </p>
+                  )}
+                  {currentProjectId && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                          Colaboradores agregados
+                        </p>
+                        {collaborators.filter((c) => !c.esResponsable).length >
+                          0 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowCollaboratorsModal(true)}
+                            className="inline-flex h-7 items-center justify-center rounded-md px-2 text-xs font-semibold text-accent transition-colors hover:bg-accent/10 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                          >
+                            Ver todos
+                          </button>
+                        )}
+                      </div>
+                      {collaboratorsLoading ? (
+                        <p className="text-xs text-muted-foreground">
+                          Cargando colaboradores...
+                        </p>
+                      ) : collaborators.filter((c) => !c.esResponsable).length >
+                        0 ? (
+                        <div className="space-y-2">
+                          {collaborators
+                            .filter((c) => !c.esResponsable)
+                            .map((colab) => (
+                              <div
+                                key={colab.id}
+                                className="flex items-center justify-between rounded-md border border-border/50 bg-background/40 px-3 py-2 text-xs"
+                              >
+                                <div className="min-w-0">
+                                  <p className="font-medium text-foreground">
+                                    {colab.nombre || 'Sin nombre'}
+                                  </p>
+                                  <p className="text-muted-foreground">
+                                    {colab.email || 'Sin email'}
+                                  </p>
+                                </div>
+                                <span className="rounded-full border border-accent/40 bg-accent/10 px-2 py-0.5 text-[11px] font-semibold text-accent">
+                                  Colaborador
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          Aún no hay colaboradores aceptados.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Contenido Multimedia */}
               <div className="space-y-3 border-t border-border/50 pt-4">
@@ -2187,8 +2397,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   />
                   <label htmlFor="file-upload" className="cursor-pointer">
                     <div className="flex flex-col items-center gap-2">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted">
-                        <Upload className="h-6 w-6 text-muted-foreground" />
+                      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+                        <Upload className="size-6 text-muted-foreground" />
                       </div>
                       <div>
                         <p className="text-sm font-medium text-foreground">
@@ -2212,13 +2422,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                               <Image
                                 src={file.url}
                                 alt={`multimedia-${index}`}
-                                className="h-full w-full object-cover"
+                                className="size-full object-cover"
                                 width={400}
                                 height={225}
                               />
                             ) : (
-                              <div className="flex h-full w-full flex-col items-center justify-center">
-                                <FileText className="mb-2 h-8 w-8 text-muted-foreground" />
+                              <div className="flex size-full flex-col items-center justify-center">
+                                <FileText className="mb-2 size-8 text-muted-foreground" />
                                 <span className="px-2 text-center text-xs text-muted-foreground">
                                   {file.name}
                                 </span>
@@ -2230,7 +2440,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                             onClick={() => handleRemoveMultimedia(index)}
                             className="absolute top-2 right-2 rounded-full bg-destructive p-1 text-destructive-foreground opacity-0 transition-opacity group-hover:opacity-100"
                           >
-                            <X className="h-4 w-4" />
+                            <X className="size-4" />
                           </button>
                         </div>
                       ))}
@@ -2293,7 +2503,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {isGeneratingFor('problema') ? (
                     <span className="ai-generate-loader" aria-hidden />
                   ) : (
-                    <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
+                    <FaWandMagicSparkles className="mr-1.5 size-3" />
                   )}
                   <span
                     className={
@@ -2328,7 +2538,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="h-3.5 w-3.5 shrink-0 text-amber-500"
+                  className="size-3.5 shrink-0 text-amber-500"
                 >
                   <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
                   <path d="M9 18h6" />
@@ -2392,7 +2602,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 {isGeneratingFor('objetivoGen') ? (
                   <span className="ai-generate-loader" aria-hidden />
                 ) : (
-                  <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
+                  <FaWandMagicSparkles className="mr-1.5 size-3" />
                 )}
                 <span
                   className={
@@ -2417,7 +2627,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               }}
             />
             <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
-              <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <Pencil className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
               <span>
                 El objetivo general debe ser claro, alcanzable y alineado con el
                 problema que se busca resolver.
@@ -2495,7 +2705,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 {isGeneratingFor('requisitos') ? (
                   <span className="ai-generate-loader" aria-hidden />
                 ) : (
-                  <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
+                  <FaWandMagicSparkles className="mr-1.5 size-3" />
                 )}
                 <span
                   className={
@@ -2541,7 +2751,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       }}
                       className="text-xs text-muted-foreground hover:text-foreground"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="size-4" />
                     </button>
                   </div>
                 ))
@@ -2562,12 +2772,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 }}
                 className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md border border-accent/30 bg-accent/10 px-3 text-sm font-medium text-accent ring-offset-background transition-colors hover:bg-accent/20 hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="size-4" />
                 Agregar requisito
               </button>
             </div>
             <div className="mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs text-muted-foreground">
-              <Pencil className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+              <Pencil className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
               <span>
                 Los requisitos deben ser específicos, medibles y alineados con
                 los objetivos del proyecto.
@@ -2591,7 +2801,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  className="mt-0.5 h-5 w-5 text-accent"
+                  className="mt-0.5 size-5 text-accent"
                 >
                   <circle cx="12" cy="12" r="10"></circle>
                   <polyline points="12 6 12 12 16 14"></polyline>
@@ -2730,7 +2940,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500"
+                className="mt-0.5 size-3.5 shrink-0 text-amber-500"
               >
                 <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
                 <path d="M9 18h6"></path>
@@ -2859,7 +3069,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 {isGeneratingFor('objetivosEsp') ? (
                   <span className="ai-generate-loader" aria-hidden />
                 ) : (
-                  <FaWandMagicSparkles className="mr-1.5 h-3 w-3" />
+                  <FaWandMagicSparkles className="mr-1.5 size-3" />
                 )}
                 <span
                   className={
@@ -2883,7 +3093,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     >
                       <div className="mb-3 flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                          <Target className="h-4 w-4 text-accent" />
+                          <Target className="size-4 text-accent" />
                           <span className="text-sm font-medium text-muted-foreground">
                             Objetivo {idx + 1}
                           </span>
@@ -2899,7 +3109,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           }}
                           className="text-xs text-muted-foreground hover:text-foreground"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="size-4" />
                         </button>
                       </div>
                       <input
@@ -3002,7 +3212,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                                   }}
                                   className="text-xs text-muted-foreground hover:text-foreground"
                                 >
-                                  <X className="h-3 w-3" />
+                                  <X className="size-3" />
                                 </button>
                               </div>
                             ))
@@ -3024,7 +3234,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           }}
                           className="inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                         >
-                          <Plus className="mr-1 h-3 w-3" />
+                          <Plus className="mr-1 size-3" />
                           Agregar actividad
                         </button>
                       </div>
@@ -3046,7 +3256,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               }}
               className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-input bg-background px-3 text-sm font-medium whitespace-nowrap ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="mr-2 size-4" />
               Agregar objetivo específico
             </button>
           </div>
@@ -3084,8 +3294,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             rangeEnd,
             timelineView
           );
-          const columnWidth = 80;
-          const labelColumnWidth = 208;
+          const columnWidth = isSmallScreen ? 68 : 80;
+          const labelColumnWidth = isSmallScreen ? 160 : 208;
           const gridWidth = Math.max(columns.length * columnWidth, 1);
           const totalWidth = labelColumnWidth + gridWidth;
           const msPerDay = 1000 * 60 * 60 * 24;
@@ -3123,8 +3333,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             <div className="rounded-xl border border-border/50 bg-card/50 p-5">
               <div className="mb-4 flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
-                    <Calendar className="h-4 w-4 text-purple-400" />
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-purple-500/20">
+                    <Calendar className="size-4 text-purple-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground">
                     Cronograma
@@ -3158,10 +3368,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   cronograma.
                 </p>
               ) : (
-                <div className="scrollbar-thin w-full overflow-x-auto [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent">
+                <div
+                  className="scrollbar-thin relative w-full touch-pan-x overflow-x-auto [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent"
+                  onWheel={handleTimelineWheel}
+                >
                   <div className="flex" style={{ minWidth: totalWidth }}>
                     <div
-                      className="shrink-0 border-r border-border/30"
+                      className="sticky left-0 z-10 shrink-0 border-r border-border/30 bg-[#061c37] px-3 sm:bg-transparent sm:px-0 sm:backdrop-blur-none"
                       style={{ width: labelColumnWidth }}
                     >
                       <div className="mb-2 flex h-10 items-end border-b border-border/50 pr-3 pb-2">
@@ -3180,17 +3393,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                                 {row.key}
                               </span>
                               <span
-                                className="max-w-[140px] truncate text-xs text-foreground"
+                                className="max-w-[110px] text-xs text-foreground sm:max-w-[180px]"
                                 title={row.title}
                               >
-                                {row.title}
+                                <span className="block overflow-x-auto pr-2 whitespace-nowrap sm:truncate sm:overflow-hidden sm:pr-0">
+                                  {row.title}
+                                </span>
                               </span>
                             </div>
                           </div>
                         ))}
                       </div>
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1 pl-1 sm:pl-0">
                       <div style={{ minWidth: gridWidth }}>
                         <div className="mb-2 flex h-10 border-b border-border/50">
                           {columns.map((column, index) => (
@@ -3300,25 +3515,25 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border/50 pt-4">
                 <span className="text-xs text-muted-foreground">Estado:</span>
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-green-500" />
+                  <div className="size-3 rounded-full bg-green-500" />
                   <span className="text-xs text-muted-foreground">
                     Completado
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-accent" />
+                  <div className="size-3 rounded-full bg-accent" />
                   <span className="text-xs text-muted-foreground">
                     En progreso
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-muted-foreground/50" />
+                  <div className="size-3 rounded-full bg-muted-foreground/50" />
                   <span className="text-xs text-muted-foreground">
                     Pendiente
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="h-3 w-3 rounded-full bg-red-500" />
+                  <div className="size-3 rounded-full bg-red-500" />
                   <span className="text-xs text-muted-foreground">
                     Atrasado
                   </span>
@@ -3418,14 +3633,14 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             <button
               onClick={handlePrevious}
               disabled={currentStep === 1 || isAutoSaving}
-              className="inline-flex h-8 w-8 shrink-0 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex size-8 shrink-0 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               title="Paso anterior"
             >
-              <ChevronLeft className="h-4 w-4 sm:rotate-90" />
+              <ChevronLeft className="size-4 sm:rotate-90" />
             </button>
 
             {/* Indicadores de pasos */}
-            <div className="flex w-full flex-1 flex-row items-center justify-center gap-2 overflow-x-auto px-2 py-2 sm:w-auto sm:flex-col sm:overflow-visible sm:px-0 sm:py-4">
+            <div className="flex w-full flex-1 flex-row items-center justify-center gap-2 overflow-x-auto p-2 sm:w-auto sm:flex-col sm:overflow-visible sm:px-0 sm:py-4">
               {steps.map((step) => (
                 <button
                   key={step.id}
@@ -3437,7 +3652,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   disabled={
                     isAutoSaving || (!isProjectCreated && step.id !== 1)
                   }
-                  className={`h-2.5 w-2.5 rounded-full transition-all ${
+                  className={`size-2.5 rounded-full transition-all ${
                     step.id === currentStep
                       ? 'scale-125 bg-[#22c4d3]'
                       : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
@@ -3454,10 +3669,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 (!isProjectCreated && currentStep === 1) ||
                 isAutoSaving
               }
-              className="inline-flex h-8 w-8 shrink-0 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="inline-flex size-8 shrink-0 transform items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-transform duration-150 hover:scale-110 hover:bg-transparent hover:text-[#1eaab7] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-30 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               title="Paso siguiente"
             >
-              <ChevronRight className="h-4 w-4 sm:rotate-90" />
+              <ChevronRight className="size-4 sm:rotate-90" />
             </button>
           </div>
 
@@ -3470,7 +3685,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   id="modal-title"
                   className="flex items-center gap-2 text-lg leading-none font-semibold tracking-tight"
                 >
-                  <FileText className="h-5 w-5 text-accent" />
+                  <FileText className="size-5 text-accent" />
                   {steps[currentStep - 1].title}
                   <div className="ml-2 inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-foreground transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
                     {currentStep}/{steps.length}
@@ -3479,7 +3694,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {isProjectCreated && (
                     <div className="absolute top-3 right-10 flex items-center sm:top-4 sm:right-12">
                       {isAutoSaving ? (
-                        <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <RefreshCw className="size-4 animate-spin text-muted-foreground" />
                       ) : (
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -3491,7 +3706,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="h-4 w-4 text-green-500"
+                          className="size-4 text-green-500"
                         >
                           <circle cx="12" cy="12" r="10"></circle>
                           <path d="m9 12 2 2 4-4"></path>
@@ -3518,7 +3733,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   className="relative h-1.5 w-full overflow-hidden rounded-full bg-[#1A2333]"
                 >
                   <div
-                    className="h-full w-full flex-1 bg-primary transition-all"
+                    className="size-full flex-1 bg-primary transition-all"
                     style={{ transform: `translateX(-${100 - progress}%)` }}
                   />
                 </div>
@@ -3537,7 +3752,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 disabled={currentStep === 1 || isAutoSaving}
                 className="inline-flex h-8 flex-1 items-center justify-center gap-2 rounded-[14px] bg-[#22c4d3] px-3 py-2 text-xs font-semibold whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:bg-[#1eaab7] hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50 sm:h-10 sm:flex-none sm:rounded-[16px] sm:px-4 sm:text-sm [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="size-4" />
                 <span className="relative mr-1 mb-1">Anterior</span>
               </button>
 
@@ -3552,12 +3767,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       <span className="relative mb-1 ml-1">
                         Guardar Proyecto
                       </span>
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="size-4" />
                     </>
                   ) : (
                     <>
                       <span className="relative mb-1 ml-1">Siguiente</span>
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="size-4" />
                     </>
                   )}
                 </button>
@@ -3573,7 +3788,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           disabled={isAutoSaving}
           className="absolute top-3 right-2 inline-flex rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none disabled:opacity-40 data-[state=open]:bg-accent data-[state=open]:text-muted-foreground sm:top-4 sm:right-4"
         >
-          <X className="h-4 w-4" />
+          <X className="size-4" />
           <span className="sr-only">Cerrar</span>
         </button>
       </div>
@@ -3590,6 +3805,55 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         nameLocked={Boolean(pendingSection && !pendingSection.isCustom)}
         onGenerateDescription={handleGenerateSectionDescription}
       />
+
+      {showInviteModal && currentProjectId && (
+        <ModalInvitarIntegrante
+          isOpen={showInviteModal}
+          onClose={() => setShowInviteModal(false)}
+          proyectoId={currentProjectId}
+          projectMembers={projectMembers}
+        />
+      )}
+
+      {showCollaboratorsModal && currentProjectId && (
+        <ModalIntegrantesProyectoInfo
+          isOpen={showCollaboratorsModal}
+          onClose={() => setShowCollaboratorsModal(false)}
+          proyecto={{
+            id: currentProjectId,
+            titulo: formData.titulo || 'Proyecto sin título',
+            rama: formData.tipoProyecto || 'Sin especialidad',
+            especialidades: collaborators.filter((c) => !c.esResponsable)
+              .length,
+            participacion: formData.needsCollaborators
+              ? 'Grupal'
+              : 'Individual',
+          }}
+          isProjectOwner={true}
+          onInvitationRemoved={() => {
+            // Refrescar los colaboradores después de eliminar uno
+            if (currentProjectId) {
+              void fetch(`/api/projects/taken?projectId=${currentProjectId}`)
+                .then((res) => res.json())
+                .then(
+                  (data: {
+                    users?: Array<{
+                      id: string | number;
+                      nombre?: string;
+                      email?: string;
+                      esResponsable?: boolean;
+                    }>;
+                  }) => {
+                    setCollaborators(data.users ?? []);
+                  }
+                )
+                .catch((err) => {
+                  console.error('Error refrescando colaboradores:', err);
+                });
+            }
+          }}
+        />
+      )}
     </div>,
     document.body
   );

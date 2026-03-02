@@ -82,7 +82,7 @@ export function UserButtonWrapper() {
 
   const renderPlanBadge = () => {
     if (isMobile) return null;
-    if (!planType) return null;
+    if (!planType || isExpired) return null;
     const config = getPlanBadgeConfig(planType);
     if (!config) return null;
     const Icon = config.icon;
@@ -102,7 +102,7 @@ export function UserButtonWrapper() {
             : `Plan ${config.label}`
         }
       >
-        {Icon ? <Icon className="h-3 w-3" /> : null}
+        {Icon ? <Icon className="size-3" /> : null}
         {config.label}
       </span>
     );

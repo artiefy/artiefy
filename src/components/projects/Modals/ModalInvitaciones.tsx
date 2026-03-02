@@ -16,6 +16,7 @@ import {
 interface InvitacionApi {
   id: number;
   projectName: string;
+  projectId?: number | string;
   fromUser: string;
   message?: string;
   status: 'pending' | 'accepted' | 'rejected';
@@ -23,11 +24,6 @@ interface InvitacionApi {
 
 interface Invitacion extends InvitacionApi {
   projectId?: number | string;
-}
-
-interface ProjectApi {
-  id: number | string;
-  name: string;
 }
 
 interface ModalInvitacionesProps {
@@ -65,33 +61,13 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
               typeof (inv as InvitacionApi).projectName === 'string' &&
               typeof (inv as InvitacionApi).fromUser === 'string'
           );
-          // Obtener los nombres de los proyectos
-          const ids = invitacionesTyped
-            .map((inv) => inv.projectName)
-            .filter((id) => typeof id === 'string' && id.length > 0);
-          const uniqueProjectIds = Array.from(new Set(ids));
           const namesMap: Record<string, string> = {};
-          await Promise.all(
-            uniqueProjectIds.map(async (id) => {
-              try {
-                const res = await fetch(
-                  `/api/projects/${encodeURIComponent(id)}`
-                );
-                if (res.ok) {
-                  const project: ProjectApi = await res.json();
-                  if (
-                    project &&
-                    typeof project === 'object' &&
-                    typeof project.name === 'string'
-                  ) {
-                    namesMap[String(id)] = project.name;
-                  }
-                }
-              } catch {
-                namesMap[String(id)] = String(id);
-              }
-            })
-          );
+          invitacionesTyped.forEach((inv) => {
+            if (inv.projectId) {
+              namesMap[String(inv.projectId)] =
+                inv.projectName ?? String(inv.projectId);
+            }
+          });
           setProjectNames(namesMap);
 
           // Obtener los nombres de los usuarios que invitaron
@@ -127,12 +103,7 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
           );
           setUserNames(userNamesMap);
 
-          setInvitaciones(
-            invitacionesTyped.map((inv) => ({
-              ...inv,
-              projectId: inv.projectName,
-            }))
-          );
+          setInvitaciones(invitacionesTyped);
         } else {
           setInvitaciones([]);
         }
@@ -167,24 +138,52 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
         body: JSON.stringify({ id, status: 'accepted' }),
       });
       if (res.ok) {
-        setInvitaciones((prev) =>
-          prev.map((inv) =>
-            inv.id === id ? { ...inv, status: 'accepted' } : inv
-          )
-        );
-        // Registrar como tomado el proyecto
+        // Registrar como tomado el proyecto con isInvited = true
         const invitacion = invitaciones.find((inv) => inv.id === id);
         if (invitacion && userId && invitacion.projectId) {
-          await fetch('/api/projects/taken', {
+          console.log('📝 Registrando usuario en proyecto:', {
+            userId,
+            projectId: invitacion.projectId,
+            isInvited: true,
+          });
+
+          const takenRes = await fetch('/api/projects/taken', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               userId,
               projectId: invitacion.projectId,
+              isInvited: true, // Marca como invitado
             }),
           });
+
+          if (takenRes.ok) {
+            console.log('✅ Usuario registrado exitosamente en el proyecto');
+          } else {
+            try {
+              const errorData = await takenRes.json();
+              console.error(
+                '❌ Error al registrar usuario en proyecto:',
+                errorData
+              );
+            } catch {
+              const errorText = await takenRes.text();
+              console.error(
+                '❌ Error al registrar usuario en proyecto (texto):',
+                errorText
+              );
+            }
+          }
         }
+
+        setInvitaciones((prev) =>
+          prev.map((inv) =>
+            inv.id === id ? { ...inv, status: 'accepted' } : inv
+          )
+        );
       }
+    } catch (error) {
+      console.error('❌ Error al aceptar invitación:', error);
     } finally {
       setActionLoading(null);
     }
@@ -317,7 +316,7 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
               disabled={loading}
             >
               <RefreshCw
-                className={`h-6 w-6 ${loading ? 'animate-spin' : ''}`}
+                className={`size-6 ${loading ? 'animate-spin' : ''}`}
               />
             </Button>
             {invitaciones.length > 0 && (
@@ -344,11 +343,10 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
           ) : (
             <div className="space-y-4 py-2">
               {sortedInvitaciones.map((inv) => {
+                const projectKey = inv.projectId ? String(inv.projectId) : '';
                 const projectLabel =
-                  inv.projectId &&
-                  typeof inv.projectId === 'string' &&
-                  projectNames[inv.projectId]
-                    ? projectNames[inv.projectId]
+                  projectKey && projectNames[projectKey]
+                    ? projectNames[projectKey]
                     : (inv.projectName ?? 'Proyecto');
                 const fromUserLabel =
                   inv.fromUser &&
@@ -364,7 +362,7 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                     <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
                       {/* Avatar y datos */}
                       <div className="flex min-w-0 flex-1 items-center gap-3">
-                        <Avatar className="h-10 w-10 flex-shrink-0">
+                        <Avatar className="size-10 flex-shrink-0">
                           <AvatarFallback className="bg-cyan-600 text-white">
                             {getAvatarText(fromUserLabel)}
                           </AvatarFallback>
@@ -418,7 +416,7 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                       {/* Botón eliminar individual */}
                       <button
                         type="button"
-                        className="absolute top-0 right-0 flex h-8 w-8 items-center justify-center rounded-tr-lg bg-slate-800 text-xl text-cyan-400 transition-all hover:bg-cyan-900/80 hover:text-cyan-300"
+                        className="absolute top-0 right-0 flex size-8 items-center justify-center rounded-tr-lg bg-slate-800 text-xl text-cyan-400 transition-all hover:bg-cyan-900/80 hover:text-cyan-300"
                         style={{ zIndex: 10 }}
                         title="Eliminar invitación"
                         disabled={actionLoading === inv.id}

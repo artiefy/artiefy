@@ -5,16 +5,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  useAuth,
-  useUser,
-} from '@clerk/nextjs';
+import { SignedIn, SignedOut, useAuth, useUser } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 import { Search, X } from 'lucide-react';
+import { FaCrown, FaStar } from 'react-icons/fa';
+import { IoGiftOutline } from 'react-icons/io5';
 import useSWR from 'swr';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
@@ -49,6 +45,9 @@ export function Header({
   const { user } = useUser();
   const pathname = usePathname();
   const isSignedIn = Boolean(user);
+  const signInHref = pathname
+    ? `/sign-in?redirect_url=${encodeURIComponent(pathname)}`
+    : '/sign-in';
 
   const navItems = [
     { href: '/', label: 'Inicio' },
@@ -79,47 +78,56 @@ export function Header({
     return false;
   };
 
-  const getMobilePlanBadgeStyle = (
-    type?: string,
-    expired?: boolean
-  ): { bg: string; textColor: string; label: string } => {
-    if (!type) {
-      return { bg: 'bg-gray-200', textColor: 'text-gray-800', label: 'Plan' };
+  const getPlanBadgeConfig = (type?: string) => {
+    if (!type) return null;
+    const normalized = type.toLowerCase();
+    if (normalized === 'premium') {
+      return {
+        label: 'Premium',
+        icon: FaCrown,
+        classes: 'border-amber-500/30 bg-amber-500/20 text-amber-400',
+      };
     }
-    switch (type) {
-      case 'Premium':
-        return {
-          bg: expired ? 'bg-gray-500' : 'bg-purple-500',
-          textColor: 'text-white',
-          label: 'Premium',
-        };
-      case 'Pro':
-        return {
-          bg: expired ? 'bg-gray-500' : 'bg-orange-500',
-          textColor: 'text-white',
-          label: 'Pro',
-        };
-      case 'Enterprise':
-        return {
-          bg: expired ? 'bg-gray-500' : 'bg-blue-800',
-          textColor: 'text-white',
-          label: 'Enterprise',
-        };
-      default:
-        return { bg: 'bg-gray-300', textColor: 'text-gray-900', label: type };
+    if (normalized === 'pro') {
+      return {
+        label: 'Pro',
+        icon: FaStar,
+        classes: 'border-blue-500/30 bg-blue-500/20 text-blue-400',
+      };
     }
+    if (normalized === 'enterprise') {
+      return {
+        label: 'Enterprise',
+        icon: FaCrown,
+        classes: 'border-indigo-500/30 bg-indigo-500/20 text-indigo-300',
+      };
+    }
+    if (normalized === 'gratuito' || normalized === 'free') {
+      return {
+        label: 'Gratuito',
+        icon: IoGiftOutline,
+        classes: 'border-emerald-500/30 bg-emerald-500/20 text-emerald-400',
+      };
+    }
+    return {
+      label: type,
+      icon: null,
+      classes: 'border-slate-500/30 bg-slate-500/20 text-slate-200',
+    };
   };
 
   const renderMobilePlanBadge = () => {
-    if (!planType) return null;
-    const expired = isPlanExpired();
-    const style = getMobilePlanBadgeStyle(planType, expired);
+    if (!planType || isPlanExpired()) return null;
+    const config = getPlanBadgeConfig(planType);
+    if (!config) return null;
+    const Icon = config.icon;
     return (
       <span
-        className={`rounded-full px-2 py-1 text-[11px] font-semibold uppercase ${style.bg} ${style.textColor}`}
-        title={expired ? 'Suscripcion vencida' : `${style.label} activo`}
+        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${config.classes}`}
+        title={`Plan ${config.label}`}
       >
-        {style.label}
+        {Icon ? <Icon className="size-3" /> : null}
+        {config.label}
       </span>
     );
   };
@@ -177,11 +185,13 @@ export function Header({
     setSearchInProgress(false);
   };
 
-  const renderAuthButton = () => {
+  const renderAuthButton = (variant: 'header' | 'mobileMenu' = 'header') => {
+    const isMobileMenu = variant === 'mobileMenu';
+    const mobilePlanBadge = renderMobilePlanBadge();
     if (!mounted) {
       return (
         <div className="flex items-center">
-          <Icons.spinner className="h-5 w-5 text-primary" />
+          <Icons.spinner className="size-5 text-primary" />
         </div>
       );
     }
@@ -190,65 +200,103 @@ export function Header({
       <>
         {!isAuthLoaded ? (
           <div className="flex items-center">
-            <Icons.spinner className="h-5 w-5 text-primary" />
+            <Icons.spinner className="size-5 text-primary" />
           </div>
         ) : (
           <>
             <SignedOut>
-              <SignInButton>
-                <div className="flex items-center">
-                  <Button className="ml-2 hidden h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium whitespace-nowrap text-black transition-colors hover:bg-primary/90 md:inline-flex">
+              <div className="flex items-center">
+                <Button
+                  asChild
+                  className="ml-2 hidden h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium whitespace-nowrap text-black transition-colors hover:bg-primary/90 md:inline-flex"
+                >
+                  <Link
+                    href={signInHref}
+                    onClick={() => {
+                      if (isMobileMenu) setMobileMenuOpen(false);
+                    }}
+                  >
                     Acceder
-                  </Button>
+                  </Link>
+                </Button>
 
-                  <Button
-                    className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95 md:hidden"
-                    style={{
-                      transition: '0.5s',
-                      width: '180px',
+                <Button
+                  asChild
+                  className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95 md:hidden"
+                  style={{
+                    transition: '0.5s',
+                    width: '180px',
+                  }}
+                >
+                  <Link
+                    href={signInHref}
+                    onClick={() => {
+                      if (isMobileMenu) setMobileMenuOpen(false);
                     }}
                   >
                     <span className="relative skew-x-[15deg] overflow-hidden font-semibold">
                       Iniciar Sesión
                     </span>
-                  </Button>
-                </div>
-              </SignInButton>
+                  </Link>
+                </Button>
+              </div>
             </SignedOut>
 
             <SignedIn>
-              <div className="mr-4 hidden items-center gap-3 md:mr-6 md:flex">
-                <Suspense
-                  fallback={
-                    <div className="flex items-center">
-                      <Icons.spinner className="h-5 w-5 text-primary" />
-                    </div>
-                  }
-                >
-                  <UserButtonWrapper />
-                </Suspense>
-                <div className="campana-header relative md:text-white">
-                  <NotificationHeader />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 md:hidden">
-                {renderMobilePlanBadge()}
-                <div className="perfil-header">
+              {isMobileMenu ? (
+                <div className="flex w-full flex-col items-center gap-2">
                   <Suspense
                     fallback={
                       <div className="flex min-w-[180px] items-center justify-start">
-                        <Icons.spinner className="ml-2 h-5 w-5 text-primary" />
+                        <Icons.spinner className="ml-2 size-5 text-primary" />
                       </div>
                     }
                   >
                     <UserButtonWrapper />
                   </Suspense>
+                  {mobilePlanBadge ? (
+                    <div className="mt-1">{mobilePlanBadge}</div>
+                  ) : null}
+                  <div className="campana-header relative md:text-white">
+                    <NotificationHeader />
+                  </div>
                 </div>
-                <div className="campana-header relative md:text-white">
-                  <NotificationHeader />
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="mr-4 hidden items-center gap-3 md:mr-6 md:flex">
+                    <Suspense
+                      fallback={
+                        <div className="flex items-center">
+                          <Icons.spinner className="size-5 text-primary" />
+                        </div>
+                      }
+                    >
+                      <UserButtonWrapper />
+                    </Suspense>
+                    <div className="campana-header relative md:text-white">
+                      <NotificationHeader />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 md:hidden">
+                    {mobilePlanBadge}
+                    <div className="perfil-header">
+                      <Suspense
+                        fallback={
+                          <div className="flex min-w-[180px] items-center justify-start">
+                            <Icons.spinner className="ml-2 size-5 text-primary" />
+                          </div>
+                        }
+                      >
+                        <UserButtonWrapper />
+                      </Suspense>
+                    </div>
+                    <div className="campana-header relative md:text-white">
+                      <NotificationHeader />
+                    </div>
+                  </div>
+                </>
+              )}
             </SignedIn>
           </>
         )}
@@ -293,9 +341,9 @@ export function Header({
       >
         <div className="fixed inset-0" aria-hidden="true" />
         <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
-          <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-blue-400 shadow-lg">
+          <span className="mb-4 flex size-16 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-blue-400 shadow-lg">
             <svg
-              className="h-10 w-10 text-white"
+              className="size-10 text-white"
               fill="none"
               stroke="currentColor"
               strokeWidth={2.5}
@@ -360,7 +408,7 @@ export function Header({
                 autoComplete="off"
               />
               <Search
-                className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 cursor-pointer text-primary/70 transition-colors hover:text-primary"
+                className="absolute top-1/2 right-3 size-4 -translate-y-1/2 cursor-pointer text-primary/70 transition-colors hover:text-primary"
                 onClick={(e) => {
                   e.preventDefault();
                   if (!searchQuery.trim()) return;
@@ -420,7 +468,7 @@ export function Header({
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className="mt-0.5 h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-180"
+                            className="mt-0.5 size-3.5 transition-transform duration-200 group-hover:rotate-180"
                           >
                             <path d="m6 9 6 6 6-6" />
                           </svg>
@@ -432,7 +480,7 @@ export function Header({
                               href="/estudiantes/myaccount"
                               className="group/item flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-primary/10"
                             >
-                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 transition-colors group-hover/item:bg-primary/25">
+                              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/15 transition-colors group-hover/item:bg-primary/25">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
@@ -443,7 +491,7 @@ export function Header({
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="h-4 w-4 text-primary"
+                                  className="size-4 text-primary"
                                 >
                                   <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
                                   <path d="M22 10v6" />
@@ -486,7 +534,7 @@ export function Header({
                                     href={courseHref}
                                     className="group/item flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-secondary/60"
                                   >
-                                    <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-border/30">
+                                    <div className="size-10 shrink-0 overflow-hidden rounded-lg border border-border/30">
                                       <Image
                                         src={getCourseImageUrl(
                                           course.coverImageKey
@@ -494,7 +542,7 @@ export function Header({
                                         alt={course.title ?? 'Curso'}
                                         width={40}
                                         height={40}
-                                        className="h-full w-full object-cover"
+                                        className="size-full object-cover"
                                       />
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -523,7 +571,7 @@ export function Header({
                                       strokeWidth="2"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      className="h-3.5 w-3.5 text-primary opacity-0 transition-opacity group-hover/item:opacity-100"
+                                      className="size-3.5 text-primary opacity-0 transition-opacity group-hover/item:opacity-100"
                                     >
                                       <polygon points="6 3 20 12 6 21 6 3" />
                                     </svg>
@@ -553,7 +601,7 @@ export function Header({
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="h-3 w-3 -rotate-90"
+                                className="size-3 -rotate-90"
                               >
                                 <path d="m6 9 6 6 6-6" />
                               </svg>
@@ -606,17 +654,23 @@ export function Header({
                 setMobileMenuOpen(false);
               }}
             >
-              <Search className="h-5 w-5" />
+              <Search className="size-5" />
             </button>
-            <label className="hamburger flex h-8 w-8 items-center justify-center md:h-12 md:w-12">
-              <input
-                type="checkbox"
-                checked={mobileMenuOpen}
-                onChange={(e) => {
-                  setMobileMenuOpen(e.target.checked);
-                  if (e.target.checked) setShowMobileSearch(false);
-                }}
-              />
+            <button
+              type="button"
+              aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
+              className="hamburger flex size-8 items-center justify-center md:size-12"
+              data-open={mobileMenuOpen ? 'true' : 'false'}
+              onClick={() => {
+                setMobileMenuOpen((prev) => {
+                  const next = !prev;
+                  if (next) setShowMobileSearch(false);
+                  return next;
+                });
+              }}
+            >
               <svg viewBox="0 0 32 32">
                 <path
                   className="line line-top-bottom"
@@ -624,7 +678,7 @@ export function Header({
                 />
                 <path className="line" d="M7 16 27 16" />
               </svg>
-            </label>
+            </button>
           </div>
         </div>
       </div>
@@ -643,7 +697,7 @@ export function Header({
               placeholder="¡Aprende con IA!"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-10 text-sm text-foreground transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+              className="w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] px-10 py-3 text-sm text-foreground transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
               autoComplete="off"
               autoFocus
             />
@@ -657,7 +711,7 @@ export function Header({
               }}
               aria-label="Buscar"
             >
-              <Search className="h-4 w-4 text-primary/70" />
+              <Search className="size-4 text-primary/70" />
             </button>
             <button
               type="button"
@@ -665,7 +719,7 @@ export function Header({
               onClick={() => setShowMobileSearch(false)}
               aria-label="Cerrar búsqueda"
             >
-              <X className="h-4 w-4 text-primary/70" />
+              <X className="size-4 text-primary/70" />
             </button>
             {showPreview &&
               (previewCourses.length > 0 || previewPrograms.length > 0) && (
@@ -694,7 +748,10 @@ export function Header({
         className="fixed inset-0 z-[99999] md:hidden"
       >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-        <DialogPanel className="fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl">
+        <DialogPanel
+          id="mobile-menu"
+          className="fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl"
+        >
           <div className="relative mt-3 mb-2 flex w-full items-center justify-center">
             <div className="mx-auto mt-16 w-fit">
               <Link href="/">
@@ -775,11 +832,11 @@ export function Header({
               <Suspense
                 fallback={
                   <div className="flex min-w-[180px] items-center justify-start">
-                    <Icons.spinner className="h-5 w-5 text-background" />
+                    <Icons.spinner className="size-5 text-background" />
                   </div>
                 }
               >
-                {renderAuthButton()}
+                {renderAuthButton('mobileMenu')}
               </Suspense>
             </div>
           </div>

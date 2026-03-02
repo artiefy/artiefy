@@ -374,6 +374,7 @@ export const projectActivities = pgTable('project_activities', {
   objectiveId: integer('objective_id') // <-- NUEVO: relación con specific_objectives
     .references(() => specificObjectives.id, { onDelete: 'cascade' }),
   description: text('description').notNull(),
+  linkUrl: text('link_url'),
   startDate: date('start_date'),
   endDate: date('end_date'),
   deliverableKey: text('deliverable_key'),
@@ -431,6 +432,7 @@ export const projectsTaken = pgTable('projects_taken', {
     .references(() => projects.id)
     .notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  isInvited: boolean('is_invited').default(false).notNull(), // Indica si fue invitado (solo puede subir entregables)
 });
 
 // Tabla de progreso de lecciones por usuario

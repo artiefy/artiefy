@@ -20,6 +20,7 @@ export default defineConfig([
   ...baseConfig,
   {
     files: ['**/*.ts', '**/*.tsx'],
+    ignores: ['run-migration.ts'],
     languageOptions: {
       parserOptions: {
         project: './tsconfig.eslint.json', // Usa el tsconfig específico para ESLint

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
+import { useUser } from '@clerk/nextjs';
 import {
   Calendar,
   ChevronDown,
@@ -19,7 +20,9 @@ import {
   Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useSWRConfig } from 'swr';
 
+import ModalIntegrantesProyectoInfo from '~/components/projects/Modals/ModalIntegrantesProyectoInfo';
 import {
   Tabs,
   TabsContent,
@@ -52,6 +55,7 @@ export default function ProjectDetailView({
   addedSections: initialAddedSections = {},
   onAddedSectionsChange,
 }: ProjectDetailViewProps) {
+  const { mutate } = useSWRConfig();
   const totalSections = 7;
   const hasBasicInfo = Boolean(
     project.name?.trim() &&
@@ -101,6 +105,50 @@ export default function ProjectDetailView({
       ? project.progressPercentage
       : fallbackProgress;
   const isProjectComplete = completedSections === totalSections;
+  const { user } = useUser();
+  const canEditProject = Boolean(
+    user?.id && project.userId && user.id === project.userId
+  );
+
+  // Estado para verificar si el usuario es invitado
+  const [isInvited, setIsInvited] = useState(false);
+
+  // Verificar si el usuario actual es invitado al proyecto
+  useEffect(() => {
+    if (!user?.id || !project.id) {
+      setIsInvited(false);
+      return;
+    }
+
+    let isMounted = true;
+    const checkIfInvited = async () => {
+      try {
+        const res = await fetch(
+          `/api/projects/taken/check?userId=${user.id}&projectId=${project.id}`
+        );
+        if (!res.ok) {
+          if (isMounted) setIsInvited(false);
+          return;
+        }
+        const data: { taken: boolean; isInvited: boolean } = await res.json();
+        if (isMounted) setIsInvited(data.isInvited);
+      } catch {
+        if (isMounted) setIsInvited(false);
+      }
+    };
+    void checkIfInvited();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, project.id]);
+
+  const showEditControls = Boolean(
+    canEditProject && onEditSection && !isInvited
+  );
+
+  // Permitir que usuarios invitados suban entregables pero no editen el proyecto
+  const canUploadDeliverables = Boolean(canEditProject || isInvited);
+
   const [timelineView, setTimelineView] = useState<
     'dias' | 'semanas' | 'meses'
   >('semanas');
@@ -131,6 +179,18 @@ export default function ProjectDetailView({
   const [deliverableOverrides, setDeliverableOverrides] = useState<
     Record<number, { url: string; name: string; submittedAt: string }>
   >({});
+  const [activityLinkOverrides, setActivityLinkOverrides] = useState<
+    Record<number, string | null>
+  >({});
+  const [editingActivityLinks, setEditingActivityLinks] = useState<
+    Record<number, boolean>
+  >({});
+  const [activityLinkValues, setActivityLinkValues] = useState<
+    Record<number, string>
+  >({});
+  const [savingActivityLinks, setSavingActivityLinks] = useState<
+    Record<number, boolean>
+  >({});
   const [addedSections, setAddedSectionsState] =
     useState<Record<string, { name: string; content: string }>>(
       initialAddedSections
@@ -148,6 +208,27 @@ export default function ProjectDetailView({
   const [expandedTextBlocks, setExpandedTextBlocks] = useState<
     Record<string, boolean>
   >({});
+  const [collaboratorsCount, setCollaboratorsCount] = useState(0);
+  const [collaboratorsLoading, setCollaboratorsLoading] = useState(false);
+  const [showCollaboratorsModal, setShowCollaboratorsModal] = useState(false);
+
+  const isActivityCompleted = (activity: {
+    id?: number;
+    deliverableUrl?: string | null;
+    linkUrl?: string | null;
+  }) => {
+    const activityId =
+      typeof activity.id === 'number' ? activity.id : undefined;
+    const deliverableUrl = activityId
+      ? deliverableOverrides[activityId]?.url
+      : undefined;
+    const linkUrl = activityId ? activityLinkOverrides[activityId] : undefined;
+
+    return Boolean(
+      (deliverableUrl ?? activity.deliverableUrl) ||
+      (linkUrl ?? activity.linkUrl)
+    );
+  };
 
   const { generateContent } = useGenerateContent();
 
@@ -159,6 +240,41 @@ export default function ProjectDetailView({
     );
     setAddedSectionsState(initialAddedSections);
   }, [initialAddedSections]);
+
+  useEffect(() => {
+    setActivityLinkOverrides({});
+  }, [project?.id]);
+
+  useEffect(() => {
+    if (!project?.id) {
+      setCollaboratorsCount(0);
+      return;
+    }
+    let isMounted = true;
+    const fetchCollaborators = async () => {
+      setCollaboratorsLoading(true);
+      try {
+        const res = await fetch(
+          `/api/projects/taken/list?projectId=${project.id}`
+        );
+        if (!res.ok) {
+          if (isMounted) setCollaboratorsCount(0);
+          return;
+        }
+        const data: unknown = await res.json();
+        const count = Array.isArray(data) ? data.length : 0;
+        if (isMounted) setCollaboratorsCount(count);
+      } catch {
+        if (isMounted) setCollaboratorsCount(0);
+      } finally {
+        if (isMounted) setCollaboratorsLoading(false);
+      }
+    };
+    void fetchCollaborators();
+    return () => {
+      isMounted = false;
+    };
+  }, [project?.id]);
 
   const setAddedSections = (
     sections:
@@ -172,6 +288,24 @@ export default function ProjectDetailView({
     setAddedSectionsState(newSections);
     onAddedSectionsChange?.(newSections);
   };
+
+  const proyectoInfo = useMemo(
+    () => ({
+      id: project.id,
+      titulo: project.name ?? '',
+      rama: project.categoryName ?? project.type_project ?? '',
+      especialidades: project.objetivos_especificos?.length ?? 0,
+      participacion: `${progressPercentage}%`,
+    }),
+    [
+      project.id,
+      project.name,
+      project.categoryName,
+      project.type_project,
+      project.objetivos_especificos,
+      progressPercentage,
+    ]
+  );
 
   const handleSectionSelect = async (sectionId: string, isCustom?: boolean) => {
     if (isCustom) {
@@ -574,6 +708,56 @@ export default function ProjectDetailView({
     }
   };
 
+  const handleSaveActivityLink = async (activityId: number) => {
+    try {
+      setSavingActivityLinks((prev) => ({ ...prev, [activityId]: true }));
+      const linkUrl = activityLinkValues[activityId] || null;
+
+      const res = await fetch(`/api/projects/activities/${activityId}/link`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ linkUrl }),
+      });
+
+      if (!res.ok) {
+        throw new Error('No se pudo guardar el link');
+      }
+
+      // Guardar en overrides para actualización inmediata
+      // Usar '__CLEARED__' si es vacío para diferenciarlo de undefined
+      setActivityLinkOverrides((prev) => ({
+        ...prev,
+        [activityId]: linkUrl === null ? '__CLEARED__' : linkUrl,
+      }));
+
+      setActivityLinkValues((prev) => {
+        const updated = { ...prev };
+        delete updated[activityId];
+        return updated;
+      });
+
+      void mutate(`/api/projects/${project.id}?details=true`);
+
+      setEditingActivityLinks((prev) => ({ ...prev, [activityId]: false }));
+      toast.success('Link guardado correctamente');
+    } catch (error) {
+      console.error('Error al guardar link:', error);
+      toast.error('Error al guardar el link');
+    } finally {
+      setSavingActivityLinks((prev) => ({ ...prev, [activityId]: false }));
+    }
+  };
+
+  const getResolvedActivityLinkUrl = (
+    activityId: number | null | undefined,
+    originalLinkUrl: string | null | undefined
+  ): string | null => {
+    if (!activityId) return originalLinkUrl ?? null;
+    const override = activityLinkOverrides[activityId];
+    if (override === '__CLEARED__') return null;
+    return override ?? originalLinkUrl ?? null;
+  };
+
   const parseDateForDisplay = (dateString: string) => {
     if (!dateString) return null;
     const datePart = dateString.slice(0, 10);
@@ -783,6 +967,7 @@ export default function ProjectDetailView({
       startDate: Date | null;
       endDate: Date | null;
       deliverableUrl?: string | null;
+      linkUrl?: string | null;
     }> = [];
 
     const objectiveActivities = new Set<number>();
@@ -798,7 +983,16 @@ export default function ProjectDetailView({
           title: activity.descripcion || 'Actividad sin título',
           startDate: parseTimelineDate(activity.startDate),
           endDate: parseTimelineDate(activity.endDate),
-          deliverableUrl: activity.deliverableUrl ?? null,
+          deliverableUrl:
+            typeof activity.id === 'number'
+              ? (deliverableOverrides[activity.id]?.url ??
+                activity.deliverableUrl ??
+                null)
+              : (activity.deliverableUrl ?? null),
+          linkUrl:
+            typeof activity.id === 'number'
+              ? (activityLinkOverrides[activity.id] ?? activity.linkUrl ?? null)
+              : (activity.linkUrl ?? null),
         });
       });
     });
@@ -817,7 +1011,16 @@ export default function ProjectDetailView({
         title: activity.descripcion || 'Actividad sin título',
         startDate: parseTimelineDate(activity.startDate),
         endDate: parseTimelineDate(activity.endDate),
-        deliverableUrl: activity.deliverableUrl ?? null,
+        deliverableUrl:
+          typeof activity.id === 'number'
+            ? (deliverableOverrides[activity.id]?.url ??
+              activity.deliverableUrl ??
+              null)
+            : (activity.deliverableUrl ?? null),
+        linkUrl:
+          typeof activity.id === 'number'
+            ? getResolvedActivityLinkUrl(activity.id, activity.linkUrl)
+            : (activity.linkUrl ?? null),
       });
     });
 
@@ -849,7 +1052,7 @@ export default function ProjectDetailView({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="mr-1 h-3 w-3"
+                    className="mr-1 size-3"
                   >
                     <circle cx="12" cy="12" r="10"></circle>
                     <path d="m9 12 2 2 4-4"></path>
@@ -858,7 +1061,7 @@ export default function ProjectDetailView({
                 </div>
               ) : (
                 <div className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs font-semibold text-blue-400 transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
-                  <Clock className="mr-1 h-3 w-3" />
+                  <Clock className="mr-1 size-3" />
                   En progreso
                 </div>
               )}
@@ -876,18 +1079,31 @@ export default function ProjectDetailView({
 
             {/* Colaboradores */}
             <div className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>0 colaboradores</span>
+              <Users className="size-4" />
+              <span>
+                {collaboratorsLoading
+                  ? '... colaboradores'
+                  : `${collaboratorsCount} colaboradores`}
+              </span>
               <button
                 type="button"
-                onClick={() => onEditSection?.(1, addedSections)}
-                className="ml-auto inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:hidden"
+                onClick={() => setShowCollaboratorsModal(true)}
+                className="inline-flex h-7 items-center justify-center rounded-md px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
               >
-                <Pencil className="h-3.5 w-3.5" />
+                Ver
               </button>
+              {showEditControls && (
+                <button
+                  type="button"
+                  onClick={() => onEditSection?.(1, addedSections)}
+                  className="ml-auto inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:hidden"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+              )}
             </div>
             <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
+              <Calendar className="size-4" />
               <span>Entrega: {formatDate(project.createdAt)}</span>
             </div>
 
@@ -907,13 +1123,15 @@ export default function ProjectDetailView({
             )}
           </div>
           <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end">
-            <button
-              type="button"
-              onClick={() => onEditSection?.(1, addedSections)}
-              className="hidden h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:inline-flex"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </button>
+            {showEditControls && (
+              <button
+                type="button"
+                onClick={() => onEditSection?.(1, addedSections)}
+                className="hidden h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:inline-flex"
+              >
+                <Pencil className="size-3.5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -950,28 +1168,28 @@ export default function ProjectDetailView({
             value="overview"
             className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
-            <FileText className="h-3.5 w-3.5" />
+            <FileText className="size-3.5" />
             Resumen
           </TabsTrigger>
           <TabsTrigger
             value="submissions"
             className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
-            <Upload className="h-3.5 w-3.5" />
+            <Upload className="size-3.5" />
             Entregas
           </TabsTrigger>
           <TabsTrigger
             value="feedback"
             className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
-            <MessageSquare className="h-3.5 w-3.5" />
+            <MessageSquare className="size-3.5" />
             Retroalimentación
           </TabsTrigger>
           <TabsTrigger
             value="timeline"
             className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
           >
-            <Calendar className="h-3.5 w-3.5" />
+            <Calendar className="size-3.5" />
             Cronograma
           </TabsTrigger>
         </TabsList>
@@ -979,30 +1197,34 @@ export default function ProjectDetailView({
         <TabsContent value="overview" className="space-y-4">
           {/* Botón Agregar Sección */}
           <div className="flex justify-end">
-            <AddSectionDropdown
-              addedSections={Object.keys(addedSections)}
-              onSectionSelect={handleSectionSelect}
-            />
+            {showEditControls && (
+              <AddSectionDropdown
+                addedSections={Object.keys(addedSections)}
+                onSectionSelect={handleSectionSelect}
+              />
+            )}
           </div>
 
           {/* Problema */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/20">
-                  <TriangleAlert className="h-4 w-4 text-red-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-red-500/20">
+                  <TriangleAlert className="size-4 text-red-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Problema
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => onEditSection?.(2, addedSections)}
-                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {showEditControls && (
+                <button
+                  type="button"
+                  onClick={() => onEditSection?.(2, addedSections)}
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  <Pencil className="size-4" />
+                </button>
+              )}
             </div>
             {project.planteamiento && project.planteamiento.trim() !== '' ? (
               renderLimitedText(
@@ -1022,8 +1244,8 @@ export default function ProjectDetailView({
             <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/20">
-                    <Lightbulb className="h-4 w-4 text-yellow-400" />
+                  <div className="flex size-8 items-center justify-center rounded-lg bg-yellow-500/20">
+                    <Lightbulb className="size-4 text-yellow-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground">
                     Justificación
@@ -1052,22 +1274,24 @@ export default function ProjectDetailView({
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div
-                  className="flex h-8 w-8 items-center justify-center rounded-lg"
+                  className="flex size-8 items-center justify-center rounded-lg"
                   style={{ backgroundColor: 'rgba(34, 196, 211, 0.2)' }}
                 >
-                  <Target className="h-4 w-4" style={{ color: '#22c4d3' }} />
+                  <Target className="size-4" style={{ color: '#22c4d3' }} />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Objetivo General
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => onEditSection?.(3, addedSections)}
-                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {showEditControls && (
+                <button
+                  type="button"
+                  onClick={() => onEditSection?.(3, addedSections)}
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  <Pencil className="size-4" />
+                </button>
+              )}
             </div>
             {project.objetivo_general ? (
               renderLimitedText(
@@ -1086,20 +1310,22 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/20">
-                  <ClipboardList className="h-4 w-4 text-amber-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/20">
+                  <ClipboardList className="size-4 text-amber-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Requisitos
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => onEditSection?.(4, addedSections)}
-                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {showEditControls && (
+                <button
+                  type="button"
+                  onClick={() => onEditSection?.(4, addedSections)}
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  <Pencil className="size-4" />
+                </button>
+              )}
             </div>
             {(() => {
               let reqs: string[] = [];
@@ -1131,7 +1357,7 @@ export default function ProjectDetailView({
                           key={idx}
                           className="flex items-start gap-3 text-sm text-muted-foreground"
                         >
-                          <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-medium text-accent">
+                          <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-medium text-accent">
                             {idx + 1}
                           </div>
                           {req}
@@ -1168,8 +1394,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="relative mb-4 sm:flex sm:items-start sm:justify-between sm:gap-3">
               <div className="flex items-start gap-3 pr-10 sm:pr-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
-                  <ListChecks className="h-4 w-4 text-blue-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/20">
+                  <ListChecks className="size-4 text-blue-400" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-foreground">
@@ -1183,25 +1409,22 @@ export default function ProjectDetailView({
                           obj.actividades ?? []
                         );
                         if (!actividades.length) return false;
-                        return actividades.every((act) =>
-                          Boolean(
-                            deliverableOverrides[act.id ?? 0]?.url ??
-                            act.deliverableUrl
-                          )
-                        );
+                        return actividades.every(isActivityCompleted);
                       }).length;
                       return `${completados}/${objetivos.length} completados`;
                     })()}
                   </span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => onEditSection?.(6, addedSections)}
-                className="absolute top-0 right-0 inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {showEditControls && (
+                <button
+                  type="button"
+                  onClick={() => onEditSection?.(6, addedSections)}
+                  className="absolute top-0 right-0 inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  <Pencil className="size-4" />
+                </button>
+              )}
             </div>
             {project.objetivos_especificos &&
             project.objetivos_especificos.length > 0 ? (
@@ -1211,10 +1434,7 @@ export default function ProjectDetailView({
                     objetivo.actividades ?? []
                   );
                   const actividadesCompletadas = actividades.filter((act) =>
-                    Boolean(
-                      deliverableOverrides[act.id ?? 0]?.url ??
-                      act.deliverableUrl
-                    )
+                    isActivityCompleted(act)
                   ).length;
                   const objetivoCompletado =
                     actividades.length > 0 &&
@@ -1235,14 +1455,14 @@ export default function ProjectDetailView({
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                            className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
                               objetivoCompletado
                                 ? 'bg-green-500/20 text-green-400'
                                 : 'bg-muted text-muted-foreground'
                             }`}
                           >
                             {objetivoCompletado ? (
-                              <CircleCheckBig className="h-4 w-4" />
+                              <CircleCheckBig className="size-4" />
                             ) : (
                               idx + 1
                             )}
@@ -1296,7 +1516,7 @@ export default function ProjectDetailView({
                             {estadoObjetivo}
                           </span>
                           <ChevronDown
-                            className={`hidden h-4 w-4 text-muted-foreground transition-transform sm:block ${
+                            className={`hidden size-4 text-muted-foreground transition-transform sm:block ${
                               expandedObjectives[objetivo.id]
                                 ? 'rotate-180'
                                 : 'rotate-0'
@@ -1304,7 +1524,7 @@ export default function ProjectDetailView({
                           />
                         </div>
                         <ChevronDown
-                          className={`absolute top-4 right-2 h-4 w-4 text-muted-foreground transition-transform sm:hidden ${
+                          className={`absolute top-4 right-2 size-4 text-muted-foreground transition-transform sm:hidden ${
                             expandedObjectives[objetivo.id]
                               ? 'rotate-180'
                               : 'rotate-0'
@@ -1355,6 +1575,11 @@ export default function ProjectDetailView({
                                   : '') ??
                                 actividad.deliverableSubmittedAt ??
                                 '';
+                              const resolvedActivityLinkUrl =
+                                getResolvedActivityLinkUrl(
+                                  activityId,
+                                  actividad.linkUrl
+                                );
                               const hasSavedDescription = Boolean(
                                 actividad.deliverableDescription
                               );
@@ -1373,8 +1598,9 @@ export default function ProjectDetailView({
                               const isRemoving = activityId
                                 ? removingActivities[activityId]
                                 : false;
-                              const actividadCompletada =
-                                Boolean(deliverableUrl);
+                              const actividadCompletada = Boolean(
+                                deliverableUrl || resolvedActivityLinkUrl
+                              );
                               const estadoActividad = actividadCompletada
                                 ? 'Completado'
                                 : 'En progreso';
@@ -1400,7 +1626,7 @@ export default function ProjectDetailView({
                                           Actividad {actIdx + 1}
                                         </span>
                                         <ChevronDown
-                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
@@ -1415,7 +1641,7 @@ export default function ProjectDetailView({
                                         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                                           {actividad.startDate && (
                                             <span className="flex items-center gap-1">
-                                              <Calendar className="h-3 w-3" />
+                                              <Calendar className="size-3" />
                                               {formatActivityDate(
                                                 actividad.startDate
                                               )}
@@ -1425,7 +1651,7 @@ export default function ProjectDetailView({
                                             actividad.endDate && <span>-</span>}
                                           {actividad.endDate && (
                                             <span className="flex items-center gap-1">
-                                              <Clock className="h-3 w-3" />
+                                              <Clock className="size-3" />
                                               {formatActivityDate(
                                                 actividad.endDate
                                               )}
@@ -1470,7 +1696,7 @@ export default function ProjectDetailView({
                                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                               {actividad.startDate && (
                                                 <span className="flex items-center gap-1">
-                                                  <Calendar className="h-3 w-3" />
+                                                  <Calendar className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.startDate
                                                   )}
@@ -1482,7 +1708,7 @@ export default function ProjectDetailView({
                                                 )}
                                               {actividad.endDate && (
                                                 <span className="flex items-center gap-1">
-                                                  <Clock className="h-3 w-3" />
+                                                  <Clock className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.endDate
                                                   )}
@@ -1494,7 +1720,7 @@ export default function ProjectDetailView({
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <ChevronDown
-                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
@@ -1578,7 +1804,7 @@ export default function ProjectDetailView({
                                           Entrega
                                         </span>
                                         <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[13px] bg-[#22c4d3] px-3 text-sm font-medium text-[#01152d] transition-colors hover:bg-[#1fb4c2]">
-                                          <Upload className="h-4 w-4" />
+                                          <Upload className="size-4" />
                                           {isUploading
                                             ? 'Subiendo...'
                                             : 'Subir entregable'}
@@ -1606,7 +1832,7 @@ export default function ProjectDetailView({
                                         {isUploading && (
                                           <div className="mt-3 rounded-lg border border-border/40 bg-background/60 p-3">
                                             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <span className="h-2 w-2 animate-pulse rounded-full bg-[#22c4d3]" />
+                                              <span className="size-2 animate-pulse rounded-full bg-[#22c4d3]" />
                                               Subiendo archivo...{' '}
                                               {uploadProgressValue}%
                                             </div>
@@ -1620,7 +1846,7 @@ export default function ProjectDetailView({
                                           <div className="mt-3 rounded-lg border border-green-500/20 bg-green-500/10 p-3">
                                             <div className="mb-2 flex items-center justify-between">
                                               <span className="flex items-center gap-2 text-sm font-medium text-green-400">
-                                                <CircleCheckBig className="h-4 w-4" />
+                                                <CircleCheckBig className="size-4" />
                                                 Entregado
                                               </span>
                                               <div className="flex items-center gap-2">
@@ -1651,7 +1877,7 @@ export default function ProjectDetailView({
                                               </div>
                                             </div>
                                             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <FileText className="h-4 w-4" />
+                                              <FileText className="size-4" />
                                               {(activityId
                                                 ? deliverableOverrides[
                                                     activityId
@@ -1673,6 +1899,124 @@ export default function ProjectDetailView({
                                                 </div>
                                               </div>
                                             )}
+                                          </div>
+                                        )}
+                                      </div>
+                                      {/* Link/URL Section */}
+                                      <div className="rounded-lg bg-muted/30 p-3">
+                                        <span className="mb-2 block text-xs font-medium text-muted-foreground">
+                                          Link / URL del Entregable
+                                        </span>
+                                        {editingActivityLinks[activityKey] ? (
+                                          <div className="flex flex-col gap-2">
+                                            <input
+                                              type="url"
+                                              placeholder="https://ejemplo.com"
+                                              value={
+                                                activityLinkValues[
+                                                  activityKey
+                                                ] ??
+                                                resolvedActivityLinkUrl ??
+                                                ''
+                                              }
+                                              onChange={(event) =>
+                                                setActivityLinkValues(
+                                                  (prev) => ({
+                                                    ...prev,
+                                                    [activityKey]:
+                                                      event.target.value,
+                                                  })
+                                                )
+                                              }
+                                              className="w-full rounded-md border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                            />
+                                            <div className="flex justify-end gap-2">
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  setEditingActivityLinks(
+                                                    (prev) => ({
+                                                      ...prev,
+                                                      [activityKey]: false,
+                                                    })
+                                                  );
+                                                  setActivityLinkValues(
+                                                    (prev) => {
+                                                      const updated = {
+                                                        ...prev,
+                                                      };
+                                                      delete updated[
+                                                        activityKey
+                                                      ];
+                                                      return updated;
+                                                    }
+                                                  );
+                                                }}
+                                                className="inline-flex h-8 items-center justify-center rounded-[12px] border border-muted-foreground px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/50"
+                                              >
+                                                Cancelar
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => {
+                                                  if (activityId) {
+                                                    void handleSaveActivityLink(
+                                                      activityId
+                                                    );
+                                                  }
+                                                }}
+                                                disabled={!activityId}
+                                                className="inline-flex h-8 items-center justify-center rounded-[12px] bg-[#22c4d3] px-3 text-xs font-semibold text-[#01152d] transition-colors hover:bg-[#1fb4c2] disabled:cursor-not-allowed disabled:opacity-70"
+                                              >
+                                                {savingActivityLinks[
+                                                  activityKey
+                                                ]
+                                                  ? 'Guardando...'
+                                                  : 'Guardar Link'}
+                                              </button>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="flex max-w-3xl items-center justify-between">
+                                            {resolvedActivityLinkUrl ? (
+                                              <a
+                                                href={resolvedActivityLinkUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm break-all text-cyan-400 underline hover:text-cyan-300"
+                                              >
+                                                {resolvedActivityLinkUrl}
+                                              </a>
+                                            ) : (
+                                              <span className="text-sm text-muted-foreground">
+                                                No hay link asignado
+                                              </span>
+                                            )}
+                                            {canUploadDeliverables &&
+                                              activityId && (
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setEditingActivityLinks(
+                                                      (prev) => ({
+                                                        ...prev,
+                                                        [activityKey]: true,
+                                                      })
+                                                    );
+                                                    setActivityLinkValues(
+                                                      (prev) => ({
+                                                        ...prev,
+                                                        [activityKey]:
+                                                          resolvedActivityLinkUrl ??
+                                                          '',
+                                                      })
+                                                    );
+                                                  }}
+                                                  className="ml-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black"
+                                                >
+                                                  <Pencil className="size-4" />
+                                                </button>
+                                              )}
                                           </div>
                                         )}
                                       </div>
@@ -1698,8 +2042,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
-                  <Calendar className="h-4 w-4 text-purple-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-purple-500/20">
+                  <Calendar className="size-4 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Cronograma
@@ -1726,13 +2070,15 @@ export default function ProjectDetailView({
                     </button>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onEditSection?.(7, addedSections)}
-                  className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
+                {showEditControls && (
+                  <button
+                    type="button"
+                    onClick={() => onEditSection?.(7, addedSections)}
+                    className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  >
+                    <Pencil className="size-4" />
+                  </button>
+                )}
               </div>
             </div>
             {(() => {
@@ -1790,8 +2136,9 @@ export default function ProjectDetailView({
                 startDate: Date | null;
                 endDate: Date | null;
                 deliverableUrl?: string | null;
+                linkUrl?: string | null;
               }) => {
-                if (row.deliverableUrl) return 'bg-green-500';
+                if (row.deliverableUrl || row.linkUrl) return 'bg-green-500';
                 if (!row.startDate || !row.endDate)
                   return 'bg-muted-foreground/50';
                 if (row.endDate < todayUTC) return 'bg-red-500';
@@ -1958,25 +2305,25 @@ export default function ProjectDetailView({
                       Estado:
                     </span>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-green-500" />
+                      <div className="size-3 rounded-full bg-green-500" />
                       <span className="text-xs text-muted-foreground">
                         Completado
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-accent" />
+                      <div className="size-3 rounded-full bg-accent" />
                       <span className="text-xs text-muted-foreground">
                         En progreso
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-muted-foreground/50" />
+                      <div className="size-3 rounded-full bg-muted-foreground/50" />
                       <span className="text-xs text-muted-foreground">
                         Pendiente
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-red-500" />
+                      <div className="size-3 rounded-full bg-red-500" />
                       <span className="text-xs text-muted-foreground">
                         Atrasado
                       </span>
@@ -1992,8 +2339,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="relative mb-4 sm:flex sm:items-start sm:justify-between sm:gap-3">
               <div className="flex items-start gap-3 pr-10 sm:pr-0">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
-                  <ListChecks className="h-4 w-4 text-blue-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/20">
+                  <ListChecks className="size-4 text-blue-400" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-foreground">
@@ -2014,13 +2361,15 @@ export default function ProjectDetailView({
                   </span>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => onEditSection?.(6, addedSections)}
-                className="absolute top-0 right-0 inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-              >
-                <Pencil className="h-4 w-4" />
-              </button>
+              {showEditControls && (
+                <button
+                  type="button"
+                  onClick={() => onEditSection?.(6, addedSections)}
+                  className="absolute top-0 right-0 inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                >
+                  <Pencil className="size-4" />
+                </button>
+              )}
             </div>
             {project.objetivos_especificos &&
             project.objetivos_especificos.length > 0 ? (
@@ -2030,10 +2379,7 @@ export default function ProjectDetailView({
                     objetivo.actividades ?? []
                   );
                   const actividadesCompletadas = actividades.filter((act) =>
-                    Boolean(
-                      deliverableOverrides[act.id ?? 0]?.url ??
-                      act.deliverableUrl
-                    )
+                    isActivityCompleted(act)
                   ).length;
                   const objetivoCompletado =
                     actividades.length > 0 &&
@@ -2054,14 +2400,14 @@ export default function ProjectDetailView({
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                            className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
                               objetivoCompletado
                                 ? 'bg-green-500/20 text-green-400'
                                 : 'bg-muted text-muted-foreground'
                             }`}
                           >
                             {objetivoCompletado ? (
-                              <CircleCheckBig className="h-4 w-4" />
+                              <CircleCheckBig className="size-4" />
                             ) : (
                               idx + 1
                             )}
@@ -2115,7 +2461,7 @@ export default function ProjectDetailView({
                             {estadoObjetivo}
                           </span>
                           <ChevronDown
-                            className={`hidden h-4 w-4 text-muted-foreground transition-transform sm:block ${
+                            className={`hidden size-4 text-muted-foreground transition-transform sm:block ${
                               expandedObjectives[objetivo.id]
                                 ? 'rotate-180'
                                 : 'rotate-0'
@@ -2123,7 +2469,7 @@ export default function ProjectDetailView({
                           />
                         </div>
                         <ChevronDown
-                          className={`absolute top-4 right-2 h-4 w-4 text-muted-foreground transition-transform sm:hidden ${
+                          className={`absolute top-4 right-2 size-4 text-muted-foreground transition-transform sm:hidden ${
                             expandedObjectives[objetivo.id]
                               ? 'rotate-180'
                               : 'rotate-0'
@@ -2174,6 +2520,11 @@ export default function ProjectDetailView({
                                   : '') ??
                                 actividad.deliverableSubmittedAt ??
                                 '';
+                              const resolvedActivityLinkUrl =
+                                getResolvedActivityLinkUrl(
+                                  activityId,
+                                  actividad.linkUrl
+                                );
                               const hasSavedDescription = Boolean(
                                 actividad.deliverableDescription
                               );
@@ -2192,8 +2543,9 @@ export default function ProjectDetailView({
                               const isRemoving = activityId
                                 ? removingActivities[activityId]
                                 : false;
-                              const actividadCompletada =
-                                Boolean(deliverableUrl);
+                              const actividadCompletada = Boolean(
+                                deliverableUrl || resolvedActivityLinkUrl
+                              );
                               const estadoActividad = actividadCompletada
                                 ? 'Completado'
                                 : 'En progreso';
@@ -2219,7 +2571,7 @@ export default function ProjectDetailView({
                                           Actividad {actIdx + 1}
                                         </span>
                                         <ChevronDown
-                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
@@ -2234,7 +2586,7 @@ export default function ProjectDetailView({
                                         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                                           {actividad.startDate && (
                                             <span className="flex items-center gap-1">
-                                              <Calendar className="h-3 w-3" />
+                                              <Calendar className="size-3" />
                                               {formatActivityDate(
                                                 actividad.startDate
                                               )}
@@ -2244,7 +2596,7 @@ export default function ProjectDetailView({
                                             actividad.endDate && <span>-</span>}
                                           {actividad.endDate && (
                                             <span className="flex items-center gap-1">
-                                              <Clock className="h-3 w-3" />
+                                              <Clock className="size-3" />
                                               {formatActivityDate(
                                                 actividad.endDate
                                               )}
@@ -2289,7 +2641,7 @@ export default function ProjectDetailView({
                                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                                               {actividad.startDate && (
                                                 <span className="flex items-center gap-1">
-                                                  <Calendar className="h-3 w-3" />
+                                                  <Calendar className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.startDate
                                                   )}
@@ -2301,7 +2653,7 @@ export default function ProjectDetailView({
                                                 )}
                                               {actividad.endDate && (
                                                 <span className="flex items-center gap-1">
-                                                  <Clock className="h-3 w-3" />
+                                                  <Clock className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.endDate
                                                   )}
@@ -2313,7 +2665,7 @@ export default function ProjectDetailView({
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <ChevronDown
-                                          className={`h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
@@ -2397,7 +2749,7 @@ export default function ProjectDetailView({
                                           Entrega
                                         </span>
                                         <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[13px] bg-[#22c4d3] px-3 text-sm font-medium text-[#01152d] transition-colors hover:bg-[#1fb4c2]">
-                                          <Upload className="h-4 w-4" />
+                                          <Upload className="size-4" />
                                           {isUploading
                                             ? 'Subiendo...'
                                             : 'Subir entregable'}
@@ -2425,7 +2777,7 @@ export default function ProjectDetailView({
                                         {isUploading && (
                                           <div className="mt-3 rounded-lg border border-border/40 bg-background/60 p-3">
                                             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <span className="h-2 w-2 animate-pulse rounded-full bg-[#22c4d3]" />
+                                              <span className="size-2 animate-pulse rounded-full bg-[#22c4d3]" />
                                               Subiendo archivo...{' '}
                                               {uploadProgressValue}%
                                             </div>
@@ -2439,7 +2791,7 @@ export default function ProjectDetailView({
                                           <div className="mt-3 rounded-lg border border-green-500/20 bg-green-500/10 p-3">
                                             <div className="mb-2 flex items-center justify-between">
                                               <span className="flex items-center gap-2 text-sm font-medium text-green-400">
-                                                <CircleCheckBig className="h-4 w-4" />
+                                                <CircleCheckBig className="size-4" />
                                                 Entregado
                                               </span>
                                               <div className="flex items-center gap-2">
@@ -2470,7 +2822,7 @@ export default function ProjectDetailView({
                                               </div>
                                             </div>
                                             <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <FileText className="h-4 w-4" />
+                                              <FileText className="size-4" />
                                               {(activityId
                                                 ? deliverableOverrides[
                                                     activityId
@@ -2526,8 +2878,8 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
-                  <Calendar className="h-4 w-4 text-purple-400" />
+                <div className="flex size-8 items-center justify-center rounded-lg bg-purple-500/20">
+                  <Calendar className="size-4 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Cronograma
@@ -2554,13 +2906,15 @@ export default function ProjectDetailView({
                     </button>
                   ))}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onEditSection?.(7, addedSections)}
-                  className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
-                >
-                  <Pencil className="h-4 w-4" />
-                </button>
+                {showEditControls && (
+                  <button
+                    type="button"
+                    onClick={() => onEditSection?.(7, addedSections)}
+                    className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  >
+                    <Pencil className="size-4" />
+                  </button>
+                )}
               </div>
             </div>
             {(() => {
@@ -2618,8 +2972,9 @@ export default function ProjectDetailView({
                 startDate: Date | null;
                 endDate: Date | null;
                 deliverableUrl?: string | null;
+                linkUrl?: string | null;
               }) => {
-                if (row.deliverableUrl) return 'bg-green-500';
+                if (row.deliverableUrl || row.linkUrl) return 'bg-green-500';
                 if (!row.startDate || !row.endDate)
                   return 'bg-muted-foreground/50';
                 if (row.endDate < todayUTC) return 'bg-red-500';
@@ -2786,25 +3141,25 @@ export default function ProjectDetailView({
                       Estado:
                     </span>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-green-500" />
+                      <div className="size-3 rounded-full bg-green-500" />
                       <span className="text-xs text-muted-foreground">
                         Completado
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-accent" />
+                      <div className="size-3 rounded-full bg-accent" />
                       <span className="text-xs text-muted-foreground">
                         En progreso
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-muted-foreground/50" />
+                      <div className="size-3 rounded-full bg-muted-foreground/50" />
                       <span className="text-xs text-muted-foreground">
                         Pendiente
                       </span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <div className="h-3 w-3 rounded-full bg-red-500" />
+                      <div className="size-3 rounded-full bg-red-500" />
                       <span className="text-xs text-muted-foreground">
                         Atrasado
                       </span>
@@ -2827,25 +3182,27 @@ export default function ProjectDetailView({
             <h3 className="text-lg font-semibold text-foreground">
               {section.name}
             </h3>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => onEditSection?.(8, addedSections)}
-                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                title="Editar sección en modal"
-              >
-                <Pencil size={16} />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDeleteSection(sectionId)}
-                disabled={isDeletingSection === sectionId}
-                className="inline-flex h-8 w-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-red-500 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
-                title="Eliminar sección"
-              >
-                {isDeletingSection === sectionId ? '⏳' : '×'}
-              </button>
-            </div>
+            {showEditControls && (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => onEditSection?.(8, addedSections)}
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                  title="Editar sección en modal"
+                >
+                  <Pencil size={16} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteSection(sectionId)}
+                  disabled={isDeletingSection === sectionId}
+                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-red-500 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
+                  title="Eliminar sección"
+                >
+                  {isDeletingSection === sectionId ? '⏳' : '×'}
+                </button>
+              </div>
+            )}
           </div>
           {section.content ? (
             renderLimitedText(
@@ -2860,17 +3217,30 @@ export default function ProjectDetailView({
       ))}
 
       {/* Modal Agregar Sección */}
-      <AddCustomSectionModal
-        isOpen={showAddCustomModal}
-        onClose={() => {
-          setShowAddCustomModal(false);
-          setPendingSection(null);
+      {showEditControls && (
+        <AddCustomSectionModal
+          isOpen={showAddCustomModal}
+          onClose={() => {
+            setShowAddCustomModal(false);
+            setPendingSection(null);
+          }}
+          onAdd={handleAddCustomSection}
+          isLoading={isAddingSectionLoading}
+          initialName={pendingSection?.name ?? ''}
+          nameLocked={Boolean(pendingSection && !pendingSection.isCustom)}
+          onGenerateDescription={handleGenerateSectionDescription}
+        />
+      )}
+
+      <ModalIntegrantesProyectoInfo
+        isOpen={showCollaboratorsModal}
+        onClose={() => setShowCollaboratorsModal(false)}
+        proyecto={proyectoInfo}
+        isProjectOwner={canEditProject}
+        onInvitationRemoved={() => {
+          // Refrescar los datos de proyectos
+          void mutate(`/api/estudiantes/projects`);
         }}
-        onAdd={handleAddCustomSection}
-        isLoading={isAddingSectionLoading}
-        initialName={pendingSection?.name ?? ''}
-        nameLocked={Boolean(pendingSection && !pendingSection.isCustom)}
-        onGenerateDescription={handleGenerateSectionDescription}
       />
     </section>
   );
