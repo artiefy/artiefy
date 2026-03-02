@@ -573,9 +573,38 @@ export const parametros = pgTable('parametros', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description').notNull(),
   porcentaje: integer('porcentaje').notNull(),
+  numberOfActivities: integer('number_of_activities').default(0).notNull(),
   courseId: integer('course_id')
     .references(() => courses.id)
+    .default(null),
+});
+
+// Tabla de plantillas de parámetros
+export const parameterTemplates = pgTable('parameter_templates', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  totalPercentage: integer('total_percentage').notNull().default(0),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .default(null),
+  creatorId: text('creator_id')
+    .references(() => users.id)
     .notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Tabla de relación entre plantillas y parámetros
+export const templateParametros = pgTable('template_parametros', {
+  id: serial('id').primaryKey(),
+  templateId: integer('template_id')
+    .references(() => parameterTemplates.id)
+    .notNull(),
+  parametroId: integer('parametro_id')
+    .references(() => parametros.id)
+    .notNull(),
+  order: integer('order').notNull().default(0),
 });
 
 export const programas = pgTable('programas', {

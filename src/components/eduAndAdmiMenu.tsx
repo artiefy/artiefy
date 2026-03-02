@@ -47,6 +47,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const [isFinancesOpen, setIsFinancesOpen] = useState(false);
   const pathname = usePathname();
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+  const [isParametersOpen, setIsParametersOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -659,6 +660,65 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           )}
                         >
                           Tipos de Certificación
+                        </Link>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+
+                {/* Submenú: Parámetros y Plantillas */}
+                <li>
+                  <button
+                    onClick={() =>
+                      shouldShowText && setIsParametersOpen(!isParametersOpen)
+                    }
+                    className={cn(
+                      'flex w-full items-center rounded-lg p-2 text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                      !shouldShowText && 'justify-center'
+                    )}
+                    title={!shouldShowText ? 'Parámetros' : undefined}
+                  >
+                    <FiFileText size={18} />
+                    {shouldShowText && (
+                      <>
+                        <span className="ml-2.5 flex-1 text-left text-xs font-medium whitespace-nowrap">
+                          Parámetros
+                        </span>
+                        {isParametersOpen ? (
+                          <FiChevronDown size={16} />
+                        ) : (
+                          <FiChevronRight size={16} />
+                        )}
+                      </>
+                    )}
+                  </button>
+
+                  {isParametersOpen && shouldShowText && (
+                    <ul className="mt-1 ml-4 space-y-0.5">
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/parametros"
+                          className={cn(
+                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            pathname ===
+                              '/dashboard/super-admin/parametros' &&
+                              'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          Parámetros
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/parametros/plantillas"
+                          className={cn(
+                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            pathname ===
+                              '/dashboard/super-admin/parametros/plantillas' &&
+                              'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          Plantillas
                         </Link>
                       </li>
                     </ul>

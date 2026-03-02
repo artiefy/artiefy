@@ -629,7 +629,10 @@ const Page: React.FC = () => {
         throw new Error(errorData.error ?? 'Error al crear la actividad');
       }
 
-      const actividadData = (await actividadResponse.json()) as { id: number; lessonsId: number };
+      const actividadData = (await actividadResponse.json()) as {
+        id: number;
+        lessonsId: number;
+      };
       const actividadId = actividadData.id;
       const finalLessonId = actividadData.lessonsId || lessonIdNumber;
 
@@ -722,11 +725,11 @@ const Page: React.FC = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative mx-auto h-auto w-full md:w-3/5 lg:w-3/5">
-        <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+        <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
         <div className="relative mt-5 h-auto w-full justify-center">
           {loadingActivity ? (
             <main className="flex h-64 items-center justify-center">
-              <div className="border-primary size-32 animate-spin rounded-full border-y-2">
+              <div className="size-32 animate-spin rounded-full border-y-2 border-primary">
                 <span className="sr-only">Cargando actividad…</span>
               </div>
             </main>
@@ -797,7 +800,7 @@ const Page: React.FC = () => {
                           }`}
                         >
                           <span
-                            className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${
+                            className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${
                               isActive ? 'translate-x-8' : 'translate-x-0'
                             }`}
                           />
@@ -898,7 +901,7 @@ const Page: React.FC = () => {
                           }`}
                         >
                           <span
-                            className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${
+                            className={`absolute top-1 left-1 size-6 rounded-full bg-primary transition-all duration-300 ${
                               fechaMaxima ? 'translate-x-8' : 'translate-x-0'
                             }`}
                           />

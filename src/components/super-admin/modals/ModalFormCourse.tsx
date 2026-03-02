@@ -229,7 +229,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [isLoadingModalidades, setIsLoadingModalidades] = useState(true);
   const [frameImageFile, setFrameImageFile] = useState<File | null>(null);
-
+  const [parametroSearch, setParametroSearch] = useState<string>('');
+  const [showParametroList, setShowParametroList] = useState(false);
   // ✅ New states for schedule and space options
   const [scheduleOptions, setScheduleOptions] = useState<
     { id: number; name: string }[]
@@ -256,11 +257,27 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     number | null
   >(certificationTypeId);
 
+  // 🆕 Estados para parámetros y plantillas existentes
+  const [existingParametros, setExistingParametros] = useState<
+    { id: number; name: string; description: string; porcentaje: number }[]
+  >([]);
+  const [existingTemplates, setExistingTemplates] = useState<
+    { id: number; name: string; description: string | null }[]
+  >([]);
+  const [selectedParametroId, setSelectedParametroId] = useState<number | null>(
+    null
+  );
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+    null
+  );
+  const [showTemplateWarning, setShowTemplateWarning] = useState(false);
+
   void isLoadingCategories;
   void isLoadingModalidades;
   void isLoadingSchedules;
   void isLoadingSpaces;
   void isLoadingCertifications;
+  void selectedParametroId;
   const isVideo = file instanceof File && file.type.startsWith('video/');
   const safeCourseTypeId = Array.isArray(courseTypeId) ? courseTypeId : [];
   const validFile = isFile(file) ? file : null;
@@ -525,6 +542,32 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     void fetchCertifications();
   }, [certificationTypes]);
 
+  // 🆕 Cargar parámetros y plantillas existentes
+  useEffect(() => {
+    const fetchParametrosAndTemplates = async () => {
+      try {
+        const [parametrosRes, templatesRes] = await Promise.all([
+          fetch('/api/educadores/parametros'),
+          fetch('/api/educadores/templates'),
+        ]);
+
+        if (parametrosRes.ok) {
+          const parametrosData = await parametrosRes.json();
+          setExistingParametros(parametrosData);
+        }
+
+        if (templatesRes.ok) {
+          const templatesData = await templatesRes.json();
+          setExistingTemplates(templatesData);
+        }
+      } catch (error) {
+        console.error('Error al cargar parámetros y plantillas:', error);
+      }
+    };
+
+    void fetchParametrosAndTemplates();
+  }, []);
+
   // Función para manejar el cambio de parámetros
   const handleParametroChange = (
     index: number,
@@ -559,20 +602,42 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     // Si tiene ID, es un parámetro guardado → eliminarlo de la base de datos
     if (parametroAEliminar.id) {
       try {
-        const response = await fetch('/api/educadores/parametros', {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id: parametroAEliminar.id }),
-        });
+        console.log(
+          `🗑️ Intentando eliminar parámetro ID ${parametroAEliminar.id}`
+        );
+        const response = await fetch(
+          `/api/educadores/parametros/${parametroAEliminar.id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+          }
+        );
+
+        console.log(
+          `📊 Response status: ${response.status} ${response.statusText}`
+        );
 
         if (!response.ok) {
-          throw new Error('Error al eliminar el parámetro de la base de datos');
+          const errorText = await response.text();
+          console.error(`❌ Error response: ${errorText}`);
+          throw new Error(
+            `Error al eliminar parámetro: ${response.status} ${errorText}`
+          );
         }
+
+        console.log(
+          `✅ Parámetro ID ${parametroAEliminar.id} eliminado correctamente`
+        );
       } catch (error) {
         console.error('❌ Error al eliminar parámetro:', error);
-        toast.error('Error al eliminar el parámetro');
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Error al eliminar el parámetro'
+        );
         return;
       }
     }
@@ -580,6 +645,33 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     // Actualiza el estado local (independientemente de si tenía id o no)
     const updatedParametros = parametros.filter((_, i) => i !== index);
     setParametrosAction(updatedParametros);
+  };
+
+  // 🆕 Agregar parámetro existente
+  const handleAddExistingParametro = (parametroId: number) => {
+    const selectedParametro = existingParametros.find(
+      (p) => p.id === parametroId
+    );
+    if (selectedParametro) {
+      setParametrosAction([...parametros, selectedParametro]);
+      setSelectedParametroId(null);
+    }
+  };
+
+  // 🆕 Agregar plantilla
+  const handleAddTemplate = (templateId: number) => {
+    if (parametros.length > 0) {
+      setShowTemplateWarning(true);
+      return;
+    }
+    // Aquí iría la lógica para cargar los parámetros de la plantilla
+    const selectedTemplate = existingTemplates.find((t) => t.id === templateId);
+    if (selectedTemplate) {
+      // Por ahora, solo limpiamos y mostramos que se cargó
+      setParametrosAction([]);
+      toast.success(`Plantilla "${selectedTemplate.name}" seleccionada`);
+      setSelectedTemplateId(null);
+    }
   };
 
   const handleSubmit = async () => {
@@ -1724,15 +1816,121 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 <label className="text-sm font-medium text-primary md:text-lg">
                   Parámetros de evaluación
                 </label>
-                <Button
-                  onClick={handleAddParametro}
-                  disabled={parametros.length >= 10}
-                  className="mt-2 w-10/12 bg-primary text-white lg:w-1/2"
-                >
-                  {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
-                  parametro
-                  <Plus />
-                </Button>
+
+                {/* Opciones para agregar parámetros */}
+                <div className="space-y-3 rounded-lg border border-primary p-4">
+                  <h4 className="font-medium text-white">Agregar parámetros</h4>
+
+                  {/* Botón para crear nuevo parámetro */}
+                  <Button
+                    onClick={handleAddParametro}
+                    disabled={parametros.length >= 10}
+                    className="w-full bg-primary text-white"
+                  >
+                    {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
+                    parámetro
+                    <Plus />
+                  </Button>
+
+                  <div className="relative">
+                    <label className="text-sm text-gray-300">
+                      O selecciona un parámetro existente:
+                    </label>
+
+                    <input
+                      type="text"
+                      placeholder="Buscar parámetro..."
+                      value={parametroSearch}
+                      onChange={(e) => setParametroSearch(e.target.value)}
+                      onFocus={() => setShowParametroList(true)}
+                      onBlur={() =>
+                        setTimeout(() => setShowParametroList(false), 150)
+                      }
+                      className="mt-2 w-full rounded border bg-background p-2 text-sm text-white"
+                    />
+
+                    {showParametroList && (
+                      <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded border border-gray-600 bg-background shadow-lg">
+                        {existingParametros
+                          .filter((p) =>
+                            p.name
+                              .toLowerCase()
+                              .includes(parametroSearch.toLowerCase())
+                          )
+                          .map((param) => (
+                            <button
+                              key={param.id}
+                              type="button"
+                              onMouseDown={() => {
+                                handleAddExistingParametro(param.id);
+                                setParametroSearch('');
+                                setShowParametroList(false);
+                              }}
+                              className="w-full px-3 py-2 text-left text-sm text-white hover:bg-gray-700"
+                            >
+                              {param.name} ({param.porcentaje}%)
+                            </button>
+                          ))}
+                        {existingParametros.filter((p) =>
+                          p.name
+                            .toLowerCase()
+                            .includes(parametroSearch.toLowerCase())
+                        ).length === 0 && (
+                          <p className="px-3 py-2 text-sm text-gray-400">
+                            No se encontraron parámetros
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Selector para plantilla */}
+                  <div>
+                    <label className="text-sm text-gray-300">
+                      O carga una plantilla:
+                    </label>
+                    <select
+                      value={selectedTemplateId ?? ''}
+                      onChange={(e) => {
+                        const id = e.target.value
+                          ? Number(e.target.value)
+                          : null;
+                        if (id) {
+                          handleAddTemplate(id);
+                        }
+                      }}
+                      className="mt-2 w-full rounded border bg-background p-2 text-sm text-white"
+                    >
+                      <option value="">
+                        {existingTemplates.length === 0
+                          ? 'No hay plantillas disponibles'
+                          : 'Seleccionar plantilla...'}
+                      </option>
+                      {existingTemplates.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Advertencia si se intenta agregar plantilla con parámetros existentes */}
+                {showTemplateWarning && (
+                  <div className="rounded-lg border border-yellow-500 bg-yellow-50 p-4">
+                    <p className="text-sm font-medium text-yellow-800">
+                      ⚠️ Para agregar una plantilla, debes eliminar todos los
+                      parámetros existentes primero.
+                    </p>
+                    <Button
+                      onClick={() => setShowTemplateWarning(false)}
+                      className="mt-2 bg-yellow-600 text-white hover:bg-yellow-700"
+                    >
+                      Entendido
+                    </Button>
+                  </div>
+                )}
+
                 {parametros.map((parametro, index) => (
                   <div key={index} className="mt-4 rounded-lg border p-4">
                     <div className="flex items-center justify-between">

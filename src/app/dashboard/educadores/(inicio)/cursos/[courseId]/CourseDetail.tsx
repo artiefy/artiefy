@@ -1329,6 +1329,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
+          credentials: 'include',
         }
       );
 
@@ -1350,6 +1351,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   porcentaje: parametro.porcentaje,
                   courseId: Number(courseIdString2),
                 }),
+                credentials: 'include',
               }
             );
 
@@ -1372,6 +1374,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 porcentaje: parametro.porcentaje,
                 courseId: Number(courseIdString2),
               }),
+              credentials: 'include',
             });
 
             if (!createResponse.ok) {
