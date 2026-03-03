@@ -11,6 +11,8 @@ interface ProjectData {
   type_project?: string;
   isPublic?: boolean;
   needsCollaborators?: boolean;
+  coverImageKey?: string;
+  coverVideoKey?: string;
   // Campos de otras secciones
   planteamiento?: string;
   justificacion?: string;

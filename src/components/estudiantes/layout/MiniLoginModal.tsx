@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { useAuth, useSignIn } from '@clerk/nextjs';
+import { useAuth, useSignIn, useSignUp } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
 
@@ -17,7 +17,7 @@ interface MiniLoginModalProps {
   onClose: () => void;
   onLoginSuccess: () => void;
   redirectUrl?: string;
-  onSwitchToSignUp?: () => void;
+  onSwitchToSignUp?: (strategy?: OAuthStrategy) => void;
   initialError?: string;
 }
 
@@ -30,6 +30,7 @@ export default function MiniLoginModal({
   initialError,
 }: MiniLoginModalProps) {
   const { signIn, setActive } = useSignIn();
+  const { signUp } = useSignUp();
   const { isSignedIn } = useAuth({
     treatPendingAsSignedOut: false,
   });
@@ -122,7 +123,6 @@ export default function MiniLoginModal({
 
     const baseUrl = window.location.origin;
     const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
-    const absoluteRedirectUrlFallback = `${baseUrl}/sign-in/sso-callback`;
     const absoluteRedirectUrlComplete =
       redirectUrl && redirectUrl.trim() !== ''
         ? redirectUrl.startsWith('http')
@@ -146,11 +146,16 @@ export default function MiniLoginModal({
 
       if (!popup || popup.closed || typeof popup.closed === 'undefined') {
         setLoadingProvider(null);
-        await signIn.authenticateWithRedirect({
-          strategy,
-          redirectUrl: absoluteRedirectUrlFallback,
-          redirectUrlComplete: absoluteRedirectUrlComplete,
-        });
+        setErrors([
+          {
+            code: 'popup_blocked',
+            message:
+              'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
+            longMessage:
+              'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
+            meta: {},
+          },
+        ]);
         return;
       }
 
@@ -172,6 +177,17 @@ export default function MiniLoginModal({
           redirectUrl: absoluteRedirectUrl,
           redirectUrlComplete: absoluteRedirectUrlComplete,
         });
+
+        if (typeof signUp?.reload === 'function') {
+          await signUp.reload();
+        }
+
+        if (signUp?.status === 'missing_requirements' && onSwitchToSignUp) {
+          setLoadingProvider(null);
+          onClose();
+          onSwitchToSignUp(strategy);
+          return;
+        }
       } catch (err) {
         setLoadingProvider(null);
         console.error('❌ Error en OAuth:', err);
@@ -181,11 +197,19 @@ export default function MiniLoginModal({
             (error) => error.code === 'popup_blocked'
           );
           if (popupBlocked) {
-            await signIn.authenticateWithRedirect({
-              strategy,
-              redirectUrl: absoluteRedirectUrlFallback,
-              redirectUrlComplete: absoluteRedirectUrlComplete,
-            });
+            if (!popup.closed) {
+              popup.close();
+            }
+            setErrors([
+              {
+                code: 'popup_blocked',
+                message:
+                  'Popup bloqueado por el navegador. Permite ventanas emergentes para continuar.',
+                longMessage:
+                  'Popup bloqueado por el navegador. Permite ventanas emergentes para continuar.',
+                meta: {},
+              },
+            ]);
             return;
           }
           const customError = err.errors.find(
@@ -195,7 +219,13 @@ export default function MiniLoginModal({
           );
 
           if (customError) {
-            // Provide a clear, actionable message
+            if (onSwitchToSignUp) {
+              onClose();
+              onSwitchToSignUp(strategy);
+              return;
+            }
+
+            // Fallback si no existe callback para abrir signup.
             setErrors([
               {
                 code: customError.code,
@@ -520,12 +550,27 @@ export default function MiniLoginModal({
   };
 
   return (
-    <div className="pointer-events-auto fixed inset-0 z-[1100] flex items-center justify-center bg-black/50">
+    <div
+      className="
+        pointer-events-auto fixed inset-0 z-[1100] flex items-center
+        justify-center bg-black/50
+      "
+    >
       {/* OAuth Loading Overlay */}
       {loadingProvider && (
-        <div className="absolute inset-0 z-[1150] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-4 rounded-2xl bg-background/95 p-8 shadow-2xl">
-            <Icons.spinner className="h-12 w-12 text-primary" />
+        <div
+          className="
+            absolute inset-0 z-[1150] flex items-center justify-center
+            bg-black/70 backdrop-blur-sm
+          "
+        >
+          <div
+            className="
+              flex flex-col items-center gap-4 rounded-2xl bg-background/95 p-8
+              shadow-2xl
+            "
+          >
+            <Icons.spinner className="size-12 text-primary" />
             <div className="text-center">
               <p className="text-lg font-semibold">Autenticando...</p>
               <p className="text-sm text-muted-foreground">
@@ -538,7 +583,21 @@ export default function MiniLoginModal({
 
       <div
         role="dialog"
-        className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-hidden rounded-[32px] border border-border/50 bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200 sm:max-w-md"
+        className="
+          data-[state=open]:animate-in
+          data-[state=closed]:animate-out data-[state=closed]:fade-out-0
+          data-[state=open]:fade-in-0
+          data-[state=closed]:zoom-out-95
+          data-[state=open]:zoom-in-95
+          data-[state=closed]:slide-out-to-left-1/2
+          data-[state=closed]:slide-out-to-top-[48%]
+          data-[state=open]:slide-in-from-left-1/2
+          data-[state=open]:slide-in-from-top-[48%]
+          fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-[-50%]
+          gap-4 overflow-hidden rounded-[32px] border border-border/50
+          bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200
+          sm:max-w-md
+        "
         tabIndex={-1}
         style={{ pointerEvents: 'auto' }}
       >
@@ -548,7 +607,9 @@ export default function MiniLoginModal({
           {Array.from({ length: 20 }).map((_, i) => (
             <div
               key={`star-${i}`}
-              className="absolute h-1 w-1 animate-pulse rounded-full bg-accent/40"
+              className="
+                absolute size-1 animate-pulse rounded-full bg-accent/40
+              "
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -559,11 +620,18 @@ export default function MiniLoginModal({
           ))}
 
           {/* Floating rockets */}
-          <div className="animate-float absolute top-1/2 right-4 h-28 w-20 -translate-y-1/2 opacity-20">
-            <div className="relative h-full w-full rotate-[-15deg]">
+          <div
+            className="
+              animate-float absolute top-1/2 right-4 h-28 w-20 -translate-y-1/2
+              opacity-20
+            "
+          >
+            <div className="relative size-full rotate-[-15deg]">
               <svg
                 viewBox="0 0 64 80"
-                className="h-full w-full drop-shadow-[0_0_15px_hsl(180_100%_50%/0.4)]"
+                className="
+                  size-full drop-shadow-[0_0_15px_hsl(180_100%_50%/0.4)]
+                "
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -627,13 +695,17 @@ export default function MiniLoginModal({
           </div>
 
           <div
-            className="animate-float absolute bottom-20 left-6 h-16 w-12 opacity-15"
+            className="
+              animate-float absolute bottom-20 left-6 h-16 w-12 opacity-15
+            "
             style={{ animationDelay: '1.5s' }}
           >
-            <div className="relative h-full w-full rotate-[20deg]">
+            <div className="relative size-full rotate-[20deg]">
               <svg
                 viewBox="0 0 64 80"
-                className="h-full w-full drop-shadow-[0_0_10px_hsl(180_100%_50%/0.3)]"
+                className="
+                  size-full drop-shadow-[0_0_10px_hsl(180_100%_50%/0.3)]
+                "
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -657,7 +729,10 @@ export default function MiniLoginModal({
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={`particle-${i}`}
-              className="animate-rise absolute h-1.5 w-1.5 rounded-full bg-gradient-to-b from-accent/60 to-orange-400/40"
+              className="
+                animate-rise absolute size-1.5 rounded-full bg-gradient-to-b
+                from-accent/60 to-orange-400/40
+              "
               style={{
                 left: `${20 + Math.random() * 60}%`,
                 bottom: '-10px',
@@ -672,7 +747,14 @@ export default function MiniLoginModal({
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+          className="
+            absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background
+            transition-opacity
+            hover:opacity-100
+            focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none
+            disabled:pointer-events-none
+            data-[state=open]:bg-accent data-[state=open]:text-muted-foreground
+          "
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -684,7 +766,7 @@ export default function MiniLoginModal({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="lucide lucide-x h-4 w-4"
+            className="lucide lucide-x size-4"
           >
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
@@ -693,8 +775,17 @@ export default function MiniLoginModal({
         </button>
 
         {/* Header */}
-        <div className="relative z-10 flex flex-col items-center space-y-3 text-center sm:text-left">
-          <h2 className="sr-only text-lg leading-none font-semibold tracking-tight">
+        <div
+          className="
+            relative z-10 flex flex-col items-center space-y-3 text-center
+            sm:text-left
+          "
+        >
+          <h2
+            className="
+              sr-only text-lg leading-none font-semibold tracking-tight
+            "
+          >
             Iniciar sesión
           </h2>
           <p className="text-sm text-muted-foreground">Inicia sesión en:</p>
@@ -724,14 +815,22 @@ export default function MiniLoginModal({
             e.code === 'identifier_not_found'
         ) &&
           onSwitchToSignUp && (
-            <div className="relative z-10 mt-4 rounded-lg border border-amber-500/20 bg-amber-500/10 p-4">
+            <div
+              className="
+                relative z-10 mt-4 rounded-lg border border-amber-500/20
+                bg-amber-500/10 p-4
+              "
+            >
               <p className="mb-2 text-sm text-amber-400">
                 No encontramos una cuenta con ese correo electrónico.
               </p>
               <button
                 type="button"
-                onClick={onSwitchToSignUp}
-                className="text-sm font-semibold text-primary hover:underline"
+                onClick={() => onSwitchToSignUp?.()}
+                className="
+                  text-sm font-semibold text-primary
+                  hover:underline
+                "
               >
                 Crear cuenta nueva →
               </button>
@@ -746,7 +845,10 @@ export default function MiniLoginModal({
             <div className="space-y-2">
               <label
                 htmlFor="email"
-                className="sr-only text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="
+                  sr-only text-sm leading-none font-medium
+                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                "
               >
                 Correo electrónico
               </label>
@@ -758,16 +860,36 @@ export default function MiniLoginModal({
                 value={email}
                 placeholder="Correo electrónico"
                 required
-                className={`flex h-12 w-full rounded-full border border-border/50 bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${
-                  emailError ? 'border-red-300 focus:border-red-500' : ''
-                }`}
+                className={`
+                  flex h-12 w-full rounded-full border border-border/50
+                  bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background
+                  file:border-0 file:bg-transparent file:text-sm
+                  file:font-medium file:text-foreground
+                  placeholder:text-muted-foreground/60
+                  focus:border-primary/50
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:cursor-not-allowed disabled:opacity-50
+                  md:text-sm
+                  ${
+                    emailError
+                      ? `
+                        border-red-300
+                        focus:border-red-500
+                      `
+                      : ''
+                  }
+                `}
               />
             </div>
 
             <div className="space-y-2">
               <label
                 htmlFor="password"
-                className="sr-only text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="
+                  sr-only text-sm leading-none font-medium
+                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                "
               >
                 Contraseña
               </label>
@@ -779,19 +901,46 @@ export default function MiniLoginModal({
                 value={password}
                 placeholder="Contraseña"
                 required
-                className={`flex h-12 w-full rounded-full border border-border/50 bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm ${
-                  passwordError ? 'border-red-300 focus:border-red-500' : ''
-                }`}
+                className={`
+                  flex h-12 w-full rounded-full border border-border/50
+                  bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background
+                  file:border-0 file:bg-transparent file:text-sm
+                  file:font-medium file:text-foreground
+                  placeholder:text-muted-foreground/60
+                  focus:border-primary/50
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:cursor-not-allowed disabled:opacity-50
+                  md:text-sm
+                  ${
+                    passwordError
+                      ? `
+                        border-red-300
+                        focus:border-red-500
+                      `
+                      : ''
+                  }
+                `}
               />
             </div>
 
             <button
               type="submit"
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary/80 to-primary px-4 py-2 text-sm font-semibold tracking-wide whitespace-nowrap text-[#080c16] ring-offset-background transition-all hover:from-primary hover:to-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="
+                inline-flex h-12 w-full items-center justify-center gap-2
+                rounded-full bg-gradient-to-r from-primary/80 to-primary px-4
+                py-2 text-sm font-semibold tracking-wide whitespace-nowrap
+                text-[#080c16] ring-offset-background transition-all
+                hover:from-primary hover:to-primary/90
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
+                disabled:pointer-events-none disabled:opacity-50
+                [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+              "
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'INICIAR SESIÓN'
               )}
@@ -800,7 +949,12 @@ export default function MiniLoginModal({
             {/* Divider */}
             <div className="relative my-6">
               <div className="h-[1px] w-full shrink-0 bg-border/50" />
-              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
+              <span
+                className="
+                  absolute top-1/2 left-1/2 -translate-1/2 bg-background px-3
+                  text-xs text-muted-foreground
+                "
+              >
                 o continúa con
               </span>
             </div>
@@ -810,40 +964,73 @@ export default function MiniLoginModal({
               <button
                 type="button"
                 onClick={() => signInWith('oauth_google')}
-                className="inline-flex h-12 w-12 items-center justify-center gap-2 rounded-full border border-border/50 bg-background text-sm font-medium whitespace-nowrap ring-offset-background transition-all hover:border-primary/50 hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="
+                  inline-flex size-12 items-center justify-center gap-2
+                  rounded-full border border-border/50 bg-background text-sm
+                  font-medium whitespace-nowrap ring-offset-background
+                  transition-all
+                  hover:border-primary/50 hover:bg-muted/50
+                  hover:text-accent-foreground
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:pointer-events-none disabled:opacity-50
+                  [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                "
                 disabled={!!loadingProvider}
                 aria-label="Continuar con Google"
               >
                 {loadingProvider === 'oauth_google' ? (
-                  <Icons.spinner className="h-5 w-5" />
+                  <Icons.spinner className="size-5" />
                 ) : (
-                  <Icons.google className="h-5 w-5" />
+                  <Icons.google className="size-5" />
                 )}
               </button>
               <button
                 type="button"
                 onClick={() => signInWith('oauth_facebook')}
-                className="inline-flex h-12 w-12 items-center justify-center gap-2 rounded-full border border-border/50 bg-background text-sm font-medium whitespace-nowrap ring-offset-background transition-all hover:border-primary/50 hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="
+                  inline-flex size-12 items-center justify-center gap-2
+                  rounded-full border border-border/50 bg-background text-sm
+                  font-medium whitespace-nowrap ring-offset-background
+                  transition-all
+                  hover:border-primary/50 hover:bg-muted/50
+                  hover:text-accent-foreground
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:pointer-events-none disabled:opacity-50
+                  [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                "
                 disabled={!!loadingProvider}
                 aria-label="Continuar con Facebook"
               >
                 {loadingProvider === 'oauth_facebook' ? (
-                  <Icons.spinner className="h-5 w-5" />
+                  <Icons.spinner className="size-5" />
                 ) : (
-                  <Icons.facebook className="h-5 w-5" />
+                  <Icons.facebook className="size-5" />
                 )}
               </button>
               <button
                 type="button"
                 onClick={() => signInWith('oauth_github')}
-                className="inline-flex h-12 w-12 items-center justify-center gap-2 rounded-full border border-border/50 bg-background text-sm font-medium whitespace-nowrap ring-offset-background transition-all hover:border-primary/50 hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="
+                  inline-flex size-12 items-center justify-center gap-2
+                  rounded-full border border-border/50 bg-background text-sm
+                  font-medium whitespace-nowrap ring-offset-background
+                  transition-all
+                  hover:border-primary/50 hover:bg-muted/50
+                  hover:text-accent-foreground
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:pointer-events-none disabled:opacity-50
+                  [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                "
                 disabled={!!loadingProvider}
                 aria-label="Continuar con GitHub"
               >
                 {loadingProvider === 'oauth_github' ? (
-                  <Icons.spinner className="h-5 w-5" />
+                  <Icons.spinner className="size-5" />
                 ) : (
-                  <Icons.gitHub className="h-5 w-5" />
+                  <Icons.gitHub className="size-5" />
                 )}
               </button>
             </div>
@@ -856,7 +1043,10 @@ export default function MiniLoginModal({
                 </span>
                 <button
                   type="button"
-                  className="font-medium text-primary transition-colors hover:text-primary/80"
+                  className="
+                    font-medium text-primary transition-colors
+                    hover:text-primary/80
+                  "
                   onClick={() => setIsForgotPassword(true)}
                 >
                   Recuperarla
@@ -869,8 +1059,11 @@ export default function MiniLoginModal({
                   </span>
                   <button
                     type="button"
-                    className="font-medium text-primary transition-colors hover:text-primary/80"
-                    onClick={onSwitchToSignUp}
+                    className="
+                      font-medium text-primary transition-colors
+                      hover:text-primary/80
+                    "
+                    onClick={() => onSwitchToSignUp?.()}
                   >
                     Regístrate aquí
                   </button>
@@ -886,7 +1079,10 @@ export default function MiniLoginModal({
             <div className="space-y-2">
               <label
                 htmlFor="new-password"
-                className="sr-only text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="
+                  sr-only text-sm leading-none font-medium
+                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                "
               >
                 Nueva contraseña
               </label>
@@ -898,13 +1094,27 @@ export default function MiniLoginModal({
                 value={password}
                 placeholder="Nueva contraseña"
                 required
-                className="flex h-12 w-full rounded-full border border-border/50 bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                className="
+                  flex h-12 w-full rounded-full border border-border/50
+                  bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background
+                  file:border-0 file:bg-transparent file:text-sm
+                  file:font-medium file:text-foreground
+                  placeholder:text-muted-foreground/60
+                  focus:border-primary/50
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:cursor-not-allowed disabled:opacity-50
+                  md:text-sm
+                "
               />
             </div>
             <div className="space-y-2">
               <label
                 htmlFor="reset-code"
-                className="sr-only text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="
+                  sr-only text-sm leading-none font-medium
+                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                "
               >
                 Código de restablecimiento
               </label>
@@ -916,16 +1126,37 @@ export default function MiniLoginModal({
                 value={code}
                 placeholder="Código de restablecimiento"
                 required
-                className="flex h-12 w-full rounded-full border border-border/50 bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                className="
+                  flex h-12 w-full rounded-full border border-border/50
+                  bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background
+                  file:border-0 file:bg-transparent file:text-sm
+                  file:font-medium file:text-foreground
+                  placeholder:text-muted-foreground/60
+                  focus:border-primary/50
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:cursor-not-allowed disabled:opacity-50
+                  md:text-sm
+                "
               />
             </div>
             <button
               type="submit"
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary/80 to-primary px-4 py-2 text-sm font-semibold tracking-wide whitespace-nowrap text-primary-foreground ring-offset-background transition-all hover:from-primary hover:to-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="
+                inline-flex h-12 w-full items-center justify-center gap-2
+                rounded-full bg-gradient-to-r from-primary/80 to-primary px-4
+                py-2 text-sm font-semibold tracking-wide whitespace-nowrap
+                text-primary-foreground ring-offset-background transition-all
+                hover:from-primary hover:to-primary/90
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
+                disabled:pointer-events-none disabled:opacity-50
+                [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+              "
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'RESTABLECER CONTRASEÑA'
               )}
@@ -933,7 +1164,10 @@ export default function MiniLoginModal({
             <div className="text-center">
               <button
                 type="button"
-                className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                className="
+                  text-sm font-medium text-primary transition-colors
+                  hover:text-primary/80
+                "
                 onClick={() => {
                   setIsForgotPassword(false);
                   setSuccessfulCreation(false);
@@ -952,7 +1186,10 @@ export default function MiniLoginModal({
             <div className="space-y-2">
               <label
                 htmlFor="forgot-email"
-                className="sr-only text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="
+                  sr-only text-sm leading-none font-medium
+                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                "
               >
                 Correo electrónico
               </label>
@@ -964,16 +1201,37 @@ export default function MiniLoginModal({
                 value={email}
                 placeholder="Correo electrónico"
                 required
-                className="flex h-12 w-full rounded-full border border-border/50 bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground/60 focus:border-primary/50 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                className="
+                  flex h-12 w-full rounded-full border border-border/50
+                  bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background
+                  file:border-0 file:bg-transparent file:text-sm
+                  file:font-medium file:text-foreground
+                  placeholder:text-muted-foreground/60
+                  focus:border-primary/50
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:cursor-not-allowed disabled:opacity-50
+                  md:text-sm
+                "
               />
             </div>
             <button
               type="submit"
-              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary/80 to-primary px-4 py-2 text-sm font-semibold tracking-wide whitespace-nowrap text-primary-foreground ring-offset-background transition-all hover:from-primary hover:to-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+              className="
+                inline-flex h-12 w-full items-center justify-center gap-2
+                rounded-full bg-gradient-to-r from-primary/80 to-primary px-4
+                py-2 text-sm font-semibold tracking-wide whitespace-nowrap
+                text-primary-foreground ring-offset-background transition-all
+                hover:from-primary hover:to-primary/90
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
+                disabled:pointer-events-none disabled:opacity-50
+                [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+              "
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'ENVIAR CÓDIGO'
               )}
@@ -981,7 +1239,10 @@ export default function MiniLoginModal({
             <div className="text-center">
               <button
                 type="button"
-                className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                className="
+                  text-sm font-medium text-primary transition-colors
+                  hover:text-primary/80
+                "
                 onClick={() => {
                   setIsForgotPassword(false);
                   setSuccessfulCreation(false);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -12,12 +12,36 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 
 import '../../../styles/mini-login-uiverse.css';
 
+const normalizeMissingFields = (fields: string[]) =>
+  fields.map((field) => {
+    if (field === 'email_address') return 'emailAddress';
+    if (field === 'phone_number') return 'phoneNumber';
+    return field;
+  });
+
+const formatFields = (fields?: string[]) => {
+  if (!fields || fields.length === 0) return 'ninguno';
+  const labels: Record<string, string> = {
+    emailAddress: 'correo',
+    email_address: 'correo',
+    firstName: 'nombre',
+    lastName: 'apellido',
+    password: 'contraseña',
+    phoneNumber: 'teléfono',
+    phone_number: 'teléfono',
+    username: 'usuario',
+  };
+  return fields.map((field) => labels[field] ?? field).join(', ');
+};
+
 interface MiniSignUpModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSignUpSuccess: () => void;
   redirectUrl?: string;
   onSwitchToLogin?: () => void;
+  autoStartOAuthStrategy?: OAuthStrategy | null;
+  onAutoStartOAuthHandled?: () => void;
 }
 
 export default function MiniSignUpModal({
@@ -26,6 +50,8 @@ export default function MiniSignUpModal({
   onSignUpSuccess,
   redirectUrl = '/',
   onSwitchToLogin,
+  autoStartOAuthStrategy = null,
+  onAutoStartOAuthHandled,
 }: MiniSignUpModalProps) {
   const { signUp, setActive, isLoaded } = useSignUp();
   const { isSignedIn } = useAuth({
@@ -48,6 +74,8 @@ export default function MiniSignUpModal({
     null
   );
   const [hasHandledAuth, setHasHandledAuth] = useState(false);
+  const [consumedAutoOAuthStrategy, setConsumedAutoOAuthStrategy] =
+    useState<OAuthStrategy | null>(null);
 
   // Sincronizar estado cuando el popup termina el OAuth
   useEffect(() => {
@@ -96,6 +124,53 @@ export default function MiniSignUpModal({
     };
   }, [isOpen, signUp, setActive]);
 
+  // Sincronizar estado de SignUp al abrir el modal (caso redirect callback sin popup)
+  useEffect(() => {
+    if (!isOpen || !isLoaded || !signUp || !setActive) return;
+
+    let cancelled = false;
+    const syncSignUpState = async () => {
+      try {
+        if (typeof signUp.reload === 'function') {
+          await signUp.reload();
+        }
+        if (cancelled) return;
+
+        if (signUp.status === 'complete' && signUp.createdSessionId) {
+          await setActive({ session: signUp.createdSessionId });
+          return;
+        }
+
+        if (signUp.status === 'missing_requirements') {
+          const missingFields = normalizeMissingFields(
+            signUp.missingFields ?? []
+          );
+          if (missingFields.length > 0) {
+            setOauthMissingFields(missingFields);
+            setErrors([
+              {
+                code: 'missing_requirements',
+                message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+                longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+                meta: {},
+              },
+            ]);
+          }
+        }
+      } catch (error) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Error al sincronizar estado de SignUp:', error);
+        }
+      }
+    };
+
+    void syncSignUpState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoaded, isOpen, setActive, signUp]);
+
   // Detectar cuando OAuth o registro se completa exitosamente
   useEffect(() => {
     // Importante: si el modal no está abierto, no hagas side-effects.
@@ -122,6 +197,7 @@ export default function MiniSignUpModal({
   useEffect(() => {
     if (!isOpen) {
       setHasHandledAuth(false);
+      setConsumedAutoOAuthStrategy(null);
       // Reset form fields
       setFirstName('');
       setLastName('');
@@ -239,13 +315,6 @@ export default function MiniSignUpModal({
 
     return validationErrors;
   };
-
-  const normalizeMissingFields = (fields: string[]) =>
-    fields.map((field) => {
-      if (field === 'email_address') return 'emailAddress';
-      if (field === 'phone_number') return 'phoneNumber';
-      return field;
-    });
 
   const validateOAuthCompletionInputs = (
     fields: string[],
@@ -372,134 +441,172 @@ export default function MiniSignUpModal({
   };
 
   // OAuth signup
-  const signUpWith = async (strategy: OAuthStrategy) => {
-    if (!signUp) {
-      setErrors([
-        {
-          code: 'sign_up_undefined',
-          message: 'SignUp no está definido',
-          meta: {},
-        },
-      ]);
-      return;
-    }
+  const signUpWith = useCallback(
+    async (strategy: OAuthStrategy) => {
+      if (!signUp) {
+        setErrors([
+          {
+            code: 'sign_up_undefined',
+            message: 'SignUp no está definido',
+            meta: {},
+          },
+        ]);
+        return;
+      }
 
-    const baseUrl = window.location.origin;
-    const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
-    const absoluteRedirectUrlFallback = `${baseUrl}/sign-up/sso-callback`;
-    const absoluteRedirectUrlComplete = redirectUrl.startsWith('http')
-      ? redirectUrl
-      : `${baseUrl}${redirectUrl}`;
-    let popupCheckInterval: ReturnType<typeof setInterval> | null = null;
-    try {
-      setLoadingProvider(strategy);
-      setErrors(undefined);
+      const baseUrl = window.location.origin;
+      const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
+      const absoluteRedirectUrlComplete =
+        redirectUrl && redirectUrl.trim() !== ''
+          ? redirectUrl.startsWith('http')
+            ? redirectUrl
+            : `${baseUrl}${redirectUrl}`
+          : `${baseUrl}${window.location.pathname}${window.location.search}`;
+      let popupCheckInterval: ReturnType<typeof setInterval> | null = null;
+      let popup: Window | null = null;
+      try {
+        setLoadingProvider(strategy);
+        setErrors(undefined);
+        setOauthMissingFields(null);
 
-      const width = 500;
-      const height = 650;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
+        const width = 500;
+        const height = 650;
+        const left = (window.screen.width - width) / 2;
+        const top = (window.screen.height - height) / 2;
 
-      const popup = window.open(
-        'about:blank',
-        '_blank',
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,popup=yes`
-      );
+        popup = window.open(
+          'about:blank',
+          '_blank',
+          `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,popup=yes`
+        );
 
-      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-        setLoadingProvider(null);
-        await signUp.authenticateWithRedirect({
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+          setLoadingProvider(null);
+          setErrors([
+            {
+              code: 'popup_blocked',
+              message:
+                'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
+              longMessage:
+                'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
+              meta: {},
+            },
+          ]);
+          return;
+        }
+
+        popupCheckInterval = setInterval(() => {
+          if (popup?.closed) {
+            if (popupCheckInterval) {
+              clearInterval(popupCheckInterval);
+            }
+            setLoadingProvider(null);
+          }
+        }, 500);
+
+        await signUp.authenticateWithPopup({
+          popup,
           strategy,
-          redirectUrl: absoluteRedirectUrlFallback,
+          redirectUrl: absoluteRedirectUrl,
           redirectUrlComplete: absoluteRedirectUrlComplete,
           continueSignUp: true,
         });
-        return;
-      }
 
-      popupCheckInterval = setInterval(() => {
-        if (popup.closed) {
-          if (popupCheckInterval) {
-            clearInterval(popupCheckInterval);
+        if (typeof signUp.reload === 'function') {
+          await signUp.reload();
+        }
+
+        if (signUp.status === 'complete') {
+          if (signUp.createdSessionId) {
+            await setActive({ session: signUp.createdSessionId });
           }
-          setLoadingProvider(null);
+          return;
         }
-      }, 500);
 
-      await signUp.authenticateWithPopup({
-        popup,
-        strategy,
-        redirectUrl: absoluteRedirectUrl,
-        redirectUrlComplete: absoluteRedirectUrlComplete,
-        continueSignUp: true,
-      });
-
-      if (typeof signUp.reload === 'function') {
-        await signUp.reload();
-      }
-
-      if (signUp.status === 'complete') {
-        if (signUp.createdSessionId) {
-          await setActive({ session: signUp.createdSessionId });
+        const missingFields = normalizeMissingFields(
+          signUp.missingFields ?? []
+        );
+        if (signUp.status === 'missing_requirements') {
+          if (missingFields.length > 0) {
+            setOauthMissingFields(missingFields);
+            setErrors([
+              {
+                code: 'missing_requirements',
+                message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+                longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+                meta: {},
+              },
+            ]);
+          }
+          return;
         }
-        return;
-      }
+      } catch (err) {
+        console.error('❌ Error en OAuth:', err);
 
-      const missingFields = normalizeMissingFields(signUp.missingFields ?? []);
-      if (signUp.status === 'missing_requirements') {
-        if (missingFields.length > 0) {
-          setOauthMissingFields(missingFields);
+        if (isClerkAPIResponseError(err)) {
+          const popupBlocked = err.errors.some(
+            (error) => error.code === 'popup_blocked'
+          );
+          if (popupBlocked) {
+            if (popup && !popup.closed) {
+              popup.close();
+            }
+            setErrors([
+              {
+                code: 'popup_blocked',
+                message:
+                  'Popup bloqueado por el navegador. Permite ventanas emergentes para continuar.',
+                longMessage:
+                  'Popup bloqueado por el navegador. Permite ventanas emergentes para continuar.',
+                meta: {},
+              },
+            ]);
+            return;
+          }
+          setErrors(err.errors);
+        } else {
           setErrors([
             {
-              code: 'missing_requirements',
-              message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-              longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+              code: 'oauth_error',
+              message:
+                err instanceof Error
+                  ? err.message
+                  : 'Error en el registro con OAuth',
+              longMessage:
+                err instanceof Error
+                  ? err.message
+                  : 'Error en el registro con OAuth',
               meta: {},
             },
           ]);
         }
-        return;
-      }
-    } catch (err) {
-      console.error('❌ Error en OAuth:', err);
-
-      if (isClerkAPIResponseError(err)) {
-        const popupBlocked = err.errors.some(
-          (error) => error.code === 'popup_blocked'
-        );
-        if (popupBlocked) {
-          await signUp.authenticateWithRedirect({
-            strategy,
-            redirectUrl: absoluteRedirectUrlFallback,
-            redirectUrlComplete: absoluteRedirectUrlComplete,
-            continueSignUp: true,
-          });
-          return;
+      } finally {
+        if (popupCheckInterval) {
+          clearInterval(popupCheckInterval);
         }
-        setErrors(err.errors);
-      } else {
-        setErrors([
-          {
-            code: 'oauth_error',
-            message:
-              err instanceof Error
-                ? err.message
-                : 'Error en el registro con OAuth',
-            longMessage:
-              err instanceof Error
-                ? err.message
-                : 'Error en el registro con OAuth',
-            meta: {},
-          },
-        ]);
+        setLoadingProvider(null);
       }
-    } finally {
-      if (popupCheckInterval) {
-        clearInterval(popupCheckInterval);
-      }
-      setLoadingProvider(null);
-    }
-  };
+    },
+    [redirectUrl, setActive, signUp]
+  );
+
+  useEffect(() => {
+    if (!isOpen || !autoStartOAuthStrategy) return;
+    if (loadingProvider || pendingVerification) return;
+    if (consumedAutoOAuthStrategy === autoStartOAuthStrategy) return;
+
+    setConsumedAutoOAuthStrategy(autoStartOAuthStrategy);
+    onAutoStartOAuthHandled?.();
+    void signUpWith(autoStartOAuthStrategy);
+  }, [
+    autoStartOAuthStrategy,
+    consumedAutoOAuthStrategy,
+    isOpen,
+    loadingProvider,
+    onAutoStartOAuthHandled,
+    pendingVerification,
+    signUpWith,
+  ]);
 
   const handleOAuthCompletion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -819,21 +926,6 @@ export default function MiniSignUpModal({
         error.meta?.paramName === 'confirmPassword')
   );
 
-  const formatFields = (fields?: string[]) => {
-    if (!fields || fields.length === 0) return 'ninguno';
-    const labels: Record<string, string> = {
-      emailAddress: 'correo',
-      email_address: 'correo',
-      firstName: 'nombre',
-      lastName: 'apellido',
-      password: 'contraseña',
-      phoneNumber: 'teléfono',
-      phone_number: 'teléfono',
-      username: 'usuario',
-    };
-    return fields.map((field) => labels[field] ?? field).join(', ');
-  };
-
   const getSignUpErrorMessage = (error: ClerkAPIError) => {
     if (error.code === 'form_identifier_exists')
       return 'Esta cuenta ya existe. Por favor inicia sesión.';
@@ -868,12 +960,22 @@ export default function MiniSignUpModal({
   const needsPassword = needsOAuthField('password');
 
   return (
-    <div className="pointer-events-auto fixed inset-0 z-[1100] flex items-center justify-center bg-black/50">
+    <div
+      className="
+      pointer-events-auto fixed inset-0 z-[1100] flex items-center
+      justify-center bg-black/50
+    "
+    >
       {/* OAuth Loading Overlay */}
       {loadingProvider && (
-        <div className="absolute inset-0 z-[1150] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div
+          className="
+          absolute inset-0 z-[1150] flex items-center justify-center bg-black/70
+          backdrop-blur-sm
+        "
+        >
           <div className="flex flex-col items-center gap-4">
-            <Icons.spinner className="h-12 w-12 text-primary" />
+            <Icons.spinner className="size-12 text-primary" />
             <p className="text-lg font-semibold text-white">
               Redirigiendo a {loadingProvider.replace('oauth_', '')}...
             </p>
@@ -883,13 +985,31 @@ export default function MiniSignUpModal({
 
       <div
         role="dialog"
-        className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-hidden rounded-[32px] border border-border/50 bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200 sm:max-w-md"
+        className="
+          data-[state=open]:animate-in
+          data-[state=closed]:animate-out data-[state=closed]:fade-out-0
+          data-[state=open]:fade-in-0
+          data-[state=closed]:zoom-out-95
+          data-[state=open]:zoom-in-95
+          data-[state=closed]:slide-out-to-left-1/2
+          data-[state=closed]:slide-out-to-top-[48%]
+          data-[state=open]:slide-in-from-left-1/2
+          data-[state=open]:slide-in-from-top-[48%]
+          fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-[-50%]
+          gap-4 overflow-hidden rounded-[32px] border border-border/50
+          bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200
+          sm:max-w-md
+        "
         tabIndex={-1}
         style={{ pointerEvents: 'auto' }}
       >
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          className="
+            absolute top-4 right-4 rounded-full p-2 text-muted-foreground
+            transition-colors
+            hover:bg-accent hover:text-accent-foreground
+          "
           aria-label="Cerrar"
         >
           <svg
@@ -914,7 +1034,9 @@ export default function MiniSignUpModal({
           {Array.from({ length: 20 }).map((_, i) => (
             <div
               key={`star-${i}`}
-              className="absolute h-1 w-1 animate-pulse rounded-full bg-accent/40"
+              className="
+                absolute size-1 animate-pulse rounded-full bg-accent/40
+              "
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -925,11 +1047,18 @@ export default function MiniSignUpModal({
           ))}
 
           {/* Floating rockets */}
-          <div className="animate-float absolute top-1/2 right-4 h-28 w-20 -translate-y-1/2 opacity-20">
-            <div className="relative h-full w-full rotate-[-15deg]">
+          <div
+            className="
+            animate-float absolute top-1/2 right-4 h-28 w-20 -translate-y-1/2
+            opacity-20
+          "
+          >
+            <div className="relative size-full rotate-[-15deg]">
               <svg
                 viewBox="0 0 64 80"
-                className="h-full w-full drop-shadow-[0_0_15px_hsl(180_100%_50%/0.4)]"
+                className="
+                  size-full drop-shadow-[0_0_15px_hsl(180_100%_50%/0.4)]
+                "
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -993,13 +1122,17 @@ export default function MiniSignUpModal({
           </div>
 
           <div
-            className="animate-float absolute bottom-20 left-6 h-16 w-12 opacity-15"
+            className="
+              animate-float absolute bottom-20 left-6 h-16 w-12 opacity-15
+            "
             style={{ animationDelay: '1.5s' }}
           >
-            <div className="relative h-full w-full rotate-[20deg]">
+            <div className="relative size-full rotate-[20deg]">
               <svg
                 viewBox="0 0 64 80"
-                className="h-full w-full drop-shadow-[0_0_10px_hsl(180_100%_50%/0.3)]"
+                className="
+                  size-full drop-shadow-[0_0_10px_hsl(180_100%_50%/0.3)]
+                "
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -1023,7 +1156,10 @@ export default function MiniSignUpModal({
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={`particle-${i}`}
-              className="animate-rise absolute h-1.5 w-1.5 rounded-full bg-gradient-to-b from-accent/60 to-orange-400/40"
+              className="
+                animate-rise absolute size-1.5 rounded-full bg-gradient-to-b
+                from-accent/60 to-orange-400/40
+              "
               style={{
                 left: `${20 + Math.random() * 60}%`,
                 bottom: '-10px',
@@ -1035,8 +1171,17 @@ export default function MiniSignUpModal({
         </div>
 
         {/* Header */}
-        <div className="relative z-10 flex flex-col items-center space-y-3 text-center sm:text-left">
-          <h2 className="sr-only text-lg leading-none font-semibold tracking-tight">
+        <div
+          className="
+          relative z-10 flex flex-col items-center space-y-3 text-center
+          sm:text-left
+        "
+        >
+          <h2
+            className="
+            sr-only text-lg leading-none font-semibold tracking-tight
+          "
+          >
             Crear cuenta
           </h2>
           <p className="text-sm text-muted-foreground">Regístrate en:</p>
@@ -1074,16 +1219,26 @@ export default function MiniSignUpModal({
                 value={code}
                 placeholder="Código de verificación"
                 required
-                className="w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 ring-border outline-hidden ring-inset hover:ring-primary/50 focus:ring-2 focus:ring-primary"
+                className="
+                  w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                  ring-border outline-hidden ring-inset
+                  hover:ring-primary/50
+                  focus:ring-2 focus:ring-primary
+                "
               />
             </div>
             <button
               type="submit"
-              className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+              className="
+                w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold
+                text-primary-foreground transition
+                hover:bg-primary/90
+                disabled:opacity-50
+              "
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5 text-[#080c16]" />
+                <Icons.spinner className="mx-auto size-5 text-[#080c16]" />
               ) : (
                 'Verificar'
               )}
@@ -1106,9 +1261,13 @@ export default function MiniSignUpModal({
                       value={firstName}
                       placeholder="Nombre"
                       required
-                      className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                        firstNameError ? 'ring-rose-400' : 'ring-border'
-                      } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                      className={`
+                        w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                        outline-hidden ring-inset
+                        ${firstNameError ? 'ring-rose-400' : 'ring-border'}
+                        hover:ring-primary/50
+                        focus:ring-2 focus:ring-primary
+                      `}
                     />
                   </div>
                 )}
@@ -1122,9 +1281,13 @@ export default function MiniSignUpModal({
                       value={lastName}
                       placeholder="Apellido"
                       required
-                      className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                        lastNameError ? 'ring-rose-400' : 'ring-border'
-                      } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                      className={`
+                        w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                        outline-hidden ring-inset
+                        ${lastNameError ? 'ring-rose-400' : 'ring-border'}
+                        hover:ring-primary/50
+                        focus:ring-2 focus:ring-primary
+                      `}
                     />
                   </div>
                 )}
@@ -1140,9 +1303,13 @@ export default function MiniSignUpModal({
                   value={username}
                   placeholder="Usuario"
                   required
-                  className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                    usernameError ? 'ring-rose-400' : 'ring-border'
-                  } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                  className={`
+                    w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                    outline-hidden ring-inset
+                    ${usernameError ? 'ring-rose-400' : 'ring-border'}
+                    hover:ring-primary/50
+                    focus:ring-2 focus:ring-primary
+                  `}
                 />
               </div>
             )}
@@ -1156,9 +1323,13 @@ export default function MiniSignUpModal({
                   value={email}
                   placeholder="Correo Electrónico"
                   required
-                  className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                    emailError ? 'ring-rose-400' : 'ring-border'
-                  } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                  className={`
+                    w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                    outline-hidden ring-inset
+                    ${emailError ? 'ring-rose-400' : 'ring-border'}
+                    hover:ring-primary/50
+                    focus:ring-2 focus:ring-primary
+                  `}
                 />
               </div>
             )}
@@ -1173,9 +1344,13 @@ export default function MiniSignUpModal({
                     value={password}
                     placeholder="Contraseña"
                     required
-                    className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                      passwordError ? 'ring-rose-400' : 'ring-border'
-                    } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                    className={`
+                      w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                      outline-hidden ring-inset
+                      ${passwordError ? 'ring-rose-400' : 'ring-border'}
+                      hover:ring-primary/50
+                      focus:ring-2 focus:ring-primary
+                    `}
                   />
                 </div>
                 <div>
@@ -1187,20 +1362,29 @@ export default function MiniSignUpModal({
                     value={confirmPassword}
                     placeholder="Confirmar Contraseña"
                     required
-                    className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                      confirmPasswordError ? 'ring-rose-400' : 'ring-border'
-                    } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                    className={`
+                      w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                      outline-hidden ring-inset
+                      ${confirmPasswordError ? 'ring-rose-400' : 'ring-border'}
+                      hover:ring-primary/50
+                      focus:ring-2 focus:ring-primary
+                    `}
                   />
                 </div>
               </>
             )}
             <button
               type="submit"
-              className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-[#080c16] transition hover:bg-primary/90 disabled:opacity-50"
+              className="
+                w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold
+                text-[#080c16] transition
+                hover:bg-primary/90
+                disabled:opacity-50
+              "
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'Finalizar registro'
               )}
@@ -1218,9 +1402,13 @@ export default function MiniSignUpModal({
                   value={firstName}
                   placeholder="Nombre"
                   required
-                  className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                    firstNameError ? 'ring-rose-400' : 'ring-border'
-                  } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                  className={`
+                    w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                    outline-hidden ring-inset
+                    ${firstNameError ? 'ring-rose-400' : 'ring-border'}
+                    hover:ring-primary/50
+                    focus:ring-2 focus:ring-primary
+                  `}
                 />
               </div>
               <div>
@@ -1232,9 +1420,13 @@ export default function MiniSignUpModal({
                   value={lastName}
                   placeholder="Apellido"
                   required
-                  className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                    lastNameError ? 'ring-rose-400' : 'ring-border'
-                  } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                  className={`
+                    w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                    outline-hidden ring-inset
+                    ${lastNameError ? 'ring-rose-400' : 'ring-border'}
+                    hover:ring-primary/50
+                    focus:ring-2 focus:ring-primary
+                  `}
                 />
               </div>
             </div>
@@ -1247,9 +1439,13 @@ export default function MiniSignUpModal({
                 value={username}
                 placeholder="Usuario"
                 required
-                className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                  usernameError ? 'ring-rose-400' : 'ring-border'
-                } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                className={`
+                  w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                  outline-hidden ring-inset
+                  ${usernameError ? 'ring-rose-400' : 'ring-border'}
+                  hover:ring-primary/50
+                  focus:ring-2 focus:ring-primary
+                `}
               />
             </div>
             <div>
@@ -1261,9 +1457,13 @@ export default function MiniSignUpModal({
                 value={email}
                 placeholder="Correo Electrónico"
                 required
-                className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                  emailError ? 'ring-rose-400' : 'ring-border'
-                } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                className={`
+                  w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                  outline-hidden ring-inset
+                  ${emailError ? 'ring-rose-400' : 'ring-border'}
+                  hover:ring-primary/50
+                  focus:ring-2 focus:ring-primary
+                `}
               />
             </div>
             <div>
@@ -1275,9 +1475,13 @@ export default function MiniSignUpModal({
                 value={password}
                 placeholder="Contraseña"
                 required
-                className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                  passwordError ? 'ring-rose-400' : 'ring-border'
-                } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                className={`
+                  w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                  outline-hidden ring-inset
+                  ${passwordError ? 'ring-rose-400' : 'ring-border'}
+                  hover:ring-primary/50
+                  focus:ring-2 focus:ring-primary
+                `}
               />
             </div>
             <div>
@@ -1289,18 +1493,27 @@ export default function MiniSignUpModal({
                 value={confirmPassword}
                 placeholder="Confirmar Contraseña"
                 required
-                className={`w-full rounded-lg bg-background px-4 py-3 text-sm ring-1 outline-hidden ring-inset ${
-                  confirmPasswordError ? 'ring-rose-400' : 'ring-border'
-                } hover:ring-primary/50 focus:ring-2 focus:ring-primary`}
+                className={`
+                  w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                  outline-hidden ring-inset
+                  ${confirmPasswordError ? 'ring-rose-400' : 'ring-border'}
+                  hover:ring-primary/50
+                  focus:ring-2 focus:ring-primary
+                `}
               />
             </div>
             <button
               type="submit"
-              className="w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-[#080c16] transition hover:bg-primary/90 disabled:opacity-50"
+              className="
+                w-full rounded-lg bg-primary px-4 py-3 text-sm font-semibold
+                text-[#080c16] transition
+                hover:bg-primary/90
+                disabled:opacity-50
+              "
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'Crear Cuenta'
               )}
@@ -1323,37 +1536,52 @@ export default function MiniSignUpModal({
           <button
             type="button"
             onClick={() => signUpWith('oauth_google')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background transition hover:bg-accent disabled:opacity-50"
+            className="
+              flex size-10 items-center justify-center rounded-full border
+              border-border bg-background transition
+              hover:bg-accent
+              disabled:opacity-50
+            "
             disabled={!!loadingProvider}
           >
             {loadingProvider === 'oauth_google' ? (
-              <Icons.spinner className="h-4 w-4" />
+              <Icons.spinner className="size-4" />
             ) : (
-              <Icons.google className="h-5 w-5" />
+              <Icons.google className="size-5" />
             )}
           </button>
           <button
             type="button"
             onClick={() => signUpWith('oauth_github')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background transition hover:bg-accent disabled:opacity-50"
+            className="
+              flex size-10 items-center justify-center rounded-full border
+              border-border bg-background transition
+              hover:bg-accent
+              disabled:opacity-50
+            "
             disabled={!!loadingProvider}
           >
             {loadingProvider === 'oauth_github' ? (
-              <Icons.spinner className="h-4 w-4" />
+              <Icons.spinner className="size-4" />
             ) : (
-              <Icons.gitHub className="h-5 w-5" />
+              <Icons.gitHub className="size-5" />
             )}
           </button>
           <button
             type="button"
             onClick={() => signUpWith('oauth_facebook')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background transition hover:bg-accent disabled:opacity-50"
+            className="
+              flex size-10 items-center justify-center rounded-full border
+              border-border bg-background transition
+              hover:bg-accent
+              disabled:opacity-50
+            "
             disabled={!!loadingProvider}
           >
             {loadingProvider === 'oauth_facebook' ? (
-              <Icons.spinner className="h-4 w-4" />
+              <Icons.spinner className="size-4" />
             ) : (
-              <Icons.facebook className="h-5 w-5" />
+              <Icons.facebook className="size-5" />
             )}
           </button>
         </div>
@@ -1363,7 +1591,10 @@ export default function MiniSignUpModal({
             <button
               type="button"
               onClick={onSwitchToLogin}
-              className="text-sm text-primary hover:underline"
+              className="
+                text-sm text-primary
+                hover:underline
+              "
             >
               ¿Ya tienes cuenta? Inicia sesión
             </button>

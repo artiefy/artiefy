@@ -34,6 +34,7 @@ interface UpdateProjectData {
     hoursPerDay?: number;
   }[];
   coverImageKey?: string;
+  coverVideoKey?: string;
   type_project?: string;
   categoryId?: number;
   isPublic?: boolean;
@@ -76,6 +77,7 @@ export async function updateProject(
     objetivo_general?: string;
     requirements?: string | null;
     coverImageKey?: string;
+    coverVideoKey?: string;
     type_project?: string;
     categoryId?: number;
     isPublic?: boolean;
@@ -104,6 +106,8 @@ export async function updateProject(
     updateData.requirements = projectData.requirements;
   if (projectData.coverImageKey !== undefined)
     updateData.coverImageKey = projectData.coverImageKey;
+  if (projectData.coverVideoKey !== undefined)
+    updateData.coverVideoKey = projectData.coverVideoKey;
   if (projectData.type_project !== undefined)
     updateData.type_project = projectData.type_project;
   if (projectData.categoryId !== undefined)

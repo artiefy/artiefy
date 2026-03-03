@@ -21,12 +21,17 @@ export default async function getPublicProjects() {
       planteamiento: project.planteamiento,
       justificacion: project.justificacion,
       objetivo_general: project.objetivo_general,
+      requirements: project.requirements,
       type_project: project.type_project,
       isPublic: project.isPublic,
+      needsCollaborators: project.needsCollaborators,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
       coverImageKey: project.coverImageKey,
       coverVideoKey: project.coverVideoKey,
+      courseId: project.courseId,
+      fecha_inicio: project.fecha_inicio,
+      fecha_fin: project.fecha_fin,
       user: project.user
         ? {
             id: project.user.id,

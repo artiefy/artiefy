@@ -288,7 +288,13 @@ export default function SignInPage() {
   );
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div
+      className="
+        relative flex min-h-screen flex-col items-center justify-center px-4
+        sm:px-6
+        lg:px-8
+      "
+    >
       {/* Imagen de fondo */}
       <Image
         src="/login-fondo.webp"
@@ -303,9 +309,23 @@ export default function SignInPage() {
       />
 
       {/* Contenedor principal */}
-      <div className="relative z-10 flex w-full flex-col items-center justify-center lg:flex-row lg:items-start lg:justify-between">
+      <div
+        className="
+          relative z-10 flex w-full flex-col items-center justify-center
+          lg:flex-row lg:items-start lg:justify-between
+        "
+      >
         {/* Contenedor del logo */}
-        <div className="mb-8 w-full max-w-3/4 max-md:mt-10 md:max-w-2/4 md:max-xl:mt-0 lg:mb-0 lg:ml-30 lg:max-w-[700px] lg:self-center lg:max-xl:ml-5">
+        <div
+          className="
+            mb-8 w-full max-w-3/4
+            max-md:mt-10
+            md:max-w-2/4
+            md:max-xl:mt-0
+            lg:mb-0 lg:ml-30 lg:max-w-[700px] lg:self-center
+            lg:max-xl:ml-5
+          "
+        >
           <AspectRatio ratio={16 / 9} className="relative size-full">
             <Image
               src="/logo-login.webp"
@@ -320,10 +340,30 @@ export default function SignInPage() {
         </div>
 
         {/* Formulario de inicio de sesión */}
-        <div className="-mt-20 w-full max-w-md sm:-mt-16 md:-mt-12 lg:mt-0 lg:mr-15 lg:w-1/2 lg:max-w-[400px] xl:max-w-[500px]">
-          <div className="mx-auto w-full max-w-sm space-y-10 rounded-2xl px-8 py-10 sm:max-w-md">
+        <div
+          className="
+            -mt-20 w-full max-w-md
+            sm:-mt-16
+            md:-mt-12
+            lg:mt-0 lg:mr-15 lg:w-1/2 lg:max-w-[400px]
+            xl:max-w-[500px]
+          "
+        >
+          <div
+            className="
+              mx-auto w-full max-w-sm space-y-10 rounded-2xl px-8 py-10
+              sm:max-w-md
+            "
+          >
             <div className="mb-6 text-center">
-              <h2 className="xs:text-2xl text-3xl font-bold">INICIAR SESIÓN</h2>
+              <h2
+                className="
+                  xs:text-2xl
+                  text-3xl font-bold
+                "
+              >
+                INICIAR SESIÓN
+              </h2>
             </div>
             {errors && (
               <ul>
@@ -349,9 +389,23 @@ export default function SignInPage() {
                     value={email}
                     placeholder="Correo Electrónico"
                     required
-                    className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 outline-hidden ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${
-                      emailError ? 'ring-rose-400' : 'ring-white/20'
-                    } focus:ring-primary hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20 data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400`}
+                    className={`
+                      w-full rounded-none bg-transparent px-4 py-2.5 text-sm
+                      ring-1 outline-hidden ring-inset
+                      sm:w-[250px]
+                      md:w-[300px]
+                      lg:w-[330px]
+                      xl:w-[350px]
+                      ${emailError ? 'ring-rose-400' : 'ring-white/20'}
+                      0
+                      focus:shadow-[0_0_
+                      6 px_0]
+                      focus:shadow-emera
+                      l d-500/20
+                      hover:ring-white/3
+                      focus:ring-[1.5px] focus:ring-primary
+                      data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400
+                    `}
                   />
                 </div>
                 <div className="mt-4 flex justify-center">
@@ -363,21 +417,44 @@ export default function SignInPage() {
                     value={password}
                     placeholder="Contraseña"
                     required
-                    className={`w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 outline-hidden ring-inset sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px] ${
-                      passwordError ? 'ring-rose-400' : 'ring-white/20'
-                    } focus:ring-primary hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20 data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400`}
+                    className={`
+                      w-full rounded-none bg-transparent px-4 py-2.5 text-sm
+                      ring-1 outline-hidden ring-inset
+                      sm:w-[250px]
+                      md:w-[300px]
+                      lg:w-[330px]
+                      xl:w-[350px]
+                      ${passwordError ? 'ring-rose-400' : 'ring-white/20'}
+                      0
+                      focus:shadow-[0_0_
+                      6 px_0]
+                      focus:shadow-emera
+                      l d-500/20
+                      hover:ring-white/3
+                      focus:ring-[1.5px] focus:ring-primary
+                      data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400
+                    `}
                   />
                 </div>
                 <div className="mt-6 flex justify-center">
                   <button
                     type="submit"
-                    className="text-primary ring-primary active:text-primary/70 rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic shadow-sm ring-1 ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95"
+                    className="
+                      py-2. 5 f o nt-medium ring-primar y focu s
+                      -visible:outline-
+                      [ 1.5px]
+                      focus-visible:outline-
+                      ffset-2 z inc-950 active : rounded-none px-3.5 text-center
+                      text-sm text-primary/70 italic shadow-sm ring-1 ring-inset
+                      hover:bg-white/30
+                      active:scale-95
+                    "
                     style={{ width: '150px' }}
                     disabled={isSubmitting}
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.spinner className="text-primary h-5 w-5" />
+                        <Icons.spinner className="textmsizery size-5" />
                       ) : (
                         <span className="inline-block font-bold">
                           COMIENZA YA
@@ -398,7 +475,16 @@ export default function SignInPage() {
                     value={password}
                     placeholder="Nueva Contraseña"
                     required
-                    className="focus:ring-primary w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 ring-white/20 outline-hidden ring-inset hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20"
+                    className="
+                      rounded-non e ring-white/ 2 0
+                      focus:shadow-[0_0_
+                      6 px_0]
+                      focus:shadow-emera
+                      l d-500/20 w-full bg-transparent px-4 py-2.5 text-sm
+                      ring-1 outline-hidden ring-inset
+                      hover:ring-white/3
+                      focus:ring-[1.5px] focus:ring-primary
+                    "
                   />
                 </div>
                 <div className="mt-4">
@@ -410,19 +496,37 @@ export default function SignInPage() {
                     value={code}
                     placeholder="Código de Restablecimiento"
                     required
-                    className="focus:ring-primary w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 ring-white/20 outline-hidden ring-inset hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20"
+                    className="
+                      rounded-non e ring-white/ 2 0
+                      focus:shadow-[0_0_
+                      6 px_0]
+                      focus:shadow-emera
+                      l d-500/20 w-full bg-transparent px-4 py-2.5 text-sm
+                      ring-1 outline-hidden ring-inset
+                      hover:ring-white/3
+                      focus:ring-[1.5px] focus:ring-primary
+                    "
                   />
                 </div>
                 <div className="mt-6 flex justify-center">
                   <button
                     type="submit"
-                    className="text-primary ring-primary active:text-primary/70 rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic shadow-sm ring-1 ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95"
+                    className="
+                      py-2. 5 f o nt-medium ring-primar y focu s
+                      -visible:outline-
+                      [ 1.5px]
+                      focus-visible:outline-
+                      ffset-2 z inc-950 active : rounded-none px-3.5 text-center
+                      text-sm text-primary/70 italic shadow-sm ring-1 ring-inset
+                      hover:bg-white/30
+                      active:scale-95
+                    "
                     style={{ width: '150px' }}
                     disabled={isSubmitting}
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.spinner className="text-primary h-5 w-5" />
+                        <Icons.spinner className="text-sizery size-5" />
                       ) : (
                         <span className="inline-block font-bold">
                           RESTABLECER
@@ -443,19 +547,37 @@ export default function SignInPage() {
                     value={email}
                     placeholder="Correo Electrónico"
                     required
-                    className="focus:ring-primary w-full rounded-none bg-transparent px-4 py-2.5 text-sm ring-1 ring-white/20 outline-hidden ring-inset hover:ring-white/30 focus:shadow-[0_0_6px_0] focus:ring-[1.5px] focus:shadow-emerald-500/20"
+                    className="
+                      rounded-non e ring-white/ 2 0
+                      focus:shadow-[0_0_
+                      6 px_0]
+                      focus:shadow-emera
+                      l d-500/20 w-full bg-transparent px-4 py-2.5 text-sm
+                      ring-1 outline-hidden ring-inset
+                      hover:ring-white/3
+                      focus:ring-[1.5px] focus:ring-primary
+                    "
                   />
                 </div>
                 <div className="mt-6 flex justify-center">
                   <button
                     type="submit"
-                    className="text-primary ring-primary active:text-primary/70 rounded-none px-3.5 py-2.5 text-center text-sm font-medium italic shadow-sm ring-1 ring-inset hover:bg-white/30 focus-visible:outline-[1.5px] focus-visible:outline-offset-2 focus-visible:outline-zinc-950 active:scale-95"
+                    className="
+                      py-2. 5 f o nt-medium ring-primar y focu s
+                      -visible:outline-
+                      [ 1.5px]
+                      focus-visible:outline-
+                      ffset-2 z inc-950 active : rounded-none px-3.5 text-center
+                      text-sm text-primary/70 italic shadow-sm ring-1 ring-inset
+                      hover:bg-white/30
+                      active:scale-95
+                    "
                     style={{ width: '150px' }}
                     disabled={isSubmitting}
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.spinner className="text-primary h-5 w-5" />
+                        <Icons.spinner className="text-sizeri size-5" />
                       ) : (
                         <span className="inline-block font-bold">
                           ENVIAR CÓDIGO
@@ -474,30 +596,42 @@ export default function SignInPage() {
               <div className="mt-2 flex justify-center space-x-4">
                 <div
                   onClick={() => signInWith('oauth_google')}
-                  className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
+                  className="
+                    flex cursor-pointer items-center justify-center rounded-md
+                    bg-transparent p-2
+                    active:scale-95
+                  "
                 >
                   {loadingProvider === 'oauth_google' ? (
-                    <Icons.spinner className="text-primary h-10 w-10" />
+                    <Icons.spinner className="texsize-pr size-10" />
                   ) : (
                     <Icons.google />
                   )}
                 </div>
                 <div
                   onClick={() => signInWith('oauth_github')}
-                  className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
+                  className="
+                    flex cursor-pointer items-center justify-center rounded-md
+                    bg-transparent p-2
+                    active:scale-95
+                  "
                 >
                   {loadingProvider === 'oauth_github' ? (
-                    <Icons.spinner className="text-primary h-10 w-10" />
+                    <Icons.spinner className="texsize-pr size-10" />
                   ) : (
                     <Icons.gitHub />
                   )}
                 </div>
                 <div
                   onClick={() => signInWith('oauth_facebook')}
-                  className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
+                  className="
+                    flex cursor-pointer items-center justify-center rounded-md
+                    bg-transparent p-2
+                    active:scale-95
+                  "
                 >
                   {loadingProvider === 'oauth_facebook' ? (
-                    <Icons.spinner className="text-primary h-10 w-10" />
+                    <Icons.spinner className="teisizeary size-10" />
                   ) : (
                     <Icons.facebook />
                   )}
@@ -517,7 +651,12 @@ export default function SignInPage() {
                           .join('&')}`
                       : ''
                   }`}
-                  className="text-primary decoration-primary hover:text-secondary font-medium underline-offset-4 outline-hidden hover:underline focus-visible:underline"
+                  className="
+                    decora tion-primary underlin e-offset-4 font-medium
+                    text-primary outline-hidden
+                    hover:text-secondary hover:underline
+                    focus-visible:underline
+                  "
                 >
                   ¿Aun no tienes cuenta? Registrate Aquí
                 </Link>
@@ -525,7 +664,12 @@ export default function SignInPage() {
               <div className="mt-6 text-sm">
                 <button
                   onClick={() => setIsForgotPassword(true)}
-                  className="text-primary decoration-primary hover:text-secondary font-medium underline-offset-4 outline-hidden hover:underline focus-visible:underline"
+                  className="
+                    decora tion-primary underlin e-offset-4 font-medium
+                    text-primary outline-hidden
+                    hover:text-secondary hover:underline
+                    focus-visible:underline
+                  "
                 >
                   ¿Olvidaste tu contraseña?
                 </button>

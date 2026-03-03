@@ -6,6 +6,7 @@ const config = {
   plugins: ['prettier-plugin-tailwindcss'],
   semi: true,
   tailwindStylesheet: './src/styles/globals.css',
+  tailwindPreserveWhitespace: true,
   singleQuote: true,
   tabWidth: 2,
   printWidth: 80,

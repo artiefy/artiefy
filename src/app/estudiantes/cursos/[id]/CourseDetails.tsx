@@ -2,9 +2,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
+import { type OAuthStrategy } from '@clerk/types';
 import { AiFillFire, AiOutlineCalendar } from 'react-icons/ai';
 import {
   FaCheck,
@@ -120,6 +121,8 @@ export default function CourseDetails({
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [oauthTransferStrategy, setOauthTransferStrategy] =
+    useState<OAuthStrategy | null>(null);
   const [pendingOpenPayment, setPendingOpenPayment] = useState(false);
   const [seenSections, setSeenSections] = useState<Record<NavKey, boolean>>({
     curso: true,
@@ -134,6 +137,7 @@ export default function CourseDetails({
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
     null
   );
@@ -175,25 +179,39 @@ export default function CourseDetails({
   const [activePill, setActivePill] = useState<NavKey>('curso');
   const [projectsCount, setProjectsCount] = useState<number>(0);
   const carouselRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchParams?.get('show_signup') !== 'true') return;
+
+    setShowLoginModal(false);
+    setShowSignUpModal(true);
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('show_signup');
+      window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+    }
+  }, [searchParams]);
+
   const getModalidadIcon = (modalidadName?: string) => {
-    if (!modalidadName) return <MdOutlineVideocam className="h-3 w-3" />;
+    if (!modalidadName) return <MdOutlineVideocam className="size-3" />;
     const name = modalidadName.toLowerCase();
     if (name.includes('presencial'))
-      return <FaBuildingUser className="h-3 w-3" />;
+      return <FaBuildingUser className="size-3" />;
     if (
       name.includes('virtual') ||
       name.includes('sincron') ||
       name.includes('sincrónica') ||
       name.includes('sincronica')
     )
-      return <FaChalkboardUser className="h-3 w-3" />;
+      return <FaChalkboardUser className="size-3" />;
     if (
       name.includes('combin') ||
       name.includes('hibr') ||
       name.includes('artiefy')
     )
-      return <FaUserClock className="h-3 w-3" />;
-    return <FaUserClock className="h-3 w-3" />;
+      return <FaUserClock className="size-3" />;
+    return <FaUserClock className="size-3" />;
   };
 
   const recordedCount = Array.isArray(classMeetings)
@@ -745,6 +763,7 @@ export default function CourseDetails({
 
   const handleLoginSuccess = () => {
     setShowLoginModal(false);
+    setOauthTransferStrategy(null);
 
     // Detectar si el curso es purchasable individually
     const hasPurchasable = courseTypes.some((t) => t.isPurchasableIndividually);
@@ -777,12 +796,14 @@ export default function CourseDetails({
   };
 
   // Funciones para cambiar entre modales de login y signup
-  const handleSwitchToSignUp = () => {
+  const handleSwitchToSignUp = (strategy?: OAuthStrategy) => {
+    setOauthTransferStrategy(strategy ?? null);
     setShowLoginModal(false);
     setShowSignUpModal(true);
   };
 
   const handleSwitchToLogin = () => {
+    setOauthTransferStrategy(null);
     setShowSignUpModal(false);
     setShowLoginModal(true);
   };
@@ -791,6 +812,7 @@ export default function CourseDetails({
   const handleSignUpSuccess = () => {
     console.log('✅ Registro completado, continuando flujo...');
     setShowSignUpModal(false);
+    setOauthTransferStrategy(null);
 
     if (pendingOpenPayment) {
       setShowPaymentModal(true);
@@ -1024,14 +1046,24 @@ export default function CourseDetails({
     const requiresLogin = !isSignedIn;
 
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-[#22C4D3] bg-[#061c37] p-6 text-center">
+      <div
+        className="
+        flex flex-col items-center gap-3 rounded-xl border-2 border-dashed
+        border-[#22C4D3] bg-[#061c37] p-6 text-center
+      "
+      >
         <h3 className="text-xl font-semibold text-white">Acceso restringido</h3>
         <p className="text-sm text-[#94A3B8]">
           {requiresLogin
             ? `Inicia sesión e inscríbete para acceder a ${label}.`
             : `Inscríbete en el curso para ver ${label}.`}
         </p>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-center">
+        <div
+          className="
+          flex flex-col gap-2
+          sm:flex-row sm:items-center sm:justify-center
+        "
+        >
           {requiresLogin && (
             <button
               type="button"
@@ -1039,7 +1071,14 @@ export default function CourseDetails({
                 setPendingOpenPayment(false);
                 setShowLoginModal(true);
               }}
-              className="inline-flex h-11 items-center justify-center rounded-full bg-[#0b2747] px-5 text-sm font-semibold text-white ring-offset-background transition hover:bg-[#11335c] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+              className="
+                inline-flex h-11 items-center justify-center rounded-full
+                bg-[#0b2747] px-5 text-sm font-semibold text-white
+                ring-offset-background transition
+                hover:bg-[#11335c]
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
+              "
             >
               Iniciar sesión
             </button>
@@ -1047,7 +1086,14 @@ export default function CourseDetails({
           <button
             type="button"
             onClick={handleStartNow}
-            className="inline-flex h-11 items-center justify-center rounded-full bg-[#22c4d3] px-5 text-sm font-semibold text-[#080c16] ring-offset-background transition hover:bg-[#1fb0be] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+            className="
+              inline-flex h-11 items-center justify-center rounded-full
+              bg-[#22c4d3] px-5 text-sm font-semibold text-[#080c16]
+              ring-offset-background transition
+              hover:bg-[#1fb0be]
+              focus-visible:ring-2 focus-visible:ring-ring
+              focus-visible:ring-offset-2 focus-visible:outline-none
+            "
           >
             Inscribirme
           </button>
@@ -1080,10 +1126,21 @@ export default function CourseDetails({
   return (
     <>
       <div className="min-h-screen bg-background">
-        <main className="mx-auto -mt-6 max-w-7xl px-4 py-2 sm:-mt-0 md:px-6 md:py-8 lg:px-8">
+        <main
+          className="
+          mx-auto -mt-6 max-w-7xl px-4 py-2
+          sm:-mt-0
+          md:px-6 md:py-8
+          lg:px-8
+        "
+        >
           <CourseBreadcrumb title={course.title} programInfo={programInfo} />
           <div
-            className="relative rounded-2xl border p-2 shadow-xl shadow-black/20 backdrop-blur-sm md:p-8"
+            className="
+              relative rounded-2xl border p-2 shadow-xl shadow-black/20
+              backdrop-blur-sm
+              md:p-8
+            "
             style={{
               backgroundColor: '#010b17',
               borderColor: '#061c37cc',
@@ -1094,7 +1151,12 @@ export default function CourseDetails({
               backgroundPosition: 'center center',
             }}
           >
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-background via-background/95 to-background/80"></div>
+            <div
+              className="
+              absolute inset-0 rounded-2xl bg-gradient-to-r from-background
+              via-background/95 to-background/80
+            "
+            ></div>
             <div className="relative z-10 space-y-6">
               {/* 
                 Layout adaptativo según inscripción:
@@ -1102,19 +1164,27 @@ export default function CourseDetails({
                 - No inscrito: Grid de 3 columnas con mini tarjeta que hace scroll junto al contenido
               */}
               <div
-                className={`grid grid-cols-1 gap-8 ${
-                  isEnrolled ? 'lg:grid-cols-1' : 'lg:grid-cols-3'
-                }`}
+                className={`
+                  grid grid-cols-1 gap-8
+                  ${isEnrolled ? 'lg:grid-cols-1' : 'lg:grid-cols-3'}
+                `}
               >
                 {/* Mini tarjeta estática para móviles: mismo contenido y estilo que el CTA lateral de escritorio */}
                 <div className="lg:hidden">
                   <div
-                    className="relative overflow-hidden rounded-2xl border border-border bg-[#061c37]"
+                    className="
+                      relative overflow-hidden rounded-2xl border border-border
+                      bg-[#061c37]
+                    "
                     style={{ borderColor: '#1d283a', borderWidth: '1px' }}
                   >
                     <div className="relative">
                       <AspectRatio ratio={16 / 9}>
-                        <div className="group relative h-full w-full overflow-hidden">
+                        <div
+                          className="
+                          group relative size-full overflow-hidden
+                        "
+                        >
                           {coverVideoUrl ? (
                             isImageUrl(coverVideoUrl) ? (
                               <Image
@@ -1128,7 +1198,7 @@ export default function CourseDetails({
                               />
                             ) : (
                               <video
-                                className="h-full w-full object-cover"
+                                className="size-full object-cover"
                                 src={coverVideoUrl}
                                 poster={coverImageUrl}
                                 playsInline
@@ -1151,7 +1221,9 @@ export default function CourseDetails({
                           )}
                           {(!coverVideoUrl || isImageUrl(coverVideoUrl)) && (
                             <div
-                              className="pointer-events-none absolute inset-0 z-20"
+                              className="
+                                pointer-events-none absolute inset-0 z-20
+                              "
                               style={{
                                 background:
                                   'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
@@ -1161,7 +1233,10 @@ export default function CourseDetails({
                           )}
                           {coverVideoUrl && !isImageUrl(coverVideoUrl) && (
                             <div
-                              className="absolute inset-0 z-30 flex cursor-pointer items-center justify-center"
+                              className="
+                                absolute inset-0 z-30 flex cursor-pointer
+                                items-center justify-center
+                              "
                               role="button"
                               aria-label="Reproducir video"
                               onClick={(e) => {
@@ -1177,7 +1252,13 @@ export default function CourseDetails({
                                 }
                               }}
                             >
-                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 transition-transform group-hover:scale-110">
+                              <div
+                                className="
+                                flex size-16 items-center justify-center
+                                rounded-full bg-primary/90 transition-transform
+                                group-hover:scale-110
+                              "
+                              >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
@@ -1188,7 +1269,9 @@ export default function CourseDetails({
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="lucide lucide-play ml-1 h-7 w-7 text-black"
+                                  className="
+                                    lucide lucide-play ml-1 size-7 text-black
+                                  "
                                 >
                                   <polygon points="6 3 20 12 6 21 6 3"></polygon>
                                 </svg>
@@ -1253,7 +1336,11 @@ export default function CourseDetails({
                           return (
                             <div className="flex flex-wrap gap-2">
                               <span
-                                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold tracking-wide uppercase"
+                                className="
+                                  inline-flex items-center gap-1.5 rounded-full
+                                  border px-3 py-1.5 text-xs font-semibold
+                                  tracking-wide uppercase
+                                "
                                 style={{
                                   backgroundColor: styles.bg,
                                   borderColor: styles.border,
@@ -1269,21 +1356,39 @@ export default function CourseDetails({
                         <div className="space-y-1">
                           {includedPlans.includes('Premium') &&
                           includedPlans.includes('Pro') ? (
-                            <div className="inline-flex items-center gap-2 rounded-full border border-red-400 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400">
-                              <AiFillFire className="h-4 w-4 text-red-400" />
+                            <div
+                              className="
+                              inline-flex items-center gap-2 rounded-full border
+                              border-red-400 bg-red-500/20 px-3 py-1.5 text-sm
+                              font-medium text-red-400
+                            "
+                            >
+                              <AiFillFire className="size-4 text-red-400" />
                               <span>Premium + Pro</span>
                             </div>
                           ) : (
                             <div className="inline-flex items-center gap-2">
                               {includedPlans.includes('Premium') && (
-                                <div className="inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-400">
-                                  <FaCrown className="h-3 w-3" />
+                                <div
+                                  className="
+                                  inline-flex items-center gap-1 rounded-full
+                                  border border-amber-400 bg-amber-500/20 px-3
+                                  py-1.5 text-sm font-medium text-amber-400
+                                "
+                                >
+                                  <FaCrown className="size-3" />
                                   <span>Premium</span>
                                 </div>
                               )}
                               {includedPlans.includes('Pro') && (
-                                <div className="inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400">
-                                  <FaStar className="h-3 w-3" />
+                                <div
+                                  className="
+                                  inline-flex items-center gap-1 rounded-full
+                                  border border-blue-400 bg-blue-500/20 px-3
+                                  py-1.5 text-sm font-medium text-blue-400
+                                "
+                                >
+                                  <FaStar className="size-3" />
                                   <span>Pro</span>
                                 </div>
                               )}
@@ -1307,7 +1412,12 @@ export default function CourseDetails({
                       <div className="space-y-3">
                         {includedPlans.length > 0 && (
                           <div>
-                            <p className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-[#22C4D3]">
+                            <p
+                              className="
+                              inline-flex items-center gap-2 rounded-full px-3
+                              py-1.5 text-sm font-medium text-[#22C4D3]
+                            "
+                            >
                               {includedPlans.includes('Premium') &&
                               includedPlans.includes('Pro')
                                 ? 'Incluido en tu plan Premium y Pro'
@@ -1320,12 +1430,12 @@ export default function CourseDetails({
                                     } ${includedPlans.join(' + ')}`}
                               {includedPlans.includes('Pro') &&
                               !includedPlans.includes('Premium') ? (
-                                <FaStar className="h-4 w-4 text-blue-400" />
+                                <FaStar className="size-4 text-blue-400" />
                               ) : includedPlans.includes('Premium') &&
                                 !includedPlans.includes('Pro') ? (
-                                <FaCrown className="h-4 w-4 text-amber-400" />
+                                <FaCrown className="size-4 text-amber-400" />
                               ) : (
-                                <AiFillFire className="h-4 w-4 text-red-400" />
+                                <AiFillFire className="size-4 text-red-400" />
                               )}
                             </p>
                           </div>
@@ -1335,10 +1445,25 @@ export default function CourseDetails({
                             <div className="group relative">
                               <button
                                 type="button"
-                                className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold whitespace-nowrap text-emerald-400 ring-offset-background transition-all hover:bg-[#10b9814d] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                                className="
+                                  group inline-flex h-12 w-full items-center
+                                  justify-center gap-2 rounded-full border
+                                  border-[#10b9814d] bg-emerald-500/20 px-4 py-2
+                                  text-base font-semibold whitespace-nowrap
+                                  text-emerald-400 ring-offset-background
+                                  transition-all
+                                  hover:bg-[#10b9814d]
+                                  focus-visible:ring-2 focus-visible:ring-ring
+                                  focus-visible:ring-offset-2
+                                  focus-visible:outline-none
+                                  disabled:pointer-events-none
+                                  disabled:opacity-50
+                                  [&_svg]:pointer-events-none [&_svg]:size-4
+                                  [&_svg]:shrink-0
+                                "
                               >
                                 <FaCheck
-                                  className="mr-2 h-5 w-5"
+                                  className="mr-2 size-5"
                                   style={{ color: 'rgb(52 211 153)' }}
                                 />
                                 Suscrito
@@ -1348,9 +1473,23 @@ export default function CourseDetails({
                                 aria-label="Cancelar suscripción al curso"
                                 onClick={() => setShowUnenrollDialog(true)}
                                 disabled={isUnenrolling}
-                                className="group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-destructive/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
+                                className="
+                                  group absolute top-1/2 right-3
+                                  -translate-y-1/2 rounded-full p-1
+                                  transition-colors
+                                  hover:bg-destructive/20
+                                  focus:outline-none
+                                  focus-visible:ring-2
+                                  focus-visible:ring-red-400
+                                  focus-visible:ring-offset-2
+                                "
                               >
-                                <FaTimes className="h-4 w-4 text-emerald-400 transition-colors group-hover:text-red-500" />
+                                <FaTimes
+                                  className="
+                                  size-4 text-emerald-400 transition-colors
+                                  group-hover:text-red-500
+                                "
+                                />
                               </button>
                             </div>
 
@@ -1358,7 +1497,19 @@ export default function CourseDetails({
                               type="button"
                               onClick={handleContinueCourse}
                               disabled={!continueLessonId}
-                              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#22c4d3] px-4 py-2 text-sm font-medium text-[#080c16] ring-offset-background transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0"
+                              className="
+                                inline-flex h-11 w-full items-center
+                                justify-center gap-2 rounded-full bg-[#22c4d3]
+                                px-4 py-2 text-sm font-medium text-[#080c16]
+                                ring-offset-background transition-colors
+                                hover:bg-primary/90
+                                focus-visible:ring-2 focus-visible:ring-ring
+                                focus-visible:ring-offset-2
+                                focus-visible:outline-none
+                                disabled:pointer-events-none disabled:opacity-50
+                                [&_svg]:pointer-events-none [&_svg]:size-5
+                                [&_svg]:shrink-0
+                              "
                             >
                               <IoPlayOutline className="mr-2 text-black" />
                               Continuar curso
@@ -1376,7 +1527,10 @@ export default function CourseDetails({
                                 con {planPhrase}.{' '}
                                 <a
                                   href="/planes"
-                                  className="text-white hover:underline"
+                                  className="
+                                    text-white
+                                    hover:underline
+                                  "
                                 >
                                   Ver planes
                                 </a>
@@ -1388,7 +1542,17 @@ export default function CourseDetails({
                             <button
                               onClick={handleStartNow}
                               disabled={isEnrolling}
-                              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-semibold whitespace-nowrap ring-offset-background transition-all hover:shadow-lg hover:shadow-primary/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                              className="
+                                inline-flex h-12 w-full items-center
+                                justify-center gap-2 rounded-full px-4 py-2
+                                text-base font-semibold whitespace-nowrap
+                                ring-offset-background transition-all
+                                hover:shadow-lg hover:shadow-primary/20
+                                focus-visible:ring-2 focus-visible:ring-ring
+                                focus-visible:ring-offset-2
+                                focus-visible:outline-none
+                                disabled:pointer-events-none disabled:opacity-50
+                              "
                               style={{
                                 color: '#080C16',
                                 backgroundColor: '#22c4d3e6',
@@ -1409,7 +1573,10 @@ export default function CourseDetails({
                                 con {planPhrase}.{' '}
                                 <a
                                   href="/planes"
-                                  className="text-white hover:underline"
+                                  className="
+                                    text-white
+                                    hover:underline
+                                  "
                                 >
                                   Ver planes
                                 </a>
@@ -1423,19 +1590,28 @@ export default function CourseDetails({
                 </div>
                 {/* Contenedor principal del contenido del curso */}
                 <div
-                  className={`space-y-8 ${
-                    isEnrolled ? 'lg:col-span-3' : 'lg:col-span-2'
-                  }`}
+                  className={`
+                    space-y-8
+                    ${isEnrolled ? 'lg:col-span-3' : 'lg:col-span-2'}
+                  `}
                 >
                   <div className="space-y-6">
                     {/* Contenedor flex para info del curso y mini tarjeta lado a lado en lg */}
-                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+                    <div
+                      className="
+                      flex flex-col gap-6
+                      lg:flex-row lg:items-start lg:gap-8
+                    "
+                    >
                       {/* Columna izquierda: toda la info del curso */}
                       <div className="flex-1 space-y-4">
                         {/* Categoria encima del título */}
                         {course.category?.name && (
                           <div
-                            className="mb-1 inline-flex items-center gap-2 rounded-full border px-3 py-1.5"
+                            className="
+                              mb-1 inline-flex items-center gap-2 rounded-full
+                              border px-3 py-1.5
+                            "
                             style={{
                               backgroundColor: '#22c4d31a',
                               borderColor: '#22C4D333',
@@ -1449,7 +1625,14 @@ export default function CourseDetails({
                             </span>
                           </div>
                         )}
-                        <h1 className="font-display text-3xl leading-tight font-bold text-foreground md:text-4xl lg:text-5xl">
+                        <h1
+                          className="
+                          font-display text-3xl leading-tight font-bold
+                          text-foreground
+                          md:text-4xl
+                          lg:text-5xl
+                        "
+                        >
                           {course.title}
                         </h1>
 
@@ -1473,7 +1656,10 @@ export default function CourseDetails({
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="lucide lucide-star h-4 w-4 fill-amber-400 text-amber-400"
+                                  className="
+                                    lucide lucide-star size-4 fill-amber-400
+                                    text-amber-400
+                                  "
                                 >
                                   <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
                                 </svg>
@@ -1488,7 +1674,10 @@ export default function CourseDetails({
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="lucide lucide-star h-4 w-4 fill-amber-400/50 text-amber-400"
+                                className="
+                                  lucide lucide-star size-4 fill-amber-400/50
+                                  text-amber-400
+                                "
                               >
                                 <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
                               </svg>
@@ -1508,7 +1697,7 @@ export default function CourseDetails({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="lucide lucide-users h-4 w-4"
+                              className="lucide lucide-users size-4"
                             >
                               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                               <circle cx="9" cy="7" r="4"></circle>
@@ -1521,7 +1710,13 @@ export default function CourseDetails({
 
                         {/* Badges de clases y duración */}
                         <div className="flex flex-wrap gap-2">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 px-3 py-1.5 text-xs font-medium text-foreground">
+                          <span
+                            className="
+                            inline-flex items-center gap-1.5 rounded-full border
+                            border-primary/40 px-3 py-1.5 text-xs font-medium
+                            text-foreground
+                          "
+                          >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="24"
@@ -1532,14 +1727,22 @@ export default function CourseDetails({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="lucide lucide-book-open h-3.5 w-3.5 text-primary"
+                              className="
+                                lucide lucide-book-open size-3.5 text-primary
+                              "
                             >
                               <path d="M12 7v14"></path>
                               <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
                             </svg>
                             {course.lessons?.length ?? 0} clases
                           </span>
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 px-3 py-1.5 text-xs font-medium text-foreground">
+                          <span
+                            className="
+                            inline-flex items-center gap-1.5 rounded-full border
+                            border-primary/40 px-3 py-1.5 text-xs font-medium
+                            text-foreground
+                          "
+                          >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="24"
@@ -1550,7 +1753,9 @@ export default function CourseDetails({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="lucide lucide-clock h-3.5 w-3.5 text-primary"
+                              className="
+                                lucide lucide-clock size-3.5 text-primary
+                              "
                             >
                               <circle cx="12" cy="12" r="10"></circle>
                               <polyline points="12 6 12 12 16 14"></polyline>
@@ -1563,9 +1768,12 @@ export default function CourseDetails({
                         <div className="flex flex-wrap items-center gap-2">
                           <span
                             style={{ backgroundColor: '#1A2333' }}
-                            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
+                            className="
+                              inline-flex items-center gap-1.5 rounded-full px-3
+                              py-1.5 text-xs font-medium text-foreground
+                            "
                           >
-                            <RiEqualizer2Line className="h-3 w-3" />
+                            <RiEqualizer2Line className="size-3" />
                             {course.nivel
                               ? typeof course.nivel === 'string'
                                 ? course.nivel
@@ -1575,7 +1783,10 @@ export default function CourseDetails({
                           {course.modalidad && (
                             <span
                               style={{ backgroundColor: '#1A2333' }}
-                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
+                              className="
+                                inline-flex items-center gap-1.5 rounded-full
+                                px-3 py-1.5 text-xs font-medium text-foreground
+                              "
                             >
                               {getModalidadIcon(
                                 typeof course.modalidad === 'string'
@@ -1590,16 +1801,22 @@ export default function CourseDetails({
                           {course.scheduleOption?.name || course.horario ? (
                             <span
                               style={{ backgroundColor: '#1A2333' }}
-                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
+                              className="
+                                inline-flex items-center gap-1.5 rounded-full
+                                px-3 py-1.5 text-xs font-medium text-foreground
+                              "
                             >
-                              <AiOutlineCalendar className="h-3 w-3" />
+                              <AiOutlineCalendar className="size-3" />
                               {course.scheduleOption?.name || course.horario}
                             </span>
                           ) : null}
                           {course.spaceOption?.name || course.espacios ? (
                             <span
                               style={{ backgroundColor: '#1A2333' }}
-                              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
+                              className="
+                                inline-flex items-center gap-1.5 rounded-full
+                                px-3 py-1.5 text-xs font-medium text-foreground
+                              "
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -1611,7 +1828,7 @@ export default function CourseDetails({
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="h-3 w-3"
+                                className="size-3"
                               >
                                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
                                 <circle cx="12" cy="10" r="3"></circle>
@@ -1629,9 +1846,17 @@ export default function CourseDetails({
 
                       {/* Columna derecha: mini tarjeta (solo cuando está inscrito en lg) */}
                       {isEnrolled && (
-                        <div className="hidden lg:block lg:w-[340px] lg:flex-shrink-0">
+                        <div
+                          className="
+                          hidden
+                          lg:block lg:w-[340px] lg:flex-shrink-0
+                        "
+                        >
                           <div
-                            className="relative w-[340px] overflow-hidden rounded-2xl border border-border bg-[#061c37]"
+                            className="
+                              relative w-[340px] overflow-hidden rounded-2xl
+                              border border-border bg-[#061c37]
+                            "
                             style={{
                               borderColor: '#1d283a',
                               borderWidth: '1px',
@@ -1639,7 +1864,11 @@ export default function CourseDetails({
                           >
                             <div className="relative">
                               <AspectRatio ratio={16 / 9}>
-                                <div className="relative h-full w-full overflow-hidden">
+                                <div
+                                  className="
+                                  relative size-full overflow-hidden
+                                "
+                                >
                                   {coverVideoUrl ? (
                                     isImageUrl(coverVideoUrl) ? (
                                       <Image
@@ -1654,7 +1883,7 @@ export default function CourseDetails({
                                       />
                                     ) : (
                                       <video
-                                        className="h-full w-full object-cover"
+                                        className="size-full object-cover"
                                         src={coverVideoUrl}
                                         poster={coverImageUrl}
                                         controls
@@ -1675,7 +1904,10 @@ export default function CourseDetails({
                                         />
                                       )}
                                       <div
-                                        className="pointer-events-none absolute inset-0 z-10"
+                                        className="
+                                          pointer-events-none absolute inset-0
+                                          z-10
+                                        "
                                         style={{
                                           background:
                                             'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
@@ -1692,21 +1924,42 @@ export default function CourseDetails({
                                 <div className="space-y-1">
                                   {includedPlans.includes('Premium') &&
                                   includedPlans.includes('Pro') ? (
-                                    <div className="inline-flex items-center gap-2 rounded-full border border-red-400 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400">
-                                      <AiFillFire className="h-4 w-4 text-red-400" />
+                                    <div
+                                      className="
+                                      inline-flex items-center gap-2
+                                      rounded-full border border-red-400
+                                      bg-red-500/20 px-3 py-1.5 text-sm
+                                      font-medium text-red-400
+                                    "
+                                    >
+                                      <AiFillFire className="size-4 text-red-400" />
                                       <span>Premium + Pro</span>
                                     </div>
                                   ) : (
                                     <div className="inline-flex items-center gap-2">
                                       {includedPlans.includes('Premium') && (
-                                        <div className="inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-400">
-                                          <FaCrown className="h-3 w-3" />
+                                        <div
+                                          className="
+                                          inline-flex items-center gap-1
+                                          rounded-full border border-amber-400
+                                          bg-amber-500/20 px-3 py-1.5 text-sm
+                                          font-medium text-amber-400
+                                        "
+                                        >
+                                          <FaCrown className="size-3" />
                                           <span>Premium</span>
                                         </div>
                                       )}
                                       {includedPlans.includes('Pro') && (
-                                        <div className="inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400">
-                                          <FaStar className="h-3 w-3" />
+                                        <div
+                                          className="
+                                          inline-flex items-center gap-1
+                                          rounded-full border border-blue-400
+                                          bg-blue-500/20 px-3 py-1.5 text-sm
+                                          font-medium text-blue-400
+                                        "
+                                        >
+                                          <FaStar className="size-3" />
                                           <span>Pro</span>
                                         </div>
                                       )}
@@ -1717,7 +1970,13 @@ export default function CourseDetails({
                               <div className="space-y-3">
                                 {includedPlans.length > 0 && (
                                   <div>
-                                    <p className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-[#22C4D3]">
+                                    <p
+                                      className="
+                                      inline-flex items-center gap-2
+                                      rounded-full px-3 py-1.5 text-sm
+                                      font-medium text-[#22C4D3]
+                                    "
+                                    >
                                       {includedPlans.includes('Premium') &&
                                       includedPlans.includes('Pro')
                                         ? 'Incluido en tu plan Premium y Pro'
@@ -1730,12 +1989,12 @@ export default function CourseDetails({
                                             } ${includedPlans.join(' + ')}`}
                                       {includedPlans.includes('Pro') &&
                                       !includedPlans.includes('Premium') ? (
-                                        <FaStar className="h-4 w-4 text-blue-400" />
+                                        <FaStar className="size-4 text-blue-400" />
                                       ) : includedPlans.includes('Premium') &&
                                         !includedPlans.includes('Pro') ? (
-                                        <FaCrown className="h-4 w-4 text-amber-400" />
+                                        <FaCrown className="size-4 text-amber-400" />
                                       ) : (
-                                        <AiFillFire className="h-4 w-4 text-red-400" />
+                                        <AiFillFire className="size-4 text-red-400" />
                                       )}
                                     </p>
                                   </div>
@@ -1744,10 +2003,27 @@ export default function CourseDetails({
                                   <div className="group relative">
                                     <button
                                       type="button"
-                                      className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold whitespace-nowrap text-emerald-400 ring-offset-background transition-all hover:bg-[#10b9814d] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                                      className="
+                                        group inline-flex h-12 w-full
+                                        items-center justify-center gap-2
+                                        rounded-full border border-[#10b9814d]
+                                        bg-emerald-500/20 px-4 py-2 text-base
+                                        font-semibold whitespace-nowrap
+                                        text-emerald-400 ring-offset-background
+                                        transition-all
+                                        hover:bg-[#10b9814d]
+                                        focus-visible:ring-2
+                                        focus-visible:ring-ring
+                                        focus-visible:ring-offset-2
+                                        focus-visible:outline-none
+                                        disabled:pointer-events-none
+                                        disabled:opacity-50
+                                        [&_svg]:pointer-events-none
+                                        [&_svg]:size-4 [&_svg]:shrink-0
+                                      "
                                     >
                                       <FaCheck
-                                        className="mr-2 h-5 w-5"
+                                        className="mr-2 size-5"
                                         style={{ color: 'rgb(52 211 153)' }}
                                       />
                                       Suscrito
@@ -1759,9 +2035,24 @@ export default function CourseDetails({
                                         setShowUnenrollDialog(true)
                                       }
                                       disabled={isUnenrolling}
-                                      className="group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-destructive/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
+                                      className="
+                                        group absolute top-1/2 right-3
+                                        -translate-y-1/2 rounded-full p-1
+                                        transition-colors
+                                        hover:bg-destructive/20
+                                        focus:outline-none
+                                        focus-visible:ring-2
+                                        focus-visible:ring-red-400
+                                        focus-visible:ring-offset-2
+                                      "
                                     >
-                                      <FaTimes className="h-4 w-4 text-emerald-400 transition-colors group-hover:text-red-500" />
+                                      <FaTimes
+                                        className="
+                                        size-4 text-emerald-400
+                                        transition-colors
+                                        group-hover:text-red-500
+                                      "
+                                      />
                                     </button>
                                   </div>
 
@@ -1769,7 +2060,22 @@ export default function CourseDetails({
                                     type="button"
                                     onClick={handleContinueCourse}
                                     disabled={!continueLessonId}
-                                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#22c4d3] px-4 py-2 text-sm font-medium text-[#080c16] ring-offset-background transition-colors hover:bg-primary/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0"
+                                    className="
+                                      inline-flex h-11 w-full items-center
+                                      justify-center gap-2 rounded-full
+                                      bg-[#22c4d3] px-4 py-2 text-sm font-medium
+                                      text-[#080c16] ring-offset-background
+                                      transition-colors
+                                      hover:bg-primary/90
+                                      focus-visible:ring-2
+                                      focus-visible:ring-ring
+                                      focus-visible:ring-offset-2
+                                      focus-visible:outline-none
+                                      disabled:pointer-events-none
+                                      disabled:opacity-50
+                                      [&_svg]:pointer-events-none [&_svg]:size-5
+                                      [&_svg]:shrink-0
+                                    "
                                   >
                                     <IoPlayOutline className="mr-2 text-black" />
                                     Continuar curso
@@ -1786,7 +2092,12 @@ export default function CourseDetails({
                     <div className="mt-6">
                       {/* Versión expandida para desktop cuando está suscrito */}
                       {isEnrolled ? (
-                        <div className="hidden lg:flex lg:w-full lg:justify-between">
+                        <div
+                          className="
+                          hidden
+                          lg:flex lg:w-full lg:justify-between
+                        "
+                        >
                           {navItems.map((item) => {
                             const isActive = activePill === item.key;
                             const badgeCount = badgeCounts[item.key] ?? 0;
@@ -1796,20 +2107,45 @@ export default function CourseDetails({
                               <button
                                 key={item.key}
                                 onClick={() => handlePillClick(item.key)}
-                                className={`flex items-center gap-2 rounded-full border px-[20px] py-[10px] text-sm font-semibold transition-all ${
-                                  isActive
-                                    ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
-                                    : 'border-transparent bg-transparent text-white/80 hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50 hover:text-white'
-                                }`}
+                                className={`
+                                  flex items-center gap-2 rounded-full border
+                                  px-[20px] py-[10px] text-sm font-semibold
+                                  transition-all
+                                  ${
+                                    isActive
+                                      ? `
+                                      border-[hsl(217,33%,17%)] bg-[#061c37]
+                                      text-white
+                                    `
+                                      : `
+                                      border-transparent bg-transparent
+                                      text-white/80
+                                      hover:border-[hsl(217,33%,17%)]/60
+                                      hover:bg-[#061c3780]/50 hover:text-white
+                                    `
+                                  }
+                                `}
                               >
                                 <span>{item.label}</span>
                                 {showBadge && (
-                                  <span className="inline-flex aspect-square h-6 w-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
+                                  <span
+                                    className="
+                                    inline-flex aspect-square size-6
+                                    justify-center rounded-full border
+                                    border-white/20 bg-[#22C4D3] pt-[2.5px]
+                                    text-xs text-black
+                                  "
+                                  >
                                     {badgeCount}
                                   </span>
                                 )}
                                 {item.helper && (
-                                  <span className="hidden text-xs font-normal text-white/60 xl:inline">
+                                  <span
+                                    className="
+                                    hidden text-xs font-normal text-white/60
+                                    xl:inline
+                                  "
+                                  >
                                     {item.helper}
                                   </span>
                                 )}
@@ -1820,11 +2156,20 @@ export default function CourseDetails({
                       ) : null}
                       {/* Versión con carousel para móvil y desktop no suscrito */}
                       <div
-                        className={`${isEnrolled ? 'lg:hidden' : ''} flex items-center gap-2`}
+                        className={`
+                          ${isEnrolled ? 'lg:hidden' : ''}
+                          flex items-center gap-2
+                        `}
                       >
                         <button
                           onClick={() => scrollCarousel('left')}
-                          className="inline-flex aspect-square h-9 w-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
+                          className="
+                            inline-flex aspect-square size-9 items-center
+                            justify-center rounded-full border
+                            border-[#061c3799] bg-[#011329] p-0 text-white
+                            transition
+                            hover:bg-[#0b2747] hover:text-white
+                          "
                           aria-label="Anterior"
                         >
                           <svg
@@ -1843,7 +2188,13 @@ export default function CourseDetails({
                         </button>
                         <div
                           ref={carouselRef}
-                          className="relative flex w-full gap-2 overflow-x-auto px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] md:px-3 [&::-webkit-scrollbar]:hidden"
+                          className="
+                            relative flex w-full gap-2 overflow-x-auto px-2
+                            py-1.5 [-ms-overflow-style:none]
+                            [scrollbar-width:none]
+                            md:px-3
+                            [&::-webkit-scrollbar]:hidden
+                          "
                           style={{ scrollSnapType: 'x mandatory' }}
                         >
                           {navItems.map((item) => {
@@ -1855,21 +2206,46 @@ export default function CourseDetails({
                               <button
                                 key={item.key}
                                 onClick={() => handlePillClick(item.key)}
-                                className={`flex shrink-0 items-center gap-2 rounded-full border px-[20px] py-[10px] text-sm font-semibold transition-all ${
-                                  isActive
-                                    ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
-                                    : 'border-transparent bg-transparent text-white/80 hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50 hover:text-white'
-                                }`}
+                                className={`
+                                  flex shrink-0 items-center gap-2 rounded-full
+                                  border px-[20px] py-[10px] text-sm
+                                  font-semibold transition-all
+                                  ${
+                                    isActive
+                                      ? `
+                                      border-[hsl(217,33%,17%)] bg-[#061c37]
+                                      text-white
+                                    `
+                                      : `
+                                      border-transparent bg-transparent
+                                      text-white/80
+                                      hover:border-[hsl(217,33%,17%)]/60
+                                      hover:bg-[#061c3780]/50 hover:text-white
+                                    `
+                                  }
+                                `}
                                 style={{ scrollSnapAlign: 'start' }}
                               >
                                 <span>{item.label}</span>
                                 {showBadge && (
-                                  <span className="inline-flex aspect-square h-6 w-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
+                                  <span
+                                    className="
+                                    inline-flex aspect-square size-6
+                                    justify-center rounded-full border
+                                    border-white/20 bg-[#22C4D3] pt-[2.5px]
+                                    text-xs text-black
+                                  "
+                                  >
                                     {badgeCount}
                                   </span>
                                 )}
                                 {item.helper && (
-                                  <span className="hidden text-xs font-normal text-white/60 sm:inline">
+                                  <span
+                                    className="
+                                    hidden text-xs font-normal text-white/60
+                                    sm:inline
+                                  "
+                                  >
                                     {item.helper}
                                   </span>
                                 )}
@@ -1879,7 +2255,13 @@ export default function CourseDetails({
                         </div>
                         <button
                           onClick={() => scrollCarousel('right')}
-                          className="inline-flex aspect-square h-9 w-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
+                          className="
+                            inline-flex aspect-square size-9 items-center
+                            justify-center rounded-full border
+                            border-[#061c3799] bg-[#011329] p-0 text-white
+                            transition
+                            hover:bg-[#0b2747] hover:text-white
+                          "
                           aria-label="Siguiente"
                         >
                           <svg
@@ -1957,9 +2339,21 @@ export default function CourseDetails({
                         )
                       ) : activePill === 'certificacion' ? (
                         isEnrolled ? (
-                          <div className="rounded-2xl border border-border bg-card p-6 shadow-xl md:p-8">
+                          <div
+                            className="
+                            rounded-2xl border border-border bg-card p-6
+                            shadow-xl
+                            md:p-8
+                          "
+                          >
                             <div className="mb-6 flex items-center gap-3">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
+                              <div
+                                className="
+                                flex size-12 items-center justify-center
+                                rounded-xl bg-gradient-to-br from-amber-400
+                                to-orange-500
+                              "
+                              >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
@@ -1970,14 +2364,19 @@ export default function CourseDetails({
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="h-6 w-6 text-white"
+                                  className="size-6 text-white"
                                 >
                                   <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path>
                                   <circle cx="12" cy="8" r="6"></circle>
                                 </svg>
                               </div>
                               <div>
-                                <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                                <h2
+                                  className="
+                                  font-display text-xl font-bold text-foreground
+                                  md:text-2xl
+                                "
+                                >
                                   Certificación Del Curso
                                 </h2>
                                 <p className="text-sm text-muted-foreground">
@@ -1988,29 +2387,48 @@ export default function CourseDetails({
                             </div>
 
                             <div className="mb-6 rounded-xl bg-secondary p-5">
-                              <div className="mb-3 flex items-center justify-between">
-                                <span className="text-sm font-medium text-foreground">
+                              <div
+                                className="
+                                mb-3 flex items-center justify-between
+                              "
+                              >
+                                <span
+                                  className="
+                                  text-sm font-medium text-foreground
+                                "
+                                >
                                   Progreso hacia la certificación
                                 </span>
                                 <span className="text-sm font-bold text-primary">
                                   {certificateProgressPercent}%
                                 </span>
                               </div>
-                              <div className="h-3 overflow-hidden rounded-full bg-muted">
+                              <div
+                                className="
+                                h-3 overflow-hidden rounded-full bg-muted
+                              "
+                              >
                                 <div
-                                  className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all"
+                                  className="
+                                    h-full rounded-full bg-gradient-to-r
+                                    from-amber-400 to-orange-500 transition-all
+                                  "
                                   style={{
                                     width: `${certificateProgressPercent}%`,
                                   }}
                                 />
                               </div>
-                              <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                              <div
+                                className="
+                                mt-3 space-y-1 text-xs text-muted-foreground
+                              "
+                              >
                                 {hasParameters && (
                                   <div className="flex items-center gap-2">
                                     {parametersFullyGraded ? (
-                                      <FaCheckCircle className="h-3.5 w-3.5 text-green-400" />
+                                      <FaCheckCircle className="size-3.5 text-green-400" />
                                     ) : (
-                                      <FaLock className="h-3.5 w-3.5 text-white/70" />
+                                      <FaLock className="size-3.5 text-white/70" />
                                     )}
                                     <span>
                                       Calificación de parámetros:{' '}
@@ -2022,9 +2440,9 @@ export default function CourseDetails({
                                 {hasActivities ? (
                                   <div className="flex items-center gap-2">
                                     {activitiesCompleted ? (
-                                      <FaCheckCircle className="h-3.5 w-3.5 text-green-400" />
+                                      <FaCheckCircle className="size-3.5 text-green-400" />
                                     ) : (
-                                      <FaLock className="h-3.5 w-3.5 text-white/70" />
+                                      <FaLock className="size-3.5 text-white/70" />
                                     )}
                                     <span>
                                       Actividades completadas:{' '}
@@ -2035,9 +2453,9 @@ export default function CourseDetails({
                                 ) : (
                                   <div className="flex items-center gap-2">
                                     {lessonsProgressOk ? (
-                                      <FaCheckCircle className="h-3.5 w-3.5 text-green-400" />
+                                      <FaCheckCircle className="size-3.5 text-green-400" />
                                     ) : (
-                                      <FaLock className="h-3.5 w-3.5 text-white/70" />
+                                      <FaLock className="size-3.5 text-white/70" />
                                     )}
                                     <span>
                                       Clases &gt; 90%: {lessonsAboveNinety}/
@@ -2048,7 +2466,13 @@ export default function CourseDetails({
                               </div>
                             </div>
 
-                            <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
+                            <div
+                              className="
+                              flex flex-col items-center gap-3 text-center
+                              sm:flex-row sm:items-center sm:justify-between
+                              sm:text-left
+                            "
+                            >
                               <p className="text-sm text-muted-foreground">
                                 El botón se habilita cuando cumples todos los
                                 requisitos del curso.
@@ -2057,16 +2481,31 @@ export default function CourseDetails({
                                 type="button"
                                 onClick={handleCertificateClick}
                                 disabled={!isCertificateUnlocked}
-                                className={`inline-flex items-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold transition focus:ring-2 focus:ring-green-400/60 focus:ring-offset-2 focus:ring-offset-card focus:outline-none ${
-                                  isCertificateUnlocked
-                                    ? 'border-green-500/30 bg-green-500/20 text-green-200 hover:bg-green-500/30'
-                                    : 'cursor-not-allowed border-white/10 bg-white/5 text-white/60'
-                                }`}
+                                className={`
+                                  inline-flex items-center gap-2 rounded-full
+                                  border px-5 py-2 text-sm font-semibold
+                                  transition
+                                  focus:ring-2 focus:ring-green-400/60
+                                  focus:ring-offset-2 focus:ring-offset-card
+                                  focus:outline-none
+                                  ${
+                                    isCertificateUnlocked
+                                      ? `
+                                      border-green-500/30 bg-green-500/20
+                                      text-green-200
+                                      hover:bg-green-500/30
+                                    `
+                                      : `
+                                      cursor-not-allowed border-white/10
+                                      bg-white/5 text-white/60
+                                    `
+                                  }
+                                `}
                               >
                                 {isCertificateUnlocked ? (
-                                  <FaCheckCircle className="h-4 w-4 text-green-400" />
+                                  <FaCheckCircle className="size-4 text-green-400" />
                                 ) : (
-                                  <FaLock className="h-4 w-4 text-white/70" />
+                                  <FaLock className="size-4 text-white/70" />
                                 )}
                                 {isCertificateUnlocked
                                   ? 'Ver tu certificado'
@@ -2122,15 +2561,31 @@ export default function CourseDetails({
                 </div>
                 {/* LADO DERECHO: Imagen y CTA */}
                 {!isEnrolled && (
-                  <div className="hidden lg:block">
-                    <div className="sticky top-24 max-h-[calc(100vh-8rem)] self-start">
+                  <div
+                    className="
+                    hidden
+                    lg:block
+                  "
+                  >
+                    <div
+                      className="
+                      sticky top-24 max-h-[calc(100vh-8rem)] self-start
+                    "
+                    >
                       <div
-                        className="relative overflow-hidden rounded-2xl border border-border bg-[#061c37]"
+                        className="
+                          relative overflow-hidden rounded-2xl border
+                          border-border bg-[#061c37]
+                        "
                         style={{ borderColor: '#1d283a', borderWidth: '1px' }}
                       >
                         <div className="relative">
                           <AspectRatio ratio={16 / 9}>
-                            <div className="group relative h-full w-full overflow-hidden">
+                            <div
+                              className="
+                              group relative size-full overflow-hidden
+                            "
+                            >
                               {course.coverVideoCourseKey && coverVideoUrl ? (
                                 isImageUrl(
                                   course.coverVideoCourseKey as string
@@ -2147,7 +2602,7 @@ export default function CourseDetails({
                                   />
                                 ) : (
                                   <video
-                                    className="h-full w-full object-cover"
+                                    className="size-full object-cover"
                                     src={coverVideoUrl}
                                     poster={coverImageUrl}
                                     playsInline
@@ -2174,7 +2629,9 @@ export default function CourseDetails({
                                   course.coverVideoCourseKey as string
                                 )) && (
                                 <div
-                                  className="pointer-events-none absolute inset-0 z-20"
+                                  className="
+                                    pointer-events-none absolute inset-0 z-20
+                                  "
                                   style={{
                                     background:
                                       'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
@@ -2188,7 +2645,10 @@ export default function CourseDetails({
                                   course.coverVideoCourseKey as string
                                 ) && (
                                   <div
-                                    className="absolute inset-0 z-30 flex cursor-pointer items-center justify-center"
+                                    className="
+                                      absolute inset-0 z-30 flex cursor-pointer
+                                      items-center justify-center
+                                    "
                                     role="button"
                                     aria-label="Reproducir video"
                                     onClick={(e) => {
@@ -2205,7 +2665,14 @@ export default function CourseDetails({
                                       }
                                     }}
                                   >
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 transition-transform group-hover:scale-110">
+                                    <div
+                                      className="
+                                      flex size-16 items-center justify-center
+                                      rounded-full bg-primary/90
+                                      transition-transform
+                                      group-hover:scale-110
+                                    "
+                                    >
                                       <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         width="24"
@@ -2216,7 +2683,10 @@ export default function CourseDetails({
                                         strokeWidth="2"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
-                                        className="lucide lucide-play ml-1 h-7 w-7 text-black"
+                                        className="
+                                          lucide lucide-play ml-1 size-7
+                                          text-black
+                                        "
                                       >
                                         <polygon points="6 3 20 12 6 21 6 3"></polygon>
                                       </svg>
@@ -2283,7 +2753,11 @@ export default function CourseDetails({
                               return (
                                 <div className="flex flex-wrap gap-2">
                                   <span
-                                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold tracking-wide uppercase"
+                                    className="
+                                      inline-flex items-center gap-1.5
+                                      rounded-full border px-3 py-1.5 text-xs
+                                      font-semibold tracking-wide uppercase
+                                    "
                                     style={{
                                       backgroundColor: styles.bg,
                                       borderColor: styles.border,
@@ -2299,21 +2773,41 @@ export default function CourseDetails({
                             <div className="space-y-1">
                               {includedPlans.includes('Premium') &&
                               includedPlans.includes('Pro') ? (
-                                <div className="inline-flex items-center gap-2 rounded-full border border-red-400 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400">
-                                  <AiFillFire className="h-4 w-4 text-red-400" />
+                                <div
+                                  className="
+                                  inline-flex items-center gap-2 rounded-full
+                                  border border-red-400 bg-red-500/20 px-3
+                                  py-1.5 text-sm font-medium text-red-400
+                                "
+                                >
+                                  <AiFillFire className="size-4 text-red-400" />
                                   <span>Premium + Pro</span>
                                 </div>
                               ) : (
                                 <div className="inline-flex items-center gap-2">
                                   {includedPlans.includes('Premium') && (
-                                    <div className="inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-400">
-                                      <FaCrown className="h-3 w-3" />
+                                    <div
+                                      className="
+                                      inline-flex items-center gap-1
+                                      rounded-full border border-amber-400
+                                      bg-amber-500/20 px-3 py-1.5 text-sm
+                                      font-medium text-amber-400
+                                    "
+                                    >
+                                      <FaCrown className="size-3" />
                                       <span>Premium</span>
                                     </div>
                                   )}
                                   {includedPlans.includes('Pro') && (
-                                    <div className="inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400">
-                                      <FaStar className="h-3 w-3" />
+                                    <div
+                                      className="
+                                      inline-flex items-center gap-1
+                                      rounded-full border border-blue-400
+                                      bg-blue-500/20 px-3 py-1.5 text-sm
+                                      font-medium text-blue-400
+                                    "
+                                    >
+                                      <FaStar className="size-3" />
                                       <span>Pro</span>
                                     </div>
                                   )}
@@ -2338,7 +2832,12 @@ export default function CourseDetails({
                           <div className="space-y-3">
                             {includedPlans.length > 0 && (
                               <div>
-                                <p className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-[#22C4D3]">
+                                <p
+                                  className="
+                                  inline-flex items-center gap-2 rounded-full
+                                  px-3 py-1.5 text-sm font-medium text-[#22C4D3]
+                                "
+                                >
                                   {includedPlans.includes('Premium') &&
                                   includedPlans.includes('Pro')
                                     ? 'Incluido en tu plan Premium y Pro'
@@ -2351,12 +2850,12 @@ export default function CourseDetails({
                                         } ${includedPlans.join(' + ')}`}
                                   {includedPlans.includes('Pro') &&
                                   !includedPlans.includes('Premium') ? (
-                                    <FaStar className="h-4 w-4 text-blue-400" />
+                                    <FaStar className="size-4 text-blue-400" />
                                   ) : includedPlans.includes('Premium') &&
                                     !includedPlans.includes('Pro') ? (
-                                    <FaCrown className="h-4 w-4 text-amber-400" />
+                                    <FaCrown className="size-4 text-amber-400" />
                                   ) : (
-                                    <AiFillFire className="h-4 w-4 text-red-400" />
+                                    <AiFillFire className="size-4 text-red-400" />
                                   )}
                                 </p>
                               </div>
@@ -2364,7 +2863,17 @@ export default function CourseDetails({
                             <button
                               onClick={handleStartNow}
                               disabled={isEnrolling}
-                              className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-4 py-2 text-base font-semibold whitespace-nowrap ring-offset-background transition-all hover:shadow-lg hover:shadow-primary/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
+                              className="
+                                inline-flex h-12 w-full items-center
+                                justify-center gap-2 rounded-full px-4 py-2
+                                text-base font-semibold whitespace-nowrap
+                                ring-offset-background transition-all
+                                hover:shadow-lg hover:shadow-primary/20
+                                focus-visible:ring-2 focus-visible:ring-ring
+                                focus-visible:ring-offset-2
+                                focus-visible:outline-none
+                                disabled:pointer-events-none disabled:opacity-50
+                              "
                               style={{
                                 color: '#080C16',
                                 backgroundColor: '#22c4d3e6',
@@ -2389,7 +2898,10 @@ export default function CourseDetails({
                                 con {planPhrase}.{' '}
                                 <a
                                   href="/planes"
-                                  className="text-white hover:underline"
+                                  className="
+                                    text-white
+                                    hover:underline
+                                  "
                                 >
                                   Ver planes
                                 </a>
@@ -2408,15 +2920,27 @@ export default function CourseDetails({
       </div>
 
       {showPaymentModal && courseProduct && (
-        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/60 px-4 py-6">
-          <div className="relative w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl">
+        <div
+          className="
+          fixed inset-0 z-[1200] flex items-center justify-center bg-black/60
+          px-4 py-6
+        "
+        >
+          <div
+            className="
+            relative w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl
+          "
+          >
             <button
               type="button"
               aria-label="Cerrar"
               onClick={() => setShowPaymentModal(false)}
-              className="absolute top-3 right-3 rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+              className="
+                absolute top-3 right-3 rounded-full p-1 text-gray-500 transition
+                hover:bg-gray-100 hover:text-gray-700
+              "
             >
-              <FaTimes className="h-5 w-5" />
+              <FaTimes className="size-5" />
             </button>
             <div className="space-y-3 pt-2 text-center">
               <h3 className="text-xl font-semibold text-gray-900">
@@ -2445,6 +2969,7 @@ export default function CourseDetails({
           isOpen={showLoginModal}
           onClose={() => {
             setShowLoginModal(false);
+            setOauthTransferStrategy(null);
           }}
           onLoginSuccess={handleLoginSuccess}
           redirectUrl={loginRedirectUrl}
@@ -2458,10 +2983,13 @@ export default function CourseDetails({
           isOpen={showSignUpModal}
           onClose={() => {
             setShowSignUpModal(false);
+            setOauthTransferStrategy(null);
             setPendingOpenPayment(false);
           }}
           onSignUpSuccess={handleSignUpSuccess}
           redirectUrl={`/estudiantes/cursos/${course.id}`}
+          autoStartOAuthStrategy={oauthTransferStrategy}
+          onAutoStartOAuthHandled={() => setOauthTransferStrategy(null)}
           onSwitchToLogin={handleSwitchToLogin}
         />
       )}
@@ -2471,18 +2999,37 @@ export default function CourseDetails({
         onOpenChange={handleUnenrollDialogChange}
       >
         <DialogContent className="border border-[#1D283A] bg-[#061c37] sm:rounded-[16px]">
-          <DialogHeader className="space-y-2 text-center sm:text-left">
+          <DialogHeader
+            className="
+            space-y-2 text-center
+            sm:text-left
+          "
+          >
             <DialogTitle className="text-[#f8fafc]">¿Estás seguro?</DialogTitle>
             <DialogDescription className="text-[#94a3b8]">
               ¿Estás seguro que quieres cancelar tu suscripción al curso?
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-2">
+          <div
+            className="
+            flex flex-col-reverse gap-2
+            sm:flex-row sm:justify-end sm:space-x-2
+          "
+          >
             <button
               type="button"
               onClick={() => setShowUnenrollDialog(false)}
               disabled={isUnenrolling}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-[#1D283A] bg-[#01152d] px-4 py-2 text-sm font-medium transition-colors hover:bg-[#22C4D3] hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+              className="
+                inline-flex h-10 w-full items-center justify-center gap-2
+                rounded-full border border-[#1D283A] bg-[#01152d] px-4 py-2
+                text-sm font-medium transition-colors
+                hover:bg-[#22C4D3] hover:text-accent-foreground
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
+                disabled:pointer-events-none disabled:opacity-50
+                sm:w-auto
+              "
             >
               Cancelar
             </button>
@@ -2490,7 +3037,16 @@ export default function CourseDetails({
               type="button"
               onClick={handleConfirmUnenroll}
               disabled={isUnenrolling}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-[#7c1d1d] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#991b1b] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+              className="
+                inline-flex h-10 w-full items-center justify-center gap-2
+                rounded-full bg-[#7c1d1d] px-4 py-2 text-sm font-medium
+                text-white transition-colors
+                hover:bg-[#991b1b]
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
+                disabled:pointer-events-none disabled:opacity-50
+                sm:w-auto
+              "
             >
               {isUnenrolling ? 'Procesando…' : 'Aceptar'}
             </button>

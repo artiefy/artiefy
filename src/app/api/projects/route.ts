@@ -43,6 +43,7 @@ interface ProjectData {
   diasEstimados?: number; // NUEVO
   diasNecesarios?: number; // NUEVO
   draft?: boolean; // Permitir marcar el objeto como borrador sin romper tipos
+  multimedia?: string;
 }
 
 const respondWithError = (message: string, status: number) =>
@@ -143,6 +144,33 @@ export async function POST(req: Request) {
       }
       if (body.coverVideoKey) {
         coverVideoKey = body.coverVideoKey;
+      }
+
+      if (!coverImageKey && typeof body.multimedia === 'string') {
+        try {
+          const parsedMultimedia = JSON.parse(body.multimedia) as unknown;
+          if (Array.isArray(parsedMultimedia)) {
+            const firstImage = parsedMultimedia.find((item) => {
+              if (!item || typeof item !== 'object') return false;
+              const media = item as {
+                type?: unknown;
+                key?: unknown;
+              };
+              return (
+                typeof media.type === 'string' &&
+                media.type.startsWith('image') &&
+                typeof media.key === 'string' &&
+                media.key.trim().length > 0
+              );
+            }) as { key?: string } | undefined;
+
+            if (typeof firstImage?.key === 'string') {
+              coverImageKey = firstImage.key;
+            }
+          }
+        } catch {
+          // no-op: multimedia opcional
+        }
       }
     }
 
