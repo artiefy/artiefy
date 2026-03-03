@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
             curso_id: 1,
             status: 'activo',
             title: 'Nueva conversación',
+            fechaPrograma: new Date().toISOString(),
           })
           .returning();
         conversationId = result[0].id;
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
               curso_id: parseInt(receiverId) || 1,
               status: 'activo',
               title: 'Nueva conversación',
+              fechaPrograma: new Date().toISOString(),
             })
             .returning();
           conversationId = result[0].id;
