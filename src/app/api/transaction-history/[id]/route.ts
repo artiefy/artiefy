@@ -46,7 +46,7 @@ export async function GET(
         programaId: pagos.programaId,
         concepto: pagos.concepto,
         nroPago: pagos.nroPago,
-        fecha: pagos.fecha,
+        fecha: pagos.fechaPrograma,
         metodo: pagos.metodo,
         valor: pagos.valor,
         createdAt: pagos.createdAt,

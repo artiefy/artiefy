@@ -76,11 +76,11 @@ export async function GET(request: Request) {
     }
 
     if (from) {
-      conditions.push(gte(pagos.fecha, from));
+      conditions.push(gte(pagos.fechaPrograma, from));
     }
 
     if (to) {
-      conditions.push(lte(pagos.fecha, to));
+      conditions.push(lte(pagos.fechaPrograma, to));
     }
 
     if (method) {

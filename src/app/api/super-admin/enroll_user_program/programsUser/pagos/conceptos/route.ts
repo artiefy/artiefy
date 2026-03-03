@@ -137,7 +137,7 @@ export async function POST(req: Request) {
     if (existing.length > 0) {
       await db
         .update(pagos)
-        .set({ concepto, metodo, valor, fecha })
+        .set({ concepto, metodo, valor, fechaPrograma: fecha })
         .where(
           and(
             eq(pagos.userId, userId),
@@ -151,7 +151,7 @@ export async function POST(req: Request) {
         programaId: programId,
         concepto,
         nroPago,
-        fecha,
+        fechaPrograma: fecha,
         metodo,
         valor,
       });
