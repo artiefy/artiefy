@@ -68,8 +68,12 @@ export function GradeHistory({
                   <span className="text-gray-500">({param.weight}%)</span>
                 </h3>
                 <div className="flex flex-nowrap items-center gap-2">
-                  <StarIcon className="h-5 w-5 text-yellow-500" />
-                  <span className="ml-1 flex flex-nowrap items-center gap-1 font-bold">
+                  <StarIcon className="size-5 text-yellow-500" />
+                  <span
+                    className="
+                    ml-1 flex flex-nowrap items-center gap-1 font-bold
+                  "
+                  >
                     {formatScore(param.grade)}
                     <span className="mx-1">→</span>
                     {formatScore(
@@ -84,7 +88,10 @@ export function GradeHistory({
                 {param.activities.map((activity, actIndex) => (
                   <div
                     key={actIndex}
-                    className="text-background flex justify-between rounded bg-gray-50 p-2"
+                    className="
+                      flex justify-between rounded bg-gray-50 p-2
+                      text-background
+                    "
                   >
                     <span>{activity.name}</span>
                     <span className="font-bold">
@@ -98,30 +105,38 @@ export function GradeHistory({
 
           {/* Final grade with dynamic background and emoji */}
           <div
-            className={`rounded-lg p-4 ${
-              gradeSummary.finalGrade >= 3 ? 'bg-green-50' : 'bg-red-50'
-            }`}
+            className={`
+              rounded-lg p-4
+              ${gradeSummary.finalGrade >= 3 ? 'bg-green-50' : 'bg-red-50'}
+            `}
           >
-            <h3 className="text-background mb-2 text-center text-lg font-bold">
+            <h3 className="mb-2 text-center text-lg font-bold text-background">
               Nota Final del Curso
             </h3>
             <div className="flex items-center justify-center space-x-2">
               {gradeSummary.finalGrade >= 3 ? (
-                <ImHappy className="h-6 w-6 text-green-500" />
+                <ImHappy className="size-6 text-green-500" />
               ) : (
-                <PiSmileySad className="h-6 w-6 text-red-500" />
+                <PiSmileySad className="size-6 text-red-500" />
               )}
-              <StarIcon className="h-6 w-6 text-yellow-500" />
+              <StarIcon className="size-6 text-yellow-500" />
               <span
-                className={`text-2xl font-bold ${gradeSummary.finalGrade >= 3 ? 'text-green-600' : 'text-red-600'}`}
+                className={`
+                  text-2xl font-bold
+                  ${gradeSummary.finalGrade >= 3 ? 'text-green-600' : 'text-red-600'}`}
               >
                 {formatScore(gradeSummary.finalGrade)}
               </span>
             </div>
             <div
-              className={`mt-2 text-center text-sm ${
-                gradeSummary.finalGrade >= 3 ? 'text-green-700' : 'text-red-700'
-              }`}
+              className={`
+                mt-2 text-center text-sm
+                ${
+                  gradeSummary.finalGrade >= 3
+                    ? 'text-green-700'
+                    : 'text-red-700'
+                }
+              `}
             >
               Calculado como suma de (nota × peso/100) para cada parámetro
             </div>
@@ -131,7 +146,12 @@ export function GradeHistory({
           <div className="mt-6 flex justify-end">
             <button
               onClick={onClose}
-              className="rounded-lg bg-[#00BDD8] px-6 py-2.5 font-semibold text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-95"
+              className="
+                rounded-lg bg-[#00BDD8] px-6 py-2.5 font-semibold text-white
+                transition-all duration-200
+                hover:bg-[#00A5C0]
+                active:scale-95
+              "
             >
               Cerrar
             </button>

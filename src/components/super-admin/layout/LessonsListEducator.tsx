@@ -120,7 +120,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
   }
   if (lessons.length === 0 || lessons === null) {
     return (
-      <div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-2 lg:px-5">
+      <div
+        className="
+        grid grid-cols-1 gap-4 px-8
+        sm:grid-cols-2
+        lg:grid-cols-2 lg:px-5
+      "
+      >
         <h2 className="mb-4 text-2xl font-bold">Lista de clases creadas</h2>
         <p className="text-xl text-gray-600">
           No hay clases creadas hasta el momento
@@ -132,9 +138,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
         <span>&#128071;&#128071;&#128071;</span>
         <div className="mt-3">
           <Button
-            className={`mx-auto cursor-pointer border-transparent px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:shadow-xl active:scale-95 ${
-              selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-            }`}
+            className={`
+              mx-auto cursor-pointer border-transparent px-8 py-6 text-lg
+              font-semibold shadow-lg transition-all
+              hover:shadow-xl
+              active:scale-95
+              ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+            `}
             style={{ backgroundColor: selectedColor }}
             onClick={() => {
               console.log('Botón Crear nueva clase clickeado');
@@ -285,17 +295,24 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       <h2 className="mt-10 mb-4 text-2xl font-bold">Lista de clases:</h2>
 
       {/* Sección de reordenar - Nueva */}
-      <div className="mb-8 flex flex-col gap-4 rounded-lg border border-gray-300 bg-gray-50 p-4">
+      <div
+        className="
+        mb-8 flex flex-col gap-4 rounded-lg border border-gray-300 bg-gray-50
+        p-4
+      "
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <SortAsc className="h-5 w-5 text-blue-600" />
+            <SortAsc className="size-5 text-blue-600" />
             <h3 className="text-lg font-semibold text-background">
               Modo Reordenar Clases
             </h3>
           </div>
           <div className="flex items-center gap-2">
             <span
-              className={`text-sm ${isReorderModeActive ? 'font-bold text-blue-600' : 'text-gray-600'}`}
+              className={`
+                text-sm
+                ${isReorderModeActive ? 'font-bold text-blue-600' : 'text-gray-600'}`}
             >
               {isReorderModeActive ? 'Activado' : 'Desactivado'}
             </span>
@@ -333,7 +350,11 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                           <div
                             ref={provided.innerRef}
                             {...provided.draggableProps}
-                            className="flex items-center gap-2 rounded-md border bg-white p-3 shadow-sm hover:bg-gray-50"
+                            className="
+                              flex items-center gap-2 rounded-md border bg-white
+                              p-3 shadow-sm
+                              hover:bg-gray-50
+                            "
                             style={
                               provided.draggableProps
                                 .style as React.CSSProperties
@@ -341,11 +362,19 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                           >
                             <div
                               {...provided.dragHandleProps}
-                              className="cursor-grab p-1 active:cursor-grabbing"
+                              className="
+                                cursor-grab p-1
+                                active:cursor-grabbing
+                              "
                             >
-                              <GripVertical className="h-5 w-5 text-gray-400" />
+                              <GripVertical className="size-5 text-gray-400" />
                             </div>
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-800">
+                            <div
+                              className="
+                              flex size-8 items-center justify-center
+                              rounded-full bg-blue-100 font-bold text-blue-800
+                            "
+                            >
                               {lesson.orderIndex || index + 1}
                             </div>
                             <div className="flex-1 font-medium text-background">
@@ -371,9 +400,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       {/* Botón Crear nueva clase */}
       <div className="mx-auto my-8">
         <Button
-          className={`mx-auto cursor-pointer border-transparent px-8 py-6 text-lg font-semibold shadow-lg transition-all hover:shadow-xl active:scale-95 ${
-            selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-          }`}
+          className={`
+            mx-auto cursor-pointer border-transparent px-8 py-6 text-lg
+            font-semibold shadow-lg transition-all
+            hover:shadow-xl
+            active:scale-95
+            ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+          `}
           style={{ backgroundColor: selectedColor }}
           onClick={() => {
             console.log('Botón Crear nueva clase clickeado');
@@ -390,7 +423,12 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       <div className="flex w-full flex-col">
         {isReorderModeActive ? (
           // En modo ordenar, usar el DragDropContext como antes
-          <div className="px-3 lg:px-1">
+          <div
+            className="
+            px-3
+            lg:px-1
+          "
+          >
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="lessons">
                 {(provided: DroppableProvided) => (
@@ -417,9 +455,23 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                           >
                             {/* Card content */}
                             <div className="group relative">
-                              <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+                              <div
+                                className="
+                                absolute -inset-0.5 animate-gradient rounded-xl
+                                bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8]
+                                to-[#01142B] opacity-0 blur transition
+                                duration-500
+                                group-hover:opacity-100
+                              "
+                              />
                               <Card
-                                className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 shadow-lg transition-all duration-300 ease-in-out hover:shadow-2xl"
+                                className="
+                                  zoom-in relative flex flex-col overflow-hidden
+                                  border-0 border-transparent bg-gray-800
+                                  shadow-lg transition-all duration-300
+                                  ease-in-out
+                                  hover:shadow-2xl
+                                "
                                 style={{
                                   backgroundColor: selectedColor,
                                   color: getContrastYIQ(selectedColor),
@@ -433,13 +485,26 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                       <Image
                                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverImageKey}`}
                                         alt={lesson.title}
-                                        className="h-full w-full rounded-l-lg object-cover transition-transform duration-300 hover:scale-105"
+                                        className="
+                                          size-full rounded-l-lg object-cover
+                                          transition-transform duration-300
+                                          hover:scale-105
+                                        "
                                         width={400}
                                         height={300}
                                         quality={75}
                                       />
                                       <div className="absolute top-2 left-2">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-xs font-bold text-white shadow-xl ring-2 ring-white/50">
+                                        <div
+                                          className="
+                                          flex size-8 items-center
+                                          justify-center rounded-full
+                                          bg-gradient-to-br from-yellow-400
+                                          to-orange-500 text-xs font-bold
+                                          text-white shadow-xl ring-2
+                                          ring-white/50
+                                        "
+                                        >
                                           {lesson.orderIndex}
                                         </div>
                                       </div>
@@ -447,37 +512,93 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                   </div>
 
                                   {/* Contenido a la derecha */}
-                                  <div className="flex flex-1 flex-col justify-center gap-2 p-4 lg:w-5/6">
-                                    <div className="flex flex-wrap items-center justify-between gap-3">
-                                      <CardTitle className="text-base leading-tight font-bold">
+                                  <div
+                                    className="
+                                    flex flex-1 flex-col justify-center gap-2
+                                    p-4
+                                    lg:w-5/6
+                                  "
+                                  >
+                                    <div
+                                      className="
+                                      flex flex-wrap items-center
+                                      justify-between gap-3
+                                    "
+                                    >
+                                      <CardTitle
+                                        className="
+                                        text-base leading-tight font-bold
+                                      "
+                                      >
                                         {lesson.title}
                                       </CardTitle>
 
                                       <Button asChild>
                                         <Link
                                           href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
-                                          className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:from-yellow-600 hover:to-orange-600 hover:shadow-lg active:scale-95"
+                                          className="
+                                            group/button relative inline-flex
+                                            items-center justify-center gap-1.5
+                                            overflow-hidden rounded-lg
+                                            bg-gradient-to-r from-yellow-500
+                                            to-orange-500 px-4 py-2 text-sm
+                                            font-semibold text-white shadow-md
+                                            transition-all
+                                            hover:from-yellow-600
+                                            hover:to-orange-600 hover:shadow-lg
+                                            active:scale-95
+                                          "
                                         >
                                           <span>Ver clase</span>
-                                          <ArrowRightIcon className="h-4 w-4 transition-transform group-hover/button:translate-x-1" />
+                                          <ArrowRightIcon
+                                            className="
+                                            size-4 transition-transform
+                                            group-hover/button:translate-x-1
+                                          "
+                                          />
                                         </Link>
                                       </Button>
                                     </div>
 
-                                    <div className="flex flex-wrap items-center gap-2 text-sm">
-                                      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 px-3 py-1 backdrop-blur-sm">
+                                    <div
+                                      className="
+                                      flex flex-wrap items-center gap-2 text-sm
+                                    "
+                                    >
+                                      <div
+                                        className="
+                                        flex items-center gap-1.5 rounded-full
+                                        bg-gradient-to-r from-blue-500/20
+                                        to-cyan-500/20 px-3 py-1
+                                        backdrop-blur-sm
+                                      "
+                                      >
                                         <span>📚</span>
                                         <span className="font-medium">
                                           {lesson.course.title}
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 px-3 py-1 backdrop-blur-sm">
+                                      <div
+                                        className="
+                                        flex items-center gap-1.5 rounded-full
+                                        bg-gradient-to-r from-purple-500/20
+                                        to-pink-500/20 px-3 py-1
+                                        backdrop-blur-sm
+                                      "
+                                      >
                                         <span>⏱️</span>
                                         <span className="font-medium">
                                           {lesson.duration} min
                                         </span>
                                       </div>
-                                      <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 px-3 py-1 backdrop-blur-sm">
+                                      <div
+                                        className="
+                                        flex items-center gap-1.5 rounded-full
+                                        bg-gradient-to-r from-green-500/20
+                                        to-emerald-500/20 px-3 py-1
+                                        backdrop-blur-sm
+                                      "
+                                      >
                                         <span>👨‍🏫</span>
                                         <span className="font-medium">
                                           {lesson.course.instructor}
@@ -500,26 +621,57 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
           </div>
         ) : (
           // Fuera del modo ordenar, una sola card por fila con diseño mejorado
-          <div className="space-y-4 px-3 lg:px-1">
+          <div
+            className="
+            space-y-4 px-3
+            lg:px-1
+          "
+          >
             {ordered.map((lesson) => (
               <div key={lesson.id} className="group relative">
-                <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+                <div
+                  className="
+                  absolute -inset-0.5 animate-gradient rounded-xl
+                  bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B]
+                  opacity-0 blur transition duration-500
+                  group-hover:opacity-100
+                "
+                />
                 <Card
-                  className="zoom-in relative flex flex-col overflow-hidden border-0 border-transparent bg-gray-800 shadow-lg transition-all duration-300 ease-in-out hover:shadow-2xl"
+                  className="
+                    zoom-in relative flex flex-col overflow-hidden border-0
+                    border-transparent bg-gray-800 shadow-lg transition-all
+                    duration-300 ease-in-out
+                    hover:shadow-2xl
+                  "
                   style={{
                     backgroundColor: selectedColor,
                     color: getContrastYIQ(selectedColor),
                   }}
                 >
                   {/* Card content en horizontal */}
-                  <div className="relative flex flex-col lg:flex-row">
+                  <div
+                    className="
+                    relative flex flex-col
+                    lg:flex-row
+                  "
+                  >
                     {/* Imagen a la izquierda */}
                     <div className="lg:w-1/6">
-                      <div className="relative h-20 w-full lg:h-full">
+                      <div
+                        className="
+                        relative h-20 w-full
+                        lg:h-full
+                      "
+                      >
                         <Image
                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverImageKey}`}
                           alt={lesson.title}
-                          className="h-full w-full rounded-l-lg object-cover transition-transform duration-300 hover:scale-105"
+                          className="
+                            size-full rounded-l-lg object-cover
+                            transition-transform duration-300
+                            hover:scale-105
+                          "
                           width={400}
                           height={300}
                           quality={75}
@@ -528,8 +680,17 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                     </div>
 
                     {/* Contenido a la derecha */}
-                    <div className="flex flex-1 flex-col justify-center gap-2 p-4 lg:w-5/6">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div
+                      className="
+                      flex flex-1 flex-col justify-center gap-2 p-4
+                      lg:w-5/6
+                    "
+                    >
+                      <div
+                        className="
+                        flex flex-wrap items-center justify-between gap-3
+                      "
+                      >
                         <CardTitle className="text-base leading-tight font-bold">
                           {lesson.title}
                         </CardTitle>
@@ -537,26 +698,58 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                         <Button asChild>
                           <Link
                             href={`/dashboard/super-admin/cursos/${courseId}/${lesson.id}`}
-                            className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:from-yellow-600 hover:to-orange-600 hover:shadow-lg active:scale-95"
+                            className="
+                              group/button relative inline-flex items-center
+                              justify-center gap-1.5 overflow-hidden rounded-lg
+                              bg-gradient-to-r from-yellow-500 to-orange-500
+                              px-4 py-2 text-sm font-semibold text-white
+                              shadow-md transition-all
+                              hover:from-yellow-600 hover:to-orange-600
+                              hover:shadow-lg
+                              active:scale-95
+                            "
                           >
                             <span>Ver clase</span>
-                            <ArrowRightIcon className="h-4 w-4 transition-transform group-hover/button:translate-x-1" />
+                            <ArrowRightIcon
+                              className="
+                              size-4 transition-transform
+                              group-hover/button:translate-x-1
+                            "
+                            />
                           </Link>
                         </Button>
                       </div>
 
                       <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-blue-500/20 to-cyan-500/20 px-3 py-1 backdrop-blur-sm">
+                        <div
+                          className="
+                          flex items-center gap-1.5 rounded-full
+                          bg-gradient-to-r from-blue-500/20 to-cyan-500/20 px-3
+                          py-1 backdrop-blur-sm
+                        "
+                        >
                           <span className="font-medium">
                             {lesson.course.title}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 px-3 py-1 backdrop-blur-sm">
+                        <div
+                          className="
+                          flex items-center gap-1.5 rounded-full
+                          bg-gradient-to-r from-purple-500/20 to-pink-500/20
+                          px-3 py-1 backdrop-blur-sm
+                        "
+                        >
                           <span className="font-medium">
                             {lesson.duration} min
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 px-3 py-1 backdrop-blur-sm">
+                        <div
+                          className="
+                          flex items-center gap-1.5 rounded-full
+                          bg-gradient-to-r from-green-500/20 to-emerald-500/20
+                          px-3 py-1 backdrop-blur-sm
+                        "
+                        >
                           <span className="font-medium">
                             {lesson.course.instructor}
                           </span>
@@ -584,8 +777,16 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       />
 
       {isReordering && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div className="rounded-md bg-white/90 px-6 py-4 text-sm font-medium text-black">
+        <div
+          className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/30
+        "
+        >
+          <div
+            className="
+            rounded-md bg-white/90 px-6 py-4 text-sm font-medium text-black
+          "
+          >
             Guardando nuevo orden...
           </div>
         </div>

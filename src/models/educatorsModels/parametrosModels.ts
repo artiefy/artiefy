@@ -12,7 +12,8 @@ export interface Parametros {
   name: string;
   description: string;
   porcentaje: number;
-  courseId: number;
+  numberOfActivities: number;
+  courseId: number | null;
 }
 
 // Crear un parámetro
@@ -20,19 +21,36 @@ export const createParametros = async ({
   name,
   description,
   porcentaje,
+  numberOfActivities,
   courseId,
 }: {
   name: string;
   description: string;
   porcentaje: number;
-  courseId: number;
+  numberOfActivities: number;
+  courseId?: number | null;
 }) => {
-  return db.insert(parametros).values({
-    name,
-    description,
-    porcentaje,
-    courseId,
-  });
+  try {
+    const result = await db
+      .insert(parametros)
+      .values({
+        name,
+        description,
+        porcentaje,
+        numberOfActivities: numberOfActivities || 0,
+        courseId: courseId || null,
+      })
+      .returning();
+
+    if (!result || result.length === 0) {
+      throw new Error('Error: No se pudo crear el parámetro');
+    }
+
+    return result[0];
+  } catch (error) {
+    console.error('Error en createParametros:', error);
+    throw error;
+  }
 };
 
 // Obtener parámetros
@@ -72,20 +90,29 @@ export const updateParametro = async ({
   name,
   description,
   porcentaje,
+  numberOfActivities,
   courseId,
 }: {
   id: number;
   name: string;
   description: string;
   porcentaje: number;
-  courseId: number;
+  numberOfActivities: number;
+  courseId?: number | null;
 }) => {
   try {
     const parametroActualizado = await db
       .update(parametros)
-      .set({ name, description, porcentaje, courseId })
-      .where(eq(parametros.id, id));
-    return parametroActualizado;
+      .set({
+        name,
+        description,
+        porcentaje,
+        numberOfActivities,
+        courseId: courseId || null,
+      })
+      .where(eq(parametros.id, id))
+      .returning();
+    return parametroActualizado[0];
   } catch (error) {
     console.error('Error al actualizar el parámetro:', error);
     throw error;
@@ -96,8 +123,9 @@ export const updateParametro = async ({
 export async function deleteParametro(id: number) {
   const parametroEliminado = await db
     .delete(parametros)
-    .where(eq(parametros.id, id));
-  return parametroEliminado;
+    .where(eq(parametros.id, id))
+    .returning();
+  return parametroEliminado[0];
 }
 
 export const deleteParametroByCourseId = async (courseId: number) => {

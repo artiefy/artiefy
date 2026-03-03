@@ -38,7 +38,10 @@ export function StudentProgram({ program }: StudenProgramProps) {
           }
           alt={program.title}
           fill
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className="
+            object-cover transition-transform duration-500
+            group-hover:scale-105
+          "
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           quality={85}
           placeholder="blur"
@@ -46,40 +49,71 @@ export function StudentProgram({ program }: StudenProgramProps) {
         />
 
         {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div
+          className="
+          absolute inset-0 bg-gradient-to-t from-black/80 via-black/20
+          to-transparent
+        "
+        />
 
         {/* Top Left Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
           {!hasCourses && (
-            <div className="inline-flex items-center rounded-full border border-transparent bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 px-2.5 py-0.5 text-xs font-semibold tracking-wide text-slate-900 uppercase shadow-lg shadow-amber-400/40">
+            <div
+              className="
+              inline-flex items-center rounded-full border border-transparent
+              bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
+              px-2.5 py-0.5 text-xs font-semibold tracking-wide text-slate-900
+              uppercase shadow-lg shadow-amber-400/40
+            "
+            >
               Muy pronto
             </div>
           )}
           {program.certificationType && (
-            <div className="inline-flex items-center rounded-full border border-transparent bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-0.5 text-xs font-medium text-white transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+            <div
+              className="
+              inline-flex items-center rounded-full border border-transparent
+              bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-0.5
+              text-xs font-medium text-white transition-colors
+              hover:bg-primary/80
+              focus:ring-2 focus:ring-ring focus:ring-offset-2
+              focus:outline-none
+            "
+            >
               {program.certificationType.name}
             </div>
           )}
         </div>
 
         {/* Top Right Award Icon */}
-        <div className="absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/90">
-          <Award className="h-5 w-5 text-white" />
+        <div
+          className="
+          absolute top-3 right-3 flex size-10 items-center justify-center
+          rounded-full bg-primary/90
+        "
+        >
+          <Award className="size-5 text-white" />
         </div>
 
         {/* Bottom Info on Image */}
-        <div className="absolute right-3 bottom-3 left-3 flex items-center justify-between text-xs text-white">
+        <div
+          className="
+          absolute right-3 bottom-3 left-3 flex items-center justify-between
+          text-xs text-white
+        "
+        >
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
-              <BookOpen className="h-3.5 w-3.5" />
+              <BookOpen className="size-3.5" />
               {coursesCount} cursos
             </span>
             <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
+              <Clock className="size-3.5" />
               {totalHours}h
             </span>
             <span className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
+              <Users className="size-3.5" />
               <EnrollmentCount
                 programId={parseInt(program.id)}
                 displayMode="number-only"
@@ -87,7 +121,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <StarIcon className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            <StarIcon className="size-3.5 fill-amber-400 text-amber-400" />
             <span>{rating.toFixed(1)}</span>
           </div>
         </div>
@@ -102,7 +136,11 @@ export function StudentProgram({ program }: StudenProgramProps) {
 
         {/* Title */}
         <h3
-          className="mb-2 line-clamp-2 text-lg leading-tight font-semibold text-foreground transition-colors group-hover:text-primary"
+          className="
+            mb-2 line-clamp-2 text-lg leading-tight font-semibold
+            text-foreground transition-colors
+            group-hover:text-primary
+          "
           title={program.title}
         >
           {program.title}

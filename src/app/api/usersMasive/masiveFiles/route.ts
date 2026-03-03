@@ -1739,7 +1739,8 @@ export async function POST(request: NextRequest) {
               programaId: programaIdForPagos,
               concepto: 'cuota' as const,
               nroPago: c.nroPago,
-              fecha: c.fecha!,
+              fechaPrograma: c.fecha!, // ← CAMBIA fecha por fechaPrograma
+              fechaRealPago: null, // ← Agrega campo, null si no tienes el dato
               metodo: (c.metodo ?? 'No especificado') as string,
               valor: c.valor!,
             }))
@@ -1795,7 +1796,8 @@ export async function POST(request: NextRequest) {
             programaId: programaIdForPagos,
             concepto: 'inscripción' as const,
             nroPago: 0,
-            fecha: insFechaStr,
+            fechaPrograma: insFechaStr, // ← CAMBIA fecha por fechaPrograma
+            fechaRealPago: null, // ← Agrega campo, null si no tienes el dato
             metodo: paymentMethod || 'No especificado',
             valor: inscripcionValor,
           });

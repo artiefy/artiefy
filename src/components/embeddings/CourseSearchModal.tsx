@@ -84,7 +84,10 @@ const renderFormattedContent = (
       elements.push(
         <div
           key={idx}
-          className="my-1 rounded border border-indigo-500/20 bg-indigo-500/10 p-2 text-sm"
+          className="
+            my-1 rounded border border-indigo-500/20 bg-indigo-500/10 p-2
+            text-sm
+          "
         >
           <span className="font-semibold text-indigo-400">{text}</span>
         </div>
@@ -192,15 +195,26 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+      className="
+        fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4
+        backdrop-blur-sm
+      "
       onClick={onClose}
     >
       <div
-        className="relative flex max-h-[90vh] w-full max-w-4xl flex-col rounded-lg border border-cyan-500/30 bg-slate-950 shadow-2xl shadow-cyan-500/20"
+        className="
+          relative flex max-h-[90vh] w-full max-w-4xl flex-col rounded-lg border
+          border-cyan-500/30 bg-slate-950 shadow-2xl shadow-cyan-500/20
+        "
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-cyan-500/20 bg-slate-900/50 px-6 py-4">
+        <div
+          className="
+          flex items-center justify-between border-b border-cyan-500/20
+          bg-slate-900/50 px-6 py-4
+        "
+        >
           <div>
             <h2 className="text-xl font-bold text-white">
               Pregunta sobre el curso
@@ -209,9 +223,12 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 transition-colors hover:text-white"
+            className="
+              text-gray-400 transition-colors
+              hover:text-white
+            "
           >
-            <X className="h-5 w-5" />
+            <X className="size-5" />
           </button>
         </div>
 
@@ -224,22 +241,30 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
               onChange={(e) => setQuery(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="¿Qué quieres saber? (duración, alumnos, actividades, materias...)"
-              className="flex-1 rounded-lg border border-cyan-500/30 bg-slate-800 px-4 py-2 text-white placeholder-gray-500 transition-all focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 focus:outline-none"
+              className="
+                flex-1 rounded-lg border border-cyan-500/30 bg-slate-800 px-4
+                py-2 text-white placeholder-gray-500 transition-all
+                focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50
+                focus:outline-none
+              "
               disabled={isLoading}
             />
             <Button
               onClick={() => void handleSearch()}
               disabled={isLoading || !query.trim()}
-              className="flex items-center gap-2 bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-700"
+              className="
+                flex items-center gap-2 bg-cyan-600 px-4 py-2 text-white
+                hover:bg-cyan-700
+              "
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                   Buscando...
                 </>
               ) : (
                 <>
-                  <Search className="h-4 w-4" />
+                  <Search className="size-4" />
                   Buscar
                 </>
               )}
@@ -248,10 +273,14 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
         </div>
 
         {/* Results */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto p-6">
           {error && (
-            <div className="flex gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4">
-              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-400" />
+            <div
+              className="
+              flex gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4
+            "
+            >
+              <AlertCircle className="mt-0.5 size-5 flex-shrink-0 text-red-400" />
               <div>
                 <p className="font-semibold text-red-400">Error</p>
                 <p className="text-sm text-red-300">{error}</p>
@@ -261,7 +290,7 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
 
           {!hasSearched && !error && (
             <div className="py-12 text-center">
-              <Search className="mx-auto mb-4 h-12 w-12 text-cyan-500/30" />
+              <Search className="mx-auto mb-4 size-12 text-cyan-500/30" />
               <p className="text-gray-400">
                 Escribe una pregunta para buscar información en el curso
               </p>
@@ -276,20 +305,32 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
           {aiResponse && (
             <div className="space-y-4">
               {/* Respuesta principal */}
-              <div className="rounded-lg border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 p-6">
+              <div
+                className="
+                rounded-lg border border-cyan-500/30 bg-gradient-to-br
+                from-cyan-500/10 to-blue-500/10 p-6
+              "
+              >
                 <div className="mb-3 flex items-center gap-2">
                   <span className="text-xl">💬</span>
                   <span className="text-sm font-semibold text-cyan-400">
                     Respuesta
                   </span>
                 </div>
-                <p className="mb-4 text-base leading-relaxed whitespace-pre-wrap text-white">
+                <p
+                  className="
+                  mb-4 text-base leading-relaxed whitespace-pre-wrap text-white
+                "
+                >
                   {aiResponse}
                 </p>
                 {results.length > 0 && (
                   <button
                     onClick={() => setShowDetails(!showDetails)}
-                    className="text-sm text-cyan-400 transition-colors hover:text-cyan-300"
+                    className="
+                      text-sm text-cyan-400 transition-colors
+                      hover:text-cyan-300
+                    "
                   >
                     {showDetails ? '▼ Ocultar fuentes' : '▶ Ver fuentes'}
                   </button>
@@ -305,10 +346,19 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
                   {results.map((result, idx) => (
                     <div
                       key={result.id}
-                      className="rounded-lg border border-cyan-500/20 bg-slate-800/50 p-4 transition-colors hover:border-cyan-500/40"
+                      className="
+                        rounded-lg border border-cyan-500/20 bg-slate-800/50 p-4
+                        transition-colors
+                        hover:border-cyan-500/40
+                      "
                     >
                       <div className="mb-3 flex items-center gap-3">
-                        <span className="rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs font-bold text-cyan-400">
+                        <span
+                          className="
+                          rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs
+                          font-bold text-cyan-400
+                        "
+                        >
                           Fuente {idx + 1}
                         </span>
                         <span className="text-xs text-cyan-400/60">
@@ -331,7 +381,7 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
 
           {hasSearched && !isLoading && !aiResponse && !error && (
             <div className="py-12 text-center">
-              <AlertCircle className="mx-auto mb-4 h-12 w-12 text-yellow-500/30" />
+              <AlertCircle className="mx-auto mb-4 size-12 text-yellow-500/30" />
               <p className="text-gray-400">
                 No se encontró información sobre &quot;{query}&quot;
               </p>
@@ -343,7 +393,7 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
 
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="mb-4 h-8 w-8 animate-spin text-cyan-500" />
+              <Loader2 className="mb-4 size-8 animate-spin text-cyan-500" />
               <p className="text-gray-400">Buscando información...</p>
               <p className="mt-2 text-xs text-gray-500">
                 Procesando con IA para generar una respuesta clara
@@ -353,11 +403,18 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end border-t border-cyan-500/20 bg-slate-900/50 px-6 py-4">
+        <div
+          className="
+          flex justify-end border-t border-cyan-500/20 bg-slate-900/50 px-6 py-4
+        "
+        >
           <Button
             onClick={onClose}
             variant="outline"
-            className="border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+            className="
+              border-cyan-500/30 text-cyan-400
+              hover:bg-cyan-500/10
+            "
           >
             Cerrar
           </Button>

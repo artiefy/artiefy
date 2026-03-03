@@ -589,13 +589,18 @@ export default function ProjectInfoModal({
   return (
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      className="
+        fixed inset-0 z-50 flex items-center justify-center bg-black/60
+      "
       onClick={onClose}
       style={{ pointerEvents: 'auto' }}
     >
       <div className="flex min-h-screen w-full items-center justify-center p-4">
         <div
-          className="relative m-6 max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-slate-800 p-6"
+          className="
+            relative m-6 max-h-[90vh] w-full max-w-4xl overflow-y-auto
+            rounded-2xl bg-slate-800 p-6
+          "
           onClick={(e) => e.stopPropagation()}
         >
           {/* Botón de cerrar sobre la carta, siempre visible al hacer scroll, sin afectar el ancho */}
@@ -603,7 +608,10 @@ export default function ProjectInfoModal({
             <Button
               variant="ghost"
               size="icon"
-              className="text-slate-400 hover:bg-slate-700 hover:text-white"
+              className="
+                text-slate-400
+                hover:bg-slate-700 hover:text-white
+              "
               onClick={onClose}
               aria-label="Cerrar"
             >
@@ -624,7 +632,11 @@ export default function ProjectInfoModal({
             </Button>
           </div>
           {/* Imagen/video del proyecto con ciclo y fullscreen */}
-          <Card className="relative mb-6 border-slate-700 bg-slate-800/50 backdrop-blur-sm">
+          <Card
+            className="
+            relative mb-6 border-slate-700 bg-slate-800/50 backdrop-blur-sm
+          "
+          >
             <div
               className="relative flex w-full items-center justify-center"
               style={{ minHeight: 180 }}
@@ -638,7 +650,10 @@ export default function ProjectInfoModal({
                       alt="Imagen del proyecto"
                       width={1200}
                       height={320}
-                      className="max-h-64 w-full rounded-2xl object-cover opacity-70 shadow-lg"
+                      className="
+                        max-h-64 w-full rounded-2xl object-cover opacity-70
+                        shadow-lg
+                      "
                       style={{ background: '#222' }}
                       priority
                       onError={() => setImageError(true)}
@@ -647,11 +662,20 @@ export default function ProjectInfoModal({
                       <Button
                         variant="secondary"
                         size="icon"
-                        className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                        className="
+                          size-8 border-0 bg-black/50 text-white
+                          hover:bg-black/70
+                          md:size-10
+                        "
                         onClick={() => handleFullscreen(true)}
                         title="Ver en pantalla completa"
                       >
-                        <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                        <Maximize
+                          className="
+                          size-4
+                          md:size-5
+                        "
+                        />
                       </Button>
                     </div>
                   </>
@@ -662,7 +686,10 @@ export default function ProjectInfoModal({
                       autoPlay
                       controls
                       muted
-                      className="max-h-64 w-full rounded-2xl object-cover opacity-70 shadow-lg"
+                      className="
+                        max-h-64 w-full rounded-2xl object-cover opacity-70
+                        shadow-lg
+                      "
                       poster={project.image}
                       onEnded={handleVideoEnded}
                       onError={() => setVideoError(true)}
@@ -677,7 +704,10 @@ export default function ProjectInfoModal({
                   <video
                     ref={videoRef}
                     controls
-                    className="max-h-64 w-full rounded-2xl object-cover opacity-70 shadow-lg"
+                    className="
+                      max-h-64 w-full rounded-2xl object-cover opacity-70
+                      shadow-lg
+                    "
                     poster={project.image ?? ''}
                     onError={() => setVideoError(true)}
                   >
@@ -693,7 +723,10 @@ export default function ProjectInfoModal({
                     alt="Imagen del proyecto"
                     width={1200}
                     height={320}
-                    className="max-h-64 w-full rounded-2xl object-cover opacity-70 shadow-lg"
+                    className="
+                      max-h-64 w-full rounded-2xl object-cover opacity-70
+                      shadow-lg
+                    "
                     style={{ background: '#222' }}
                     priority
                     onError={() => setImageError(true)}
@@ -702,11 +735,20 @@ export default function ProjectInfoModal({
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                      className="
+                        size-8 border-0 bg-black/50 text-white
+                        hover:bg-black/70
+                        md:size-10
+                      "
                       onClick={() => handleFullscreen(true)}
                       title="Ver en pantalla completa"
                     >
-                      <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                      <Maximize
+                        className="
+                        size-4
+                        md:size-5
+                      "
+                      />
                     </Button>
                   </div>
                 </>
@@ -733,7 +775,11 @@ export default function ProjectInfoModal({
           </Card>
           <div className="w-full space-y-6">
             {/* Header del Proyecto */}
-            <Card className="relative border-slate-700 bg-slate-800/50 backdrop-blur-sm">
+            <Card
+              className="
+              relative border-slate-700 bg-slate-800/50 backdrop-blur-sm
+            "
+            >
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1 space-y-2 pr-4">
@@ -749,7 +795,12 @@ export default function ProjectInfoModal({
               <CardContent className="space-y-6">
                 {/* Badges de Estado */}
                 <div className="flex flex-wrap gap-2">
-                  <Badge className="max-w-[150px] truncate border-cyan-500/30 bg-cyan-500/20 text-cyan-400">
+                  <Badge
+                    className="
+                    max-w-[150px] truncate border-cyan-500/30 bg-cyan-500/20
+                    text-cyan-400
+                  "
+                  >
                     {isOwner ? 'Propio' : 'Público'}
                   </Badge>
                 </div>
@@ -762,21 +813,33 @@ export default function ProjectInfoModal({
                   <Progress value={progreso} className="h-2 bg-slate-700" />
                 </div>
                 {/* Información del Proyecto */}
-                <div className="grid gap-6 md:grid-cols-2">
+                <div
+                  className="
+                  grid gap-6
+                  md:grid-cols-2
+                "
+                >
                   <div className="min-w-0 space-y-4">
                     <div className="flex items-center gap-3 text-slate-300">
-                      <Users className="h-5 w-5 flex-shrink-0 text-cyan-400" />
+                      <Users className="size-5 flex-shrink-0 text-cyan-400" />
                       <Button
                         type="button"
                         variant="outline"
-                        className="truncate rounded-md border-cyan-400 bg-transparent px-3 py-1 font-semibold text-cyan-400 transition-transform duration-150 hover:scale-105 hover:bg-cyan-900/20 hover:text-white focus:scale-105 active:scale-100"
+                        className="
+                          truncate rounded-md border-cyan-400 bg-transparent
+                          px-3 py-1 font-semibold text-cyan-400
+                          transition-transform duration-150
+                          hover:scale-105 hover:bg-cyan-900/20 hover:text-white
+                          focus:scale-105
+                          active:scale-100
+                        "
                         onClick={() => setShowIntegrantes(true)}
                       >
                         {inscritos} Integrantes
                       </Button>
                     </div>
                     <div className="flex items-center gap-3 text-slate-300">
-                      <Calendar className="h-5 w-5 flex-shrink-0 text-cyan-400" />
+                      <Calendar className="size-5 flex-shrink-0 text-cyan-400" />
                       <span className="text-sm break-words">
                         Fecha de creación:{' '}
                         {typeof project.createdAt === 'string'
@@ -806,7 +869,14 @@ export default function ProjectInfoModal({
                       <Button
                         type="button"
                         variant="outline"
-                        className="max-w-[200px] truncate rounded-md border-cyan-400 bg-transparent px-3 py-1 font-semibold text-cyan-400 transition-transform duration-150 hover:scale-105 hover:bg-cyan-900/20 hover:text-white focus:scale-105 active:scale-100"
+                        className="
+                          max-w-[200px] truncate rounded-md border-cyan-400
+                          bg-transparent px-3 py-1 font-semibold text-cyan-400
+                          transition-transform duration-150
+                          hover:scale-105 hover:bg-cyan-900/20 hover:text-white
+                          focus:scale-105
+                          active:scale-100
+                        "
                         onClick={() => setShowCategoria(true)}
                       >
                         {project.category?.name ?? 'Sin categoría'}
@@ -817,12 +887,21 @@ export default function ProjectInfoModal({
               </CardContent>
             </Card>
             {/* Secciones Principales */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div
+              className="
+              grid gap-6
+              md:grid-cols-2
+            "
+            >
               {/* Planteamiento */}
               <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
                 <CardHeader>
-                  <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
-                    <div className="h-2 w-2 flex-shrink-0 rounded-full bg-cyan-400" />
+                  <h2
+                    className="
+                    flex items-center gap-2 text-xl font-semibold text-white
+                  "
+                  >
+                    <div className="size-2 flex-shrink-0 rounded-full bg-cyan-400" />
                     Planteamiento
                   </h2>
                 </CardHeader>
@@ -837,8 +916,12 @@ export default function ProjectInfoModal({
               {/* Objetivo */}
               <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
                 <CardHeader>
-                  <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
-                    <div className="h-2 w-2 flex-shrink-0 rounded-full bg-green-400" />
+                  <h2
+                    className="
+                    flex items-center gap-2 text-xl font-semibold text-white
+                  "
+                  >
+                    <div className="size-2 flex-shrink-0 rounded-full bg-green-400" />
                     Objetivo
                   </h2>
                 </CardHeader>
@@ -854,7 +937,10 @@ export default function ProjectInfoModal({
             <div className="flex w-full justify-center gap-3">
               {!userId ? (
                 <Button
-                  className="flex-1 bg-blue-500 text-lg text-white hover:bg-blue-600"
+                  className="
+                    flex-1 bg-blue-500 text-lg text-white
+                    hover:bg-blue-600
+                  "
                   onClick={() => {
                     onClose();
                     window.location.href = '/sign-in';
@@ -866,27 +952,46 @@ export default function ProjectInfoModal({
                 </Button>
               ) : isOwner ? (
                 <Button
-                  className="flex-1 bg-cyan-500 text-white hover:bg-cyan-600"
+                  className="
+                    flex-1 bg-cyan-500 text-white
+                    hover:bg-cyan-600
+                  "
                   onClick={handleVerProyecto}
                 >
-                  <span className="flex w-full items-center justify-center text-lg font-semibold">
-                    <Eye className="mr-2 h-5 w-5" />
+                  <span
+                    className="
+                    flex w-full items-center justify-center text-lg
+                    font-semibold
+                  "
+                  >
+                    <Eye className="mr-2 size-5" />
                     Ver Proyecto
                   </span>
                 </Button>
               ) : alreadyTaken ? (
                 <>
                   <Button
-                    className="flex-1 bg-cyan-500 text-white hover:bg-cyan-600"
+                    className="
+                      flex-1 bg-cyan-500 text-white
+                      hover:bg-cyan-600
+                    "
                     onClick={handleVerProyecto}
                   >
-                    <span className="flex w-full items-center justify-center text-lg font-semibold">
-                      <Eye className="mr-2 h-5 w-5" />
+                    <span
+                      className="
+                      flex w-full items-center justify-center text-lg
+                      font-semibold
+                    "
+                    >
+                      <Eye className="mr-2 size-5" />
                       Ver Proyecto
                     </span>
                   </Button>
                   <Button
-                    className="flex-1 bg-orange-500 text-lg text-white hover:bg-orange-600"
+                    className="
+                      flex-1 bg-orange-500 text-lg text-white
+                      hover:bg-orange-600
+                    "
                     onClick={handleSolicitarRenuncia}
                     disabled={loading || solicitudPendiente}
                   >
@@ -910,7 +1015,10 @@ export default function ProjectInfoModal({
                 </Button>
               ) : solicitudPendiente ? (
                 <Button
-                  className="flex-1 bg-yellow-500 text-lg text-black hover:bg-yellow-600"
+                  className="
+                    flex-1 bg-yellow-500 text-lg text-black
+                    hover:bg-yellow-600
+                  "
                   disabled
                 >
                   <span className="w-full text-lg font-semibold">
@@ -919,7 +1027,10 @@ export default function ProjectInfoModal({
                 </Button>
               ) : (
                 <Button
-                  className="flex-1 bg-green-500 text-lg text-white hover:bg-green-600"
+                  className="
+                    flex-1 bg-green-500 text-lg text-white
+                    hover:bg-green-600
+                  "
                   onClick={handleSolicitarParticipacion}
                   disabled={loading || success}
                 >

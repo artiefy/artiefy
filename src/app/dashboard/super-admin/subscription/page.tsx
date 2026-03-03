@@ -139,15 +139,25 @@ export default function AccessLogsPage() {
   const getStatusBadge = (log: AccessLogItem) => {
     if (!log.exitTime) {
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+        <span
+          className="
+          inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3
+          py-1 text-xs font-semibold text-emerald-400
+        "
+        >
+          <span className="size-2 animate-pulse rounded-full bg-emerald-400" />
           Dentro
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-600/30 px-3 py-1 text-xs font-semibold text-gray-400">
-        <span className="h-2 w-2 rounded-full bg-gray-500" />
+      <span
+        className="
+        inline-flex items-center gap-1.5 rounded-full bg-gray-600/30 px-3 py-1
+        text-xs font-semibold text-gray-400
+      "
+      >
+        <span className="size-2 rounded-full bg-gray-500" />
         Salió
       </span>
     );
@@ -157,7 +167,7 @@ export default function AccessLogsPage() {
     return (
       <div className="flex min-h-[400px] items-center justify-center p-6">
         <div className="text-center">
-          <FiUsers className="mx-auto mb-4 h-12 w-12 text-gray-500" />
+          <FiUsers className="mx-auto mb-4 size-12 text-gray-500" />
           <h1 className="text-xl font-semibold text-white">No autorizado</h1>
           <p className="mt-2 text-gray-400">
             No tienes permisos para ver esta página.
@@ -168,7 +178,12 @@ export default function AccessLogsPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
+    <div
+      className="
+      min-h-screen p-4
+      md:p-6
+    "
+    >
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight text-white">
@@ -180,8 +195,18 @@ export default function AccessLogsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-800 p-5">
+      <div
+        className="
+        mb-6 grid grid-cols-1 gap-4
+        sm:grid-cols-3
+      "
+      >
+        <div
+          className="
+          rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900
+          to-gray-800 p-5
+        "
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-400">
@@ -190,12 +215,17 @@ export default function AccessLogsPage() {
               <p className="mt-1 text-3xl font-bold text-white">{total}</p>
             </div>
             <div className="rounded-xl bg-primary/20 p-3">
-              <FiClock className="h-6 w-6 text-primary" />
+              <FiClock className="size-6 text-primary" />
             </div>
           </div>
         </div>
 
-        <div className="rounded-xl border border-emerald-800/50 bg-gradient-to-br from-emerald-900/30 to-gray-900 p-5">
+        <div
+          className="
+          rounded-xl border border-emerald-800/50 bg-gradient-to-br
+          from-emerald-900/30 to-gray-900 p-5
+        "
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-emerald-400">
@@ -206,12 +236,17 @@ export default function AccessLogsPage() {
               </p>
             </div>
             <div className="rounded-xl bg-emerald-500/20 p-3">
-              <FiUser className="h-6 w-6 text-emerald-400" />
+              <FiUser className="size-6 text-emerald-400" />
             </div>
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-800 p-5">
+        <div
+          className="
+          rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900
+          to-gray-800 p-5
+        "
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-400">Página</p>
@@ -221,19 +256,31 @@ export default function AccessLogsPage() {
               </p>
             </div>
             <div className="rounded-xl bg-gray-700/50 p-3">
-              <FiUsers className="h-6 w-6 text-gray-400" />
+              <FiUsers className="size-6 text-gray-400" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div
+        className="
+        mb-6 flex flex-col gap-4
+        md:flex-row md:items-center md:justify-between
+      "
+      >
         {/* Search */}
         <div className="relative">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
           <input
-            className="w-full rounded-xl border border-gray-700 bg-gray-900/80 px-10 py-3 text-sm font-medium text-white placeholder:text-gray-500 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/30 md:w-80"
+            className="
+              w-full rounded-xl border border-gray-700 bg-gray-900/80 px-10 py-3
+              text-sm font-medium text-white
+              transition-all
+              outline-none placeholder:text-gray-500
+              focus:border-primary focus:ring-2 focus:ring-primary/30
+              md:w-80
+            "
             placeholder="Buscar por nombre o correo..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -242,14 +289,21 @@ export default function AccessLogsPage() {
 
         <div className="flex flex-wrap gap-2">
           {/* Filter Buttons */}
-          <div className="flex rounded-lg border border-gray-700 bg-gray-900/50 p-1">
+          <div
+            className="
+            flex rounded-lg border border-gray-700 bg-gray-900/50 p-1
+          "
+          >
             <button
               onClick={() => setFilter('all')}
               className={cn(
                 'rounded-md px-4 py-2 text-sm font-medium transition-all',
                 filter === 'all'
                   ? 'bg-primary text-black'
-                  : 'text-gray-400 hover:text-white'
+                  : `
+                    text-gray-400
+                    hover:text-white
+                  `
               )}
             >
               Todos
@@ -260,7 +314,10 @@ export default function AccessLogsPage() {
                 'rounded-md px-4 py-2 text-sm font-medium transition-all',
                 filter === 'inside'
                   ? 'bg-emerald-500 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  : `
+                    text-gray-400
+                    hover:text-white
+                  `
               )}
             >
               Dentro
@@ -271,7 +328,10 @@ export default function AccessLogsPage() {
                 'rounded-md px-4 py-2 text-sm font-medium transition-all',
                 filter === 'completed'
                   ? 'bg-gray-600 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  : `
+                    text-gray-400
+                    hover:text-white
+                  `
               )}
             >
               Completados
@@ -281,42 +341,81 @@ export default function AccessLogsPage() {
           {/* Refresh Button */}
           <button
             onClick={() => fetchLogs(page, debouncedQ, filter)}
-            className="flex items-center gap-2 rounded-xl bg-gray-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-700"
+            className="
+              flex items-center gap-2 rounded-xl bg-gray-800 px-4 py-2.5 text-sm
+              font-medium text-white transition-colors
+              hover:bg-gray-700
+            "
           >
-            <FiRefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
+            <FiRefreshCw className={cn('size-4', loading && 'animate-spin')} />
             Actualizar
           </button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 shadow-xl">
+      <div
+        className="
+        overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50
+        shadow-xl
+      "
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-800 bg-gray-800/80">
               <tr>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                  uppercase
+                "
+                >
                   Persona
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                  uppercase
+                "
+                >
                   Estado
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                  uppercase
+                "
+                >
                   <div className="flex items-center gap-1.5">
-                    <FiArrowDownLeft className="h-4 w-4 text-emerald-400" />
+                    <FiArrowDownLeft className="size-4 text-emerald-400" />
                     Entrada
                   </div>
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                  uppercase
+                "
+                >
                   <div className="flex items-center gap-1.5">
-                    <FiArrowUpRight className="h-4 w-4 text-red-400" />
+                    <FiArrowUpRight className="size-4 text-red-400" />
                     Salida
                   </div>
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                  uppercase
+                "
+                >
                   Duración
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                  uppercase
+                "
+                >
                   Suscripción
                 </th>
               </tr>
@@ -327,7 +426,7 @@ export default function AccessLogsPage() {
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
                     <div className="flex items-center justify-center gap-3">
-                      <FiRefreshCw className="h-5 w-5 animate-spin text-primary" />
+                      <FiRefreshCw className="size-5 animate-spin text-primary" />
                       <span className="text-gray-400">
                         Cargando registros...
                       </span>
@@ -339,7 +438,7 @@ export default function AccessLogsPage() {
               {!loading && items.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
-                    <FiUsers className="mx-auto mb-3 h-10 w-10 text-gray-600" />
+                    <FiUsers className="mx-auto mb-3 size-10 text-gray-600" />
                     <p className="text-gray-400">No hay registros de acceso</p>
                   </td>
                 </tr>
@@ -350,14 +449,22 @@ export default function AccessLogsPage() {
                   <tr
                     key={log.id}
                     className={cn(
-                      'transition-colors hover:bg-gray-800/40',
+                      `
+                        transition-colors
+                        hover:bg-gray-800/40
+                      `,
                       !log.exitTime && 'bg-emerald-900/10'
                     )}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-secondary/30">
-                          <FiUser className="h-5 w-5 text-primary" />
+                        <div
+                          className="
+                          flex size-10 items-center justify-center rounded-full
+                          bg-gradient-to-br from-primary/30 to-secondary/30
+                        "
+                        >
+                          <FiUser className="size-5 text-primary" />
                         </div>
                         <div>
                           <p className="font-semibold text-white">
@@ -438,7 +545,10 @@ export default function AccessLogsPage() {
               'rounded-xl px-5 py-2.5 text-sm font-medium transition-all',
               page <= 1
                 ? 'cursor-not-allowed bg-gray-800/50 text-gray-600'
-                : 'bg-gray-800 text-white hover:bg-gray-700'
+                : `
+                  bg-gray-800 text-white
+                  hover:bg-gray-700
+                `
             )}
           >
             Anterior
@@ -450,7 +560,10 @@ export default function AccessLogsPage() {
               'rounded-xl px-5 py-2.5 text-sm font-medium transition-all',
               page >= totalPages
                 ? 'cursor-not-allowed bg-gray-800/50 text-gray-600'
-                : 'bg-primary text-black hover:opacity-90'
+                : `
+                  bg-primary text-black
+                  hover:opacity-90
+                `
             )}
           >
             Siguiente

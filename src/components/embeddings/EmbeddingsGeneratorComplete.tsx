@@ -106,11 +106,19 @@ export function EmbeddingsGeneratorComplete({
       <Button
         onClick={handleGenerateEmbeddings}
         disabled={isLoading}
-        className="w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+        className="
+          w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600
+          hover:from-purple-700 hover:to-blue-700
+        "
       >
         {isLoading ? (
           <>
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            <span
+              className="
+              inline-block size-4 animate-spin rounded-full border-2
+              border-current border-t-transparent
+            "
+            />
             Generando embeddings del curso completo...
           </>
         ) : isSuccess ? (
@@ -126,7 +134,11 @@ export function EmbeddingsGeneratorComplete({
 
       {/* Estadísticas exitosas */}
       {isSuccess && stats && (
-        <div className="space-y-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+        <div
+          className="
+          space-y-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4
+        "
+        >
           <div className="flex items-start gap-2">
             <span className="text-2xl">✨</span>
             <div className="flex-1">
@@ -141,7 +153,12 @@ export function EmbeddingsGeneratorComplete({
           </div>
 
           {/* Grid de estadísticas */}
-          <div className="grid grid-cols-2 gap-3 pt-2 sm:grid-cols-4">
+          <div
+            className="
+            grid grid-cols-2 gap-3 pt-2
+            sm:grid-cols-4
+          "
+          >
             <div className="rounded bg-green-500/5 p-2">
               <div className="text-xs text-green-400/70">Chunks</div>
               <div className="text-xl font-bold text-green-400">
@@ -197,7 +214,11 @@ export function EmbeddingsGeneratorComplete({
 
       {/* Error */}
       {error && (
-        <div className="space-y-2 rounded-lg border border-red-500/30 bg-red-500/10 p-4">
+        <div
+          className="
+          space-y-2 rounded-lg border border-red-500/30 bg-red-500/10 p-4
+        "
+        >
           <div className="flex items-start gap-2">
             <span className="text-2xl">❌</span>
             <div className="flex-1">
@@ -211,7 +232,10 @@ export function EmbeddingsGeneratorComplete({
             variant="outline"
             size="sm"
             onClick={() => setError(null)}
-            className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+            className="
+              border-red-500/30 text-red-400
+              hover:bg-red-500/10
+            "
           >
             Descartar
           </Button>

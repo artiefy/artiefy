@@ -63,7 +63,12 @@ const CourseVideo: React.FC<CourseVideoProps> = ({
 
   if (!videoKey || videoKey === 'null') {
     return (
-      <div className="flex h-64 items-center justify-center text-center text-lg font-semibold text-gray-500">
+      <div
+        className="
+        flex h-64 items-center justify-center text-center text-lg font-semibold
+        text-gray-500
+      "
+      >
         No hay video disponible para esta clase grabada.
       </div>
     );
@@ -90,8 +95,16 @@ const CourseVideo: React.FC<CourseVideoProps> = ({
         />
       )}
       {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60">
-          <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-cyan-400" />
+        <div
+          className="
+          absolute inset-0 z-10 flex items-center justify-center bg-black/60
+        "
+        >
+          <div
+            className="
+            size-12 animate-spin rounded-full border-y-2 border-cyan-400
+          "
+          />
         </div>
       )}
       {/* Barra de progreso eliminada, solo se muestra en el modal */}

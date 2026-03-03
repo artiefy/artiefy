@@ -26,7 +26,7 @@ export default function MisCoursesPage() {
                     <Skeleton className="mb-8 h-10 w-72" />
                     <div className="mb-8 rounded-lg bg-gray-800 p-6">
                       <div className="flex items-center gap-4">
-                        <Skeleton className="h-16 w-16 rounded-full" />
+                        <Skeleton className="size-16 rounded-full" />
                         <div className="space-y-2">
                           <Skeleton className="h-6 w-48" />
                           <Skeleton className="h-4 w-64" />
@@ -38,7 +38,12 @@ export default function MisCoursesPage() {
                   {/* Programs Section Skeleton */}
                   <section className="mb-12">
                     <Skeleton className="mb-6 h-8 w-64" />
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div
+                      className="
+                      grid grid-cols-1 gap-4
+                      md:grid-cols-2
+                    "
+                    >
                       {[1, 2].map((i) => (
                         <CourseCardSkeleton key={`program-${i}`} />
                       ))}
@@ -48,7 +53,12 @@ export default function MisCoursesPage() {
                   {/* Courses Section Skeleton */}
                   <section className="mb-12">
                     <Skeleton className="mb-6 h-8 w-64" />
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div
+                      className="
+                      grid grid-cols-1 gap-4
+                      md:grid-cols-2
+                    "
+                    >
                       {[1, 2].map((i) => (
                         <CourseCardSkeleton key={`course-${i}`} />
                       ))}

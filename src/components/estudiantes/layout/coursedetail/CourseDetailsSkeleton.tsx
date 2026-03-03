@@ -4,7 +4,14 @@ import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 export function CourseDetailsSkeleton() {
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto -mt-6 max-w-7xl px-4 py-2 sm:-mt-0 md:px-6 md:py-8 lg:px-8">
+      <main
+        className="
+        mx-auto -mt-6 max-w-7xl px-4 py-2
+        sm:-mt-0
+        md:px-6 md:py-8
+        lg:px-8
+      "
+      >
         {/* Breadcrumb Skeleton */}
         <div className="mb-4 flex items-center gap-2">
           <Skeleton className="h-4 w-16 bg-[#1d283a]" />
@@ -16,25 +23,42 @@ export function CourseDetailsSkeleton() {
 
         {/* Main Card Container */}
         <div
-          className="relative rounded-2xl border p-2 shadow-xl shadow-black/20 backdrop-blur-sm md:p-8"
+          className="
+            relative rounded-2xl border p-2 shadow-xl shadow-black/20
+            backdrop-blur-sm
+            md:p-8
+          "
           style={{
             backgroundColor: '#010b17',
             borderColor: '#061c37cc',
           }}
         >
-          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-background via-background/95 to-background/80"></div>
+          <div
+            className="
+            absolute inset-0 rounded-2xl bg-gradient-to-r from-background
+            via-background/95 to-background/80
+          "
+          ></div>
 
           <div className="relative z-10 space-y-6">
             {/* Layout Grid - Desktop: 3 cols, Mobile: 1 col */}
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+            <div
+              className="
+              grid grid-cols-1 gap-8
+              lg:grid-cols-3
+            "
+            >
               {/* Mini Card - Mobile Version (Top) */}
               <div className="lg:hidden">
                 <div
-                  className="relative overflow-hidden rounded-2xl border border-border bg-[#061c37]"
+                  className="
+                    relative overflow-hidden rounded-2xl border border-border
+                    bg-[#061c37]
+                  "
                   style={{ borderColor: '#1d283a', borderWidth: '1px' }}
                 >
                   <AspectRatio ratio={16 / 9}>
-                    <Skeleton className="h-full w-full bg-[#0a1929]" />
+                    <Skeleton className="size-full bg-[#0a1929]" />
                   </AspectRatio>
                   <div className="space-y-4 p-5">
                     {/* Badge Premium + Pro */}
@@ -68,13 +92,13 @@ export function CourseDetailsSkeleton() {
                     <Skeleton className="h-5 w-12 bg-[#1d283a]" />
                     <div className="flex gap-1">
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <Skeleton key={i} className="h-5 w-5 bg-[#1d283a]" />
+                        <Skeleton key={i} className="size-5 bg-[#1d283a]" />
                       ))}
                     </div>
                     <Skeleton className="h-4 w-24 bg-[#1d283a]" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-4 bg-[#1d283a]" />
+                    <Skeleton className="size-4 bg-[#1d283a]" />
                     <Skeleton className="h-4 w-28 bg-[#1d283a]" />
                   </div>
                 </div>
@@ -113,7 +137,10 @@ export function CourseDetailsSkeleton() {
                     ].map((label, i) => (
                       <Skeleton
                         key={i}
-                        className="h-10 min-w-[100px] flex-shrink-0 rounded-full bg-[#1d283a]"
+                        className="
+                          h-10 min-w-[100px] flex-shrink-0 rounded-full
+                          bg-[#1d283a]
+                        "
                       />
                     ))}
                   </div>
@@ -121,13 +148,21 @@ export function CourseDetailsSkeleton() {
               </div>
 
               {/* Side Card - Desktop Only */}
-              <div className="hidden lg:block">
+              <div
+                className="
+                hidden
+                lg:block
+              "
+              >
                 <div
-                  className="sticky top-24 overflow-hidden rounded-2xl border border-border bg-[#061c37]"
+                  className="
+                    sticky top-24 overflow-hidden rounded-2xl border
+                    border-border bg-[#061c37]
+                  "
                   style={{ borderColor: '#1d283a', borderWidth: '1px' }}
                 >
                   <AspectRatio ratio={16 / 9}>
-                    <Skeleton className="h-full w-full bg-[#0a1929]" />
+                    <Skeleton className="size-full bg-[#0a1929]" />
                   </AspectRatio>
                   <div className="space-y-4 p-5">
                     {/* Badge Premium + Pro */}

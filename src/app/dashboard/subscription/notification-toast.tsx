@@ -24,7 +24,12 @@ export function NotificationToast({
   onRemove,
 }: NotificationToastProps) {
   return (
-    <div className="pointer-events-none fixed top-4 right-4 z-50 space-y-2 sm:top-6 sm:right-6">
+    <div
+      className="
+      pointer-events-none fixed top-4 right-4 z-50 space-y-2
+      sm:top-6 sm:right-6
+    "
+    >
       {toasts.map((t) => (
         <Toast key={t.id} toast={t} onRemove={onRemove} />
       ))}
@@ -82,10 +87,19 @@ function Toast({ toast, onRemove }: ToastProps) {
 
   return (
     <div
-      className={` ${baseClasses} ${typeClasses[toast.type]} ${isExiting ? 'slide-out-to-top-2 opacity-0' : ''} `}
+      className={`
+        ${baseClasses}
+        ${typeClasses[toast.type]}
+        ${isExiting ? 'slide-out-to-top-2 opacity-0' : ''}
+      `}
     >
       <div className="flex-shrink-0">{icons[toast.type]}</div>
-      <div className="flex-1 text-sm sm:text-base">
+      <div
+        className="
+        flex-1 text-sm
+        sm:text-base
+      "
+      >
         {toast.message}
         {toast.subtitle && (
           <p className="mt-1 text-xs opacity-80">{toast.subtitle}</p>
@@ -96,10 +110,13 @@ function Toast({ toast, onRemove }: ToastProps) {
           setIsExiting(true);
           setTimeout(() => onRemove(toast.id), 300);
         }}
-        className="flex-shrink-0 text-current opacity-60 transition-opacity hover:opacity-100"
+        className="
+          flex-shrink-0 text-current opacity-60 transition-opacity
+          hover:opacity-100
+        "
         aria-label="Cerrar"
       >
-        <X className="h-4 w-4" />
+        <X className="size-4" />
       </button>
     </div>
   );

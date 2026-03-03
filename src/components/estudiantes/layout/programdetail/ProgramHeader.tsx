@@ -570,7 +570,11 @@ export function ProgramHeader({
         <button
           type="button"
           disabled
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-base font-semibold text-primary-foreground opacity-60 transition-all"
+          className="
+            inline-flex h-12 w-full items-center justify-center gap-2
+            rounded-full bg-primary px-4 py-2 text-base font-semibold
+            text-primary-foreground opacity-60 transition-all
+          "
         >
           Cargando...
         </button>
@@ -583,7 +587,17 @@ export function ProgramHeader({
         <button
           type="button"
           onClick={handleSignInRedirect}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-base font-semibold whitespace-nowrap text-primary-foreground ring-offset-background transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+          className="
+            inline-flex h-12 w-full items-center justify-center gap-2
+            rounded-full bg-primary px-4 py-2 text-base font-semibold
+            whitespace-nowrap text-primary-foreground ring-offset-background
+            transition-all
+            hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20
+            focus-visible:ring-2 focus-visible:ring-ring
+            focus-visible:ring-offset-2 focus-visible:outline-none
+            disabled:pointer-events-none disabled:opacity-50
+            [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+          "
         >
           Iniciar sesión
         </button>
@@ -593,10 +607,20 @@ export function ProgramHeader({
         <div className="group relative">
           <button
             type="button"
-            className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold whitespace-nowrap text-emerald-400 ring-offset-background transition-all hover:bg-[#10b9814d] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            className="
+              group inline-flex h-12 w-full items-center justify-center gap-2
+              rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2
+              text-base font-semibold whitespace-nowrap text-emerald-400
+              ring-offset-background transition-all
+              hover:bg-[#10b9814d]
+              focus-visible:ring-2 focus-visible:ring-ring
+              focus-visible:ring-offset-2 focus-visible:outline-none
+              disabled:pointer-events-none disabled:opacity-50
+              [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+            "
           >
             <FaCheck
-              className="mr-2 h-5 w-5"
+              className="mr-2 size-5"
               style={{ color: 'rgb(52 211 153)' }}
             />
             Suscrito
@@ -606,9 +630,21 @@ export function ProgramHeader({
             aria-label="Cancelar suscripción al programa"
             onClick={() => setShowUnenrollDialog(true)}
             disabled={isUnenrolling}
-            className="group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-destructive/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
+            className="
+              group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1
+              transition-colors
+              hover:bg-destructive/20
+              focus:outline-none
+              focus-visible:ring-2 focus-visible:ring-red-400
+              focus-visible:ring-offset-2
+            "
           >
-            <FaTimes className="h-4 w-4 text-emerald-400 transition-colors group-hover:text-red-500" />
+            <FaTimes
+              className="
+              size-4 text-emerald-400 transition-colors
+              group-hover:text-red-500
+            "
+            />
           </button>
         </div>
       );
@@ -620,7 +656,17 @@ export function ProgramHeader({
           type="button"
           onClick={handleEnrollClick}
           disabled={isDisabled}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-primary px-4 py-2 text-base font-semibold whitespace-nowrap text-primary-foreground ring-offset-background transition-all hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+          className="
+            inline-flex h-12 w-full items-center justify-center gap-2
+            rounded-full bg-primary px-4 py-2 text-base font-semibold
+            whitespace-nowrap text-primary-foreground ring-offset-background
+            transition-all
+            hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/20
+            focus-visible:ring-2 focus-visible:ring-ring
+            focus-visible:ring-offset-2 focus-visible:outline-none
+            disabled:pointer-events-none disabled:opacity-50
+            [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+          "
         >
           {isCheckingEnrollment ? (
             <>
@@ -649,7 +695,7 @@ export function ProgramHeader({
     >
       <div className="relative">
         <AspectRatio ratio={16 / 9}>
-          <div className="relative h-full w-full overflow-hidden">
+          <div className="relative size-full overflow-hidden">
             <Image
               src={coverImageUrl}
               alt={program.title}
@@ -672,8 +718,13 @@ export function ProgramHeader({
         </AspectRatio>
       </div>
       <div className="relative z-10 space-y-5 p-5">
-        <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-400">
-          <Crown className="h-4 w-4" />
+        <div
+          className="
+          inline-flex items-center gap-2 rounded-full border border-amber-500/20
+          bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-400
+        "
+        >
+          <Crown className="size-4" />
           Programa Premium
         </div>
         <div className="space-y-3">{renderEnrollmentButton()}</div>
@@ -687,41 +738,91 @@ export function ProgramHeader({
   return (
     <>
       <div
-        className="relative rounded-2xl border border-border/50 bg-card/80 p-6 shadow-xl shadow-black/20 backdrop-blur-sm md:p-8"
+        className="
+          relative rounded-2xl border border-border/50 bg-card/80 p-6 shadow-xl
+          shadow-black/20 backdrop-blur-sm
+          md:p-8
+        "
         style={{
           backgroundImage: `url(${coverImageUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
         }}
       >
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-background via-background/95 to-background/80" />
+        <div
+          className="
+          absolute inset-0 rounded-2xl bg-gradient-to-r from-background
+          via-background/95 to-background/80
+        "
+        />
         {/* CTA móvil solo cuando no estás inscrito */}
         {!isEnrolled && (
-          <div className="relative z-10 mb-8 lg:hidden">{renderCtaCard()}</div>
+          <div
+            className="
+            relative z-10 mb-8
+            lg:hidden
+          "
+          >
+            {renderCtaCard()}
+          </div>
         )}
 
         <div
-          className={`relative z-10 grid grid-cols-1 gap-8 lg:gap-12 ${
-            !isEnrolled
-              ? 'lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start'
-              : ''
-          }`}
+          className={`
+            relative z-10 grid grid-cols-1 gap-8
+            lg:gap-12
+            ${
+              !isEnrolled
+                ? 'lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start'
+                : ''
+            }
+          `}
         >
           <div className="space-y-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+            <div
+              className="
+              flex flex-col gap-6
+              lg:flex-row lg:items-start lg:gap-8
+            "
+            >
               <div className="flex-1">
-                <div className="max-w-2xl space-y-6 lg:max-w-3xl">
+                <div
+                  className="
+                  max-w-2xl space-y-6
+                  lg:max-w-3xl
+                "
+                >
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Badge de categoría */}
-                    <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                    <div
+                      className="
+                      inline-flex items-center rounded-full border
+                      border-primary/30 bg-primary/20 px-2.5 py-0.5 text-xs
+                      font-medium text-primary transition-colors
+                      hover:bg-primary/80
+                      focus:ring-2 focus:ring-ring focus:ring-offset-2
+                      focus:outline-none
+                    "
+                    >
                       {program.category?.name ?? 'Sin categoría'}
                     </div>
                   </div>
-                  <h1 className="font-display text-3xl leading-tight font-bold break-words text-foreground md:text-4xl">
+                  <h1
+                    className="
+                    font-display text-3xl leading-tight font-bold break-words
+                    text-foreground
+                    md:text-4xl
+                  "
+                  >
                     <span className="inline">
                       {program.title}{' '}
                       {isEnrolled && (
-                        <CheckCircleIcon className="mb-1 ml-1 inline-block h-6 w-6 flex-shrink-0 align-middle text-green-500" />
+                        <CheckCircleIcon
+                          className="
+                          mb-1 ml-1 inline-block size-6 flex-shrink-0
+                          align-middle text-green-500
+                        "
+                        />
                       )}
                     </span>
                   </h1>
@@ -730,11 +831,14 @@ export function ProgramHeader({
                       {Array.from({ length: 5 }).map((_, index) => (
                         <StarIcon
                           key={index}
-                          className={`h-4 w-4 ${
-                            index < Math.floor(program.rating ?? 0)
-                              ? 'text-amber-400'
-                              : 'text-amber-400/50'
-                          }`}
+                          className={`
+                            size-4
+                            ${
+                              index < Math.floor(program.rating ?? 0)
+                                ? 'text-amber-400'
+                                : 'text-amber-400/50'
+                            }
+                          `}
                         />
                       ))}
                       <span className="ml-1 font-semibold text-amber-400">
@@ -744,30 +848,39 @@ export function ProgramHeader({
                   </div>
                   <div className="grid max-w-3xl grid-cols-2 gap-3 md:grid-cols-4">
                     <div
-                      className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
+                      className="
+                        flex flex-col items-center justify-center gap-1
+                        rounded-xl px-3 py-2.5 text-center
+                      "
                       style={{ backgroundColor: '#1a23334d' }}
                     >
-                      <Book className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <Book className="mx-auto mb-1 size-5 text-primary" />
                       <p className="text-lg font-bold text-foreground">
                         {totalCourses}
                       </p>
                       <p className="text-xs text-muted-foreground">Cursos</p>
                     </div>
                     <div
-                      className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
+                      className="
+                        flex flex-col items-center justify-center gap-1
+                        rounded-xl px-3 py-2.5 text-center
+                      "
                       style={{ backgroundColor: '#1a23334d' }}
                     >
-                      <Clock className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <Clock className="mx-auto mb-1 size-5 text-primary" />
                       <p className="text-lg font-bold text-foreground">
                         {totalContentLabel}
                       </p>
                       <p className="text-xs text-muted-foreground">Contenido</p>
                     </div>
                     <div
-                      className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
+                      className="
+                        flex flex-col items-center justify-center gap-1
+                        rounded-xl px-3 py-2.5 text-center
+                      "
                       style={{ backgroundColor: '#1a23334d' }}
                     >
-                      <Users className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <Users className="mx-auto mb-1 size-5 text-primary" />
                       <p className="text-lg font-bold text-foreground">
                         {enrollmentCount}
                       </p>
@@ -776,10 +889,13 @@ export function ProgramHeader({
                       </p>
                     </div>
                     <div
-                      className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
+                      className="
+                        flex flex-col items-center justify-center gap-1
+                        rounded-xl px-3 py-2.5 text-center
+                      "
                       style={{ backgroundColor: '#1a23334d' }}
                     >
-                      <Video className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <Video className="mx-auto mb-1 size-5 text-primary" />
                       <p className="text-lg font-bold text-foreground">
                         {liveSessionsCount}
                       </p>
@@ -791,21 +907,36 @@ export function ProgramHeader({
 
                   {/* Badge de tipo de certificación */}
                   {program.certificationType && (
-                    <div className="flex w-fit items-center gap-2 rounded-full bg-muted/50 px-3 py-1.5">
-                      <LiaCertificateSolid className="h-4 w-4 text-muted-foreground" />
+                    <div
+                      className="
+                      flex w-fit items-center gap-2 rounded-full bg-muted/50
+                      px-3 py-1.5
+                    "
+                    >
+                      <LiaCertificateSolid className="size-4 text-muted-foreground" />
                       <span className="text-xs font-medium text-foreground">
                         {program.certificationType.name}
                       </span>
                     </div>
                   )}
 
-                  <p className="text-base leading-relaxed break-words whitespace-pre-wrap text-muted-foreground">
+                  <p
+                    className="
+                    text-base leading-relaxed break-words whitespace-pre-wrap
+                    text-muted-foreground
+                  "
+                  >
                     {program.description ?? 'No hay descripción disponible.'}
                   </p>
                 </div>
               </div>
               {isEnrolled && (
-                <div className="hidden lg:block lg:w-[320px] lg:flex-shrink-0">
+                <div
+                  className="
+                  hidden
+                  lg:block lg:w-[320px] lg:flex-shrink-0
+                "
+                >
                   {renderCtaCard()}
                 </div>
               )}
@@ -819,26 +950,71 @@ export function ProgramHeader({
               className="w-full"
             >
               <div className="border-b border-border/50">
-                <Tabs.List className="inline-flex h-auto w-full flex-nowrap items-center justify-start overflow-x-auto rounded-md bg-transparent p-0 text-muted-foreground">
+                <Tabs.List
+                  className="
+                  inline-flex h-auto w-full flex-nowrap items-center
+                  justify-start overflow-x-auto rounded-md bg-transparent p-0
+                  text-muted-foreground
+                "
+                >
                   <Tabs.Trigger
                     value="cursos"
-                    className="flex items-center justify-center gap-2 rounded-none bg-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
+                    className="
+                      flex items-center justify-center gap-2 rounded-none
+                      bg-transparent px-4 py-3 text-sm font-medium
+                      whitespace-nowrap text-muted-foreground
+                      ring-offset-background transition-all
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                      disabled:pointer-events-none disabled:opacity-50
+                      data-[state=active]:border-b-2
+                      data-[state=active]:border-primary
+                      data-[state=active]:bg-transparent
+                      data-[state=active]:text-primary
+                      data-[state=active]:shadow-none
+                    "
                   >
-                    <Book className="h-4 w-4" />
+                    <Book className="size-4" />
                     Cursos
                   </Tabs.Trigger>
                   <Tabs.Trigger
                     value="en-vivo"
-                    className="flex items-center justify-center gap-2 rounded-none bg-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
+                    className="
+                      flex items-center justify-center gap-2 rounded-none
+                      bg-transparent px-4 py-3 text-sm font-medium
+                      whitespace-nowrap text-muted-foreground
+                      ring-offset-background transition-all
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                      disabled:pointer-events-none disabled:opacity-50
+                      data-[state=active]:border-b-2
+                      data-[state=active]:border-primary
+                      data-[state=active]:bg-transparent
+                      data-[state=active]:text-primary
+                      data-[state=active]:shadow-none
+                    "
                   >
-                    <Video className="h-4 w-4" />
+                    <Video className="size-4" />
                     En Vivo
                   </Tabs.Trigger>
                   <Tabs.Trigger
                     value="certificacion"
-                    className="flex items-center justify-center gap-2 rounded-none bg-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
+                    className="
+                      flex items-center justify-center gap-2 rounded-none
+                      bg-transparent px-4 py-3 text-sm font-medium
+                      whitespace-nowrap text-muted-foreground
+                      ring-offset-background transition-all
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                      disabled:pointer-events-none disabled:opacity-50
+                      data-[state=active]:border-b-2
+                      data-[state=active]:border-primary
+                      data-[state=active]:bg-transparent
+                      data-[state=active]:text-primary
+                      data-[state=active]:shadow-none
+                    "
                   >
-                    <Award className="h-4 w-4" />
+                    <Award className="size-4" />
                     Certificación
                   </Tabs.Trigger>
                 </Tabs.List>
@@ -851,13 +1027,28 @@ export function ProgramHeader({
                 />
               </Tabs.Content>
               <Tabs.Content value="en-vivo" className="pt-6">
-                <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+                <section
+                  className="
+                  rounded-2xl border border-border bg-card p-6
+                  md:p-8
+                "
+                >
                   <div className="mb-6 flex items-center gap-3">
-                    <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
-                      <LuVideo className="h-5 w-5 text-red-400" />
+                    <div
+                      className="
+                      flex items-center justify-center rounded-full
+                      bg-red-500/20 p-2
+                    "
+                    >
+                      <LuVideo className="size-5 text-red-400" />
                     </div>
                     <div>
-                      <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+                      <h2
+                        className="
+                        font-display text-xl font-bold text-foreground
+                        md:text-2xl
+                      "
+                      >
                         Clases en Vivo
                       </h2>
                       <p className="text-sm text-muted-foreground">
@@ -867,12 +1058,12 @@ export function ProgramHeader({
                   </div>
                   {isLoadingLive || isLoadingEnrollments ? (
                     <div className="flex items-center justify-center py-12">
-                      <Icons.spinner className="h-8 w-8 text-primary" />
+                      <Icons.spinner className="size-8 text-primary" />
                     </div>
                   ) : liveSessions.length === 0 ? (
                     <div className="flex items-center justify-center py-12">
                       <div className="text-center">
-                        <Video className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <Video className="mx-auto mb-4 size-12 text-muted-foreground" />
                         <p className="text-muted-foreground">
                           No hay clases en vivo programadas en este momento
                         </p>
@@ -923,14 +1114,14 @@ export function ProgramHeader({
                           buttonDisabled = false;
                           buttonText =
                             'Inscribirse al curso para ver la clase en vivo';
-                          buttonIcon = <Book className="mr-2 h-4 w-4" />;
+                          buttonIcon = <Book className="mr-2 size-4" />;
                         } else if (isToday && isJoinEnabled) {
                           buttonBg = 'bg-red-600 text-white hover:bg-red-700';
                           buttonDisabled = false;
                           buttonText = 'Unirse Ahora';
                           buttonIcon = (
                             <LuSquareArrowOutUpRight
-                              className="mr-2 inline-block h-4 w-4"
+                              className="mr-2 inline-block size-4"
                               style={{ flexShrink: 0 }}
                             />
                           );
@@ -940,7 +1131,7 @@ export function ProgramHeader({
                           buttonText = 'Próxima Clase';
                           buttonIcon = (
                             <FaClock
-                              className="mr-2 inline-block h-4 w-4"
+                              className="mr-2 inline-block size-4"
                               style={{ flexShrink: 0 }}
                             />
                           );
@@ -950,43 +1141,87 @@ export function ProgramHeader({
                         return (
                           <div
                             key={`course-${meeting.courseId}`}
-                            className={`sm:hover:neon-live-class relative flex flex-col gap-3 rounded-[12px] border p-3 ${isEnrolledInCourse ? 'sm:flex-row sm:items-center sm:justify-between' : ''} sm:p-4`}
+                            className={`
+                              sm:hover:neon-live-class
+                              relative flex flex-col gap-3 rounded-[12px] border
+                              p-3
+                              ${
+                                isEnrolledInCourse
+                                  ? `
+                                sm:flex-row sm:items-center sm:justify-between
+                              `
+                                  : ''
+                              }
+                              sm:p-4
+                            `}
                             style={{
                               backgroundColor: '#01152d',
                               borderColor: 'hsla(217, 33%, 17%, 0.5)',
                             }}
                           >
                             {/* MOBILE: layout vertical y centrado */}
-                            <div className="block w-full sm:hidden">
-                              <div className="flex w-full flex-col items-stretch gap-3">
+                            <div
+                              className="
+                              block w-full
+                              sm:hidden
+                            "
+                            >
+                              <div
+                                className="
+                                flex w-full flex-col items-stretch gap-3
+                              "
+                              >
                                 {/* Badge del curso arriba del título */}
-                                <span className="inline-flex w-fit rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                <span
+                                  className="
+                                  inline-flex w-fit rounded-full bg-primary/10
+                                  px-2 py-0.5 text-[11px] font-semibold
+                                  text-primary
+                                "
+                                >
                                   {meeting.courseTitle}
                                 </span>
                                 {/* Header compacto */}
-                                <div className="flex items-start justify-between gap-2">
+                                <div
+                                  className="
+                                  flex items-start justify-between gap-2
+                                "
+                                >
                                   <div className="flex items-center gap-2">
                                     <span
-                                      className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                                      className="
+                                        flex items-center gap-1.5 rounded-full
+                                        px-2 py-0.5 text-xs font-medium
+                                      "
                                       style={{
                                         backgroundColor: '#061c3799',
                                         color: '#E6F7F8',
                                       }}
                                     >
                                       <span
-                                        className="h-1.5 w-1.5 animate-pulse rounded-full"
+                                        className="
+                                          size-1.5 animate-pulse rounded-full
+                                        "
                                         style={{ backgroundColor: '#061c37' }}
                                       />
                                       VIVO
                                     </span>
-                                    <h3 className="text-lg leading-snug font-semibold text-slate-100">
+                                    <h3
+                                      className="
+                                      text-lg leading-snug font-semibold
+                                      text-slate-100
+                                    "
+                                    >
                                       {meeting.title}
                                     </h3>
                                   </div>
                                 </div>
                                 {/* Chips fecha+hora y duración */}
                                 <div
-                                  className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                  className="
+                                    flex items-center gap-2 text-sm
+                                    whitespace-nowrap
+                                  "
                                   style={{
                                     color: '#94a3b8',
                                     background: '#01152d',
@@ -1003,7 +1238,7 @@ export function ProgramHeader({
                                       strokeWidth="2"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      className="h-4 w-4"
+                                      className="size-4"
                                     >
                                       <path d="M8 2v4"></path>
                                       <path d="M16 2v4"></path>
@@ -1029,7 +1264,7 @@ export function ProgramHeader({
                                       strokeWidth="2"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      className="h-4 w-4"
+                                      className="size-4"
                                     >
                                       <circle cx="12" cy="12" r="10"></circle>
                                       <polyline points="12 6 12 12 16 14"></polyline>
@@ -1046,7 +1281,11 @@ export function ProgramHeader({
                                   {!isEnrolledInCourse ? (
                                     <Link
                                       href={`/estudiantes/cursos/${meeting.courseId}`}
-                                      className={`${buttonClass} ${buttonBg} text-center`}
+                                      className={`
+                                        ${buttonClass}
+                                        ${buttonBg}
+                                        text-center
+                                      `}
                                       style={{
                                         fontFamily:
                                           'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
@@ -1055,7 +1294,11 @@ export function ProgramHeader({
                                       }}
                                     >
                                       {buttonIcon}
-                                      <span className="relative z-10 whitespace-nowrap">
+                                      <span
+                                        className="
+                                        relative z-10 whitespace-nowrap
+                                      "
+                                      >
                                         {buttonText}
                                       </span>
                                     </Link>
@@ -1066,21 +1309,32 @@ export function ProgramHeader({
                                       href={meeting.joinUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className={`${buttonClass} ${buttonBg}`}
+                                      className={`
+                                        ${buttonClass}
+                                        ${buttonBg}
+                                      `}
                                       style={{
                                         fontFamily:
                                           'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
                                       }}
                                     >
                                       {buttonIcon}
-                                      <span className="relative z-10 whitespace-nowrap">
+                                      <span
+                                        className="
+                                        relative z-10 whitespace-nowrap
+                                      "
+                                      >
                                         {buttonText}
                                       </span>
                                     </a>
                                   ) : (
                                     <button
                                       type="button"
-                                      className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
+                                      className={`
+                                        ${buttonClass}
+                                        ${buttonExtraClass}
+                                        ${buttonBg}
+                                      `}
                                       disabled={buttonDisabled}
                                       style={{
                                         fontFamily:
@@ -1089,7 +1343,11 @@ export function ProgramHeader({
                                       }}
                                     >
                                       {buttonIcon}
-                                      <span className="relative z-10 whitespace-nowrap">
+                                      <span
+                                        className="
+                                        relative z-10 whitespace-nowrap
+                                      "
+                                      >
                                         {buttonText}
                                       </span>
                                     </button>
@@ -1098,23 +1356,52 @@ export function ProgramHeader({
                               </div>
                             </div>
                             {/* DESKTOP: badge + title en una línea, fecha/hora debajo */}
-                            <div className="hidden min-w-0 flex-1 flex-col gap-2 sm:flex">
+                            <div
+                              className="
+                              hidden min-w-0 flex-1 flex-col gap-2
+                              sm:flex
+                            "
+                            >
                               <div className="flex items-center gap-3">
-                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                                <span
+                                  className="
+                                  rounded-full bg-primary/10 px-2 py-0.5
+                                  text-[11px] font-semibold text-primary
+                                "
+                                >
                                   {meeting.courseTitle}
                                 </span>
                               </div>
                               <div className="flex items-center gap-3">
-                                <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                                <span
+                                  className="
+                                  flex items-center gap-1.5 rounded-full
+                                  bg-red-500/20 px-2 py-0.5 text-xs font-medium
+                                  text-red-400
+                                "
+                                >
+                                  <span
+                                    className="
+                                    size-1.5 animate-pulse rounded-full
+                                    bg-red-500
+                                  "
+                                  />
                                   VIVO
                                 </span>
-                                <div className="text-base leading-tight font-semibold text-slate-100">
+                                <div
+                                  className="
+                                  text-base leading-tight font-semibold
+                                  text-slate-100
+                                "
+                                >
                                   {meeting.title}
                                 </div>
                               </div>
                               <div
-                                className="flex items-center gap-2 text-sm whitespace-nowrap"
+                                className="
+                                  flex items-center gap-2 text-sm
+                                  whitespace-nowrap
+                                "
                                 style={{
                                   color: '#94a3b8',
                                   background: '#01152d',
@@ -1131,7 +1418,7 @@ export function ProgramHeader({
                                     strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className="h-4 w-4"
+                                    className="size-4"
                                   >
                                     <path d="M8 2v4"></path>
                                     <path d="M16 2v4"></path>
@@ -1157,7 +1444,7 @@ export function ProgramHeader({
                                     strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className="h-4 w-4"
+                                    className="size-4"
                                   >
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <polyline points="12 6 12 12 16 14"></polyline>
@@ -1172,12 +1459,18 @@ export function ProgramHeader({
                             </div>
                             {/* Botón desktop debajo de fecha/hora y centrado o a la derecha */}
                             <div
-                              className={`mt-2 hidden ${isEnrolledInCourse ? 'sm:flex sm:justify-end' : 'w-full justify-center sm:flex'}`}
+                              className={`
+                                mt-2 hidden
+                                ${isEnrolledInCourse ? 'sm:flex sm:justify-end' : 'w-full justify-center sm:flex'}`}
                             >
                               {!isEnrolledInCourse ? (
                                 <Link
                                   href={`/estudiantes/cursos/${meeting.courseId}`}
-                                  className={`${buttonClass} ${buttonBg} text-center`}
+                                  className={`
+                                    ${buttonClass}
+                                    ${buttonBg}
+                                    text-center
+                                  `}
                                   style={{
                                     fontFamily:
                                       'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
@@ -1197,7 +1490,10 @@ export function ProgramHeader({
                                   href={meeting.joinUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className={`${buttonClass} ${buttonBg}`}
+                                  className={`
+                                    ${buttonClass}
+                                    ${buttonBg}
+                                  `}
                                   style={{
                                     fontFamily:
                                       'var(--font-montserrat), "Montserrat", "Istok Web", sans-serif',
@@ -1211,7 +1507,11 @@ export function ProgramHeader({
                               ) : (
                                 <button
                                   type="button"
-                                  className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
+                                  className={`
+                                    ${buttonClass}
+                                    ${buttonExtraClass}
+                                    ${buttonBg}
+                                  `}
                                   disabled={buttonDisabled}
                                   style={{
                                     fontFamily:
@@ -1242,7 +1542,12 @@ export function ProgramHeader({
           </div>
 
           {!isEnrolled && (
-            <aside className="sticky top-24 hidden max-h-[calc(100vh-8rem)] self-start lg:block">
+            <aside
+              className="
+              sticky top-24 hidden max-h-[calc(100vh-8rem)] self-start
+              lg:block
+            "
+            >
               {renderCtaCard()}
             </aside>
           )}
@@ -1259,15 +1564,27 @@ export function ProgramHeader({
         materias={program.materias ?? []}
       />
       {isCertModalOpen && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
-          <div className="relative w-full max-w-lg rounded-lg border border-gray-200 bg-[#01142B] p-6">
+        <div
+          className="
+          fixed inset-0 z-[99999] flex items-center justify-center bg-black/50
+        "
+        >
+          <div
+            className="
+            relative w-full max-w-lg rounded-lg border border-gray-200
+            bg-[#01142B] p-6
+          "
+          >
             <button
               onClick={() => setIsCertModalOpen(false)}
-              className="absolute top-2 right-2 text-primary transition-colors hover:text-secondary"
+              className="
+                absolute top-2 right-2 text-primary transition-colors
+                hover:text-secondary
+              "
               type="button"
               aria-label="Cerrar"
             >
-              <IoCloseOutline className="h-8 w-8" />
+              <IoCloseOutline className="size-8" />
             </button>
             <div className="flex flex-col items-center gap-4">
               <Image
@@ -1298,18 +1615,37 @@ export function ProgramHeader({
         onOpenChange={handleUnenrollDialogChange}
       >
         <DialogContent className="border border-[#1D283A] bg-[#061c37] sm:rounded-[16px]">
-          <DialogHeader className="space-y-2 text-center sm:text-left">
+          <DialogHeader
+            className="
+            space-y-2 text-center
+            sm:text-left
+          "
+          >
             <DialogTitle className="text-[#f8fafc]">¿Estás seguro?</DialogTitle>
             <DialogDescription className="text-[#94a3b8]">
               ¿Estás seguro que quieres cancelar tu suscripción al programa?
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-2">
+          <div
+            className="
+            flex flex-col-reverse gap-2
+            sm:flex-row sm:justify-end sm:space-x-2
+          "
+          >
             <button
               type="button"
               onClick={() => setShowUnenrollDialog(false)}
               disabled={isUnenrolling}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-[#1D283A] bg-[#01152d] px-4 py-2 text-sm font-medium transition-colors hover:bg-[#22C4D3] hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+              className="
+                inline-flex h-10 w-full items-center justify-center gap-2
+                rounded-full border border-[#1D283A] bg-[#01152d] px-4 py-2
+                text-sm font-medium transition-colors
+                hover:bg-[#22C4D3] hover:text-accent-foreground
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
+                disabled:pointer-events-none disabled:opacity-50
+                sm:w-auto
+              "
             >
               Cancelar
             </button>
@@ -1317,7 +1653,16 @@ export function ProgramHeader({
               type="button"
               onClick={handleConfirmUnenroll}
               disabled={isUnenrolling}
-              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-[#7c1d1d] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#991b1b] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+              className="
+                inline-flex h-10 w-full items-center justify-center gap-2
+                rounded-full bg-[#7c1d1d] px-4 py-2 text-sm font-medium
+                text-white transition-colors
+                hover:bg-[#991b1b]
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
+                disabled:pointer-events-none disabled:opacity-50
+                sm:w-auto
+              "
             >
               {isUnenrolling ? 'Procesando…' : 'Aceptar'}
             </button>

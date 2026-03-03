@@ -145,12 +145,25 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
   };
 
   return (
-    <div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-      <div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+    <div
+      className="
+      bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4
+      backdrop-blur-md
+    "
+    >
+      <div
+        className="
+        relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg
+        bg-gray-900 p-6 text-white shadow-2xl
+      "
+      >
         {/* Botón de Cerrar */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-white hover:text-red-500"
+          className="
+            absolute top-4 right-4 text-white
+            hover:text-red-500
+          "
         >
           <X size={24} />
         </button>
@@ -163,14 +176,22 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
           placeholder="Título del anuno"
           value={tituloState}
           onChange={(e) => setTituloState(e.target.value)}
-          className="mb-3 w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500"
+          className="
+            mb-3 w-full rounded-lg border border-gray-700 bg-gray-800 p-3
+            text-white
+            focus:ring-2 focus:ring-blue-500
+          "
         />
 
         <textarea
           placeholder="Descripción"
           value={descripcionState}
           onChange={(e) => setDescripcionState(e.target.value)}
-          className="mb-3 w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500"
+          className="
+            mb-3 w-full rounded-lg border border-gray-700 bg-gray-800 p-3
+            text-white
+            focus:ring-2 focus:ring-blue-500
+          "
         />
         {/* 🔹 Opciones de checkboxes */}
         <div className="mb-4 flex flex-col space-y-2">
@@ -179,7 +200,7 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
               type="checkbox"
               checked={opcionesSeleccionadas.includes('curso')}
               onChange={() => handleCheckboxChange('curso')}
-              className="form-checkbox h-5 w-5 text-blue-500"
+              className="form-checkbox size-5 text-blue-500"
             />
             <span>Asignar a un Curso</span>
           </label>
@@ -206,7 +227,10 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
           type="file"
           accept="image/*"
           onChange={handleFileChange}
-          className="mb-4 w-full cursor-pointer rounded-lg border border-gray-700 bg-gray-800 p-3 text-white"
+          className="
+            mb-4 w-full cursor-pointer rounded-lg border border-gray-700
+            bg-gray-800 p-3 text-white
+          "
         />
 
         {/* Vista Previa */}
@@ -219,7 +243,11 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
         {/* Botón de Guardar */}
         <button
           onClick={handleSave}
-          className="mt-6 w-full rounded-lg bg-blue-600 py-3 text-lg font-semibold text-white transition hover:bg-blue-700"
+          className="
+            mt-6 w-full rounded-lg bg-blue-600 py-3 text-lg font-semibold
+            text-white transition
+            hover:bg-blue-700
+          "
         >
           Guardar Anuncio
         </button>

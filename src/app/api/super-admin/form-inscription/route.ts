@@ -753,7 +753,7 @@ export async function POST(req: Request) {
           programaId: programRow.id,
           concepto: 'Cuota 1', // o 'Inscripción' si prefieres
           nroPago: 1,
-          fecha: fechaStr,
+          fechaPrograma: fechaStr,
           metodo: 'Artiefy',
           valor: 150000,
           createdAt: hoy,
@@ -773,7 +773,7 @@ export async function POST(req: Request) {
           programaId: pagos.programaId,
           concepto: pagos.concepto,
           nroPago: pagos.nroPago,
-          fecha: pagos.fecha,
+          fecha: pagos.fechaPrograma,
           metodo: pagos.metodo,
           valor: pagos.valor,
           receiptKey: pagos.receiptKey,

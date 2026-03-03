@@ -16,14 +16,11 @@ export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ChatRequestBody;
     const { receiverId, message, conversationId: clientConversationId } = body;
-
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
-
     let conversationId: number;
-
     if (clientConversationId) {
       conversationId = clientConversationId;
     } else {
@@ -35,6 +32,7 @@ export async function POST(req: NextRequest) {
             curso_id: 1,
             status: 'activo',
             title: 'Nueva conversación',
+            fechaPrograma: new Date().toISOString(),
           })
           .returning();
         conversationId = result[0].id;
@@ -59,6 +57,7 @@ export async function POST(req: NextRequest) {
               curso_id: parseInt(receiverId) || 1,
               status: 'activo',
               title: 'Nueva conversación',
+              fechaPrograma: new Date().toISOString(),
             })
             .returning();
           conversationId = result[0].id;

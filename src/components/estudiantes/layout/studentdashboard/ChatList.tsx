@@ -38,15 +38,15 @@ interface Chat {
 
 const chatTypeConfig = {
   ticket: {
-    icon: <Ticket className="h-4 w-4 text-white" />,
+    icon: <Ticket className="size-4 text-white" />,
     color: 'purple',
   },
   chat: {
-    icon: <IoChatboxEllipses className="h-4 w-4 text-white" />,
+    icon: <IoChatboxEllipses className="size-4 text-white" />,
     color: 'blue',
   },
   project: {
-    icon: <FileText className="h-4 w-4" />,
+    icon: <FileText className="size-4" />,
     color: 'green',
   },
 } as const;
@@ -373,12 +373,31 @@ export const ChatList = ({
   };
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col border-r border-transparent bg-gradient-to-b from-[#061226] to-[#071024] text-white">
+    <div
+      className="
+      flex size-full min-h-0 flex-col border-r border-transparent
+      bg-gradient-to-b from-[#061226] to-[#071024] text-white
+    "
+    >
       <div
-        className={`border-b border-gray-700 p-4 ${activeType === 'tickets' ? 'pt-6' : ''}`}
+        className={`
+          border-b border-gray-700 p-4
+          ${activeType === 'tickets' ? 'pt-6' : ''}
+        `}
       >
         <h2
-          className={`flex items-center justify-center gap-2 text-center text-lg font-extrabold tracking-tight ${activeType === 'chatia' ? 'bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent' : 'text-white'}`}
+          className={`
+            flex items-center justify-center gap-2 text-center text-lg
+            font-extrabold tracking-tight
+            ${
+              activeType === 'chatia'
+                ? `
+              bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text
+              text-transparent
+            `
+                : 'text-white'
+            }
+          `}
         >
           {activeType === 'tickets' ? (
             'Tickets de Soporte'
@@ -387,7 +406,7 @@ export const ChatList = ({
           ) : (
             <>
               Chats con IA
-              <BsRobot className="h-5 w-5 text-white" />
+              <BsRobot className="size-5 text-white" />
             </>
           )}
         </h2>
@@ -398,24 +417,33 @@ export const ChatList = ({
             <Button
               onClick={handleCreateNewChat}
               disabled={isCreatingChat}
-              className="w-full transform-gpu rounded-lg px-4 py-2 transition-transform hover:scale-[1.02] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="
+                w-full transform-gpu rounded-lg px-4 py-2 transition-transform
+                hover:scale-[1.02]
+                focus:outline-none
+                disabled:cursor-not-allowed disabled:opacity-50
+              "
               style={{
                 background: 'linear-gradient(90deg,#3AF4EF,#00BDD8)',
                 boxShadow:
                   '0 6px 24px rgba(58,244,239,0.24), 0 0 18px rgba(0,189,216,0.18)',
               }}
             >
-              <div className="flex items-center justify-center gap-2 font-semibold text-black">
+              <div
+                className="
+                flex items-center justify-center gap-2 font-semibold text-black
+              "
+              >
                 {isCreatingChat ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Creando chat...
                   </>
                 ) : (
                   <>
                     <span className="flex items-center gap-2">
                       <span className="rounded-full bg-white/20 p-1 shadow-sm">
-                        <Plus className="h-4 w-4 text-black" />
+                        <Plus className="size-4 text-black" />
                       </span>
                       Crear Nuevo Chat IA
                     </span>
@@ -427,12 +455,19 @@ export const ChatList = ({
               <Button
                 onClick={handleDeleteSelected}
                 disabled={isDeleting}
-                className="w-full rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                className="
+                  w-full rounded-lg bg-red-600 px-4 py-2 text-white
+                  transition-colors
+                  hover:bg-red-700
+                  focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+                  focus:outline-none
+                  disabled:cursor-not-allowed disabled:opacity-50
+                "
               >
                 <div className="flex items-center justify-center gap-2">
                   {isDeleting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="size-4 animate-spin" />
                       Eliminando...
                     </>
                   ) : (
@@ -450,22 +485,31 @@ export const ChatList = ({
             <Button
               onClick={handleCreateNewTicket}
               disabled={isCreatingTicket}
-              className="w-full transform-gpu rounded-lg px-4 py-2 transition-transform hover:scale-[1.02] focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="
+                w-full transform-gpu rounded-lg px-4 py-2 transition-transform
+                hover:scale-[1.02]
+                focus:outline-none
+                disabled:cursor-not-allowed disabled:opacity-50
+              "
               style={{
                 background: 'linear-gradient(90deg,#3AF4EF,#00BDD8)',
                 boxShadow:
                   '0 6px 24px rgba(58,244,239,0.24), 0 0 18px rgba(0,189,216,0.18)',
               }}
             >
-              <div className="flex items-center justify-center gap-2 font-semibold text-black">
+              <div
+                className="
+                flex items-center justify-center gap-2 font-semibold text-black
+              "
+              >
                 {isCreatingTicket ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Creando ticket...
                   </>
                 ) : (
                   <>
-                    <Plus className="h-4 w-4 text-black" />
+                    <Plus className="size-4 text-black" />
                     Crear Nuevo Ticket
                   </>
                 )}
@@ -485,7 +529,11 @@ export const ChatList = ({
               onChange={(e) =>
                 setStatusFilter(e.target.value as typeof statusFilter)
               }
-              className="w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2 text-sm text-white shadow-sm focus:border-gray-500 focus:outline-none"
+              className="
+                w-full rounded-md border border-gray-600 bg-gray-800 px-3 py-2
+                text-sm text-white shadow-sm
+                focus:border-gray-500 focus:outline-none
+              "
             >
               <option value="all">Todos</option>
               <option value="abierto">Abierto</option>
@@ -499,12 +547,16 @@ export const ChatList = ({
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center p-8">
           <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+            <Loader2 className="size-6 animate-spin text-gray-500" />
             <span className="text-sm text-gray-500">Cargando...</span>
           </div>
         </div>
       ) : chats.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-8 text-center text-gray-500">
+        <div
+          className="
+          flex flex-1 items-center justify-center p-8 text-center text-gray-500
+        "
+        >
           No hay{' '}
           {activeType === 'tickets'
             ? 'tickets'
@@ -536,12 +588,18 @@ export const ChatList = ({
                     // Reset loading después de un breve delay
                     setTimeout(() => setLoadingChatId(null), 1000);
                   }}
-                  className="flex-1 rounded-xl border border-white/6 bg-white/4 px-4 py-3 text-left backdrop-blur-sm transition-all duration-200 ease-in-out hover:scale-[1.02] hover:bg-white/6 hover:shadow-[0_8px_30px_rgba(59,130,246,0.06)]"
+                  className="
+                    flex-1 rounded-xl border border-white/6 bg-white/4 px-4 py-3
+                    text-left backdrop-blur-sm transition-all duration-200
+                    ease-in-out
+                    hover:scale-[1.02] hover:bg-white/6
+                    hover:shadow-[0_8px_30px_rgba(59,130,246,0.06)]
+                  "
                 >
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
                       {loadingChatId === chat.id ? (
-                        <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
+                        <Loader2 className="size-5 animate-spin text-gray-600" />
                       ) : (
                         chat.type && chatTypeConfig[chat.type]?.icon
                       )}
@@ -554,7 +612,12 @@ export const ChatList = ({
                         {chat.type === 'ticket' && (
                           <div className="flex items-center gap-2">
                             <span
-                              className={`inline-flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-[11px] font-medium ${statusBadge(chat.status)}`}
+                              className={`
+                                inline-flex items-center gap-1 truncate
+                                rounded-md border px-2 py-0.5 text-[11px]
+                                font-medium
+                                ${statusBadge(chat.status)}
+                              `}
                             >
                               {chat.status
                                 ? chat.status.charAt(0).toUpperCase() +
@@ -562,7 +625,12 @@ export const ChatList = ({
                                 : '—'}
                             </span>
                             {Number(chat.unreadCount) > 0 && (
-                              <span className="rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
+                              <span
+                                className="
+                                rounded-full bg-red-600 px-2 py-0.5 text-xs
+                                font-semibold text-white
+                              "
+                              >
                                 Nuevo
                               </span>
                             )}
@@ -571,9 +639,18 @@ export const ChatList = ({
                         {/* Badge for new chats (futuristic neon) */}
                         {chat.title === 'Nuevo Chat' && (
                           <span className="ml-2 inline-flex items-center gap-2">
-                            <span className="animate-pulse rounded-full bg-gradient-to-r from-green-400 to-cyan-300 p-1 shadow-[0_0_12px_rgba(34,197,94,0.9)]" />
                             <span
-                              className="rounded-full bg-white/6 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur-sm"
+                              className="
+                              animate-pulse rounded-full bg-gradient-to-r
+                              from-green-400 to-cyan-300 p-1
+                              shadow-[0_0_12px_rgba(34,197,94,0.9)]
+                            "
+                            />
+                            <span
+                              className="
+                                rounded-full bg-white/6 px-2 py-0.5 text-[11px]
+                                font-semibold text-white backdrop-blur-sm
+                              "
                               style={{
                                 boxShadow: '0 6px 18px rgba(6,182,212,0.12)',
                               }}
@@ -598,7 +675,10 @@ export const ChatList = ({
                     onChange={(e) =>
                       handleSelectChat(chat.id, e.target.checked)
                     }
-                    className="ml-3 h-4 w-4 rounded border-gray-300 text-cyan-400 focus:ring-cyan-300"
+                    className="
+                      ml-3 size-4 rounded border-gray-300 text-cyan-400
+                      focus:ring-cyan-300
+                    "
                     aria-label={`Seleccionar chat ${chat.title}`}
                   />
                 )}

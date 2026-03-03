@@ -106,47 +106,37 @@ const getContrastYIQ = (hexcolor: string) => {
 
 // Add this CSS block at the top of the file after imports:
 const styles = `
-    .svg-frame {
-      position: relative;
-      width: 300px;
-      height: 300px;
-      transform-style: preserve-3d;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    .svg-frame svg {
-      position: absolute;
-      transition: .5s;
-      z-index: calc(1 - (0.2 * var(--j)));
-      transform-origin: center;
-      width: 344px;
-      height: 344px;
-      fill: none;
-    }
-
-    .svg-frame:hover svg {
-      transform: rotate(-80deg) skew(30deg) translateX(calc(45px * var(--i))) translateY(calc(-35px * var(--i)));
-    }
-
-    #out2 {
-      animation: rotate16 7s ease-in-out infinite alternate;
-      transform-origin: center;
-    }
-
-    #out3 {
-      animation: rotate16 3s ease-in-out infinite alternate;
-      transform-origin: center;
-      stroke: #ff0;
-    }
-
-    @keyframes rotate16 {
-      to {
-      transform: rotate(360deg);
-      }
-    }
-    `;
+  .svg-frame {
+  position:
+  relative;
+  width:
+  300px;
+  height:
+  transform-style:
+  preserve-3d;
+  display:
+  flex;
+  justify-content:
+  center;
+  align-items:
+  } svg absolute;
+  transition:
+  .5s;
+  z-index:
+  calc(1 - (0.2 * var(--j)));
+  transform-origin:
+  344px;
+  fill:
+  none;
+  .svg-frame:hover
+  transform:
+  rotate(-80deg) skew(30deg) translateX(calc(45px var(--i)))
+  translateY(calc(-35px var(--i))); #out2
+  animation:
+  rotate16 7s ease-in-out infinite alternate; #out3 3s
+  stroke:
+  #ff0; @keyframes to rotate(360deg);
+`;
 
 // Replace the stylesheet append code
 if (typeof document !== 'undefined') {
@@ -159,7 +149,12 @@ if (typeof document !== 'undefined') {
 const FullscreenLoader = () => {
   return (
     <Portal>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+      <div
+        className="
+        fixed inset-0 z-50 flex items-center justify-center bg-background/20
+        backdrop-blur-sm
+      "
+      >
         <TechLoader />
       </div>
     </Portal>
@@ -460,6 +455,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
+          credentials: 'include',
         }
       );
 
@@ -481,6 +477,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   porcentaje: parametro.porcentaje,
                   courseId: Number(courseIdString2),
                 }),
+                credentials: 'include',
               }
             );
 
@@ -505,6 +502,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 porcentaje: parametro.porcentaje,
                 courseId: Number(courseIdString2),
               }),
+              credentials: 'include',
             });
 
             if (!createResponse.ok) {
@@ -727,7 +725,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         <BreadcrumbList className="flex flex-wrap gap-2">
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/dashboard/admin"
             >
               Inicio
@@ -736,7 +737,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/dashboard/admin/cursos"
             >
               Lista de cursos
@@ -744,23 +748,50 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink className="text-primary hover:text-gray-300">
+            <BreadcrumbLink
+              className="
+              text-primary
+              hover:text-gray-300
+            "
+            >
               Detalles del curso
             </BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative h-auto w-full">
-        <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+        <div
+          className="
+          absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
+          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition
+          duration-500
+          group-hover:opacity-100
+        "
+        />
         <Card
-          className={`zoom-in relative mt-3 h-auto overflow-hidden border-none p-4 transition-transform duration-300 ease-in-out sm:p-6`}
+          className={`
+            zoom-in relative mt-3 h-auto overflow-hidden border-none p-4
+            transition-transform duration-300 ease-in-out
+            sm:p-6
+          `}
           style={{
             backgroundColor: selectedColor,
             color: getContrastYIQ(selectedColor),
           }}
         >
-          <CardHeader className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:gap-16">
-            <CardTitle className="text-xl font-bold text-primary sm:text-2xl">
+          <CardHeader
+            className="
+            grid w-full grid-cols-1 gap-4
+            md:grid-cols-2 md:gap-8
+            lg:gap-16
+          "
+          >
+            <CardTitle
+              className="
+              text-xl font-bold text-primary
+              sm:text-2xl
+            "
+            >
               Curso: {course.title}
             </CardTitle>
             <div className="flex flex-col">
@@ -776,18 +807,26 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <Button
                     key={color}
                     style={{ backgroundColor: color }}
-                    className={`size-8 border ${
-                      selectedColor === '#FFFFFF'
-                        ? 'border-black'
-                        : 'border-white'
-                    } `}
+                    className={`
+                      size-8 border
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'border-black'
+                          : 'border-white'
+                      }
+                    `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}
               </div>
             </div>
           </CardHeader>
-          <div className="grid gap-6 md:grid-cols-2">
+          <div
+            className="
+            grid gap-6
+            md:grid-cols-2
+          "
+          >
             {/* Left Column - Image */}
             <div className="flex w-full flex-col space-y-4">
               <div className="relative aspect-video w-full">
@@ -801,19 +840,39 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   quality={75}
                 />
               </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
-                <Button className="w-full bg-green-400 text-white hover:bg-green-500 sm:w-auto">
+              <div
+                className="
+                grid grid-cols-1 gap-2
+                sm:grid-cols-2 sm:gap-4
+                lg:grid-cols-4
+              "
+              >
+                <Button
+                  className="
+                  w-full bg-green-400 text-white
+                  hover:bg-green-500
+                  sm:w-auto
+                "
+                >
                   <Link href={`./${course.id}/ver/${course.id}`}>
                     Visualizar curso
                   </Link>
                 </Button>
                 <Button
                   onClick={handleEditCourse}
-                  className={`border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600`}
+                  className={`
+                    border-yellow-500 bg-yellow-500 text-white
+                    hover:bg-yellow-600
+                  `}
                 >
                   Editar curso
                 </Button>
-                <Button className="border-primary bg-primary text-white hover:bg-primary/90">
+                <Button
+                  className="
+                  border-primary bg-primary text-white
+                  hover:bg-primary/90
+                "
+                >
                   <Link href={`/dashboard/admin/detailsDashboard/${course.id}`}>
                     Estadisticas
                   </Link>
@@ -836,7 +895,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDelete()}
-                        className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                        className="
+                          border-red-600 bg-red-600 text-white
+                          hover:border-red-700 hover:bg-transparent
+                          hover:text-red-700
+                        "
                       >
                         Eliminar
                       </AlertDialogAction>
@@ -847,33 +910,63 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
             {/* Right Column - Information */}
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-primary sm:text-2xl">
+              <h2
+                className="
+                text-xl font-bold text-primary
+                sm:text-2xl
+              "
+              >
                 Información del curso
               </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div
+                className="
+                grid grid-cols-1 gap-4
+                sm:grid-cols-2
+              "
+              >
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Curso:
                   </h2>
-                  <h1 className="text-xl font-bold text-primary sm:text-2xl">
+                  <h1
+                    className="
+                    text-xl font-bold text-primary
+                    sm:text-2xl
+                  "
+                  >
                     {course.title}
                   </h1>
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Categoría:
                   </h2>
                   <Badge
                     variant="outline"
-                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                    className="
+                      ml-1 w-fit border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {course.categoryid}
                   </Badge>
@@ -881,31 +974,40 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`
+                    text-base font-semibold
+                    sm:text-lg
+                    ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`
+                    text-justify text-sm
+                    sm:text-base
+                    ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 >
                   {course.description}
                 </p>
               </div>
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`
+                    text-base font-semibold
+                    sm:text-lg
+                    ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 >
                   Precio Individual:
                 </h2>
                 <Badge
                   variant="outline"
-                  className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                  className="
+                    ml-1 w-fit border-primary bg-background text-primary
+                    hover:bg-black/70
+                  "
                 >
                   {individualPrice !== null
                     ? `$${individualPrice}`
@@ -916,9 +1018,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Educador:
                   </h2>
@@ -926,7 +1034,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     <select
                       value={selectedInstructor || course.instructor} // Use current instructor as fallback
                       onChange={(e) => setSelectedInstructor(e.target.value)}
-                      className="w-full rounded-md border border-primary bg-background p-2 text-sm text-primary"
+                      className="
+                        w-full rounded-md border border-primary bg-background
+                        p-2 text-sm text-primary
+                      "
                     >
                       <option value={course.instructor}>
                         {course.instructorName ??
@@ -949,7 +1060,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           variant="outline"
                           size="sm"
                           onClick={handleChangeInstructor}
-                          className="relative w-full border-primary text-primary hover:bg-primary hover:text-white"
+                          className="
+                            relative w-full border-primary text-primary
+                            hover:bg-primary hover:text-white
+                          "
                           disabled={isUpdating}
                         >
                           Guardar cambio
@@ -959,39 +1073,63 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Nivel:
                   </h2>
                   <Badge
                     variant="outline"
-                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                    className="
+                      ml-1 w-fit border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {course.nivelid}
                   </Badge>
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Modalidad:
                   </h2>
                   <Badge
                     variant="outline"
-                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                    className="
+                      ml-1 w-fit border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {course.modalidadesid}
                   </Badge>
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Tipos de curso:
                   </h2>
@@ -1001,7 +1139,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         <Badge
                           key={type.id}
                           variant="outline"
-                          className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                          className="
+                            ml-1 w-fit border-primary bg-background text-primary
+                            hover:bg-black/70
+                          "
                         >
                           {type.name}
                         </Badge>
@@ -1010,7 +1151,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   ) : (
                     <Badge
                       variant="outline"
-                      className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                      className="
+                        ml-1 w-fit border-primary bg-background text-primary
+                        hover:bg-black/70
+                      "
                     >
                       No especificado
                     </Badge>
@@ -1020,25 +1164,46 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Estado:
                   </h2>
                   <Badge
                     variant="outline"
-                    className={`ml-1 w-fit border ${
-                      course.isActive
-                        ? 'border-green-500 text-green-500'
-                        : 'border-red-500 text-red-500'
-                    } bg-background hover:bg-black/70`}
+                    className={`
+                      ml-1 w-fit border
+                      ${
+                        course.isActive
+                          ? 'border-green-500 text-green-500'
+                          : 'border-red-500 text-red-500'
+                      }
+                      bg-background
+                      hover:bg-black/70
+                    `}
                   >
                     {course.isActive ? 'Activo' : 'Inactivo'}
                   </Badge>
                 </div>
-                <div className="materias-container col-span-1 sm:col-span-2">
-                  <h3 className="mb-2 text-base font-semibold sm:text-lg">
+                <div
+                  className="
+                  materias-container col-span-1
+                  sm:col-span-2
+                "
+                >
+                  <h3
+                    className="
+                    mb-2 text-base font-semibold
+                    sm:text-lg
+                  "
+                  >
                     Materias:
                   </h3>
                   {materias.length > 0 ? (
@@ -1049,7 +1214,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         <Badge
                           key={materia.id}
                           variant="secondary"
-                          className={`bg-gradient-to-r ${getBadgeGradient()} text-white transition-all duration-300 hover:scale-105 hover:shadow-lg`}
+                          className={`
+                            bg-gradient-to-r
+                            ${getBadgeGradient()}
+                            text-white transition-all duration-300
+                            hover:scale-105 hover:shadow-lg
+                          `}
                         >
                           {materia.title}
                         </Badge>
@@ -1063,45 +1233,72 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Tipo de Certificación:
                   </h2>
                   <Badge
                     variant="outline"
-                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                    className="
+                      ml-1 w-fit border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {certificationTypeName ?? 'No asignado'}
                   </Badge>
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Opción de Horario:
                   </h2>
                   <Badge
                     variant="outline"
-                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                    className="
+                      ml-1 w-fit border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {scheduleOptionName ?? 'No asignado'}
                   </Badge>
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
                   >
                     Opción de Espacio:
                   </h2>
                   <Badge
                     variant="outline"
-                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                    className="
+                      ml-1 w-fit border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {spaceOptionName ?? 'No asignado'}
                   </Badge>

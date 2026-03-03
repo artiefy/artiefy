@@ -79,7 +79,10 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
       </label>
       {isLoading ? (
         <p
-          className={`my-3 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'} `}
+          className={`
+            my-3
+            ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+          `}
         >
           Cargando los tipos de actividades...
         </p>
@@ -91,7 +94,10 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
             const selectedId = Number(e.target.value);
             setTypeActividad(selectedId);
           }}
-          className={`mb-5 w-8/12 rounded border border-none bg-white p-2 text-black outline-none`}
+          className={`
+            mb-5 w-8/12 rounded border border-none bg-white p-2 text-black
+            outline-none
+          `}
         >
           <option value="">Selecciona un tipo de actividad</option>
           {allTypeAct.map((type) => (

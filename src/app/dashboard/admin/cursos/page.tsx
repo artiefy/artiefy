@@ -34,7 +34,13 @@ export interface CourseModel {
 // Define el modelo de datos de los parámetros de evaluación
 export function LoadingCourses() {
   return (
-    <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div
+      className="
+      mt-10 grid grid-cols-1 gap-4
+      md:grid-cols-2
+      lg:grid-cols-3
+    "
+    >
       {Array.from({ length: 9 }).map((_, index) => (
         <SkeletonCard key={index} />
       ))}
@@ -430,7 +436,11 @@ export default function Page() {
   if (uploading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="size-32 animate-spin rounded-full border-y-2 border-primary">
+        <div
+          className="
+          size-32 animate-spin rounded-full border-y-2 border-primary
+        "
+        >
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -440,41 +450,115 @@ export default function Page() {
 
   // Renderizado de la vista
   return (
-    <div className="p-4 sm:p-6">
+    <div
+      className="
+      p-4
+      sm:p-6
+    "
+    >
       {/* Header with gradient effect */}
       <header className="group relative overflow-hidden rounded-lg p-[1px]">
-        <div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
-        <div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
-          <h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
+        <div
+          className="
+          absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF]
+          via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500
+        "
+        />
+        <div
+          className="
+          relative flex flex-col items-start justify-between rounded-lg
+          bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
+          group-hover:bg-gray-800/95
+          sm:flex-row sm:items-center sm:p-6
+        "
+        >
+          <h1
+            className="
+            flex items-center gap-3 text-xl font-extrabold tracking-tight
+            text-primary
+            sm:text-2xl
+            lg:text-3xl
+          "
+          >
             Gestión de Cursos
           </h1>
         </div>
       </header>
 
       {/* Stats Cards */}
-      <div className="my-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm sm:p-6">
-          <h2 className="text-base font-semibold text-gray-400 sm:text-lg">
+      <div
+        className="
+        my-4 grid grid-cols-1 gap-4
+        sm:grid-cols-2
+        lg:grid-cols-3
+      "
+      >
+        <div
+          className="
+          rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+          sm:p-6
+        "
+        >
+          <h2
+            className="
+            text-base font-semibold text-gray-400
+            sm:text-lg
+          "
+          >
             Total de Cursos
           </h2>
-          <p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+          <p
+            className="
+            mt-2 text-2xl font-bold text-white
+            sm:text-3xl
+          "
+          >
             {totalCourses}
           </p>
         </div>
-        <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm sm:p-6">
-          <h2 className="text-base font-semibold text-gray-400 sm:text-lg">
+        <div
+          className="
+          rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+          sm:p-6
+        "
+        >
+          <h2
+            className="
+            text-base font-semibold text-gray-400
+            sm:text-lg
+          "
+          >
             Estudiantes Inscritos
           </h2>
-          <p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+          <p
+            className="
+            mt-2 text-2xl font-bold text-white
+            sm:text-3xl
+          "
+          >
             {totalStudents}
           </p>
         </div>
-        <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm sm:p-6">
-          <h2 className="text-base font-semibold text-gray-400 sm:text-lg">
+        <div
+          className="
+          rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+          sm:p-6
+        "
+        >
+          <h2
+            className="
+            text-base font-semibold text-gray-400
+            sm:text-lg
+          "
+          >
             Filtrar por Categoría
           </h2>
           <select
-            className="mt-2 w-full rounded-md border border-gray-700 bg-gray-900/50 px-3 py-1.5 text-white sm:px-4 sm:py-2"
+            className="
+              mt-2 w-full rounded-md border border-gray-700 bg-gray-900/50 px-3
+              py-1.5 text-white
+              sm:px-4 sm:py-2
+            "
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
@@ -489,24 +573,58 @@ export default function Page() {
       </div>
 
       {/* Search and Add Button */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="col-span-1 rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm lg:col-span-3">
+      <div
+        className="
+        mb-6 grid grid-cols-1 gap-4
+        sm:grid-cols-2
+        lg:grid-cols-4
+      "
+      >
+        <div
+          className="
+          col-span-1 rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+          lg:col-span-3
+        "
+        >
           <input
             type="text"
             placeholder="Buscar cursos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2 text-white placeholder:text-gray-400"
+            className="
+              w-full rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2
+              text-white
+              placeholder:text-gray-400
+            "
           />
         </div>
         <div className="col-span-1">
           <button
             onClick={handleCreateCourse}
-            className="group/button relative inline-flex h-full w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="
+              group/button relative inline-flex size-full items-center
+              justify-center gap-1 overflow-hidden rounded-md border
+              border-white/20 bg-background px-2 py-1.5 text-xs text-primary
+              transition-all
+              hover:bg-primary/10
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+            "
           >
             <span className="relative z-10 font-medium">Crear Curso</span>
-            <FiPlus className="relative z-10 size-3.5 sm:size-4" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+            <FiPlus
+              className="
+              relative z-10 size-3.5
+              sm:size-4
+            "
+            />
+            <div
+              className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+            />
           </button>
         </div>
       </div>
@@ -518,11 +636,14 @@ export default function Page() {
             setShowProgramCourses(false);
             setCurrentPage(1);
           }}
-          className={`rounded-md px-4 py-2 ${
-            !showProgramCourses
-              ? 'bg-primary text-white'
-              : 'bg-gray-800 text-gray-300'
-          }`}
+          className={`
+            rounded-md px-4 py-2
+            ${
+              !showProgramCourses
+                ? 'bg-primary text-white'
+                : 'bg-gray-800 text-gray-300'
+            }
+          `}
         >
           Cursos Independientes
         </button>
@@ -531,11 +652,14 @@ export default function Page() {
             setShowProgramCourses(true);
             setCurrentPage(1);
           }}
-          className={`rounded-md px-4 py-2 ${
-            showProgramCourses
-              ? 'bg-primary text-background'
-              : 'bg-gray-800 text-gray-300'
-          }`}
+          className={`
+            rounded-md px-4 py-2
+            ${
+              showProgramCourses
+                ? 'bg-primary text-background'
+                : 'bg-gray-800 text-gray-300'
+            }
+          `}
         >
           Cursos en Programas
         </button>
@@ -561,7 +685,10 @@ export default function Page() {
         <button
           onClick={handlePrevPage}
           disabled={currentPage === 1 || isLoadingMore}
-          className="rounded-md bg-gray-800 px-4 py-2 text-white disabled:opacity-50"
+          className="
+            rounded-md bg-gray-800 px-4 py-2 text-white
+            disabled:opacity-50
+          "
         >
           Anterior
         </button>
@@ -572,7 +699,10 @@ export default function Page() {
         <button
           onClick={handleNextPage}
           disabled={currentPage === totalPages || isLoadingMore}
-          className="rounded-md bg-gray-800 px-4 py-2 text-white disabled:opacity-50"
+          className="
+            rounded-md bg-gray-800 px-4 py-2 text-white
+            disabled:opacity-50
+          "
         >
           Siguiente
         </button>

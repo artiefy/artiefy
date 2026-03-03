@@ -1,5 +1,5 @@
 {
-  "id": "393f3bb2-4ca5-4ec2-8ab2-295524c34725",
+  "id": "70fd00e0-2f15-48d3-89ce-4f955e43a4ad",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2770,6 +2770,89 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.parameter_templates": {
+      "name": "parameter_templates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_percentage": {
+          "name": "total_percentage",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creator_id": {
+          "name": "creator_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "parameter_templates_course_id_courses_id_fk": {
+          "name": "parameter_templates_course_id_courses_id_fk",
+          "tableFrom": "parameter_templates",
+          "tableTo": "courses",
+          "columnsFrom": ["course_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "parameter_templates_creator_id_users_id_fk": {
+          "name": "parameter_templates_creator_id_users_id_fk",
+          "tableFrom": "parameter_templates",
+          "tableTo": "users",
+          "columnsFrom": ["creator_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.parametros": {
       "name": "parametros",
       "schema": "",
@@ -2798,11 +2881,18 @@
           "primaryKey": false,
           "notNull": true
         },
+        "number_of_activities": {
+          "name": "number_of_activities",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
         "course_id": {
           "name": "course_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         }
       },
       "indexes": {},
@@ -3306,12 +3396,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "link_url": {
-          "name": "link_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "start_date": {
           "name": "start_date",
@@ -4441,13 +4525,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "is_invited": {
-          "name": "is_invited",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         }
       },
       "indexes": {},
@@ -4949,6 +5026,63 @@
           "columnsFrom": ["project_id"],
           "columnsTo": ["id"],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.template_parametros": {
+      "name": "template_parametros",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "template_id": {
+          "name": "template_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parametro_id": {
+          "name": "parametro_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "template_parametros_template_id_parameter_templates_id_fk": {
+          "name": "template_parametros_template_id_parameter_templates_id_fk",
+          "tableFrom": "template_parametros",
+          "tableTo": "parameter_templates",
+          "columnsFrom": ["template_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "template_parametros_parametro_id_parametros_id_fk": {
+          "name": "template_parametros_parametro_id_parametros_id_fk",
+          "tableFrom": "template_parametros",
+          "tableTo": "parametros",
+          "columnsFrom": ["parametro_id"],
+          "columnsTo": ["id"],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },

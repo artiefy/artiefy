@@ -97,19 +97,29 @@ function FileBadge({
     file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '');
 
   return (
-    <div className="mt-2 flex items-center gap-3 rounded border border-cyan-900/40 bg-[#0f1a38] p-2">
+    <div
+      className="
+      mt-2 flex items-center gap-3 rounded border border-cyan-900/40
+      bg-[#0f1a38] p-2
+    "
+    >
       {isImg && url ? (
         <Image
           src={url}
           alt={file.name}
           width={48}
           height={48}
-          className="h-12 w-12 rounded object-cover"
+          className="size-12 rounded object-cover"
           unoptimized
           priority
         />
       ) : (
-        <div className="flex h-12 w-12 items-center justify-center rounded bg-[#101a35] text-xs text-gray-300">
+        <div
+          className="
+          flex size-12 items-center justify-center rounded bg-[#101a35] text-xs
+          text-gray-300
+        "
+        >
           {isPdf ? 'PDF' : 'FILE'}
         </div>
       )}
@@ -134,7 +144,10 @@ function FileBadge({
       <button
         type="button"
         onClick={onClear}
-        className="rounded border border-gray-600 px-2 py-1 text-xs hover:bg-gray-800"
+        className="
+          rounded border border-gray-600 px-2 py-1 text-xs
+          hover:bg-gray-800
+        "
       >
         Quitar
       </button>
@@ -408,7 +421,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
           onChange={(e) => onChange(e.target.files?.[0] ?? null)}
           aria-required={required}
           aria-invalid={!!error}
-          className={`rounded bg-[#1C2541] p-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none ${error ? 'border border-red-500' : ''}`}
+          className={`
+            rounded bg-[#1C2541] p-2 text-sm text-white
+            focus:ring-2 focus:ring-cyan-500 focus:outline-none
+            ${error ? 'border border-red-500' : ''}
+          `}
         />
 
         {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
@@ -521,7 +538,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           aria-invalid={!!error}
-          className={`rounded bg-[#1C2541] p-2 text-sm text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none disabled:opacity-60 ${error ? 'border border-red-500' : ''}`}
+          className={`
+            rounded bg-[#1C2541] p-2 text-sm text-white
+            focus:ring-2 focus:ring-cyan-500 focus:outline-none
+            disabled:opacity-60
+            ${error ? 'border border-red-500' : ''}
+          `}
         >
           <option value="">{placeholder}</option>
           {options.map((opt) => {
@@ -841,18 +863,35 @@ export default function FormModal({ isOpen, onClose }: Props) {
     <Dialog
       open={isOpen}
       onClose={handleClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70"
+      className="
+        fixed inset-0 z-50 flex items-center justify-center bg-black/70
+      "
     >
-      <Dialog.Panel className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20">
+      <Dialog.Panel
+        className="
+        flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl
+        bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20
+      "
+      >
         {showSuccess ? (
           // ==== Pantalla de ÉXITO ====
-          <div className="flex flex-col items-center justify-center gap-6 px-8 py-12 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1C2541] shadow shadow-cyan-500/30">
+          <div
+            className="
+            flex flex-col items-center justify-center gap-6 px-8 py-12
+            text-center
+          "
+          >
+            <div
+              className="
+              flex size-20 items-center justify-center rounded-full bg-[#1C2541]
+              shadow shadow-cyan-500/30
+            "
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                className="h-10 w-10 text-cyan-400"
+                className="size-10 text-cyan-400"
                 aria-hidden="true"
               >
                 <path
@@ -881,7 +920,11 @@ export default function FormModal({ isOpen, onClose }: Props) {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-400"
+                className="
+                  rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black
+                  shadow-md transition
+                  hover:bg-cyan-400
+                "
               >
                 Llenar otro formulario
               </button>
@@ -889,7 +932,10 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 href="https://artiefy.com/"
                 target="_blank"
                 rel="noreferrer"
-                className="rounded border border-gray-600 px-5 py-2 text-sm hover:bg-gray-800"
+                className="
+                  rounded border border-gray-600 px-5 py-2 text-sm
+                  hover:bg-gray-800
+                "
               >
                 Ir a Artiefy
               </a>
@@ -900,7 +946,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
           <>
             <div className="min-h-0 flex-1 overflow-y-auto">
               {/* Header sticky */}
-              <div className="sticky top-0 z-10 border-b border-cyan-900/30 bg-[#0B132B]/95 px-6 py-4 backdrop-blur">
+              <div
+                className="
+                sticky top-0 z-10 border-b border-cyan-900/30 bg-[#0B132B]/95
+                px-6 py-4 backdrop-blur
+              "
+              >
                 <Dialog.Title className="text-2xl font-semibold text-cyan-400">
                   Formulario de Inscripción
                 </Dialog.Title>
@@ -912,11 +963,14 @@ export default function FormModal({ isOpen, onClose }: Props) {
               {/* Banner resultado */}
               {submittedOK !== null && submitMessage && (
                 <div
-                  className={`mx-6 mt-4 rounded-lg px-4 py-3 text-center text-lg font-bold ${
-                    submittedOK
-                      ? 'bg-green-600/20 text-green-300'
-                      : 'bg-red-600/20 text-red-300'
-                  }`}
+                  className={`
+                    mx-6 mt-4 rounded-lg px-4 py-3 text-center text-lg font-bold
+                    ${
+                      submittedOK
+                        ? 'bg-green-600/20 text-green-300'
+                        : 'bg-red-600/20 text-red-300'
+                    }
+                  `}
                   role="alert"
                 >
                   {submitMessage}
@@ -926,7 +980,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
               <form onSubmit={handleSubmit} className="px-6 pt-4 pb-6">
                 {/* Datos personales */}
                 <Section title="Datos personales">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div
+                    className="
+                    grid grid-cols-1 gap-4
+                    sm:grid-cols-2
+                  "
+                  >
                     <FieldInput
                       label="Primer nombre*"
                       value={fields.primerNombre}
@@ -985,7 +1044,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
                 {/* Ubicación y educación */}
                 <Section title="Ubicación y educación">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div
+                    className="
+                    grid grid-cols-1 gap-4
+                    sm:grid-cols-2
+                  "
+                  >
                     <FieldSelect
                       label="País de Residencia*"
                       value={fields.pais}
@@ -1028,7 +1092,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
                 {/* Acudiente (opcional) */}
                 <Section title="Acudiente o empresa (opcional)">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div
+                    className="
+                    grid grid-cols-1 gap-4
+                    sm:grid-cols-2
+                  "
+                  >
                     <FieldSelect
                       label="¿Acudiente o empresa?"
                       value={fields.tieneAcudiente}
@@ -1066,7 +1135,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
                 {/* Programa y fechas */}
                 <Section title="Programa y fechas">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div
+                    className="
+                    grid grid-cols-1 gap-4
+                    sm:grid-cols-2
+                  "
+                  >
                     <FieldSelect
                       label={
                         loadingPrograms
@@ -1117,7 +1191,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
 
                 {/* Sede, modalidad y cuotas */}
                 <Section title="Sede y detalles de pago">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div
+                    className="
+                    grid grid-cols-1 gap-4
+                    sm:grid-cols-2
+                  "
+                  >
                     <FieldSelect
                       label="Sede*"
                       value={fields.sede}
@@ -1180,7 +1259,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 </Section>
 
                 <Section title="Documentos requeridos">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div
+                    className="
+                    grid grid-cols-1 gap-4
+                    sm:grid-cols-2
+                  "
+                  >
                     <FieldFile
                       label="Subir Documento de Identidad"
                       required
@@ -1211,18 +1295,31 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 </Section>
 
                 {/* Acciones */}
-                <div className="sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30 bg-[#0B132B] py-4">
+                <div
+                  className="
+                  sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30
+                  bg-[#0B132B] py-4
+                "
+                >
                   <button
                     type="button"
                     onClick={handleClose}
-                    className="rounded border border-gray-600 px-5 py-2 text-sm hover:bg-gray-800"
+                    className="
+                      rounded border border-gray-600 px-5 py-2 text-sm
+                      hover:bg-gray-800
+                    "
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={submitting || uploadingFiles}
-                    className="rounded bg-cyan-500 px-6 py-2 text-sm font-semibold text-black shadow-md transition hover:bg-cyan-400 disabled:opacity-60"
+                    className="
+                      rounded bg-cyan-500 px-6 py-2 text-sm font-semibold
+                      text-black shadow-md transition
+                      hover:bg-cyan-400
+                      disabled:opacity-60
+                    "
                   >
                     {uploadingFiles
                       ? '📤 Subiendo archivos...'
@@ -1279,7 +1376,11 @@ function FieldInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-invalid={!!error}
-        className={`rounded bg-[#1C2541] p-2 text-sm text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:outline-none ${error ? 'border border-red-500' : ''}`}
+        className={`
+          rounded bg-[#1C2541] p-2 text-sm text-white placeholder-gray-400
+          focus:ring-2 focus:ring-cyan-500 focus:outline-none
+          ${error ? 'border border-red-500' : ''}
+        `}
       />
       {error && <span className="mt-1 text-xs text-red-400">{error}</span>}
     </label>

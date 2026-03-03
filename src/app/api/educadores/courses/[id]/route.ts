@@ -462,9 +462,22 @@ export async function PUT(
 ) {
   try {
     // Validar autenticación del usuario
-    const { userId } = await auth();
+    console.log('🔍 [PUT /courses/[id]] Iniciando...');
+    console.log('🔍 [AUTH] Llamando auth()...');
+    const authResult = await auth();
+    console.log('🔍 [AUTH] Resultado:', {
+      userId: authResult.userId,
+      sessionId: authResult.sessionId,
+      hasAuth: !!authResult.userId,
+    });
+
+    const { userId } = authResult;
     if (!userId) {
-      console.warn('⚠️ Usuario no autenticado.');
+      console.warn('⚠️ Usuario no autenticado. authResult:', authResult);
+      console.log('🔍 [HEADERS] Request headers:', {
+        cookie: request.headers.get('cookie'),
+        authorization: request.headers.get('authorization'),
+      });
       return NextResponse.json(
         { error: 'No autorizado. Por favor, inicie sesión.' },
         { status: 403 }

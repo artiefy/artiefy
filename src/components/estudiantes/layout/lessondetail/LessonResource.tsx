@@ -292,18 +292,27 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
   };
 
   return (
-    <div className="mx-auto mt-4 mb-4 w-full md:mx-0 md:w-[70%]">
+    <div
+      className="
+      mx-auto my-4 w-full
+      md:mx-0 md:w-[70%]
+    "
+    >
       <div>
         {loading ? (
           <div className="flex items-center justify-center p-4">
-            <Icons.spinner className="h-8 w-8 text-background" />
+            <Icons.spinner className="size-8 text-background" />
           </div>
         ) : files.length > 0 ? (
           <div className="space-y-2">
             {files.map((file, index) => (
               <div
                 key={index}
-                className="group flex items-center justify-between border p-3 transition-all duration-200 hover:cursor-pointer"
+                className="
+                  group flex items-center justify-between border p-3
+                  transition-all duration-200
+                  hover:cursor-pointer
+                "
                 style={{
                   backgroundColor: '#01152d',
                   borderColor: 'hsla(217, 33%, 17%, 0.5)',
@@ -341,7 +350,15 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
                 </div>
                 <button
                   onClick={() => handleDownload(file)}
-                  className="inline-flex h-9 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-medium whitespace-nowrap opacity-100 ring-offset-background transition-opacity focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="
+                    inline-flex h-9 items-center justify-center gap-2
+                    rounded-2xl px-3 text-sm font-medium whitespace-nowrap
+                    opacity-100 ring-offset-background transition-opacity
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    disabled:pointer-events-none disabled:opacity-50
+                    [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                  "
                   style={{
                     transition:
                       'background-color 0.2s, opacity 0.2s, color 0.2s',
@@ -357,18 +374,26 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
                     e.currentTarget.style.color = '#22c4d3';
                   }}
                 >
-                  <FaDownload className="h-4 w-4" />
+                  <FaDownload className="size-4" />
                 </button>
               </div>
             ))}
           </div>
         ) : (
           <div
-            className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
+            className="
+              flex flex-col items-center justify-center rounded-xl border
+              border-dashed border-border/50 py-12
+            "
             style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
           >
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
-              <FaFilePdf className="h-8 w-8 text-black" />
+            <div
+              className="
+              mb-4 flex size-16 items-center justify-center rounded-full
+              bg-muted/50
+            "
+            >
+              <FaFilePdf className="size-8 text-black" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-100">
               No hay recursos disponibles

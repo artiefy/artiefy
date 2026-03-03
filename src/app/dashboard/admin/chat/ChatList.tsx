@@ -69,7 +69,11 @@ export default function ChatList({
         {paginatedConversations.map((conv) => (
           <div
             key={conv.id}
-            className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-700/50 p-3 hover:bg-gray-700"
+            className="
+              flex items-center justify-between rounded-lg border
+              border-gray-700 bg-gray-700/50 p-3
+              hover:bg-gray-700
+            "
           >
             <div>
               <h3 className="font-medium">{conv.userName}</h3>
@@ -80,13 +84,21 @@ export default function ChatList({
             <div className="relative">
               <button
                 onClick={() => onSelectChat(conv.id, conv.senderId)}
-                className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600"
+                className="
+                  rounded-full bg-blue-500 p-2 text-white
+                  hover:bg-blue-600
+                "
                 title="Iniciar chat"
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="size-4" />
               </button>
               {unreadConversationIds?.includes(conv.id) && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500" />
+                <span
+                  className="
+                  absolute -top-1 -right-1 size-3 rounded-full border-2
+                  border-white bg-red-500
+                "
+                />
               )}
             </div>
           </div>
@@ -98,7 +110,11 @@ export default function ChatList({
           <button
             onClick={handlePrev}
             disabled={currentPage === 1}
-            className="rounded bg-gray-700 px-3 py-1 text-sm hover:bg-gray-600 disabled:opacity-50"
+            className="
+              rounded bg-gray-700 px-3 py-1 text-sm
+              hover:bg-gray-600
+              disabled:opacity-50
+            "
           >
             ← Anterior
           </button>
@@ -108,7 +124,11 @@ export default function ChatList({
           <button
             onClick={handleNext}
             disabled={currentPage === totalPages}
-            className="rounded bg-gray-700 px-3 py-1 text-sm hover:bg-gray-600 disabled:opacity-50"
+            className="
+              rounded bg-gray-700 px-3 py-1 text-sm
+              hover:bg-gray-600
+              disabled:opacity-50
+            "
           >
             Siguiente →
           </button>

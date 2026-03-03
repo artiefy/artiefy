@@ -32,6 +32,8 @@ import {
   BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
 
+import type { Course } from '~/types';
+
 // Crear actividad
 
 // Función para obtener el contraste de un color
@@ -44,23 +46,6 @@ const getContrastYIQ = (hexcolor: string) => {
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
   return yiq >= 128 ? 'black' : 'white';
 };
-
-// Definir las interfaces de los datos
-interface Course {
-  id: number;
-  title: string;
-  description: string;
-  categoryid: string;
-  nivelid: string;
-  modalidadesid: string;
-  instructor: string;
-  coverImageKey: string;
-  creatorId: string;
-  createdAt: string;
-  updatedAt: string;
-  totalParametros: number;
-}
-
 interface ActivityDetailsAPI {
   id: number;
   name: string;
@@ -84,6 +69,7 @@ interface Parametros {
   courseId: number;
   typeid: number;
   isUsed?: boolean;
+  numberOfActivities?: number;
 }
 
 interface LessonsResponse {
@@ -291,6 +277,7 @@ const Page: React.FC = () => {
           entrega: parametro.entrega,
           porcentaje: parametro.porcentaje,
           description: parametro.description,
+          numberOfActivities: parametro.numberOfActivities, // ← PRESERVAR ESTE CAMPO
         }));
 
         setParametros(parametrosActualizados);
@@ -629,7 +616,10 @@ const Page: React.FC = () => {
         throw new Error(errorData.error ?? 'Error al crear la actividad');
       }
 
-      const actividadData = (await actividadResponse.json()) as { id: number; lessonsId: number };
+      const actividadData = (await actividadResponse.json()) as {
+        id: number;
+        lessonsId: number;
+      };
       const actividadId = actividadData.id;
       const finalLessonId = actividadData.lessonsId || lessonIdNumber;
 
@@ -678,7 +668,10 @@ const Page: React.FC = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/dashboard/educadores"
             >
               Inicio
@@ -687,7 +680,10 @@ const Page: React.FC = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/dashboard/educadores/cursos"
             >
               Lista de cursos
@@ -696,7 +692,10 @@ const Page: React.FC = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href={`/dashboard/educadores/cursos/${courseIdNumber}`}
             >
               Detalles curso
@@ -707,26 +706,51 @@ const Page: React.FC = () => {
             <BreadcrumbLink
               href="#"
               onClick={() => window.history.back()}
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
             >
               Lession
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink className="text-primary hover:text-gray-300">
+            <BreadcrumbLink
+              className="
+              text-primary
+              hover:text-gray-300
+            "
+            >
               Creación de actividad:
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="group relative mx-auto h-auto w-full md:w-3/5 lg:w-3/5">
-        <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+      <div
+        className="
+        group relative mx-auto h-auto w-full
+        md:w-3/5
+        lg:w-3/5
+      "
+      >
+        <div
+          className="
+          absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+          duration-500
+          group-hover:opacity-100
+        "
+        />
         <div className="relative mt-5 h-auto w-full justify-center">
           {loadingActivity ? (
             <main className="flex h-64 items-center justify-center">
-              <div className="border-primary size-32 animate-spin rounded-full border-y-2">
+              <div
+                className="
+                size-32 animate-spin rounded-full border-y-2 border-primary
+              "
+              >
                 <span className="sr-only">Cargando actividad…</span>
               </div>
             </main>
@@ -743,21 +767,29 @@ const Page: React.FC = () => {
                   width={70}
                   height={70}
                 />
-                <h2 className="mt-5 flex flex-col text-start text-3xl font-semibold">
+                <h2
+                  className="
+                  mt-5 flex flex-col text-start text-3xl font-semibold
+                "
+                >
                   {isEditing ? 'Editar actividad' : 'Creación de actividad'}
                   <p className="text-sm">Del curso: {course?.title}</p>
                 </h2>
               </div>
               <div className="my-4">
                 <Label
-                  className={`mb-2 text-xl ${
-                    color === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`
+                    mb-2 text-xl
+                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 >
                   Clase / lección del curso
                 </Label>
                 <select
-                  className="w-full rounded-lg border border-gray-500 bg-[#01142B] p-2 text-white outline-none"
+                  className="
+                    w-full rounded-lg border border-gray-500 bg-[#01142B] p-2
+                    text-white outline-none
+                  "
                   value={selectedLessonId ?? ''}
                   onChange={(e) =>
                     setSelectedLessonId(parseInt(e.target.value, 10))
@@ -774,7 +806,12 @@ const Page: React.FC = () => {
                 </select>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2">
+              <div
+                className="
+                grid grid-cols-1
+                lg:grid-cols-2
+              "
+              >
                 {/* ───── Columna «Calificable» ───── */}
                 <div className="flex flex-col">
                   <div className="flex flex-col">
@@ -792,14 +829,18 @@ const Page: React.FC = () => {
                           className="absolute size-0"
                         />
                         <span
-                          className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${
-                            isActive ? 'bg-gray-300' : 'bg-red-500'
-                          }`}
+                          className={`
+                            size-1/2 cursor-pointer rounded-full transition-all
+                            duration-300
+                            ${isActive ? 'bg-gray-300' : 'bg-red-500'}
+                          `}
                         >
                           <span
-                            className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${
-                              isActive ? 'translate-x-8' : 'translate-x-0'
-                            }`}
+                            className={`
+                              absolute top-1 left-1 size-6 rounded-full
+                              bg-primary transition-all duration-300
+                              ${isActive ? 'translate-x-8' : 'translate-x-0'}
+                            `}
                           />
                         </span>
                       </label>
@@ -818,7 +859,10 @@ const Page: React.FC = () => {
                             e.preventDefault();
                             handleLongevidadClick();
                           }}
-                          className="border-none bg-blue-500 text-white hover:bg-blue-500/90"
+                          className="
+                            border-none bg-blue-500 text-white
+                            hover:bg-blue-500/90
+                          "
                         >
                           Asignar un parámetro de evaluación
                         </Button>
@@ -836,18 +880,29 @@ const Page: React.FC = () => {
 
                           <Label
                             htmlFor="porcentaje"
-                            className={`mb-2 ${
-                              color === '#FFFFFF' ? 'text-black' : 'text-white'
-                            }`}
+                            className={`
+                              mb-2
+                              ${
+                                color === '#FFFFFF'
+                                  ? 'text-black'
+                                  : 'text-white'
+                              }
+                            `}
                           >
                             Peso actividad en el parámetro (0-100 %):
                           </Label>
 
                           <Input
                             value={formData.porcentaje}
-                            className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${
-                              color === '#FFFFFF' ? 'text-black' : 'text-white'
-                            }`}
+                            className={`
+                              rounded-lg border border-slate-200 bg-transparent
+                              p-2 outline-none
+                              ${
+                                color === '#FFFFFF'
+                                  ? 'text-black'
+                                  : 'text-white'
+                              }
+                            `}
                             type="number"
                             id="percentage"
                             min="0"
@@ -860,11 +915,14 @@ const Page: React.FC = () => {
 
                           {porcentajeDisponible !== null && (
                             <p
-                              className={`mt-1 text-sm ${
-                                color === '#FFFFFF'
-                                  ? 'text-black'
-                                  : 'text-white'
-                              }`}
+                              className={`
+                                mt-1 text-sm
+                                ${
+                                  color === '#FFFFFF'
+                                    ? 'text-black'
+                                    : 'text-white'
+                                }
+                              `}
                             >
                               Porcentaje disponible:{' '}
                               <strong>{porcentajeDisponible}%</strong>
@@ -893,14 +951,18 @@ const Page: React.FC = () => {
                           className="absolute size-0"
                         />
                         <span
-                          className={`size-1/2 cursor-pointer rounded-full transition-all duration-300 ${
-                            fechaMaxima ? 'bg-gray-300' : 'bg-red-500'
-                          }`}
+                          className={`
+                            size-1/2 cursor-pointer rounded-full transition-all
+                            duration-300
+                            ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}
+                          `}
                         >
                           <span
-                            className={`bg-primary absolute top-1 left-1 size-6 rounded-full transition-all duration-300 ${
-                              fechaMaxima ? 'translate-x-8' : 'translate-x-0'
-                            }`}
+                            className={`
+                              absolute top-1 left-1 size-6 rounded-full
+                              bg-primary transition-all duration-300
+                              ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}
+                            `}
                           />
                         </span>
                       </label>
@@ -913,9 +975,10 @@ const Page: React.FC = () => {
                   {fechaMaxima && (
                     <>
                       <span
-                        className={`text-xl font-medium ${
-                          color === '#FFFFFF' ? 'text-black' : 'text-white'
-                        }`}
+                        className={`
+                          text-xl font-medium
+                          ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                        `}
                       >
                         Fecha máxima de entrega:
                       </span>
@@ -928,7 +991,10 @@ const Page: React.FC = () => {
                                 .slice(0, 16)
                             : ''
                         }
-                        className="w-full rounded-lg border border-slate-200 bg-white p-2 text-black outline-none"
+                        className="
+                          w-full rounded-lg border border-slate-200 bg-white p-2
+                          text-black outline-none
+                        "
                         onChange={(e) =>
                           setFormData({
                             ...formData,
@@ -943,9 +1009,10 @@ const Page: React.FC = () => {
 
               {/* ─────  TÍTULO, DESCRIPCIÓN y SELECT de tipo ───── */}
               <Label
-                className={`mt-6 mb-2 text-xl ${
-                  color === '#FFFFFF' ? 'text-black' : 'text-white'
-                }`}
+                className={`
+                  mt-6 mb-2 text-xl
+                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                `}
               >
                 Título
               </Label>
@@ -955,16 +1022,18 @@ const Page: React.FC = () => {
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder="Nombre de la actividad"
-                className={`border-slate-200 ${
-                  color === '#FFFFFF' ? 'text-black' : 'text-white'
-                }`}
+                className={`
+                  border-slate-200
+                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                `}
               />
 
               <div className="my-4 flex flex-col">
                 <Label
-                  className={`mb-2 text-xl ${
-                    color === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`
+                    mb-2 text-xl
+                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 >
                   Descripción actividad:
                 </Label>
@@ -973,16 +1042,19 @@ const Page: React.FC = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className={`rounded-lg border border-slate-200 bg-transparent p-2 outline-none ${
-                    color === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  className={`
+                    rounded-lg border border-slate-200 bg-transparent p-2
+                    outline-none
+                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 />
               </div>
 
               <Label
-                className={`mb-2 text-xl ${
-                  color === '#FFFFFF' ? 'text-black' : 'text-white'
-                }`}
+                className={`
+                  mb-2 text-xl
+                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                `}
               >
                 Tipo de actividad
               </Label>
@@ -1007,7 +1079,12 @@ const Page: React.FC = () => {
               <div className="mt-4 flex justify-evenly">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button className="mx-auto w-1/6 border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
+                    <Button
+                      className="
+                      mx-auto w-1/6 border-red-600 bg-red-600 text-white
+                      hover:border-red-600 hover:bg-white hover:text-red-600
+                    "
+                    >
                       Cancelar
                     </Button>
                   </AlertDialogTrigger>
@@ -1021,7 +1098,11 @@ const Page: React.FC = () => {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
-                        className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                        className="
+                          border-red-600 bg-red-600 text-white
+                          hover:border-red-700 hover:bg-transparent
+                          hover:text-red-700
+                        "
                         onClick={() => window.history.back()}
                       >
                         Volver
@@ -1031,7 +1112,11 @@ const Page: React.FC = () => {
                 </AlertDialog>
                 <Input
                   type="submit"
-                  className="w-1/2 cursor-pointer border-green-600 bg-green-600 text-white hover:border-green-600 hover:bg-white hover:text-green-600"
+                  className="
+                    w-1/2 cursor-pointer border-green-600 bg-green-600
+                    text-white
+                    hover:border-green-600 hover:bg-white hover:text-green-600
+                  "
                   value={isEditing ? 'Actualizar' : 'Crear'}
                 />
               </div>

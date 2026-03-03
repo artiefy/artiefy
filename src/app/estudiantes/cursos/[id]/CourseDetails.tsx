@@ -1048,9 +1048,9 @@ export default function CourseDetails({
     return (
       <div
         className="
-        flex flex-col items-center gap-3 rounded-xl border-2 border-dashed
-        border-[#22C4D3] bg-[#061c37] p-6 text-center
-      "
+          flex flex-col items-center gap-3 rounded-xl border-2 border-dashed
+          border-[#22C4D3] bg-[#061c37] p-6 text-center
+        "
       >
         <h3 className="text-xl font-semibold text-white">Acceso restringido</h3>
         <p className="text-sm text-[#94A3B8]">
@@ -1060,9 +1060,9 @@ export default function CourseDetails({
         </p>
         <div
           className="
-          flex flex-col gap-2
-          sm:flex-row sm:items-center sm:justify-center
-        "
+            flex flex-col gap-2
+            sm:flex-row sm:items-center sm:justify-center
+          "
         >
           {requiresLogin && (
             <button
@@ -1128,11 +1128,11 @@ export default function CourseDetails({
       <div className="min-h-screen bg-background">
         <main
           className="
-          mx-auto -mt-6 max-w-7xl px-4 py-2
-          sm:-mt-0
-          md:px-6 md:py-8
-          lg:px-8
-        "
+            mx-auto -mt-6 max-w-7xl px-4 py-2
+            sm:-mt-0
+            md:px-6 md:py-8
+            lg:px-8
+          "
         >
           <CourseBreadcrumb title={course.title} programInfo={programInfo} />
           <div
@@ -1153,9 +1153,9 @@ export default function CourseDetails({
           >
             <div
               className="
-              absolute inset-0 rounded-2xl bg-gradient-to-r from-background
-              via-background/95 to-background/80
-            "
+                absolute inset-0 rounded-2xl bg-gradient-to-r from-background
+                via-background/95 to-background/80
+              "
             ></div>
             <div className="relative z-10 space-y-6">
               {/* 
@@ -1180,11 +1180,7 @@ export default function CourseDetails({
                   >
                     <div className="relative">
                       <AspectRatio ratio={16 / 9}>
-                        <div
-                          className="
-                          group relative size-full overflow-hidden
-                        "
-                        >
+                        <div className="group relative size-full overflow-hidden">
                           {coverVideoUrl ? (
                             isImageUrl(coverVideoUrl) ? (
                               <Image
@@ -1254,10 +1250,11 @@ export default function CourseDetails({
                             >
                               <div
                                 className="
-                                flex size-16 items-center justify-center
-                                rounded-full bg-primary/90 transition-transform
-                                group-hover:scale-110
-                              "
+                                  flex size-16 items-center justify-center
+                                  rounded-full bg-primary/90
+                                  transition-transform
+                                  group-hover:scale-110
+                                "
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -1358,10 +1355,10 @@ export default function CourseDetails({
                           includedPlans.includes('Pro') ? (
                             <div
                               className="
-                              inline-flex items-center gap-2 rounded-full border
-                              border-red-400 bg-red-500/20 px-3 py-1.5 text-sm
-                              font-medium text-red-400
-                            "
+                                inline-flex items-center gap-2 rounded-full
+                                border border-red-400 bg-red-500/20 px-3 py-1.5
+                                text-sm font-medium text-red-400
+                              "
                             >
                               <AiFillFire className="size-4 text-red-400" />
                               <span>Premium + Pro</span>
@@ -1371,10 +1368,10 @@ export default function CourseDetails({
                               {includedPlans.includes('Premium') && (
                                 <div
                                   className="
-                                  inline-flex items-center gap-1 rounded-full
-                                  border border-amber-400 bg-amber-500/20 px-3
-                                  py-1.5 text-sm font-medium text-amber-400
-                                "
+                                    inline-flex items-center gap-1 rounded-full
+                                    border border-amber-400 bg-amber-500/20 px-3
+                                    py-1.5 text-sm font-medium text-amber-400
+                                  "
                                 >
                                   <FaCrown className="size-3" />
                                   <span>Premium</span>
@@ -1383,10 +1380,10 @@ export default function CourseDetails({
                               {includedPlans.includes('Pro') && (
                                 <div
                                   className="
-                                  inline-flex items-center gap-1 rounded-full
-                                  border border-blue-400 bg-blue-500/20 px-3
-                                  py-1.5 text-sm font-medium text-blue-400
-                                "
+                                    inline-flex items-center gap-1 rounded-full
+                                    border border-blue-400 bg-blue-500/20 px-3
+                                    py-1.5 text-sm font-medium text-blue-400
+                                  "
                                 >
                                   <FaStar className="size-3" />
                                   <span>Pro</span>
@@ -1414,9 +1411,9 @@ export default function CourseDetails({
                           <div>
                             <p
                               className="
-                              inline-flex items-center gap-2 rounded-full px-3
-                              py-1.5 text-sm font-medium text-[#22C4D3]
-                            "
+                                inline-flex items-center gap-2 rounded-full px-3
+                                py-1.5 text-sm font-medium text-[#22C4D3]
+                              "
                             >
                               {includedPlans.includes('Premium') &&
                               includedPlans.includes('Pro')
@@ -1486,9 +1483,9 @@ export default function CourseDetails({
                               >
                                 <FaTimes
                                   className="
-                                  size-4 text-emerald-400 transition-colors
-                                  group-hover:text-red-500
-                                "
+                                    size-4 text-emerald-400 transition-colors
+                                    group-hover:text-red-500
+                                  "
                                 />
                               </button>
                             </div>
@@ -1599,9 +1596,9 @@ export default function CourseDetails({
                     {/* Contenedor flex para info del curso y mini tarjeta lado a lado en lg */}
                     <div
                       className="
-                      flex flex-col gap-6
-                      lg:flex-row lg:items-start lg:gap-8
-                    "
+                        flex flex-col gap-6
+                        lg:flex-row lg:items-start lg:gap-8
+                      "
                     >
                       {/* Columna izquierda: toda la info del curso */}
                       <div className="flex-1 space-y-4">
@@ -1627,11 +1624,11 @@ export default function CourseDetails({
                         )}
                         <h1
                           className="
-                          font-display text-3xl leading-tight font-bold
-                          text-foreground
-                          md:text-4xl
-                          lg:text-5xl
-                        "
+                            font-display text-3xl leading-tight font-bold
+                            text-foreground
+                            md:text-4xl
+                            lg:text-5xl
+                          "
                         >
                           {course.title}
                         </h1>
@@ -1712,10 +1709,10 @@ export default function CourseDetails({
                         <div className="flex flex-wrap gap-2">
                           <span
                             className="
-                            inline-flex items-center gap-1.5 rounded-full border
-                            border-primary/40 px-3 py-1.5 text-xs font-medium
-                            text-foreground
-                          "
+                              inline-flex items-center gap-1.5 rounded-full
+                              border border-primary/40 px-3 py-1.5 text-xs
+                              font-medium text-foreground
+                            "
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -1738,10 +1735,10 @@ export default function CourseDetails({
                           </span>
                           <span
                             className="
-                            inline-flex items-center gap-1.5 rounded-full border
-                            border-primary/40 px-3 py-1.5 text-xs font-medium
-                            text-foreground
-                          "
+                              inline-flex items-center gap-1.5 rounded-full
+                              border border-primary/40 px-3 py-1.5 text-xs
+                              font-medium text-foreground
+                            "
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -1848,9 +1845,9 @@ export default function CourseDetails({
                       {isEnrolled && (
                         <div
                           className="
-                          hidden
-                          lg:block lg:w-[340px] lg:flex-shrink-0
-                        "
+                            hidden
+                            lg:block lg:w-[340px] lg:flex-shrink-0
+                          "
                         >
                           <div
                             className="
@@ -1864,11 +1861,7 @@ export default function CourseDetails({
                           >
                             <div className="relative">
                               <AspectRatio ratio={16 / 9}>
-                                <div
-                                  className="
-                                  relative size-full overflow-hidden
-                                "
-                                >
+                                <div className="relative size-full overflow-hidden">
                                   {coverVideoUrl ? (
                                     isImageUrl(coverVideoUrl) ? (
                                       <Image
@@ -1926,11 +1919,11 @@ export default function CourseDetails({
                                   includedPlans.includes('Pro') ? (
                                     <div
                                       className="
-                                      inline-flex items-center gap-2
-                                      rounded-full border border-red-400
-                                      bg-red-500/20 px-3 py-1.5 text-sm
-                                      font-medium text-red-400
-                                    "
+                                        inline-flex items-center gap-2
+                                        rounded-full border border-red-400
+                                        bg-red-500/20 px-3 py-1.5 text-sm
+                                        font-medium text-red-400
+                                      "
                                     >
                                       <AiFillFire className="size-4 text-red-400" />
                                       <span>Premium + Pro</span>
@@ -1940,11 +1933,11 @@ export default function CourseDetails({
                                       {includedPlans.includes('Premium') && (
                                         <div
                                           className="
-                                          inline-flex items-center gap-1
-                                          rounded-full border border-amber-400
-                                          bg-amber-500/20 px-3 py-1.5 text-sm
-                                          font-medium text-amber-400
-                                        "
+                                            inline-flex items-center gap-1
+                                            rounded-full border border-amber-400
+                                            bg-amber-500/20 px-3 py-1.5 text-sm
+                                            font-medium text-amber-400
+                                          "
                                         >
                                           <FaCrown className="size-3" />
                                           <span>Premium</span>
@@ -1953,11 +1946,11 @@ export default function CourseDetails({
                                       {includedPlans.includes('Pro') && (
                                         <div
                                           className="
-                                          inline-flex items-center gap-1
-                                          rounded-full border border-blue-400
-                                          bg-blue-500/20 px-3 py-1.5 text-sm
-                                          font-medium text-blue-400
-                                        "
+                                            inline-flex items-center gap-1
+                                            rounded-full border border-blue-400
+                                            bg-blue-500/20 px-3 py-1.5 text-sm
+                                            font-medium text-blue-400
+                                          "
                                         >
                                           <FaStar className="size-3" />
                                           <span>Pro</span>
@@ -1972,10 +1965,10 @@ export default function CourseDetails({
                                   <div>
                                     <p
                                       className="
-                                      inline-flex items-center gap-2
-                                      rounded-full px-3 py-1.5 text-sm
-                                      font-medium text-[#22C4D3]
-                                    "
+                                        inline-flex items-center gap-2
+                                        rounded-full px-3 py-1.5 text-sm
+                                        font-medium text-[#22C4D3]
+                                      "
                                     >
                                       {includedPlans.includes('Premium') &&
                                       includedPlans.includes('Pro')
@@ -2048,10 +2041,10 @@ export default function CourseDetails({
                                     >
                                       <FaTimes
                                         className="
-                                        size-4 text-emerald-400
-                                        transition-colors
-                                        group-hover:text-red-500
-                                      "
+                                          size-4 text-emerald-400
+                                          transition-colors
+                                          group-hover:text-red-500
+                                        "
                                       />
                                     </button>
                                   </div>
@@ -2094,9 +2087,9 @@ export default function CourseDetails({
                       {isEnrolled ? (
                         <div
                           className="
-                          hidden
-                          lg:flex lg:w-full lg:justify-between
-                        "
+                            hidden
+                            lg:flex lg:w-full lg:justify-between
+                          "
                         >
                           {navItems.map((item) => {
                             const isActive = activePill === item.key;
@@ -2114,15 +2107,15 @@ export default function CourseDetails({
                                   ${
                                     isActive
                                       ? `
-                                      border-[hsl(217,33%,17%)] bg-[#061c37]
-                                      text-white
-                                    `
+                                        border-[hsl(217,33%,17%)] bg-[#061c37]
+                                        text-white
+                                      `
                                       : `
-                                      border-transparent bg-transparent
-                                      text-white/80
-                                      hover:border-[hsl(217,33%,17%)]/60
-                                      hover:bg-[#061c3780]/50 hover:text-white
-                                    `
+                                        border-transparent bg-transparent
+                                        text-white/80
+                                        hover:border-[hsl(217,33%,17%)]/60
+                                        hover:bg-[#061c3780]/50 hover:text-white
+                                      `
                                   }
                                 `}
                               >
@@ -2130,11 +2123,11 @@ export default function CourseDetails({
                                 {showBadge && (
                                   <span
                                     className="
-                                    inline-flex aspect-square size-6
-                                    justify-center rounded-full border
-                                    border-white/20 bg-[#22C4D3] pt-[2.5px]
-                                    text-xs text-black
-                                  "
+                                      inline-flex aspect-square size-6
+                                      justify-center rounded-full border
+                                      border-white/20 bg-[#22C4D3] pt-[2.5px]
+                                      text-xs text-black
+                                    "
                                   >
                                     {badgeCount}
                                   </span>
@@ -2142,9 +2135,9 @@ export default function CourseDetails({
                                 {item.helper && (
                                   <span
                                     className="
-                                    hidden text-xs font-normal text-white/60
-                                    xl:inline
-                                  "
+                                      hidden text-xs font-normal text-white/60
+                                      xl:inline
+                                    "
                                   >
                                     {item.helper}
                                   </span>
@@ -2213,15 +2206,15 @@ export default function CourseDetails({
                                   ${
                                     isActive
                                       ? `
-                                      border-[hsl(217,33%,17%)] bg-[#061c37]
-                                      text-white
-                                    `
+                                        border-[hsl(217,33%,17%)] bg-[#061c37]
+                                        text-white
+                                      `
                                       : `
-                                      border-transparent bg-transparent
-                                      text-white/80
-                                      hover:border-[hsl(217,33%,17%)]/60
-                                      hover:bg-[#061c3780]/50 hover:text-white
-                                    `
+                                        border-transparent bg-transparent
+                                        text-white/80
+                                        hover:border-[hsl(217,33%,17%)]/60
+                                        hover:bg-[#061c3780]/50 hover:text-white
+                                      `
                                   }
                                 `}
                                 style={{ scrollSnapAlign: 'start' }}
@@ -2230,11 +2223,11 @@ export default function CourseDetails({
                                 {showBadge && (
                                   <span
                                     className="
-                                    inline-flex aspect-square size-6
-                                    justify-center rounded-full border
-                                    border-white/20 bg-[#22C4D3] pt-[2.5px]
-                                    text-xs text-black
-                                  "
+                                      inline-flex aspect-square size-6
+                                      justify-center rounded-full border
+                                      border-white/20 bg-[#22C4D3] pt-[2.5px]
+                                      text-xs text-black
+                                    "
                                   >
                                     {badgeCount}
                                   </span>
@@ -2242,9 +2235,9 @@ export default function CourseDetails({
                                 {item.helper && (
                                   <span
                                     className="
-                                    hidden text-xs font-normal text-white/60
-                                    sm:inline
-                                  "
+                                      hidden text-xs font-normal text-white/60
+                                      sm:inline
+                                    "
                                   >
                                     {item.helper}
                                   </span>
@@ -2341,18 +2334,18 @@ export default function CourseDetails({
                         isEnrolled ? (
                           <div
                             className="
-                            rounded-2xl border border-border bg-card p-6
-                            shadow-xl
-                            md:p-8
-                          "
+                              rounded-2xl border border-border bg-card p-6
+                              shadow-xl
+                              md:p-8
+                            "
                           >
                             <div className="mb-6 flex items-center gap-3">
                               <div
                                 className="
-                                flex size-12 items-center justify-center
-                                rounded-xl bg-gradient-to-br from-amber-400
-                                to-orange-500
-                              "
+                                  flex size-12 items-center justify-center
+                                  rounded-xl bg-gradient-to-br from-amber-400
+                                  to-orange-500
+                                "
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -2373,9 +2366,10 @@ export default function CourseDetails({
                               <div>
                                 <h2
                                   className="
-                                  font-display text-xl font-bold text-foreground
-                                  md:text-2xl
-                                "
+                                    font-display text-xl font-bold
+                                    text-foreground
+                                    md:text-2xl
+                                  "
                                 >
                                   Certificación Del Curso
                                 </h2>
@@ -2389,13 +2383,13 @@ export default function CourseDetails({
                             <div className="mb-6 rounded-xl bg-secondary p-5">
                               <div
                                 className="
-                                mb-3 flex items-center justify-between
-                              "
+                                  mb-3 flex items-center justify-between
+                                "
                               >
                                 <span
                                   className="
-                                  text-sm font-medium text-foreground
-                                "
+                                    text-sm font-medium text-foreground
+                                  "
                                 >
                                   Progreso hacia la certificación
                                 </span>
@@ -2405,8 +2399,8 @@ export default function CourseDetails({
                               </div>
                               <div
                                 className="
-                                h-3 overflow-hidden rounded-full bg-muted
-                              "
+                                  h-3 overflow-hidden rounded-full bg-muted
+                                "
                               >
                                 <div
                                   className="
@@ -2420,8 +2414,8 @@ export default function CourseDetails({
                               </div>
                               <div
                                 className="
-                                mt-3 space-y-1 text-xs text-muted-foreground
-                              "
+                                  mt-3 space-y-1 text-xs text-muted-foreground
+                                "
                               >
                                 {hasParameters && (
                                   <div className="flex items-center gap-2">
@@ -2468,10 +2462,10 @@ export default function CourseDetails({
 
                             <div
                               className="
-                              flex flex-col items-center gap-3 text-center
-                              sm:flex-row sm:items-center sm:justify-between
-                              sm:text-left
-                            "
+                                flex flex-col items-center gap-3 text-center
+                                sm:flex-row sm:items-center sm:justify-between
+                                sm:text-left
+                              "
                             >
                               <p className="text-sm text-muted-foreground">
                                 El botón se habilita cuando cumples todos los
@@ -2491,14 +2485,14 @@ export default function CourseDetails({
                                   ${
                                     isCertificateUnlocked
                                       ? `
-                                      border-green-500/30 bg-green-500/20
-                                      text-green-200
-                                      hover:bg-green-500/30
-                                    `
+                                        border-green-500/30 bg-green-500/20
+                                        text-green-200
+                                        hover:bg-green-500/30
+                                      `
                                       : `
-                                      cursor-not-allowed border-white/10
-                                      bg-white/5 text-white/60
-                                    `
+                                        cursor-not-allowed border-white/10
+                                        bg-white/5 text-white/60
+                                      `
                                   }
                                 `}
                               >
@@ -2563,14 +2557,14 @@ export default function CourseDetails({
                 {!isEnrolled && (
                   <div
                     className="
-                    hidden
-                    lg:block
-                  "
+                      hidden
+                      lg:block
+                    "
                   >
                     <div
                       className="
-                      sticky top-24 max-h-[calc(100vh-8rem)] self-start
-                    "
+                        sticky top-24 max-h-[calc(100vh-8rem)] self-start
+                      "
                     >
                       <div
                         className="
@@ -2583,8 +2577,8 @@ export default function CourseDetails({
                           <AspectRatio ratio={16 / 9}>
                             <div
                               className="
-                              group relative size-full overflow-hidden
-                            "
+                                group relative size-full overflow-hidden
+                              "
                             >
                               {course.coverVideoCourseKey && coverVideoUrl ? (
                                 isImageUrl(
@@ -2667,11 +2661,11 @@ export default function CourseDetails({
                                   >
                                     <div
                                       className="
-                                      flex size-16 items-center justify-center
-                                      rounded-full bg-primary/90
-                                      transition-transform
-                                      group-hover:scale-110
-                                    "
+                                        flex size-16 items-center justify-center
+                                        rounded-full bg-primary/90
+                                        transition-transform
+                                        group-hover:scale-110
+                                      "
                                     >
                                       <svg
                                         xmlns="http://www.w3.org/2000/svg"
@@ -2775,10 +2769,10 @@ export default function CourseDetails({
                               includedPlans.includes('Pro') ? (
                                 <div
                                   className="
-                                  inline-flex items-center gap-2 rounded-full
-                                  border border-red-400 bg-red-500/20 px-3
-                                  py-1.5 text-sm font-medium text-red-400
-                                "
+                                    inline-flex items-center gap-2 rounded-full
+                                    border border-red-400 bg-red-500/20 px-3
+                                    py-1.5 text-sm font-medium text-red-400
+                                  "
                                 >
                                   <AiFillFire className="size-4 text-red-400" />
                                   <span>Premium + Pro</span>
@@ -2788,11 +2782,11 @@ export default function CourseDetails({
                                   {includedPlans.includes('Premium') && (
                                     <div
                                       className="
-                                      inline-flex items-center gap-1
-                                      rounded-full border border-amber-400
-                                      bg-amber-500/20 px-3 py-1.5 text-sm
-                                      font-medium text-amber-400
-                                    "
+                                        inline-flex items-center gap-1
+                                        rounded-full border border-amber-400
+                                        bg-amber-500/20 px-3 py-1.5 text-sm
+                                        font-medium text-amber-400
+                                      "
                                     >
                                       <FaCrown className="size-3" />
                                       <span>Premium</span>
@@ -2801,11 +2795,11 @@ export default function CourseDetails({
                                   {includedPlans.includes('Pro') && (
                                     <div
                                       className="
-                                      inline-flex items-center gap-1
-                                      rounded-full border border-blue-400
-                                      bg-blue-500/20 px-3 py-1.5 text-sm
-                                      font-medium text-blue-400
-                                    "
+                                        inline-flex items-center gap-1
+                                        rounded-full border border-blue-400
+                                        bg-blue-500/20 px-3 py-1.5 text-sm
+                                        font-medium text-blue-400
+                                      "
                                     >
                                       <FaStar className="size-3" />
                                       <span>Pro</span>
@@ -2834,9 +2828,10 @@ export default function CourseDetails({
                               <div>
                                 <p
                                   className="
-                                  inline-flex items-center gap-2 rounded-full
-                                  px-3 py-1.5 text-sm font-medium text-[#22C4D3]
-                                "
+                                    inline-flex items-center gap-2 rounded-full
+                                    px-3 py-1.5 text-sm font-medium
+                                    text-[#22C4D3]
+                                  "
                                 >
                                   {includedPlans.includes('Premium') &&
                                   includedPlans.includes('Pro')
@@ -2922,14 +2917,14 @@ export default function CourseDetails({
       {showPaymentModal && courseProduct && (
         <div
           className="
-          fixed inset-0 z-[1200] flex items-center justify-center bg-black/60
-          px-4 py-6
-        "
+            fixed inset-0 z-[1200] flex items-center justify-center bg-black/60
+            px-4 py-6
+          "
         >
           <div
             className="
-            relative w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl
-          "
+              relative w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl
+            "
           >
             <button
               type="button"
@@ -3001,9 +2996,9 @@ export default function CourseDetails({
         <DialogContent className="border border-[#1D283A] bg-[#061c37] sm:rounded-[16px]">
           <DialogHeader
             className="
-            space-y-2 text-center
-            sm:text-left
-          "
+              space-y-2 text-center
+              sm:text-left
+            "
           >
             <DialogTitle className="text-[#f8fafc]">¿Estás seguro?</DialogTitle>
             <DialogDescription className="text-[#94a3b8]">
@@ -3012,9 +3007,9 @@ export default function CourseDetails({
           </DialogHeader>
           <div
             className="
-            flex flex-col-reverse gap-2
-            sm:flex-row sm:justify-end sm:space-x-2
-          "
+              flex flex-col-reverse gap-2
+              sm:flex-row sm:justify-end sm:space-x-2
+            "
           >
             <button
               type="button"

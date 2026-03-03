@@ -107,7 +107,7 @@ export function GradeModal({
     if (isFirstLoad && isLoading) {
       return (
         <div className="flex justify-center py-4">
-          <Icons.spinner className="text-primary h-6 w-6" />
+          <Icons.spinner className="size-6 text-primary" />
         </div>
       );
     }
@@ -118,16 +118,17 @@ export function GradeModal({
         key={materia.id}
         className="flex items-center justify-between rounded-md bg-gray-50 p-3"
       >
-        <span className="font-mediumt text-background font-bold">
+        <span className="font-mediumt font-bold text-background">
           {materia.title}
         </span>
         {isLoading && !isFirstLoad ? (
-          <Icons.spinner className="h-4 w-4 text-gray-600" />
+          <Icons.spinner className="size-4 text-gray-600" />
         ) : (
           <span
-            className={`font-semibold ${
-              materia.grade >= 3 ? 'text-green-600' : 'text-red-600'
-            }`}
+            className={`
+              font-semibold
+              ${materia.grade >= 3 ? 'text-green-600' : 'text-red-600'}
+            `}
           >
             {formatScore(materia.grade)}
           </span>
@@ -150,14 +151,17 @@ export function GradeModal({
 
           <div className="mb-6 rounded-lg bg-gray-100 p-4 text-center">
             {isLoading ? (
-              <Icons.spinner className="text-background mx-auto h-6 w-6" />
+              <Icons.spinner className="mx-auto size-6 text-background" />
             ) : (
               <span
-                className={`text-3xl font-bold ${
-                  (calculatedFinalGrade ?? 0) >= 3
-                    ? 'text-green-600'
-                    : 'text-red-600'
-                }`}
+                className={`
+                  text-3xl font-bold
+                  ${
+                    (calculatedFinalGrade ?? 0) >= 3
+                      ? 'text-green-600'
+                      : 'text-red-600'
+                  }
+                `}
               >
                 {formatScore(calculatedFinalGrade ?? 0)}
               </span>
@@ -168,7 +172,7 @@ export function GradeModal({
             <h4 className="font-semibold">Materias del curso:</h4>
             {isFirstLoad && isLoading ? (
               <div className="flex justify-center py-4">
-                <Icons.spinner className="text-primary h-6 w-6" />
+                <Icons.spinner className="size-6 text-primary" />
               </div>
             ) : (
               <div className="space-y-2">{renderMaterias()}</div>

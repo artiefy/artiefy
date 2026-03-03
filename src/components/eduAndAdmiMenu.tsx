@@ -47,6 +47,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const [isFinancesOpen, setIsFinancesOpen] = useState(false);
   const pathname = usePathname();
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
+  const [isParametersOpen, setIsParametersOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -225,7 +226,10 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       {/* Overlay para cerrar sidebar en móvil */}
       {isMobile && isOpen && (
         <div
-          className="backdrop-blur-s fixed inset-0 z-40 bg-white/10 md:hidden"
+          className="
+            backdrop-blur-s fixed inset-0 z-40 bg-white/10
+            md:hidden
+          "
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -234,7 +238,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       {isMobile && isOpen && (
         <button
           onClick={() => setIsOpen(false)}
-          className="fixed top-4 left-4 z-60 rounded-lg bg-gray-900/80 p-2 text-white hover:bg-gray-800 focus:ring-2 focus:ring-gray-200 focus:outline-hidden md:hidden"
+          className="
+            fixed top-4 left-4 z-60 rounded-lg bg-gray-900/80 p-2 text-white
+            hover:bg-gray-800
+            focus:ring-2 focus:ring-gray-200 focus:outline-hidden
+            md:hidden
+          "
           aria-controls="sidebar"
           aria-expanded={isOpen}
         >
@@ -243,15 +252,29 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       )}
 
       {/* Navbar */}
-      <nav className="fixed top-0 z-40 w-full border-b border-gray-200 bg-background shadow-xs">
-        <div className="p-2.5 lg:px-4 lg:pl-3">
+      <nav
+        className="
+        fixed top-0 z-40 w-full border-b border-gray-200 bg-background shadow-xs
+      "
+      >
+        <div
+          className="
+          p-2.5
+          lg:px-4 lg:pl-3
+        "
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {/* Botón menú hamburguesa solo en móvil+cerrado */}
               {isMobile && !isOpen && (
                 <button
                   onClick={() => setIsOpen(true)}
-                  className="rounded-lg p-2 text-white hover:bg-gray-100 focus:ring-2 focus:ring-gray-200 focus:outline-hidden md:hidden"
+                  className="
+                    rounded-lg p-2 text-white
+                    hover:bg-gray-100
+                    focus:ring-2 focus:ring-gray-200 focus:outline-hidden
+                    md:hidden
+                  "
                   aria-controls="sidebar"
                   aria-expanded={isOpen}
                 >
@@ -287,13 +310,22 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
         onMouseEnter={() => !isMobile && setIsHovered(true)}
         onMouseLeave={() => !isMobile && setIsHovered(false)}
         className={cn(
-          'fixed top-0 left-0 z-50 h-screen border-r border-gray-200 bg-background pt-[52px] transition-all duration-300 dark:border-gray-700 dark:bg-gray-800',
+          `
+            fixed top-0 left-0 z-50 h-screen border-r border-gray-200
+            bg-background pt-[52px] transition-all duration-300
+            dark:border-gray-700 dark:bg-gray-800
+          `,
           sidebarWidth,
           isMobile && !isOpen && '-translate-x-full'
         )}
         aria-label="Sidebar"
       >
-        <div className="h-full overflow-x-hidden overflow-y-auto bg-background px-2 pb-4 dark:bg-gray-800">
+        <div
+          className="
+          h-full overflow-x-hidden overflow-y-auto bg-background px-2 pb-4
+          dark:bg-gray-800
+        "
+        >
           <ul className="mt-3 space-y-1.5 font-medium">
             {navItems.map((item) => (
               <li key={item.id} onClick={item.onClick}>
@@ -301,7 +333,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   href={item.link ?? '#'}
                   onClick={() => setActiveItem(item.id)}
                   className={cn(
-                    'group relative flex items-center rounded-lg p-2 text-white transition-all duration-200 hover:bg-primary',
+                    `
+                      group relative flex items-center rounded-lg p-2 text-white
+                      transition-all duration-200
+                      hover:bg-primary
+                    `,
                     activeItem === item.id && 'bg-primary text-black',
                     !shouldShowText && 'justify-center'
                   )}
@@ -309,24 +345,45 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 >
                   <span
                     className={cn(
-                      'relative text-gray-300 transition duration-75 group-hover:text-gray-900',
+                      `
+                        relative text-gray-300 transition duration-75
+                        group-hover:text-gray-900
+                      `,
                       activeItem === item.id && 'text-black'
                     )}
                   >
                     {item.icon}
                     {/* ✅ Badge cuando el sidebar está CERRADO - aparece sobre el ícono */}
                     {!shouldShowText && item.badge && item.badge > 0 && (
-                      <span className="absolute -top-2 -right-2 flex h-4 min-w-[16px] animate-pulse items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold text-white ring-1 ring-background">
+                      <span
+                        className="
+                        absolute -top-2 -right-2 flex h-4 min-w-[16px]
+                        animate-pulse items-center justify-center rounded-full
+                        bg-red-600 px-1 text-[9px] font-bold text-white ring-1
+                        ring-background
+                      "
+                      >
                         {item.badge > 99 ? '99+' : item.badge}
                       </span>
                     )}
                   </span>
                   {/* ✅ Badge cuando el sidebar está ABIERTO - aparece al final del texto */}
                   {shouldShowText && (
-                    <span className="ml-2.5 flex flex-1 items-center justify-between text-xs font-medium whitespace-nowrap">
+                    <span
+                      className="
+                      ml-2.5 flex flex-1 items-center justify-between text-xs
+                      font-medium whitespace-nowrap
+                    "
+                    >
                       {item.title}
                       {item.badge && item.badge > 0 && (
-                        <span className="ml-2 flex h-5 min-w-[20px] animate-pulse items-center justify-center rounded-full bg-red-600 px-1.5 text-[10px] font-bold text-white">
+                        <span
+                          className="
+                          ml-2 flex h-5 min-w-[20px] animate-pulse items-center
+                          justify-center rounded-full bg-red-600 px-1.5
+                          text-[10px] font-bold text-white
+                        "
+                        >
                           {item.badge > 99 ? '99+' : item.badge}
                         </span>
                       )}
@@ -343,7 +400,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   <button
                     onClick={() => shouldShowText && setIsFormOpen(!isFormOpen)}
                     className={cn(
-                      'flex w-full items-center rounded-lg p-2 text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                      `
+                        flex w-full items-center rounded-lg p-2 text-white
+                        transition-all duration-300
+                        hover:bg-secondary hover:text-white
+                      `,
                       !shouldShowText && 'justify-center'
                     )}
                     title={!shouldShowText ? 'Formulario' : undefined}
@@ -351,7 +412,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     <FiFileText size={18} />
                     {shouldShowText && (
                       <>
-                        <span className="ml-2.5 flex-1 text-left text-xs font-medium whitespace-nowrap">
+                        <span
+                          className="
+                          ml-2.5 flex-1 text-left text-xs font-medium
+                          whitespace-nowrap
+                        "
+                        >
                           Formulario
                         </span>
                         {isFormOpen ? (
@@ -369,7 +435,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/form-inscription/dates"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/form-inscription/dates' &&
                               'bg-primary text-[#01142B]'
@@ -382,7 +452,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/form-inscription/comercials"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/form-inscription/comercials' &&
                               'bg-primary text-[#01142B]'
@@ -395,7 +469,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/form-inscription/horario"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/form-inscription/horario' &&
                               'bg-primary text-[#01142B]'
@@ -408,7 +486,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/form-inscription/sedes"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/form-inscription/sedes' &&
                               'bg-primary text-[#01142B]'
@@ -427,7 +509,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       shouldShowText && setIsWhatsAppOpen(!isWhatsAppOpen)
                     }
                     className={cn(
-                      'flex w-full items-center rounded-lg p-2 text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                      `
+                        flex w-full items-center rounded-lg p-2 text-white
+                        transition-all duration-300
+                        hover:bg-secondary hover:text-white
+                      `,
                       !shouldShowText && 'justify-center'
                     )}
                     title={!shouldShowText ? 'WhatsApp' : undefined}
@@ -435,7 +521,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     <FaWhatsapp size={18} />
                     {shouldShowText && (
                       <>
-                        <span className="ml-2.5 flex-1 text-left text-xs font-medium whitespace-nowrap">
+                        <span
+                          className="
+                          ml-2.5 flex-1 text-left text-xs font-medium
+                          whitespace-nowrap
+                        "
+                        >
                           WhatsApp
                         </span>
                         {isWhatsAppOpen ? (
@@ -453,7 +544,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/whatsapp/soporte"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/whatsapp/soporte' &&
                               'bg-primary text-[#01142B]'
@@ -473,7 +568,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       shouldShowText && setIsFinancesOpen(!isFinancesOpen)
                     }
                     className={cn(
-                      'flex w-full items-center rounded-lg p-2 text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                      `
+                        flex w-full items-center rounded-lg p-2 text-white
+                        transition-all duration-300
+                        hover:bg-secondary hover:text-white
+                      `,
                       !shouldShowText && 'justify-center'
                     )}
                     title={!shouldShowText ? 'Finanzas' : undefined}
@@ -481,12 +580,22 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     <FiFileText size={18} />
                     {shouldShowText && (
                       <>
-                        <span className="ml-2.5 flex-1 text-left text-xs font-medium whitespace-nowrap">
+                        <span
+                          className="
+                          ml-2.5 flex-1 text-left text-xs font-medium
+                          whitespace-nowrap
+                        "
+                        >
                           Finanzas
                         </span>
                         <div className="flex items-center gap-2">
                           {totalRecaudado > 0 && (
-                            <span className="rounded bg-green-500/20 px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap text-green-400">
+                            <span
+                              className="
+                              rounded bg-green-500/20 px-1.5 py-0.5 text-[10px]
+                              font-semibold whitespace-nowrap text-green-400
+                            "
+                            >
                               ${(totalRecaudado / 1000000).toFixed(1)}M
                             </span>
                           )}
@@ -506,7 +615,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/transaction-history"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname === '/dashboard/transaction-history' &&
                               'bg-primary text-[#01142B]'
                           )}
@@ -518,7 +631,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/whatsapp/sesion2"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/whatsapp/sesion2' &&
                               'bg-primary text-[#01142B]'
@@ -538,7 +655,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       shouldShowText && setIsCoursesOpen(!isCoursesOpen)
                     }
                     className={cn(
-                      'flex w-full items-center rounded-lg p-2 text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                      `
+                        flex w-full items-center rounded-lg p-2 text-white
+                        transition-all duration-300
+                        hover:bg-secondary hover:text-white
+                      `,
                       !shouldShowText && 'justify-center'
                     )}
                     title={!shouldShowText ? 'Cursos' : undefined}
@@ -546,7 +667,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     <FiBook size={18} />
                     {shouldShowText && (
                       <>
-                        <span className="ml-2.5 flex-1 text-left text-xs font-medium whitespace-nowrap">
+                        <span
+                          className="
+                          ml-2.5 flex-1 text-left text-xs font-medium
+                          whitespace-nowrap
+                        "
+                        >
                           Cursos
                         </span>
                         {isCoursesOpen ? (
@@ -564,7 +690,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/cursos"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname === '/dashboard/super-admin/cursos' &&
                               'bg-primary text-[#01142B]'
                           )}
@@ -576,7 +706,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/courses/topFeature"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/courses/topFeature' &&
                               'bg-primary text-[#01142B]'
@@ -589,7 +723,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/categories"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname === '/dashboard/super-admin/categories' &&
                               'bg-primary text-[#01142B]'
                           )}
@@ -601,7 +739,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/modalities"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname === '/dashboard/super-admin/modalities' &&
                               'bg-primary text-[#01142B]'
                           )}
@@ -613,7 +755,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/difficulties"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/difficulties' &&
                               'bg-primary text-[#01142B]'
@@ -626,7 +772,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/subscription/schedule-options"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/subscription/schedule-options' &&
                               'bg-primary text-[#01142B]'
@@ -639,7 +789,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/subscription/space-options"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/subscription/space-options' &&
                               'bg-primary text-[#01142B]'
@@ -652,13 +806,92 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/cursos/certification-types"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/cursos/certification-types' &&
                               'bg-primary text-[#01142B]'
                           )}
                         >
                           Tipos de Certificación
+                        </Link>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+
+                {/* Submenú: Parámetros y Plantillas */}
+                <li>
+                  <button
+                    onClick={() =>
+                      shouldShowText && setIsParametersOpen(!isParametersOpen)
+                    }
+                    className={cn(
+                      `
+                        flex w-full items-center rounded-lg p-2 text-white
+                        transition-all duration-300
+                        hover:bg-secondary hover:text-white
+                      `,
+                      !shouldShowText && 'justify-center'
+                    )}
+                    title={!shouldShowText ? 'Parámetros' : undefined}
+                  >
+                    <FiFileText size={18} />
+                    {shouldShowText && (
+                      <>
+                        <span
+                          className="
+                          ml-2.5 flex-1 text-left text-xs font-medium
+                          whitespace-nowrap
+                        "
+                        >
+                          Parámetros
+                        </span>
+                        {isParametersOpen ? (
+                          <FiChevronDown size={16} />
+                        ) : (
+                          <FiChevronRight size={16} />
+                        )}
+                      </>
+                    )}
+                  </button>
+
+                  {isParametersOpen && shouldShowText && (
+                    <ul className="mt-1 ml-4 space-y-0.5">
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/parametros"
+                          className={cn(
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
+                            pathname === '/dashboard/super-admin/parametros' &&
+                              'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          Parámetros
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/parametros/plantillas"
+                          className={cn(
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
+                            pathname ===
+                              '/dashboard/super-admin/parametros/plantillas' &&
+                              'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          Plantillas
                         </Link>
                       </li>
                     </ul>
@@ -672,7 +905,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       shouldShowText && setIsProgramsOpen(!isProgramsOpen)
                     }
                     className={cn(
-                      'flex w-full items-center rounded-lg p-2 text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                      `
+                        flex w-full items-center rounded-lg p-2 text-white
+                        transition-all duration-300
+                        hover:bg-secondary hover:text-white
+                      `,
                       !shouldShowText && 'justify-center'
                     )}
                     title={!shouldShowText ? 'Programas' : undefined}
@@ -680,7 +917,12 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     <FiBook size={18} />
                     {shouldShowText && (
                       <>
-                        <span className="ml-2.5 flex-1 text-left text-xs font-medium whitespace-nowrap">
+                        <span
+                          className="
+                          ml-2.5 flex-1 text-left text-xs font-medium
+                          whitespace-nowrap
+                        "
+                        >
                           Programas
                         </span>
                         {isProgramsOpen ? (
@@ -698,7 +940,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/programs"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname === '/dashboard/super-admin/programs' &&
                               'bg-primary text-[#01142B]'
                           )}
@@ -710,7 +956,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/materias"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname === '/dashboard/super-admin/materias' &&
                               'bg-primary text-[#01142B]'
                           )}
@@ -722,7 +972,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                         <Link
                           href="/dashboard/super-admin/programs/enrolled_users"
                           className={cn(
-                            'block rounded-lg px-2 py-1.5 text-xs text-white transition-all duration-300 hover:bg-secondary hover:text-white',
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
                             pathname ===
                               '/dashboard/super-admin/programs/enrolled_users' &&
                               'bg-primary text-[#01142B]'

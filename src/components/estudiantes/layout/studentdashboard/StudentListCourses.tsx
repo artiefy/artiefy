@@ -209,8 +209,13 @@ export default async function StudentListCourses({
         // PREMIUM
         if (userPlanType === 'Premium' && hasPremium) {
           return (
-            <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-              <FaCrown className="h-3 w-3" />
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-amber-500/30
+              bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400
+            "
+            >
+              <FaCrown className="size-3" />
               Premium
             </div>
           );
@@ -218,8 +223,13 @@ export default async function StudentListCourses({
         // PRO
         if ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasPro) {
           return (
-            <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-              <FaStar className="h-3 w-3" />
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-blue-500/30
+              bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400
+            "
+            >
+              <FaStar className="size-3" />
               Pro
             </div>
           );
@@ -227,8 +237,14 @@ export default async function StudentListCourses({
         // GRATUITO
         if (hasFree) {
           return (
-            <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-              <IoGiftOutline className="h-3 w-3" />
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-emerald-500/30
+              bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium
+              text-emerald-400
+            "
+            >
+              <IoGiftOutline className="size-3" />
               Gratuito
             </div>
           );
@@ -239,8 +255,14 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           return (
-            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-              <FaStar className="h-3 w-3" />${' '}
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-orange-500/30
+              bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium
+              text-orange-400
+            "
+            >
+              <FaStar className="size-3" />${' '}
               {course.individualPrice
                 ? course.individualPrice.toLocaleString('es-CO')
                 : purchasableType?.price
@@ -257,9 +279,20 @@ export default async function StudentListCourses({
           (type) => type.isPurchasableIndividually
         );
         return (
-          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-              <FaStar className="h-3 w-3" />${' '}
+          <div
+            className="
+            flex flex-col
+            sm:flex-row sm:items-center sm:gap-2
+          "
+          >
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-orange-500/30
+              bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium
+              text-orange-400
+            "
+            >
+              <FaStar className="size-3" />${' '}
               {course.individualPrice
                 ? course.individualPrice.toLocaleString('es-CO')
                 : purchasableType?.price
@@ -269,8 +302,18 @@ export default async function StudentListCourses({
             {includedInPlans.length > 0 && (
               <>
                 {/* Mobile view */}
-                <div className="mt-0.5 sm:hidden">
-                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                <div
+                  className="
+                  mt-0.5
+                  sm:hidden
+                "
+                >
+                  <Badge
+                    className="
+                    rounded-full bg-yellow-400 text-[10px] text-gray-900
+                    hover:bg-yellow-500
+                  "
+                  >
                     Incluido en:{' '}
                     <span className="font-bold">
                       {includedInPlans.join(', ')}
@@ -278,8 +321,18 @@ export default async function StudentListCourses({
                   </Badge>
                 </div>
                 {/* Desktop view as badge */}
-                <div className="hidden sm:block">
-                  <Badge className="rounded-full bg-yellow-400 text-[10px] text-gray-900 hover:bg-yellow-500">
+                <div
+                  className="
+                  hidden
+                  sm:block
+                "
+                >
+                  <Badge
+                    className="
+                    rounded-full bg-yellow-400 text-[10px] text-gray-900
+                    hover:bg-yellow-500
+                  "
+                  >
                     Incluido en:{' '}
                     <span className="font-bold">
                       {includedInPlans.join(', ')}
@@ -298,15 +351,25 @@ export default async function StudentListCourses({
             .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
             .join(' + ');
           return (
-            <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-              <AiOutlineFire className="h-3 w-3" />
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-red-500/30
+              bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400
+            "
+            >
+              <AiOutlineFire className="size-3" />
               {formattedPlans}
             </div>
           );
         }
         return (
-          <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-            <FaCrown className="h-3 w-3" />
+          <div
+            className="
+            flex items-center gap-1 rounded-full border border-amber-500/30
+            bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400
+          "
+          >
+            <FaCrown className="size-3" />
             Premium
           </div>
         );
@@ -318,15 +381,25 @@ export default async function StudentListCourses({
             .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
             .join(' + ');
           return (
-            <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-              <AiOutlineFire className="h-3 w-3" />
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-red-500/30
+              bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400
+            "
+            >
+              <AiOutlineFire className="size-3" />
               {formattedPlans}
             </div>
           );
         }
         return (
-          <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-            <FaStar className="h-3 w-3" />
+          <div
+            className="
+            flex items-center gap-1 rounded-full border border-blue-500/30
+            bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400
+          "
+          >
+            <FaStar className="size-3" />
             Pro
           </div>
         );
@@ -338,15 +411,26 @@ export default async function StudentListCourses({
             .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
             .join(' + ');
           return (
-            <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-              <AiOutlineFire className="h-3 w-3" />
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-red-500/30
+              bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400
+            "
+            >
+              <AiOutlineFire className="size-3" />
               {formattedPlans}
             </div>
           );
         }
         return (
-          <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-            <IoGiftOutline className="h-3 w-3" />
+          <div
+            className="
+            flex items-center gap-1 rounded-full border border-emerald-500/30
+            bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium
+            text-emerald-400
+          "
+          >
+            <IoGiftOutline className="size-3" />
             Gratuito
           </div>
         );
@@ -360,8 +444,13 @@ export default async function StudentListCourses({
     // Mostrar el precio individual cuando el curso es tipo 4
     if (course.courseTypeId === 4 && course.individualPrice) {
       return (
-        <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-          <FaStar className="h-3 w-3" />${' '}
+        <div
+          className="
+          flex items-center gap-1 rounded-full border border-orange-500/30
+          bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400
+        "
+        >
+          <FaStar className="size-3" />${' '}
           {course.individualPrice.toLocaleString('es-CO')}
         </div>
       );
@@ -369,23 +458,38 @@ export default async function StudentListCourses({
     const { requiredSubscriptionLevel } = courseType;
     if (requiredSubscriptionLevel === 'none') {
       return (
-        <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-          <IoGiftOutline className="h-3 w-3" />
+        <div
+          className="
+          flex items-center gap-1 rounded-full border border-emerald-500/30
+          bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400
+        "
+        >
+          <IoGiftOutline className="size-3" />
           Gratuito
         </div>
       );
     }
     if (requiredSubscriptionLevel === 'premium') {
       return (
-        <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-          <FaCrown className="h-3 w-3" />
+        <div
+          className="
+          flex items-center gap-1 rounded-full border border-amber-500/30
+          bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400
+        "
+        >
+          <FaCrown className="size-3" />
           Premium
         </div>
       );
     }
     return (
-      <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-        <FaStar className="h-3 w-3" />
+      <div
+        className="
+        flex items-center gap-1 rounded-full border border-blue-500/30
+        bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400
+      "
+      >
+        <FaStar className="size-3" />
         Pro
       </div>
     );
@@ -431,8 +535,13 @@ export default async function StudentListCourses({
       if (hasActiveSubscription) {
         if (userPlanType === 'Premium' && hasPremium) {
           principalType = (
-            <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-              <FaCrown className="h-3 w-3" />
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-amber-500/30
+              bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400
+            "
+            >
+              <FaCrown className="size-3" />
               Premium
             </div>
           );
@@ -441,15 +550,26 @@ export default async function StudentListCourses({
           hasPro
         ) {
           principalType = (
-            <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-              <FaCrown className="h-3 w-3" />
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-blue-500/30
+              bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400
+            "
+            >
+              <FaCrown className="size-3" />
               Pro
             </div>
           );
         } else if (hasFree) {
           principalType = (
-            <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-              <IoGiftOutline className="h-3 w-3" />
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-emerald-500/30
+              bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium
+              text-emerald-400
+            "
+            >
+              <IoGiftOutline className="size-3" />
               Gratuito
             </div>
           );
@@ -458,8 +578,14 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           principalType = (
-            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-              <FaStar className="h-3 w-3" />${' '}
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-orange-500/30
+              bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium
+              text-orange-400
+            "
+            >
+              <FaStar className="size-3" />${' '}
               {course.individualPrice
                 ? course.individualPrice.toLocaleString('es-CO')
                 : purchasableType?.price
@@ -474,8 +600,14 @@ export default async function StudentListCourses({
             (type) => type.isPurchasableIndividually
           );
           principalType = (
-            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-              <FaStar className="h-3 w-3" />${' '}
+            <div
+              className="
+              flex items-center gap-1 rounded-full border border-orange-500/30
+              bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium
+              text-orange-400
+            "
+            >
+              <FaStar className="size-3" />${' '}
               {course.individualPrice
                 ? course.individualPrice.toLocaleString('es-CO')
                 : purchasableType?.price
@@ -489,15 +621,26 @@ export default async function StudentListCourses({
               .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
               .join(' + ');
             principalType = (
-              <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-                <AiOutlineFire className="h-3 w-3" />
+              <div
+                className="
+                flex items-center gap-1 rounded-full border border-red-500/30
+                bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400
+              "
+              >
+                <AiOutlineFire className="size-3" />
                 {formattedPlans}
               </div>
             );
           } else {
             principalType = (
-              <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-                <FaCrown className="h-3 w-3" />
+              <div
+                className="
+                flex items-center gap-1 rounded-full border border-amber-500/30
+                bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium
+                text-amber-400
+              "
+              >
+                <FaCrown className="size-3" />
                 Premium
               </div>
             );
@@ -508,15 +651,25 @@ export default async function StudentListCourses({
               .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
               .join(' + ');
             principalType = (
-              <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-                <AiOutlineFire className="h-3 w-3" />
+              <div
+                className="
+                flex items-center gap-1 rounded-full border border-red-500/30
+                bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400
+              "
+              >
+                <AiOutlineFire className="size-3" />
                 {formattedPlans}
               </div>
             );
           } else {
             principalType = (
-              <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-                <FaCrown className="h-3 w-3" />
+              <div
+                className="
+                flex items-center gap-1 rounded-full border border-blue-500/30
+                bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400
+              "
+              >
+                <FaCrown className="size-3" />
                 Pro
               </div>
             );
@@ -527,15 +680,26 @@ export default async function StudentListCourses({
               .map((plan) => plan.charAt(0) + plan.slice(1).toLowerCase())
               .join(' + ');
             principalType = (
-              <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-                <AiOutlineFire className="h-3 w-3" />
+              <div
+                className="
+                flex items-center gap-1 rounded-full border border-red-500/30
+                bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400
+              "
+              >
+                <AiOutlineFire className="size-3" />
                 {formattedPlans}
               </div>
             );
           } else {
             principalType = (
-              <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                <IoGiftOutline className="h-3 w-3" />
+              <div
+                className="
+                flex items-center gap-1 rounded-full border
+                border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px]
+                font-medium text-emerald-400
+              "
+              >
+                <IoGiftOutline className="size-3" />
                 Gratuito
               </div>
             );
@@ -552,15 +716,32 @@ export default async function StudentListCourses({
   return (
     // Add an ID to this section so we can scroll to it
     <div id="courses-list-section">
-      <div className="mt-8 mb-3 flex justify-start px-8 sm:mb-3 lg:px-26">
+      <div
+        className="
+        mt-8 mb-3 flex justify-start px-8
+        sm:mb-3
+        lg:px-26
+      "
+      >
         <div className="flex items-center gap-2">
           <HiLibrary className="text-xl text-white" />
-          <GradientText className="text-2xl sm:text-3xl">
+          <GradientText
+            className="
+            text-2xl
+            sm:text-3xl
+          "
+          >
             Cursos Artie
           </GradientText>
         </div>
       </div>
-      <div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-26">
+      <div
+        className="
+        relative z-0 mb-8 grid grid-cols-1 gap-4 px-8
+        sm:grid-cols-2
+        lg:grid-cols-4 lg:px-26
+      "
+      >
         {processedCourses.map(
           ({
             course,
@@ -571,15 +752,23 @@ export default async function StudentListCourses({
           }) => {
             const cardContent = (
               <Card
-                className={`artiefy-course-card zoom-in relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 text-foreground shadow-md transition-all duration-300 ${
-                  course.isActive
-                    ? 'cursor-pointer hover:-translate-y-1 hover:border-primary hover:shadow-xl'
-                    : 'cursor-not-allowed'
-                }`}
+                className={`
+                  artiefy-course-card zoom-in relative flex h-full flex-col
+                  gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4
+                  text-foreground shadow-md transition-all duration-300
+                  ${
+                    course.isActive
+                      ? `
+                      cursor-pointer
+                      hover:-translate-y-1 hover:border-primary hover:shadow-xl
+                    `
+                      : 'cursor-not-allowed'
+                  }
+                `}
               >
                 <div className="relative -mx-4 -mt-4 overflow-hidden">
                   <AspectRatio ratio={16 / 9}>
-                    <div className="relative h-full w-full">
+                    <div className="relative size-full">
                       <Image
                         src={imageUrl}
                         alt={course.title || 'Imagen del curso'}
@@ -590,17 +779,32 @@ export default async function StudentListCourses({
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         quality={75}
                       />
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#061C37] via-[#061C37]/60 to-transparent" />
+                      <div
+                        className="
+                        pointer-events-none absolute inset-0 bg-gradient-to-t
+                        from-[#061C37] via-[#061C37]/60 to-transparent
+                      "
+                      />
                     </div>
                   </AspectRatio>
                 </div>
 
                 <div className="flex h-full flex-1 flex-col gap-3">
-                  <h3 className="line-clamp-2 text-base leading-snug font-semibold text-white md:text-lg">
+                  <h3
+                    className="
+                    line-clamp-2 text-base leading-snug font-semibold text-white
+                    md:text-lg
+                  "
+                  >
                     {course.title}
                   </h3>
 
-                  <div className="flex flex-wrap items-center justify-between gap-2 sm:flex-row">
+                  <div
+                    className="
+                    flex flex-wrap items-center justify-between gap-2
+                    sm:flex-row
+                  "
+                  >
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs text-[#94A3B8]">
                         Por:{' '}
@@ -609,8 +813,14 @@ export default async function StudentListCourses({
                         </span>
                       </p>
                       {isEnrolled && (
-                        <div className="flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/20 px-2 py-0.5 text-green-400">
-                          <CheckCircleIcon className="h-3 w-3" />
+                        <div
+                          className="
+                          flex items-center gap-1 rounded-full border
+                          border-green-500/30 bg-green-500/20 px-2 py-0.5
+                          text-green-400
+                        "
+                        >
+                          <CheckCircleIcon className="size-3" />
                           <span className="text-[10px] font-medium">
                             Inscrito
                           </span>
@@ -619,10 +829,20 @@ export default async function StudentListCourses({
                     </div>
 
                     <div className="flex items-center text-sm">
-                      <div className="hidden sm:block">
+                      <div
+                        className="
+                        hidden
+                        sm:block
+                      "
+                      >
                         {getCourseTypeLabel(course)}
                       </div>
-                      <div className="block sm:hidden">
+                      <div
+                        className="
+                        block
+                        sm:hidden
+                      "
+                      >
                         {getCourseTypeLabelMobile(course)}
                       </div>
                     </div>
@@ -647,10 +867,19 @@ export default async function StudentListCourses({
                     </span>
                   </div>
 
-                  <p className="mt-3 flex items-center gap-1.5 text-xs text-[#94A3B8]">
+                  <p
+                    className="
+                    mt-3 flex items-center gap-1.5 text-xs text-[#94A3B8]
+                  "
+                  >
                     Empieza:{' '}
                     {nextLiveClassDate ? (
-                      <span className="animate-pulse font-medium text-primary drop-shadow-[0_0_8px_rgba(58,244,239,0.6)]">
+                      <span
+                        className="
+                        animate-pulse font-medium text-primary
+                        drop-shadow-[0_0_8px_rgba(58,244,239,0.6)]
+                      "
+                      >
                         {formatSpanishDate(nextLiveClassDate)}
                       </span>
                     ) : course.modalidad &&
@@ -675,14 +904,23 @@ export default async function StudentListCourses({
                   <Link
                     href={`/estudiantes/cursos/${course.id}`}
                     aria-label={`Ver detalles del curso ${course.title}`}
-                    className={`group ${cardWrapperClass}`}
+                    className={`
+                      group
+                      ${cardWrapperClass}
+                    `}
                   >
                     {cardContent}
                   </Link>
                 ) : (
                   <div className="group relative h-full rounded-2xl opacity-80">
                     {cardContent}
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40 text-lg font-semibold">
+                    <div
+                      className="
+                      pointer-events-none absolute inset-0 flex items-center
+                      justify-center rounded-2xl bg-black/40 text-lg
+                      font-semibold
+                    "
+                    >
                       Muy pronto
                     </div>
                   </div>

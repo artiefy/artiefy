@@ -213,7 +213,12 @@ export function ProgramContent({
   }, [userId, courses, enrollmentCache]);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+    <section
+      className="
+      rounded-2xl border border-border bg-card p-6
+      md:p-8
+    "
+    >
       {isEnrolled && !isSubscriptionActive && (
         <Alert
           variant="destructive"
@@ -233,7 +238,12 @@ export function ProgramContent({
                 </p>
                 <Button
                   onClick={() => router.push('/planes')}
-                  className="transform rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-red-600 active:scale-95"
+                  className="
+                    transform rounded-lg bg-red-500 px-6 py-2 font-semibold
+                    text-white transition-all duration-300
+                    hover:scale-105 hover:bg-red-600
+                    active:scale-95
+                  "
                 >
                   <FaCrown className="mr-2" />
                   Renovar Suscripción Premium
@@ -245,11 +255,20 @@ export function ProgramContent({
       )}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <BookOpen className="h-5 w-5 text-primary" />
+          <div
+            className="
+            flex size-10 items-center justify-center rounded-xl bg-primary/10
+          "
+          >
+            <BookOpen className="size-5 text-primary" />
           </div>
           <div>
-            <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
+            <h2
+              className="
+              font-display text-xl font-bold text-foreground
+              md:text-2xl
+            "
+            >
               Cursos del programa
             </h2>
             {isEnrolled && (
@@ -259,7 +278,13 @@ export function ProgramContent({
             )}
           </div>
         </div>
-        <div className="inline-flex items-center rounded-full border border-primary/30 px-2.5 py-0.5 text-xs font-semibold text-primary transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+        <div
+          className="
+          inline-flex items-center rounded-full border border-primary/30 px-2.5
+          py-0.5 text-xs font-semibold text-primary transition-colors
+          focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none
+        "
+        >
           {courses.length} cursos
         </div>
       </div>
@@ -305,30 +330,56 @@ export function ProgramContent({
                 <a
                   key={course.id}
                   href={`/estudiantes/cursos/${course.id}`}
-                  className={`group flex items-center gap-4 rounded-xl border p-4 transition-all hover:shadow-md ${
-                    isCompleted
-                      ? 'border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/40'
-                      : 'border-border bg-[#01152d80] hover:border-primary/50'
-                  }`}
+                  className={`
+                    group flex items-center gap-4 rounded-xl border p-4
+                    transition-all
+                    hover:shadow-md
+                    ${
+                      isCompleted
+                        ? `
+                        border-emerald-500/20 bg-emerald-500/5
+                        hover:border-emerald-500/40
+                      `
+                        : `
+                        border-border bg-[#01152d80]
+                        hover:border-primary/50
+                      `
+                    }
+                  `}
                 >
-                  <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg">
+                  <div
+                    className="
+                    relative h-16 w-24 shrink-0 overflow-hidden rounded-lg
+                  "
+                  >
                     <Image
                       src={coverImageUrl}
                       alt={course.title}
                       fill
-                      className="h-full w-full object-cover"
+                      className="size-full object-cover"
                       sizes="96px"
                     />
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Play className="h-6 w-6 text-white" />
+                    <div
+                      className="
+                      absolute inset-0 flex items-center justify-center
+                      bg-black/30 opacity-0 transition-opacity
+                      group-hover:opacity-100
+                    "
+                    >
+                      <Play className="size-6 text-white" />
                     </div>
                     {isEnrolled && (isLoadingProgress || isEnrolledCourse) && (
-                      <div className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
+                      <div
+                        className="
+                        absolute top-1 right-1 flex size-5 items-center
+                        justify-center rounded-full bg-emerald-500
+                      "
+                      >
                         {isLoadingProgress ? (
-                          <Icons.spinner className="h-3 w-3 text-white" />
+                          <Icons.spinner className="size-3 text-white" />
                         ) : (
                           isEnrolledCourse && (
-                            <FaCheck className="h-3 w-3 text-white" />
+                            <FaCheck className="size-3 text-white" />
                           )
                         )}
                       </div>
@@ -342,38 +393,80 @@ export function ProgramContent({
                       {isEnrolled && (
                         <>
                           {isLoadingProgress ? (
-                            <div className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-[#0b2a4a] px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                              <Icons.spinner className="h-3 w-3" /> Cargando
+                            <div
+                              className="
+                              inline-flex items-center gap-1 rounded-full border
+                              border-border/50 bg-[#0b2a4a] px-2.5 py-0.5
+                              text-xs font-semibold text-muted-foreground
+                            "
+                            >
+                              <Icons.spinner className="size-3" /> Cargando
                             </div>
                           ) : isCompleted ? (
-                            <div className="inline-flex items-center rounded-full border border-transparent bg-emerald-500/20 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                            <div
+                              className="
+                              inline-flex items-center rounded-full border
+                              border-transparent bg-emerald-500/20 px-2.5 py-0.5
+                              text-xs font-semibold text-emerald-400
+                              transition-colors
+                              hover:bg-primary/80
+                              focus:ring-2 focus:ring-ring focus:ring-offset-2
+                              focus:outline-none
+                            "
+                            >
                               Completado
                             </div>
                           ) : isEnrolledCourse ? (
-                            <div className="inline-flex items-center rounded-full border border-border/50 bg-[#0b2a4a] px-2.5 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
-                              <Clock className="mr-1 h-3 w-3" /> En progreso
+                            <div
+                              className="
+                              inline-flex items-center rounded-full border
+                              border-border/50 bg-[#0b2a4a] px-2.5 py-0.5
+                              text-xs font-semibold text-muted-foreground
+                              transition-colors
+                              hover:border-primary/50 hover:text-primary
+                              focus:ring-2 focus:ring-ring focus:ring-offset-2
+                              focus:outline-none
+                            "
+                            >
+                              <Clock className="mr-1 size-3" /> En progreso
                             </div>
                           ) : null}
                         </>
                       )}
                     </div>
-                    <h3 className="truncate font-semibold text-foreground transition-colors group-hover:text-primary">
+                    <h3
+                      className="
+                      truncate font-semibold text-foreground transition-colors
+                      group-hover:text-primary
+                    "
+                    >
                       {course.title}
                     </h3>
                     <p className="mt-0.5 truncate text-sm text-muted-foreground">
                       {course.description || 'Descripción no disponible'}
                     </p>
                   </div>
-                  <div className="hidden shrink-0 items-center gap-4 text-sm text-muted-foreground sm:flex">
+                  <div
+                    className="
+                    hidden shrink-0 items-center gap-4 text-sm
+                    text-muted-foreground
+                    sm:flex
+                  "
+                  >
                     <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
+                      <Clock className="size-4" />
                       {durationLabel}
                     </div>
                     <div className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
+                      <BookOpen className="size-4" />
                       {totalClasses} clases
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+                    <ChevronRight
+                      className="
+                      size-5 text-muted-foreground transition-colors
+                      group-hover:text-primary
+                    "
+                    />
                   </div>
                 </a>
               );
@@ -490,13 +583,28 @@ export function ProgramCertificationPanel({
   const isProgramCertificateUnlocked = canSeeProgramCertificate;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+    <section
+      className="
+      rounded-2xl border border-border bg-card p-6
+      md:p-8
+    "
+    >
       <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
-          <Award className="h-6 w-6 text-white" />
+        <div
+          className="
+          flex size-12 items-center justify-center rounded-xl bg-gradient-to-br
+          from-amber-400 to-orange-500
+        "
+        >
+          <Award className="size-6 text-white" />
         </div>
         <div>
-          <h3 className="font-display text-xl font-bold text-foreground md:text-2xl">
+          <h3
+            className="
+            font-display text-xl font-bold text-foreground
+            md:text-2xl
+          "
+          >
             Certificación Del Programa
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -516,7 +624,10 @@ export function ProgramCertificationPanel({
         </div>
         <div className="h-3 overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all"
+            className="
+              h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500
+              transition-all
+            "
             style={{ width: `${programProgress}%` }}
           />
         </div>
@@ -531,16 +642,25 @@ export function ProgramCertificationPanel({
           onClick={() =>
             isProgramCertificateUnlocked && setShowProgramCertModal(true)
           }
-          className={`inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-full border px-5 py-2 text-sm font-semibold transition focus:ring-2 focus:ring-green-400/60 focus:ring-offset-2 focus:ring-offset-card focus:outline-none ${
-            isProgramCertificateUnlocked
-              ? 'border-green-500/30 bg-green-500/20 text-green-200 hover:bg-green-500/30'
-              : 'cursor-not-allowed border-white/10 bg-white/5 text-white/60'
-          }`}
+          className={`
+            inline-flex w-full max-w-xs items-center justify-center gap-2
+            rounded-full border px-5 py-2 text-sm font-semibold transition
+            focus:ring-2 focus:ring-green-400/60 focus:ring-offset-2
+            focus:ring-offset-card focus:outline-none
+            ${
+              isProgramCertificateUnlocked
+                ? `
+                border-green-500/30 bg-green-500/20 text-green-200
+                hover:bg-green-500/30
+              `
+                : 'cursor-not-allowed border-white/10 bg-white/5 text-white/60'
+            }
+          `}
         >
           {isProgramCertificateUnlocked ? (
-            <FaCheckCircle className="h-4 w-4 text-green-400" />
+            <FaCheckCircle className="size-4 text-green-400" />
           ) : (
-            <FaLock className="h-4 w-4 text-white/70" />
+            <FaLock className="size-4 text-white/70" />
           )}
           {isProgramCertificateUnlocked
             ? 'Ver tu certificado'
@@ -549,10 +669,22 @@ export function ProgramCertificationPanel({
       </div>
 
       {showProgramCertModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl">
+        <div
+          className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4
+        "
+        >
+          <div
+            className="
+            relative w-full max-w-lg rounded-2xl border border-border bg-card
+            p-6 shadow-2xl
+          "
+          >
             <button
-              className="absolute top-3 right-3 text-muted-foreground hover:text-foreground"
+              className="
+                absolute top-3 right-3 text-muted-foreground
+                hover:text-foreground
+              "
               onClick={() => setShowProgramCertModal(false)}
               type="button"
               aria-label="Cerrar"
@@ -560,8 +692,13 @@ export function ProgramCertificationPanel({
               ×
             </button>
             <div className="flex flex-col items-center gap-4 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500">
-                <Award className="h-7 w-7 text-white" />
+              <div
+                className="
+                flex size-14 items-center justify-center rounded-full
+                bg-gradient-to-br from-amber-400 to-orange-500
+              "
+              >
+                <Award className="size-7 text-white" />
               </div>
               <h4 className="text-lg font-bold text-foreground">
                 ¡Felicidades!
@@ -571,7 +708,12 @@ export function ProgramCertificationPanel({
                 visualizado.
               </p>
               <Link href={`/estudiantes/certificados/programa/${program.id}`}>
-                <Button className="w-full max-w-sm bg-amber-500 font-semibold text-white hover:bg-amber-600">
+                <Button
+                  className="
+                  w-full max-w-sm bg-amber-500 font-semibold text-white
+                  hover:bg-amber-600
+                "
+                >
                   Ver tu certificado del programa
                 </Button>
               </Link>

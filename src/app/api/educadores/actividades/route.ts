@@ -15,7 +15,7 @@ import {
   userActivitiesProgress,
 } from '~/server/db/schema';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
-
+// El endpoint de sugerencia se moverá a /api/educadores/actividades/sugerido/route.ts
 function respondWithError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
 }

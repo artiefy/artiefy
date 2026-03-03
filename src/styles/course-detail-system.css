@@ -14,10 +14,10 @@
   --color-bg-hover: rgba(29, 40, 58, 0.4);
 
   /* Teal / Green Primary */
-  --color-primary: rgb(34, 197, 94);
+  --color-primary: rgb(6, 182, 212);
   --color-primary-rgb: 34, 197, 94;
-  --color-primary-light: rgb(74, 222, 128);
-  --color-primary-dark: rgb(22, 163, 74);
+  --color-primary-light: rgb(6, 182, 212);
+  --color-primary-dark: rgb(6, 182, 212);
   --color-primary-fade: rgba(34, 197, 94, 0.12);
   --color-primary-glow: rgba(34, 197, 94, 0.3);
 
@@ -28,8 +28,8 @@
   --color-accent-fade: rgba(6, 182, 212, 0.12);
 
   /* Purple Secondary */
-  --color-secondary: rgb(168, 85, 247);
-  --color-secondary-light: rgb(196, 181, 253);
+  --color-secondary: rgb(6, 182, 212);
+  --color-secondary-light: rgb(6, 182, 212);
   --color-secondary-fade: rgba(168, 85, 247, 0.12);
 
   /* Neutral Text */
@@ -44,7 +44,7 @@
   --color-border-glass: rgba(148, 163, 184, 0.12);
 
   /* States */
-  --color-success: rgb(34, 197, 94);
+  --color-success: rgb(6, 182, 212);
   --color-warning: rgb(245, 158, 11);
   --color-error: rgb(239, 68, 68);
   --color-info: rgb(6, 182, 212);

@@ -34,15 +34,15 @@ interface Chat {
 
 const chatTypeConfig = {
   ticket: {
-    icon: <Ticket className="h-4 w-4" />,
+    icon: <Ticket className="size-4" />,
     color: 'purple',
   },
   chat: {
-    icon: <MessageSquare className="h-4 w-4" />,
+    icon: <MessageSquare className="size-4" />,
     color: 'blue',
   },
   project: {
-    icon: <FileText className="h-4 w-4" />,
+    icon: <FileText className="size-4" />,
     color: 'green',
   },
 } as const;
@@ -112,15 +112,20 @@ export const ChatList = ({
   }, [user?.id, activeType, setShowChatList]);
 
   return (
-    <div className="flex h-full w-full flex-col border-r border-gray-200 bg-white">
+    <div className="flex size-full flex-col border-r border-gray-200 bg-white">
       <div className="border-b border-gray-200 p-4">
-        <h2 className="flex items-center justify-center gap-2 text-center text-lg font-semibold text-gray-800">
+        <h2
+          className="
+          flex items-center justify-center gap-2 text-center text-lg
+          font-semibold text-gray-800
+        "
+        >
           {activeType === 'tickets' ? (
             'Tickets de Soporte'
           ) : activeType === 'projects' ? (
             'Mis Proyectos'
           ) : (
-            <BsRobot className="h-5 w-5 text-white" />
+            <BsRobot className="size-5 text-white" />
           )}
         </h2>
       </div>
@@ -139,10 +144,14 @@ export const ChatList = ({
               });
               setShowChatList(false);
             }}
-            className="w-full rounded-lg bg-purple-500 px-4 py-3 text-center font-medium text-white transition-colors hover:bg-purple-600"
+            className="
+              w-full rounded-lg bg-purple-500 px-4 py-3 text-center font-medium
+              text-white transition-colors
+              hover:bg-purple-600
+            "
           >
             <div className="flex items-center justify-center gap-2">
-              <Ticket className="h-5 w-5" />
+              <Ticket className="size-5" />
               Crear Nuevo Ticket
             </div>
           </Button>
@@ -150,7 +159,11 @@ export const ChatList = ({
       )}
 
       {chats.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center p-8 text-center text-gray-500">
+        <div
+          className="
+          flex flex-1 items-center justify-center p-8 text-center text-gray-500
+        "
+        >
           {activeType === 'tickets'
             ? 'No tienes tickets de soporte. Crea uno nuevo para obtener ayuda.'
             : `No hay ${activeType === 'projects' ? 'proyectos' : 'chats'} disponibles`}
@@ -179,7 +192,11 @@ export const ChatList = ({
                     setShowChatList(false);
                   }
                 }}
-                className="w-full border-b border-gray-100 bg-gray-50 px-4 py-3 text-left transition-transform duration-200 ease-in-out hover:scale-[1.02]"
+                className="
+                  w-full border-b border-gray-100 bg-gray-50 px-4 py-3 text-left
+                  transition-transform duration-200 ease-in-out
+                  hover:scale-[1.02]
+                "
               >
                 <div className="flex items-center gap-2">
                   {chat.type && chatTypeConfig[chat.type]?.icon}
@@ -198,17 +215,30 @@ export const ChatList = ({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: 'spring', stiffness: 300 }}
-                  className={`mt-2 flex w-27 items-center gap-1 rounded-2xl px-3 py-1 text-sm text-white shadow-md ${
-                    chat.type && chatTypeConfig[chat.type]?.color === 'purple'
-                      ? 'bg-purple-500 hover:bg-purple-600'
-                      : chat.type &&
-                          chatTypeConfig[chat.type]?.color === 'green'
-                        ? 'bg-green-500 hover:bg-green-600'
-                        : 'bg-blue-500 hover:bg-blue-600'
-                  }`}
+                  className={`
+                    mt-2 flex w-27 items-center gap-1 rounded-2xl px-3 py-1
+                    text-sm text-white shadow-md
+                    ${
+                      chat.type && chatTypeConfig[chat.type]?.color === 'purple'
+                        ? `
+                        bg-purple-500
+                        hover:bg-purple-600
+                      `
+                        : chat.type &&
+                            chatTypeConfig[chat.type]?.color === 'green'
+                          ? `
+                          bg-green-500
+                          hover:bg-green-600
+                        `
+                          : `
+                          bg-blue-500
+                          hover:bg-blue-600
+                        `
+                    }
+                  `}
                 >
                   Abrir
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="size-4" />
                 </motion.div>
               </Button>
             </li>
@@ -229,10 +259,14 @@ export const ChatList = ({
               });
               setShowChatList(false);
             }}
-            className="w-full rounded-lg bg-purple-500 px-3 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-purple-600"
+            className="
+              w-full rounded-lg bg-purple-500 px-3 py-2 text-center text-sm
+              font-medium text-white transition-colors
+              hover:bg-purple-600
+            "
           >
             <div className="flex items-center justify-center gap-2">
-              <Ticket className="h-4 w-4" />
+              <Ticket className="size-4" />
               Nuevo Ticket
             </div>
           </Button>

@@ -116,10 +116,10 @@ export async function GET(request: Request) {
 
     // Filtro por rango de fechas
     if (from) {
-      conditions.push(gte(pagos.fecha, from));
+      conditions.push(gte(pagos.fechaPrograma, from));
     }
     if (to) {
-      conditions.push(lte(pagos.fecha, to));
+      conditions.push(lte(pagos.fechaPrograma, to));
     }
 
     // Filtro por método
@@ -176,7 +176,7 @@ export async function GET(request: Request) {
         concepto: pagos.concepto,
         metodo: pagos.metodo,
         valor: pagos.valor,
-        fecha: pagos.fecha,
+        fecha: pagos.fechaPrograma,
         createdAt: pagos.createdAt,
         receiptVerified: pagos.receiptVerified,
         receiptVerifiedAt: pagos.receiptVerifiedAt,

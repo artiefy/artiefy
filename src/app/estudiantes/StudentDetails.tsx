@@ -447,19 +447,47 @@ export default function StudentDetails({
 
   return (
     <div
-      className={`-mb-8 flex min-h-screen flex-col sm:mb-0 ${activeFilter === 'cursos' || activeFilter === 'programas' ? 'pb-28 sm:pb-40' : ''}`}
+      className={`
+        -mb-8 flex min-h-screen flex-col
+        sm:mb-0
+        ${activeFilter === 'cursos' || activeFilter === 'programas' ? 'pb-28 sm:pb-40' : ''}`}
     >
       <main className="grow">
-        <div className="flex flex-col space-y-12 sm:space-y-16">
-          <div className="-mt-6 flex animate-zoom-in flex-col items-center space-y-4 px-2 sm:mt-8 sm:px-0">
-            <div className="header-search-wrapper relative flex w-full flex-col items-center justify-center gap-4">
+        <div
+          className="
+          flex flex-col space-y-12
+          sm:space-y-16
+        "
+        >
+          <div
+            className="
+            -mt-6 flex animate-zoom-in flex-col items-center space-y-4 px-2
+            sm:mt-8 sm:px-0
+          "
+          >
+            <div
+              className="
+              header-search-wrapper relative flex w-full flex-col items-center
+              justify-center gap-4
+            "
+            >
               <div className="flex flex-col items-center text-center">
                 <div
                   role="heading"
                   aria-level={1}
-                  className="flex items-center justify-center gap-2 sm:gap-4"
+                  className="
+                    flex items-center justify-center gap-2
+                    sm:gap-4
+                  "
                 >
-                  <span className="search-illuminate-title font-display text-3xl font-bold text-foreground sm:text-4xl md:text-5xl">
+                  <span
+                    className="
+                    search-illuminate-title font-display text-3xl font-bold
+                    text-foreground
+                    sm:text-4xl
+                    md:text-5xl
+                  "
+                  >
                     Pregúntale a
                   </span>
 
@@ -468,7 +496,12 @@ export default function StudentDetails({
                   </div>
                 </div>
 
-                <p className="mt-2 px-4 text-sm text-muted-foreground sm:mt-3 sm:px-0 sm:text-lg">
+                <p
+                  className="
+                  mt-2 px-4 text-sm text-muted-foreground
+                  sm:mt-3 sm:px-0 sm:text-lg
+                "
+                >
                   Tu asistente de IA para encontrar el curso perfecto y comenzar
                   a crear proyectos increíbles.
                 </p>
@@ -482,9 +515,10 @@ export default function StudentDetails({
               <div className="header-search-container relative">
                 <input
                   required
-                  className={`header-input pl-6 ${
-                    searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''
-                  }`}
+                  className={`
+                    header-input pl-6
+                    ${searchBarDisabled ? 'cursor-not-allowed opacity-70' : ''}
+                  `}
                   name="search"
                   placeholder={
                     searchBarDisabled ? 'Procesando consulta...' : _text
@@ -529,7 +563,12 @@ export default function StudentDetails({
               </div>
 
               {/* Text with sparkles icon below search bar */}
-              <p className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-muted-foreground">
+              <p
+                className="
+                mt-3 flex items-center justify-center gap-2 text-center text-sm
+                text-muted-foreground
+              "
+              >
                 <span className="text-gray-400">
                   Aprende con{' '}
                   <span className="font-medium text-primary">IA</span> y
@@ -542,17 +581,40 @@ export default function StudentDetails({
           {/* Filter buttons above Seguir viendo */}
           <div
             id="filters-anchor"
-            className="animation-delay-200 relative animate-zoom-in pr-0 pl-4 sm:px-24"
+            className="
+              animation-delay-200 relative animate-zoom-in pr-0 pl-4
+              sm:px-24
+            "
           >
-            <div className="-mt-6 mb-4 flex w-full flex-wrap justify-center gap-2 pr-4 sm:-mt-8 sm:mb-0 sm:justify-start">
-              <div className="flex flex-wrap items-center justify-center gap-1.5 sm:justify-start sm:gap-2 md:gap-3">
+            <div
+              className="
+              -mt-6 mb-4 flex w-full flex-wrap justify-center gap-2 pr-4
+              sm:-mt-8 sm:mb-0 sm:justify-start
+            "
+            >
+              <div
+                className="
+                flex flex-wrap items-center justify-center gap-1.5
+                sm:justify-start sm:gap-2
+                md:gap-3
+              "
+              >
                 <button
                   onClick={() => handleFilterClick('todos')}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
-                    activeFilter === 'todos'
-                      ? 'bg-foreground text-background'
-                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
-                  }`}
+                  className={`
+                    rounded-full px-3 py-1.5 text-xs font-medium transition-all
+                    duration-300
+                    sm:px-5 sm:py-2 sm:text-sm
+                    ${
+                      activeFilter === 'todos'
+                        ? 'bg-foreground text-background'
+                        : `
+                        border border-foreground/30 bg-transparent
+                        text-[#94A3B8]
+                        hover:border-foreground hover:text-foreground
+                      `
+                    }
+                  `}
                   disabled={isNavigating && pendingFilter === 'todos'}
                 >
                   <span className="inline-flex items-center gap-2">
@@ -567,11 +629,20 @@ export default function StudentDetails({
                 </button>
                 <button
                   onClick={() => handleFilterClick('cursos')}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
-                    activeFilter === 'cursos'
-                      ? 'bg-foreground text-background'
-                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
-                  }`}
+                  className={`
+                    rounded-full px-3 py-1.5 text-xs font-medium transition-all
+                    duration-300
+                    sm:px-5 sm:py-2 sm:text-sm
+                    ${
+                      activeFilter === 'cursos'
+                        ? 'bg-foreground text-background'
+                        : `
+                        border border-foreground/30 bg-transparent
+                        text-[#94A3B8]
+                        hover:border-foreground hover:text-foreground
+                      `
+                    }
+                  `}
                   disabled={isNavigating && pendingFilter === 'cursos'}
                 >
                   <span className="inline-flex items-center gap-2">
@@ -586,11 +657,20 @@ export default function StudentDetails({
                 </button>
                 <button
                   onClick={() => handleFilterClick('programas')}
-                  className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
-                    activeFilter === 'programas'
-                      ? 'bg-foreground text-background'
-                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
-                  }`}
+                  className={`
+                    rounded-full px-3 py-1.5 text-xs font-medium transition-all
+                    duration-300
+                    sm:px-5 sm:py-2 sm:text-sm
+                    ${
+                      activeFilter === 'programas'
+                        ? 'bg-foreground text-background'
+                        : `
+                        border border-foreground/30 bg-transparent
+                        text-[#94A3B8]
+                        hover:border-foreground hover:text-foreground
+                      `
+                    }
+                  `}
                   disabled={isNavigating && pendingFilter === 'programas'}
                 >
                   <span className="inline-flex items-center gap-2">
@@ -756,11 +836,26 @@ export default function StudentDetails({
 
           {/* Top Cursos section */}
           {activeFilter === 'todos' && !isNavigating && (
-            <div className="animation-delay-200 relative animate-zoom-in pr-0 pl-4 sm:px-24">
-              <div className="mb-4 flex justify-start pr-4 sm:pr-0">
+            <div
+              className="
+              animation-delay-200 relative animate-zoom-in pr-0 pl-4
+              sm:px-24
+            "
+            >
+              <div
+                className="
+                mb-4 flex justify-start pr-4
+                sm:pr-0
+              "
+              >
                 <div className="flex items-center gap-2">
                   <FaArrowTrendUp className="text-xl text-white" />
-                  <StudentGradientText className="text-2xl sm:text-3xl">
+                  <StudentGradientText
+                    className="
+                    text-2xl
+                    sm:text-3xl
+                  "
+                  >
                     Top Cursos
                   </StudentGradientText>
                 </div>
@@ -792,38 +887,78 @@ export default function StudentDetails({
                         return (
                           <CarouselItem
                             key={course.id}
-                            className="basis-[85%] sm:basis-[60%] md:basis-1/3 lg:basis-[28%]"
+                            className="
+                              basis-[85%]
+                              sm:basis-[60%]
+                              md:basis-1/3
+                              lg:basis-[28%]
+                            "
                           >
                             <Link
                               href={`/estudiantes/cursos/${course.id}`}
-                              className="group/card relative block overflow-hidden rounded-2xl focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-primary"
+                              className="
+                                group/card relative block overflow-hidden
+                                rounded-2xl
+                                focus-visible:outline
+                                focus-visible:outline-offset-2
+                                focus-visible:outline-primary
+                              "
                             >
                               <div className="relative h-56 w-full">
                                 <Image
                                   src={getImageUrl(course.coverImageKey)}
                                   alt={course.title}
                                   fill
-                                  className="h-full w-full rounded-2xl object-cover transition-transform duration-300 group-hover/card:scale-105"
+                                  className="
+                                    size-full rounded-2xl object-cover
+                                    transition-transform duration-300
+                                    group-hover/card:scale-105
+                                  "
                                   sizes="(max-width: 768px) 100vw, 420px"
                                   quality={85}
                                   placeholder="blur"
                                   blurDataURL={blurDataURL}
                                 />
                                 {/* Number badge top-left */}
-                                <div className="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                                <div
+                                  className="
+                                  absolute top-3 left-3 flex size-8 items-center
+                                  justify-center rounded-full bg-primary
+                                "
+                                >
                                   <span className="text-xs font-bold text-black">
                                     {idx + 1}
                                   </span>
                                 </div>
 
                                 {/* Bottom gradient overlay: subtle fade from bottom to top */}
-                                <div className="absolute right-0 bottom-0 left-0 h-28 bg-gradient-to-t from-black/85 via-black/50 to-transparent" />
+                                <div
+                                  className="
+                                  absolute right-0 bottom-0 left-0 h-28
+                                  bg-gradient-to-t from-black/85 via-black/50
+                                  to-transparent
+                                "
+                                />
 
                                 {/* Bottom overlay: full-width content area */}
-                                <div className="absolute right-0 bottom-0 left-0 pb-0">
-                                  <div className="relative z-10 w-full rounded-b-2xl px-4 py-3">
+                                <div
+                                  className="
+                                  absolute right-0 bottom-0 left-0 pb-0
+                                "
+                                >
+                                  <div
+                                    className="
+                                    relative z-10 w-full rounded-b-2xl px-4 py-3
+                                  "
+                                  >
                                     <h3
-                                      className={`line-clamp-2 text-[13px] font-semibold text-foreground sm:text-[15px] ${titleSpacingClass} ${titleLineHeightClass}`}
+                                      className={`
+                                        line-clamp-2 text-[13px] font-semibold
+                                        text-foreground
+                                        sm:text-[15px]
+                                        ${titleSpacingClass}
+                                        ${titleLineHeightClass}
+                                      `}
                                       title={course.title}
                                       style={{
                                         display: 'flex',
@@ -833,7 +968,11 @@ export default function StudentDetails({
                                       {course.title}
                                     </h3>
                                     <p
-                                      className={`${instructorSpacingClass} text-[13px] text-gray-200 sm:text-[13px]`}
+                                      className={`
+                                        ${instructorSpacingClass}
+                                        text-[13px] text-gray-200
+                                        sm:text-[13px]
+                                      `}
                                     >
                                       {course.instructorName}
                                     </p>
@@ -866,20 +1005,39 @@ export default function StudentDetails({
                     {canScrollPrevTop && (
                       <button
                         onClick={() => topCoursesApi?.scrollPrev()}
-                        className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
+                        className="
+                          pointer-events-auto absolute top-1/2 left-2
+                          -translate-y-1/2
+                          sm:hidden
+                        "
                         aria-label="Anterior"
                       >
-                        <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                        <div
+                          className="
+                          carousel-mobile-arrow flex size-10 items-center
+                          justify-center rounded-full bg-black/40
+                          backdrop-blur-sm
+                        "
+                        >
                           <IoIosArrowBack className="text-2xl text-white" />
                         </div>
                       </button>
                     )}
                     <button
                       onClick={() => topCoursesApi?.scrollNext()}
-                      className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
+                      className="
+                        pointer-events-auto absolute top-1/2 right-2
+                        -translate-y-1/2
+                        sm:hidden
+                      "
                       aria-label="Siguiente"
                     >
-                      <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                      <div
+                        className="
+                        carousel-mobile-arrow flex size-10 items-center
+                        justify-center rounded-full bg-black/40 backdrop-blur-sm
+                      "
+                      >
                         <IoIosArrowForward className="text-2xl text-white" />
                       </div>
                     </button>
@@ -893,9 +1051,19 @@ export default function StudentDetails({
           {activeFilter === 'cursos' && !isNavigating && (
             <div
               id="courses-filter-section"
-              className="animation-delay-250 relative -mt-4 animate-zoom-in px-4 sm:-mt-6 sm:px-8 lg:px-20"
+              className="
+                animation-delay-250 relative -mt-4 animate-zoom-in px-4
+                sm:-mt-6 sm:px-8
+                lg:px-20
+              "
             >
-              <div className="relative z-0 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div
+                className="
+                relative z-0 grid grid-cols-1 gap-4
+                sm:grid-cols-2
+                lg:grid-cols-4
+              "
+              >
                 {courses.length > 0 ? (
                   courses.map((course) => {
                     const imageUrl =
@@ -922,8 +1090,14 @@ export default function StudentDetails({
 
                         if (hasPurchasable) {
                           return (
-                            <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-                              <FaStar className="h-3 w-3" />${' '}
+                            <div
+                              className="
+                              flex items-center gap-1 rounded-full border
+                              border-orange-500/30 bg-orange-500/20 px-2 py-0.5
+                              text-[10px] font-medium text-orange-400
+                            "
+                            >
+                              <FaStar className="size-3" />${' '}
                               {course.individualPrice
                                 ? course.individualPrice.toLocaleString('es-CO')
                                 : 'Comprar'}
@@ -932,24 +1106,42 @@ export default function StudentDetails({
                         }
                         if (hasPremium) {
                           return (
-                            <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-                              <FaCrown className="h-3 w-3" />
+                            <div
+                              className="
+                              flex items-center gap-1 rounded-full border
+                              border-amber-500/30 bg-amber-500/20 px-2 py-0.5
+                              text-[10px] font-medium text-amber-400
+                            "
+                            >
+                              <FaCrown className="size-3" />
                               Premium
                             </div>
                           );
                         }
                         if (hasPro) {
                           return (
-                            <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-                              <FaStar className="h-3 w-3" />
+                            <div
+                              className="
+                              flex items-center gap-1 rounded-full border
+                              border-blue-500/30 bg-blue-500/20 px-2 py-0.5
+                              text-[10px] font-medium text-blue-400
+                            "
+                            >
+                              <FaStar className="size-3" />
                               Pro
                             </div>
                           );
                         }
                         if (hasFree) {
                           return (
-                            <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                              <IoGiftOutline className="h-3 w-3" />
+                            <div
+                              className="
+                              flex items-center gap-1 rounded-full border
+                              border-emerald-500/30 bg-emerald-500/20 px-2
+                              py-0.5 text-[10px] font-medium text-emerald-400
+                            "
+                            >
+                              <IoGiftOutline className="size-3" />
                               Gratuito
                             </div>
                           );
@@ -964,12 +1156,26 @@ export default function StudentDetails({
                           <Link
                             href={`/estudiantes/cursos/${course.id}`}
                             aria-label={`Ver detalles del curso ${course.title}`}
-                            className="group block h-full rounded-2xl focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 focus-visible:outline-none"
+                            className="
+                              group block h-full rounded-2xl
+                              focus-visible:ring-2 focus-visible:ring-primary/70
+                              focus-visible:ring-offset-2
+                              focus-visible:outline-none
+                            "
                           >
-                            <Card className="artiefy-course-card zoom-in relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 text-foreground shadow-md transition-all duration-300 hover:-translate-y-1 hover:cursor-pointer hover:border-primary hover:shadow-xl">
+                            <Card
+                              className="
+                              artiefy-course-card zoom-in relative flex h-full
+                              flex-col gap-4 overflow-hidden rounded-2xl
+                              border-0 bg-[#061C37] p-4 text-foreground
+                              shadow-md transition-all duration-300
+                              hover:-translate-y-1 hover:cursor-pointer
+                              hover:border-primary hover:shadow-xl
+                            "
+                            >
                               <div className="relative -mx-4 -mt-4 overflow-hidden">
                                 <AspectRatio ratio={16 / 9}>
-                                  <div className="relative h-full w-full">
+                                  <div className="relative size-full">
                                     <Image
                                       src={imageUrl}
                                       alt={course.title || 'Imagen del curso'}
@@ -980,18 +1186,40 @@ export default function StudentDetails({
                                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                       quality={75}
                                     />
-                                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#061C37] via-[#061C37]/60 to-transparent" />
+                                    <div
+                                      className="
+                                      pointer-events-none absolute inset-0
+                                      bg-gradient-to-t from-[#061C37]
+                                      via-[#061C37]/60 to-transparent
+                                    "
+                                    />
                                   </div>
                                 </AspectRatio>
                               </div>
 
                               <div className="flex h-full flex-1 flex-col gap-3">
-                                <h3 className="line-clamp-2 text-base leading-snug font-semibold text-white md:text-lg">
+                                <h3
+                                  className="
+                                  line-clamp-2 text-base leading-snug
+                                  font-semibold text-white
+                                  md:text-lg
+                                "
+                                >
                                   {course.title}
                                 </h3>
 
-                                <div className="flex flex-wrap items-center justify-between gap-2 sm:flex-row">
-                                  <div className="flex flex-wrap items-center gap-2">
+                                <div
+                                  className="
+                                  flex flex-wrap items-center justify-between
+                                  gap-2
+                                  sm:flex-row
+                                "
+                                >
+                                  <div
+                                    className="
+                                    flex flex-wrap items-center gap-2
+                                  "
+                                  >
                                     <p className="text-xs text-[#94A3B8]">
                                       Por:{' '}
                                       <span className="font-medium text-primary">
@@ -1025,7 +1253,12 @@ export default function StudentDetails({
                                   </span>
                                 </div>
 
-                                <p className="mt-3 flex items-center gap-1.5 text-xs text-[#94A3B8]">
+                                <p
+                                  className="
+                                  mt-3 flex items-center gap-1.5 text-xs
+                                  text-[#94A3B8]
+                                "
+                                >
                                   Empieza:{' '}
                                   {course.modalidad &&
                                   String(course.modalidad?.name)
@@ -1044,11 +1277,23 @@ export default function StudentDetails({
                             </Card>
                           </Link>
                         ) : (
-                          <div className="group relative h-full rounded-2xl opacity-80">
-                            <Card className="artiefy-course-card zoom-in relative flex h-full cursor-not-allowed flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 text-foreground shadow-md transition-all duration-300">
+                          <div
+                            className="
+                            group relative h-full rounded-2xl opacity-80
+                          "
+                          >
+                            <Card
+                              className="
+                              artiefy-course-card zoom-in relative flex h-full
+                              cursor-not-allowed flex-col gap-4 overflow-hidden
+                              rounded-2xl border-0 bg-[#061C37] p-4
+                              text-foreground shadow-md transition-all
+                              duration-300
+                            "
+                            >
                               <div className="relative -mx-4 -mt-4 overflow-hidden">
                                 <AspectRatio ratio={16 / 9}>
-                                  <div className="relative h-full w-full">
+                                  <div className="relative size-full">
                                     <Image
                                       src={imageUrl}
                                       alt={course.title || 'Imagen del curso'}
@@ -1059,17 +1304,35 @@ export default function StudentDetails({
                                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                       quality={75}
                                     />
-                                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#061C37] via-[#061C37]/60 to-transparent" />
+                                    <div
+                                      className="
+                                      pointer-events-none absolute inset-0
+                                      bg-gradient-to-t from-[#061C37]
+                                      via-[#061C37]/60 to-transparent
+                                    "
+                                    />
                                   </div>
                                 </AspectRatio>
                               </div>
                               <div className="flex h-full flex-1 flex-col gap-3">
-                                <h3 className="line-clamp-2 text-base leading-snug font-semibold text-white md:text-lg">
+                                <h3
+                                  className="
+                                  line-clamp-2 text-base leading-snug
+                                  font-semibold text-white
+                                  md:text-lg
+                                "
+                                >
                                   {course.title}
                                 </h3>
                               </div>
                             </Card>
-                            <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40 text-lg font-semibold">
+                            <div
+                              className="
+                              pointer-events-none absolute inset-0 flex
+                              items-center justify-center rounded-2xl
+                              bg-black/40 text-lg font-semibold
+                            "
+                            >
                               Muy pronto
                             </div>
                           </div>
@@ -1078,7 +1341,11 @@ export default function StudentDetails({
                     );
                   })
                 ) : (
-                  <div className="col-span-full flex h-56 items-center justify-center">
+                  <div
+                    className="
+                    col-span-full flex h-56 items-center justify-center
+                  "
+                  >
                     <p className="text-lg text-gray-500">
                       No hay cursos disponibles
                     </p>
@@ -1093,12 +1360,37 @@ export default function StudentDetails({
             (activeFilter === 'todos' || activeFilter === 'programas') && (
               <div
                 id="programas-section"
-                className={`animation-delay-300 relative animate-zoom-in ${activeFilter === 'programas' ? '-mt-2 sm:-mt-4' : '-mt-8 sm:-mt-10'} pr-0 pl-4 sm:px-24`}
+                className={`
+                  animation-delay-300 relative animate-zoom-in
+                  ${
+                    activeFilter === 'programas'
+                      ? `
+                    -mt-2
+                    sm:-mt-4
+                  `
+                      : `
+                    -mt-8
+                    sm:-mt-10
+                  `
+                  }
+                  pr-0 pl-4
+                  sm:px-24
+                `}
               >
-                <div className="flex justify-start pr-4 sm:pr-0">
+                <div
+                  className="
+                  flex justify-start pr-4
+                  sm:pr-0
+                "
+                >
                   <div className="-mb-5 flex items-center gap-2">
                     <IoLibrarySharp className="text-xl text-white" />
-                    <StudentGradientText className="text-2xl sm:text-3xl">
+                    <StudentGradientText
+                      className="
+                      text-2xl
+                      sm:text-3xl
+                    "
+                    >
                       Programas
                     </StudentGradientText>
                   </div>
@@ -1111,7 +1403,11 @@ export default function StudentDetails({
                         {sortedPrograms.map((program) => (
                           <CarouselItem
                             key={program.id}
-                            className="basis-[85%] sm:basis-1/2 lg:basis-[30%]"
+                            className="
+                              basis-[85%]
+                              sm:basis-1/2
+                              lg:basis-[30%]
+                            "
                           >
                             <StudentProgram program={program} />
                           </CarouselItem>
@@ -1127,20 +1423,40 @@ export default function StudentDetails({
                         {canScrollPrevPrograms && (
                           <button
                             onClick={() => programsApi?.scrollPrev()}
-                            className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
+                            className="
+                              pointer-events-auto absolute top-1/2 left-2
+                              -translate-y-1/2
+                              sm:hidden
+                            "
                             aria-label="Anterior"
                           >
-                            <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                            <div
+                              className="
+                              carousel-mobile-arrow flex size-10 items-center
+                              justify-center rounded-full bg-black/40
+                              backdrop-blur-sm
+                            "
+                            >
                               <IoIosArrowBack className="text-2xl text-white" />
                             </div>
                           </button>
                         )}
                         <button
                           onClick={() => programsApi?.scrollNext()}
-                          className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
+                          className="
+                            pointer-events-auto absolute top-1/2 right-2
+                            -translate-y-1/2
+                            sm:hidden
+                          "
                           aria-label="Siguiente"
                         >
-                          <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                          <div
+                            className="
+                            carousel-mobile-arrow flex size-10 items-center
+                            justify-center rounded-full bg-black/40
+                            backdrop-blur-sm
+                          "
+                          >
                             <IoIosArrowForward className="text-2xl text-white" />
                           </div>
                         </button>
@@ -1149,7 +1465,13 @@ export default function StudentDetails({
                   </div>
                 ) : (
                   // Grid para vista 'programas' (sin carousel)
-                  <div className="my-6 grid gap-4 pr-4 sm:grid-cols-2 sm:pr-0 lg:grid-cols-4">
+                  <div
+                    className="
+                    my-6 grid gap-4 pr-4
+                    sm:grid-cols-2 sm:pr-0
+                    lg:grid-cols-4
+                  "
+                  >
                     {sortedPrograms.map((program) => (
                       <div key={program.id}>
                         <StudentProgram program={program} />

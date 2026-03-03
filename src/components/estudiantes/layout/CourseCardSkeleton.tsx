@@ -3,10 +3,15 @@ import { Skeleton } from '../ui/skeleton';
 
 export function CourseCardSkeleton() {
   return (
-    <Card className="-pt-2 overflow-hidden bg-gray-800 py-0 text-white sm:pt-0">
+    <Card
+      className="
+      -pt-2 overflow-hidden bg-gray-800 py-0 text-white
+      sm:pt-0
+    "
+    >
       <div className="flex h-32">
         <div className="w-48">
-          <Skeleton className="h-full w-full" />
+          <Skeleton className="size-full" />
         </div>
         <CardContent className="flex w-full flex-col justify-between px-4 py-3">
           <div>

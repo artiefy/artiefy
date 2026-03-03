@@ -289,14 +289,44 @@ export default function BuscarSuscripcionPage() {
 
     if (!result.found) {
       return (
-        <div className="xs:mt-5 xs:p-4 mt-4 rounded-lg border border-red-500/30 bg-red-950/20 p-3 sm:mt-6 sm:p-6">
-          <div className="xs:gap-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <AlertCircle className="xs:h-6 xs:w-6 h-5 w-5 flex-shrink-0 text-red-400 sm:h-6 sm:w-6" />
+        <div
+          className="
+          xs:mt-5 xs:p-4
+          mt-4 rounded-lg border border-red-500/30 bg-red-950/20 p-3
+          sm:mt-6 sm:p-6
+        "
+        >
+          <div
+            className="
+            xs:gap-3
+            flex flex-col gap-3
+            sm:flex-row sm:items-center sm:gap-4
+          "
+          >
+            <AlertCircle
+              className="
+              xs:h-6 xs:w-6
+              size-5 flex-shrink-0 text-red-400
+              sm:size-6
+            "
+            />
             <div className="flex-1">
-              <h3 className="xs:text-base text-sm font-semibold text-red-400 sm:text-lg">
+              <h3
+                className="
+                xs:text-base
+                text-sm font-semibold text-red-400
+                sm:text-lg
+              "
+              >
                 Usuario no encontrado
               </h3>
-              <p className="xs:text-xs mt-1 text-xs text-gray-400 sm:text-sm">
+              <p
+                className="
+                xs:text-xs
+                mt-1 text-xs text-gray-400
+                sm:text-sm
+              "
+              >
                 {result.message ??
                   'No se encontró ningún usuario con los datos proporcionados'}
               </p>
@@ -311,13 +341,38 @@ export default function BuscarSuscripcionPage() {
     const daysRemaining = user?.daysRemaining ?? 0;
 
     return (
-      <div className="xs:mt-5 xs:space-y-3 mt-4 space-y-2 sm:mt-6 sm:space-y-4 md:space-y-5">
+      <div
+        className="
+        xs:mt-5 xs:space-y-3
+        mt-4 space-y-2
+        sm:mt-6 sm:space-y-4
+        md:space-y-5
+      "
+      >
         {/* Información del usuario */}
-        <div className="xs:p-4 rounded-lg border border-gray-700 bg-gray-800/50 p-3 sm:p-6">
-          <h3 className="xs:mb-3 xs:text-lg mb-2 text-base font-bold text-cyan-400 sm:mb-4 sm:text-xl">
+        <div
+          className="
+          xs:p-4
+          rounded-lg border border-gray-700 bg-gray-800/50 p-3
+          sm:p-6
+        "
+        >
+          <h3
+            className="
+            xs:mb-3 xs:text-lg
+            mb-2 text-base font-bold text-cyan-400
+            sm:mb-4 sm:text-xl
+          "
+          >
             Información del Usuario
           </h3>
-          <div className="xs:space-y-2 xs:text-sm space-y-1.5 text-xs text-gray-300 sm:text-base">
+          <div
+            className="
+            xs:space-y-2 xs:text-sm
+            space-y-1.5 text-xs text-gray-300
+            sm:text-base
+          "
+          >
             <p className="break-words">
               <span className="font-semibold text-gray-400">Nombre:</span>{' '}
               {user?.name ?? 'N/A'}
@@ -337,17 +392,59 @@ export default function BuscarSuscripcionPage() {
 
         {/* Estado de suscripción */}
         {isActive ? (
-          <div className="xs:p-4 rounded-lg border border-green-500/30 bg-green-950/20 p-3 sm:p-6">
-            <div className="xs:gap-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-              <CheckCircle className="xs:h-6 xs:w-6 h-5 w-5 flex-shrink-0 text-green-400 sm:h-6 sm:w-6" />
+          <div
+            className="
+            xs:p-4
+            rounded-lg border border-green-500/30 bg-green-950/20 p-3
+            sm:p-6
+          "
+          >
+            <div
+              className="
+              xs:gap-3
+              flex flex-col gap-3
+              sm:flex-row sm:items-start sm:gap-4
+            "
+            >
+              <CheckCircle
+                className="
+                xs:h-6 xs:w-6
+                size-5 flex-shrink-0 text-green-400
+                sm:size-6
+              "
+              />
               <div className="flex-1">
-                <h3 className="xs:mb-2 xs:text-base mb-2 text-sm font-semibold text-green-400 sm:text-lg">
+                <h3
+                  className="
+                  xs:mb-2 xs:text-base
+                  mb-2 text-sm font-semibold text-green-400
+                  sm:text-lg
+                "
+                >
                   Suscripción Activa
                 </h3>
-                <div className="xs:space-y-2 xs:text-sm space-y-1.5 text-xs text-gray-300 sm:text-base">
+                <div
+                  className="
+                  xs:space-y-2 xs:text-sm
+                  space-y-1.5 text-xs text-gray-300
+                  sm:text-base
+                "
+                >
                   <div className="flex items-center gap-2">
-                    <Clock className="xs:h-4 xs:w-4 h-3.5 w-3.5 flex-shrink-0 text-cyan-400 sm:h-5 sm:w-5" />
-                    <span className="xs:text-xs text-xs sm:text-sm">
+                    <Clock
+                      className="
+                      xs:h-4 xs:w-4
+                      size-3.5 flex-shrink-0 text-cyan-400
+                      sm:size-5
+                    "
+                    />
+                    <span
+                      className="
+                      xs:text-xs
+                      text-xs
+                      sm:text-sm
+                    "
+                    >
                       <span className="font-semibold text-cyan-400">
                         {daysRemaining}
                       </span>{' '}
@@ -355,7 +452,13 @@ export default function BuscarSuscripcionPage() {
                     </span>
                   </div>
                   {user?.subscriptionEndDate && (
-                    <p className="xs:text-xs text-xs text-gray-400 sm:text-sm">
+                    <p
+                      className="
+                      xs:text-xs
+                      text-xs text-gray-400
+                      sm:text-sm
+                    "
+                    >
                       Vence el:{' '}
                       {new Date(user.subscriptionEndDate).toLocaleDateString(
                         'es-ES',
@@ -370,22 +473,30 @@ export default function BuscarSuscripcionPage() {
                 </div>
                 {esp32Message && (
                   <div
-                    className={`xs:mt-2.5 xs:p-2.5 mt-2 rounded border p-2 sm:mt-3 sm:p-3 ${
-                      esp32MessageType === 'success'
-                        ? 'border-green-500/30 bg-green-950/20'
-                        : esp32MessageType === 'warning'
-                          ? 'border-blue-500/30 bg-blue-950/20'
-                          : 'border-red-500/30 bg-red-950/20'
-                    }`}
+                    className={`
+                      xs:mt-2.5 xs:p-2.5
+                      mt-2 rounded border p-2
+                      sm:mt-3 sm:p-3
+                      ${
+                        esp32MessageType === 'success'
+                          ? 'border-green-500/30 bg-green-950/20'
+                          : esp32MessageType === 'warning'
+                            ? 'border-blue-500/30 bg-blue-950/20'
+                            : 'border-red-500/30 bg-red-950/20'
+                      }
+                    `}
                   >
                     <p
-                      className={`text-xs ${
-                        esp32MessageType === 'success'
-                          ? 'text-green-300'
-                          : esp32MessageType === 'warning'
-                            ? 'text-blue-300'
-                            : 'text-red-300'
-                      }`}
+                      className={`
+                        text-xs
+                        ${
+                          esp32MessageType === 'success'
+                            ? 'text-green-300'
+                            : esp32MessageType === 'warning'
+                              ? 'text-blue-300'
+                              : 'text-red-300'
+                        }
+                      `}
                     >
                       {esp32Message}
                     </p>
@@ -395,18 +506,54 @@ export default function BuscarSuscripcionPage() {
             </div>
           </div>
         ) : (
-          <div className="xs:p-4 rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-3 sm:p-6">
-            <div className="xs:gap-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-              <AlertCircle className="xs:h-6 xs:w-6 h-5 w-5 flex-shrink-0 text-yellow-400 sm:h-6 sm:w-6" />
+          <div
+            className="
+            xs:p-4
+            rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-3
+            sm:p-6
+          "
+          >
+            <div
+              className="
+              xs:gap-3
+              flex flex-col gap-3
+              sm:flex-row sm:items-center sm:gap-4
+            "
+            >
+              <AlertCircle
+                className="
+                xs:h-6 xs:w-6
+                size-5 flex-shrink-0 text-yellow-400
+                sm:size-6
+              "
+              />
               <div className="flex-1">
-                <h3 className="xs:text-base text-sm font-semibold text-yellow-400 sm:text-lg">
+                <h3
+                  className="
+                  xs:text-base
+                  text-sm font-semibold text-yellow-400
+                  sm:text-lg
+                "
+                >
                   Suscripción Vencida o Inactiva
                 </h3>
-                <p className="xs:mt-1 xs:text-xs mt-1 text-xs text-gray-400 sm:text-sm">
+                <p
+                  className="
+                  xs:mt-1 xs:text-xs
+                  mt-1 text-xs text-gray-400
+                  sm:text-sm
+                "
+                >
                   Este usuario no tiene una suscripción activa
                 </p>
                 {user?.subscriptionEndDate && (
-                  <p className="xs:mt-2 mt-1.5 text-xs text-gray-500 sm:text-sm">
+                  <p
+                    className="
+                    xs:mt-2
+                    mt-1.5 text-xs text-gray-500
+                    sm:text-sm
+                  "
+                  >
                     Venció el:{' '}
                     {new Date(user.subscriptionEndDate).toLocaleDateString(
                       'es-ES',
@@ -452,69 +599,147 @@ export default function BuscarSuscripcionPage() {
         }
       `}</style>
 
-      <div className="min-h-screen w-full bg-gray-950 px-3 py-4 sm:px-4 sm:py-6 md:px-6 md:py-8">
-        <div className="xs:p-5 mx-auto w-full max-w-4xl rounded-lg border border-gray-700 bg-gray-900 p-4 shadow-xl shadow-cyan-500/10 sm:p-6 md:p-8 lg:p-10">
+      <div
+        className="
+        min-h-screen w-full bg-gray-950 px-3 py-4
+        sm:px-4 sm:py-6
+        md:px-6 md:py-8
+      "
+      >
+        <div
+          className="
+          xs:p-5
+          mx-auto w-full max-w-4xl rounded-lg border border-gray-700 bg-gray-900
+          p-4 shadow-xl shadow-cyan-500/10
+          sm:p-6
+          md:p-8
+          lg:p-10
+        "
+        >
           {/* Logo */}
-          <div className="xs:mb-5 mb-4 sm:mb-6 md:mb-8">
+          <div
+            className="
+            xs:mb-5
+            mb-4
+            sm:mb-6
+            md:mb-8
+          "
+          >
             <div className="mx-auto flex max-w-xs items-center justify-center">
               <Image
                 src="/artiefy-logo.png"
                 alt="Artiefy"
                 width={220}
                 height={64}
-                className="xs:w-[140px] h-auto w-[120px] object-contain sm:w-[160px] md:w-[200px]"
+                className="
+                  xs:w-[140px]
+                  h-auto w-[120px] object-contain
+                  sm:w-[160px]
+                  md:w-[200px]
+                "
                 priority
               />
             </div>
           </div>
 
           {/* Título */}
-          <h1 className="xs:text-2xl mb-2 text-center text-xl font-extrabold tracking-tight text-cyan-400 sm:mb-3 sm:text-3xl md:text-4xl">
+          <h1
+            className="
+            xs:text-2xl
+            mb-2 text-center text-xl font-extrabold tracking-tight text-cyan-400
+            sm:mb-3 sm:text-3xl
+            md:text-4xl
+          "
+          >
             Verificación de Suscripción
           </h1>
-          <p className="xs:mb-5 xs:text-sm mx-auto mb-4 max-w-3xl text-center text-xs text-gray-300 sm:mb-6 sm:text-base md:mb-8">
+          <p
+            className="
+            xs:mb-5 xs:text-sm
+            mx-auto mb-4 max-w-3xl text-center text-xs text-gray-300
+            sm:mb-6 sm:text-base
+            md:mb-8
+          "
+          >
             Busca un usuario por correo electrónico, número de documento o
             nombre para verificar el estado de su suscripción.
           </p>
 
           {/* Formulario de búsqueda */}
-          <div className="xs:space-y-4 space-y-3 sm:space-y-5 md:space-y-6">
+          <div
+            className="
+            xs:space-y-4
+            space-y-3
+            sm:space-y-5
+            md:space-y-6
+          "
+          >
             {/* Selector de tipo de búsqueda */}
             <div>
               <label className="mb-2 block text-xs font-medium text-gray-300">
                 Buscar por:
               </label>
-              <div className="xs:gap-2.5 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
+              <div
+                className="
+                xs:gap-2.5
+                flex flex-col gap-2
+                sm:flex-row sm:flex-wrap sm:gap-3
+              "
+              >
                 <button
                   type="button"
                   onClick={() => setSearchType('email')}
-                  className={`xs:py-2.5 xs:px-4 flex-1 rounded-lg px-3 py-2 text-xs font-medium transition sm:w-auto sm:text-sm ${
-                    searchType === 'email'
-                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
-                      : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
-                  }`}
+                  className={`
+                    xs:py-2.5 xs:px-4
+                    flex-1 rounded-lg px-3 py-2 text-xs font-medium transition
+                    sm:w-auto sm:text-sm
+                    ${
+                      searchType === 'email'
+                        ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
+                        : `
+                        border border-gray-600 bg-gray-800 text-gray-300
+                        hover:border-cyan-500
+                      `
+                    }
+                  `}
                 >
                   Correo
                 </button>
                 <button
                   type="button"
                   onClick={() => setSearchType('document')}
-                  className={`xs:py-2.5 xs:px-4 flex-1 rounded-lg px-3 py-2 text-xs font-medium transition sm:w-auto sm:text-sm ${
-                    searchType === 'document'
-                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
-                      : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
-                  }`}
+                  className={`
+                    xs:py-2.5 xs:px-4
+                    flex-1 rounded-lg px-3 py-2 text-xs font-medium transition
+                    sm:w-auto sm:text-sm
+                    ${
+                      searchType === 'document'
+                        ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
+                        : `
+                        border border-gray-600 bg-gray-800 text-gray-300
+                        hover:border-cyan-500
+                      `
+                    }
+                  `}
                 >
                   Documento
                 </button>
                 <button
                   type="button"
                   onClick={() => setSearchType('name')}
-                  className={`xs:py-2.5 xs:px-4 flex-1 rounded-lg px-3 py-2 text-xs font-medium transition sm:w-auto sm:text-sm ${
-                    searchType === 'name'
-                      ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
-                      : 'border border-gray-600 bg-gray-800 text-gray-300 hover:border-cyan-500'
-                  }`}
+                  className={`
+                    xs:py-2.5 xs:px-4
+                    flex-1 rounded-lg px-3 py-2 text-xs font-medium transition
+                    sm:w-auto sm:text-sm
+                    ${
+                      searchType === 'name'
+                        ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
+                        : `
+                        border border-gray-600 bg-gray-800 text-gray-300
+                        hover:border-cyan-500
+                      `
+                    }
+                  `}
                 >
                   Nombre
                 </button>
@@ -546,37 +771,95 @@ export default function BuscarSuscripcionPage() {
                         ? '1234567890'
                         : 'Juan Pérez'
                   }
-                  className="xs:px-4 xs:py-2.5 xs:pr-11 w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 pr-9 text-sm text-white placeholder-gray-500 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none sm:py-3 sm:pr-12 sm:text-base"
+                  className="
+                    xs:px-4 xs:py-2.5 xs:pr-11
+                    w-full rounded-lg border border-gray-600 bg-gray-800 px-3
+                    py-2 pr-9 text-sm text-white placeholder-gray-500 transition
+                    focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20
+                    focus:outline-none
+                    sm:py-3 sm:pr-12 sm:text-base
+                  "
                 />
-                <Search className="xs:right-3 absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-gray-500 sm:right-4 sm:h-5 sm:w-5" />
+                <Search
+                  className="
+                  xs:right-3
+                  absolute top-1/2 right-2.5 size-4 -translate-y-1/2
+                  text-gray-500
+                  sm:right-4 sm:size-5
+                "
+                />
               </div>
             </div>
 
             {/* Error */}
             {error && (
-              <div className="xs:p-3.5 rounded-lg border border-red-500/30 bg-red-950/20 p-3 sm:p-4">
-                <p className="xs:text-xs text-xs text-red-400 sm:text-sm">
+              <div
+                className="
+                xs:p-3.5
+                rounded-lg border border-red-500/30 bg-red-950/20 p-3
+                sm:p-4
+              "
+              >
+                <p
+                  className="
+                  xs:text-xs
+                  text-xs text-red-400
+                  sm:text-sm
+                "
+                >
                   {error}
                 </p>
               </div>
             )}
 
             {/* Botón Inteligente - Registrar Acceso */}
-            <div className="xs:pt-3 flex flex-col gap-3 pt-2 sm:flex-row sm:justify-center sm:gap-4 sm:pt-4">
+            <div
+              className="
+              xs:pt-3
+              flex flex-col gap-3 pt-2
+              sm:flex-row sm:justify-center sm:gap-4 sm:pt-4
+            "
+            >
               <button
                 type="button"
                 onClick={handleRegister}
                 disabled={loading}
-                className={`xs:px-5 xs:py-2.5 flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-md transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none sm:px-8 sm:py-3 sm:text-lg ${
-                  result?.user?.hasOpenEntry
-                    ? 'bg-red-600 hover:bg-red-500 hover:shadow-red-400/50 focus:ring-2 focus:ring-red-500'
-                    : 'bg-green-600 hover:bg-green-500 hover:shadow-green-400/50 focus:ring-2 focus:ring-green-500'
-                }`}
+                className={`
+                  xs:px-5 xs:py-2.5
+                  flex-1 rounded-lg px-4 py-2 text-sm font-semibold text-white
+                  shadow-md transition
+                  focus:outline-none
+                  disabled:cursor-not-allowed disabled:opacity-50
+                  sm:flex-none sm:px-8 sm:py-3 sm:text-lg
+                  ${
+                    result?.user?.hasOpenEntry
+                      ? `
+                      bg-red-600
+                      hover:bg-red-500 hover:shadow-red-400/50
+                      focus:ring-2 focus:ring-red-500
+                    `
+                      : `
+                      bg-green-600
+                      hover:bg-green-500 hover:shadow-green-400/50
+                      focus:ring-2 focus:ring-green-500
+                    `
+                  }
+                `}
               >
                 {loading ? (
-                  <span className="xs:gap-2 flex items-center justify-center gap-2 sm:gap-2">
+                  <span
+                    className="
+                    xs:gap-2
+                    flex items-center justify-center gap-2
+                    sm:gap-2
+                  "
+                  >
                     <svg
-                      className="xs:h-4 xs:w-4 h-4 w-4 animate-spin sm:h-5 sm:w-5"
+                      className="
+                        xs:h-4 xs:w-4
+                        size-4 animate-spin
+                        sm:size-5
+                      "
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"

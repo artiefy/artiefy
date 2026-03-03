@@ -384,7 +384,10 @@ export function CourseHeader({
               {includedInPlans.length > 0 &&
                 includedInPlans.filter((p) => p !== 'PREMIUM').length > 0 && (
                   <Badge
-                    className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                    className="
+                      cursor-pointer bg-yellow-400 text-xs text-gray-900
+                      hover:bg-yellow-500
+                    "
                     onClick={handlePlanBadgeClick}
                   >
                     Incluido en:{' '}
@@ -412,7 +415,10 @@ export function CourseHeader({
               {includedInPlans.length > 0 &&
                 includedInPlans.filter((p) => p !== 'PRO').length > 0 && (
                   <Badge
-                    className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                    className="
+                      cursor-pointer bg-yellow-400 text-xs text-gray-900
+                      hover:bg-yellow-500
+                    "
                     onClick={handlePlanBadgeClick}
                   >
                     Incluido en:{' '}
@@ -442,7 +448,10 @@ export function CourseHeader({
               {includedInPlans.length > 0 &&
                 includedInPlans.filter((p) => p !== 'GRATUITO').length > 0 && (
                   <Badge
-                    className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                    className="
+                      cursor-pointer bg-yellow-400 text-xs text-gray-900
+                      hover:bg-yellow-500
+                    "
                     onClick={handlePlanBadgeClick}
                   >
                     Incluido en:{' '}
@@ -485,7 +494,10 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div
-                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    className="
+                      block cursor-pointer text-xs text-gray-300 italic
+                      sm:hidden
+                    "
                     onClick={handlePlanBadgeClick}
                   >
                     Incluido en:{' '}
@@ -497,9 +509,17 @@ export function CourseHeader({
                     ))}
                   </div>
                   {/* Desktop view as badge */}
-                  <div className="hidden sm:block">
+                  <div
+                    className="
+                    hidden
+                    sm:block
+                  "
+                  >
                     <Badge
-                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      className="
+                        cursor-pointer bg-yellow-400 text-xs text-gray-900
+                        hover:bg-yellow-500
+                      "
                       onClick={handlePlanBadgeClick}
                     >
                       Incluido en:{' '}
@@ -544,7 +564,10 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div
-                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    className="
+                      block cursor-pointer text-xs text-gray-300 italic
+                      sm:hidden
+                    "
                     onClick={handlePlanBadgeClick}
                   >
                     Incluido en:{' '}
@@ -556,9 +579,17 @@ export function CourseHeader({
                     ))}
                   </div>
                   {/* Desktop view as badge */}
-                  <div className="hidden sm:block">
+                  <div
+                    className="
+                    hidden
+                    sm:block
+                  "
+                  >
                     <Badge
-                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      className="
+                        cursor-pointer bg-yellow-400 text-xs text-gray-900
+                        hover:bg-yellow-500
+                      "
                       onClick={handlePlanBadgeClick}
                     >
                       Incluido en:{' '}
@@ -591,7 +622,10 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div
-                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    className="
+                      block cursor-pointer text-xs text-gray-300 italic
+                      sm:hidden
+                    "
                     onClick={handlePlanBadgeClick}
                   >
                     Incluido en:{' '}
@@ -603,9 +637,17 @@ export function CourseHeader({
                     ))}
                   </div>
                   {/* Desktop view as badge */}
-                  <div className="hidden sm:block">
+                  <div
+                    className="
+                    hidden
+                    sm:block
+                  "
+                  >
                     <Badge
-                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      className="
+                        cursor-pointer bg-yellow-400 text-xs text-gray-900
+                        hover:bg-yellow-500
+                      "
                       onClick={handlePlanBadgeClick}
                     >
                       Incluido en:{' '}
@@ -636,7 +678,10 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div
-                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    className="
+                      block cursor-pointer text-xs text-gray-300 italic
+                      sm:hidden
+                    "
                     onClick={handlePlanBadgeClick}
                   >
                     Incluido en:{' '}
@@ -648,9 +693,17 @@ export function CourseHeader({
                     ))}
                   </div>
                   {/* Desktop view as badge */}
-                  <div className="hidden sm:block">
+                  <div
+                    className="
+                    hidden
+                    sm:block
+                  "
+                  >
                     <Badge
-                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      className="
+                        cursor-pointer bg-yellow-400 text-xs text-gray-900
+                        hover:bg-yellow-500
+                      "
                       onClick={handlePlanBadgeClick}
                     >
                       Incluido en:{' '}
@@ -683,7 +736,10 @@ export function CourseHeader({
                 <>
                   {/* Mobile view */}
                   <div
-                    className="block cursor-pointer text-xs text-gray-300 italic sm:hidden"
+                    className="
+                      block cursor-pointer text-xs text-gray-300 italic
+                      sm:hidden
+                    "
                     onClick={handlePlanBadgeClick}
                   >
                     Incluido en:{' '}
@@ -695,9 +751,17 @@ export function CourseHeader({
                     ))}
                   </div>
                   {/* Desktop view as badge */}
-                  <div className="hidden sm:block">
+                  <div
+                    className="
+                    hidden
+                    sm:block
+                  "
+                  >
                     <Badge
-                      className="cursor-pointer bg-yellow-400 text-xs text-gray-900 hover:bg-yellow-500"
+                      className="
+                        cursor-pointer bg-yellow-400 text-xs text-gray-900
+                        hover:bg-yellow-500
+                      "
                       onClick={handlePlanBadgeClick}
                     >
                       Incluido en:{' '}
@@ -756,7 +820,12 @@ export function CourseHeader({
         : 'text-orange-500';
 
     return (
-      <div className={`flex items-center gap-1 ${color}`}>
+      <div
+        className={`
+        flex items-center gap-1
+        ${color}
+      `}
+      >
         <FaCrown className="text-lg" />
         <span className="text-base font-bold">
           {requiredSubscriptionLevel.toUpperCase()}
@@ -1324,13 +1393,31 @@ export function CourseHeader({
 
   return (
     <>
-      <Card className="overflow-hidden bg-gray-800 p-0 px-4 text-white sm:px-0">
+      <Card
+        className="
+        overflow-hidden bg-gray-800 p-0 px-4 text-white
+        sm:px-0
+      "
+      >
         {/* Cambia el CardHeader para reducir el espacio en móviles */}
-        <CardHeader className="mt-0 px-0 py-2 pt-0 sm:mt-0 sm:py-6 sm:pt-0">
-          <div className="relative mt-0 mb-4 w-full pt-0 transition-all duration-200 sm:mt-0 sm:pt-0">
+        <CardHeader
+          className="
+          mt-0 px-0 py-2 pt-0
+          sm:mt-0 sm:py-6 sm:pt-0
+        "
+        >
+          <div
+            className="
+            relative mt-0 mb-4 w-full pt-0 transition-all duration-200
+            sm:mt-0 sm:pt-0
+          "
+          >
             <AspectRatio
               ratio={16 / 9}
-              className="mt-0 w-full pt-0 sm:mt-0 sm:pt-0"
+              className="
+                mt-0 w-full pt-0
+                sm:mt-0 sm:pt-0
+              "
             >
               {/* Nueva lógica de portada/video */}
               {coverVideoCourseKey ? (
@@ -1353,7 +1440,12 @@ export function CourseHeader({
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`.trimEnd()}
                         alt={course.title}
                         fill
-                        className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                        className="
+                          min-h-[180px] object-cover
+                          sm:min-h-[340px]
+                          md:min-h-[400px]
+                          lg:min-h-[480px]
+                        "
                         priority
                         sizes="100vw"
                         placeholder="blur"
@@ -1363,11 +1455,11 @@ export function CourseHeader({
                   }
                   if (isVideo) {
                     return (
-                      <div className="relative h-full w-full">
+                      <div className="relative size-full">
                         <video
                           ref={videoRef}
                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
-                          className="h-full w-full cursor-pointer object-cover"
+                          className="size-full cursor-pointer object-cover"
                           autoPlay
                           loop
                           playsInline
@@ -1388,7 +1480,12 @@ export function CourseHeader({
                           }}
                         />
                         {/* Botón de volumen y pantalla completa */}
-                        <div className="absolute right-4 bottom-4 z-10 flex items-center gap-2 sm:right-4 sm:bottom-4">
+                        <div
+                          className="
+                          absolute right-4 bottom-4 z-10 flex items-center gap-2
+                          sm:right-4 sm:bottom-4
+                        "
+                        >
                           {/* Botón mute/unmute */}
                           <button
                             type="button"
@@ -1396,12 +1493,27 @@ export function CourseHeader({
                               isMuted ? 'Activar sonido' : 'Silenciar'
                             }
                             onClick={handleToggleMute}
-                            className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                            className="
+                              flex size-5 cursor-pointer items-center
+                              justify-center rounded-full border-none
+                              bg-black/60 p-1 text-white transition-all
+                              sm:size-10 sm:p-2
+                            "
                           >
                             {isMuted ? (
-                              <FaVolumeMute className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                              <FaVolumeMute
+                                className="
+                                size-2.5
+                                sm:size-5
+                              "
+                              />
                             ) : (
-                              <FaVolumeUp className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                              <FaVolumeUp
+                                className="
+                                size-2.5
+                                sm:size-5
+                              "
+                              />
                             )}
                           </button>
                           {/* Volumen */}
@@ -1412,7 +1524,10 @@ export function CourseHeader({
                             step={0.01}
                             value={videoVolume}
                             onChange={handleVolumeChange}
-                            className="mr-1 h-2 w-10 accent-cyan-300 sm:mr-2 sm:h-3 sm:w-20"
+                            className="
+                              mr-1 h-2 w-10 accent-cyan-300
+                              sm:mr-2 sm:h-3 sm:w-20
+                            "
                             title="Volumen"
                           />
                           {/* Botón pantalla completa */}
@@ -1420,9 +1535,19 @@ export function CourseHeader({
                             type="button"
                             aria-label="Pantalla completa"
                             onClick={handleFullscreenClick}
-                            className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                            className="
+                              flex size-5 cursor-pointer items-center
+                              justify-center rounded-full border-none
+                              bg-black/60 p-1 text-white transition-all
+                              sm:size-10 sm:p-2
+                            "
                           >
-                            <FaExpand className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                            <FaExpand
+                              className="
+                              size-2.5
+                              sm:size-5
+                            "
+                            />
                           </button>
                         </div>
                       </div>
@@ -1438,7 +1563,12 @@ export function CourseHeader({
                       }
                       alt={course.title}
                       fill
-                      className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                      className="
+                        min-h-[180px] object-cover
+                        sm:min-h-[340px]
+                        md:min-h-[400px]
+                        lg:min-h-[480px]
+                      "
                       priority
                       sizes="100vw"
                       placeholder="blur"
@@ -1451,7 +1581,12 @@ export function CourseHeader({
                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`.trimEnd()}
                   alt={course.title}
                   fill
-                  className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                  className="
+                    min-h-[180px] object-cover
+                    sm:min-h-[340px]
+                    md:min-h-[400px]
+                    lg:min-h-[480px]
+                  "
                   priority
                   sizes="100vw"
                   placeholder="blur"
@@ -1462,7 +1597,12 @@ export function CourseHeader({
                   src="https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT"
                   alt={course.title}
                   fill
-                  className="min-h-[180px] object-cover sm:min-h-[340px] md:min-h-[400px] lg:min-h-[480px]"
+                  className="
+                    min-h-[180px] object-cover
+                    sm:min-h-[340px]
+                    md:min-h-[400px]
+                    lg:min-h-[480px]
+                  "
                   priority
                   sizes="100vw"
                   placeholder="blur"
@@ -1473,36 +1613,66 @@ export function CourseHeader({
           </div>
           {/* Removed mobile metadata section from here */}
         </CardHeader>
-        <CardContent className="mx-auto mt-0 w-full max-w-7xl space-y-4 px-4 pt-0 sm:mt-0 sm:px-6 sm:pt-0">
+        <CardContent
+          className="
+          mx-auto mt-0 w-full max-w-7xl space-y-4 px-4 pt-0
+          sm:mt-0 sm:px-6 sm:pt-0
+        "
+        >
           {' '}
           {/* <-- Ensure no top margin/padding */}
           {/* Course titles - desktop and mobile */}
           <div className="w-full">
             {/* Título en móviles - con chulito alineado a última palabra */}
-            <h1 className="-mt-10 mb-2 line-clamp-2 text-lg font-bold text-cyan-300 sm:hidden">
+            <h1
+              className="
+              -mt-10 mb-2 line-clamp-2 text-lg font-bold text-cyan-300
+              sm:hidden
+            "
+            >
               <span className="inline">
                 {course.title}{' '}
                 {isEnrolled && (
-                  <CheckCircleIcon className="mb-1 ml-1 inline-block h-5 w-5 flex-shrink-0 align-middle text-green-500" />
+                  <CheckCircleIcon
+                    className="
+                    mb-1 ml-1 inline-block size-5 flex-shrink-0 align-middle
+                    text-green-500
+                  "
+                  />
                 )}
               </span>
             </h1>
 
             {/* Título en desktop - adjusted top margin */}
-            <h1 className="mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:-mt-12 sm:flex sm:items-center md:text-2xl lg:text-3xl">
+            <h1
+              className="
+              mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300
+              sm:-mt-12 sm:flex sm:items-center
+              md:text-2xl
+              lg:text-3xl
+            "
+            >
               {course.title}
               {isEnrolled && (
-                <CheckCircleIcon className="ml-3 h-6 w-6 flex-shrink-0 text-green-500" />
+                <CheckCircleIcon className="ml-3 size-6 flex-shrink-0 text-green-500" />
               )}
             </h1>
           </div>
           {/* MOVED: Mobile metadata section - now below title in mobile view */}
-          <div className="relative z-10 -mt-2 -mb-2 block w-full sm:mb-2 sm:hidden">
+          <div
+            className="
+            relative z-10 -my-2 block w-full
+            sm:mb-2 sm:hidden
+          "
+          >
             <div className="flex items-center justify-between gap-2">
               {/* Categoría alineada a la izquierda */}
               <Badge
                 variant="outline"
-                className="border-primary bg-background text-primary w-fit flex-shrink-0 hover:bg-black/70"
+                className="
+                  w-fit flex-shrink-0 border-primary bg-background text-primary
+                  hover:bg-black/70
+                "
               >
                 {course.category?.name}
               </Badge>
@@ -1574,7 +1744,11 @@ export function CourseHeader({
                       <div className="flex flex-wrap items-center gap-1">
                         {/* Tipo principal */}
                         <div
-                          className={`flex items-center gap-0.5 ${mainColor} font-bold`}
+                          className={`
+                            flex items-center gap-0.5
+                            ${mainColor}
+                            font-bold
+                          `}
                         >
                           {mainIcon}
                           <span className="text-xs whitespace-nowrap">
@@ -1586,7 +1760,11 @@ export function CourseHeader({
                         {includedTypes.length > 0 && (
                           <div className="ml-1">
                             <Badge
-                              className="cursor-pointer bg-yellow-400 px-1 py-0.5 text-[10px] text-gray-900 hover:bg-yellow-500"
+                              className="
+                                cursor-pointer bg-yellow-400 px-1 py-0.5
+                                text-[10px] text-gray-900
+                                hover:bg-yellow-500
+                              "
                               onClick={handlePlanBadgeClick}
                             >
                               Incluido en:{' '}
@@ -1603,7 +1781,11 @@ export function CourseHeader({
                   // Fallback para cursos con courseType tradicional
                   if (course.courseTypeId === 4 && course.individualPrice) {
                     return (
-                      <div className="flex items-center gap-0.5 font-bold text-blue-500">
+                      <div
+                        className="
+                        flex items-center gap-0.5 font-bold text-blue-500
+                      "
+                      >
                         <FaStar className="text-xs" />
                         <span className="text-xs">
                           ${course.individualPrice.toLocaleString('es-CO')}
@@ -1618,14 +1800,37 @@ export function CourseHeader({
             </div>
           </div>
           {/* Course metadata */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            className="
+            flex flex-col gap-4
+            sm:flex-row sm:items-center sm:justify-between
+          "
+          >
             {/* EN MOBILE: Ocultar badges aquí, ya están debajo de la portada */}
-            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-4">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-2">
-                <div className="hidden flex-wrap items-center gap-2 sm:flex">
+            <div
+              className="
+              flex w-full flex-col gap-2
+              sm:w-auto sm:flex-row sm:items-center sm:gap-4
+            "
+            >
+              <div
+                className="
+                flex flex-wrap items-center gap-2
+                sm:gap-2
+              "
+              >
+                <div
+                  className="
+                  hidden flex-wrap items-center gap-2
+                  sm:flex
+                "
+                >
                   <Badge
                     variant="outline"
-                    className="border-primary bg-background text-primary w-fit hover:bg-black/70"
+                    className="
+                      w-fit border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {course.category?.name}
                   </Badge>
@@ -1634,17 +1839,43 @@ export function CourseHeader({
               </div>
               {/* Fechas: ocultas en pantallas pequeñas si NO está inscrito; en sm+ siempre visibles */}
               <div
-                className={`${isEnrolled ? 'flex' : 'hidden sm:flex'} flex-col gap-2 sm:flex-row sm:items-center`}
+                className={`
+                  ${
+                    isEnrolled
+                      ? 'flex'
+                      : `
+                    hidden
+                    sm:flex
+                  `
+                  }
+                  flex-col gap-2
+                  sm:flex-row sm:items-center
+                `}
               >
-                <div className="mt-3 flex items-center sm:mt-0">
+                <div
+                  className="
+                  mt-3 flex items-center
+                  sm:mt-0
+                "
+                >
                   <FaCalendar className="mr-2 text-white" />
-                  <span className="text-xs text-white sm:text-sm">
+                  <span
+                    className="
+                    text-xs text-white
+                    sm:text-sm
+                  "
+                  >
                     Creado: {formatDateString(course.createdAt)}
                   </span>
                 </div>
                 <div className="flex items-center">
                   <FaClock className="mr-2 text-white" />
-                  <span className="text-xs text-white sm:text-sm">
+                  <span
+                    className="
+                    text-xs text-white
+                    sm:text-sm
+                  "
+                  >
                     Actualizado: {formatDateString(course.updatedAt)}
                   </span>
                 </div>
@@ -1652,45 +1883,84 @@ export function CourseHeader({
             </div>
             {/* Mostrar número de estudiantes y rating en desktop y mobile */}
             <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
-              <div className="flex items-center sm:-mt-1">
+              <div
+                className="
+                flex items-center
+                sm:-mt-1
+              "
+              >
                 <FaUserGraduate className="mr-2 text-blue-600" />
                 <span className="text-sm font-semibold text-blue-600 sm:text-base">
                   {Math.max(0, totalStudents)}{' '}
                   {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
                 </span>
               </div>
-              <div className="flex items-center sm:-mt-1">
+              <div
+                className="
+                flex items-center
+                sm:-mt-1
+              "
+              >
                 {Array.from({ length: 5 }).map((_, index) => (
                   <StarIcon
                     key={index}
-                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
-                      index < Math.floor(course.rating ?? 0)
-                        ? 'text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
+                    className={`
+                      size-4
+                      sm:size-5
+                      ${
+                        index < Math.floor(course.rating ?? 0)
+                          ? 'text-yellow-400'
+                          : 'text-gray-300'
+                      }
+                    `}
                   />
                 ))}
-                <span className="ml-2 text-base font-semibold text-yellow-400 sm:text-lg">
+                <span
+                  className="
+                  ml-2 text-base font-semibold text-yellow-400
+                  sm:text-lg
+                "
+                >
                   {course.rating?.toFixed(1)}
                 </span>
               </div>
             </div>
           </div>
           {/* Course type and instructor info */}
-          <div className="mb-6 flex flex-col gap-4 sm:-mb-1 sm:flex-row sm:items-start sm:justify-between">
+          <div
+            className="
+            mb-6 flex flex-col gap-4
+            sm:-mb-1 sm:flex-row sm:items-start sm:justify-between
+          "
+          >
             <div className="w-full space-y-4">
-              <div className="-mt-3 -mb-9 flex w-full items-center justify-between sm:-mt-1 sm:-mb-2">
+              <div
+                className="
+                -mt-3 -mb-9 flex w-full items-center justify-between
+                sm:-mt-1 sm:-mb-2
+              "
+              >
                 <div className="flex w-full items-center justify-between">
                   <div>
                     <h3 className="text-base font-extrabold text-white sm:text-lg">
                       {course.instructorName ?? 'Instructor no encontrado'}
                     </h3>
-                    <em className="mb-4 block text-sm font-bold text-cyan-300 sm:text-base">
+                    <em
+                      className="
+                      mb-4 block text-sm font-bold text-cyan-300
+                      sm:text-base
+                    "
+                    >
                       Educador
                     </em>
                   </div>
                   {/* Modalidad badge in mobile, right side, same line as educator */}
-                  <span className="ml-2 sm:hidden">
+                  <span
+                    className="
+                    ml-2
+                    sm:hidden
+                  "
+                  >
                     <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
                       {course.modalidad?.name}
                     </Badge>
@@ -1700,10 +1970,22 @@ export function CourseHeader({
               {/* Elimina el botón duplicado en mobile, solo se muestra en el bloque principal */}
               {/* Botón foro SOLO en mobile, debajo de "Educador" y centrado */}
               {isEnrolled && (forumId ?? course.forumId) && (
-                <div className="mt-8 -mb-6 flex w-full justify-center sm:hidden">
+                <div
+                  className="
+                  mt-8 -mb-6 flex w-full justify-center
+                  sm:hidden
+                "
+                >
                   <Link href={`/estudiantes/foro/${forumId ?? course.forumId}`}>
                     <button
-                      className="buttonforum text-secondary w-full max-w-xs text-base font-bold whitespace-nowrap sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                      className="
+                        buttonforum w-full max-w-xs text-base font-bold
+                        whitespace-nowrap text-secondary
+                        sm:max-w-md sm:text-lg
+                        md:max-w-lg
+                        lg:max-w-xl
+                        xl:max-w-2xl
+                      "
                       style={{ minWidth: 240 }}
                     >
                       Ir al Foro Del Curso
@@ -1713,17 +1995,22 @@ export function CourseHeader({
               )}
             </div>
             {/* Modalidad badge y Ver Certificado en desktop (right arrow, right of button) */}
-            <div className="hidden flex-col items-end gap-4 sm:flex">
+            <div
+              className="
+              hidden flex-col items-end gap-4
+              sm:flex
+            "
+            >
               <div className="flex items-center gap-2">
                 {canAccessCertificate && (
                   <>
-                    <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-8 w-8" />
+                    <MdKeyboardDoubleArrowRight className="animate-arrow-slide size-8 text-primary" />
                     <Button
                       onClick={() => setIsCertModalOpen(true)}
                       className="cert2-button h-10 w-40 text-white"
                       aria-label="Ver Certificado"
                     >
-                      <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                      <PiCertificateFill className="mr-2 size-4 text-white" />
                       <span className="text-xs font-semibold text-white sm:text-sm">
                         Ver Certificado
                       </span>
@@ -1763,13 +2050,17 @@ export function CourseHeader({
                       }
                     }}
                     disabled={!isSignedIn}
-                    className={`grades-button flex h-9 items-center rounded px-4 font-semibold ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''}`}
+                    className={`
+                      grades-button flex h-9 items-center rounded px-4
+                      font-semibold
+                      ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''}
+                    `}
                   >
-                    <FaTrophy className="mr-2 h-4 w-4" />
+                    <FaTrophy className="mr-2 size-4" />
                     <span className="text-sm font-semibold">
                       Ver Resultados De Notas
                     </span>
-                    <PiNote className="ml-2 h-4 w-4" />
+                    <PiNote className="ml-2 size-4" />
                   </button>
                 </div>
               )}
@@ -1781,7 +2072,14 @@ export function CourseHeader({
                       href={`/estudiantes/foro/${forumId ?? course.forumId}`}
                     >
                       <button
-                        className="buttonforum text-secondary w-full max-w-xs text-base font-bold whitespace-nowrap sm:max-w-md sm:text-lg md:max-w-lg lg:max-w-xl xl:max-w-2xl"
+                        className="
+                          buttonforum w-full max-w-xs text-base font-bold
+                          whitespace-nowrap text-secondary
+                          sm:max-w-md sm:text-lg
+                          md:max-w-lg
+                          lg:max-w-xl
+                          xl:max-w-2xl
+                        "
                         style={{ minWidth: 240 }}
                       >
                         Ir al Foro Del Curso
@@ -1793,29 +2091,51 @@ export function CourseHeader({
           </div>
           {/* Duplicated enrollment button (centered) - mirror the bottom control exactly for consistent visuals */}
           <div
-            className={`flex justify-center ${localIsEnrolled ? 'mb-4' : 'mb-2'}`}
+            className={`
+              flex justify-center
+              ${localIsEnrolled ? 'mb-4' : 'mb-2'}
+            `}
           >
-            <div className="relative h-auto origin-center scale-90 transform-gpu sm:scale-100">
+            <div
+              className="
+              relative h-auto origin-center scale-90 transform-gpu
+              sm:scale-100
+            "
+            >
               {/* On mobile, Ver Certificado above enrollment buttons with arrows on both sides */}
               {localIsEnrolled && canAccessCertificate && (
-                <div className="mb-2 flex w-full items-center justify-center gap-2 sm:hidden">
-                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-7 w-7 -scale-x-100" />
+                <div
+                  className="
+                  mb-2 flex w-full items-center justify-center gap-2
+                  sm:hidden
+                "
+                >
+                  <MdKeyboardDoubleArrowRight
+                    className="
+                    animate-arrow-slide size-7 -scale-x-100 text-primary
+                  "
+                  />
                   <Button
                     onClick={() => setIsCertModalOpen(true)}
                     className="cert2-button h-10 w-40 text-white"
                     aria-label="Ver Certificado"
                   >
-                    <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                    <PiCertificateFill className="mr-2 size-4 text-white" />
                     <span className="text-xs font-semibold text-white sm:text-sm">
                       Ver Certificado
                     </span>
                   </Button>
-                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-7 w-7" />
+                  <MdKeyboardDoubleArrowRight className="animate-arrow-slide size-7 text-primary" />
                 </div>
               )}
               {/* On mobile, LessonGrades below modalidad, centered (solo si está inscrito) */}
               {localIsEnrolled && (
-                <div className="mb-2 flex w-full justify-center sm:hidden">
+                <div
+                  className="
+                  mb-2 flex w-full justify-center
+                  sm:hidden
+                "
+                >
                   <button
                     onClick={async () => {
                       if (!user?.id) {
@@ -1842,28 +2162,48 @@ export function CourseHeader({
                       }
                     }}
                     disabled={!isSignedIn}
-                    className={`grades-button flex w-full items-center justify-center whitespace-nowrap ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''} rounded px-4 py-2 font-semibold`}
+                    className={`
+                      grades-button flex w-full items-center justify-center
+                      whitespace-nowrap
+                      ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''} rounded px-4 py-2 font-semibold`}
                   >
                     <FaTrophy className="mr-2 inline-block" />
                     <span className="whitespace-nowrap">
                       Ver Resultados De Notas
                     </span>
-                    <PiNote className="ml-2 inline-block h-4 w-4" />
+                    <PiNote className="ml-2 inline-block size-4" />
                   </button>
                 </div>
               )}
               {localIsEnrolled ? (
                 <div className="flex flex-col items-center space-y-4">
                   {/* Botones de inscripción en la fila inferior */}
-                  <div className="flex flex-col items-center space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
+                  <div
+                    className="
+                    flex flex-col items-center space-y-2
+                    sm:flex-row sm:space-y-0 sm:space-x-4
+                  "
+                  >
                     <Button
-                      className="bg-primary text-background hover:bg-primary/90 h-10 w-56 justify-center border-white/20 text-sm font-semibold transition-colors active:scale-95 sm:h-12 sm:w-64 sm:text-lg"
+                      className="
+                        h-10 w-56
+                        justify-center
+                        border-white/20 bg-primary text-sm font-semibold text-background
+                        transition-colors hover:bg-primary/90
+                        active:scale-95
+                        sm:h-12 sm:w-64 sm:text-lg
+                      "
                       disabled
                     >
                       <FaCheck className="mr-2" /> Suscrito Al Curso
                     </Button>
                     <Button
-                      className="h-10 w-56 justify-center border-white/20 bg-red-500 text-sm font-semibold hover:bg-red-600 sm:h-12 sm:w-64 sm:text-lg"
+                      className="
+                        h-10 w-56 justify-center border-white/20 bg-red-500
+                        text-sm font-semibold
+                        hover:bg-red-600
+                        sm:h-12 sm:w-64 sm:text-lg
+                      "
                       onClick={onUnenrollAction}
                       disabled={isUnenrolling}
                     >
@@ -1886,7 +2226,10 @@ export function CourseHeader({
                       forceRedirectUrl={forceRedirectUrl}
                     >
                       <button
-                        className="btn h-10 w-56 sm:h-12 sm:w-64"
+                        className="
+                          btn h-10 w-56
+                          sm:h-12 sm:w-64
+                        "
                         onClick={async () => {
                           try {
                             const suggested = String(
@@ -1933,7 +2276,12 @@ export function CourseHeader({
                           }
                         }}
                       >
-                        <strong className="text-sm sm:text-lg">
+                        <strong
+                          className="
+                          text-sm
+                          sm:text-lg
+                        "
+                        >
                           {getButtonPrice() && <span>{getButtonPrice()}</span>}
                           <span>{getEnrollButtonText()}</span>
                         </strong>
@@ -1948,13 +2296,21 @@ export function CourseHeader({
                     </SignInButton>
                   ) : (
                     <button
-                      className="btn h-10 w-56 sm:h-12 sm:w-64"
+                      className="
+                        btn h-10 w-56
+                        sm:h-12 sm:w-64
+                      "
                       onClick={handleEnrollClick}
                       disabled={isEnrolling || isEnrollClicked}
                     >
-                      <strong className="text-sm sm:text-lg">
+                      <strong
+                        className="
+                        text-sm
+                        sm:text-lg
+                      "
+                      >
                         {isEnrolling || isEnrollClicked ? (
-                          <Icons.spinner className="h-5 w-5" />
+                          <Icons.spinner className="size-5" />
                         ) : (
                           <>
                             {getButtonPrice() && (
@@ -1978,9 +2334,20 @@ export function CourseHeader({
             </div>
           </div>
           {/* Course description y botones responsivos */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div
+            className="
+            flex flex-col gap-4
+            sm:flex-row sm:items-start sm:justify-between
+          "
+          >
             <div className="prose flex-1">
-              <p className="text-justify text-sm leading-relaxed whitespace-pre-wrap text-white sm:text-base">
+              <p
+                className="
+                text-justify text-sm leading-relaxed whitespace-pre-wrap
+                text-white
+                sm:text-base
+              "
+              >
                 {/* Cambiado a blanco */}
                 {course.description ?? 'No hay descripción disponible.'}
               </p>
@@ -1989,15 +2356,29 @@ export function CourseHeader({
           </div>
           {/* El bloque de certificado ahora está en el modal */}
           {isCertModalOpen && (
-            <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/50">
-              <div className="relative w-full max-w-lg rounded-lg border border-gray-200 bg-[#01142B] p-6">
+            <div
+              className="
+              fixed inset-0 z-[99999] flex items-center justify-center
+              bg-black/50
+            "
+            >
+              <div
+                className="
+                relative w-full max-w-lg rounded-lg border border-gray-200
+                bg-[#01142B] p-6
+              "
+              >
                 <button
                   onClick={() => setIsCertModalOpen(false)}
-                  className="text-primary hover:text-secondary absolute top-2 right-2 transition-colors"
+                  className="
+                    absolute
+                    top-2
+                    right-2 text-primary transition-colors hover:text-secondary
+                  "
                   type="button"
                   aria-label="Cerrar"
                 >
-                  <IoCloseOutline className="h-8 w-8" />
+                  <IoCloseOutline className="size-8" />
                 </button>
                 <div className="flex flex-col items-center gap-4">
                   <Image
@@ -2007,7 +2388,11 @@ export function CourseHeader({
                     height={120}
                     className="mb-2"
                   />
-                  <p className="text-primary text-center font-serif text-lg italic">
+                  <p
+                    className="
+                    text-center font-serif text-lg text-primary italic
+                  "
+                  >
                     ¡Felicitaciones! Has completado exitosamente el curso con
                     una calificación sobresaliente. Tu certificado está listo
                     para ser visualizado y compartido.
@@ -2047,7 +2432,13 @@ export function CourseHeader({
                   <Badge
                     key={materia.id}
                     variant="secondary"
-                    className={`bg-gradient-to-r break-words whitespace-normal ${getBadgeGradient(index)} max-w-[200px] text-white transition-all duration-300 hover:scale-105 hover:shadow-lg sm:max-w-none`}
+                    className={`
+                      bg-gradient-to-r break-words whitespace-normal
+                      ${getBadgeGradient(index)}
+                      max-w-[200px] text-white transition-all duration-300
+                      hover:scale-105 hover:shadow-lg
+                      sm:max-w-none
+                    `}
                   >
                     {materia.title}
                   </Badge>
@@ -2070,13 +2461,23 @@ export function CourseHeader({
               {localIsEnrolled ? (
                 <div className="flex flex-col space-y-4">
                   <Button
-                    className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+                    className="
+                      h-12 w-64
+                      justify-center
+                      border-white/20 bg-primary text-lg font-semibold text-background
+                      transition-colors hover:bg-primary/90
+                      active:scale-95
+                    "
                     disabled
                   >
                     <FaCheck className="mr-2" /> Suscrito Al Curso
                   </Button>
                   <Button
-                    className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+                    className="
+                      h-12 w-64 justify-center border-white/20 bg-red-500
+                      text-lg font-semibold
+                      hover:bg-red-600
+                    "
                     onClick={onUnenrollAction}
                     disabled={isUnenrolling}
                   >
@@ -2166,7 +2567,7 @@ export function CourseHeader({
                     >
                       <strong>
                         {isEnrolling || isEnrollClicked ? (
-                          <Icons.spinner className="h-6 w-6" />
+                          <Icons.spinner className="size-6" />
                         ) : (
                           <>
                             {getButtonPrice() && (
@@ -2193,21 +2594,33 @@ export function CourseHeader({
       </Card>
       {/* --- MODAL DE PAGO PARA CURSO INDIVIDUAL --- */}
       {showPaymentModal && courseProduct && (
-        <div className="pointer-events-auto fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
+        <div
+          className="
+          pointer-events-auto fixed inset-0 z-[1000] flex items-center
+          justify-center bg-black/50
+        "
+        >
           <div className="relative w-full max-w-lg rounded-lg bg-white p-4">
             <div className="relative mb-4 flex items-center justify-between">
-              <h3 className="w-full text-center text-xl font-semibold text-gray-900">
+              <h3
+                className="
+                w-full text-center text-xl font-semibold text-gray-900
+              "
+              >
                 Llena este formulario
                 <br />
                 <span className="font-bold">{courseProduct.name}</span>
               </h3>
               <button
                 onClick={() => setShowPaymentModal(false)}
-                className="absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500 hover:text-gray-700"
+                className="
+                  absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500
+                  hover:text-gray-700
+                "
                 type="button"
                 aria-label="Cerrar"
               >
-                <FaTimes className="h-5 w-5" />
+                <FaTimes className="size-5" />
               </button>
             </div>
             <div>

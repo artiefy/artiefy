@@ -153,7 +153,7 @@ const LessonCards = ({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="h-4 w-4 text-accent"
+            className="size-4 text-accent"
           >
             <circle cx="12" cy="12" r="10" />
             <path d="m9 12 2 2 4-4" />
@@ -161,7 +161,13 @@ const LessonCards = ({
         );
       }
       return (
-        <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 transition-colors group-hover/lesson:border-muted-foreground/50" />
+        <div
+          className="
+          size-4 rounded-full border-2 border-muted-foreground/30
+          transition-colors
+          group-hover/lesson:border-muted-foreground/50
+        "
+        />
       );
     };
 
@@ -170,9 +176,12 @@ const LessonCards = ({
         type="button"
         key={lessonItem.id}
         onClick={() => handleClick(lessonItem)}
-        className={`group/lesson relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all ${
-          isNavigating ? 'cursor-not-allowed opacity-70' : ''
-        } ${isCurrentLesson ? 'bg-accent/10' : ''}`}
+        className={`
+          group/lesson relative flex w-full items-center gap-3 rounded-xl px-3
+          py-2.5 text-left transition-all
+          ${isNavigating ? 'cursor-not-allowed opacity-70' : ''}
+          ${isCurrentLesson ? 'bg-accent/10' : ''}
+        `}
         onMouseEnter={(e) => {
           if (!isCurrentLesson) {
             e.currentTarget.style.backgroundColor = '#1a2333';
@@ -187,7 +196,12 @@ const LessonCards = ({
       >
         {/* Indicador lateral activo */}
         {isCurrentLesson && (
-          <div className="absolute top-1/2 -left-[18px] h-6 w-0.5 -translate-y-1/2 rounded-full bg-accent" />
+          <div
+            className="
+            absolute top-1/2 -left-[18px] h-6 w-0.5 -translate-y-1/2
+            rounded-full bg-accent
+          "
+          />
         )}
 
         {/* Ícono de estado */}
@@ -197,18 +211,29 @@ const LessonCards = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <p
-              className={`truncate text-sm leading-tight transition-colors ${
-                isCurrentLesson
-                  ? 'font-medium text-accent'
-                  : isCompleted
-                    ? 'text-muted-foreground'
-                    : 'text-foreground group-hover/lesson:text-foreground'
-              }`}
+              className={`
+                truncate text-sm leading-tight transition-colors
+                ${
+                  isCurrentLesson
+                    ? 'font-medium text-accent'
+                    : isCompleted
+                      ? 'text-muted-foreground'
+                      : `
+                      text-foreground
+                      group-hover/lesson:text-foreground
+                    `
+                }
+              `}
             >
               {lessonItem.title}
             </p>
             {shouldShowNew && (
-              <span className="rounded-full bg-green-500 px-1.5 py-0.5 text-[9px] font-semibold tracking-wide text-white uppercase">
+              <span
+                className="
+                rounded-full bg-green-500 px-1.5 py-0.5 text-[9px] font-semibold
+                tracking-wide text-white uppercase
+              "
+              >
                 Nueva
               </span>
             )}
@@ -216,9 +241,9 @@ const LessonCards = ({
 
           <div className="mt-1 flex items-center gap-1">
             {isCompleted ? (
-              <FaCheckCircle className="h-3 w-3 text-green-500" />
+              <FaCheckCircle className="size-3 text-green-500" />
             ) : (
-              <FaClock className="h-3 w-3 text-muted-foreground/70" />
+              <FaClock className="size-3 text-muted-foreground/70" />
             )}
             <span className="text-[10px] text-muted-foreground">
               {isCompleted
@@ -243,7 +268,10 @@ const LessonCards = ({
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="h-28 animate-pulse rounded-lg bg-gray-100 p-3 shadow-sm md:h-32 md:p-4"
+            className="
+              h-28 animate-pulse rounded-lg bg-gray-100 p-3 shadow-sm
+              md:h-32 md:p-4
+            "
           >
             <div className="mb-2 h-4 w-3/4 rounded bg-gray-200" />
             <div className="mb-4 h-3 w-1/2 rounded bg-gray-200" />
@@ -301,7 +329,11 @@ const LessonCards = ({
                     <span className="truncate">{lesson.title}</span>
                     {/* Badge Nueva */}
                     {shouldShowNew && (
-                      <span className="ml-2 rounded bg-green-500 px-2 py-0.5 text-xs text-white">
+                      <span
+                        className="
+                        ml-2 rounded bg-green-500 px-2 py-0.5 text-xs text-white
+                      "
+                      >
                         Nueva
                       </span>
                     )}
@@ -329,10 +361,15 @@ const LessonCards = ({
   return (
     <div className="flex h-full flex-col">
       {/* Progress section at top */}
-      <div className="sticky top-0 z-10 border-b border-border bg-[#061c37cc] px-5 py-3 backdrop-blur-xl">
+      <div
+        className="
+        sticky top-0 z-10 border-b border-border bg-[#061c37cc] px-5 py-3
+        backdrop-blur-xl
+      "
+      >
         <div className="flex items-center gap-4">
-          <div className="relative h-14 w-14">
-            <svg className="h-14 w-14 -rotate-90">
+          <div className="relative size-14">
+            <svg className="size-14 -rotate-90">
               <circle
                 cx="28"
                 cy="28"
@@ -371,12 +408,28 @@ const LessonCards = ({
       {/* Lista de lecciones */}
       <div className="flex-1 overflow-y-auto px-3 pb-4">
         <div className="mb-2">
-          <button className="group flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all hover:bg-secondary/50">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-green-600 bg-green-200 transition-colors group-hover:bg-green-300">
-              <SiGoogleclassroom className="h-4 w-4 text-green-600" />
+          <button
+            className="
+            group flex w-full items-center gap-3 rounded-xl p-3 text-left
+            transition-all
+            hover:bg-secondary/50
+          "
+          >
+            <div
+              className="
+              flex size-8 shrink-0 items-center justify-center rounded-full
+              border border-green-600 bg-green-200 transition-colors
+              group-hover:bg-green-300
+            "
+            >
+              <SiGoogleclassroom className="size-4 text-green-600" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm leading-tight font-medium text-foreground">
+              <p
+                className="
+                truncate text-sm leading-tight font-medium text-foreground
+              "
+              >
                 Clases
               </p>
               <p className="mt-0.5 text-[10px] text-muted-foreground">
@@ -393,12 +446,17 @@ const LessonCards = ({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="h-4 w-4 shrink-0 text-muted-foreground"
+              className="size-4 shrink-0 text-muted-foreground"
             >
               <path d="m6 9 6 6 6-6" />
             </svg>
           </button>
-          <div className="max-h-[1000px] overflow-hidden opacity-100 transition-all duration-300">
+          <div
+            className="
+            max-h-[1000px] overflow-hidden opacity-100 transition-all
+            duration-300
+          "
+          >
             <div
               className="ml-5 space-y-1 border-l-2 py-2 pl-4"
               style={{ borderColor: '#1a2333' }}
@@ -431,7 +489,12 @@ export function LessonCardsRecorded({
             <div className="flex items-center justify-between">
               <span className="font-semibold">{meeting.title}</span>
               <Link href={`/estudiantes/clases/${meeting.id}`}>
-                <button className="buttonclass text-background transition-none active:scale-95">
+                <button
+                  className="
+                  buttonclass text-background transition-none
+                  active:scale-95
+                "
+                >
                   Ver Clase
                 </button>
               </Link>

@@ -118,8 +118,13 @@ export function CertificationStudent({
           ))}
         </div>
         {/* Certificate Content */}
-        <div className="mb-8 text-center print:hidden">
-          <h1 className="text-primary mb-2 text-4xl font-bold">
+        <div
+          className="
+          mb-8 text-center
+          print:hidden
+        "
+        >
+          <h1 className="mb-2 text-4xl font-bold text-primary">
             Constancia de Participación
           </h1>
           <p className="text-lg text-gray-400">
@@ -127,7 +132,10 @@ export function CertificationStudent({
           </p>
         </div>
         <div
-          className="certificate relative mb-8 overflow-hidden rounded-lg border-8 border-amber-200 bg-white p-8 shadow-2xl"
+          className="
+            certificate relative mb-8 overflow-hidden rounded-lg border-8
+            border-amber-200 bg-white p-8 shadow-2xl
+          "
           style={{ minHeight: 0, minWidth: 0 }}
         >
           {/* ...existing code... */}
@@ -149,13 +157,13 @@ export function CertificationStudent({
                   <p className="text-xl text-gray-600">
                     Por medio de la presente se hace constar que
                   </p>
-                  <p className="text-background text-3xl font-bold">
+                  <p className="text-3xl font-bold text-background">
                     {displayName}
                   </p>
                   <p className="text-xl text-gray-600">
                     ha participado y completado exitosamente el curso
                   </p>
-                  <p className="text-background text-3xl font-bold">
+                  <p className="text-3xl font-bold text-background">
                     {course?.title || 'Curso no encontrado'}
                   </p>
                   <p className="mt-4 text-lg text-gray-600">
@@ -177,7 +185,7 @@ export function CertificationStudent({
                       className="mx-auto mb-4"
                     />
                     <div className="space-y-1">
-                      <p className="text-background text-base font-semibold">
+                      <p className="text-base font-semibold text-background">
                         Luis Antonio Ruíz Cicery
                       </p>
                       <p className="text-sm text-gray-600">
@@ -192,10 +200,10 @@ export function CertificationStudent({
 
                   {/* Center completion details */}
                   <div className="space-y-2">
-                    <p className="text-background text-lg">
+                    <p className="text-lg text-background">
                       realizado a través de Artiefy, la educación del futuro
                     </p>
-                    <p className="text-background text-lg">
+                    <p className="text-lg text-background">
                       Finalizado el {formatDate(today)}
                     </p>
                     <p className="text-sm text-gray-600">
@@ -205,7 +213,10 @@ export function CertificationStudent({
                       <p className="text-sm text-gray-600">Verificado en:</p>
                       <Link
                         href={certificateUrl}
-                        className="inline-block max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-blue-500 hover:underline"
+                        className="
+                          inline-block max-w-full truncate text-sm text-blue-500
+                          hover:underline
+                        "
                       >
                         {certificateUrl}
                       </Link>
@@ -222,7 +233,7 @@ export function CertificationStudent({
                       className="mx-auto mb-4"
                     />
                     <div className="space-y-1">
-                      <p className="text-background text-base font-semibold">
+                      <p className="text-base font-semibold text-background">
                         Juan José Ruíz Artunduaga
                       </p>
                       <p className="text-sm text-gray-600">
@@ -238,7 +249,12 @@ export function CertificationStudent({
 
           {/* Decorative Background */}
           <div className="absolute inset-0 opacity-5">
-            <div className="from-primary to-primary absolute inset-0 bg-gradient-to-r via-amber-500" />
+            <div
+              className="
+              absolute inset-0 bg-gradient-to-r from-primary via-amber-500
+              to-primary
+            "
+            />
           </div>
         </div>
         {/* Download Button */}
@@ -271,7 +287,11 @@ export function CertificationStudent({
               />
             }
             fileName={`certificado-${course?.title || 'curso'}.pdf`}
-            className="bg-primary text-background hover:bg-primary/90 rounded px-4 py-2 font-semibold"
+            className="
+              rounded bg-primary
+              px-4
+              py-2 font-semibold text-background hover:bg-primary/90
+            "
           >
             {({ loading }) => (loading ? 'Generando PDF...' : 'Descargar PDF')}
           </PDFDownloadLink>

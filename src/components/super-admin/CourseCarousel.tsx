@@ -60,7 +60,14 @@ export default function CourseCarousel({ courses, userId }: Props) {
             return (
               <div
                 key={course.id}
-                className="relative isolate z-10 mx-2 w-48 flex-shrink-0 overflow-visible rounded-lg bg-gray-800 px-4 py-4 shadow-[0_0px_15px_rgba(0,189,216,0.5)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0px_25px_rgba(0,189,216,0.6)]"
+                className="
+                  relative isolate z-10 mx-2 w-48 flex-shrink-0 overflow-visible
+                  rounded-lg bg-gray-800 p-4
+                  shadow-[0_0px_15px_rgba(0,189,216,0.5)] transition-all
+                  duration-300
+                  hover:scale-[1.03]
+                  hover:shadow-[0_0px_25px_rgba(0,189,216,0.6)]
+                "
               >
                 {/* Imagen */}
                 {course.coverImageKey ? (
@@ -72,7 +79,12 @@ export default function CourseCarousel({ courses, userId }: Props) {
                     className="h-20 w-full rounded-md object-cover"
                   />
                 ) : (
-                  <div className="flex h-20 w-full items-center justify-center rounded-md bg-gray-700">
+                  <div
+                    className="
+                    flex h-20 w-full items-center justify-center rounded-md
+                    bg-gray-700
+                  "
+                  >
                     Sin imagen
                   </div>
                 )}
@@ -86,7 +98,11 @@ export default function CourseCarousel({ courses, userId }: Props) {
                 </div>
 
                 {/* Footer */}
-                <div className="mt-2 flex flex-col items-start justify-between space-y-2 px-2">
+                <div
+                  className="
+                  mt-2 flex flex-col items-start justify-between space-y-2 px-2
+                "
+                >
                   <div className="flex w-full justify-between">
                     <p className="text-xs font-bold text-red-500">
                       {course.modalidad?.name}
@@ -97,11 +113,25 @@ export default function CourseCarousel({ courses, userId }: Props) {
                     {/* Botón "Ver Curso" */}
                     <Link
                       href={`/dashboard/super-admin/stats/${course.id}?user=${userId}`}
-                      className="group/button relative flex w-full items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-xs font-bold text-primary transition-all active:scale-95"
+                      className="
+                        group/button relative flex w-full items-center
+                        justify-center overflow-hidden rounded-md border
+                        border-white/20 bg-background p-2 text-xs font-bold
+                        text-primary transition-all
+                        active:scale-95
+                      "
                     >
                       <p className="font-bold">Ver Curso</p>
                       <ArrowRight className="ml-2 size-4 animate-bounce-right" />
-                      <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+                      <div
+                        className="
+                        absolute inset-0 flex w-full
+                        [transform:skew(-13deg)_translateX(-100%)]
+                        justify-center
+                        group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                        group-hover/button:duration-1000
+                      "
+                      >
                         <div className="relative h-full w-10 bg-white/30" />
                       </div>
                     </Link>
@@ -116,7 +146,11 @@ export default function CourseCarousel({ courses, userId }: Props) {
       {courses.length > 4 && (
         <>
           <button
-            className="absolute top-1/2 left-0 -translate-y-1/2 rounded-full bg-gray-900 p-2 text-white shadow-md hover:bg-gray-700"
+            className="
+              absolute top-1/2 left-0 -translate-y-1/2 rounded-full bg-gray-900
+              p-2 text-white shadow-md
+              hover:bg-gray-700
+            "
             onClick={() => emblaApi?.scrollPrev()}
             disabled={!canScrollPrev}
           >
@@ -124,7 +158,11 @@ export default function CourseCarousel({ courses, userId }: Props) {
           </button>
 
           <button
-            className="absolute top-1/2 right-0 -translate-y-1/2 rounded-full bg-gray-900 p-2 text-white shadow-md hover:bg-gray-700"
+            className="
+              absolute top-1/2 right-0 -translate-y-1/2 rounded-full bg-gray-900
+              p-2 text-white shadow-md
+              hover:bg-gray-700
+            "
             onClick={() => emblaApi?.scrollNext()}
             disabled={!canScrollNext}
           >

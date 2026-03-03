@@ -1975,12 +1975,36 @@ export default function AdminDashboard() {
 
   return (
     <>
-      <div className="p-4 sm:p-6">
+      <div
+        className="
+        p-4
+        sm:p-6
+      "
+      >
         {/* Header with gradient effect */}
         <header className="group relative overflow-hidden rounded-lg p-[1px]">
-          <div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
-          <div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
-            <h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
+          <div
+            className="
+            absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF]
+            via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500
+          "
+          />
+          <div
+            className="
+            relative flex flex-col items-start justify-between rounded-lg
+            bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
+            group-hover:bg-gray-800/95
+            sm:flex-row sm:items-center sm:p-6
+          "
+          >
+            <h1
+              className="
+              flex items-center gap-3 text-xl font-extrabold tracking-tight
+              text-primary
+              sm:text-2xl
+              lg:text-3xl
+            "
+            >
               Administrador de usuarios
             </h1>
           </div>
@@ -1991,50 +2015,131 @@ export default function AdminDashboard() {
         <div className="mb-6 flex flex-wrap gap-2">
           <button
             onClick={() => setShowCreateForm(true)}
-            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md border border-white/20
+              bg-background px-2 py-1.5 text-xs text-primary transition-all
+              hover:bg-primary/10
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+            "
           >
             <span className="relative z-10 font-medium">Crear Usuario</span>
-            <UserPlus className="relative z-10 size-3.5 sm:size-4" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+            <UserPlus
+              className="
+              relative z-10 size-3.5
+              sm:size-4
+            "
+            />
+            <div
+              className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+            />
           </button>
           <button
             onClick={() => handleMassUpdateStatus('activo')}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
-              selectedUsers.length === 0
-                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-                : 'border border-green-500/20 bg-green-500/10 text-green-500 hover:bg-green-500/20'
-            }`}
+            className={`
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs
+              transition-all
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+              ${
+                selectedUsers.length === 0
+                  ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                  : `
+                  border border-green-500/20 bg-green-500/10 text-green-500
+                  hover:bg-green-500/20
+                `
+              }
+            `}
             disabled={selectedUsers.length === 0}
           >
             <span className="relative z-10 font-medium">Activar</span>
-            <Check className="relative z-10 size-3.5 sm:size-4" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+            <Check
+              className="
+              relative z-10 size-3.5
+              sm:size-4
+            "
+            />
+            <div
+              className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+            />
           </button>
           <button
             onClick={() => handleMassUpdateStatus('inactivo')}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
-              selectedUsers.length === 0
-                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-                : 'border border-red-500/20 bg-red-500/10 text-red-500 hover:bg-red-500/20'
-            }`}
+            className={`
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs
+              transition-all
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+              ${
+                selectedUsers.length === 0
+                  ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                  : `
+                  border border-red-500/20 bg-red-500/10 text-red-500
+                  hover:bg-red-500/20
+                `
+              }
+            `}
             disabled={selectedUsers.length === 0}
           >
             <span className="relative z-10 font-medium">Desactivar</span>
-            <XCircle className="relative z-10 size-3.5 sm:size-4" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+            <XCircle
+              className="
+              relative z-10 size-3.5
+              sm:size-4
+            "
+            />
+            <div
+              className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+            />
           </button>
           <button
             onClick={handleMassRemoveRole}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
-              selectedUsers.length === 0
-                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-                : 'border border-yellow-500/20 bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20'
-            }`}
+            className={`
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs
+              transition-all
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+              ${
+                selectedUsers.length === 0
+                  ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                  : `
+                  border border-yellow-500/20 bg-yellow-500/10 text-yellow-500
+                  hover:bg-yellow-500/20
+                `
+              }
+            `}
             disabled={selectedUsers.length === 0}
           >
             <span className="relative z-10 font-medium">Quitar Rol</span>
-            <XCircle className="relative z-10 size-3.5 sm:size-4" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+            <XCircle
+              className="
+              relative z-10 size-3.5
+              sm:size-4
+            "
+            />
+            <div
+              className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+            />
           </button>
 
           <button
@@ -2093,17 +2198,26 @@ export default function AdminDashboard() {
                 setSendingEmails(false);
               }
             }}
-            className={`group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${
-              selectedUsers.length === 0
-                ? 'cursor-not-allowed border border-gray-600 text-gray-500'
-                : 'border border-blue-500/20 bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
-            }`}
+            className={`
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs
+              transition-all
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+              ${
+                selectedUsers.length === 0
+                  ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                  : `
+                  border border-blue-500/20 bg-blue-500/10 text-blue-500
+                  hover:bg-blue-500/20
+                `
+              }
+            `}
             disabled={selectedUsers.length === 0 || sendingEmails}
           >
             <span className="relative z-10 font-medium">
               {sendingEmails ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4" />
+                  <Loader2 className="size-4" />
                   Enviando...
                 </div>
               ) : (
@@ -2111,43 +2225,120 @@ export default function AdminDashboard() {
               )}
             </span>
             {!sendingEmails && (
-              <Paperclip className="relative z-10 size-3.5 sm:size-4" />
+              <Paperclip
+                className="
+                relative z-10 size-3.5
+                sm:size-4
+              "
+              />
             )}
           </button>
           <button
             onClick={() => setShowAssignModal(true)}
-            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md border border-white/20
+              bg-background px-2 py-1.5 text-xs text-primary transition-all
+              hover:bg-primary/10
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+            "
           >
             <span className="relative z-10 font-medium">
               Asignar a Curso o Programa
             </span>
-            <UserPlus className="relative z-10 size-3.5 sm:size-4" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+            <UserPlus
+              className="
+              relative z-10 size-3.5
+              sm:size-4
+            "
+            />
+            <div
+              className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+            />
           </button>
           <button
             onClick={() => setShowAnuncioModal(true)}
-            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md border border-white/20
+              bg-background px-2 py-1.5 text-xs text-primary transition-all
+              hover:bg-primary/10
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+            "
           >
             <span className="relative z-10 font-medium">Crear Anuncio</span>
-            <UserPlus className="relative z-10 size-3.5 sm:size-4" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+            <UserPlus
+              className="
+              relative z-10 size-3.5
+              sm:size-4
+            "
+            />
+            <div
+              className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+            />
           </button>
           <button
             onClick={handleOpenWhatsApp}
-            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-green-400 transition-all hover:bg-green-500/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md border border-white/20
+              bg-background px-2 py-1.5 text-xs text-green-400 transition-all
+              hover:bg-green-500/10
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+            "
           >
             <span className="relative z-10 font-medium">Enviar WhatsApp</span>
-            <Send className="relative z-10 size-3.5 sm:size-4" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+            <Send
+              className="
+              relative z-10 size-3.5
+              sm:size-4
+            "
+            />
+            <div
+              className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+            />
           </button>
 
           <button
             onClick={() => setShowEmailModal(true)}
-            className="group/button relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md border border-white/20
+              bg-background px-2 py-1.5 text-xs text-primary transition-all
+              hover:bg-primary/10
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+            "
           >
             <span className="relative z-10 font-medium">Enviar Correo</span>
-            <Paperclip className="relative z-10 size-3.5 sm:size-4" />
-            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+            <Paperclip
+              className="
+              relative z-10 size-3.5
+              sm:size-4
+            "
+            />
+            <div
+              className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+            />
           </button>
           <BulkUploadUsers
             onUsersUploaded={handleMassUserUpload}
@@ -2159,21 +2350,42 @@ export default function AdminDashboard() {
 
         <div className="mt-6">
           {/* Search and filters with consistent card styling */}
-          <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm">
+          <div
+            className="
+            mb-6 grid grid-cols-1 gap-4
+            md:grid-cols-2
+            lg:grid-cols-3
+          "
+          >
+            <div
+              className="
+              rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            "
+            >
               <input
                 type="text"
                 placeholder="Buscar por nombre o correo..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2 text-white placeholder:text-gray-400"
+                className="
+                  w-full rounded-md border border-gray-700 bg-gray-900/50 px-4
+                  py-2 text-white
+                  placeholder:text-gray-400
+                "
               />
             </div>
 
             {/* Role filter */}
-            <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm">
+            <div
+              className="
+              rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            "
+            >
               <select
-                className="w-full rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2 text-white"
+                className="
+                  w-full rounded-md border border-gray-700 bg-gray-900/50 px-4
+                  py-2 text-white
+                "
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value)}
               >
@@ -2187,9 +2399,16 @@ export default function AdminDashboard() {
             </div>
 
             {/* Status filter */}
-            <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm">
+            <div
+              className="
+              rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            "
+            >
               <select
-                className="w-full rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2 text-white"
+                className="
+                  w-full rounded-md border border-gray-700 bg-gray-900/50 px-4
+                  py-2 text-white
+                "
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -2202,7 +2421,12 @@ export default function AdminDashboard() {
           </div>
 
           {/* Users table with improved styling */}
-          <div className="mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl backdrop-blur-sm">
+          <div
+            className="
+            mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl
+            backdrop-blur-sm
+          "
+          >
             <div className="overflow-x-auto">
               <div className="mb-4 flex items-center gap-2 text-sm text-white">
                 <span>Mostrar:</span>
@@ -2225,8 +2449,18 @@ export default function AdminDashboard() {
 
               <table className="min-w-full table-auto border-collapse">
                 <thead>
-                  <tr className="border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] text-white">
-                    <th className="w-12 px-2 py-3 sm:px-4 sm:py-4">
+                  <tr
+                    className="
+                    border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF]
+                    via-[#00BDD8] to-[#01142B] text-white
+                  "
+                  >
+                    <th
+                      className="
+                      w-12 px-2 py-3
+                      sm:px-4 sm:py-4
+                    "
+                    >
                       <input
                         type="checkbox"
                         checked={selectedUsers.length === filteredUsers.length}
@@ -2240,16 +2474,36 @@ export default function AdminDashboard() {
                         className="rounded border-white/20"
                       />
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium whitespace-nowrap sm:px-4 sm:py-4 sm:text-sm">
+                    <th
+                      className="
+                      px-2 py-3 text-left text-xs font-medium whitespace-nowrap
+                      sm:px-4 sm:py-4 sm:text-sm
+                    "
+                    >
                       Usuario
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium whitespace-nowrap sm:px-4 sm:py-4 sm:text-sm">
+                    <th
+                      className="
+                      px-2 py-3 text-left text-xs font-medium whitespace-nowrap
+                      sm:px-4 sm:py-4 sm:text-sm
+                    "
+                    >
                       Rol
                     </th>
-                    <th className="px-2 py-3 text-left text-xs font-medium whitespace-nowrap sm:px-4 sm:py-4 sm:text-sm">
+                    <th
+                      className="
+                      px-2 py-3 text-left text-xs font-medium whitespace-nowrap
+                      sm:px-4 sm:py-4 sm:text-sm
+                    "
+                    >
                       Estado
                     </th>
-                    <th className="px-2 py-3 text-right text-xs font-medium whitespace-nowrap sm:px-4 sm:py-4 sm:text-sm">
+                    <th
+                      className="
+                      px-2 py-3 text-right text-xs font-medium whitespace-nowrap
+                      sm:px-4 sm:py-4 sm:text-sm
+                    "
+                    >
                       Acciones
                     </th>
                   </tr>
@@ -2258,9 +2512,17 @@ export default function AdminDashboard() {
                   {currentUsers.map((user) => (
                     <tr
                       key={user.id}
-                      className="group transition-colors hover:bg-gray-700/50"
+                      className="
+                        group transition-colors
+                        hover:bg-gray-700/50
+                      "
                     >
-                      <td className="px-2 py-3 sm:px-4 sm:py-4">
+                      <td
+                        className="
+                        px-2 py-3
+                        sm:px-4 sm:py-4
+                      "
+                      >
                         <input
                           type="checkbox"
                           checked={selectedUsers.includes(user.id)}
@@ -2270,31 +2532,73 @@ export default function AdminDashboard() {
                           className="rounded border-gray-600"
                         />
                       </td>
-                      <td className="px-2 py-3 sm:px-4 sm:py-4">
-                        <div className="flex items-center gap-2 sm:gap-3">
-                          <div className="size-8 rounded-full bg-primary/10 p-1 sm:size-10 sm:p-2">
-                            <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-primary sm:text-sm">
+                      <td
+                        className="
+                        px-2 py-3
+                        sm:px-4 sm:py-4
+                      "
+                      >
+                        <div
+                          className="
+                          flex items-center gap-2
+                          sm:gap-3
+                        "
+                        >
+                          <div
+                            className="
+                            size-8 rounded-full bg-primary/10 p-1
+                            sm:size-10 sm:p-2
+                          "
+                          >
+                            <span
+                              className="
+                              flex size-full items-center justify-center text-xs
+                              font-semibold text-primary
+                              sm:text-sm
+                            "
+                            >
                               {user.firstName[0]}
                               {user.lastName[0]}
                             </span>
                           </div>
                           <div>
-                            <div className="text-xs font-medium text-white sm:text-sm">
+                            <div
+                              className="
+                              text-xs font-medium text-white
+                              sm:text-sm
+                            "
+                            >
                               {user.firstName} {user.lastName}
                             </div>
-                            <div className="text-xs text-gray-400 sm:text-sm">
+                            <div
+                              className="
+                              text-xs text-gray-400
+                              sm:text-sm
+                            "
+                            >
                               {user.email}
                             </div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-2 py-3 sm:px-4 sm:py-4">
+                      <td
+                        className="
+                        px-2 py-3
+                        sm:px-4 sm:py-4
+                      "
+                      >
                         <select
                           value={user.role || 'sin-role'}
                           onChange={(e) =>
                             handleRoleChange(user.id, e.target.value)
                           }
-                          className="w-full rounded-md border border-gray-600 bg-gray-700/50 px-2 py-1 text-xs text-white transition-colors hover:bg-gray-700 sm:px-3 sm:text-sm"
+                          className="
+                            w-full rounded-md border border-gray-600
+                            bg-gray-700/50 px-2 py-1 text-xs text-white
+                            transition-colors
+                            hover:bg-gray-700
+                            sm:px-3 sm:text-sm
+                          "
                         >
                           <option value="sin-role">Sin Rol</option>
                           <option value="admin">Admin</option>
@@ -2303,29 +2607,52 @@ export default function AdminDashboard() {
                           <option value="estudiante">Estudiante</option>
                         </select>
                       </td>
-                      <td className="px-2 py-3 sm:px-4 sm:py-4">
+                      <td
+                        className="
+                        px-2 py-3
+                        sm:px-4 sm:py-4
+                      "
+                      >
                         <div
-                          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                            user.status === 'activo'
-                              ? 'bg-green-500/10 text-green-500'
-                              : user.status === 'inactivo'
-                                ? 'bg-red-500/10 text-red-500'
-                                : 'bg-yellow-500/10 text-yellow-500'
-                          }`}
+                          className={`
+                            inline-flex items-center rounded-full px-2 py-1
+                            text-xs font-medium
+                            ${
+                              user.status === 'activo'
+                                ? 'bg-green-500/10 text-green-500'
+                                : user.status === 'inactivo'
+                                  ? 'bg-red-500/10 text-red-500'
+                                  : 'bg-yellow-500/10 text-yellow-500'
+                            }
+                          `}
                         >
                           <div
-                            className={`mr-1 size-1.5 rounded-full sm:size-2 ${
-                              user.status === 'activo'
-                                ? 'bg-green-500'
-                                : user.status === 'inactivo'
-                                  ? 'bg-red-500'
-                                  : 'bg-yellow-500'
-                            }`}
+                            className={`
+                              mr-1 size-1.5 rounded-full
+                              sm:size-2
+                              ${
+                                user.status === 'activo'
+                                  ? 'bg-green-500'
+                                  : user.status === 'inactivo'
+                                    ? 'bg-red-500'
+                                    : 'bg-yellow-500'
+                              }
+                            `}
                           />
-                          <span className="hidden sm:inline">
+                          <span
+                            className="
+                            hidden
+                            sm:inline
+                          "
+                          >
                             {user.status}
                           </span>
-                          <span className="inline sm:hidden">
+                          <span
+                            className="
+                            inline
+                            sm:hidden
+                          "
+                          >
                             {user.status === 'activo'
                               ? 'A'
                               : user.status === 'inactivo'
@@ -2334,28 +2661,62 @@ export default function AdminDashboard() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-2 py-3 sm:px-4 sm:py-4">
-                        <div className="flex items-center justify-end gap-1 sm:gap-2">
+                      <td
+                        className="
+                        px-2 py-3
+                        sm:px-4 sm:py-4
+                      "
+                      >
+                        <div
+                          className="
+                          flex items-center justify-end gap-1
+                          sm:gap-2
+                        "
+                        >
                           <button
                             onClick={() => handleViewUser(user)}
-                            className="rounded-md p-1 hover:bg-gray-700"
+                            className="
+                              rounded-md p-1
+                              hover:bg-gray-700
+                            "
                             title="Ver detalles"
                           >
-                            <Eye className="size-3.5 sm:size-4" />
+                            <Eye
+                              className="
+                              size-3.5
+                              sm:size-4
+                            "
+                            />
                           </button>
                           <button
                             onClick={() => handleEditUser(user)}
-                            className="rounded-md p-1 hover:bg-gray-700"
+                            className="
+                              rounded-md p-1
+                              hover:bg-gray-700
+                            "
                             title="Editar"
                           >
-                            <Edit className="size-3.5 sm:size-4" />
+                            <Edit
+                              className="
+                              size-3.5
+                              sm:size-4
+                            "
+                            />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(user.id)}
-                            className="rounded-md p-1 hover:bg-red-500/10 hover:text-red-500"
+                            className="
+                              rounded-md p-1
+                              hover:bg-red-500/10 hover:text-red-500
+                            "
                             title="Eliminar"
                           >
-                            <Trash2 className="size-3.5 sm:size-4" />
+                            <Trash2
+                              className="
+                              size-3.5
+                              sm:size-4
+                            "
+                            />
                           </button>
                         </div>
                       </td>
@@ -2367,7 +2728,12 @@ export default function AdminDashboard() {
           </div>
 
           {/* Pagination - Keep existing pagination code */}
-          <div className="mt-6 flex flex-col items-center justify-between gap-4 px-4 py-4 sm:flex-row">
+          <div
+            className="
+            mt-6 flex flex-col items-center justify-between gap-4 p-4
+            sm:flex-row
+          "
+          >
             <p className="text-sm text-gray-300">
               Mostrando {currentUsers.length} de {filteredUsers.length} usuarios
             </p>
@@ -2376,7 +2742,11 @@ export default function AdminDashboard() {
               <button
                 onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1}
-                className="rounded bg-gray-700 px-3 py-1 text-sm text-white hover:bg-gray-600 disabled:opacity-50"
+                className="
+                  rounded bg-gray-700 px-3 py-1 text-sm text-white
+                  hover:bg-gray-600
+                  disabled:opacity-50
+                "
               >
                 Anterior
               </button>
@@ -2407,7 +2777,11 @@ export default function AdminDashboard() {
                 disabled={
                   currentPage === Math.ceil(filteredUsers.length / usersPerPage)
                 }
-                className="rounded bg-gray-700 px-3 py-1 text-sm text-white hover:bg-gray-600 disabled:opacity-50"
+                className="
+                  rounded bg-gray-700 px-3 py-1 text-sm text-white
+                  hover:bg-gray-600
+                  disabled:opacity-50
+                "
               >
                 Siguiente
               </button>
@@ -2417,26 +2791,59 @@ export default function AdminDashboard() {
       </div>
       {/* ...existing modals and dialogs... */}
       {showCreateForm && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl bg-gray-800 shadow-2xl">
+        <div
+          className="
+          fixed inset-0 z-[9999] flex items-center justify-center bg-black/50
+          p-4 backdrop-blur-sm
+        "
+        >
+          <div
+            className="
+            relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-xl
+            bg-gray-800 shadow-2xl
+          "
+          >
             {/* Header fijo */}
-            <div className="flex items-center justify-between border-b border-gray-700 px-6 py-4">
-              <h2 className="text-xl font-bold text-white sm:text-2xl">
+            <div
+              className="
+              flex items-center justify-between border-b border-gray-700 px-6
+              py-4
+            "
+            >
+              <h2
+                className="
+                text-xl font-bold text-white
+                sm:text-2xl
+              "
+              >
                 Crear Nuevo Usuario
               </h2>
               <button
                 onClick={() => setShowCreateForm(false)}
-                className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white"
+                className="
+                  rounded-lg p-2 text-gray-400 transition-colors
+                  hover:bg-gray-700 hover:text-white
+                "
               >
-                <X className="h-5 w-5 sm:h-6 sm:w-6" />
+                <X
+                  className="
+                  size-5
+                  sm:size-6
+                "
+                />
               </button>
             </div>
 
             {/* Contenido con scroll */}
-            <div className="overflow-y-auto px-6 py-6">
+            <div className="overflow-y-auto p-6">
               <div className="space-y-5">
                 {/* Campos básicos en grid responsive */}
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div
+                  className="
+                  grid gap-4
+                  sm:grid-cols-2
+                "
+                >
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-300">
                       Nombre *
@@ -2444,7 +2851,13 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       placeholder="Ej: Juan"
-                      className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-gray-600 bg-gray-700
+                        px-4 py-2.5 text-white
+                        placeholder:text-gray-400
+                        focus:border-blue-500 focus:ring-2
+                        focus:ring-blue-500/20 focus:outline-none
+                      "
                       value={newUser.firstName}
                       onChange={(e) => {
                         const singleName = e.target.value.trim().split(' ')[0];
@@ -2466,7 +2879,13 @@ export default function AdminDashboard() {
                     <input
                       type="text"
                       placeholder="Ej: Pérez"
-                      className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-gray-600 bg-gray-700
+                        px-4 py-2.5 text-white
+                        placeholder:text-gray-400
+                        focus:border-blue-500 focus:ring-2
+                        focus:ring-blue-500/20 focus:outline-none
+                      "
                       value={newUser.lastName}
                       onChange={(e) =>
                         setNewUser({ ...newUser, lastName: e.target.value })
@@ -2483,7 +2902,13 @@ export default function AdminDashboard() {
                   <input
                     type="email"
                     placeholder="ejemplo@correo.com"
-                    className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                    className="
+                      w-full rounded-lg border border-gray-600 bg-gray-700 px-4
+                      py-2.5 text-white
+                      placeholder:text-gray-400
+                      focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                      focus:outline-none
+                    "
                     value={newUser.email}
                     onChange={(e) =>
                       setNewUser({ ...newUser, email: e.target.value })
@@ -2492,7 +2917,12 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Teléfono y Rol en grid */}
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div
+                  className="
+                  grid gap-4
+                  sm:grid-cols-2
+                "
+                >
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-300">
                       Teléfono
@@ -2500,7 +2930,13 @@ export default function AdminDashboard() {
                     <input
                       type="tel"
                       placeholder="3001234567"
-                      className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-gray-600 bg-gray-700
+                        px-4 py-2.5 text-white
+                        placeholder:text-gray-400
+                        focus:border-blue-500 focus:ring-2
+                        focus:ring-blue-500/20 focus:outline-none
+                      "
                       value={newUser.phone}
                       onChange={(e) => {
                         const phone = e.target.value.replace(/\D/g, '');
@@ -2515,7 +2951,12 @@ export default function AdminDashboard() {
                       Rol *
                     </label>
                     <select
-                      className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-gray-600 bg-gray-700
+                        px-4 py-2.5 text-white
+                        focus:border-blue-500 focus:ring-2
+                        focus:ring-blue-500/20 focus:outline-none
+                      "
                       value={newUser.role}
                       onChange={(e) =>
                         setNewUser({ ...newUser, role: e.target.value })
@@ -2531,10 +2972,19 @@ export default function AdminDashboard() {
 
                 {/* Sección de Educador */}
                 {newUser.role === 'educador' && (
-                  <div className="bg-gray-750 space-y-5 rounded-lg border border-gray-700 p-5">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-blue-400">
+                  <div
+                    className="
+                    bg-gray-750 space-y-5 rounded-lg border border-gray-700 p-5
+                  "
+                  >
+                    <div
+                      className="
+                      flex items-center gap-2 text-sm font-semibold
+                      text-blue-400
+                    "
+                    >
                       <svg
-                        className="h-5 w-5"
+                        className="size-5"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -2556,7 +3006,13 @@ export default function AdminDashboard() {
                       <input
                         type="text"
                         placeholder="Ej: Profesor de Arte"
-                        className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                        className="
+                          w-full rounded-lg border border-gray-600 bg-gray-700
+                          px-4 py-2.5 text-white
+                          placeholder:text-gray-400
+                          focus:border-blue-500 focus:ring-2
+                          focus:ring-blue-500/20 focus:outline-none
+                        "
                         value={newUser.profesion}
                         onChange={(e) =>
                           setNewUser({ ...newUser, profesion: e.target.value })
@@ -2565,7 +3021,12 @@ export default function AdminDashboard() {
                     </div>
 
                     <div>
-                      <label className="mb-2 flex items-center justify-between text-sm font-medium text-gray-300">
+                      <label
+                        className="
+                        mb-2 flex items-center justify-between text-sm
+                        font-medium text-gray-300
+                      "
+                      >
                         <span>Descripción</span>
                         <span className="text-xs text-gray-400">
                           {newUser.descripcion.length}/161
@@ -2573,7 +3034,13 @@ export default function AdminDashboard() {
                       </label>
                       <textarea
                         placeholder="Breve descripción sobre su experiencia y especialidad..."
-                        className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-white placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+                        className="
+                          w-full rounded-lg border border-gray-600 bg-gray-700
+                          px-4 py-2.5 text-white
+                          placeholder:text-gray-400
+                          focus:border-blue-500 focus:ring-2
+                          focus:ring-blue-500/20 focus:outline-none
+                        "
                         value={newUser.descripcion}
                         onChange={(e) => {
                           const text = e.target.value;
@@ -2594,20 +3061,36 @@ export default function AdminDashboard() {
                         <input
                           type="file"
                           accept="image/*"
-                          className="w-full rounded-lg border border-gray-600 bg-gray-700 px-4 py-2.5 text-sm text-white file:mr-3 file:rounded-md file:border-0 file:bg-blue-500 file:px-4 file:py-1.5 file:text-sm file:font-medium file:text-white file:transition-colors hover:file:bg-blue-600"
+                          className="
+                            w-full rounded-lg border border-gray-600 bg-gray-700
+                            px-4 py-2.5 text-sm text-white
+                            file:mr-3 file:rounded-md file:border-0
+                            file:bg-blue-500 file:px-4 file:py-1.5 file:text-sm
+                            file:font-medium file:text-white
+                            file:transition-colors
+                            hover:file:bg-blue-600
+                          "
                           onChange={(e) => {
                             const file = e.target.files?.[0] || null;
                             setNewUser({ ...newUser, profileImage: file });
                           }}
                         />
                         {newUser.profileImage && (
-                          <div className="flex items-center gap-3 rounded-lg border border-gray-600 bg-gray-700 p-3">
+                          <div
+                            className="
+                            flex items-center gap-3 rounded-lg border
+                            border-gray-600 bg-gray-700 p-3
+                          "
+                          >
                             <Image
                               src={URL.createObjectURL(newUser.profileImage)}
                               alt="Vista previa"
                               width={64}
                               height={64}
-                              className="h-16 w-16 rounded-full border-2 border-gray-600 object-cover"
+                              className="
+                                size-16 rounded-full border-2 border-gray-600
+                                object-cover
+                              "
                               unoptimized
                             />
                             <div className="flex-1">
@@ -2623,9 +3106,12 @@ export default function AdminDashboard() {
                               onClick={() =>
                                 setNewUser({ ...newUser, profileImage: null })
                               }
-                              className="rounded-lg p-2 text-red-400 transition-colors hover:bg-red-500/10 hover:text-red-300"
+                              className="
+                                rounded-lg p-2 text-red-400 transition-colors
+                                hover:bg-red-500/10 hover:text-red-300
+                              "
                             >
-                              <X className="h-4 w-4" />
+                              <X className="size-4" />
                             </button>
                           </div>
                         )}
@@ -2641,16 +3127,22 @@ export default function AdminDashboard() {
               <button
                 onClick={handleCreateUser}
                 disabled={creatingUser}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="
+                  flex w-full items-center justify-center gap-2 rounded-lg
+                  bg-blue-600 px-6 py-3 font-semibold text-white
+                  transition-colors
+                  hover:bg-blue-700
+                  disabled:cursor-not-allowed disabled:opacity-50
+                "
               >
                 {creatingUser ? (
                   <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <Loader2 className="size-5 animate-spin" />
                     <span>Creando usuario...</span>
                   </>
                 ) : (
                   <>
-                    <UserPlus className="h-5 w-5" />
+                    <UserPlus className="size-5" />
                     <span>Crear Usuario</span>
                   </>
                 )}
@@ -2661,43 +3153,78 @@ export default function AdminDashboard() {
       )}
       {viewUser && (
         <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80"
+          className="
+            fixed inset-0 z-[10000] flex items-center justify-center bg-black/80
+          "
           onClick={() => setViewUser(null)}
         >
           <div
-            className="relative m-4 flex w-full max-w-5xl flex-col rounded-xl bg-[#01142B] p-4 text-white shadow-2xl md:p-8"
+            className="
+              relative m-4 flex w-full max-w-5xl flex-col rounded-xl
+              bg-[#01142B] p-4 text-white shadow-2xl
+              md:p-8
+            "
             style={{ maxHeight: '90vh' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="mb-6 flex items-center justify-between border-b border-white/10 pb-4">
+            <div
+              className="
+              mb-6 flex items-center justify-between border-b border-white/10
+              pb-4
+            "
+            >
               <h2 className="text-2xl font-bold text-[#3AF4EF]">
                 Detalles del Usuario
               </h2>
               <button
                 onClick={() => setViewUser(null)}
-                className="rounded-lg bg-white/5 p-2 hover:bg-white/10"
+                className="
+                  rounded-lg bg-white/5 p-2
+                  hover:bg-white/10
+                "
               >
                 <X className="size-5" />
               </button>
             </div>
 
             {/* Content */}
-            <div className="grid max-h-[70vh] w-full gap-6 overflow-y-auto md:grid-cols-[320px_1fr]">
+            <div
+              className="
+              grid max-h-[70vh] w-full gap-6 overflow-y-auto
+              md:grid-cols-[320px_1fr]
+            "
+            >
               {/* Sidebar - Info básica */}
               <div className="min-w-0 space-y-6">
                 {/* Avatar */}
-                <div className="relative mx-auto h-40 w-40 max-w-full overflow-hidden rounded-xl border-2 border-[#3AF4EF] shadow-lg sm:h-56 sm:w-56 md:h-64 md:w-64">
+                <div
+                  className="
+                  relative mx-auto size-40 max-w-full overflow-hidden rounded-xl
+                  border-2 border-[#3AF4EF] shadow-lg
+                  sm:size-56
+                  md:size-64
+                "
+                >
                   {viewUser.profileImage ? (
                     <Image
                       src={viewUser.profileImage}
                       alt={`Foto de ${viewUser.firstName}`}
                       fill
-                      className="object-cover transition duration-200 hover:scale-105"
+                      className="
+                        object-cover transition duration-200
+                        hover:scale-105
+                      "
                       unoptimized
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#012A5C] to-[#01142B] text-6xl font-bold text-white">
+                    <div
+                      className="
+                      flex size-full items-center justify-center
+                      bg-gradient-to-br from-[#012A5C] to-[#01142B] text-6xl
+                      font-bold text-white
+                    "
+                    >
                       {viewUser.firstName?.[0]}
                     </div>
                   )}
@@ -2726,22 +3253,34 @@ export default function AdminDashboard() {
                   {/* Badges */}
                   <div className="mt-4 flex flex-wrap gap-2">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${
-                        viewUser.status === 'activo'
-                          ? 'bg-green-500/10 text-green-400'
-                          : 'bg-red-500/10 text-red-400'
-                      }`}
+                      className={`
+                        inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5
+                        text-sm font-medium
+                        ${
+                          viewUser.status === 'activo'
+                            ? 'bg-green-500/10 text-green-400'
+                            : 'bg-red-500/10 text-red-400'
+                        }
+                      `}
                     >
                       <span
-                        className={`size-2 rounded-full ${
-                          viewUser.status === 'activo'
-                            ? 'bg-green-400'
-                            : 'bg-red-400'
-                        }`}
+                        className={`
+                          size-2 rounded-full
+                          ${
+                            viewUser.status === 'activo'
+                              ? 'bg-green-400'
+                              : 'bg-red-400'
+                          }
+                        `}
                       />
                       {viewUser.status}
                     </span>
-                    <span className="inline-flex items-center rounded-lg bg-blue-500/10 px-3 py-1.5 text-sm font-medium text-blue-400">
+                    <span
+                      className="
+                      inline-flex items-center rounded-lg bg-blue-500/10 px-3
+                      py-1.5 text-sm font-medium text-blue-400
+                    "
+                    >
                       {viewUser.role}
                     </span>
                   </div>
@@ -2756,7 +3295,12 @@ export default function AdminDashboard() {
                     Información adicional
                   </h3>
                   <div className="w-full rounded-lg bg-white/5 p-4">
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div
+                      className="
+                      grid gap-4
+                      md:grid-cols-2
+                    "
+                    >
                       <div className="space-y-2">
                         <p className="text-sm text-gray-400">ID del usuario</p>
                         <p className="font-mono text-sm break-all">
@@ -2793,12 +3337,34 @@ export default function AdminDashboard() {
       )}
 
       {showAssignModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-md">
-          <div className="flex max-h-[90vh] w-full max-w-5xl flex-col rounded-xl bg-gray-900 shadow-2xl">
+        <div
+          className="
+          fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4
+          backdrop-blur-md
+        "
+        >
+          <div
+            className="
+            flex max-h-[90vh] w-full max-w-5xl flex-col rounded-xl bg-gray-900
+            shadow-2xl
+          "
+          >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] px-4 py-3 sm:px-6 sm:py-4">
+            <div
+              className="
+              flex items-center justify-between border-b border-gray-700
+              bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] px-4
+              py-3
+              sm:px-6 sm:py-4
+            "
+            >
               <div>
-                <h2 className="text-base font-bold text-white sm:text-lg">
+                <h2
+                  className="
+                  text-base font-bold text-white
+                  sm:text-lg
+                "
+                >
                   Asignar a Curso o Programa
                 </h2>
                 <p className="text-xs text-white/80">
@@ -2807,18 +3373,37 @@ export default function AdminDashboard() {
               </div>
               <button
                 onClick={() => setShowAssignModal(false)}
-                className="rounded-lg bg-white/10 p-1.5 transition-colors hover:bg-white/20"
+                className="
+                  rounded-lg bg-white/10 p-1.5 transition-colors
+                  hover:bg-white/20
+                "
               >
                 <X className="size-5 text-white" />
               </button>
             </div>
 
             {/* Content - con scroll interno */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-              <div className="grid gap-4 lg:grid-cols-2">
+            <div
+              className="
+              flex-1 overflow-y-auto p-4
+              sm:p-6
+            "
+            >
+              <div
+                className="
+                grid gap-4
+                lg:grid-cols-2
+              "
+              >
                 {/* Panel de Estudiantes */}
                 <div className="rounded-lg bg-gray-800 p-4">
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-white sm:text-base">
+                  <h3
+                    className="
+                    mb-3 flex items-center gap-2 text-sm font-semibold
+                    text-white
+                    sm:text-base
+                  "
+                  >
                     <UserPlus className="size-4 text-blue-400" />
                     Seleccionar Estudiantes
                   </h3>
@@ -2826,12 +3411,22 @@ export default function AdminDashboard() {
                   <input
                     type="text"
                     placeholder="Buscar estudiante..."
-                    className="mb-2 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder:text-gray-500"
+                    className="
+                      mb-2 w-full rounded-lg border border-gray-700 bg-gray-900
+                      px-3 py-2 text-sm text-white
+                      placeholder:text-gray-500
+                    "
                     value={studentSearch}
                     onChange={(e) => setStudentSearch(e.target.value)}
                   />
 
-                  <label className="mb-2 flex cursor-pointer items-center justify-between rounded-lg bg-gray-700 px-3 py-2 hover:bg-gray-600">
+                  <label
+                    className="
+                    mb-2 flex cursor-pointer items-center justify-between
+                    rounded-lg bg-gray-700 px-3 py-2
+                    hover:bg-gray-600
+                  "
+                  >
                     <span className="text-sm font-medium text-white">
                       Seleccionar Todos
                     </span>
@@ -2846,11 +3441,16 @@ export default function AdminDashboard() {
                           e.target.checked ? users.map((u) => u.id) : []
                         )
                       }
-                      className="form-checkbox h-4 w-4 rounded text-blue-500"
+                      className="form-checkbox size-4 rounded text-blue-500"
                     />
                   </label>
 
-                  <div className="max-h-[250px] space-y-1 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-2">
+                  <div
+                    className="
+                    max-h-[250px] space-y-1 overflow-y-auto rounded-lg border
+                    border-gray-700 bg-gray-900 p-2
+                  "
+                  >
                     {users
                       .filter(
                         (user) =>
@@ -2867,9 +3467,18 @@ export default function AdminDashboard() {
                       .map((user) => (
                         <label
                           key={user.id}
-                          className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 hover:bg-gray-700"
+                          className="
+                            flex cursor-pointer items-center gap-2 rounded p-2
+                            hover:bg-gray-700
+                          "
                         >
-                          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-500 text-xs font-semibold text-white">
+                          <div
+                            className="
+                            flex size-8 flex-shrink-0 items-center
+                            justify-center rounded-full bg-blue-500 text-xs
+                            font-semibold text-white
+                          "
+                          >
                             {user.firstName[0]}
                             {user.lastName[0]}
                           </div>
@@ -2885,7 +3494,10 @@ export default function AdminDashboard() {
                             type="checkbox"
                             checked={selectedStudents.includes(user.id)}
                             onChange={() => handleSelectStudent(user.id)}
-                            className="form-checkbox h-4 w-4 flex-shrink-0 rounded text-blue-500"
+                            className="
+                              form-checkbox size-4 flex-shrink-0 rounded
+                              text-blue-500
+                            "
                           />
                         </label>
                       ))}
@@ -2906,7 +3518,10 @@ export default function AdminDashboard() {
                           e.target.value as 'Pro' | 'Premium' | 'Enterprise'
                         )
                       }
-                      className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white"
+                      className="
+                        w-full rounded-lg border border-gray-700 bg-gray-900
+                        px-3 py-2 text-sm text-white
+                      "
                     >
                       <option value="Pro">Pro</option>
                       <option value="Premium">Premium</option>
@@ -2918,13 +3533,20 @@ export default function AdminDashboard() {
                   <div className="rounded-lg bg-gray-800">
                     <button
                       onClick={() => setCoursesCollapsed(!coursesCollapsed)}
-                      className="flex w-full items-center justify-between rounded-t-lg bg-emerald-600 px-4 py-2.5 text-white transition-colors hover:bg-emerald-700"
+                      className="
+                        flex w-full items-center justify-between rounded-t-lg
+                        bg-emerald-600 px-4 py-2.5 text-white transition-colors
+                        hover:bg-emerald-700
+                      "
                     >
                       <span className="text-sm font-semibold">
                         {coursesCollapsed ? 'Mostrar' : 'Ocultar'} Cursos
                       </span>
                       <svg
-                        className={`size-4 transition-transform ${!coursesCollapsed ? 'rotate-180' : ''}`}
+                        className={`
+                          size-4 transition-transform
+                          ${!coursesCollapsed ? 'rotate-180' : ''}
+                        `}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -2945,13 +3567,26 @@ export default function AdminDashboard() {
                           placeholder="Buscar cursos..."
                           value={courseSearch}
                           onChange={(e) => setCourseSearch(e.target.value)}
-                          className="mb-2 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder:text-gray-500"
+                          className="
+                            mb-2 w-full rounded-lg border border-gray-700
+                            bg-gray-900 px-3 py-2 text-sm text-white
+                            placeholder:text-gray-500
+                          "
                         />
-                        <div className="max-h-[180px] space-y-1 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-2">
+                        <div
+                          className="
+                          max-h-[180px] space-y-1 overflow-y-auto rounded-lg
+                          border border-gray-700 bg-gray-900 p-2
+                        "
+                        >
                           {filteredCourses.map((course) => (
                             <label
                               key={course.id}
-                              className="flex cursor-pointer items-start gap-2 rounded px-2 py-2 hover:bg-gray-700"
+                              className="
+                                flex cursor-pointer items-start gap-2 rounded
+                                p-2
+                                hover:bg-gray-700
+                              "
                             >
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium text-white">
@@ -2968,7 +3603,10 @@ export default function AdminDashboard() {
                                 name="selectedCourse"
                                 checked={selectedCourse === course.id}
                                 onChange={() => setSelectedCourse(course.id)}
-                                className="form-radio mt-1 h-4 w-4 flex-shrink-0 text-emerald-500"
+                                className="
+                                  form-radio mt-1 size-4 flex-shrink-0
+                                  text-emerald-500
+                                "
                               />
                             </label>
                           ))}
@@ -2979,7 +3617,12 @@ export default function AdminDashboard() {
                               setSelectedCourse(null);
                               void fetchAllPrograms();
                             }}
-                            className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                            className="
+                              mt-2 flex w-full items-center justify-center gap-1
+                              rounded-lg bg-red-600 px-3 py-1.5 text-xs
+                              font-medium text-white
+                              hover:bg-red-700
+                            "
                           >
                             <X className="size-3" />
                             Quitar selección
@@ -2993,13 +3636,20 @@ export default function AdminDashboard() {
                   <div className="rounded-lg bg-gray-800">
                     <button
                       onClick={() => setProgramsCollapsed(!programsCollapsed)}
-                      className="flex w-full items-center justify-between rounded-t-lg bg-purple-600 px-4 py-2.5 text-white transition-colors hover:bg-purple-700"
+                      className="
+                        flex w-full items-center justify-between rounded-t-lg
+                        bg-purple-600 px-4 py-2.5 text-white transition-colors
+                        hover:bg-purple-700
+                      "
                     >
                       <span className="text-sm font-semibold">
                         {programsCollapsed ? 'Mostrar' : 'Ocultar'} Programas
                       </span>
                       <svg
-                        className={`size-4 transition-transform ${!programsCollapsed ? 'rotate-180' : ''}`}
+                        className={`
+                          size-4 transition-transform
+                          ${!programsCollapsed ? 'rotate-180' : ''}
+                        `}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -3020,13 +3670,26 @@ export default function AdminDashboard() {
                           placeholder="Buscar programas..."
                           value={programSearch}
                           onChange={(e) => setProgramSearch(e.target.value)}
-                          className="mb-2 w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder:text-gray-500"
+                          className="
+                            mb-2 w-full rounded-lg border border-gray-700
+                            bg-gray-900 px-3 py-2 text-sm text-white
+                            placeholder:text-gray-500
+                          "
                         />
-                        <div className="max-h-[180px] space-y-1 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-2">
+                        <div
+                          className="
+                          max-h-[180px] space-y-1 overflow-y-auto rounded-lg
+                          border border-gray-700 bg-gray-900 p-2
+                        "
+                        >
                           {filteredPrograms.map((program) => (
                             <label
                               key={program.id}
-                              className="flex cursor-pointer items-center gap-2 rounded px-2 py-2 hover:bg-gray-700"
+                              className="
+                                flex cursor-pointer items-center gap-2 rounded
+                                p-2
+                                hover:bg-gray-700
+                              "
                             >
                               <span className="min-w-0 flex-1 text-sm text-white">
                                 {program.title}
@@ -3036,7 +3699,10 @@ export default function AdminDashboard() {
                                 name="selectedProgram"
                                 checked={selectedProgram === program.id}
                                 onChange={() => setSelectedProgram(program.id)}
-                                className="form-radio h-4 w-4 flex-shrink-0 text-purple-500"
+                                className="
+                                  form-radio size-4 flex-shrink-0
+                                  text-purple-500
+                                "
                               />
                             </label>
                           ))}
@@ -3044,7 +3710,12 @@ export default function AdminDashboard() {
                         {selectedProgram && (
                           <button
                             onClick={() => setSelectedProgram(null)}
-                            className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                            className="
+                              mt-2 flex w-full items-center justify-center gap-1
+                              rounded-lg bg-red-600 px-3 py-1.5 text-xs
+                              font-medium text-white
+                              hover:bg-red-700
+                            "
                           >
                             <X className="size-3" />
                             Quitar selección
@@ -3058,10 +3729,20 @@ export default function AdminDashboard() {
             </div>
 
             {/* Footer con botones - siempre visible */}
-            <div className="flex flex-col gap-2 border-t border-gray-700 bg-gray-800 px-4 py-3 sm:flex-row sm:justify-between sm:px-6">
+            <div
+              className="
+              flex flex-col gap-2 border-t border-gray-700 bg-gray-800 px-4 py-3
+              sm:flex-row sm:justify-between sm:px-6
+            "
+            >
               <button
                 onClick={handleAssignStudents}
-                className="flex items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="
+                  flex items-center justify-center gap-2 rounded-lg bg-green-600
+                  px-4 py-2 text-sm font-semibold text-white
+                  hover:bg-green-700
+                  disabled:cursor-not-allowed disabled:opacity-50
+                "
                 disabled={
                   selectedStudents.length === 0 ||
                   (!selectedCourse && !selectedProgram)
@@ -3072,7 +3753,11 @@ export default function AdminDashboard() {
               </button>
               <button
                 onClick={() => setShowAssignModal(false)}
-                className="rounded-lg bg-gray-700 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-600"
+                className="
+                  rounded-lg bg-gray-700 px-4 py-2 text-sm font-semibold
+                  text-white
+                  hover:bg-gray-600
+                "
               >
                 Cancelar
               </button>
@@ -3085,17 +3770,33 @@ export default function AdminDashboard() {
 
       {notification && (
         <div
-          className={`fixed right-5 bottom-5 rounded-md px-4 py-2 text-white shadow-lg ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}
+          className={`
+            fixed right-5 bottom-5 rounded-md px-4 py-2 text-white shadow-lg
+            ${notification.type === 'success' ? 'bg-green-500' : 'bg-red-500'}
+          `}
         >
           {notification.message}
         </div>
       )}
       {showAnuncioModal && (
-        <div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+        <div
+          className="
+          bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4
+          backdrop-blur-md
+        "
+        >
+          <div
+            className="
+            relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg
+            bg-gray-900 p-6 text-white shadow-2xl
+          "
+          >
             <button
               onClick={() => setShowAnuncioModal(false)}
-              className="absolute top-4 right-4 text-white hover:text-red-500"
+              className="
+                absolute top-4 right-4 text-white
+                hover:text-red-500
+              "
             >
               <X size={24} />
             </button>
@@ -3107,7 +3808,9 @@ export default function AdminDashboard() {
             {/* Inputs que actualizan la vista previa en tiempo real */}
             {/* Tipo de destinatario */}
             <select
-              className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+              className="
+                mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white
+              "
               value={newAnuncio.tipo_destinatario || ''}
               onChange={(e) =>
                 setNewAnuncio({
@@ -3128,7 +3831,9 @@ export default function AdminDashboard() {
             {/* Mostrar el select de cursos si se selecciona "cursos" */}
             {newAnuncio.tipo_destinatario === 'cursos' && (
               <select
-                className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+                className="
+                  mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white
+                "
                 value={selectedCourses}
                 onChange={(e) => setSelectedCourses([e.target.value])}
               >
@@ -3144,7 +3849,9 @@ export default function AdminDashboard() {
             {/* Mostrar el select de programas si se selecciona "programas" */}
             {newAnuncio.tipo_destinatario === 'programas' && (
               <select
-                className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+                className="
+                  mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white
+                "
                 value={selectedPrograms}
                 onChange={(e) => setSelectedPrograms([e.target.value])}
               >
@@ -3161,7 +3868,9 @@ export default function AdminDashboard() {
             {/* Mostrar el select de usuarios si se selecciona "custom" */}
             {newAnuncio.tipo_destinatario === 'custom' && (
               <select
-                className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+                className="
+                  mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white
+                "
                 value={selectedUsers}
                 onChange={(e) => setSelectedUsers([e.target.value])}
               >
@@ -3182,7 +3891,9 @@ export default function AdminDashboard() {
               onChange={(e) =>
                 setNewAnuncio({ ...newAnuncio, titulo: e.target.value })
               }
-              className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+              className="
+                mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white
+              "
             />
 
             <textarea
@@ -3191,14 +3902,18 @@ export default function AdminDashboard() {
               onChange={(e) =>
                 setNewAnuncio({ ...newAnuncio, descripcion: e.target.value })
               }
-              className="mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+              className="
+                mb-3 w-full rounded-lg border bg-gray-800 p-3 text-white
+              "
             />
 
             <input
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className="mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white"
+              className="
+                mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white
+              "
             />
 
             {/* 🔹 Componente de Vista Previa del Anuncio */}
@@ -3210,7 +3925,11 @@ export default function AdminDashboard() {
 
             <button
               onClick={handleCreateAnuncio}
-              className="mt-6 w-full rounded-lg bg-blue-600 py-3 text-lg font-semibold text-white hover:bg-blue-700"
+              className="
+                mt-6 w-full rounded-lg bg-blue-600 py-3 text-lg font-semibold
+                text-white
+                hover:bg-blue-700
+              "
             >
               Guardar Anuncio
             </button>
@@ -3285,12 +4004,25 @@ export default function AdminDashboard() {
         onClose={() => setInfoDialogOpen(false)}
       />
       {showEmailModal && (
-        <div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+        <div
+          className="
+          bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4
+          backdrop-blur-md
+        "
+        >
+          <div
+            className="
+            relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg
+            bg-gray-900 p-6 text-white shadow-2xl
+          "
+          >
             {/* ❌ Botón de cierre */}
             <button
               onClick={() => setShowEmailModal(false)}
-              className="absolute top-4 right-4 text-white hover:text-red-500"
+              className="
+                absolute top-4 right-4 text-white
+                hover:text-red-500
+              "
             >
               <X size={24} />
             </button>
@@ -3303,7 +4035,11 @@ export default function AdminDashboard() {
             <input
               type="text"
               placeholder="Asunto del correo"
-              className="mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="
+                mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3
+                text-white
+                focus:ring-2 focus:ring-blue-500 focus:outline-none
+              "
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
             />
@@ -3312,7 +4048,10 @@ export default function AdminDashboard() {
               {selectedEmails.map((email) => (
                 <span
                   key={email}
-                  className="flex items-center rounded-full bg-blue-600 px-4 py-2 text-white"
+                  className="
+                    flex items-center rounded-full bg-blue-600 px-4 py-2
+                    text-white
+                  "
                 >
                   {email}
                   <button
@@ -3333,7 +4072,11 @@ export default function AdminDashboard() {
             <input
               type="text"
               placeholder="Agregar correos manualmente y presiona Enter"
-              className="mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="
+                mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3
+                text-white
+                focus:ring-2 focus:ring-blue-500 focus:outline-none
+              "
               value={customEmails}
               onChange={(e) => setCustomEmails(e.target.value)}
               onKeyDown={handleManualEmailAdd}
@@ -3363,7 +4106,7 @@ export default function AdminDashboard() {
 
               <div className="mb-4 flex flex-wrap gap-4">
                 {previewAttachments.map((src, index) => (
-                  <div key={index} className="relative h-24 w-24">
+                  <div key={index} className="relative size-24">
                     <Image
                       src={src}
                       alt={`preview-${index}`}
@@ -3373,7 +4116,10 @@ export default function AdminDashboard() {
                     />
                     <button
                       onClick={() => removeAttachment(index)}
-                      className="absolute top-0 right-0 rounded-full bg-red-600 p-2 text-xs text-white"
+                      className="
+                        absolute top-0 right-0 rounded-full bg-red-600 p-2
+                        text-xs text-white
+                      "
                     >
                       ✕
                     </button>
@@ -3385,7 +4131,10 @@ export default function AdminDashboard() {
                 type="file"
                 multiple
                 onChange={handleAttachmentChange}
-                className="rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="
+                  rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white
+                  focus:ring-2 focus:ring-blue-500 focus:outline-none
+                "
               />
             </div>
 
@@ -3393,12 +4142,17 @@ export default function AdminDashboard() {
               {/* ✅ Botón SOLO CORREO */}
               <button
                 onClick={sendEmailOnly}
-                className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-50"
+                className="
+                  rounded-lg bg-blue-600 px-6 py-3 text-white
+                  hover:bg-blue-700
+                  focus:ring-2 focus:ring-blue-500 focus:outline-none
+                  disabled:opacity-50
+                "
                 disabled={loadingEmail}
               >
                 {loadingEmail ? (
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Enviando correo…
                   </div>
                 ) : (
@@ -3410,12 +4164,25 @@ export default function AdminDashboard() {
         </div>
       )}
       {showWhatsAppModal && (
-        <div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-          <div className="relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+        <div
+          className="
+          bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4
+          backdrop-blur-md
+        "
+        >
+          <div
+            className="
+            relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg
+            bg-gray-900 p-6 text-white shadow-2xl
+          "
+          >
             {/* ❌ cerrar */}
             <button
               onClick={() => setShowWhatsAppModal(false)}
-              className="absolute top-4 right-4 text-white hover:text-red-500"
+              className="
+                absolute top-4 right-4 text-white
+                hover:text-red-500
+              "
             >
               <X size={24} />
             </button>
@@ -3428,7 +4195,11 @@ export default function AdminDashboard() {
             <input
               type="text"
               placeholder="Título opcional"
-              className="mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3 text-white focus:ring-2 focus:ring-green-500 focus:outline-none"
+              className="
+                mb-4 w-full rounded-lg border-2 border-gray-700 bg-gray-800 p-3
+                text-white
+                focus:ring-2 focus:ring-green-500 focus:outline-none
+              "
               value={waSubjectText}
               onChange={(e) => setWaSubjectText(e.target.value)}
             />
@@ -3485,7 +4256,9 @@ export default function AdminDashboard() {
                         setWaVariables([]);
                       }
                     }}
-                    className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                    className="
+                      w-full rounded-lg border bg-gray-800 p-3 text-white
+                    "
                   >
                     <option value="">Texto + abrir sesión (automático)</option>
                     <option value={WA_TEXT_ONLY}>
@@ -3501,7 +4274,9 @@ export default function AdminDashboard() {
                   {(waSelectedTemplate === WA_TEXT_ONLY ||
                     waSelectedTemplate === '') && (
                     <textarea
-                      className="mt-3 w-full rounded-lg border bg-gray-800 p-3 text-white"
+                      className="
+                        mt-3 w-full rounded-lg border bg-gray-800 p-3 text-white
+                      "
                       placeholder="Escribe un mensaje para WhatsApp"
                       value={waMessageText}
                       onChange={(e) => setWaMessageText(e.target.value)}
@@ -3522,7 +4297,9 @@ export default function AdminDashboard() {
                     <input
                       key={idx}
                       type="text"
-                      className="w-full rounded-lg border bg-gray-800 p-2 text-white"
+                      className="
+                        w-full rounded-lg border bg-gray-800 p-2 text-white
+                      "
                       placeholder={`Valor para {{${idx + 1}}}`}
                       value={v}
                       onChange={(e) =>
@@ -3547,7 +4324,9 @@ export default function AdminDashboard() {
                     <input
                       key={idx}
                       type="text"
-                      className="w-full rounded-lg border bg-gray-800 p-2 text-white"
+                      className="
+                        w-full rounded-lg border bg-gray-800 p-2 text-white
+                      "
                       placeholder={`Valor para {{${idx + 1}}}`}
                       value={v}
                       onChange={(e) =>
@@ -3569,9 +4348,18 @@ export default function AdminDashboard() {
               waSelectedTemplate !== WA_TEXT_ONLY &&
               waSelectedTemplate !== '' &&
               selectedWaTemplate && (
-                <div className="mb-4 overflow-hidden rounded-xl border border-gray-700">
+                <div
+                  className="
+                  mb-4 overflow-hidden rounded-xl border border-gray-700
+                "
+                >
                   <div className="flex items-center gap-3 bg-[#202C33] px-3 py-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00a884]/30 text-xs text-[#00a884]">
+                    <div
+                      className="
+                      flex size-8 items-center justify-center rounded-full
+                      bg-[#00a884]/30 text-xs text-[#00a884]
+                    "
+                    >
                       WA
                     </div>
                     <div className="flex-1">
@@ -3585,7 +4373,10 @@ export default function AdminDashboard() {
 
                   <div className="bg-[#0B141A] p-3">
                     <div
-                      className="ml-auto max-w-[85%] rounded-lg bg-[#005C4B] px-3 py-2 text-[14px] text-white shadow"
+                      className="
+                        ml-auto max-w-[85%] rounded-lg bg-[#005C4B] px-3 py-2
+                        text-[14px] text-white shadow
+                      "
                       style={{ borderTopRightRadius: 4 }}
                     >
                       <div className="break-words whitespace-pre-wrap">
@@ -3598,7 +4389,12 @@ export default function AdminDashboard() {
                         )}
                       </div>
 
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-gray-200/80">
+                      <div
+                        className="
+                        mt-1 flex items-center justify-end gap-1 text-[11px]
+                        text-gray-200/80
+                      "
+                      >
                         <span>
                           {new Date().toLocaleTimeString([], {
                             hour: '2-digit',
@@ -3615,9 +4411,18 @@ export default function AdminDashboard() {
             {/* 2) Preview si es SOLO MENSAJE (incluye "" y WA_TEXT_ONLY) */}
             {(waSelectedTemplate === WA_TEXT_ONLY ||
               waSelectedTemplate === '') && (
-              <div className="mb-4 overflow-hidden rounded-xl border border-gray-700">
+              <div
+                className="
+                mb-4 overflow-hidden rounded-xl border border-gray-700
+              "
+              >
                 <div className="flex items-center gap-3 bg-[#202C33] px-3 py-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00a884]/30 text-xs text-[#00a884]">
+                  <div
+                    className="
+                    flex size-8 items-center justify-center rounded-full
+                    bg-[#00a884]/30 text-xs text-[#00a884]
+                  "
+                  >
                     WA
                   </div>
                   <div className="flex-1">
@@ -3631,7 +4436,10 @@ export default function AdminDashboard() {
 
                 <div className="bg-[#0B141A] p-3">
                   <div
-                    className="ml-auto max-w-[85%] rounded-lg bg-[#005C4B] px-3 py-2 text-[14px] text-white shadow"
+                    className="
+                      ml-auto max-w-[85%] rounded-lg bg-[#005C4B] px-3 py-2
+                      text-[14px] text-white shadow
+                    "
                     style={{ borderTopRightRadius: 4 }}
                   >
                     <div className="break-words whitespace-pre-wrap">
@@ -3640,7 +4448,12 @@ export default function AdminDashboard() {
                       }`}
                     </div>
 
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-gray-200/80">
+                    <div
+                      className="
+                      mt-1 flex items-center justify-end gap-1 text-[11px]
+                      text-gray-200/80
+                    "
+                    >
                       <span>
                         {new Date().toLocaleTimeString([], {
                           hour: '2-digit',
@@ -3683,7 +4496,9 @@ export default function AdminDashboard() {
               placeholder="Números locales separados por coma, ej: 3001234567,3012345678"
               value={numerosLocales}
               onChange={(e) => setNumerosLocales(e.target.value)}
-              className="mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white"
+              className="
+                mb-4 w-full rounded-lg border bg-gray-800 p-3 text-white
+              "
             />
 
             {/* ✅ Sección de Programación */}
@@ -3727,7 +4542,9 @@ export default function AdminDashboard() {
                       value={waScheduledDate}
                       onChange={(e) => setWaScheduledDate(e.target.value)}
                       min={new Date().toISOString().split('T')[0]}
-                      className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                      className="
+                        w-full rounded-lg border bg-gray-800 p-3 text-white
+                      "
                       required={!waSendNow}
                     />
                   </div>
@@ -3737,7 +4554,9 @@ export default function AdminDashboard() {
                       type="time"
                       value={waScheduledTime}
                       onChange={(e) => setWaScheduledTime(e.target.value)}
-                      className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                      className="
+                        w-full rounded-lg border bg-gray-800 p-3 text-white
+                      "
                       required={!waSendNow}
                     />
                   </div>
@@ -3748,7 +4567,9 @@ export default function AdminDashboard() {
                     <select
                       value={waRecurrence}
                       onChange={(e) => setWaRecurrence(e.target.value)}
-                      className="w-full rounded-lg border bg-gray-800 p-3 text-white"
+                      className="
+                        w-full rounded-lg border bg-gray-800 p-3 text-white
+                      "
                     >
                       <option value="no-repeat">No se repite</option>
                       <option value="daily">Todos los días</option>
@@ -3783,7 +4604,12 @@ export default function AdminDashboard() {
 
                   {/* ✅ Configuración personalizada */}
                   {waRecurrence === 'custom' && (
-                    <div className="space-y-2 rounded border border-gray-600 bg-gray-800/50 p-3">
+                    <div
+                      className="
+                      space-y-2 rounded border border-gray-600 bg-gray-800/50
+                      p-3
+                    "
+                    >
                       <h4 className="text-sm font-semibold">
                         Configuración personalizada
                       </h4>
@@ -3801,7 +4627,9 @@ export default function AdminDashboard() {
                                 interval: parseInt(e.target.value) || 1,
                               }))
                             }
-                            className="w-full rounded border bg-gray-700 p-2 text-white"
+                            className="
+                              w-full rounded border bg-gray-700 p-2 text-white
+                            "
                           />
                         </div>
                         <div className="flex-1">
@@ -3817,7 +4645,9 @@ export default function AdminDashboard() {
                                   | 'months',
                               }))
                             }
-                            className="w-full rounded border bg-gray-700 p-2 text-white"
+                            className="
+                              w-full rounded border bg-gray-700 p-2 text-white
+                            "
                           >
                             <option value="days">Día(s)</option>
                             <option value="weeks">Semana(s)</option>
@@ -3858,13 +4688,16 @@ export default function AdminDashboard() {
                                       : [...current, day.value].sort(),
                                   }));
                                 }}
-                                className={`h-8 w-8 rounded-full text-xs font-semibold ${
-                                  (waCustomRecurrence.weekdays || []).includes(
-                                    day.value
-                                  )
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-gray-700 text-gray-300'
-                                }`}
+                                className={`
+                                  size-8 rounded-full text-xs font-semibold
+                                  ${
+                                    (
+                                      waCustomRecurrence.weekdays || []
+                                    ).includes(day.value)
+                                      ? 'bg-green-600 text-white'
+                                      : 'bg-gray-700 text-gray-300'
+                                  }
+                                `}
                               >
                                 {day.label}
                               </button>
@@ -3900,7 +4733,12 @@ export default function AdminDashboard() {
             <div className="mt-4 flex justify-center gap-3">
               <button
                 onClick={sendWhatsApp}
-                className="rounded-lg bg-green-600 px-6 py-3 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:outline-none disabled:opacity-50"
+                className="
+                  rounded-lg bg-green-600 px-6 py-3 text-white
+                  hover:bg-green-700
+                  focus:ring-2 focus:ring-green-500 focus:outline-none
+                  disabled:opacity-50
+                "
                 disabled={
                   loadingWhatsApp ||
                   (!waSendNow && (!waScheduledDate || !waScheduledTime))
@@ -3908,7 +4746,7 @@ export default function AdminDashboard() {
               >
                 {loadingWhatsApp ? (
                   <div className="flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     {waSendNow ? 'Enviando...' : 'Programando...'}
                   </div>
                 ) : waSendNow ? (

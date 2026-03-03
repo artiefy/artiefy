@@ -87,6 +87,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
       parametroId: parametros.id,
       parametroName: parametros.name,
       parametroPeso: parametros.porcentaje,
+      numberOfActivities: parametros.numberOfActivities,
     })
     .from(parametros)
     .where(eq(parametros.courseId, courseId));

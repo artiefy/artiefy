@@ -171,10 +171,15 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
   // Layout: flex-col, mensajes con overflow, input SIEMPRE pegado abajo
   return (
-    <div className="flex h-full min-h-0 w-full flex-col">
+    <div className="flex size-full min-h-0 flex-col">
       {/* Banner de ticket cerrado */}
       {isTicketClosed && (
-        <div className="mb-3 rounded-lg border border-yellow-400/60 bg-yellow-400/10 p-3 text-sm text-yellow-100">
+        <div
+          className="
+          mb-3 rounded-lg border border-yellow-400/60 bg-yellow-400/10 p-3
+          text-sm text-yellow-100
+        "
+        >
           <div className="flex items-center gap-2">
             <span className="text-xl">🔒</span>
             <div>
@@ -201,10 +206,14 @@ export const SuportChat: React.FC<SuportChatProps> = ({
               </div>
             )}
             <div
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+              className={`
+                flex
+                ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
             >
               <div
-                className={`flex max-w-[80%] items-start space-x-2 ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}
+                className={`
+                  flex max-w-[80%] items-start space-x-2
+                  ${message.sender === 'user' ? 'flex-row-reverse space-x-reverse' : 'flex-row'}`}
               >
                 {message.sender === 'support' ? (
                   <MdSupportAgent className="mt-2 text-2xl text-[#3AF4EF]" />
@@ -220,7 +229,17 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                   <BsPersonCircle className="mt-2 text-xl text-white/60" />
                 )}
                 <div
-                  className={`rounded-2xl px-4 py-3 shadow-lg ${message.sender === 'user' ? 'bg-gradient-to-r from-[#00bdd8] to-[#009fbf] text-white shadow-[#00bdd8]/30' : 'border border-white/10 bg-[#08142a] text-white'}`}
+                  className={`
+                    rounded-2xl px-4 py-3 shadow-lg
+                    ${
+                      message.sender === 'user'
+                        ? `
+                      bg-gradient-to-r from-[#00bdd8] to-[#009fbf] text-white
+                      shadow-[#00bdd8]/30
+                    `
+                        : 'border border-white/10 bg-[#08142a] text-white'
+                    }
+                  `}
                 >
                   <div className="whitespace-pre-wrap">{message.text}</div>
                   {message.buttons && message.buttons.length > 0 && (
@@ -229,7 +248,13 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                         <button
                           key={index}
                           onClick={() => onBotButtonClick?.(button.action)}
-                          className="rounded-lg border border-[#00bdd8]/70 px-3 py-2 text-xs font-semibold text-[#3AF4EF] transition-colors hover:bg-[#00bdd8] hover:text-[#041226] focus:outline-none"
+                          className="
+                            rounded-lg border border-[#00bdd8]/70 px-3 py-2
+                            text-xs font-semibold text-[#3AF4EF]
+                            transition-colors
+                            hover:bg-[#00bdd8] hover:text-[#041226]
+                            focus:outline-none
+                          "
                         >
                           {button.label}
                         </button>
@@ -244,7 +269,11 @@ export const SuportChat: React.FC<SuportChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
       {/* Input fijo abajo, SIEMPRE visible */}
-      <div className="w-full border-t border-gray-700 bg-[#050c1b] px-2 py-2 backdrop-blur-sm">
+      <div
+        className="
+        w-full border-t border-gray-700 bg-[#050c1b] p-2 backdrop-blur-sm
+      "
+      >
         <form onSubmit={handleSendMessage} className="flex w-full gap-2">
           <input
             ref={actualInputRef}
@@ -257,12 +286,26 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                 : 'Describe el problema...'
             }
             disabled={isTicketClosed}
-            className="flex-1 rounded-lg border border-[#1f2c44] bg-[#0b1d36] p-2 text-sm text-white placeholder-white/40 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none disabled:cursor-not-allowed disabled:bg-[#1a2a44] disabled:text-white/30 sm:p-3 sm:text-base"
+            className="
+              flex-1 rounded-lg border border-[#1f2c44] bg-[#0b1d36] p-2 text-sm
+              text-white placeholder-white/40
+              focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF]
+              focus:outline-none
+              disabled:cursor-not-allowed disabled:bg-[#1a2a44]
+              disabled:text-white/30
+              sm:p-3 sm:text-base
+            "
           />
           <button
             type="submit"
             disabled={isLoading || isTicketClosed}
-            className="rounded-lg bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-2 text-sm font-semibold text-[#041226] transition-all hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50 sm:px-5 sm:py-2.5 sm:text-base"
+            className="
+              rounded-lg bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-2
+              text-sm font-semibold text-[#041226] transition-all
+              hover:brightness-110
+              disabled:cursor-not-allowed disabled:opacity-50
+              sm:px-5 sm:py-2.5 sm:text-base
+            "
           >
             Enviar
           </button>

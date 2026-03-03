@@ -143,16 +143,41 @@ const ForumHome = () => {
   }, [user]);
 
   return (
-    <div className="bg-background min-h-screen px-4 py-8 sm:px-6 lg:px-10">
+    <div
+      className="
+      min-h-screen bg-background px-4 py-8
+      sm:px-6
+      lg:px-10
+    "
+    >
       <div className="mx-auto max-w-7xl space-y-8">
-        <header className="mb-10 flex flex-col items-center justify-center gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-primary text-center text-3xl font-extrabold tracking-tight sm:text-left sm:text-4xl">
+        <header
+          className="
+          mb-10 flex flex-col items-center justify-center gap-6
+          sm:flex-row sm:items-center sm:justify-between
+        "
+        >
+          <h1
+            className="
+            text-center text-3xl font-extrabold tracking-tight text-primary
+            sm:text-left sm:text-4xl
+          "
+          >
             Zona de Foros Artiefy
           </h1>
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90 flex w-full max-w-xs items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold text-black shadow-md transition-all duration-200 sm:w-auto sm:max-w-none sm:text-base">
+              <Button
+                className="
+                flex
+                w-full
+                max-w-xs items-center justify-center gap-2 rounded-md bg-primary
+                px-5 py-2.5 text-sm font-semibold text-black shadow-md
+                transition-all duration-200 hover:bg-primary/90
+                sm:w-auto sm:max-w-none sm:text-base
+              "
+              >
                 + Nuevo Foro
               </Button>
             </DialogTrigger>
@@ -170,7 +195,7 @@ const ForumHome = () => {
               <div className="mt-4 space-y-4">
                 {/* Curso asociado */}
                 <div className="space-y-2">
-                  <label className="text-primary text-sm font-medium">
+                  <label className="text-sm font-medium text-primary">
                     Curso asociado
                   </label>
                   {loadingCourses ? (
@@ -191,7 +216,13 @@ const ForumHome = () => {
                             className="fixed inset-0 z-10"
                             onClick={() => setShowCourseList(false)}
                           />
-                          <div className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md border border-white/20 bg-[#111] shadow-lg">
+                          <div
+                            className="
+                            absolute z-20 mt-1 max-h-60 w-full overflow-auto
+                            rounded-md border border-white/20 bg-[#111]
+                            shadow-lg
+                          "
+                          >
                             {courses
                               .filter((c) =>
                                 c.title
@@ -207,7 +238,11 @@ const ForumHome = () => {
                                     setSearchCourse(c.title);
                                     setShowCourseList(false);
                                   }}
-                                  className="w-full px-3 py-2 text-left text-sm text-white transition hover:bg-white/10"
+                                  className="
+                                    w-full px-3 py-2 text-left text-sm
+                                    text-white transition
+                                    hover:bg-white/10
+                                  "
                                 >
                                   {c.title}
                                 </button>
@@ -225,7 +260,7 @@ const ForumHome = () => {
 
                 {/* Título */}
                 <div className="space-y-1">
-                  <label className="text-primary text-sm">
+                  <label className="text-sm text-primary">
                     Título del foro
                   </label>
                   <Input
@@ -239,7 +274,7 @@ const ForumHome = () => {
 
                 {/* Descripción */}
                 <div className="space-y-1">
-                  <label className="text-primary text-sm">Descripción</label>
+                  <label className="text-sm text-primary">Descripción</label>
                   <Input
                     type="text"
                     placeholder="Breve descripción del foro"
@@ -250,17 +285,28 @@ const ForumHome = () => {
                 </div>
 
                 {/* Instructor info */}
-                <div className="border-primary text-primary rounded-md border bg-black/10 p-2 text-sm">
+                <div
+                  className="
+                  rounded-md border border-primary bg-black/10 p-2 text-sm
+                  text-primary
+                "
+                >
                   Instructor: {user?.fullName}
                 </div>
                 <div className="space-y-3">
                   {/* Imagen de portada */}
                   <div>
-                    <label className="text-primary text-sm font-medium">
+                    <label className="text-sm font-medium text-primary">
                       Imagen de portada (opcional)
                     </label>
                     <div className="mt-2 flex items-center gap-4">
-                      <label className="cursor-pointer rounded-md bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20">
+                      <label
+                        className="
+                        cursor-pointer rounded-md bg-white/10 px-4 py-2 text-sm
+                        transition
+                        hover:bg-white/20
+                      "
+                      >
                         Seleccionar imagen
                         <input
                           type="file"
@@ -279,11 +325,18 @@ const ForumHome = () => {
                             alt="Vista previa"
                             width={96}
                             height={96}
-                            className="h-24 w-24 rounded-md border border-white/20 object-cover"
+                            className="
+                              size-24 rounded-md border border-white/20
+                              object-cover
+                            "
                           />
                           <button
                             onClick={() => setCoverImage(null)}
-                            className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+                            className="
+                              absolute top-0 right-0 flex size-5 items-center
+                              justify-center rounded-full bg-black/60 text-xs
+                              text-white
+                            "
                           >
                             ×
                           </button>
@@ -294,11 +347,17 @@ const ForumHome = () => {
 
                   {/* Documento adjunto */}
                   <div>
-                    <label className="text-primary text-sm font-medium">
+                    <label className="text-sm font-medium text-primary">
                       Documento adjunto (opcional)
                     </label>
                     <div className="mt-2 flex items-center gap-4">
-                      <label className="cursor-pointer rounded-md bg-white/10 px-4 py-2 text-sm transition hover:bg-white/20">
+                      <label
+                        className="
+                        cursor-pointer rounded-md bg-white/10 px-4 py-2 text-sm
+                        transition
+                        hover:bg-white/20
+                      "
+                      >
                         Seleccionar documento
                         <input
                           type="file"
@@ -311,11 +370,20 @@ const ForumHome = () => {
                       </label>
 
                       {documentFile && (
-                        <div className="flex items-center gap-2 rounded-md border border-white/20 bg-black/10 px-3 py-1 text-sm text-white">
+                        <div
+                          className="
+                          flex items-center gap-2 rounded-md border
+                          border-white/20 bg-black/10 px-3 py-1 text-sm
+                          text-white
+                        "
+                        >
                           📄 {documentFile.name}
                           <button
                             onClick={() => setDocumentFile(null)}
-                            className="ml-2 text-red-400 transition hover:text-red-500"
+                            className="
+                              ml-2 text-red-400 transition
+                              hover:text-red-500
+                            "
                           >
                             ×
                           </button>
@@ -336,10 +404,19 @@ const ForumHome = () => {
                 </div>
               )}
 
-              <DialogFooter className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <DialogFooter
+                className="
+                mt-6 flex flex-col-reverse gap-3
+                sm:flex-row sm:justify-end
+              "
+              >
                 <Button
                   variant="outline"
-                  className="w-full border border-white/20 text-white hover:bg-white/10 sm:w-auto"
+                  className="
+                    w-full border border-white/20 text-white
+                    hover:bg-white/10
+                    sm:w-auto
+                  "
                   onClick={() => {
                     setCourseId(null);
                     setTitle('');
@@ -352,7 +429,11 @@ const ForumHome = () => {
                 </Button>
                 <Button
                   onClick={handleCreateForum}
-                  className="w-full bg-green-500 text-white hover:bg-green-600 sm:w-auto"
+                  className="
+                    w-full bg-green-500 text-white
+                    hover:bg-green-600
+                    sm:w-auto
+                  "
                 >
                   Crear Foro
                 </Button>
@@ -365,7 +446,13 @@ const ForumHome = () => {
           <input
             type="text"
             placeholder="Buscar foros o temas..."
-            className="focus:border-primary focus:ring-primary w-full rounded-md border border-gray-700 bg-[#111827] px-4 py-2 pl-10 text-base text-gray-100 shadow-sm transition placeholder:text-gray-400 focus:ring-1"
+            className="
+              w-full rounded-md
+              border border-gray-700 bg-[#111827] px-4 py-2 pl-10 text-base
+              text-gray-100 shadow-sm transition placeholder:text-gray-400 focus:border-primary
+              focus:ring-1
+              focus:ring-primary
+            "
           />
           <FaSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500" />
         </div>

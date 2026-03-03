@@ -962,17 +962,17 @@ export default function MiniSignUpModal({
   return (
     <div
       className="
-      pointer-events-auto fixed inset-0 z-[1100] flex items-center
-      justify-center bg-black/50
-    "
+        pointer-events-auto fixed inset-0 z-[1100] flex items-center
+        justify-center bg-black/50
+      "
     >
       {/* OAuth Loading Overlay */}
       {loadingProvider && (
         <div
           className="
-          absolute inset-0 z-[1150] flex items-center justify-center bg-black/70
-          backdrop-blur-sm
-        "
+            absolute inset-0 z-[1150] flex items-center justify-center
+            bg-black/70 backdrop-blur-sm
+          "
         >
           <div className="flex flex-col items-center gap-4">
             <Icons.spinner className="size-12 text-primary" />
@@ -1049,9 +1049,9 @@ export default function MiniSignUpModal({
           {/* Floating rockets */}
           <div
             className="
-            animate-float absolute top-1/2 right-4 h-28 w-20 -translate-y-1/2
-            opacity-20
-          "
+              animate-float absolute top-1/2 right-4 h-28 w-20 -translate-y-1/2
+              opacity-20
+            "
           >
             <div className="relative size-full rotate-[-15deg]">
               <svg
@@ -1173,14 +1173,14 @@ export default function MiniSignUpModal({
         {/* Header */}
         <div
           className="
-          relative z-10 flex flex-col items-center space-y-3 text-center
-          sm:text-left
-        "
+            relative z-10 flex flex-col items-center space-y-3 text-center
+            sm:text-left
+          "
         >
           <h2
             className="
-            sr-only text-lg leading-none font-semibold tracking-tight
-          "
+              sr-only text-lg leading-none font-semibold tracking-tight
+            "
           >
             Crear cuenta
           </h2>

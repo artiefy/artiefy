@@ -644,25 +644,40 @@ export default function ModalSolicitudesParticipacion({
     <>
       {/* Barra de progreso de procesamiento de aprobación/rechazo */}
       {isProcessing && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
+        <div
+          className="
+          fixed inset-0 z-[100] flex items-center justify-center bg-black/60
+        "
+        >
+          <div
+            className="
+            flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
+            p-6 shadow-lg
+          "
+          >
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">
                 <div
-                  className={`h-6 rounded-full transition-all duration-300 ${
-                    processingAction === 'rejected'
-                      ? 'bg-orange-500'
-                      : 'bg-green-500'
-                  }`}
+                  className={`
+                    h-6 rounded-full transition-all duration-300
+                    ${
+                      processingAction === 'rejected'
+                        ? 'bg-orange-500'
+                        : 'bg-green-500'
+                    }
+                  `}
                   style={{ width: `${progress}%` }}
                 />
               </div>
               <div
-                className={`mt-2 text-center font-semibold ${
-                  processingAction === 'rejected'
-                    ? 'text-orange-500'
-                    : 'text-green-500'
-                }`}
+                className={`
+                  mt-2 text-center font-semibold
+                  ${
+                    processingAction === 'rejected'
+                      ? 'text-orange-500'
+                      : 'text-green-500'
+                  }
+                `}
               >
                 {statusText
                   ? statusText
@@ -683,12 +698,23 @@ export default function ModalSolicitudesParticipacion({
       )}
       {/* Barra de progreso de eliminación masiva */}
       {eliminandoTodas && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
+        <div
+          className="
+          fixed inset-0 z-[100] flex items-center justify-center bg-black/60
+        "
+        >
+          <div
+            className="
+            flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
+            p-6 shadow-lg
+          "
+          >
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">
                 <div
-                  className="h-6 rounded-full bg-red-500 transition-all duration-300"
+                  className="
+                    h-6 rounded-full bg-red-500 transition-all duration-300
+                  "
                   style={{ width: `${eliminandoProgress}%` }}
                 />
               </div>
@@ -707,19 +733,37 @@ export default function ModalSolicitudesParticipacion({
         </div>
       )}
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
+        className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2
+          sm:p-4
+        "
         onClick={onClose}
       >
         <div
-          className="relative max-h-[95vh] w-full max-w-xs overflow-hidden overflow-y-auto rounded-lg bg-slate-800 p-3 sm:max-h-[90vh] sm:max-w-lg sm:rounded-xl sm:p-4 md:max-w-2xl lg:max-w-4xl lg:rounded-2xl lg:p-6 xl:max-w-5xl"
+          className="
+            relative max-h-[95vh] w-full max-w-xs overflow-hidden
+            overflow-y-auto rounded-lg bg-slate-800 p-3
+            sm:max-h-[90vh] sm:max-w-lg sm:rounded-xl sm:p-4
+            md:max-w-2xl
+            lg:max-w-4xl lg:rounded-2xl lg:p-6
+            xl:max-w-5xl
+          "
           onClick={(e) => e.stopPropagation()}
         >
           {/* Botón de cerrar */}
-          <div className="sticky top-0 z-50 flex w-full justify-end bg-slate-800/95 pb-2">
+          <div
+            className="
+            sticky top-0 z-50 flex w-full justify-end bg-slate-800/95 pb-2
+          "
+          >
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 text-slate-400 hover:bg-slate-700 hover:text-white sm:h-10 sm:w-10"
+              className="
+                size-8 text-slate-400
+                hover:bg-slate-700 hover:text-white
+                sm:size-10
+              "
               onClick={onClose}
             >
               <span className="sr-only">Cerrar</span>
@@ -727,7 +771,10 @@ export default function ModalSolicitudesParticipacion({
                 width={20}
                 height={20}
                 viewBox="0 0 16 16"
-                className="text-white sm:h-6 sm:w-6"
+                className="
+                  text-white
+                  sm:size-6
+                "
               >
                 <path
                   d="M4 4l8 8M12 4l-8 8"
@@ -739,8 +786,18 @@ export default function ModalSolicitudesParticipacion({
             </Button>
           </div>
 
-          <div className="space-y-4 sm:space-y-6">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div
+            className="
+            space-y-4
+            sm:space-y-6
+          "
+          >
+            <div
+              className="
+              flex flex-col gap-3
+              sm:flex-row sm:items-center sm:justify-between
+            "
+            >
               <h2 className="text-xl font-bold break-words text-white sm:text-2xl">
                 Gestión de Solicitudes
               </h2>
@@ -754,9 +811,18 @@ export default function ModalSolicitudesParticipacion({
                     void handleEliminarTodasLasSolicitudes();
                   }}
                   disabled={eliminandoTodas || loading}
-                  className="w-full shrink-0 bg-red-600 text-xs hover:bg-red-700 sm:w-auto sm:text-sm"
+                  className="
+                    w-full shrink-0 bg-red-600 text-xs
+                    hover:bg-red-700
+                    sm:w-auto sm:text-sm
+                  "
                 >
-                  <Trash2 className="mr-1 h-3 w-3 shrink-0 sm:mr-2 sm:h-4 sm:w-4" />
+                  <Trash2
+                    className="
+                    mr-1 size-3 shrink-0
+                    sm:mr-2 sm:size-4
+                  "
+                  />
                   <span className="break-words">
                     {eliminandoTodas
                       ? 'Eliminando...'
@@ -768,45 +834,105 @@ export default function ModalSolicitudesParticipacion({
 
             {/* Título del proyecto debajo del encabezado, con indentación */}
             {projectTitle && (
-              <div className="mt-1 pl-9 text-base font-semibold break-words text-cyan-300 sm:text-lg">
+              <div
+                className="
+                mt-1 pl-9 text-base font-semibold break-words text-cyan-300
+                sm:text-lg
+              "
+              >
                 {projectTitle}
               </div>
             )}
 
             {loading ? (
-              <div className="flex justify-center py-6 sm:py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-cyan-400 sm:h-8 sm:w-8" />
+              <div
+                className="
+                flex justify-center py-6
+                sm:py-8
+              "
+              >
+                <div
+                  className="
+                  size-6 animate-spin rounded-full border-b-2 border-cyan-400
+                  sm:size-8
+                "
+                />
               </div>
             ) : (
-              <div className="space-y-4 sm:space-y-6">
+              <div
+                className="
+                space-y-4
+                sm:space-y-6
+              "
+              >
                 {/* Solicitudes de Participación Pendientes */}
                 <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
-                  <CardHeader className="pb-3 sm:pb-4">
-                    <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg">
-                      <Clock className="h-4 w-4 shrink-0 text-yellow-400 sm:h-5 sm:w-5" />
+                  <CardHeader
+                    className="
+                    pb-3
+                    sm:pb-4
+                  "
+                  >
+                    <CardTitle
+                      className="
+                      flex items-center gap-2 text-base text-white
+                      sm:text-lg
+                    "
+                    >
+                      <Clock className="size-4 shrink-0 text-yellow-400 sm:size-5" />
                       <span className="min-w-0 break-words">
                         Solicitudes de Participación
                       </span>
-                      <span className="shrink-0 text-sm sm:text-base">
+                      <span
+                        className="
+                        shrink-0 text-sm
+                        sm:text-base
+                      "
+                      >
                         ({solicitudesParticipacionPendientes.length})
                       </span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     {solicitudesParticipacionPendientes.length === 0 ? (
-                      <p className="text-sm text-slate-400 italic sm:text-base">
+                      <p
+                        className="
+                        text-sm text-slate-400 italic
+                        sm:text-base
+                      "
+                      >
                         No hay solicitudes de participación pendientes
                       </p>
                     ) : (
-                      <div className="space-y-3 sm:space-y-4">
+                      <div
+                        className="
+                        space-y-3
+                        sm:space-y-4
+                      "
+                      >
                         {solicitudesParticipacionPendientes.map((solicitud) => (
                           <div
                             key={solicitud.id}
-                            className="flex flex-col gap-3 overflow-hidden rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-4"
+                            className="
+                              flex flex-col gap-3 overflow-hidden rounded-lg
+                              border border-slate-600 bg-slate-700/50 p-3
+                              sm:flex-row sm:items-start sm:justify-between
+                              sm:gap-4 sm:p-4
+                            "
                           >
-                            <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
-                              <Avatar className="h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
-                                <AvatarFallback className="bg-green-600 text-xs text-white sm:text-sm">
+                            <div
+                              className="
+                              flex min-w-0 flex-1 items-start gap-2
+                              sm:gap-3
+                            "
+                            >
+                              <Avatar className="size-8 flex-shrink-0 sm:size-10">
+                                <AvatarFallback
+                                  className="
+                                  bg-green-600 text-xs text-white
+                                  sm:text-sm
+                                "
+                                >
                                   {(solicitud.userName ?? 'AN')
                                     .split(' ')
                                     .map((n) => n[0])
@@ -815,10 +941,20 @@ export default function ModalSolicitudesParticipacion({
                                 </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
-                                <h4 className="text-sm font-semibold break-words text-white sm:text-base">
+                                <h4
+                                  className="
+                                  text-sm font-semibold break-words text-white
+                                  sm:text-base
+                                "
+                                >
                                   {solicitud.userName ?? 'Usuario desconocido'}
                                 </h4>
-                                <p className="text-xs break-all text-slate-400 sm:text-sm">
+                                <p
+                                  className="
+                                  text-xs break-all text-slate-400
+                                  sm:text-sm
+                                "
+                                >
                                   {solicitud.userEmail}
                                 </p>
                                 <p className="text-xs text-slate-500">
@@ -827,30 +963,54 @@ export default function ModalSolicitudesParticipacion({
                                     solicitud.createdAt
                                   ).toLocaleDateString('es-ES')}
                                 </p>
-                                <Badge className="mt-1 bg-green-600 text-xs text-white">
+                                <Badge
+                                  className="
+                                  mt-1 bg-green-600 text-xs text-white
+                                "
+                                >
                                   Participación
                                 </Badge>
                                 {solicitud.requestMessage && (
                                   <div className="mt-2 rounded bg-slate-600/50 p-2">
-                                    <div className="mb-1 flex items-center gap-1 text-xs text-slate-400">
-                                      <MessageSquare className="h-3 w-3 flex-shrink-0" />
+                                    <div
+                                      className="
+                                      mb-1 flex items-center gap-1 text-xs
+                                      text-slate-400
+                                    "
+                                    >
+                                      <MessageSquare className="size-3 flex-shrink-0" />
                                       <span className="shrink-0">Mensaje:</span>
                                     </div>
-                                    <p className="text-xs break-words whitespace-pre-wrap text-slate-300 sm:text-sm">
+                                    <p
+                                      className="
+                                      text-xs break-words whitespace-pre-wrap
+                                      text-slate-300
+                                      sm:text-sm
+                                    "
+                                    >
                                       {solicitud.requestMessage}
                                     </p>
                                   </div>
                                 )}
                               </div>
                             </div>
-                            <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0">
+                            <div
+                              className="
+                              flex w-full gap-2
+                              sm:w-auto sm:flex-shrink-0
+                            "
+                            >
                               <Button
                                 size="sm"
-                                className="min-w-0 flex-1 bg-green-600 text-xs hover:bg-green-700 sm:flex-none sm:text-sm"
+                                className="
+                                  min-w-0 flex-1 bg-green-600 text-xs
+                                  hover:bg-green-700
+                                  sm:flex-none sm:text-sm
+                                "
                                 onClick={() => handleAprobar(solicitud)}
                                 disabled={processingId === solicitud.id}
                               >
-                                <Check className="mr-1 h-3 w-3 shrink-0" />
+                                <Check className="mr-1 size-3 shrink-0" />
                                 <span className="break-words">
                                   {processingId === solicitud.id
                                     ? 'Procesando...'
@@ -860,11 +1020,14 @@ export default function ModalSolicitudesParticipacion({
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                className="min-w-0 flex-1 text-xs sm:flex-none sm:text-sm"
+                                className="
+                                  min-w-0 flex-1 text-xs
+                                  sm:flex-none sm:text-sm
+                                "
                                 onClick={() => handleRechazar(solicitud)}
                                 disabled={processingId === solicitud.id}
                               >
-                                <X className="mr-1 h-3 w-3 shrink-0" />
+                                <X className="mr-1 size-3 shrink-0" />
                                 <span className="break-words">
                                   {processingId === solicitud.id
                                     ? 'Procesando...'
@@ -881,32 +1044,72 @@ export default function ModalSolicitudesParticipacion({
 
                 {/* Solicitudes de Renuncia Pendientes */}
                 <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
-                  <CardHeader className="pb-3 sm:pb-4">
-                    <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg">
-                      <Clock className="h-4 w-4 shrink-0 text-orange-400 sm:h-5 sm:w-5" />
+                  <CardHeader
+                    className="
+                    pb-3
+                    sm:pb-4
+                  "
+                  >
+                    <CardTitle
+                      className="
+                      flex items-center gap-2 text-base text-white
+                      sm:text-lg
+                    "
+                    >
+                      <Clock className="size-4 shrink-0 text-orange-400 sm:size-5" />
                       <span className="min-w-0 break-words">
                         Solicitudes de Renuncia
                       </span>
-                      <span className="shrink-0 text-sm sm:text-base">
+                      <span
+                        className="
+                        shrink-0 text-sm
+                        sm:text-base
+                      "
+                      >
                         ({solicitudesRenunciaPendientes.length})
                       </span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     {solicitudesRenunciaPendientes.length === 0 ? (
-                      <p className="text-sm text-slate-400 italic sm:text-base">
+                      <p
+                        className="
+                        text-sm text-slate-400 italic
+                        sm:text-base
+                      "
+                      >
                         No hay solicitudes de renuncia pendientes
                       </p>
                     ) : (
-                      <div className="space-y-3 sm:space-y-4">
+                      <div
+                        className="
+                        space-y-3
+                        sm:space-y-4
+                      "
+                      >
                         {solicitudesRenunciaPendientes.map((solicitud) => (
                           <div
                             key={solicitud.id}
-                            className="flex flex-col gap-3 overflow-hidden rounded-lg border border-orange-600 bg-orange-900/20 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-4"
+                            className="
+                              flex flex-col gap-3 overflow-hidden rounded-lg
+                              border border-orange-600 bg-orange-900/20 p-3
+                              sm:flex-row sm:items-start sm:justify-between
+                              sm:gap-4 sm:p-4
+                            "
                           >
-                            <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
-                              <Avatar className="h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
-                                <AvatarFallback className="bg-orange-600 text-xs text-white sm:text-sm">
+                            <div
+                              className="
+                              flex min-w-0 flex-1 items-start gap-2
+                              sm:gap-3
+                            "
+                            >
+                              <Avatar className="size-8 flex-shrink-0 sm:size-10">
+                                <AvatarFallback
+                                  className="
+                                  bg-orange-600 text-xs text-white
+                                  sm:text-sm
+                                "
+                                >
                                   {(solicitud.userName ?? 'AN')
                                     .split(' ')
                                     .map((n) => n[0])
@@ -915,10 +1118,20 @@ export default function ModalSolicitudesParticipacion({
                                 </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
-                                <h4 className="text-sm font-semibold break-words text-white sm:text-base">
+                                <h4
+                                  className="
+                                  text-sm font-semibold break-words text-white
+                                  sm:text-base
+                                "
+                                >
                                   {solicitud.userName ?? 'Usuario desconocido'}
                                 </h4>
-                                <p className="text-xs break-all text-slate-400 sm:text-sm">
+                                <p
+                                  className="
+                                  text-xs break-all text-slate-400
+                                  sm:text-sm
+                                "
+                                >
                                   {solicitud.userEmail}
                                 </p>
                                 <p className="text-xs text-slate-500">
@@ -927,30 +1140,58 @@ export default function ModalSolicitudesParticipacion({
                                     solicitud.createdAt
                                   ).toLocaleDateString('es-ES')}
                                 </p>
-                                <Badge className="mt-1 bg-orange-600 text-xs text-white">
+                                <Badge
+                                  className="
+                                  mt-1 bg-orange-600 text-xs text-white
+                                "
+                                >
                                   Renuncia
                                 </Badge>
                                 {solicitud.requestMessage && (
-                                  <div className="mt-2 rounded bg-orange-600/20 p-2">
-                                    <div className="mb-1 flex items-center gap-1 text-xs text-orange-300">
-                                      <MessageSquare className="h-3 w-3 flex-shrink-0" />
+                                  <div
+                                    className="
+                                    mt-2 rounded bg-orange-600/20 p-2
+                                  "
+                                  >
+                                    <div
+                                      className="
+                                      mb-1 flex items-center gap-1 text-xs
+                                      text-orange-300
+                                    "
+                                    >
+                                      <MessageSquare className="size-3 flex-shrink-0" />
                                       <span className="shrink-0">Motivo:</span>
                                     </div>
-                                    <p className="text-xs break-words whitespace-pre-wrap text-orange-200 sm:text-sm">
+                                    <p
+                                      className="
+                                      text-xs break-words whitespace-pre-wrap
+                                      text-orange-200
+                                      sm:text-sm
+                                    "
+                                    >
                                       {solicitud.requestMessage}
                                     </p>
                                   </div>
                                 )}
                               </div>
                             </div>
-                            <div className="flex w-full gap-2 sm:w-auto sm:flex-shrink-0">
+                            <div
+                              className="
+                              flex w-full gap-2
+                              sm:w-auto sm:flex-shrink-0
+                            "
+                            >
                               <Button
                                 size="sm"
-                                className="min-w-0 flex-1 bg-orange-600 text-xs hover:bg-orange-700 sm:flex-none sm:text-sm"
+                                className="
+                                  min-w-0 flex-1 bg-orange-600 text-xs
+                                  hover:bg-orange-700
+                                  sm:flex-none sm:text-sm
+                                "
                                 onClick={() => handleAprobar(solicitud)}
                                 disabled={processingId === solicitud.id}
                               >
-                                <Check className="mr-1 h-3 w-3 shrink-0" />
+                                <Check className="mr-1 size-3 shrink-0" />
                                 <span className="break-words">
                                   {processingId === solicitud.id
                                     ? 'Procesando...'
@@ -960,11 +1201,16 @@ export default function ModalSolicitudesParticipacion({
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="min-w-0 flex-1 border-slate-400 text-xs text-slate-300 hover:bg-slate-700 sm:flex-none sm:text-sm"
+                                className="
+                                  min-w-0 flex-1 border-slate-400 text-xs
+                                  text-slate-300
+                                  hover:bg-slate-700
+                                  sm:flex-none sm:text-sm
+                                "
                                 onClick={() => handleRechazar(solicitud)}
                                 disabled={processingId === solicitud.id}
                               >
-                                <X className="mr-1 h-3 w-3 shrink-0" />
+                                <X className="mr-1 size-3 shrink-0" />
                                 <span className="break-words">
                                   {processingId === solicitud.id
                                     ? 'Procesando...'
@@ -982,27 +1228,55 @@ export default function ModalSolicitudesParticipacion({
                 {/* Historial de Solicitudes Procesadas */}
                 {solicitudesProcesadas.length > 0 && (
                   <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
-                    <CardHeader className="pb-3 sm:pb-4">
+                    <CardHeader
+                      className="
+                      pb-3
+                      sm:pb-4
+                    "
+                    >
                       <CardTitle className="text-base break-words text-white sm:text-lg">
                         Historial de Solicitudes ({solicitudesProcesadas.length}
                         )
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
-                      <div className="space-y-2 sm:space-y-3">
+                      <div
+                        className="
+                        space-y-2
+                        sm:space-y-3
+                      "
+                      >
                         {solicitudesProcesadas.map((solicitud) => (
                           <div
                             key={solicitud.id}
-                            className="flex flex-col gap-2 overflow-hidden rounded-lg border border-slate-600 bg-slate-700/30 p-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 sm:p-3"
+                            className="
+                              flex flex-col gap-2 overflow-hidden rounded-lg
+                              border border-slate-600 bg-slate-700/30 p-2
+                              sm:flex-row sm:items-start sm:justify-between
+                              sm:gap-3 sm:p-3
+                            "
                           >
-                            <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
-                              <Avatar className="h-6 w-6 flex-shrink-0 sm:h-8 sm:w-8">
+                            <div
+                              className="
+                              flex min-w-0 flex-1 items-start gap-2
+                              sm:gap-3
+                            "
+                            >
+                              <Avatar
+                                className="
+                                size-6 flex-shrink-0
+                                sm:size-8
+                              "
+                              >
                                 <AvatarFallback
-                                  className={`${
-                                    solicitud.requestType === 'participation'
-                                      ? 'bg-green-600'
-                                      : 'bg-orange-600'
-                                  } text-xs text-white`}
+                                  className={`
+                                    ${
+                                      solicitud.requestType === 'participation'
+                                        ? 'bg-green-600'
+                                        : 'bg-orange-600'
+                                    }
+                                    text-xs text-white
+                                  `}
                                 >
                                   {(solicitud.userName ?? 'AN')
                                     .split(' ')
@@ -1012,7 +1286,12 @@ export default function ModalSolicitudesParticipacion({
                                 </AvatarFallback>
                               </Avatar>
                               <div className="min-w-0 flex-1">
-                                <h5 className="text-xs font-medium break-words text-white sm:text-sm">
+                                <h5
+                                  className="
+                                  text-xs font-medium break-words text-white
+                                  sm:text-sm
+                                "
+                                >
                                   {solicitud.userName ?? 'Usuario desconocido'}
                                 </h5>
                                 <p className="text-xs text-slate-400">
@@ -1025,11 +1304,15 @@ export default function ModalSolicitudesParticipacion({
                                 </p>
                                 <div className="mt-1 flex flex-wrap gap-1">
                                   <Badge
-                                    className={`text-xs ${
-                                      solicitud.requestType === 'participation'
-                                        ? 'bg-green-700 text-white'
-                                        : 'bg-orange-700 text-white'
-                                    }`}
+                                    className={`
+                                      text-xs
+                                      ${
+                                        solicitud.requestType ===
+                                        'participation'
+                                          ? 'bg-green-700 text-white'
+                                          : 'bg-orange-700 text-white'
+                                      }
+                                    `}
                                   >
                                     {solicitud.requestType === 'participation'
                                       ? 'Participación'
@@ -1037,19 +1320,32 @@ export default function ModalSolicitudesParticipacion({
                                   </Badge>
                                 </div>
                                 {solicitud.responseMessage && (
-                                  <p className="mt-1 text-xs break-words whitespace-pre-wrap text-slate-300">
+                                  <p
+                                    className="
+                                    mt-1 text-xs break-words whitespace-pre-wrap
+                                    text-slate-300
+                                  "
+                                  >
                                     &quot;{solicitud.responseMessage}&quot;
                                   </p>
                                 )}
                               </div>
                             </div>
-                            <div className="flex justify-end sm:flex-shrink-0">
+                            <div
+                              className="
+                              flex justify-end
+                              sm:flex-shrink-0
+                            "
+                            >
                               <Badge
-                                className={`text-xs ${
-                                  solicitud.status === 'approved'
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-red-600 text-white'
-                                }`}
+                                className={`
+                                  text-xs
+                                  ${
+                                    solicitud.status === 'approved'
+                                      ? 'bg-green-600 text-white'
+                                      : 'bg-red-600 text-white'
+                                  }
+                                `}
                               >
                                 {solicitud.status === 'approved'
                                   ? 'Aprobada'
