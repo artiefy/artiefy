@@ -117,6 +117,7 @@ export interface Parametros {
   description: string;
   porcentaje: number;
   courseId: number;
+  numberOfActivities?: number;
 }
 
 type UIMeeting = ScheduledMeeting & {
@@ -456,6 +457,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       name: string;
       description: string;
       porcentaje: number;
+      numberOfActivities: number;
     }[]
   >([]); // Nuevo estado para los parámetros
   const [editRating, setEditRating] = useState(0); // Añadir esta línea
@@ -1434,6 +1436,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         name: parametro.name,
         description: parametro.description,
         porcentaje: parametro.porcentaje,
+        numberOfActivities: parametro.numberOfActivities ?? 1,
       }))
     );
     setEditRating(course.rating);

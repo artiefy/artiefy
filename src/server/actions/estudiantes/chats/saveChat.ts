@@ -43,6 +43,7 @@ export async function getOrCreateConversation({
       senderId,
       curso_id: cursoId ?? null,
       title: title ?? '',
+      fechaPrograma: new Date().toISOString(),
     })
     .returning();
 

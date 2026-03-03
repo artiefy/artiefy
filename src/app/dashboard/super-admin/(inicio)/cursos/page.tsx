@@ -76,7 +76,13 @@ export default function Page() {
     []
   );
   const [parametrosList, setParametrosList] = useState<
-    { id: number; name: string; description: string; porcentaje: number }[]
+    {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+      numberOfActivities?: number;
+    }[]
   >([]);
   const [educators, setEducators] = useState<{ id: string; name: string }[]>(
     []
@@ -783,6 +789,7 @@ export default function Page() {
             parametros={parametrosList.map((parametro, index) => ({
               ...parametro,
               id: index,
+              numberOfActivities: parametro.numberOfActivities ?? 1,
             }))}
             setParametrosAction={setParametrosList}
             courseTypeId={courseTypeId}
