@@ -29,7 +29,7 @@ export function ForumBreadcrumbs({
   return (
     <div className="relative z-20 flex w-full flex-col items-start backdrop-blur-sm md:bg-transparent md:backdrop-blur-none">
       <div className="w-full min-w-0">
-        <Breadcrumb className="-px-0 w-full overflow-x-auto pt-2 pb-2 sm:px-6 md:pt-0">
+        <Breadcrumb className="-px-0 w-full overflow-x-auto py-2 sm:px-6 md:pt-0">
           <BreadcrumbList className="flex w-full flex-nowrap items-center gap-1 whitespace-nowrap md:px-0">
             <BreadcrumbItem>
               <BreadcrumbLink href="/">

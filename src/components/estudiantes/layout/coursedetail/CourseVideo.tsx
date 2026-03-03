@@ -91,7 +91,7 @@ const CourseVideo: React.FC<CourseVideoProps> = ({
       )}
       {isLoading && (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/60">
-          <div className="h-12 w-12 animate-spin rounded-full border-t-2 border-b-2 border-cyan-400" />
+          <div className="size-12 animate-spin rounded-full border-y-2 border-cyan-400" />
         </div>
       )}
       {/* Barra de progreso eliminada, solo se muestra en el modal */}

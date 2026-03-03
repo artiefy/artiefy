@@ -72,7 +72,7 @@ export default function LessonPlayer({
                   <button
                     type="button"
                     onClick={() => playerRef.current?.play()}
-                    className="group/play flex h-20 w-20 items-center justify-center rounded-full bg-[#22c4d3e6] shadow-2xl transition-all hover:scale-110 hover:bg-[#22c4d3e6]/90 md:h-24 md:w-24"
+                    className="group/play flex size-20 items-center justify-center rounded-full bg-[#22c4d3e6] shadow-2xl transition-all hover:scale-110 hover:bg-[#22c4d3e6]/90 md:size-24"
                     aria-label="Reproducir video"
                   >
                     <svg
@@ -85,7 +85,7 @@ export default function LessonPlayer({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="ml-1 h-8 w-8 text-accent-foreground transition-transform group-hover/play:scale-110 md:h-10 md:w-10"
+                      className="ml-1 size-8 text-accent-foreground transition-transform group-hover/play:scale-110 md:size-10"
                     >
                       <polygon points="6 3 20 12 6 21 6 3" />
                     </svg>
@@ -95,7 +95,7 @@ export default function LessonPlayer({
             )}
 
             {/* Header info debajo del video */}
-            <div className="mt-4 mb-4 pl-0">
+            <div className="my-4 pl-0">
               <div className="mb-3 flex items-center gap-3">
                 {lesson.courseTitle ? (
                   <span className="rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">

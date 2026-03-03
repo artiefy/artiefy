@@ -525,7 +525,7 @@ export default function MiniLoginModal({
       {loadingProvider && (
         <div className="absolute inset-0 z-[1150] flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4 rounded-2xl bg-background/95 p-8 shadow-2xl">
-            <Icons.spinner className="h-12 w-12 text-primary" />
+            <Icons.spinner className="size-12 text-primary" />
             <div className="text-center">
               <p className="text-lg font-semibold">Autenticando...</p>
               <p className="text-sm text-muted-foreground">
@@ -538,7 +538,7 @@ export default function MiniLoginModal({
 
       <div
         role="dialog"
-        className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-hidden rounded-[32px] border border-border/50 bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200 sm:max-w-md"
+        className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-[-50%] gap-4 overflow-hidden rounded-[32px] border border-border/50 bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200 sm:max-w-md"
         tabIndex={-1}
         style={{ pointerEvents: 'auto' }}
       >
@@ -548,7 +548,7 @@ export default function MiniLoginModal({
           {Array.from({ length: 20 }).map((_, i) => (
             <div
               key={`star-${i}`}
-              className="absolute h-1 w-1 animate-pulse rounded-full bg-accent/40"
+              className="absolute size-1 animate-pulse rounded-full bg-accent/40"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -560,10 +560,10 @@ export default function MiniLoginModal({
 
           {/* Floating rockets */}
           <div className="animate-float absolute top-1/2 right-4 h-28 w-20 -translate-y-1/2 opacity-20">
-            <div className="relative h-full w-full rotate-[-15deg]">
+            <div className="relative size-full rotate-[-15deg]">
               <svg
                 viewBox="0 0 64 80"
-                className="h-full w-full drop-shadow-[0_0_15px_hsl(180_100%_50%/0.4)]"
+                className="size-full drop-shadow-[0_0_15px_hsl(180_100%_50%/0.4)]"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -630,10 +630,10 @@ export default function MiniLoginModal({
             className="animate-float absolute bottom-20 left-6 h-16 w-12 opacity-15"
             style={{ animationDelay: '1.5s' }}
           >
-            <div className="relative h-full w-full rotate-[20deg]">
+            <div className="relative size-full rotate-[20deg]">
               <svg
                 viewBox="0 0 64 80"
-                className="h-full w-full drop-shadow-[0_0_10px_hsl(180_100%_50%/0.3)]"
+                className="size-full drop-shadow-[0_0_10px_hsl(180_100%_50%/0.3)]"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -657,7 +657,7 @@ export default function MiniLoginModal({
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={`particle-${i}`}
-              className="animate-rise absolute h-1.5 w-1.5 rounded-full bg-gradient-to-b from-accent/60 to-orange-400/40"
+              className="animate-rise absolute size-1.5 rounded-full bg-gradient-to-b from-accent/60 to-orange-400/40"
               style={{
                 left: `${20 + Math.random() * 60}%`,
                 bottom: '-10px',
@@ -684,7 +684,7 @@ export default function MiniLoginModal({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="lucide lucide-x h-4 w-4"
+            className="lucide lucide-x size-4"
           >
             <path d="M18 6 6 18" />
             <path d="m6 6 12 12" />
@@ -791,7 +791,7 @@ export default function MiniLoginModal({
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'INICIAR SESIÓN'
               )}
@@ -800,7 +800,7 @@ export default function MiniLoginModal({
             {/* Divider */}
             <div className="relative my-6">
               <div className="h-[1px] w-full shrink-0 bg-border/50" />
-              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-3 text-xs text-muted-foreground">
+              <span className="absolute top-1/2 left-1/2 -translate-1/2 bg-background px-3 text-xs text-muted-foreground">
                 o continúa con
               </span>
             </div>
@@ -810,40 +810,40 @@ export default function MiniLoginModal({
               <button
                 type="button"
                 onClick={() => signInWith('oauth_google')}
-                className="inline-flex h-12 w-12 items-center justify-center gap-2 rounded-full border border-border/50 bg-background text-sm font-medium whitespace-nowrap ring-offset-background transition-all hover:border-primary/50 hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="inline-flex size-12 items-center justify-center gap-2 rounded-full border border-border/50 bg-background text-sm font-medium whitespace-nowrap ring-offset-background transition-all hover:border-primary/50 hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 disabled={!!loadingProvider}
                 aria-label="Continuar con Google"
               >
                 {loadingProvider === 'oauth_google' ? (
-                  <Icons.spinner className="h-5 w-5" />
+                  <Icons.spinner className="size-5" />
                 ) : (
-                  <Icons.google className="h-5 w-5" />
+                  <Icons.google className="size-5" />
                 )}
               </button>
               <button
                 type="button"
                 onClick={() => signInWith('oauth_facebook')}
-                className="inline-flex h-12 w-12 items-center justify-center gap-2 rounded-full border border-border/50 bg-background text-sm font-medium whitespace-nowrap ring-offset-background transition-all hover:border-primary/50 hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="inline-flex size-12 items-center justify-center gap-2 rounded-full border border-border/50 bg-background text-sm font-medium whitespace-nowrap ring-offset-background transition-all hover:border-primary/50 hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 disabled={!!loadingProvider}
                 aria-label="Continuar con Facebook"
               >
                 {loadingProvider === 'oauth_facebook' ? (
-                  <Icons.spinner className="h-5 w-5" />
+                  <Icons.spinner className="size-5" />
                 ) : (
-                  <Icons.facebook className="h-5 w-5" />
+                  <Icons.facebook className="size-5" />
                 )}
               </button>
               <button
                 type="button"
                 onClick={() => signInWith('oauth_github')}
-                className="inline-flex h-12 w-12 items-center justify-center gap-2 rounded-full border border-border/50 bg-background text-sm font-medium whitespace-nowrap ring-offset-background transition-all hover:border-primary/50 hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                className="inline-flex size-12 items-center justify-center gap-2 rounded-full border border-border/50 bg-background text-sm font-medium whitespace-nowrap ring-offset-background transition-all hover:border-primary/50 hover:bg-muted/50 hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                 disabled={!!loadingProvider}
                 aria-label="Continuar con GitHub"
               >
                 {loadingProvider === 'oauth_github' ? (
-                  <Icons.spinner className="h-5 w-5" />
+                  <Icons.spinner className="size-5" />
                 ) : (
-                  <Icons.gitHub className="h-5 w-5" />
+                  <Icons.gitHub className="size-5" />
                 )}
               </button>
             </div>
@@ -925,7 +925,7 @@ export default function MiniLoginModal({
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'RESTABLECER CONTRASEÑA'
               )}
@@ -973,7 +973,7 @@ export default function MiniLoginModal({
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'ENVIAR CÓDIGO'
               )}

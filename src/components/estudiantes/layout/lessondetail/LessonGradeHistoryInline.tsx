@@ -49,7 +49,7 @@ export function LessonGradeHistoryInline({
   };
 
   return (
-    <div className="mt-6 mb-6 space-y-4">
+    <div className="my-6 space-y-4">
       {/* Final grade summary - moved to top */}
       <div
         className={`rounded-2xl border p-5 transition-all ${
@@ -82,12 +82,12 @@ export function LessonGradeHistoryInline({
         </div>
         <div className="mt-4 flex items-start gap-3 border-t border-border/30 pt-4">
           <div
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${gradeSummary.finalGrade >= 3 ? 'bg-green-500/20' : 'bg-red-500/20'}`}
+            className={`flex size-8 shrink-0 items-center justify-center rounded-full ${gradeSummary.finalGrade >= 3 ? 'bg-green-500/20' : 'bg-red-500/20'}`}
           >
             {gradeSummary.finalGrade >= 3 ? (
-              <ImHappy className="h-4 w-4 text-green-400" />
+              <ImHappy className="size-4 text-green-400" />
             ) : (
-              <PiSmileySad className="h-4 w-4 text-red-400" />
+              <PiSmileySad className="size-4 text-red-400" />
             )}
           </div>
           <div>

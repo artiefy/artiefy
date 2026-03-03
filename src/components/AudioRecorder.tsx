@@ -105,19 +105,19 @@ export function AudioRecorder({ onAudioSelect, onClose }: AudioRecorderProps) {
               >
                 {isRecording ? (
                   <>
-                    <Square className="h-4 w-4" />
+                    <Square className="size-4" />
                     Detener
                   </>
                 ) : (
                   <>
-                    <Mic className="h-4 w-4" />
+                    <Mic className="size-4" />
                     Grabar
                   </>
                 )}
               </button>
               {isRecording && (
                 <div className="flex items-center gap-2 text-red-500 text-sm font-medium">
-                  <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse"></div>
+                  <div className="size-2 rounded-full bg-red-500 animate-pulse"></div>
                   Grabando...
                 </div>
               )}
@@ -129,21 +129,21 @@ export function AudioRecorder({ onAudioSelect, onClose }: AudioRecorderProps) {
                 disabled={isPlaying}
                 className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50"
               >
-                <Play className="h-4 w-4" />
+                <Play className="size-4" />
                 {isPlaying ? 'Reproduciendo...' : 'Escuchar'}
               </button>
               <button
                 onClick={deleteRecording}
                 className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="size-4" />
                 Borrar
               </button>
               <button
                 onClick={handleSubmit}
                 className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700"
               >
-                <Upload className="h-4 w-4" />
+                <Upload className="size-4" />
                 Usar Audio
               </button>
             </>

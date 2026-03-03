@@ -29,7 +29,7 @@ const LessonBreadcrumbs = ({
           </Link>
         </li>
         <li>
-          <ChevronRightIcon className="h-4 w-4" />
+          <ChevronRightIcon className="size-4" />
         </li>
         <li>
           <Link
@@ -40,7 +40,7 @@ const LessonBreadcrumbs = ({
           </Link>
         </li>
         <li>
-          <ChevronRightIcon className="h-4 w-4" />
+          <ChevronRightIcon className="size-4" />
         </li>
         <li>
           <Link
@@ -58,7 +58,7 @@ const LessonBreadcrumbs = ({
           </Link>
         </li>
         <li>
-          <ChevronRightIcon className="h-4 w-4" />
+          <ChevronRightIcon className="size-4" />
         </li>
         <li
           className="text-primary mb-2 flex items-center pr-2 font-bold sm:mb-0"

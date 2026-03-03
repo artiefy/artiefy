@@ -217,7 +217,7 @@ export default function StudentCategories({
             <div className="ml-0 flex items-center lg:hidden">
               <button
                 type="button"
-                className="mt-2 mr-2 h-4 w-4 -translate-y-2 transform text-white"
+                className="mt-2 mr-2 size-4 -translate-y-2 transform text-white"
                 aria-label="Buscar cursos"
                 onClick={() => {
                   if (showMobileSearch) {
@@ -428,7 +428,7 @@ export default function StudentCategories({
               className={`category-arrow absolute top-[35%] left-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-focus-within/categories:opacity-95 group-hover/categories:opacity-95 hover:scale-110 ${isPressing ? 'scale-110 opacity-95' : ''}`}
               aria-label="Scroll left"
             >
-              <IoIosArrowBack className="h-5 w-5 text-white" />
+              <IoIosArrowBack className="size-5 text-white" />
             </button>
           )}
 
@@ -438,13 +438,13 @@ export default function StudentCategories({
               className={`category-arrow absolute top-[35%] right-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-focus-within/categories:opacity-95 group-hover/categories:opacity-95 hover:scale-110 ${isPressing ? 'scale-110 opacity-95' : ''}`}
               aria-label="Scroll right"
             >
-              <IoIosArrowForward className="h-5 w-5 text-white" />
+              <IoIosArrowForward className="size-5 text-white" />
             </button>
           )}
 
           <div
             ref={scrollContainerRef}
-            className="scrollbar-hide flex justify-start gap-3 overflow-x-auto pr-4 pb-4 pl-4 sm:pr-3 sm:pl-3"
+            className="scrollbar-hide flex justify-start gap-3 overflow-x-auto px-4 pb-4 sm:px-3"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -465,7 +465,7 @@ export default function StudentCategories({
                 (!selectedCategory && !searchParams?.get('query')) ||
                 buttonsDisabled
                   ? 'cursor-not-allowed bg-foreground text-background opacity-60'
-                  : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
+                  : 'border border-foreground/30 bg-transparent text-[#94A3B8] hover:border-foreground hover:text-foreground'
               }`}
               aria-label="Mostrar todos los cursos"
             >
@@ -488,8 +488,8 @@ export default function StudentCategories({
                   selectedCategory === category.id.toString()
                     ? 'bg-foreground text-background'
                     : buttonsDisabled
-                      ? 'cursor-not-allowed border border-foreground/30 bg-transparent font-medium text-[#94A3B8] opacity-50'
-                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
+                      ? 'cursor-not-allowed border border-foreground/30 bg-transparent text-[#94A3B8] opacity-50'
+                      : 'border border-foreground/30 bg-transparent text-[#94A3B8] hover:border-foreground hover:text-foreground'
                 }`}
                 aria-label={`Mostrar cursos de ${category.name}`}
               >

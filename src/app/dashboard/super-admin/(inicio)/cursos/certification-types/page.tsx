@@ -219,7 +219,7 @@ export default function CertificationTypesPage() {
                                     onChange={(e) =>
                                         setFormData({ ...formData, isActive: e.target.checked })
                                     }
-                                    className="w-4 h-4"
+                                    className="size-4"
                                 />
                                 <label htmlFor="isActive" className="text-sm font-medium">
                                     Activo

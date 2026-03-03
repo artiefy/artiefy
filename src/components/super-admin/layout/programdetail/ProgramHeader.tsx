@@ -113,7 +113,7 @@ export function ProgramHeader({
               {Array.from({ length: 5 }).map((_, index) => (
                 <StarIcon
                   key={index}
-                  className={`h-5 w-5 ${index < Math.floor(program.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
+                  className={`size-5 ${index < Math.floor(program.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
                 />
               ))}
               <span className="ml-2 text-lg font-semibold text-yellow-400">

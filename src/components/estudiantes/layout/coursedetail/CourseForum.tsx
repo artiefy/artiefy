@@ -410,29 +410,29 @@ export function CourseForum({ courseId }: CourseForumProps) {
       estudiante: {
         label: 'Estudiante',
         classes: 'bg-blue-500/15 text-blue-400 border-blue-400/40',
-        icon: <FaUserGraduate className="mr-1 h-3 w-3" />,
+        icon: <FaUserGraduate className="mr-1 size-3" />,
       },
       educador: {
         label: 'Educador',
         classes: 'bg-emerald-500/15 text-emerald-400 border-emerald-400/40',
-        icon: <FaUserTie className="mr-1 h-3 w-3" />,
+        icon: <FaUserTie className="mr-1 size-3" />,
       },
       admin: {
         label: 'Admin',
         classes: 'bg-purple-500/15 text-purple-400 border-purple-400/40',
-        icon: <IoShieldCheckmark className="mr-1 h-3.5 w-3.5" />,
+        icon: <IoShieldCheckmark className="mr-1 size-3.5" />,
       },
       'super-admin': {
         label: 'Super-admin',
         classes: 'bg-fuchsia-500/15 text-fuchsia-400 border-fuchsia-400/40',
-        icon: <IoShieldCheckmark className="mr-1 h-3.5 w-3.5" />,
+        icon: <IoShieldCheckmark className="mr-1 size-3.5" />,
       },
     };
 
     const item = mapping[normalizedRole] ?? {
       label: normalizedRole.charAt(0).toUpperCase() + normalizedRole.slice(1),
       classes: 'bg-slate-500/15 text-slate-300 border-slate-400/40',
-      icon: <FaUserGraduate className="mr-1 h-3 w-3" />,
+      icon: <FaUserGraduate className="mr-1 size-3" />,
     };
 
     return (
@@ -478,8 +478,8 @@ export function CourseForum({ courseId }: CourseForumProps) {
         className="border-border/50 flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center"
         style={{ backgroundColor: 'rgba(6, 28, 55)' }}
       >
-        <div className="bg-muted/50 mb-4 flex h-16 w-16 items-center justify-center rounded-full text-black">
-          <MessagesSquare className="h-8 w-8" />
+        <div className="bg-muted/50 mb-4 flex size-16 items-center justify-center rounded-full text-black">
+          <MessagesSquare className="size-8" />
         </div>
         <h3 className="mb-2 text-lg font-semibold text-slate-100">
           No hay foro disponible
@@ -513,8 +513,8 @@ export function CourseForum({ courseId }: CourseForumProps) {
     <div className="space-y-6">
       <div>
         <h3 className="text-foreground text-xl font-semibold">
-          <span className="mr-2 inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]">
-            <MdOutlineForum className="h-4 w-4" />
+          <span className="mr-2 inline-flex size-8 items-center justify-center rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]">
+            <MdOutlineForum className="size-4" />
           </span>
           Foro del curso
         </h3>
@@ -547,13 +547,13 @@ export function CourseForum({ courseId }: CourseForumProps) {
               alt="Vista previa"
               width={80}
               height={80}
-              className="h-20 w-20 rounded-lg border border-[#1d283a80] object-cover"
+              className="size-20 rounded-lg border border-[#1d283a80] object-cover"
               unoptimized
             />
             <button
               type="button"
               onClick={() => setSelectedImage(null)}
-              className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+              className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
             >
               ×
             </button>
@@ -563,10 +563,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
           <div className="flex items-center gap-1 text-[#94a3b8]">
             <label
               htmlFor="forum-image-input"
-              className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
+              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
               aria-label="Adjuntar imagen"
             >
-              <ImageIcon className="h-4 w-4" />
+              <ImageIcon className="size-4" />
               <input
                 id="forum-image-input"
                 type="file"
@@ -577,19 +577,19 @@ export function CourseForum({ courseId }: CourseForumProps) {
             </label>
             <button
               type="button"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
+              className="inline-flex size-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
               aria-label="Adjuntar video"
               disabled
             >
-              <Video className="h-4 w-4" />
+              <Video className="size-4" />
             </button>
             <button
               type="button"
-              className="inline-flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
+              className="inline-flex size-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
               aria-label="Adjuntar audio"
               disabled
             >
-              <Mic className="h-4 w-4" />
+              <Mic className="size-4" />
             </button>
           </div>
           <button
@@ -603,9 +603,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
             )}
           >
             {uploadingImage ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="size-4" />
             )}
             {uploadingImage
               ? 'Subiendo...'
@@ -629,7 +629,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                 className="space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4 shadow-sm"
               >
                 <div className="flex gap-3">
-                  <span className="bg-accent/20 text-accent flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold">
+                  <span className="bg-accent/20 text-accent flex size-10 items-center justify-center rounded-full text-sm font-semibold">
                     {initials(post.userId?.name)}
                   </span>
                   <div className="flex-1 space-y-2">
@@ -672,7 +672,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               className="px-3 py-1 text-xs bg-[#22C4D3] text-[#080C16] rounded-md hover:bg-[#22C4D3]/90 disabled:opacity-70 disabled:cursor-wait"
                             >
                               {savingPostId === post.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <Loader2 className="size-4 animate-spin" />
                               ) : (
                                 'Guardar'
                               )}
@@ -697,7 +697,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                   className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
                                   aria-label="Abrir menú"
                                 >
-                                  <MoreHorizontal className="h-4 w-4" />
+                                  <MoreHorizontal className="size-4" />
                                 </button>
                                 {showMenuPostId === post.id && (
                                   <div
@@ -716,7 +716,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                       }}
                                       className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
                                     >
-                                      <Pencil className="h-3 w-3" />
+                                      <Pencil className="size-3" />
                                       Editar
                                     </button>
                                     <button
@@ -727,7 +727,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                       }}
                                       className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
                                     >
-                                      <Trash2 className="h-3 w-3" />
+                                      <Trash2 className="size-3" />
                                       Eliminar
                                     </button>
                                   </div>
@@ -762,7 +762,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                       >
                         <ThumbsUp
                           className={cn(
-                            'h-4 w-4',
+                            'size-4',
                             likedPosts.has(post.id) && 'fill-current'
                           )}
                         />
@@ -782,7 +782,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                           )
                         }
                       >
-                        <Reply className="h-4 w-4" />
+                        <Reply className="size-4" />
                         Responder
                       </button>
                       <span className="ml-auto text-[#94a3b8]/80">
@@ -817,7 +817,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                           alt="Vista previa"
                           width={80}
                           height={80}
-                          className="h-20 w-20 rounded-lg border border-[#1d283a80] object-cover"
+                          className="size-20 rounded-lg border border-[#1d283a80] object-cover"
                           unoptimized
                         />
                         <button
@@ -828,7 +828,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               [post.id]: null,
                             }))
                           }
-                          className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                          className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
                         >
                           ×
                         </button>
@@ -837,10 +837,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
                     <div className="flex justify-between items-center">
                       <label
                         htmlFor={`reply-image-input-${post.id}`}
-                        className="inline-flex h-8 w-8 cursor-pointer items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white text-[#94a3b8]"
+                        className="inline-flex size-8 cursor-pointer items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white text-[#94a3b8]"
                         aria-label="Adjuntar imagen"
                       >
-                        <ImageIcon className="h-4 w-4" />
+                        <ImageIcon className="size-4" />
                         <input
                           id={`reply-image-input-${post.id}`}
                           type="file"
@@ -867,9 +867,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         )}
                       >
                         {uploadingImage ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="size-4 animate-spin" />
                         ) : (
-                          <Send className="h-4 w-4" />
+                          <Send className="size-4" />
                         )}
                         {uploadingImage
                           ? 'Subiendo...'
@@ -886,7 +886,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                     <span className="pointer-events-none absolute left-4 top-0 h-full w-px bg-[#1f2a3d]" />
                     {postReplies.map((reply) => (
                       <div key={reply.id} className="flex gap-3 pl-1">
-                        <span className="bg-accent/20 text-accent mt-1 flex h-9 w-9 items-center justify-center rounded-full text-xs font-semibold">
+                        <span className="bg-accent/20 text-accent mt-1 flex size-9 items-center justify-center rounded-full text-xs font-semibold">
                           {initials(reply.userId?.name)}
                         </span>
                         <div className="flex-1 space-y-1 border-l border-[#1f2a3d] pl-4">
@@ -931,7 +931,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                     className="px-3 py-1 text-xs bg-[#22C4D3] text-[#080C16] rounded-md hover:bg-[#22C4D3]/90 disabled:opacity-70 disabled:cursor-wait"
                                   >
                                     {savingReplyId === reply.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                      <Loader2 className="size-4 animate-spin" />
                                     ) : (
                                       'Guardar'
                                     )}
@@ -956,7 +956,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                         className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
                                         aria-label="Abrir menú"
                                       >
-                                        <MoreHorizontal className="h-4 w-4" />
+                                        <MoreHorizontal className="size-4" />
                                       </button>
                                       {showMenuReplyId === reply.id && (
                                         <div
@@ -976,7 +976,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                             }}
                                             className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
                                           >
-                                            <Pencil className="h-3 w-3" />
+                                            <Pencil className="size-3" />
                                             Editar
                                           </button>
                                           <button
@@ -987,7 +987,7 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                             }}
                                             className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
                                           >
-                                            <Trash2 className="h-3 w-3" />
+                                            <Trash2 className="size-3" />
                                             Eliminar
                                           </button>
                                         </div>

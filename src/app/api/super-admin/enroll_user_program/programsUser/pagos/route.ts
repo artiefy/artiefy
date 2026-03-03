@@ -77,7 +77,8 @@ interface JsonBody {
   index?: number | string;
   concepto?: string;
   nro_pago?: number | string;
-  fecha?: string;
+  fechaPrograma?: string;
+  fechaRealPago?: string;
   metodo?: string;
   valor?: number | string;
 }
@@ -104,7 +105,10 @@ function coerceJsonBody(u: unknown): JsonBody {
         typeof r.nro_pago === 'string' || typeof r.nro_pago === 'number'
           ? r.nro_pago
           : undefined,
-      fecha: typeof r.fecha === 'string' ? r.fecha : undefined,
+      fechaPrograma:
+        typeof r.fechaPrograma === 'string' ? r.fechaPrograma : undefined,
+      fechaRealPago:
+        typeof r.fechaRealPago === 'string' ? r.fechaRealPago : undefined,
       metodo: typeof r.metodo === 'string' ? r.metodo : undefined,
       valor:
         typeof r.valor === 'string' || typeof r.valor === 'number'
@@ -173,17 +177,6 @@ export async function GET(req: Request) {
           programId ? eq(pagos.programaId, programId) : undefined
         )
       );
-
-    console.info('[PAGOS][GET] resultados', {
-      count: pagosUsuarioPrograma.length,
-      sample: pagosUsuarioPrograma.slice(0, 5).map((p) => ({
-        nroPago: p.nroPago,
-        programaId: p.programaId ?? null,
-        valor: p.valor,
-        fecha: p.fecha,
-        receipt: Boolean(p.receiptUrl),
-      })),
-    });
 
     const planType =
       dbUser.planType && dbUser.planType !== 'none'
@@ -300,7 +293,8 @@ export async function POST(req: Request) {
       index?: number | string;
       concepto?: string;
       nro_pago?: number | string;
-      fecha?: string;
+      fechaPrograma?: string;
+      fechaRealPago?: string;
       metodo?: string;
       valor?: number | string;
     }
@@ -335,21 +329,34 @@ export async function POST(req: Request) {
     const valor = Number(body.valor ?? 0);
 
     // fecha en formato 'YYYY-MM-DD' OBLIGATORIA (schema notNull)
-    const fechaInput = typeof body.fecha === 'string' ? body.fecha : '';
-    const fecha =
-      fechaInput && !Number.isNaN(new Date(fechaInput).getTime())
-        ? new Date(fechaInput).toISOString().split('T')[0]
-        : null;
+    // const fechaInput = typeof body.fecha === 'string' ? body.fecha : '';
+    // const fecha =
+    //   fechaInput && !Number.isNaN(new Date(fechaInput).getTime())
+    //     ? new Date(fechaInput).toISOString().split('T')[0]
+    //     : null;
+    const fechaProgramaInput =
+      typeof body.fechaPrograma === 'string' ? body.fechaPrograma : '';
+    const fechaPrograma =
+      fechaProgramaInput &&
+      !Number.isNaN(new Date(fechaProgramaInput).getTime())
+        ? new Date(fechaProgramaInput).toISOString().split('T')[0]
+        : undefined;
+    const fechaRealPagoInput =
+      typeof body.fechaRealPago === 'string' ? body.fechaRealPago : '';
+    const fechaRealPago =
+      fechaRealPagoInput &&
+      !Number.isNaN(new Date(fechaRealPagoInput).getTime())
+        ? new Date(fechaRealPagoInput).toISOString().split('T')[0]
+        : undefined;
     if (!userId || !Number.isFinite(nroPago)) {
       return NextResponse.json(
         { error: 'Parámetros inválidos' },
         { status: 400 }
       );
     }
-
-    if (!fecha) {
+    if (!fechaPrograma) {
       return NextResponse.json(
-        { error: 'La fecha es obligatoria' },
+        { error: 'La fecha programada es obligatoria' },
         { status: 400 }
       );
     }
@@ -375,7 +382,8 @@ export async function POST(req: Request) {
           concepto,
           metodo,
           valor,
-          fecha, // string 'YYYY-MM-DD'
+          fechaPrograma, // string 'YYYY-MM-DD'
+          fechaRealPago, // string 'YYYY-MM-DD' o null
         })
         .where(
           and(
@@ -392,7 +400,8 @@ export async function POST(req: Request) {
         programaId: programId,
         concepto,
         nroPago,
-        fecha, // obligatorio por notNull
+        fechaPrograma, // obligatorio por notNull
+        fechaRealPago, // puede ser null
         metodo,
         valor,
       });
@@ -425,11 +434,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const firstDate = new Date(firstPayment[0].fecha); // ej: 2025-09-01
+    // Usar fechaPrograma en vez de fecha
+    const firstDate = new Date(firstPayment[0].fechaPrograma); // ej: 2025-09-01
     const cutoffDay = firstDate.getDate(); // 1
 
     // Fecha del último pago
-    const lastPaymentDate = new Date(fecha);
+    const lastPaymentDate = new Date(fechaPrograma);
 
     // Calcular fecha fin en el mes del pago
     let subscriptionEndDate = new Date(

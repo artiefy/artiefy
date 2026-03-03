@@ -596,7 +596,7 @@ export function ProgramHeader({
             className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold whitespace-nowrap text-emerald-400 ring-offset-background transition-all hover:bg-[#10b9814d] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
           >
             <FaCheck
-              className="mr-2 h-5 w-5"
+              className="mr-2 size-5"
               style={{ color: 'rgb(52 211 153)' }}
             />
             Suscrito
@@ -608,7 +608,7 @@ export function ProgramHeader({
             disabled={isUnenrolling}
             className="group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-destructive/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
           >
-            <FaTimes className="h-4 w-4 text-emerald-400 transition-colors group-hover:text-red-500" />
+            <FaTimes className="size-4 text-emerald-400 transition-colors group-hover:text-red-500" />
           </button>
         </div>
       );
@@ -649,7 +649,7 @@ export function ProgramHeader({
     >
       <div className="relative">
         <AspectRatio ratio={16 / 9}>
-          <div className="relative h-full w-full overflow-hidden">
+          <div className="relative size-full overflow-hidden">
             <Image
               src={coverImageUrl}
               alt={program.title}
@@ -673,7 +673,7 @@ export function ProgramHeader({
       </div>
       <div className="relative z-10 space-y-5 p-5">
         <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-400">
-          <Crown className="h-4 w-4" />
+          <Crown className="size-4" />
           Programa Premium
         </div>
         <div className="space-y-3">{renderEnrollmentButton()}</div>
@@ -721,7 +721,7 @@ export function ProgramHeader({
                     <span className="inline">
                       {program.title}{' '}
                       {isEnrolled && (
-                        <CheckCircleIcon className="mb-1 ml-1 inline-block h-6 w-6 flex-shrink-0 align-middle text-green-500" />
+                        <CheckCircleIcon className="mb-1 ml-1 inline-block size-6 flex-shrink-0 align-middle text-green-500" />
                       )}
                     </span>
                   </h1>
@@ -730,7 +730,7 @@ export function ProgramHeader({
                       {Array.from({ length: 5 }).map((_, index) => (
                         <StarIcon
                           key={index}
-                          className={`h-4 w-4 ${
+                          className={`size-4 ${
                             index < Math.floor(program.rating ?? 0)
                               ? 'text-amber-400'
                               : 'text-amber-400/50'
@@ -747,7 +747,7 @@ export function ProgramHeader({
                       className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
                       style={{ backgroundColor: '#1a23334d' }}
                     >
-                      <Book className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <Book className="mx-auto mb-1 size-5 text-primary" />
                       <p className="text-lg font-bold text-foreground">
                         {totalCourses}
                       </p>
@@ -757,7 +757,7 @@ export function ProgramHeader({
                       className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
                       style={{ backgroundColor: '#1a23334d' }}
                     >
-                      <Clock className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <Clock className="mx-auto mb-1 size-5 text-primary" />
                       <p className="text-lg font-bold text-foreground">
                         {totalContentLabel}
                       </p>
@@ -767,7 +767,7 @@ export function ProgramHeader({
                       className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
                       style={{ backgroundColor: '#1a23334d' }}
                     >
-                      <Users className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <Users className="mx-auto mb-1 size-5 text-primary" />
                       <p className="text-lg font-bold text-foreground">
                         {enrollmentCount}
                       </p>
@@ -779,7 +779,7 @@ export function ProgramHeader({
                       className="flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2.5 text-center"
                       style={{ backgroundColor: '#1a23334d' }}
                     >
-                      <Video className="mx-auto mb-1 h-5 w-5 text-primary" />
+                      <Video className="mx-auto mb-1 size-5 text-primary" />
                       <p className="text-lg font-bold text-foreground">
                         {liveSessionsCount}
                       </p>
@@ -792,7 +792,7 @@ export function ProgramHeader({
                   {/* Badge de tipo de certificación */}
                   {program.certificationType && (
                     <div className="flex w-fit items-center gap-2 rounded-full bg-muted/50 px-3 py-1.5">
-                      <LiaCertificateSolid className="h-4 w-4 text-muted-foreground" />
+                      <LiaCertificateSolid className="size-4 text-muted-foreground" />
                       <span className="text-xs font-medium text-foreground">
                         {program.certificationType.name}
                       </span>
@@ -824,21 +824,21 @@ export function ProgramHeader({
                     value="cursos"
                     className="flex items-center justify-center gap-2 rounded-none bg-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
                   >
-                    <Book className="h-4 w-4" />
+                    <Book className="size-4" />
                     Cursos
                   </Tabs.Trigger>
                   <Tabs.Trigger
                     value="en-vivo"
                     className="flex items-center justify-center gap-2 rounded-none bg-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
                   >
-                    <Video className="h-4 w-4" />
+                    <Video className="size-4" />
                     En Vivo
                   </Tabs.Trigger>
                   <Tabs.Trigger
                     value="certificacion"
                     className="flex items-center justify-center gap-2 rounded-none bg-transparent px-4 py-3 text-sm font-medium whitespace-nowrap text-muted-foreground ring-offset-background transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
                   >
-                    <Award className="h-4 w-4" />
+                    <Award className="size-4" />
                     Certificación
                   </Tabs.Trigger>
                 </Tabs.List>
@@ -854,7 +854,7 @@ export function ProgramHeader({
                 <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
                   <div className="mb-6 flex items-center gap-3">
                     <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
-                      <LuVideo className="h-5 w-5 text-red-400" />
+                      <LuVideo className="size-5 text-red-400" />
                     </div>
                     <div>
                       <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
@@ -867,12 +867,12 @@ export function ProgramHeader({
                   </div>
                   {isLoadingLive || isLoadingEnrollments ? (
                     <div className="flex items-center justify-center py-12">
-                      <Icons.spinner className="h-8 w-8 text-primary" />
+                      <Icons.spinner className="size-8 text-primary" />
                     </div>
                   ) : liveSessions.length === 0 ? (
                     <div className="flex items-center justify-center py-12">
                       <div className="text-center">
-                        <Video className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                        <Video className="mx-auto mb-4 size-12 text-muted-foreground" />
                         <p className="text-muted-foreground">
                           No hay clases en vivo programadas en este momento
                         </p>
@@ -923,14 +923,14 @@ export function ProgramHeader({
                           buttonDisabled = false;
                           buttonText =
                             'Inscribirse al curso para ver la clase en vivo';
-                          buttonIcon = <Book className="mr-2 h-4 w-4" />;
+                          buttonIcon = <Book className="mr-2 size-4" />;
                         } else if (isToday && isJoinEnabled) {
                           buttonBg = 'bg-red-600 text-white hover:bg-red-700';
                           buttonDisabled = false;
                           buttonText = 'Unirse Ahora';
                           buttonIcon = (
                             <LuSquareArrowOutUpRight
-                              className="mr-2 inline-block h-4 w-4"
+                              className="mr-2 inline-block size-4"
                               style={{ flexShrink: 0 }}
                             />
                           );
@@ -940,7 +940,7 @@ export function ProgramHeader({
                           buttonText = 'Próxima Clase';
                           buttonIcon = (
                             <FaClock
-                              className="mr-2 inline-block h-4 w-4"
+                              className="mr-2 inline-block size-4"
                               style={{ flexShrink: 0 }}
                             />
                           );
@@ -974,7 +974,7 @@ export function ProgramHeader({
                                       }}
                                     >
                                       <span
-                                        className="h-1.5 w-1.5 animate-pulse rounded-full"
+                                        className="size-1.5 animate-pulse rounded-full"
                                         style={{ backgroundColor: '#061c37' }}
                                       />
                                       VIVO
@@ -1003,7 +1003,7 @@ export function ProgramHeader({
                                       strokeWidth="2"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      className="h-4 w-4"
+                                      className="size-4"
                                     >
                                       <path d="M8 2v4"></path>
                                       <path d="M16 2v4"></path>
@@ -1029,7 +1029,7 @@ export function ProgramHeader({
                                       strokeWidth="2"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      className="h-4 w-4"
+                                      className="size-4"
                                     >
                                       <circle cx="12" cy="12" r="10"></circle>
                                       <polyline points="12 6 12 12 16 14"></polyline>
@@ -1106,7 +1106,7 @@ export function ProgramHeader({
                               </div>
                               <div className="flex items-center gap-3">
                                 <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                                  <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
                                   VIVO
                                 </span>
                                 <div className="text-base leading-tight font-semibold text-slate-100">
@@ -1131,7 +1131,7 @@ export function ProgramHeader({
                                     strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className="h-4 w-4"
+                                    className="size-4"
                                   >
                                     <path d="M8 2v4"></path>
                                     <path d="M16 2v4"></path>
@@ -1157,7 +1157,7 @@ export function ProgramHeader({
                                     strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className="h-4 w-4"
+                                    className="size-4"
                                   >
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <polyline points="12 6 12 12 16 14"></polyline>
@@ -1267,7 +1267,7 @@ export function ProgramHeader({
               type="button"
               aria-label="Cerrar"
             >
-              <IoCloseOutline className="h-8 w-8" />
+              <IoCloseOutline className="size-8" />
             </button>
             <div className="flex flex-col items-center gap-4">
               <Image

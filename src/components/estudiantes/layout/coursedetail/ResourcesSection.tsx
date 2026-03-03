@@ -235,8 +235,8 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
         className="border-border/50 flex flex-col items-center justify-center rounded-xl border border-dashed py-12"
         style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
       >
-        <div className="bg-muted/50 mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-          <FaFilePdf className="h-8 w-8 text-black" />
+        <div className="bg-muted/50 mb-4 flex size-16 items-center justify-center rounded-full">
+          <FaFilePdf className="size-8 text-black" />
         </div>
         <h3 className="mb-2 text-lg font-semibold text-slate-100">
           No hay recursos disponibles
@@ -264,7 +264,7 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
           }}
           disabled={isBulkDownloading}
         >
-          <FaDownload className="h-4 w-4" />
+          <FaDownload className="size-4" />
           {isBulkDownloading ? 'Preparando...' : 'Descargar todo'}
         </button>
       </div>
@@ -281,7 +281,7 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
             <div key={lesson.id} className="space-y-3">
               {/* Header de la clase */}
               <div className="flex items-center gap-3">
-                <div className="bg-accent/20 flex h-6 w-6 items-center justify-center rounded-full">
+                <div className="bg-accent/20 flex size-6 items-center justify-center rounded-full">
                   <span className="text-accent text-xs font-medium">
                     {lesson.order}
                   </span>
@@ -341,7 +341,7 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
                         e.currentTarget.style.color = '';
                       }}
                     >
-                      <FaDownload className="h-4 w-4" />
+                      <FaDownload className="size-4" />
                     </button>
                   </div>
                 ))}

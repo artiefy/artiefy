@@ -81,7 +81,7 @@ export default function MyCoursesPreview() {
   // Skeleton while loading
   if (isLoading) {
     return (
-      <section className="mb-8 overflow-visible pr-4 pl-4 sm:px-24">
+      <section className="mb-8 overflow-visible px-4 sm:px-24">
         <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
           <div className="flex items-center gap-2">
             <GrOverview className="text-xl text-white" />
@@ -120,7 +120,7 @@ export default function MyCoursesPreview() {
 
   if (error) {
     return (
-      <section className="mb-8 overflow-visible pr-4 pl-4 sm:px-24">
+      <section className="mb-8 overflow-visible px-4 sm:px-24">
         <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
           <div className="flex items-center gap-2">
             <GrOverview className="text-xl text-white" />
@@ -140,7 +140,7 @@ export default function MyCoursesPreview() {
   if (!courses || courses.length === 0) return null;
 
   return (
-    <section className="-mt-12 mb-8 overflow-visible pr-4 pl-4 sm:px-24">
+    <section className="-mt-12 mb-8 overflow-visible px-4 sm:px-24">
       <div className="flex items-center justify-between pr-4 sm:pr-0">
         <div className="flex items-center gap-2">
           <GrOverview className="text-xl text-white" />
@@ -200,7 +200,7 @@ export default function MyCoursesPreview() {
                         src={getImageUrl(course.coverImageKey)}
                         alt={course.title}
                         fill
-                        className="h-full w-full object-cover"
+                        className="size-full object-cover"
                         sizes="(max-width: 768px) 100vw, 420px"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#061C37] via-[#061C37]/60 to-transparent" />
@@ -261,7 +261,7 @@ export default function MyCoursesPreview() {
             className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
             aria-label="Anterior"
           >
-            <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+            <div className="carousel-mobile-arrow flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
               <IoIosArrowBack className="text-2xl text-white" />
             </div>
           </button>
@@ -271,7 +271,7 @@ export default function MyCoursesPreview() {
           className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
           aria-label="Siguiente"
         >
-          <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+          <div className="carousel-mobile-arrow flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
             <IoIosArrowForward className="text-2xl text-white" />
           </div>
         </button>

@@ -288,7 +288,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       <div className="mb-8 flex flex-col gap-4 rounded-lg border border-gray-300 bg-gray-50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <SortAsc className="h-5 w-5 text-blue-600" />
+            <SortAsc className="size-5 text-blue-600" />
             <h3 className="text-lg font-semibold text-background">
               Modo Reordenar Clases
             </h3>
@@ -343,9 +343,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                               {...provided.dragHandleProps}
                               className="cursor-grab p-1 active:cursor-grabbing"
                             >
-                              <GripVertical className="h-5 w-5 text-gray-400" />
+                              <GripVertical className="size-5 text-gray-400" />
                             </div>
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-800">
+                            <div className="flex size-8 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-800">
                               {lesson.orderIndex || index + 1}
                             </div>
                             <div className="flex-1 font-medium text-background">
@@ -433,13 +433,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                       <Image
                                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverImageKey}`}
                                         alt={lesson.title}
-                                        className="h-full w-full rounded-l-lg object-cover transition-transform duration-300 hover:scale-105"
+                                        className="size-full rounded-l-lg object-cover transition-transform duration-300 hover:scale-105"
                                         width={400}
                                         height={300}
                                         quality={75}
                                       />
                                       <div className="absolute top-2 left-2">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-xs font-bold text-white shadow-xl ring-2 ring-white/50">
+                                        <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-xs font-bold text-white shadow-xl ring-2 ring-white/50">
                                           {lesson.orderIndex}
                                         </div>
                                       </div>
@@ -459,7 +459,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                           className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:from-yellow-600 hover:to-orange-600 hover:shadow-lg active:scale-95"
                                         >
                                           <span>Ver clase</span>
-                                          <ArrowRightIcon className="h-4 w-4 transition-transform group-hover/button:translate-x-1" />
+                                          <ArrowRightIcon className="size-4 transition-transform group-hover/button:translate-x-1" />
                                         </Link>
                                       </Button>
                                     </div>
@@ -519,7 +519,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                         <Image
                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverImageKey}`}
                           alt={lesson.title}
-                          className="h-full w-full rounded-l-lg object-cover transition-transform duration-300 hover:scale-105"
+                          className="size-full rounded-l-lg object-cover transition-transform duration-300 hover:scale-105"
                           width={400}
                           height={300}
                           quality={75}
@@ -540,7 +540,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                             className="group/button relative inline-flex items-center justify-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-yellow-500 to-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:from-yellow-600 hover:to-orange-600 hover:shadow-lg active:scale-95"
                           >
                             <span>Ver clase</span>
-                            <ArrowRightIcon className="h-4 w-4 transition-transform group-hover/button:translate-x-1" />
+                            <ArrowRightIcon className="size-4 transition-transform group-hover/button:translate-x-1" />
                           </Link>
                         </Button>
                       </div>

@@ -42,7 +42,7 @@ const LessonNavigation = ({
         onClick={() => onNavigate('prev')}
         disabled={!hasPreviousLesson || isNavigating}
         style={{ backgroundColor: '#061c37cc' }}
-        className={`inline-flex h-8 w-8 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap text-slate-200 transition-colors hover:bg-[#1d283a] hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
+        className={`inline-flex size-8 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap text-slate-200 transition-colors hover:bg-[#1d283a] hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
           isNavigating ? 'opacity-50' : ''
         }`}
         aria-label="Clase anterior"
@@ -67,7 +67,7 @@ const LessonNavigation = ({
         onClick={() => onNavigate('next')}
         disabled={!hasNextLesson || isNavigating}
         style={{ backgroundColor: '#061c37cc' }}
-        className={`inline-flex h-8 w-8 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap text-slate-200 transition-colors hover:bg-[#1d283a] hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
+        className={`inline-flex size-8 items-center justify-center gap-2 rounded-full text-sm font-medium whitespace-nowrap text-slate-200 transition-colors hover:bg-[#1d283a] hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
           isNavigating ? 'opacity-50' : ''
         }`}
         aria-label="Siguiente clase"
@@ -82,7 +82,7 @@ const LessonNavigation = ({
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="h-4 w-4"
+          className="size-4"
         >
           <path d="m9 18 6-6-6-6" />
         </svg>

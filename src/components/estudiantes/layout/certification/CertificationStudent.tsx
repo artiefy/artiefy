@@ -205,7 +205,7 @@ export function CertificationStudent({
                       <p className="text-sm text-gray-600">Verificado en:</p>
                       <Link
                         href={certificateUrl}
-                        className="inline-block max-w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap text-blue-500 hover:underline"
+                        className="inline-block max-w-full truncate text-sm text-blue-500 hover:underline"
                       >
                         {certificateUrl}
                       </Link>

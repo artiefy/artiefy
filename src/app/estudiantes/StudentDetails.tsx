@@ -551,7 +551,7 @@ export default function StudentDetails({
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                     activeFilter === 'todos'
                       ? 'bg-foreground text-background'
-                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
+                      : 'border border-foreground/30 bg-transparent text-[#94A3B8] hover:border-foreground hover:text-foreground'
                   }`}
                   disabled={isNavigating && pendingFilter === 'todos'}
                 >
@@ -570,7 +570,7 @@ export default function StudentDetails({
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                     activeFilter === 'cursos'
                       ? 'bg-foreground text-background'
-                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
+                      : 'border border-foreground/30 bg-transparent text-[#94A3B8] hover:border-foreground hover:text-foreground'
                   }`}
                   disabled={isNavigating && pendingFilter === 'cursos'}
                 >
@@ -589,7 +589,7 @@ export default function StudentDetails({
                   className={`rounded-full px-3 py-1.5 text-xs font-medium transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
                     activeFilter === 'programas'
                       ? 'bg-foreground text-background'
-                      : 'border border-foreground/30 bg-transparent font-medium text-[#94A3B8] hover:border-foreground hover:text-foreground'
+                      : 'border border-foreground/30 bg-transparent text-[#94A3B8] hover:border-foreground hover:text-foreground'
                   }`}
                   disabled={isNavigating && pendingFilter === 'programas'}
                 >
@@ -803,14 +803,14 @@ export default function StudentDetails({
                                   src={getImageUrl(course.coverImageKey)}
                                   alt={course.title}
                                   fill
-                                  className="h-full w-full rounded-2xl object-cover transition-transform duration-300 group-hover/card:scale-105"
+                                  className="size-full rounded-2xl object-cover transition-transform duration-300 group-hover/card:scale-105"
                                   sizes="(max-width: 768px) 100vw, 420px"
                                   quality={85}
                                   placeholder="blur"
                                   blurDataURL={blurDataURL}
                                 />
                                 {/* Number badge top-left */}
-                                <div className="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary">
+                                <div className="absolute top-3 left-3 flex size-8 items-center justify-center rounded-full bg-primary">
                                   <span className="text-xs font-bold text-black">
                                     {idx + 1}
                                   </span>
@@ -869,7 +869,7 @@ export default function StudentDetails({
                         className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
                         aria-label="Anterior"
                       >
-                        <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                        <div className="carousel-mobile-arrow flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                           <IoIosArrowBack className="text-2xl text-white" />
                         </div>
                       </button>
@@ -879,7 +879,7 @@ export default function StudentDetails({
                       className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
                       aria-label="Siguiente"
                     >
-                      <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                      <div className="carousel-mobile-arrow flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                         <IoIosArrowForward className="text-2xl text-white" />
                       </div>
                     </button>
@@ -923,7 +923,7 @@ export default function StudentDetails({
                         if (hasPurchasable) {
                           return (
                             <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-                              <FaStar className="h-3 w-3" />${' '}
+                              <FaStar className="size-3" />${' '}
                               {course.individualPrice
                                 ? course.individualPrice.toLocaleString('es-CO')
                                 : 'Comprar'}
@@ -933,7 +933,7 @@ export default function StudentDetails({
                         if (hasPremium) {
                           return (
                             <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-                              <FaCrown className="h-3 w-3" />
+                              <FaCrown className="size-3" />
                               Premium
                             </div>
                           );
@@ -941,7 +941,7 @@ export default function StudentDetails({
                         if (hasPro) {
                           return (
                             <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-                              <FaStar className="h-3 w-3" />
+                              <FaStar className="size-3" />
                               Pro
                             </div>
                           );
@@ -949,7 +949,7 @@ export default function StudentDetails({
                         if (hasFree) {
                           return (
                             <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                              <IoGiftOutline className="h-3 w-3" />
+                              <IoGiftOutline className="size-3" />
                               Gratuito
                             </div>
                           );
@@ -969,7 +969,7 @@ export default function StudentDetails({
                             <Card className="artiefy-course-card zoom-in relative flex h-full flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 text-foreground shadow-md transition-all duration-300 hover:-translate-y-1 hover:cursor-pointer hover:border-primary hover:shadow-xl">
                               <div className="relative -mx-4 -mt-4 overflow-hidden">
                                 <AspectRatio ratio={16 / 9}>
-                                  <div className="relative h-full w-full">
+                                  <div className="relative size-full">
                                     <Image
                                       src={imageUrl}
                                       alt={course.title || 'Imagen del curso'}
@@ -1048,7 +1048,7 @@ export default function StudentDetails({
                             <Card className="artiefy-course-card zoom-in relative flex h-full cursor-not-allowed flex-col gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4 text-foreground shadow-md transition-all duration-300">
                               <div className="relative -mx-4 -mt-4 overflow-hidden">
                                 <AspectRatio ratio={16 / 9}>
-                                  <div className="relative h-full w-full">
+                                  <div className="relative size-full">
                                     <Image
                                       src={imageUrl}
                                       alt={course.title || 'Imagen del curso'}
@@ -1130,7 +1130,7 @@ export default function StudentDetails({
                             className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
                             aria-label="Anterior"
                           >
-                            <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                            <div className="carousel-mobile-arrow flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                               <IoIosArrowBack className="text-2xl text-white" />
                             </div>
                           </button>
@@ -1140,7 +1140,7 @@ export default function StudentDetails({
                           className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
                           aria-label="Siguiente"
                         >
-                          <div className="carousel-mobile-arrow flex h-10 w-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+                          <div className="carousel-mobile-arrow flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
                             <IoIosArrowForward className="text-2xl text-white" />
                           </div>
                         </button>

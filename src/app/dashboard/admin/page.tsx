@@ -427,7 +427,7 @@ export default function AdminDashboard() {
                       <td className="px-2 py-3 sm:px-4 sm:py-4">
                         <div className="flex items-center gap-2 sm:gap-3">
                           <div className="bg-primary/10 size-8 rounded-full p-1 sm:size-10 sm:p-2">
-                            <span className="text-primary flex h-full w-full items-center justify-center text-xs font-semibold sm:text-sm">
+                            <span className="text-primary flex size-full items-center justify-center text-xs font-semibold sm:text-sm">
                               {user.firstName[0]}
                               {user.lastName[0]}
                             </span>

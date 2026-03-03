@@ -147,11 +147,11 @@ export default function EditUserModal({
         </div>
 
         {/* Contenido scrolleable */}
-        <div className="h-full overflow-y-auto px-6 pt-24 pb-24">
+        <div className="h-full overflow-y-auto px-6 py-24">
           <div className="grid gap-8 md:grid-cols-[250px_1fr]">
             {/* Sidebar - Profile Image & Quick Info */}
             <div className="space-y-6">
-              <div className="relative mx-auto h-48 w-48 overflow-hidden rounded-xl border-2 border-[#3AF4EF] shadow-lg">
+              <div className="relative mx-auto size-48 overflow-hidden rounded-xl border-2 border-[#3AF4EF] shadow-lg">
                 {/* Priorizar profileImageKey de la BD si existe y el usuario es educador */}
                 {editedUser.role === 'educador' &&
                 editedUser.profileImageKey ? (
@@ -171,7 +171,7 @@ export default function EditUserModal({
                     unoptimized
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#012A5C] to-[#01142B] text-4xl font-bold text-white">
+                  <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#012A5C] to-[#01142B] text-4xl font-bold text-white">
                     {editedUser.firstName[0]}
                   </div>
                 )}
@@ -416,13 +416,13 @@ export default function EditUserModal({
                         >
                           {uploadingImage ? (
                             <>
-                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[#3AF4EF] border-t-transparent" />
+                              <span className="size-4 animate-spin rounded-full border-2 border-[#3AF4EF] border-t-transparent" />
                               Subiendo...
                             </>
                           ) : (
                             <>
                               <svg
-                                className="h-4 w-4"
+                                className="size-4"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"

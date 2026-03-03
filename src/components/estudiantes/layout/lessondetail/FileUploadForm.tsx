@@ -74,13 +74,13 @@ export function FileUploadForm({
 
         <div className="upload-container">
           <div className="upload-header">
-            <Upload className="h-16 w-16 text-blue-500" />
+            <Upload className="size-16 text-blue-500" />
             <p>Arrastra y suelta tu archivo aquí</p>
             <p className="text-sm text-gray-500">o</p>
           </div>
 
           <label htmlFor="file-upload" className="upload-footer">
-            <FileUp className="mr-2 h-5 w-5" />
+            <FileUp className="mr-2 size-5" />
             <p>{file ? file.name : 'Seleccionar archivo'}</p>
           </label>
 
@@ -99,7 +99,7 @@ export function FileUploadForm({
           >
             {isUploading ? (
               <>
-                <Icons.spinner className="mr-2 h-4 w-4" />
+                <Icons.spinner className="mr-2 size-4" />
                 Subiendo...
               </>
             ) : (

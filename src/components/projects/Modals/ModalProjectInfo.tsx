@@ -647,11 +647,11 @@ export default function ProjectInfoModal({
                       <Button
                         variant="secondary"
                         size="icon"
-                        className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                        className="size-8 border-0 bg-black/50 text-white hover:bg-black/70 md:size-10"
                         onClick={() => handleFullscreen(true)}
                         title="Ver en pantalla completa"
                       >
-                        <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                        <Maximize className="size-4 md:size-5" />
                       </Button>
                     </div>
                   </>
@@ -702,11 +702,11 @@ export default function ProjectInfoModal({
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-8 w-8 border-0 bg-black/50 text-white hover:bg-black/70 md:h-10 md:w-10"
+                      className="size-8 border-0 bg-black/50 text-white hover:bg-black/70 md:size-10"
                       onClick={() => handleFullscreen(true)}
                       title="Ver en pantalla completa"
                     >
-                      <Maximize className="h-4 w-4 md:h-5 md:w-5" />
+                      <Maximize className="size-4 md:size-5" />
                     </Button>
                   </div>
                 </>
@@ -765,7 +765,7 @@ export default function ProjectInfoModal({
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="min-w-0 space-y-4">
                     <div className="flex items-center gap-3 text-slate-300">
-                      <Users className="h-5 w-5 flex-shrink-0 text-cyan-400" />
+                      <Users className="size-5 flex-shrink-0 text-cyan-400" />
                       <Button
                         type="button"
                         variant="outline"
@@ -776,7 +776,7 @@ export default function ProjectInfoModal({
                       </Button>
                     </div>
                     <div className="flex items-center gap-3 text-slate-300">
-                      <Calendar className="h-5 w-5 flex-shrink-0 text-cyan-400" />
+                      <Calendar className="size-5 flex-shrink-0 text-cyan-400" />
                       <span className="text-sm break-words">
                         Fecha de creación:{' '}
                         {typeof project.createdAt === 'string'
@@ -822,7 +822,7 @@ export default function ProjectInfoModal({
               <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
                 <CardHeader>
                   <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
-                    <div className="h-2 w-2 flex-shrink-0 rounded-full bg-cyan-400" />
+                    <div className="size-2 flex-shrink-0 rounded-full bg-cyan-400" />
                     Planteamiento
                   </h2>
                 </CardHeader>
@@ -838,7 +838,7 @@ export default function ProjectInfoModal({
               <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
                 <CardHeader>
                   <h2 className="flex items-center gap-2 text-xl font-semibold text-white">
-                    <div className="h-2 w-2 flex-shrink-0 rounded-full bg-green-400" />
+                    <div className="size-2 flex-shrink-0 rounded-full bg-green-400" />
                     Objetivo
                   </h2>
                 </CardHeader>
@@ -870,7 +870,7 @@ export default function ProjectInfoModal({
                   onClick={handleVerProyecto}
                 >
                   <span className="flex w-full items-center justify-center text-lg font-semibold">
-                    <Eye className="mr-2 h-5 w-5" />
+                    <Eye className="mr-2 size-5" />
                     Ver Proyecto
                   </span>
                 </Button>
@@ -881,7 +881,7 @@ export default function ProjectInfoModal({
                     onClick={handleVerProyecto}
                   >
                     <span className="flex w-full items-center justify-center text-lg font-semibold">
-                      <Eye className="mr-2 h-5 w-5" />
+                      <Eye className="mr-2 size-5" />
                       Ver Proyecto
                     </span>
                   </Button>

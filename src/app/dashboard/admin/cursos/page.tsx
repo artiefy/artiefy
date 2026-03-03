@@ -502,7 +502,7 @@ export default function Page() {
         <div className="col-span-1">
           <button
             onClick={handleCreateCourse}
-            className="group/button relative inline-flex h-full w-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+            className="group/button relative inline-flex size-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">Crear Curso</span>
             <FiPlus className="relative z-10 size-3.5 sm:size-4" />

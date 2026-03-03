@@ -211,7 +211,7 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
             onClick={onClose}
             className="text-gray-400 transition-colors hover:text-white"
           >
-            <X className="h-5 w-5" />
+            <X className="size-5" />
           </button>
         </div>
 
@@ -234,12 +234,12 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                   Buscando...
                 </>
               ) : (
                 <>
-                  <Search className="h-4 w-4" />
+                  <Search className="size-4" />
                   Buscar
                 </>
               )}
@@ -248,10 +248,10 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
         </div>
 
         {/* Results */}
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="flex-1 overflow-y-auto p-6">
           {error && (
             <div className="flex gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4">
-              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-400" />
+              <AlertCircle className="mt-0.5 size-5 flex-shrink-0 text-red-400" />
               <div>
                 <p className="font-semibold text-red-400">Error</p>
                 <p className="text-sm text-red-300">{error}</p>
@@ -261,7 +261,7 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
 
           {!hasSearched && !error && (
             <div className="py-12 text-center">
-              <Search className="mx-auto mb-4 h-12 w-12 text-cyan-500/30" />
+              <Search className="mx-auto mb-4 size-12 text-cyan-500/30" />
               <p className="text-gray-400">
                 Escribe una pregunta para buscar información en el curso
               </p>
@@ -331,7 +331,7 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
 
           {hasSearched && !isLoading && !aiResponse && !error && (
             <div className="py-12 text-center">
-              <AlertCircle className="mx-auto mb-4 h-12 w-12 text-yellow-500/30" />
+              <AlertCircle className="mx-auto mb-4 size-12 text-yellow-500/30" />
               <p className="text-gray-400">
                 No se encontró información sobre &quot;{query}&quot;
               </p>
@@ -343,7 +343,7 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
 
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="mb-4 h-8 w-8 animate-spin text-cyan-500" />
+              <Loader2 className="mb-4 size-8 animate-spin text-cyan-500" />
               <p className="text-gray-400">Buscando información...</p>
               <p className="mt-2 text-xs text-gray-500">
                 Procesando con IA para generar una respuesta clara

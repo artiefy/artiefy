@@ -350,7 +350,7 @@ export default function LessonComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star h-5 w-5 transition-all duration-300 ${
+                    className={`lucide lucide-star size-5 transition-all duration-300 ${
                       1 <= rating
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'text-[#94a3b8]/40'
@@ -381,7 +381,7 @@ export default function LessonComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star h-5 w-5 transition-all duration-300 ${
+                    className={`lucide lucide-star size-5 transition-all duration-300 ${
                       2 <= rating
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'text-[#94a3b8]/40'
@@ -412,7 +412,7 @@ export default function LessonComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star h-5 w-5 transition-all duration-300 ${
+                    className={`lucide lucide-star size-5 transition-all duration-300 ${
                       3 <= rating
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'text-[#94a3b8]/40'
@@ -443,7 +443,7 @@ export default function LessonComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star h-5 w-5 transition-all duration-300 ${
+                    className={`lucide lucide-star size-5 transition-all duration-300 ${
                       4 <= rating
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'text-[#94a3b8]/40'
@@ -474,7 +474,7 @@ export default function LessonComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star h-5 w-5 transition-all duration-300 ${
+                    className={`lucide lucide-star size-5 transition-all duration-300 ${
                       5 <= rating
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'text-[#94a3b8]/40'
@@ -512,25 +512,25 @@ export default function LessonComments({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-slate-400 hover:text-slate-100"
+                className="size-8 text-slate-400 hover:text-slate-100"
               >
-                <Icons.image className="h-4 w-4" />
+                <Icons.image className="size-4" />
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-slate-400 hover:text-slate-100"
+                className="size-8 text-slate-400 hover:text-slate-100"
               >
-                <Icons.video className="h-4 w-4" />
+                <Icons.video className="size-4" />
               </Button>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-slate-400 hover:text-slate-100"
+                className="size-8 text-slate-400 hover:text-slate-100"
               >
-                <Icons.mic className="h-4 w-4" />
+                <Icons.mic className="size-4" />
               </Button>
             </div>
 
@@ -542,7 +542,7 @@ export default function LessonComments({
                 style={{ backgroundColor: '#22c4d3' }}
               >
                 {isSubmitting ? (
-                  <Icons.spinner className="h-4 w-4" />
+                  <Icons.spinner className="size-4" />
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -554,7 +554,7 @@ export default function LessonComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="lucide lucide-send h-4 w-4"
+                    className="lucide lucide-send size-4"
                   >
                     <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 1-.635-.635l-19 6.5a.5.5 0 0 1-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
                     <path d="m21.854 2.147-10.94 10.939" />
@@ -568,7 +568,7 @@ export default function LessonComments({
                   variant="ghost"
                   onClick={handleCancelEdit}
                 >
-                  <XMarkIcon className="h-4 w-4" />
+                  <XMarkIcon className="size-4" />
                   Cancelar
                 </Button>
               )}
@@ -592,8 +592,8 @@ export default function LessonComments({
             >
               <div className="flex gap-3">
                 {/* Avatar */}
-                <div className="relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full">
-                  <span className="flex h-full w-full items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
+                <div className="relative flex size-10 shrink-0 overflow-hidden rounded-full">
+                  <span className="flex size-full items-center justify-center rounded-full bg-accent/20 text-sm font-semibold text-accent">
                     {comment.userName
                       .split(' ')
                       .map((n) => n[0])
@@ -616,7 +616,7 @@ export default function LessonComments({
                       {[1, 2, 3, 4, 5].map((star) => (
                         <StarIcon
                           key={star}
-                          className={`h-4 w-4 ${
+                          className={`size-4 ${
                             star <= comment.rating
                               ? 'fill-yellow-400 text-yellow-400'
                               : 'text-[#94a3b8]'
@@ -648,7 +648,7 @@ export default function LessonComments({
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className="lucide lucide-ellipsis h-4 w-4"
+                            className="lucide lucide-ellipsis size-4"
                           >
                             <circle cx="12" cy="12" r="1"></circle>
                             <circle cx="19" cy="12" r="1"></circle>
@@ -669,7 +669,7 @@ export default function LessonComments({
                               onClick={() => handleEditFromMenu(comment)}
                               className="flex w-full items-center gap-2 rounded-t-lg px-4 py-2 text-left text-sm text-slate-300 transition-colors hover:bg-slate-700/20 hover:text-slate-100"
                             >
-                              <PencilIcon className="h-4 w-4" />
+                              <PencilIcon className="size-4" />
                               Editar
                             </button>
                             <button
@@ -678,9 +678,9 @@ export default function LessonComments({
                               className="flex w-full items-center gap-2 rounded-b-lg px-4 py-2 text-left text-sm text-slate-300 transition-colors hover:bg-slate-700/20 hover:text-red-400"
                             >
                               {deletingComment === comment.id ? (
-                                <Icons.spinner className="h-4 w-4" />
+                                <Icons.spinner className="size-4" />
                               ) : (
-                                <TrashIcon className="h-4 w-4" />
+                                <TrashIcon className="size-4" />
                               )}
                               Eliminar
                             </button>
@@ -702,10 +702,10 @@ export default function LessonComments({
                       }`}
                     >
                       {likingComment === comment.id ? (
-                        <Icons.spinner className="h-4 w-4" />
+                        <Icons.spinner className="size-4" />
                       ) : (
                         <HandThumbUpIcon
-                          className={`h-4 w-4 ${comment.hasLiked ? 'fill-current' : ''}`}
+                          className={`size-4 ${comment.hasLiked ? 'fill-current' : ''}`}
                         />
                       )}
                       {comment.likes}
@@ -715,7 +715,7 @@ export default function LessonComments({
                       onClick={() => setReplyingTo(comment.id)}
                       className="flex items-center gap-1.5 text-xs text-slate-400 transition-colors hover:text-slate-100"
                     >
-                      <Icons.reply className="h-4 w-4" />
+                      <Icons.reply className="size-4" />
                       Responder
                     </button>
 
@@ -734,7 +734,7 @@ export default function LessonComments({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className={`lucide h-4 w-4 transition-transform ${showReplies[comment.id] ? 'rotate-180' : ''}`}
+                          className={`lucide size-4 transition-transform ${showReplies[comment.id] ? 'rotate-180' : ''}`}
                         >
                           <path d="m18 15-6-6-6 6" />
                         </svg>
@@ -763,7 +763,7 @@ export default function LessonComments({
                           className="inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-sm font-medium whitespace-nowrap text-[#080c16] ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50"
                           style={{ backgroundColor: '#22c4d3' }}
                         >
-                          <Icons.send className="h-3 w-3" />
+                          <Icons.send className="size-3" />
                           Enviar
                         </button>
                         <button
@@ -787,8 +787,8 @@ export default function LessonComments({
                         <div className="space-y-3 border-l-2 border-slate-700 pl-4">
                           {replies[comment.id].map((reply) => (
                             <div key={reply.id} className="flex gap-2">
-                              <div className="relative flex h-8 w-8 shrink-0 overflow-hidden rounded-full">
-                                <span className="flex h-full w-full items-center justify-center rounded-full bg-accent/20 text-xs font-semibold text-accent">
+                              <div className="relative flex size-8 shrink-0 overflow-hidden rounded-full">
+                                <span className="flex size-full items-center justify-center rounded-full bg-accent/20 text-xs font-semibold text-accent">
                                   {reply.userName
                                     .split(' ')
                                     .map((n) => n[0])
@@ -833,7 +833,7 @@ export default function LessonComments({
                                           strokeWidth="2"
                                           strokeLinecap="round"
                                           strokeLinejoin="round"
-                                          className="lucide lucide-ellipsis h-4 w-4"
+                                          className="lucide lucide-ellipsis size-4"
                                         >
                                           <circle
                                             cx="12"
@@ -871,9 +871,9 @@ export default function LessonComments({
                                             className="flex w-full items-center gap-2 rounded-lg px-4 py-2 text-left text-sm text-slate-300 transition-colors hover:bg-slate-700/20 hover:text-red-400"
                                           >
                                             {deletingReply === reply.id ? (
-                                              <Icons.spinner className="h-4 w-4" />
+                                              <Icons.spinner className="size-4" />
                                             ) : (
-                                              <TrashIcon className="h-4 w-4" />
+                                              <TrashIcon className="size-4" />
                                             )}
                                             Eliminar
                                           </button>
@@ -896,7 +896,7 @@ export default function LessonComments({
 
         {loading && (
           <div className="flex items-center justify-center gap-2 p-8">
-            <Icons.spinner className="h-5 w-5 text-slate-400" />
+            <Icons.spinner className="size-5 text-slate-400" />
             <span className="text-sm text-slate-300">
               Cargando comentarios...
             </span>

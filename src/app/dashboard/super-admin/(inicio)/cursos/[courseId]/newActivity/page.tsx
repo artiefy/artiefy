@@ -346,45 +346,48 @@ const Page: React.FC = () => {
     };
     void fetchCourse();
   }, [user, courseIdNumber]);
+  // Solo aplicar porcentaje sugerido al montar si viene en la URL y el parámetro coincide
   useEffect(() => {
     if (!isEditing && searchParams) {
       const parametroIdFromUrl = searchParams.get('parametroId');
-      if (parametroIdFromUrl) {
+      const porcentajeSugeridoFromUrl = searchParams.get('porcentajeSugerido');
+      if (parametroIdFromUrl && porcentajeSugeridoFromUrl) {
         const idNumber = parseInt(parametroIdFromUrl, 10);
-        console.log('🚀 Nueva actividad con parametroId desde URL:', idNumber);
-
+        const porcentajeSugerido = parseFloat(porcentajeSugeridoFromUrl);
         setIsActive(true);
         setShowLongevidadForm(true);
-
         setFormData((prev) => ({
           ...prev,
           revisada: true,
           parametro: idNumber,
+          porcentaje: porcentajeSugerido,
         }));
-
         // Fetch porcentaje disponible para ese parametro
         fetch('/api/educadores/actividades/actividadesByLesson', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ parametroId: idNumber, porcentaje: 0 }),
+          body: JSON.stringify({
+            parametroId: idNumber,
+            porcentaje: porcentajeSugerido,
+          }),
         })
           .then((res) => res.json())
-          .then((data: { totalActual: number; disponible: number }) => {
-            console.log('📊 % disponible para parametro:', data);
+          .then((data) => {
             setPorcentajeDisponible(data.disponible);
             toast('Porcentaje disponible', {
               description: `Ya usado: ${data.totalActual}%, Disponible: ${data.disponible}%`,
             });
           })
-          .catch((err) => {
-            console.error('❌ Error al obtener %:', err);
+          .catch(() => {
             toast('Error', {
               description: 'No se pudo obtener el porcentaje disponible',
             });
           });
       }
     }
-  }, [isEditing, searchParams]);
+    // Solo ejecutar una vez al montar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Función para manejar el cambio de color y guardarlo
   const handleToggle = () => {
@@ -489,19 +492,60 @@ const Page: React.FC = () => {
   };
 
   const handleParametroChange = async (parametroId: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      parametro: parametroId,
-      porcentaje: 0,
-    }));
+    // Solo modificar el porcentaje si el parámetro es diferente al de la URL o no hay sugerido
+    const searchParamsLocal =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search)
+        : null;
+    const parametroIdFromUrl = searchParamsLocal?.get('parametroId');
+    const porcentajeSugeridoFromUrl =
+      searchParamsLocal?.get('porcentajeSugerido');
+    const parametroIdUrlNum = parametroIdFromUrl
+      ? parseInt(parametroIdFromUrl, 10)
+      : null;
+    const porcentajeSugeridoNum = porcentajeSugeridoFromUrl
+      ? parseFloat(porcentajeSugeridoFromUrl)
+      : null;
+
+    setFormData((prev) => {
+      // Si el parámetro coincide con el de la URL y ya hay porcentaje en formData, NO sobrescribir
+      if (
+        parametroIdUrlNum === parametroId &&
+        porcentajeSugeridoNum !== null &&
+        prev.porcentaje === porcentajeSugeridoNum
+      ) {
+        return {
+          ...prev,
+          parametro: parametroId,
+        };
+      }
+      // Si el parámetro coincide pero el porcentaje no está, lo ponemos
+      if (parametroIdUrlNum === parametroId && porcentajeSugeridoNum !== null) {
+        return {
+          ...prev,
+          parametro: parametroId,
+          porcentaje: porcentajeSugeridoNum,
+        };
+      }
+      // Si es otro parámetro, poner porcentaje en 0
+      return {
+        ...prev,
+        parametro: parametroId,
+        porcentaje: 0,
+      };
+    });
 
     // Fetch de porcentaje disponible
+    const porcentajeParaFetch =
+      parametroIdUrlNum === parametroId && porcentajeSugeridoNum !== null
+        ? porcentajeSugeridoNum
+        : 0;
     const response = await fetch(
       '/api/educadores/actividades/actividadesByLesson',
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parametroId, porcentaje: 0 }),
+        body: JSON.stringify({ parametroId, porcentaje: porcentajeParaFetch }),
       }
     );
 
@@ -514,7 +558,6 @@ const Page: React.FC = () => {
 
     setPorcentajeDisponible(data.disponible);
 
-    // Opcional: Toast informativo
     toast('Porcentaje disponible', {
       description: `Ya usado: ${data.totalActual}%, Disponible: ${data.disponible}%`,
     });
@@ -859,6 +902,8 @@ const Page: React.FC = () => {
                             onChange={(e) =>
                               handlePorcentajeChange(e.target.value)
                             }
+                            // El campo siempre es editable para permitir redondeo manual
+                            disabled={false}
                           />
 
                           {porcentajeDisponible !== null && (

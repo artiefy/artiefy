@@ -484,7 +484,7 @@ export function CourseContent({
                     className="mb-4 line-clamp-3 max-w-full break-words whitespace-pre-wrap text-gray-300"
                     style={{ overflowWrap: 'anywhere' }}
                   >
-                    <IoPlayCircleOutline className="-mt-1 mr-2 inline h-4 w-4 text-white" />
+                    <IoPlayCircleOutline className="-mt-1 mr-2 inline size-4 text-white" />
                     {lesson.description ??
                       'No hay descripción disponible para esta clase.'}
                   </p>
@@ -541,7 +541,7 @@ export function CourseContent({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="lucide lucide-navigation h-4 w-4 -rotate-[25deg] transition-all duration-300 group-hover:translate-x-2 group-hover:-translate-y-4 group-hover:opacity-0 group-active:animate-[rocket-launch_0.4s_ease-out]"
+                      className="lucide lucide-navigation size-4 -rotate-[25deg] transition-all duration-300 group-hover:translate-x-2 group-hover:-translate-y-4 group-hover:opacity-0 group-active:animate-[rocket-launch_0.4s_ease-out]"
                     >
                       <polygon points="3 11 22 2 13 21 11 13 3 11" />
                     </svg>
@@ -555,7 +555,7 @@ export function CourseContent({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="lucide lucide-navigation absolute inset-0 h-4 w-4 -translate-x-2 translate-y-4 -rotate-[25deg] opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100"
+                      className="lucide lucide-navigation absolute inset-0 size-4 -translate-x-2 translate-y-4 -rotate-[25deg] opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100"
                     >
                       <polygon points="3 11 22 2 13 21 11 13 3 11" />
                     </svg>
@@ -885,7 +885,7 @@ export function CourseContent({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                      <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
                       EN VIVO
                     </span>
                     <span className="text-base font-semibold text-slate-100 sm:text-lg">
@@ -928,7 +928,7 @@ export function CourseContent({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="h-4 w-4"
+                          className="size-4"
                         >
                           <path d="M8 2v4"></path>
                           <path d="M16 2v4"></path>
@@ -955,7 +955,7 @@ export function CourseContent({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className="h-4 w-4"
+                          className="size-4"
                         >
                           <circle cx="12" cy="12" r="10"></circle>
                           <polyline points="12 6 12 12 16 14"></polyline>
@@ -996,12 +996,12 @@ export function CourseContent({
                     href="/sign-in"
                     className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 sm:w-auto"
                   >
-                    <FaLock className="h-4 w-4" />
+                    <FaLock className="size-4" />
                     Inicia sesión
                   </Link>
                 ) : (
                   <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-200">
-                    <FaLock className="h-3.5 w-3.5" />
+                    <FaLock className="size-3.5" />
                     Acceso restringido para estudiantes inscritos
                   </div>
                 )}
@@ -1020,7 +1020,7 @@ export function CourseContent({
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
-                        <LuVideo className="h-5 w-5 text-red-400" />
+                        <LuVideo className="size-5 text-red-400" />
                       </div>
                       <h2 className="text-lg font-bold text-white">
                         Clases en Vivo
@@ -1032,7 +1032,7 @@ export function CourseContent({
                   <div className="mb-2 hidden items-center sm:flex">
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
-                        <LuVideo className="h-5 w-5 text-red-400" />
+                        <LuVideo className="size-5 text-red-400" />
                       </div>
                       <h2 className="text-xl font-bold text-white">
                         Clases en Vivo
@@ -1136,7 +1136,7 @@ export function CourseContent({
                           buttonText = 'Próxima Clase';
                           buttonIcon = (
                             <FaClock
-                              className="mr-2 inline-block h-4 w-4"
+                              className="mr-2 inline-block size-4"
                               style={{ flexShrink: 0 }}
                             />
                           );
@@ -1148,7 +1148,7 @@ export function CourseContent({
                           buttonText = 'Unirse Ahora';
                           buttonIcon = (
                             <LuSquareArrowOutUpRight
-                              className="mr-2 inline-block h-4 w-4"
+                              className="mr-2 inline-block size-4"
                               style={{ flexShrink: 0 }}
                             />
                           );
@@ -1160,12 +1160,12 @@ export function CourseContent({
                           buttonBg = 'bg-gray-400 text-white';
                           buttonDisabled = true;
                           buttonText = 'Clase Finalizada';
-                          buttonIcon = <FaLock className="mr-2 h-4 w-4" />;
+                          buttonIcon = <FaLock className="mr-2 size-4" />;
                         } else if (!isAvailable && !isNext && !isToday) {
                           buttonBg = 'bg-[#01142B] text-white';
                           buttonDisabled = true;
                           buttonText = 'Clase Bloqueada';
-                          buttonIcon = <FaLock className="mr-2 h-4 w-4" />;
+                          buttonIcon = <FaLock className="mr-2 size-4" />;
                         }
 
                         return (
@@ -1194,7 +1194,7 @@ export function CourseContent({
                                       }}
                                     >
                                       <span
-                                        className="h-1.5 w-1.5 animate-pulse rounded-full"
+                                        className="size-1.5 animate-pulse rounded-full"
                                         style={{ backgroundColor: '#061c37' }}
                                       />
                                       EN VIVO
@@ -1234,7 +1234,7 @@ export function CourseContent({
                                       strokeWidth="2"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      className="h-4 w-4"
+                                      className="size-4"
                                     >
                                       <path d="M8 2v4"></path>
                                       <path d="M16 2v4"></path>
@@ -1260,7 +1260,7 @@ export function CourseContent({
                                       strokeWidth="2"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      className="h-4 w-4"
+                                      className="size-4"
                                     >
                                       <circle cx="12" cy="12" r="10"></circle>
                                       <polyline points="12 6 12 12 16 14"></polyline>
@@ -1380,7 +1380,7 @@ export function CourseContent({
                             <div className="hidden min-w-0 flex-1 flex-col gap-2 sm:flex">
                               <div className="flex items-center gap-3">
                                 <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />
+                                  <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
                                   EN VIVO
                                 </span>
                                 <div className="text-base leading-tight font-semibold text-slate-100">
@@ -1405,7 +1405,7 @@ export function CourseContent({
                                     strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className="h-4 w-4"
+                                    className="size-4"
                                   >
                                     <path d="M8 2v4"></path>
                                     <path d="M16 2v4"></path>
@@ -1431,7 +1431,7 @@ export function CourseContent({
                                     strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className="h-4 w-4"
+                                    className="size-4"
                                   >
                                     <circle cx="12" cy="12" r="10"></circle>
                                     <polyline points="12 6 12 12 16 14"></polyline>
@@ -1562,7 +1562,7 @@ export function CourseContent({
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center rounded-full bg-emerald-500/20 p-2">
-                        <IoIosSave className="h-5 w-5 text-emerald-400" />
+                        <IoIosSave className="size-5 text-emerald-400" />
                       </div>
                       <h3 className="text-lg font-bold text-white">
                         Clases Grabadas
@@ -1575,7 +1575,7 @@ export function CourseContent({
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex items-center justify-center rounded-full bg-emerald-500/20 p-2">
-                        <IoIosSave className="h-5 w-5 text-emerald-400" />
+                        <IoIosSave className="size-5 text-emerald-400" />
                       </div>
                       <h3 className="text-xl font-bold text-white">
                         Clases Grabadas
@@ -1640,7 +1640,7 @@ export function CourseContent({
                               )}
                             >
                               <div className="relative flex h-10 w-16 shrink-0 items-center justify-center rounded-lg bg-accent/20">
-                                <Play className="h-4 w-4 text-accent transition-transform group-hover:scale-110" />
+                                <Play className="size-4 text-accent transition-transform group-hover:scale-110" />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
@@ -1653,17 +1653,17 @@ export function CourseContent({
                                 </div>
                                 <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:hidden">
                                   <div className="flex items-center gap-1">
-                                    <FaCalendarAlt className="h-3.5 w-3.5" />
+                                    <FaCalendarAlt className="size-3.5" />
                                     <span>{dateLabel}</span>
                                   </div>
                                   {timeLabel && (
                                     <div className="flex items-center gap-1">
-                                      <FaClock className="h-3.5 w-3.5" />
+                                      <FaClock className="size-3.5" />
                                       <span>{timeLabel}</span>
                                     </div>
                                   )}
                                   {isCompleted ? (
-                                    <FaCheckCircle className="h-4 w-4 text-accent" />
+                                    <FaCheckCircle className="size-4 text-accent" />
                                   ) : (
                                     <span className="text-xs font-semibold text-accent">
                                       {currentProgress}%
@@ -1673,17 +1673,17 @@ export function CourseContent({
                               </div>
                               <div className="hidden shrink-0 items-center gap-3 text-muted-foreground sm:flex">
                                 <div className="flex items-center gap-1 text-xs">
-                                  <FaCalendarAlt className="h-3.5 w-3.5" />
+                                  <FaCalendarAlt className="size-3.5" />
                                   <span>{dateLabel}</span>
                                 </div>
                                 {timeLabel && (
                                   <div className="flex items-center gap-1 text-xs">
-                                    <FaClock className="h-3.5 w-3.5" />
+                                    <FaClock className="size-3.5" />
                                     <span>{timeLabel}</span>
                                   </div>
                                 )}
                                 {isCompleted ? (
-                                  <FaCheckCircle className="h-4 w-4 text-accent" />
+                                  <FaCheckCircle className="size-4 text-accent" />
                                 ) : (
                                   <span className="text-xs font-semibold text-accent">
                                     {currentProgress}%
@@ -1723,7 +1723,7 @@ export function CourseContent({
           >
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center justify-center rounded-full border border-transparent bg-blue-500/20 p-2 text-blue-300">
-                <MdVideoLibrary className="h-4 w-4" />
+                <MdVideoLibrary className="size-4" />
               </span>
               Clases del Curso
             </div>

@@ -377,7 +377,7 @@ export default function SignInPage() {
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.spinner className="text-primary h-5 w-5" />
+                        <Icons.spinner className="text-primary size-5" />
                       ) : (
                         <span className="inline-block font-bold">
                           COMIENZA YA
@@ -422,7 +422,7 @@ export default function SignInPage() {
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.spinner className="text-primary h-5 w-5" />
+                        <Icons.spinner className="text-primary size-5" />
                       ) : (
                         <span className="inline-block font-bold">
                           RESTABLECER
@@ -455,7 +455,7 @@ export default function SignInPage() {
                   >
                     <div className="flex w-full items-center justify-center">
                       {isSubmitting ? (
-                        <Icons.spinner className="text-primary h-5 w-5" />
+                        <Icons.spinner className="text-primary size-5" />
                       ) : (
                         <span className="inline-block font-bold">
                           ENVIAR CÓDIGO
@@ -477,7 +477,7 @@ export default function SignInPage() {
                   className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                 >
                   {loadingProvider === 'oauth_google' ? (
-                    <Icons.spinner className="text-primary h-10 w-10" />
+                    <Icons.spinner className="text-primary size-10" />
                   ) : (
                     <Icons.google />
                   )}
@@ -487,7 +487,7 @@ export default function SignInPage() {
                   className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                 >
                   {loadingProvider === 'oauth_github' ? (
-                    <Icons.spinner className="text-primary h-10 w-10" />
+                    <Icons.spinner className="text-primary size-10" />
                   ) : (
                     <Icons.gitHub />
                   )}
@@ -497,7 +497,7 @@ export default function SignInPage() {
                   className="flex cursor-pointer items-center justify-center rounded-md bg-transparent p-2 active:scale-95"
                 >
                   {loadingProvider === 'oauth_facebook' ? (
-                    <Icons.spinner className="text-primary h-10 w-10" />
+                    <Icons.spinner className="text-primary size-10" />
                   ) : (
                     <Icons.facebook />
                   )}

@@ -292,11 +292,11 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
   };
 
   return (
-    <div className="mx-auto mt-4 mb-4 w-full md:mx-0 md:w-[70%]">
+    <div className="mx-auto my-4 w-full md:mx-0 md:w-[70%]">
       <div>
         {loading ? (
           <div className="flex items-center justify-center p-4">
-            <Icons.spinner className="h-8 w-8 text-background" />
+            <Icons.spinner className="size-8 text-background" />
           </div>
         ) : files.length > 0 ? (
           <div className="space-y-2">
@@ -357,7 +357,7 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
                     e.currentTarget.style.color = '#22c4d3';
                   }}
                 >
-                  <FaDownload className="h-4 w-4" />
+                  <FaDownload className="size-4" />
                 </button>
               </div>
             ))}
@@ -367,8 +367,8 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
             className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
             style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
           >
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted/50">
-              <FaFilePdf className="h-8 w-8 text-black" />
+            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50">
+              <FaFilePdf className="size-8 text-black" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-100">
               No hay recursos disponibles

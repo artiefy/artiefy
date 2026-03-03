@@ -873,7 +873,7 @@ export default function MiniSignUpModal({
       {loadingProvider && (
         <div className="absolute inset-0 z-[1150] flex items-center justify-center bg-black/70 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4">
-            <Icons.spinner className="h-12 w-12 text-primary" />
+            <Icons.spinner className="size-12 text-primary" />
             <p className="text-lg font-semibold text-white">
               Redirigiendo a {loadingProvider.replace('oauth_', '')}...
             </p>
@@ -883,7 +883,7 @@ export default function MiniSignUpModal({
 
       <div
         role="dialog"
-        className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-hidden rounded-[32px] border border-border/50 bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200 sm:max-w-md"
+        className="data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] fixed top-[50%] left-[50%] z-50 grid w-full max-w-lg translate-[-50%] gap-4 overflow-hidden rounded-[32px] border border-border/50 bg-background/95 p-8 shadow-lg backdrop-blur-xl duration-200 sm:max-w-md"
         tabIndex={-1}
         style={{ pointerEvents: 'auto' }}
       >
@@ -914,7 +914,7 @@ export default function MiniSignUpModal({
           {Array.from({ length: 20 }).map((_, i) => (
             <div
               key={`star-${i}`}
-              className="absolute h-1 w-1 animate-pulse rounded-full bg-accent/40"
+              className="absolute size-1 animate-pulse rounded-full bg-accent/40"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
@@ -926,10 +926,10 @@ export default function MiniSignUpModal({
 
           {/* Floating rockets */}
           <div className="animate-float absolute top-1/2 right-4 h-28 w-20 -translate-y-1/2 opacity-20">
-            <div className="relative h-full w-full rotate-[-15deg]">
+            <div className="relative size-full rotate-[-15deg]">
               <svg
                 viewBox="0 0 64 80"
-                className="h-full w-full drop-shadow-[0_0_15px_hsl(180_100%_50%/0.4)]"
+                className="size-full drop-shadow-[0_0_15px_hsl(180_100%_50%/0.4)]"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -996,10 +996,10 @@ export default function MiniSignUpModal({
             className="animate-float absolute bottom-20 left-6 h-16 w-12 opacity-15"
             style={{ animationDelay: '1.5s' }}
           >
-            <div className="relative h-full w-full rotate-[20deg]">
+            <div className="relative size-full rotate-[20deg]">
               <svg
                 viewBox="0 0 64 80"
-                className="h-full w-full drop-shadow-[0_0_10px_hsl(180_100%_50%/0.3)]"
+                className="size-full drop-shadow-[0_0_10px_hsl(180_100%_50%/0.3)]"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -1023,7 +1023,7 @@ export default function MiniSignUpModal({
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={`particle-${i}`}
-              className="animate-rise absolute h-1.5 w-1.5 rounded-full bg-gradient-to-b from-accent/60 to-orange-400/40"
+              className="animate-rise absolute size-1.5 rounded-full bg-gradient-to-b from-accent/60 to-orange-400/40"
               style={{
                 left: `${20 + Math.random() * 60}%`,
                 bottom: '-10px',
@@ -1083,7 +1083,7 @@ export default function MiniSignUpModal({
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5 text-[#080c16]" />
+                <Icons.spinner className="mx-auto size-5 text-[#080c16]" />
               ) : (
                 'Verificar'
               )}
@@ -1200,7 +1200,7 @@ export default function MiniSignUpModal({
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'Finalizar registro'
               )}
@@ -1300,7 +1300,7 @@ export default function MiniSignUpModal({
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <Icons.spinner className="mx-auto h-5 w-5" />
+                <Icons.spinner className="mx-auto size-5" />
               ) : (
                 'Crear Cuenta'
               )}
@@ -1323,37 +1323,37 @@ export default function MiniSignUpModal({
           <button
             type="button"
             onClick={() => signUpWith('oauth_google')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background transition hover:bg-accent disabled:opacity-50"
+            className="flex size-10 items-center justify-center rounded-full border border-border bg-background transition hover:bg-accent disabled:opacity-50"
             disabled={!!loadingProvider}
           >
             {loadingProvider === 'oauth_google' ? (
-              <Icons.spinner className="h-4 w-4" />
+              <Icons.spinner className="size-4" />
             ) : (
-              <Icons.google className="h-5 w-5" />
+              <Icons.google className="size-5" />
             )}
           </button>
           <button
             type="button"
             onClick={() => signUpWith('oauth_github')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background transition hover:bg-accent disabled:opacity-50"
+            className="flex size-10 items-center justify-center rounded-full border border-border bg-background transition hover:bg-accent disabled:opacity-50"
             disabled={!!loadingProvider}
           >
             {loadingProvider === 'oauth_github' ? (
-              <Icons.spinner className="h-4 w-4" />
+              <Icons.spinner className="size-4" />
             ) : (
-              <Icons.gitHub className="h-5 w-5" />
+              <Icons.gitHub className="size-5" />
             )}
           </button>
           <button
             type="button"
             onClick={() => signUpWith('oauth_facebook')}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-background transition hover:bg-accent disabled:opacity-50"
+            className="flex size-10 items-center justify-center rounded-full border border-border bg-background transition hover:bg-accent disabled:opacity-50"
             disabled={!!loadingProvider}
           >
             {loadingProvider === 'oauth_facebook' ? (
-              <Icons.spinner className="h-4 w-4" />
+              <Icons.spinner className="size-4" />
             ) : (
-              <Icons.facebook className="h-5 w-5" />
+              <Icons.facebook className="size-5" />
             )}
           </button>
         </div>

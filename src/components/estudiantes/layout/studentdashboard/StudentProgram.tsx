@@ -63,23 +63,23 @@ export function StudentProgram({ program }: StudenProgramProps) {
         </div>
 
         {/* Top Right Award Icon */}
-        <div className="absolute top-3 right-3 flex h-10 w-10 items-center justify-center rounded-full bg-primary/90">
-          <Award className="h-5 w-5 text-white" />
+        <div className="absolute top-3 right-3 flex size-10 items-center justify-center rounded-full bg-primary/90">
+          <Award className="size-5 text-white" />
         </div>
 
         {/* Bottom Info on Image */}
         <div className="absolute right-3 bottom-3 left-3 flex items-center justify-between text-xs text-white">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
-              <BookOpen className="h-3.5 w-3.5" />
+              <BookOpen className="size-3.5" />
               {coursesCount} cursos
             </span>
             <span className="flex items-center gap-1">
-              <Clock className="h-3.5 w-3.5" />
+              <Clock className="size-3.5" />
               {totalHours}h
             </span>
             <span className="flex items-center gap-1">
-              <Users className="h-3.5 w-3.5" />
+              <Users className="size-3.5" />
               <EnrollmentCount
                 programId={parseInt(program.id)}
                 displayMode="number-only"
@@ -87,7 +87,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
             </span>
           </div>
           <div className="flex items-center gap-1">
-            <StarIcon className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            <StarIcon className="size-3.5 fill-amber-400 text-amber-400" />
             <span>{rating.toFixed(1)}</span>
           </div>
         </div>

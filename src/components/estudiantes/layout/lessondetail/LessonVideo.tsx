@@ -251,9 +251,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
                 Este video aún no está disponible para esta clase
               </p>
               <div className="mt-4 flex items-center space-x-2">
-                <div className="h-2 w-2 animate-bounce rounded-full bg-white delay-100" />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-white delay-200" />
-                <div className="h-2 w-2 animate-bounce rounded-full bg-white delay-300" />
+                <div className="size-2 animate-bounce rounded-full bg-white delay-100" />
+                <div className="size-2 animate-bounce rounded-full bg-white delay-200" />
+                <div className="size-2 animate-bounce rounded-full bg-white delay-300" />
               </div>
             </>
           ) : (
@@ -336,7 +336,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           <video
             ref={playerRef}
             src={videoUrl}
-            className="absolute inset-0 h-full w-full bg-black object-contain"
+            className="absolute inset-0 size-full bg-black object-contain"
             controls
             playsInline
             controlsList="nodownload"

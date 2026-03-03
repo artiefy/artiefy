@@ -342,7 +342,7 @@ const BulkUploadUsers = ({
                       type="file"
                       accept=".xlsx"
                       onChange={handleFileChange}
-                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                      className="absolute inset-0 size-full cursor-pointer opacity-0"
                     />
                     <FiUpload className="mx-auto mb-4 text-5xl text-gray-400 transition-colors group-hover:text-[#00BDD8]" />
                     <p className="mb-2 text-lg font-semibold text-gray-700">
@@ -596,7 +596,7 @@ const BulkUploadUsers = ({
                   >
                     {uploading ? (
                       <>
-                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                         Subiendo...
                       </>
                     ) : (

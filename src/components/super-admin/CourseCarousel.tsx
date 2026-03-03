@@ -60,7 +60,7 @@ export default function CourseCarousel({ courses, userId }: Props) {
             return (
               <div
                 key={course.id}
-                className="relative isolate z-10 mx-2 w-48 flex-shrink-0 overflow-visible rounded-lg bg-gray-800 px-4 py-4 shadow-[0_0px_15px_rgba(0,189,216,0.5)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0px_25px_rgba(0,189,216,0.6)]"
+                className="relative isolate z-10 mx-2 w-48 flex-shrink-0 overflow-visible rounded-lg bg-gray-800 p-4 shadow-[0_0px_15px_rgba(0,189,216,0.5)] transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0px_25px_rgba(0,189,216,0.6)]"
               >
                 {/* Imagen */}
                 {course.coverImageKey ? (

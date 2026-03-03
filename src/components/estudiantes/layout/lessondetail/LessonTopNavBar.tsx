@@ -58,7 +58,7 @@ const LessonTopNavBar = ({
             type="button"
             onClick={onToggleSidebar}
             style={{ backgroundColor: '#061c37cc' }}
-            className="hidden h-10 w-10 items-center justify-center gap-2 rounded-full border border-border/50 bg-primary text-sm font-medium whitespace-nowrap backdrop-blur-xl transition-colors hover:bg-purple-600 hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:flex"
+            className="hidden size-10 items-center justify-center gap-2 rounded-full border border-border/50 bg-primary text-sm font-medium whitespace-nowrap backdrop-blur-xl transition-colors hover:bg-purple-600 hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:flex"
             aria-label="Close sidebar"
           >
             {isSidebarOpen ? (
@@ -72,7 +72,7 @@ const LessonTopNavBar = ({
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-4 w-4"
+                className="size-4"
               >
                 <path d="M18 6 6 18" />
                 <path d="m6 6 12 12" />
@@ -88,7 +88,7 @@ const LessonTopNavBar = ({
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-5 w-5"
+                className="size-5"
               >
                 <line x1="4" x2="20" y1="12" y2="12" />
                 <line x1="4" x2="20" y1="6" y2="6" />
@@ -102,7 +102,7 @@ const LessonTopNavBar = ({
             type="button"
             onClick={onToggleSidebar}
             style={{ backgroundColor: '#061c37cc' }}
-            className="inline-flex h-10 w-10 items-center justify-center gap-2 rounded-full border border-border/50 bg-primary text-sm font-medium whitespace-nowrap backdrop-blur-xl transition-colors hover:bg-purple-600 hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:hidden"
+            className="inline-flex size-10 items-center justify-center gap-2 rounded-full border border-border/50 bg-primary text-sm font-medium whitespace-nowrap backdrop-blur-xl transition-colors hover:bg-purple-600 hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:hidden"
             aria-label="Toggle sidebar"
           >
             {isSidebarOpen ? (
@@ -116,7 +116,7 @@ const LessonTopNavBar = ({
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-5 w-5"
+                className="size-5"
               >
                 <path d="M18 6 6 18" />
                 <path d="m6 6 12 12" />
@@ -132,7 +132,7 @@ const LessonTopNavBar = ({
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-5 w-5"
+                className="size-5"
               >
                 <line x1="4" x2="20" y1="12" y2="12" />
                 <line x1="4" x2="20" y1="6" y2="6" />
@@ -157,7 +157,7 @@ const LessonTopNavBar = ({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground"
+              className="size-4 text-muted-foreground transition-colors group-hover:text-foreground"
             >
               <path d="m15 18-6-6 6-6" />
             </svg>
@@ -223,7 +223,7 @@ const LessonTopNavBar = ({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="h-4 w-4"
+              className="size-4"
             >
               <circle cx="12" cy="12" r="10" />
               <path d="m9 12 2 2 4-4" />

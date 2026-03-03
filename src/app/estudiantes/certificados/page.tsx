@@ -44,14 +44,14 @@ export default async function CertificatesListPage() {
         {/* Elimina el botón bonito de "Mis Certificados" aquí */}
 
         <div className="mb-8 flex items-center gap-3">
-          <PiCertificate className="text-primary h-8 w-8" />
+          <PiCertificate className="text-primary size-8" />
           <h1 className="text-primary text-3xl font-bold">Mis Certificados</h1>
         </div>
 
         {userCertificates.length === 0 ? (
           <div className="rounded-lg border border-gray-200 p-8 text-center">
             <div className="mb-4 flex justify-center">
-              <PiCertificate className="h-40 w-40 text-gray-300" />
+              <PiCertificate className="size-40 text-gray-300" />
             </div>
             <h3 className="mb-2 text-xl font-semibold">
               No tienes certificados aún
@@ -81,7 +81,7 @@ export default async function CertificatesListPage() {
                         className="poster-certificado mx-auto flex min-h-[420px] max-w-xs flex-col items-center overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b from-blue-900 via-[#01142B] to-cyan-900 p-0 shadow-xl"
                       >
                         <CardHeader className="flex w-full flex-col items-center rounded-t-2xl bg-gradient-to-r from-blue-600 to-cyan-500 p-6 text-white">
-                          <PiCertificate className="mb-2 h-12 w-12 text-white" />
+                          <PiCertificate className="mb-2 size-12 text-white" />
                           <CardTitle className="line-clamp-3 text-center text-lg font-bold">
                             {certificate.course?.title ?? 'Certificado'}
                           </CardTitle>
@@ -140,7 +140,7 @@ export default async function CertificatesListPage() {
                         className="poster-certificado mx-auto flex min-h-[420px] max-w-xs flex-col items-center overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b from-blue-900 via-[#01142B] to-cyan-900 p-0 shadow-xl"
                       >
                         <CardHeader className="flex w-full flex-col items-center rounded-t-2xl bg-gradient-to-r from-blue-600 to-cyan-500 p-6 text-white">
-                          <PiCertificate className="mb-2 h-12 w-12 text-white" />
+                          <PiCertificate className="mb-2 size-12 text-white" />
                           <CardTitle className="line-clamp-3 text-center text-lg font-bold">
                             {certificate.programa?.title ?? 'Certificado'}
                           </CardTitle>

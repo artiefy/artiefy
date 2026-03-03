@@ -649,7 +649,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
                                   alt="WhatsApp"
                                   width={28}
                                   height={28}
-                                  className="h-7 w-7"
+                                  className="size-7"
                                 />
                               )}
                               {btn.label}
@@ -703,7 +703,7 @@ export const ChatMessages: React.FC<ChatProps> = ({
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-secondary group relative flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
+              className="bg-secondary group relative flex size-10 flex-shrink-0 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
             >
               <Image
                 src="/send-svgrepo-com.svg"

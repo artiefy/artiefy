@@ -137,7 +137,7 @@ export default function Component() {
           <div className="flex flex-col gap-4 md:flex-row">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+                <Search className="absolute top-1/2 left-3 size-5 -translate-y-1/2 transform text-gray-400" />
                 <input
                   type="text"
                   placeholder="Buscar Espacios..."
@@ -153,11 +153,11 @@ export default function Component() {
                 className="flex w-full items-center justify-between rounded-lg border border-teal-700/50 bg-slate-800/50 px-4 py-3 text-white hover:border-cyan-400/50 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
               >
                 <div className="flex items-center">
-                  <Filter className="mr-2 h-4 w-4" />
+                  <Filter className="mr-2 size-4" />
                   <span>{selectedCategoryLabel}</span>
                 </div>
                 <ChevronDown
-                  className={`h-4 w-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                  className={`size-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
                 />
               </button>
               {isDropdownOpen && (
@@ -247,35 +247,35 @@ export default function Component() {
 
                   <div className="flex items-center justify-between text-sm text-gray-400">
                     <div className="flex items-center space-x-1">
-                      <User className="h-4 w-4" />
+                      <User className="size-4" />
                       <span>{space.author}</span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Eye className="h-4 w-4" />
+                      <Eye className="size-4" />
                       <span>{space.views.toLocaleString()}</span>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between text-sm text-gray-400">
                     <div className="flex items-center space-x-1">
-                      <Calendar className="h-4 w-4" />
+                      <Calendar className="size-4" />
                       <span>
                         {new Date(space.date).toLocaleDateString('es-ES')}
                       </span>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <Tag className="h-4 w-4" />
+                      <Tag className="size-4" />
                       <span>{space.category}</span>
                     </div>
                   </div>
 
                   <div className="flex space-x-2 pt-2">
                     <button className="flex flex-1 items-center justify-center rounded-lg bg-cyan-600 px-4 py-2 text-white transition-colors hover:bg-cyan-700">
-                      <Eye className="mr-2 h-4 w-4" />
+                      <Eye className="mr-2 size-4" />
                       Ver Espacio
                     </button>
                     <button className="rounded-lg border border-teal-600 px-3 py-2 text-teal-300 transition-colors hover:bg-teal-600/20">
-                      <ExternalLink className="h-4 w-4" />
+                      <ExternalLink className="size-4" />
                     </button>
                   </div>
                 </div>

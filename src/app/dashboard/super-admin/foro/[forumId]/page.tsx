@@ -500,7 +500,7 @@ const ForumPage = () => {
                   {/* Avatar */}
                   <div
                     className={cn(
-                      'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white',
+                      'flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white',
                       getAvatarColor(reply.userId.name ?? '')
                     )}
                   >
@@ -523,7 +523,7 @@ const ForumPage = () => {
                   {reply.userId.id === user?.id && (
                     <Collapsible>
                       <CollapsibleTrigger className="rounded-full p-1 hover:bg-gray-700">
-                        <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                        <MoreHorizontal className="size-4 text-gray-500" />
                       </CollapsibleTrigger>
                       <CollapsibleContent className="absolute right-0 z-10 mt-1 flex flex-col overflow-hidden rounded-lg border border-gray-700 bg-gray-900 shadow-xl">
                         <button
@@ -605,7 +605,7 @@ const ForumPage = () => {
                               <div className="relative h-40 w-full overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20">
                                 <video
                                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
-                                  className="h-full w-full object-cover"
+                                  className="size-full object-cover"
                                   controls
                                 />
                               </div>
@@ -638,7 +638,7 @@ const ForumPage = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="size-12 animate-spin rounded-full border-4 border-primary border-t-transparent" />
         <span className="mt-4 text-sm text-primary">Cargando foro...</span>
       </main>
     );
@@ -653,7 +653,7 @@ const ForumPage = () => {
             onClick={() => setLightboxImage(null)}
             className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
           >
-            <X className="h-6 w-6" />
+            <X className="size-6" />
           </button>
           <Image
             src={lightboxImage}
@@ -726,7 +726,7 @@ const ForumPage = () => {
                     <Image
                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
                       alt="Imagen del foro"
-                      className="h-32 w-32 object-cover transition-opacity group-hover:opacity-80"
+                      className="size-32 object-cover transition-opacity group-hover:opacity-80"
                       width={128}
                       height={128}
                       loading="lazy"
@@ -739,7 +739,7 @@ const ForumPage = () => {
                       }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
-                      <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                      <ImageIcon className="size-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
                     </div>
                   </button>
                 </div>
@@ -792,9 +792,9 @@ const ForumPage = () => {
                   className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                   title="Adjuntar imagen"
                 >
-                  <ImageIcon className="h-5 w-5" />
+                  <ImageIcon className="size-5" />
                   {selectedImage && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
+                    <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
                       ✓
                     </span>
                   )}
@@ -815,9 +815,9 @@ const ForumPage = () => {
                     className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                     title="Grabar o subir audio"
                   >
-                    <Mic className="h-5 w-5" />
+                    <Mic className="size-5" />
                     {selectedAudio && (
-                      <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
+                      <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
                         ✓
                       </span>
                     )}
@@ -870,9 +870,9 @@ const ForumPage = () => {
                   className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                   title="Adjuntar video"
                 >
-                  <Video className="h-5 w-5" />
+                  <Video className="size-5" />
                   {selectedVideo && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
+                    <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-black">
                       ✓
                     </span>
                   )}
@@ -896,7 +896,7 @@ const ForumPage = () => {
                         onClick={() => setSelectedImage(null)}
                         className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="size-4" />
                       </button>
                       <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
                         {selectedImage.name}
@@ -914,7 +914,7 @@ const ForumPage = () => {
                         onClick={() => setSelectedVideo(null)}
                         className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
                       >
-                        <X className="h-4 w-4" />
+                        <X className="size-4" />
                       </button>
                       <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
                         {selectedVideo.name}
@@ -923,7 +923,7 @@ const ForumPage = () => {
                   )}
                   {selectedAudio && (
                     <div className="relative flex items-center gap-2 rounded-lg border border-cyan-700/40 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-slate-900/60 p-2">
-                      <Music className="h-4 w-4 flex-shrink-0 text-cyan-400/80" />
+                      <Music className="size-4 flex-shrink-0 text-cyan-400/80" />
                       <span className="flex-1 truncate text-xs font-semibold text-white">
                         {selectedAudio.name}
                       </span>
@@ -932,7 +932,7 @@ const ForumPage = () => {
                         onClick={() => setSelectedAudio(null)}
                         className="rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="size-3" />
                       </button>
                     </div>
                   )}
@@ -952,12 +952,12 @@ const ForumPage = () => {
               >
                 {isSubmitting ? (
                   <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                    <div className="size-4 animate-spin rounded-full border-2 border-black border-t-transparent" />
                     Publicando...
                   </>
                 ) : (
                   <>
-                    <Send className="h-4 w-4" />
+                    <Send className="size-4" />
                     Publicar
                   </>
                 )}
@@ -969,7 +969,7 @@ const ForumPage = () => {
           <div className="space-y-4">
             {loadingPosts ? (
               <div className="flex justify-center py-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                <div className="size-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
               </div>
             ) : posts.length === 0 ? (
               <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-8 text-center">
@@ -992,7 +992,7 @@ const ForumPage = () => {
                       {/* Avatar */}
                       <div
                         className={cn(
-                          'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white',
+                          'flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-bold text-white',
                           getAvatarColor(post.userId.name ?? '')
                         )}
                       >
@@ -1078,7 +1078,7 @@ const ForumPage = () => {
                                       }}
                                     />
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/30">
-                                      <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                      <ImageIcon className="size-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                                     </div>
                                   </button>
                                 )}
@@ -1103,7 +1103,7 @@ const ForumPage = () => {
                             {/* Audio - Ancho completo debajo */}
                             {post.audioKey && (
                               <div className="flex items-center gap-3 rounded-lg border border-gray-600/40 bg-gradient-to-r from-gray-900/60 via-gray-900/40 to-gray-900/60 p-4 shadow-md shadow-black/30 transition-all duration-300 hover:border-cyan-400/60 hover:from-gray-900/80 hover:to-gray-900/80">
-                                <Music className="h-5 w-5 flex-shrink-0 text-cyan-400/80" />
+                                <Music className="size-5 flex-shrink-0 text-cyan-400/80" />
                                 <audio
                                   controls
                                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.audioKey}`}
@@ -1123,7 +1123,7 @@ const ForumPage = () => {
                         {/* Acciones */}
                         <div className="mt-3 flex items-center gap-4">
                           <button className="flex items-center gap-1.5 text-xs text-gray-400 transition-colors hover:text-white">
-                            <ThumbsUp className="h-4 w-4" />
+                            <ThumbsUp className="size-4" />
                             Me gusta
                           </button>
                           {repliesCount > 0 && (
@@ -1138,7 +1138,7 @@ const ForumPage = () => {
                         <div className="mt-4 flex gap-3">
                           <div
                             className={cn(
-                              'flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white',
+                              'flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-bold text-white',
                               getAvatarColor(user?.fullName ?? '')
                             )}
                           >
@@ -1219,7 +1219,7 @@ const ForumPage = () => {
                                       }
                                       className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
                                     >
-                                      <X className="h-3 w-3" />
+                                      <X className="size-3" />
                                     </button>
                                     <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-xs font-semibold text-white">
                                       {replyImage[post.id].name}
@@ -1245,7 +1245,7 @@ const ForumPage = () => {
                                       }
                                       className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
                                     >
-                                      <X className="h-3 w-3" />
+                                      <X className="size-3" />
                                     </button>
                                     <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-xs font-semibold text-white">
                                       {replyVideo[post.id].name}
@@ -1254,7 +1254,7 @@ const ForumPage = () => {
                                 )}
                                 {replyAudio[post.id] && (
                                   <div className="relative flex items-center gap-2 rounded-lg border border-cyan-700/40 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-slate-900/60 p-2">
-                                    <Music className="h-4 w-4 flex-shrink-0 text-cyan-400/80" />
+                                    <Music className="size-4 flex-shrink-0 text-cyan-400/80" />
                                     <span className="flex-1 truncate text-xs font-semibold text-white">
                                       {replyAudio[post.id].name}
                                     </span>
@@ -1269,7 +1269,7 @@ const ForumPage = () => {
                                       }
                                       className="rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
                                     >
-                                      <X className="h-3 w-3" />
+                                      <X className="size-3" />
                                     </button>
                                   </div>
                                 )}
@@ -1297,7 +1297,7 @@ const ForumPage = () => {
                                 className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                 title="Subir audio"
                               >
-                                <Mic className="h-4 w-4" />
+                                <Mic className="size-4" />
                               </button>
                               <button
                                 onClick={() =>
@@ -1314,7 +1314,7 @@ const ForumPage = () => {
                                 className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                 title="Grabar audio"
                               >
-                                <Music className="h-4 w-4" />
+                                <Music className="size-4" />
                               </button>
                               <button
                                 onClick={() => {
@@ -1335,7 +1335,7 @@ const ForumPage = () => {
                                 className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                 title="Adjuntar imagen"
                               >
-                                <ImageIcon className="h-4 w-4" />
+                                <ImageIcon className="size-4" />
                               </button>
                               <button
                                 onClick={() => {
@@ -1356,7 +1356,7 @@ const ForumPage = () => {
                                 className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                 title="Adjuntar video"
                               >
-                                <Video className="h-4 w-4" />
+                                <Video className="size-4" />
                               </button>
 
                               <button
@@ -1372,7 +1372,7 @@ const ForumPage = () => {
                               >
                                 {isSubmittingReply ? (
                                   <>
-                                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                                    <div className="size-3 animate-spin rounded-full border-2 border-black border-t-transparent" />
                                     Enviando...
                                   </>
                                 ) : (
@@ -1391,7 +1391,7 @@ const ForumPage = () => {
                       {post.userId.id === user?.id && (
                         <Collapsible className="relative">
                           <CollapsibleTrigger className="rounded-full p-1.5 text-gray-500 transition-colors hover:bg-gray-800 hover:text-white">
-                            <MoreHorizontal className="h-5 w-5" />
+                            <MoreHorizontal className="size-5" />
                           </CollapsibleTrigger>
                           <CollapsibleContent className="absolute right-0 z-10 mt-1 flex flex-col overflow-hidden rounded-xl border border-gray-700 bg-gray-900 shadow-xl">
                             <button

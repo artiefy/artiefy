@@ -408,7 +408,7 @@ export default function TransactionHistoryPage() {
         <div className="mb-8">
           <div className="mb-4 flex items-center gap-3">
             <div className="rounded-xl border border-[#00BDD8]/30 bg-gradient-to-br from-[#00BDD8]/30 to-[#00BDD8]/10 p-3">
-              <TrendingUp className="h-6 w-6 text-[#00BDD8]" />
+              <TrendingUp className="size-6 text-[#00BDD8]" />
             </div>
             <div>
               <h1 className="bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] bg-clip-text text-2xl font-bold text-transparent sm:text-3xl">
@@ -431,7 +431,7 @@ export default function TransactionHistoryPage() {
                 Total Recaudado
               </span>
               <div className="rounded-lg bg-green-500/20 p-2">
-                <CheckCircle2 className="h-4 w-4 text-green-400" />
+                <CheckCircle2 className="size-4 text-green-400" />
               </div>
             </div>
             <div className="space-y-3">
@@ -463,7 +463,7 @@ export default function TransactionHistoryPage() {
                 Total Transacciones
               </span>
               <div className="rounded-lg bg-[#00BDD8]/20 p-2">
-                <FileText className="h-4 w-4 text-[#00BDD8]" />
+                <FileText className="size-4 text-[#00BDD8]" />
               </div>
             </div>
             <div className="space-y-3">
@@ -495,7 +495,7 @@ export default function TransactionHistoryPage() {
                 Resumen
               </span>
               <div className="rounded-lg bg-yellow-500/20 p-2">
-                <AlertCircle className="h-4 w-4 text-yellow-400" />
+                <AlertCircle className="size-4 text-yellow-400" />
               </div>
             </div>
             <div className="space-y-3">
@@ -524,7 +524,7 @@ export default function TransactionHistoryPage() {
         {/* Filtros */}
         <div className="mb-6 rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-br from-[#00BDD8]/5 to-[#00BDD8]/[0.02] p-6 shadow-xl backdrop-blur-md">
           <div className="mb-6 flex items-center gap-2">
-            <Filter className="h-5 w-5 text-[#00BDD8]" />
+            <Filter className="size-5 text-[#00BDD8]" />
             <h2 className="text-sm font-semibold text-white">Filtros</h2>
           </div>
           <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -534,7 +534,7 @@ export default function TransactionHistoryPage() {
                 Búsqueda
               </label>
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#00BDD8]/50" />
+                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#00BDD8]/50" />
                 <input
                   type="text"
                   placeholder="Usuario, email, concepto..."
@@ -630,7 +630,7 @@ export default function TransactionHistoryPage() {
                   onClick={handleClearFilters}
                   className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2.5 text-sm font-medium text-red-300 backdrop-blur-sm transition hover:border-red-500/50 hover:bg-red-500/20"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="size-4" />
                   Limpiar
                 </button>
               </div>
@@ -641,7 +641,7 @@ export default function TransactionHistoryPage() {
         {/* Error Message */}
         {error && (
           <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-red-300 backdrop-blur-sm">
-            <AlertCircle className="h-5 w-5 flex-shrink-0" />
+            <AlertCircle className="size-5 flex-shrink-0" />
             <p className="text-sm">{error}</p>
           </div>
         )}
@@ -651,7 +651,7 @@ export default function TransactionHistoryPage() {
           {loading ? (
             <div className="flex items-center justify-center py-16">
               <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-[#00BDD8]" />
+                <Loader2 className="size-8 animate-spin text-[#00BDD8]" />
                 <p className="text-sm text-gray-400">
                   Cargando transacciones...
                 </p>
@@ -660,7 +660,7 @@ export default function TransactionHistoryPage() {
           ) : items.length === 0 ? (
             <div className="py-16 text-center">
               <div className="mx-auto mb-4 w-fit rounded-xl bg-[#00BDD8]/10 p-4">
-                <FileText className="mx-auto h-8 w-8 text-[#00BDD8]/50" />
+                <FileText className="mx-auto size-8 text-[#00BDD8]/50" />
               </div>
               <p className="text-gray-400">No hay transacciones registradas</p>
             </div>
@@ -729,12 +729,12 @@ export default function TransactionHistoryPage() {
                       <td className="px-6 py-4 text-center">
                         {item.receiptVerified ? (
                           <span className="inline-flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/20 px-3 py-1 text-xs font-medium text-green-300">
-                            <CheckCircle2 className="h-3 w-3" />
+                            <CheckCircle2 className="size-3" />
                             Verificado
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/20 px-3 py-1 text-xs font-medium text-yellow-300">
-                            <AlertCircle className="h-3 w-3" />
+                            <AlertCircle className="size-3" />
                             Pendiente
                           </span>
                         )}
@@ -744,7 +744,7 @@ export default function TransactionHistoryPage() {
                           onClick={() => handleViewDetail(item.id)}
                           className="inline-flex items-center gap-1 rounded-lg bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] px-4 py-2 text-xs font-semibold text-[#01142B] transition hover:shadow-lg hover:shadow-[#00BDD8]/50"
                         >
-                          <Eye className="h-3.5 w-3.5" />
+                          <Eye className="size-3.5" />
                           Ver
                         </button>
                       </td>
@@ -780,7 +780,7 @@ export default function TransactionHistoryPage() {
                 disabled={page === 1}
                 className="inline-flex items-center gap-2 rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2 text-sm font-medium text-[#00BDD8] backdrop-blur-sm transition hover:enabled:border-[#00BDD8]/70 hover:enabled:bg-[#00BDD8]/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="size-4" />
                 Anterior
               </button>
               <button
@@ -789,7 +789,7 @@ export default function TransactionHistoryPage() {
                 className="inline-flex items-center gap-2 rounded-lg border border-[#00BDD8]/30 bg-[#001a35]/50 px-4 py-2 text-sm font-medium text-[#00BDD8] backdrop-blur-sm transition hover:enabled:border-[#00BDD8]/70 hover:enabled:bg-[#00BDD8]/10 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Siguiente
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="size-4" />
               </button>
             </div>
           </div>
@@ -807,18 +807,18 @@ export default function TransactionHistoryPage() {
                   onClick={handleCloseDetail}
                   className="rounded-lg p-2 text-gray-400 transition hover:bg-[#00BDD8]/10 hover:text-[#00BDD8]"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="size-5" />
                 </button>
               </div>
 
               <div className="max-h-[80vh] overflow-y-auto">
                 {detailLoading ? (
                   <div className="flex items-center justify-center py-16">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#00BDD8]" />
+                    <Loader2 className="size-8 animate-spin text-[#00BDD8]" />
                   </div>
                 ) : detailError ? (
                   <div className="m-6 flex items-center gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4 text-red-300 backdrop-blur-sm">
-                    <AlertCircle className="h-5 w-5 flex-shrink-0" />
+                    <AlertCircle className="size-5 flex-shrink-0" />
                     <p className="text-sm">{detailError}</p>
                   </div>
                 ) : detailData ? (
@@ -878,12 +878,12 @@ export default function TransactionHistoryPage() {
                           <span className="text-sm text-gray-300">Estado:</span>
                           {detailData.pago.receiptVerified ? (
                             <span className="inline-flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/20 px-3 py-1 text-xs font-medium text-green-300">
-                              <CheckCircle2 className="h-3 w-3" />
+                              <CheckCircle2 className="size-3" />
                               Verificado
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 rounded-full border border-yellow-500/30 bg-yellow-500/20 px-3 py-1 text-xs font-medium text-yellow-300">
-                              <AlertCircle className="h-3 w-3" />
+                              <AlertCircle className="size-3" />
                               Pendiente
                             </span>
                           )}
@@ -899,9 +899,9 @@ export default function TransactionHistoryPage() {
                             className="flex-1 rounded-lg border border-green-500/30 bg-green-500/20 px-3 py-2 text-xs font-semibold text-green-300 transition hover:enabled:bg-green-500/30 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {updatingStatus ? (
-                              <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
+                              <Loader2 className="mr-1 inline size-3 animate-spin" />
                             ) : (
-                              <CheckCircle2 className="mr-1 inline h-3 w-3" />
+                              <CheckCircle2 className="mr-1 inline size-3" />
                             )}
                             Verificar
                           </button>
@@ -913,9 +913,9 @@ export default function TransactionHistoryPage() {
                             className="flex-1 rounded-lg border border-red-500/30 bg-red-500/20 px-3 py-2 text-xs font-semibold text-red-300 transition hover:enabled:bg-red-500/30 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             {updatingStatus ? (
-                              <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
+                              <Loader2 className="mr-1 inline size-3 animate-spin" />
                             ) : (
-                              <X className="mr-1 inline h-3 w-3" />
+                              <X className="mr-1 inline size-3" />
                             )}
                             Rechazar
                           </button>
@@ -943,7 +943,7 @@ export default function TransactionHistoryPage() {
                                 rel="noopener noreferrer"
                                 className="mt-3 inline-flex items-center gap-2 rounded-lg border border-[#00BDD8]/30 bg-[#00BDD8]/20 px-3 py-1.5 text-xs font-medium text-[#00BDD8] transition hover:bg-[#00BDD8]/30"
                               >
-                                <Download className="h-3.5 w-3.5" />
+                                <Download className="size-3.5" />
                                 Descargar
                               </a>
                             )}
@@ -984,7 +984,7 @@ export default function TransactionHistoryPage() {
                               rel="noopener noreferrer"
                               className="mt-3 inline-flex items-center gap-2 rounded-lg border border-green-500/30 bg-green-500/20 px-3 py-1.5 text-xs font-medium text-green-300 transition hover:bg-green-500/30"
                             >
-                              <Download className="h-3.5 w-3.5" />
+                              <Download className="size-3.5" />
                               Descargar
                             </a>
                           </div>
@@ -1043,7 +1043,7 @@ export default function TransactionHistoryPage() {
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-1 text-[#00BDD8] transition hover:text-[#00d9ff]"
                                       >
-                                        <Download className="h-3 w-3" />
+                                        <Download className="size-3" />
                                         {v.fileName || 'Archivo'}
                                       </a>
                                     ) : (

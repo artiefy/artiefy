@@ -268,7 +268,7 @@ const ForumHome = () => {
                           />
                           <button
                             onClick={() => setCoverImage(null)}
-                            className="absolute top-0 right-0 flex h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
+                            className="absolute top-0 right-0 flex size-5 items-center justify-center rounded-full bg-black/60 text-xs text-white"
                           >
                             ×
                           </button>

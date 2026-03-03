@@ -140,14 +140,14 @@ export default function AccessLogsPage() {
     if (!log.exitTime) {
       return (
         <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+          <span className="size-2 animate-pulse rounded-full bg-emerald-400" />
           Dentro
         </span>
       );
     }
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-600/30 px-3 py-1 text-xs font-semibold text-gray-400">
-        <span className="h-2 w-2 rounded-full bg-gray-500" />
+        <span className="size-2 rounded-full bg-gray-500" />
         Salió
       </span>
     );
@@ -157,7 +157,7 @@ export default function AccessLogsPage() {
     return (
       <div className="flex min-h-[400px] items-center justify-center p-6">
         <div className="text-center">
-          <FiUsers className="mx-auto mb-4 h-12 w-12 text-gray-500" />
+          <FiUsers className="mx-auto mb-4 size-12 text-gray-500" />
           <h1 className="text-xl font-semibold text-white">No autorizado</h1>
           <p className="mt-2 text-gray-400">
             No tienes permisos para ver esta página.
@@ -190,7 +190,7 @@ export default function AccessLogsPage() {
               <p className="mt-1 text-3xl font-bold text-white">{total}</p>
             </div>
             <div className="rounded-xl bg-primary/20 p-3">
-              <FiClock className="h-6 w-6 text-primary" />
+              <FiClock className="size-6 text-primary" />
             </div>
           </div>
         </div>
@@ -206,7 +206,7 @@ export default function AccessLogsPage() {
               </p>
             </div>
             <div className="rounded-xl bg-emerald-500/20 p-3">
-              <FiUser className="h-6 w-6 text-emerald-400" />
+              <FiUser className="size-6 text-emerald-400" />
             </div>
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function AccessLogsPage() {
               </p>
             </div>
             <div className="rounded-xl bg-gray-700/50 p-3">
-              <FiUsers className="h-6 w-6 text-gray-400" />
+              <FiUsers className="size-6 text-gray-400" />
             </div>
           </div>
         </div>
@@ -283,7 +283,7 @@ export default function AccessLogsPage() {
             onClick={() => fetchLogs(page, debouncedQ, filter)}
             className="flex items-center gap-2 rounded-xl bg-gray-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-700"
           >
-            <FiRefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} />
+            <FiRefreshCw className={cn('size-4', loading && 'animate-spin')} />
             Actualizar
           </button>
         </div>
@@ -303,13 +303,13 @@ export default function AccessLogsPage() {
                 </th>
                 <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
                   <div className="flex items-center gap-1.5">
-                    <FiArrowDownLeft className="h-4 w-4 text-emerald-400" />
+                    <FiArrowDownLeft className="size-4 text-emerald-400" />
                     Entrada
                   </div>
                 </th>
                 <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
                   <div className="flex items-center gap-1.5">
-                    <FiArrowUpRight className="h-4 w-4 text-red-400" />
+                    <FiArrowUpRight className="size-4 text-red-400" />
                     Salida
                   </div>
                 </th>
@@ -327,7 +327,7 @@ export default function AccessLogsPage() {
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
                     <div className="flex items-center justify-center gap-3">
-                      <FiRefreshCw className="h-5 w-5 animate-spin text-primary" />
+                      <FiRefreshCw className="size-5 animate-spin text-primary" />
                       <span className="text-gray-400">
                         Cargando registros...
                       </span>
@@ -339,7 +339,7 @@ export default function AccessLogsPage() {
               {!loading && items.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-12 text-center">
-                    <FiUsers className="mx-auto mb-3 h-10 w-10 text-gray-600" />
+                    <FiUsers className="mx-auto mb-3 size-10 text-gray-600" />
                     <p className="text-gray-400">No hay registros de acceso</p>
                   </td>
                 </tr>
@@ -356,8 +356,8 @@ export default function AccessLogsPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-secondary/30">
-                          <FiUser className="h-5 w-5 text-primary" />
+                        <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-secondary/30">
+                          <FiUser className="size-5 text-primary" />
                         </div>
                         <div>
                           <p className="font-semibold text-white">

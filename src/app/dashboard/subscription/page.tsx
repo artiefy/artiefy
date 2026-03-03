@@ -291,7 +291,7 @@ export default function BuscarSuscripcionPage() {
       return (
         <div className="xs:mt-5 xs:p-4 mt-4 rounded-lg border border-red-500/30 bg-red-950/20 p-3 sm:mt-6 sm:p-6">
           <div className="xs:gap-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <AlertCircle className="xs:h-6 xs:w-6 h-5 w-5 flex-shrink-0 text-red-400 sm:h-6 sm:w-6" />
+            <AlertCircle className="xs:h-6 xs:w-6 size-5 flex-shrink-0 text-red-400 sm:size-6" />
             <div className="flex-1">
               <h3 className="xs:text-base text-sm font-semibold text-red-400 sm:text-lg">
                 Usuario no encontrado
@@ -339,14 +339,14 @@ export default function BuscarSuscripcionPage() {
         {isActive ? (
           <div className="xs:p-4 rounded-lg border border-green-500/30 bg-green-950/20 p-3 sm:p-6">
             <div className="xs:gap-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-              <CheckCircle className="xs:h-6 xs:w-6 h-5 w-5 flex-shrink-0 text-green-400 sm:h-6 sm:w-6" />
+              <CheckCircle className="xs:h-6 xs:w-6 size-5 flex-shrink-0 text-green-400 sm:size-6" />
               <div className="flex-1">
                 <h3 className="xs:mb-2 xs:text-base mb-2 text-sm font-semibold text-green-400 sm:text-lg">
                   Suscripción Activa
                 </h3>
                 <div className="xs:space-y-2 xs:text-sm space-y-1.5 text-xs text-gray-300 sm:text-base">
                   <div className="flex items-center gap-2">
-                    <Clock className="xs:h-4 xs:w-4 h-3.5 w-3.5 flex-shrink-0 text-cyan-400 sm:h-5 sm:w-5" />
+                    <Clock className="xs:h-4 xs:w-4 size-3.5 flex-shrink-0 text-cyan-400 sm:size-5" />
                     <span className="xs:text-xs text-xs sm:text-sm">
                       <span className="font-semibold text-cyan-400">
                         {daysRemaining}
@@ -397,7 +397,7 @@ export default function BuscarSuscripcionPage() {
         ) : (
           <div className="xs:p-4 rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-3 sm:p-6">
             <div className="xs:gap-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-              <AlertCircle className="xs:h-6 xs:w-6 h-5 w-5 flex-shrink-0 text-yellow-400 sm:h-6 sm:w-6" />
+              <AlertCircle className="xs:h-6 xs:w-6 size-5 flex-shrink-0 text-yellow-400 sm:size-6" />
               <div className="flex-1">
                 <h3 className="xs:text-base text-sm font-semibold text-yellow-400 sm:text-lg">
                   Suscripción Vencida o Inactiva
@@ -548,7 +548,7 @@ export default function BuscarSuscripcionPage() {
                   }
                   className="xs:px-4 xs:py-2.5 xs:pr-11 w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 pr-9 text-sm text-white placeholder-gray-500 transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 focus:outline-none sm:py-3 sm:pr-12 sm:text-base"
                 />
-                <Search className="xs:right-3 absolute top-1/2 right-2.5 h-4 w-4 -translate-y-1/2 text-gray-500 sm:right-4 sm:h-5 sm:w-5" />
+                <Search className="xs:right-3 absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-gray-500 sm:right-4 sm:size-5" />
               </div>
             </div>
 
@@ -576,7 +576,7 @@ export default function BuscarSuscripcionPage() {
                 {loading ? (
                   <span className="xs:gap-2 flex items-center justify-center gap-2 sm:gap-2">
                     <svg
-                      className="xs:h-4 xs:w-4 h-4 w-4 animate-spin sm:h-5 sm:w-5"
+                      className="xs:h-4 xs:w-4 size-4 animate-spin sm:size-5"
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"

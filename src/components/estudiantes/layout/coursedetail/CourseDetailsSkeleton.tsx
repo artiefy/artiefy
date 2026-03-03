@@ -34,7 +34,7 @@ export function CourseDetailsSkeleton() {
                   style={{ borderColor: '#1d283a', borderWidth: '1px' }}
                 >
                   <AspectRatio ratio={16 / 9}>
-                    <Skeleton className="h-full w-full bg-[#0a1929]" />
+                    <Skeleton className="size-full bg-[#0a1929]" />
                   </AspectRatio>
                   <div className="space-y-4 p-5">
                     {/* Badge Premium + Pro */}
@@ -68,13 +68,13 @@ export function CourseDetailsSkeleton() {
                     <Skeleton className="h-5 w-12 bg-[#1d283a]" />
                     <div className="flex gap-1">
                       {Array.from({ length: 5 }).map((_, i) => (
-                        <Skeleton key={i} className="h-5 w-5 bg-[#1d283a]" />
+                        <Skeleton key={i} className="size-5 bg-[#1d283a]" />
                       ))}
                     </div>
                     <Skeleton className="h-4 w-24 bg-[#1d283a]" />
                   </div>
                   <div className="flex items-center gap-2">
-                    <Skeleton className="h-4 w-4 bg-[#1d283a]" />
+                    <Skeleton className="size-4 bg-[#1d283a]" />
                     <Skeleton className="h-4 w-28 bg-[#1d283a]" />
                   </div>
                 </div>
@@ -127,7 +127,7 @@ export function CourseDetailsSkeleton() {
                   style={{ borderColor: '#1d283a', borderWidth: '1px' }}
                 >
                   <AspectRatio ratio={16 / 9}>
-                    <Skeleton className="h-full w-full bg-[#0a1929]" />
+                    <Skeleton className="size-full bg-[#0a1929]" />
                   </AspectRatio>
                   <div className="space-y-4 p-5">
                     {/* Badge Premium + Pro */}

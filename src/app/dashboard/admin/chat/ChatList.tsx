@@ -83,10 +83,10 @@ export default function ChatList({
                 className="rounded-full bg-blue-500 p-2 text-white hover:bg-blue-600"
                 title="Iniciar chat"
               >
-                <MessageCircle className="h-4 w-4" />
+                <MessageCircle className="size-4" />
               </button>
               {unreadConversationIds?.includes(conv.id) && (
-                <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500" />
+                <span className="absolute -top-1 -right-1 size-3 rounded-full border-2 border-white bg-red-500" />
               )}
             </div>
           </div>

@@ -109,43 +109,43 @@ const styles = `
     .svg-frame {
       position: relative;
       width: 300px;
-      height: 300px;
+      height:
       transform-style: preserve-3d;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items:
     }
 
-    .svg-frame svg {
-      position: absolute;
+     svg
+       absolute;
       transition: .5s;
       z-index: calc(1 - (0.2 * var(--j)));
-      transform-origin: center;
-      width: 344px;
-      height: 344px;
+      transform-origin:
+       344px;
+       
       fill: none;
-    }
+    
 
-    .svg-frame:hover svg {
-      transform: rotate(-80deg) skew(30deg) translateX(calc(45px * var(--i))) translateY(calc(-35px * var(--i)));
-    }
+    .svg-frame:hover
+      transform: rotate(-80deg) skew(30deg) translateX(calc(45px var(--i))) translateY(calc(-35px var(--i)));
+    
 
-    #out2 {
+    #out2
       animation: rotate16 7s ease-in-out infinite alternate;
-      transform-origin: center;
-    }
+       
+    
 
-    #out3 {
-      animation: rotate16 3s ease-in-out infinite alternate;
-      transform-origin: center;
+    #out3
+        3s
+       
       stroke: #ff0;
-    }
+    
 
-    @keyframes rotate16 {
-      to {
-      transform: rotate(360deg);
-      }
-    }
+    @keyframes
+      to
+       rotate(360deg);
+      
+    
     `;
 
 // Replace the stylesheet append code
@@ -783,7 +783,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       selectedColor === '#FFFFFF'
                         ? 'border-black'
                         : 'border-white'
-                    } `}
+                    }`}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}

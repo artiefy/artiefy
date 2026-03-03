@@ -115,7 +115,7 @@ export function EmbeddingsGenerator({
       >
         {isLoading ? (
           <>
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+            <span className="inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
             Generando embeddings...
           </>
         ) : isSuccess ? (

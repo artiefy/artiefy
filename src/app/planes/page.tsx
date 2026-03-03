@@ -238,7 +238,7 @@ const PlansPage: React.FC = () => {
                   )}
 
                   <div className="flex flex-col space-y-1.5 p-6 pb-2 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white">
+                    <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary text-white">
                       {createElement(
                         plan.icon as React.ComponentType<{ className: string }>,
                         { className: 'h-6 w-6' }
@@ -265,11 +265,11 @@ const PlansPage: React.FC = () => {
                           key={feature.text}
                           className="flex items-start gap-3"
                         >
-                          <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
+                          <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
                             {feature.available ? (
-                              <BsCheck2Circle className="h-3 w-3 text-primary" />
+                              <BsCheck2Circle className="size-3 text-primary" />
                             ) : (
-                              <FaTimesCircle className="h-3 w-3 text-red-500" />
+                              <FaTimesCircle className="size-3 text-red-500" />
                             )}
                           </div>
                           <span className="text-sm text-muted-foreground">
@@ -307,7 +307,7 @@ const PlansPage: React.FC = () => {
                 className="absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500 hover:text-gray-700"
                 type="button"
               >
-                <FaTimes className="h-6 w-6" />
+                <FaTimes className="size-6" />
               </button>
             </div>
             <div>

@@ -13,7 +13,7 @@ export function ProgramDetailsSkeleton() {
         <Card className="overflow-hidden p-0">
           <CardHeader className="px-0">
             <AspectRatio ratio={16 / 6}>
-              <Skeleton className="h-full w-full" />
+              <Skeleton className="size-full" />
             </AspectRatio>
           </CardHeader>
 
@@ -28,7 +28,7 @@ export function ProgramDetailsSkeleton() {
                 <Skeleton className="h-6 w-32" />
                 <div className="flex space-x-1">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={`star-skeleton-${i}`} className="h-5 w-5" />
+                    <Skeleton key={`star-skeleton-${i}`} className="size-5" />
                   ))}
                 </div>
               </div>

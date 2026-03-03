@@ -826,7 +826,8 @@ export default function EnrolledUsersPage() {
           <tr>
             <th>PRODUCTO</th>
             <th class="text-center">N° PAGO</th>
-            <th>FECHA DE PAGO</th>
+            <th>FECHA PROGRAMA</th>
+            <th>FECHA REAL DE PAGO</th>
             <th>MÉTODO DE PAGO</th>
             <th class="text-right">VALOR</th>
           </tr>
@@ -873,7 +874,20 @@ export default function EnrolledUsersPage() {
       <tr>
         <td>${row.concepto ?? `Cuota ${cuotaNum}`}</td>
         <td class="text-center">${row.nro_pago ?? row.nroPago ?? cuotaNum}</td>
-        <td>${row.fecha ? new Date(row.fecha).toLocaleDateString('es-CO') : '-'}</td>
+        <td class="border border-black px-3 py-2 text-black">
+          ${
+            row.fechaPrograma
+              ? new Date(row.fechaPrograma).toLocaleDateString('es-CO')
+              : '-'
+          }
+        </td>
+        <td class="border border-black px-3 py-2 text-black">
+          ${
+            row.fechaRealPago
+              ? new Date(row.fechaRealPago).toLocaleDateString('es-CO')
+              : '-'
+          }
+        </td>
         <td>${row.metodo ?? '-'}</td>
         <td class="text-right">${formatCOP(valor)}</td>
       </tr>
@@ -896,9 +910,22 @@ export default function EnrolledUsersPage() {
       <tr>
         <td style="font-weight: bold;">${row.concepto ?? label}</td>
         <td class="text-center">${idxBase + 1}</td>
-        <td>${row.fecha ? new Date(row.fecha).toLocaleDateString('es-CO') : '-'}</td>
-        <td>${row.metodo ?? '-'}</td>
-        <td class="text-right">${formatCOP(valor)}</td>
+          <td class="border border-black px-3 py-2 text-black">
+            ${
+              row.fechaPrograma
+                ? new Date(row.fechaPrograma).toLocaleDateString('es-CO')
+                : '-'
+            }
+          </td>
+          <td class="border border-black px-3 py-2 text-black">
+            ${
+              row.fechaRealPago
+                ? new Date(row.fechaRealPago).toLocaleDateString('es-CO')
+                : '-'
+            }
+          </td>
+          <td>${row.metodo ?? '-'}</td>
+          <td class="text-right">${formatCOP(valor)}</td>
       </tr>
     `;
     });
@@ -1005,8 +1032,16 @@ export default function EnrolledUsersPage() {
               : Number.isFinite(getNum(p, 'nro_pago'))
                 ? getNum(p, 'nro_pago')
                 : esp.nroPago,
-            fecha: ((): string => {
-              const f = p.fecha;
+            fechaPrograma: ((): string => {
+              const f = p.fechaPrograma;
+              return typeof f === 'string' ||
+                typeof f === 'number' ||
+                f instanceof Date
+                ? String(f)
+                : '';
+            })(),
+            fechaRealPago: ((): string => {
+              const f = p.fechaRealPago;
               return typeof f === 'string' ||
                 typeof f === 'number' ||
                 f instanceof Date
@@ -1037,8 +1072,16 @@ export default function EnrolledUsersPage() {
           slots[idx] = {
             concepto: getStr(p, 'concepto') || `Cuota ${idx + 1}`,
             nro_pago: nroPagoNum,
-            fecha: ((): string => {
-              const f = p.fecha;
+            fechaPrograma: ((): string => {
+              const f = p.fechaPrograma ?? p.fecha;
+              return typeof f === 'string' ||
+                typeof f === 'number' ||
+                f instanceof Date
+                ? String(f)
+                : '';
+            })(),
+            fechaRealPago: ((): string => {
+              const f = p.fechaRealPago;
               return typeof f === 'string' ||
                 typeof f === 'number' ||
                 f instanceof Date
@@ -1098,8 +1141,8 @@ export default function EnrolledUsersPage() {
       const next = [...prev];
       const current: Pago = { ...(next[index] ?? {}) };
 
-      if (field === 'fecha') {
-        current.fecha = value || null;
+      if (field === 'fechaPrograma') {
+        current.fechaPrograma = value || null;
         next[index] = current;
 
         // Autocompletar mes a mes a partir de la 1ª cuota
@@ -1108,9 +1151,10 @@ export default function EnrolledUsersPage() {
           for (let i = 1; i < 12; i++) {
             const r: Pago = { ...(next[i] ?? {}) };
             const hasFecha =
-              typeof r.fecha === 'string' && r.fecha.trim().length > 0;
+              typeof r.fechaPrograma === 'string' &&
+              r.fechaPrograma.trim().length > 0;
             if (!hasFecha) {
-              r.fecha = addMonthsKeepingDay(base, i);
+              r.fechaPrograma = addMonthsKeepingDay(base, i);
               next[i] = r;
             }
           }
@@ -1161,7 +1205,8 @@ export default function EnrolledUsersPage() {
     }
 
     const row = editablePagos[index] ?? {};
-    const fechaStr = toISODateLike(row.fecha);
+    const fechaStr = toISODateLike(row.fechaPrograma);
+    const fechaRealPagoStr = toISODateLike(row.fechaRealPago);
 
     if (!fechaStr) {
       alert('La fecha es obligatoria para guardar.');
@@ -1190,7 +1235,8 @@ export default function EnrolledUsersPage() {
             index,
             concepto,
             nro_pago,
-            fecha: fechaStr,
+            fechaPrograma: fechaStr,
+            fechaRealPago: fechaRealPagoStr || null,
             metodo: row.metodo ?? '',
             valor: Number(
               typeof row.valor === 'number' ? row.valor : (row.valor ?? 0)
@@ -1207,7 +1253,7 @@ export default function EnrolledUsersPage() {
       }
 
       // 👇 CAMBIO: Guardar el estado actual de fechas autocompletadas
-      const currentFechas = editablePagos.map((p) => p.fecha);
+      const currentFechas = editablePagos.map((p) => p.fechaPrograma);
 
       const pagosRefrescados = await fetchPagosUsuarioPrograma(
         carteraUserId,
@@ -1218,9 +1264,9 @@ export default function EnrolledUsersPage() {
 
       // 👇 NUEVO: Restaurar las fechas autocompletadas que no están en el backend
       const pagosMerged = pagosActualizados.map((p, idx) => {
-        // Si la fecha está vacía en el backend pero la teníamos autocompletada, mantenerla
-        if (!p.fecha && currentFechas[idx]) {
-          return { ...p, fecha: currentFechas[idx] };
+        // Si la fechaPrograma está vacía en el backend pero la teníamos autocompletada, mantenerla
+        if (!p.fechaPrograma && currentFechas[idx]) {
+          return { ...p, fechaPrograma: currentFechas[idx] };
         }
         return p;
       });
@@ -1408,7 +1454,7 @@ export default function EnrolledUsersPage() {
     const m = hoy.getMonth();
 
     const pagosMesActual = editablePagos.filter((p) => {
-      const f = p?.fecha ? new Date(String(p.fecha)) : null;
+      const f = p?.fechaPrograma ? new Date(String(p.fechaPrograma)) : null;
       const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
       return (
         f &&
@@ -1427,8 +1473,8 @@ export default function EnrolledUsersPage() {
     // Tomamos el ÚLTIMO pago del mes por fecha
     const ultimoPagoMes = [...pagosMesActual].sort(
       (a, b) =>
-        new Date(String(a.fecha)).getTime() -
-        new Date(String(b.fecha)).getTime()
+        new Date(String(a.fechaPrograma)).getTime() -
+        new Date(String(b.fechaPrograma)).getTime()
     )[pagosMesActual.length - 1];
 
     // Regla: si tiene pago y el verificado dice "No verificado", mostramos "No verificado"
@@ -1500,7 +1546,8 @@ export default function EnrolledUsersPage() {
     concepto?: string | null;
     nro_pago?: string | number | null;
     nroPago?: string | number | null;
-    fecha?: string | number | Date | null;
+    fechaPrograma?: string | number | Date | null; // renombrado
+    fechaRealPago?: string | number | Date | null; // nuevo campo
     metodo?: string | null;
     valor?: string | number | null;
     receiptUrl?: string;
@@ -1526,7 +1573,7 @@ export default function EnrolledUsersPage() {
     const m = hoy.getMonth();
 
     const pagosMes = arr.filter((p) => {
-      const f = p?.fecha ? new Date(String(p.fecha)) : null;
+      const f = p?.fechaPrograma ? new Date(String(p.fechaPrograma)) : null;
       const v = typeof p?.valor === 'number' ? p.valor : Number(p?.valor ?? 0);
       return (
         f &&
@@ -1541,8 +1588,8 @@ export default function EnrolledUsersPage() {
 
     const ultimo = [...pagosMes].sort(
       (a, b) =>
-        new Date(String(a.fecha)).getTime() -
-        new Date(String(b.fecha)).getTime()
+        new Date(String(a.fechaPrograma)).getTime() -
+        new Date(String(b.fechaPrograma)).getTime()
     )[pagosMes.length - 1];
 
     return Boolean(ultimo?.receiptUrl) && ultimo?.receiptVerified === false;
@@ -1590,31 +1637,11 @@ export default function EnrolledUsersPage() {
   const [price, setPrice] = useState<number>(0);
 
   useEffect(() => {
+    // Solo actualizar el precio, sin tocar editablePagos
     if (carteraInfo?.programaPrice) {
-      // Si ya hay un plan guardado
       setPrice(carteraInfo.programaPrice);
-
-      // Ajustamos las cuotas al valor existente
-      const cuotas = Array.from({ length: DEFAULT_CUOTAS }, (_, idx) => ({
-        concepto: `Cuota ${idx + 1}`,
-        nro_pago: idx + 1,
-        fecha: '',
-        metodo: '',
-        valor: Math.round(carteraInfo.programaPrice / DEFAULT_CUOTAS),
-      }));
-      setEditablePagos(cuotas);
     } else {
-      // Si no hay plan creado, usamos 12 cuotas por defecto de 150000
       setPrice(DEFAULT_CUOTAS * DEFAULT_VALOR);
-
-      const cuotas = Array.from({ length: DEFAULT_CUOTAS }, (_, idx) => ({
-        concepto: `Cuota ${idx + 1}`,
-        nro_pago: idx + 1,
-        fecha: '',
-        metodo: '',
-        valor: DEFAULT_VALOR,
-      }));
-      setEditablePagos(cuotas);
     }
   }, [carteraInfo]);
 
@@ -1673,7 +1700,7 @@ export default function EnrolledUsersPage() {
               typeof r.nroPago === 'string' || typeof r.nroPago === 'number'
                 ? r.nroPago
                 : null,
-            fecha:
+            fechaPrograma:
               typeof r.fecha === 'string' ||
               typeof r.fecha === 'number' ||
               r.fecha instanceof Date
@@ -2241,21 +2268,27 @@ export default function EnrolledUsersPage() {
         const norm = mapPagosToEditable(pagosUsuarioPrograma);
 
         let baseIndex = norm.findIndex(
-          (r) => typeof r?.fecha === 'string' && r.fecha.trim() !== ''
+          (r) =>
+            typeof r?.fechaPrograma === 'string' &&
+            r.fechaPrograma.trim() !== ''
         );
         const baseISO =
           baseIndex >= 0
-            ? (norm[baseIndex]!.fecha as string)
+            ? (norm[baseIndex]!.fechaPrograma as string)
             : new Date().toISOString().split('T')[0];
         if (baseIndex < 0) baseIndex = 0;
 
         const next = norm.map((r, i) => {
           const hasFecha =
-            typeof r?.fecha === 'string' && r.fecha.trim() !== '';
+            typeof r?.fechaPrograma === 'string' &&
+            r.fechaPrograma.trim() !== '';
           if (hasFecha) return r;
           // sólo autocompleta cuotas 0..11
           if (i <= 11)
-            return { ...r, fecha: addMonthsKeepingDay(baseISO, i - baseIndex) };
+            return {
+              ...r,
+              fechaPrograma: addMonthsKeepingDay(baseISO, i - baseIndex),
+            };
           return r; // especiales intactos
         });
 
@@ -2293,42 +2326,7 @@ export default function EnrolledUsersPage() {
     }
   };
 
-  useEffect(() => {
-    // Solo ejecutar cuando hay datos de pagos
-    if (!carteraInfo?.pagosUsuarioPrograma) return;
-
-    const norm = mapPagosToEditable(carteraInfo.pagosUsuarioPrograma);
-    const baseIndex = norm.findIndex(
-      (r) => typeof r?.fecha === 'string' && r.fecha.trim() !== ''
-    );
-
-    // Si no hay ninguna fecha, solo mapear
-    if (baseIndex === -1) {
-      setEditablePagos(norm);
-      return;
-    }
-
-    const baseISO = norm[baseIndex]!.fecha as string;
-
-    // Autocompletar fechas vacías mes a mes
-    const filled = norm.map((r, i) => {
-      const hasFecha = typeof r.fecha === 'string' && r.fecha.trim() !== '';
-      if (hasFecha) return r; // Ya tiene fecha, mantenerla
-
-      // Solo autocompleta cuotas 0..11 que estén vacías
-      if (i <= 11) {
-        return { ...r, fecha: addMonthsKeepingDay(baseISO, i - baseIndex) };
-      }
-
-      return r; // Especiales sin tocar
-    });
-
-    setEditablePagos(filled);
-  }, [
-    carteraInfo?.pagosUsuarioPrograma,
-    addMonthsKeepingDay,
-    mapPagosToEditable,
-  ]);
+  // useEffect de autocompletado eliminado: openCarteraModal ya lo maneja
   useEffect(() => {
     localStorage.setItem('visibleColumns', JSON.stringify(visibleColumns));
   }, [visibleColumns]);
@@ -2646,7 +2644,9 @@ export default function EnrolledUsersPage() {
                   const m = hoy.getMonth();
 
                   const pagosMes = (editablePagos ?? []).filter((p) => {
-                    const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                    const f = p?.fechaPrograma
+                      ? new Date(String(p.fechaPrograma))
+                      : null;
                     const v =
                       typeof p?.valor === 'number'
                         ? p.valor
@@ -2663,8 +2663,8 @@ export default function EnrolledUsersPage() {
                   if (pagosMes.length > 0) {
                     const ultimo = [...pagosMes].sort(
                       (a, b) =>
-                        new Date(String(a.fecha)).getTime() -
-                        new Date(String(b.fecha)).getTime()
+                        new Date(String(a.fechaPrograma)).getTime() -
+                        new Date(String(b.fechaPrograma)).getTime()
                     )[pagosMes.length - 1];
 
                     if (
@@ -2710,7 +2710,9 @@ export default function EnrolledUsersPage() {
                   const m = hoy.getMonth();
 
                   const pagosMes = (editablePagos ?? []).filter((p) => {
-                    const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                    const f = p?.fechaPrograma
+                      ? new Date(String(p.fechaPrograma))
+                      : null;
                     const v =
                       typeof p?.valor === 'number'
                         ? p.valor
@@ -2727,8 +2729,8 @@ export default function EnrolledUsersPage() {
                   if (pagosMes.length > 0) {
                     const ultimo = [...pagosMes].sort(
                       (a, b) =>
-                        new Date(String(a.fecha)).getTime() -
-                        new Date(String(b.fecha)).getTime()
+                        new Date(String(a.fechaPrograma)).getTime() -
+                        new Date(String(b.fechaPrograma)).getTime()
                     )[pagosMes.length - 1];
 
                     if (
@@ -2807,7 +2809,9 @@ export default function EnrolledUsersPage() {
                   const m = hoy.getMonth();
 
                   const pagosMes = (editablePagos ?? []).filter((p) => {
-                    const f = p?.fecha ? new Date(String(p.fecha)) : null;
+                    const f = p?.fechaPrograma
+                      ? new Date(String(p.fechaPrograma))
+                      : null;
                     const v =
                       typeof p?.valor === 'number'
                         ? p.valor
@@ -2824,8 +2828,8 @@ export default function EnrolledUsersPage() {
                   if (pagosMes.length > 0) {
                     const ultimo = [...pagosMes].sort(
                       (a, b) =>
-                        new Date(String(a.fecha)).getTime() -
-                        new Date(String(b.fecha)).getTime()
+                        new Date(String(a.fechaPrograma)).getTime() -
+                        new Date(String(b.fechaPrograma)).getTime()
                     )[pagosMes.length - 1];
 
                     if (
@@ -3347,7 +3351,7 @@ export default function EnrolledUsersPage() {
                               : [...prev, col.id]
                           )
                         }
-                        className="h-4 w-4 rounded border-gray-400 bg-gray-700"
+                        className="size-4 rounded border-gray-400 bg-gray-700"
                       />
                       <span>{col.label}</span>
                     </label>
@@ -3861,8 +3865,8 @@ export default function EnrolledUsersPage() {
                           const m = hoy.getMonth();
 
                           const pagosMes = pagosParaEvaluar.filter((p) => {
-                            const f = p?.fecha
-                              ? new Date(String(p.fecha))
+                            const f = p?.fechaPrograma
+                              ? new Date(String(p.fechaPrograma))
                               : null;
                             const v =
                               typeof p?.valor === 'number'
@@ -3887,8 +3891,8 @@ export default function EnrolledUsersPage() {
                           if (pagosMes.length > 0) {
                             const ultimo = [...pagosMes].sort(
                               (a, b) =>
-                                new Date(String(a.fecha)).getTime() -
-                                new Date(String(b.fecha)).getTime()
+                                new Date(String(a.fechaPrograma)).getTime() -
+                                new Date(String(b.fechaPrograma)).getTime()
                             )[pagosMes.length - 1];
 
                             // ✔️ Si el último pago del mes tiene comprobante y está no verificado → "No verificado"
@@ -4993,7 +4997,10 @@ export default function EnrolledUsersPage() {
                           N° PAGO{' '}
                         </th>
                         <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
-                          FECHA DE PAGO
+                          FECHA PROGRAMA
+                        </th>
+                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                          FECHA REAL DE PAGO
                         </th>
                         <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
                           MÉTODO DE PAGO
@@ -5064,19 +5071,47 @@ export default function EnrolledUsersPage() {
                               />
                             </td>
 
-                            {/* FECHA */}
+                            {/* FECHA PROGRAMA */}
                             <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                               <input
                                 type="date"
                                 value={
-                                  typeof editablePagos[idx]?.fecha === 'string'
-                                    ? (editablePagos[idx]!.fecha as string)
-                                    : toISODateLike(editablePagos[idx]?.fecha)
+                                  typeof editablePagos[idx]?.fechaPrograma ===
+                                  'string'
+                                    ? (editablePagos[idx]!
+                                        .fechaPrograma as string)
+                                    : toISODateLike(
+                                        editablePagos[idx]?.fechaPrograma
+                                      )
                                 }
                                 onChange={(e) =>
                                   handleCuotaChange(
                                     idx,
-                                    'fecha',
+                                    'fechaPrograma',
+                                    e.target.value
+                                  )
+                                }
+                                className="w-36 rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                              />
+                            </td>
+
+                            {/* FECHA REAL DE PAGO */}
+                            <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                              <input
+                                type="date"
+                                value={
+                                  typeof editablePagos[idx]?.fechaRealPago ===
+                                  'string'
+                                    ? (editablePagos[idx]!
+                                        .fechaRealPago as string)
+                                    : toISODateLike(
+                                        editablePagos[idx]?.fechaRealPago
+                                      )
+                                }
+                                onChange={(e) =>
+                                  handleCuotaChange(
+                                    idx,
+                                    'fechaRealPago',
                                     e.target.value
                                   )
                                 }
@@ -5172,7 +5207,7 @@ export default function EnrolledUsersPage() {
                                   <svg
                                     viewBox="0 0 20 20"
                                     fill="currentColor"
-                                    className="h-3.5 w-3.5"
+                                    className="size-3.5"
                                   >
                                     <path d="M3 4a2 2 0 012-2h7l5 5v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4zM5 4v4h6V4H5z" />
                                   </svg>
@@ -5234,7 +5269,7 @@ export default function EnrolledUsersPage() {
                                   <svg
                                     viewBox="0 0 20 20"
                                     fill="currentColor"
-                                    className="h-3.5 w-3.5"
+                                    className="size-3.5"
                                   >
                                     <path d="M3 16a2 2 0 002 2h10a2 2 0 002-2v-5h-2v5H5V5h5V3H5a2 2 0 00-2 2v11z" />
                                     <path d="M15 3h-3V1h5v5h-2V3z" />
@@ -5263,7 +5298,7 @@ export default function EnrolledUsersPage() {
                                     <svg
                                       viewBox="0 0 20 20"
                                       fill="currentColor"
-                                      className="h-3.5 w-3.5"
+                                      className="size-3.5"
                                     >
                                       <path d="M10 3c-5 0-8 7-8 7s3 7 8 7 8-7 8-7-3-7-8-7zm0 2a5 5 0 110 10A5 5 0 0110 5zm0 2a3 3 0 100 6 3 3 0 000-6z" />
                                     </svg>
@@ -5277,7 +5312,7 @@ export default function EnrolledUsersPage() {
                                     <svg
                                       viewBox="0 0 20 20"
                                       fill="currentColor"
-                                      className="h-3.5 w-3.5"
+                                      className="size-3.5"
                                     >
                                       <path d="M10 3c-5 0-8 7-8 7l2 2s3-7 6-7 6 7 6 7l2-2s-3-7-8-7z" />
                                     </svg>
@@ -5297,7 +5332,7 @@ export default function EnrolledUsersPage() {
                                   <svg
                                     viewBox="0 0 20 20"
                                     fill="currentColor"
-                                    className="h-3 w-3"
+                                    className="size-3"
                                     aria-hidden="true"
                                   >
                                     {editablePagos[idx]?.receiptVerified ? (
@@ -5371,7 +5406,7 @@ export default function EnrolledUsersPage() {
                                     <svg
                                       viewBox="0 0 20 20"
                                       fill="currentColor"
-                                      className="h-3.5 w-3.5"
+                                      className="size-3.5"
                                     >
                                       <path d="M10 2l2.39 4.84 5.34.78-3.86 3.76.91 5.31L10 14.77 4.22 16.7l.91-5.31L1.27 7.62l5.34-.78L10 2z" />
                                     </svg>
@@ -5388,7 +5423,7 @@ export default function EnrolledUsersPage() {
                     <tfoot>
                       {/* Encabezado plan */}
                       <tr>
-                        <td colSpan={5} className="px-3 py-3">
+                        <td colSpan={5} className="p-3">
                           <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
                             <span className="font-semibold text-gray-700 dark:text-gray-200">
                               PLAN / VALOR PROGRAMA
@@ -5416,7 +5451,7 @@ export default function EnrolledUsersPage() {
 
                       {/* Valor pagado */}
                       <tr>
-                        <td colSpan={5} className="px-3 py-3">
+                        <td colSpan={5} className="p-3">
                           <div className="flex items-center justify-between rounded-lg bg-green-50 p-3 dark:bg-green-900/30">
                             <span className="font-semibold text-green-700 dark:text-green-400">
                               VALOR PAGADO
@@ -5438,7 +5473,7 @@ export default function EnrolledUsersPage() {
 
                       {/* Deuda restante */}
                       <tr>
-                        <td colSpan={5} className="px-3 py-3">
+                        <td colSpan={5} className="p-3">
                           <div className="flex items-center justify-between rounded-lg bg-red-50 p-3 dark:bg-red-900/30">
                             <span className="font-semibold text-red-700 dark:text-red-400">
                               DEUDA RESTANTE
@@ -5477,7 +5512,10 @@ export default function EnrolledUsersPage() {
                               PRODUCTO
                             </th>
                             <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
-                              FECHA DE PAGO
+                              FECHA PROGRAMA
+                            </th>
+                            <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                              FECHA REAL DE PAGO
                             </th>
                             <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
                               MÉTODO DE PAGO
@@ -5525,23 +5563,49 @@ export default function EnrolledUsersPage() {
                                   />
                                 </td>
 
-                                {/* FECHA */}
+                                {/* FECHA PROGRAMA */}
                                 <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
                                   <input
                                     type="date"
                                     value={
-                                      typeof editablePagos[idxBase]?.fecha ===
-                                      'string'
+                                      typeof editablePagos[idxBase]
+                                        ?.fechaPrograma === 'string'
                                         ? (editablePagos[idxBase]!
-                                            .fecha as string)
+                                            .fechaPrograma as string)
                                         : toISODateLike(
-                                            editablePagos[idxBase]?.fecha
+                                            editablePagos[idxBase]
+                                              ?.fechaPrograma
                                           )
                                     }
                                     onChange={(e) =>
                                       handleCuotaChange(
                                         idxBase,
-                                        'fecha',
+                                        'fechaPrograma',
+                                        e.target.value
+                                      )
+                                    }
+                                    className="w-36 rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                  />
+                                </td>
+
+                                {/* FECHA REAL DE PAGO */}
+                                <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                  <input
+                                    type="date"
+                                    value={
+                                      typeof editablePagos[idxBase]
+                                        ?.fechaRealPago === 'string'
+                                        ? (editablePagos[idxBase]!
+                                            .fechaRealPago as string)
+                                        : toISODateLike(
+                                            editablePagos[idxBase]
+                                              ?.fechaRealPago
+                                          )
+                                    }
+                                    onChange={(e) =>
+                                      handleCuotaChange(
+                                        idxBase,
+                                        'fechaRealPago',
                                         e.target.value
                                       )
                                     }
@@ -5860,7 +5924,10 @@ export default function EnrolledUsersPage() {
                             N° PAGO
                           </th>
                           <th className="border border-black px-3 py-2 text-left font-bold text-black">
-                            FECHA DE PAGO
+                            FECHA PROGRAMA
+                          </th>
+                          <th className="border border-black px-3 py-2 text-left font-bold text-black">
+                            FECHA REAL DE PAGO
                           </th>
                           <th className="border border-black px-3 py-2 text-left font-bold text-black">
                             MÉTODO DE PAGO
@@ -5892,10 +5959,17 @@ export default function EnrolledUsersPage() {
                                 {row.nro_pago ?? row.nroPago ?? cuotaNum}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
-                                {row.fecha
-                                  ? new Date(row.fecha).toLocaleDateString(
-                                      'es-CO'
-                                    )
+                                {row.fechaPrograma
+                                  ? new Date(
+                                      row.fechaPrograma
+                                    ).toLocaleDateString('es-CO')
+                                  : '-'}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-black">
+                                {row.fechaRealPago
+                                  ? new Date(
+                                      row.fechaRealPago as string | Date
+                                    ).toLocaleDateString('es-CO')
                                   : '-'}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
@@ -5932,10 +6006,17 @@ export default function EnrolledUsersPage() {
                                 {idxBase + 1}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
-                                {row.fecha
-                                  ? new Date(row.fecha).toLocaleDateString(
-                                      'es-CO'
-                                    )
+                                {row.fechaPrograma
+                                  ? new Date(
+                                      row.fechaPrograma as string | Date
+                                    ).toLocaleDateString('es-CO')
+                                  : '-'}
+                              </td>
+                              <td className="border border-black px-3 py-2 text-black">
+                                {row.fechaRealPago
+                                  ? new Date(
+                                      row.fechaRealPago as string | Date
+                                    ).toLocaleDateString('es-CO')
                                   : '-'}
                               </td>
                               <td className="border border-black px-3 py-2 text-black">
@@ -6079,11 +6160,10 @@ export default function EnrolledUsersPage() {
                           Fecha
                         </p>
                         <p className="mt-1 font-semibold text-gray-900 dark:text-white">
-                          {editablePagos[pendingRowForReceipt].fecha
+                          {editablePagos[pendingRowForReceipt].fechaPrograma
                             ? new Date(
-                                editablePagos[pendingRowForReceipt].fecha as
-                                  | string
-                                  | Date
+                                editablePagos[pendingRowForReceipt]
+                                  .fechaPrograma as string | Date
                               ).toLocaleDateString('es-CO', {
                                 year: 'numeric',
                                 month: '2-digit',
@@ -6632,7 +6712,7 @@ export default function EnrolledUsersPage() {
                 aria-label="Cerrar"
                 title="Cerrar"
               >
-                <X className="h-5 w-5" />
+                <X className="size-5" />
               </button>
             </div>
 
@@ -6701,7 +6781,7 @@ export default function EnrolledUsersPage() {
                 {/* Simulación de chat WhatsApp */}
                 <div className="overflow-hidden rounded-xl border border-gray-700">
                   <div className="flex items-center gap-3 bg-[#202C33] px-3 py-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#00a884]/30 text-xs text-[#00a884]">
+                    <div className="flex size-8 items-center justify-center rounded-full bg-[#00a884]/30 text-xs text-[#00a884]">
                       WA
                     </div>
                     <div className="flex-1">

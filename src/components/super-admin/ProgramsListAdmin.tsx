@@ -131,7 +131,7 @@ export default function ProgramListAdmin({
                   <Button asChild className="h-8 w-[95px] px-0">
                     <Link
                       href={`/dashboard/super-admin/programs/${program.id}`}
-                      className="group/button bg-background text-primary hover:bg-primary/10 inline-flex h-full w-full items-center justify-center gap-1.5 rounded-md border border-white/20 px-2 text-[10px] transition-all"
+                      className="group/button bg-background text-primary hover:bg-primary/10 inline-flex size-full items-center justify-center gap-1.5 rounded-md border border-white/20 px-2 text-[10px] transition-all"
                     >
                       <span className="relative z-10">Ver Programa</span>
                       <ArrowRightIcon className="relative z-10 size-3" />

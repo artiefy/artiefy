@@ -28,8 +28,8 @@ export function NextLessonModal({
           className="flex items-center"
           aria-label={`Ir a ${nextLesson.title}`}
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-green-500 bg-green-600/30 transition-transform duration-200 hover:scale-110">
-            <ChevronRight className="h-6 w-6 text-green-400 transition-transform duration-200 hover:scale-110" />
+          <div className="flex size-12 items-center justify-center rounded-xl border-2 border-green-500 bg-green-600/30 transition-transform duration-200 hover:scale-110">
+            <ChevronRight className="size-6 text-green-400 transition-transform duration-200 hover:scale-110" />
           </div>
         </Link>
         <div className="min-w-0">
@@ -43,10 +43,10 @@ export function NextLessonModal({
       </div>
       <Link
         href={`/estudiantes/clases/${nextLesson.id}`}
-        className="flex h-12 w-12 items-center justify-center rounded-xl border-2 border-green-500 bg-green-600/30 transition-transform duration-200 hover:scale-110 sm:hidden"
+        className="flex size-12 items-center justify-center rounded-xl border-2 border-green-500 bg-green-600/30 transition-transform duration-200 hover:scale-110 sm:hidden"
         aria-label={`Ir a ${nextLesson.title}`}
       >
-        <ChevronRight className="h-6 w-6 text-green-400 transition-transform duration-200 hover:scale-110" />
+        <ChevronRight className="size-6 text-green-400 transition-transform duration-200 hover:scale-110" />
       </Link>
     </div>
   );

@@ -44,7 +44,7 @@ const ModalJustificacion: React.FC<ModalJustificacionProps> = ({
             id="just"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
-            className="h-full min-h-[80px] w-full resize-none rounded-lg border border-cyan-200 bg-white p-3 text-sm text-gray-800 ring-cyan-300 transition-all duration-200 outline-none focus:ring-2 sm:min-h-[160px] sm:text-base"
+            className="size-full min-h-[80px] resize-none rounded-lg border border-cyan-200 bg-white p-3 text-sm text-gray-800 ring-cyan-300 transition-all duration-200 outline-none focus:ring-2 sm:min-h-[160px] sm:text-base"
             placeholder="Descripción de la Justificación..."
           />
         </div>

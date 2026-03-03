@@ -241,121 +241,121 @@ const styles = `
     .svg-frame {
       position: relative;
       width: 300px;
-      height: 300px;
+      height:
       transform-style: preserve-3d;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items:
     }
 
-    .svg-frame svg {
-      position: absolute;
+     svg
+       absolute;
       transition: .5s;
       z-index: calc(1 - (0.2 * var(--j)));
-      transform-origin: center;
-      width: 344px;
-      height: 344px;
+      transform-origin:
+       344px;
+       
       fill: none;
-    }
+    
 
-    .svg-frame:hover svg {
-      transform: rotate(-80deg) skew(30deg) translateX(calc(45px * var(--i))) translateY(calc(-35px * var(--i)));
-    }
+    .svg-frame:hover
+      transform: rotate(-80deg) skew(30deg) translateX(calc(45px var(--i))) translateY(calc(-35px var(--i)));
+    
 
-    #out2 {
+    #out2
       animation: rotate16 7s ease-in-out infinite alternate;
-      transform-origin: center;
-    }
+       
+    
 
-    #out3 {
-      animation: rotate16 3s ease-in-out infinite alternate;
-      transform-origin: center;
+    #out3
+        3s
+       
       stroke: #ff0;
-    }
+    
 
-    @keyframes rotate16 {
-      to {
-      transform: rotate(360deg);
-      }
-    }
+    @keyframes
+      to
+       rotate(360deg);
+      
+    
 
-    @keyframes slideInFromLeft {
-      from {
+     slideInFromLeft
+      from
         opacity: 0;
-        transform: translateX(-20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
+         translateX(-20px);
+      
+       
+         1;
+         translateX(0);
+      
+    
 
-    @keyframes slideInFromRight {
-      from {
-        opacity: 0;
-        transform: translateX(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
+     slideInFromRight
+       
+         
+         translateX(20px);
+      
+       
+         
+         
+      
+    
 
-    @keyframes slideInFromBottom {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+     slideInFromBottom
+       
+         
+         translateY(20px);
+      
+       
+         
+         translateY(0);
+      
+    
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
-    }
+     fadeIn
+       
+         
+      
+       
+         
+      
+    
 
-    .animate-in {
-      animation: fadeIn 0.5s ease-out forwards;
-    }
+    .animate-in
+        0.5s ease-out forwards;
+    
 
-    .slide-in-from-left-4 {
-      animation: slideInFromLeft 0.5s ease-out forwards;
-    }
+    .slide-in-from-left-4
+          
+    
 
-    .slide-in-from-right-4 {
-      animation: slideInFromRight 0.5s ease-out forwards;
-    }
+    .slide-in-from-right-4
+          
+    
 
-    .slide-in-from-left-8 {
-      animation: slideInFromLeft 0.7s ease-out forwards;
-    }
+    .slide-in-from-left-8
+        0.7s
+    
 
-    .slide-in-from-right-8 {
-      animation: slideInFromRight 0.7s ease-out forwards;
-    }
+    .slide-in-from-right-8
+          
+    
 
-    .slide-in-from-bottom-8 {
-      animation: slideInFromBottom 0.7s ease-out forwards;
-    }
+    .slide-in-from-bottom-8
+          
+    
 
-    .delay-150 {
+    .delay-150
       animation-delay: 150ms;
-    }
+    
 
-    .duration-500 {
+    .duration-500
       animation-duration: 500ms;
-    }
+    
 
-    .duration-700 {
-      animation-duration: 700ms;
-    }
+    .duration-700
+       700ms;
+    
     `;
 
 // Replace the stylesheet append code
@@ -1750,7 +1750,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
               </div>
               <svg
-                className={`h-5 w-5 flex-shrink-0 text-cyan-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                className={`size-5 flex-shrink-0 text-cyan-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1846,7 +1846,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               title="Copiar nombre"
                             >
                               <svg
-                                className="h-4 w-4"
+                                className="size-4"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -1873,7 +1873,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 title="Copiar correo"
                               >
                                 <svg
-                                  className="h-4 w-4"
+                                  className="size-4"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -1912,7 +1912,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           >
             {isUpdating ? (
               <>
-                <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <span className="mr-2 inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                 Guardando...
               </>
             ) : (
@@ -2082,8 +2082,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
       {/* Fondo decorativo con patrón */}
       <div className="pointer-events-none absolute inset-0 opacity-20">
-        <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-green-500 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-purple-500 blur-3xl" />
+        <div className="absolute -top-40 -right-40 size-80 rounded-full bg-green-500 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 size-80 rounded-full bg-purple-500 blur-3xl" />
       </div>
 
       {/* Tarjeta Mini Sticky - Premium Glass */}
@@ -2092,13 +2092,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           {/* Mini Imagen y Info */}
           <div className="flex min-w-0 flex-1 items-center gap-4">
             {/* Mini Imagen - Premium */}
-            <div className="card-premium relative h-20 w-20 flex-shrink-0">
+            <div className="card-premium relative size-20 flex-shrink-0">
               <Image
                 src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
                 alt={course.title}
                 width={80}
                 height={80}
-                className="h-full w-full object-cover"
+                className="size-full object-cover"
                 quality={75}
               />
             </div>
@@ -2193,7 +2193,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     key={color}
                     onClick={() => handlePredefinedColorChange(color)}
                     style={{ backgroundColor: color }}
-                    className={`h-12 w-12 rounded-xl border-2 transition-all duration-300 hover:scale-125 hover:shadow-lg hover:shadow-cyan-500/50 ${
+                    className={`size-12 rounded-xl border-2 transition-all duration-300 hover:scale-125 hover:shadow-lg hover:shadow-cyan-500/50 ${
                       selectedColor === color
                         ? `scale-110 border-white shadow-lg ring-2 ring-cyan-400 ring-offset-2`
                         : 'border-white/20 hover:border-cyan-400'
@@ -2215,7 +2215,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   alt={course.title}
                   width={400}
                   height={225}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
                   priority
                   quality={85}
                 />
@@ -2234,7 +2234,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   className="btn-secondary flex w-full items-center justify-center gap-1"
                   title="Buscar información del curso con IA"
                 >
-                  <Brain className="h-3 w-3 md:h-4 md:w-4" />
+                  <Brain className="size-3 md:size-4" />
                   <span className="hidden sm:inline">IA</span>
                 </Button>
                 <Button
@@ -2245,7 +2245,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 >
                   {isGeneratingEmbeddings ? (
                     <>
-                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent md:h-4 md:w-4" />
+                      <div className="size-3 animate-spin rounded-full border-2 border-white border-t-transparent md:size-4" />
                       <span className="hidden sm:inline">Indexando...</span>
                     </>
                   ) : (
@@ -2655,7 +2655,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               alt={course.instructorName}
                               width={128}
                               height={128}
-                              className="relative h-32 w-32 rounded-full object-cover ring-4 ring-cyan-500/50 transition-transform duration-300 group-hover:scale-105"
+                              className="relative size-32 rounded-full object-cover ring-4 ring-cyan-500/50 transition-transform duration-300 group-hover:scale-105"
                               quality={70}
                             />
                           </div>
@@ -2744,7 +2744,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               alt={course.instructorName}
                               width={128}
                               height={128}
-                              className="relative h-32 w-32 rounded-full object-cover ring-4 ring-cyan-500/50 transition-transform duration-300 group-hover:scale-105"
+                              className="relative size-32 rounded-full object-cover ring-4 ring-cyan-500/50 transition-transform duration-300 group-hover:scale-105"
                               quality={70}
                             />
                           </div>
@@ -2950,7 +2950,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 style={{ marginBottom: '18px' }}
                               >
                                 <div className="mb-2 flex items-center gap-4">
-                                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-lg font-bold text-white">
+                                  <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-lg font-bold text-white">
                                     {forum.title?.[0]?.toUpperCase() || '?'}
                                   </div>
                                   <div className="min-w-0 flex-1">
@@ -2990,7 +2990,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
                         {!selectedForum ? (
                           <div className="flex h-full min-h-[500px] flex-col items-center justify-center text-center">
-                            <div className="mb-4 h-20 w-20 rounded-full bg-white/5" />
+                            <div className="mb-4 size-20 rounded-full bg-white/5" />
                             <h3 className="mb-2 text-xl font-bold text-white">
                               Selecciona un foro
                             </h3>
@@ -3037,7 +3037,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         )?.coverImageKey
                                       }`}
                                       alt="Imagen del foro"
-                                      className="h-24 w-24 object-cover transition-opacity group-hover:opacity-80"
+                                      className="size-24 object-cover transition-opacity group-hover:opacity-80"
                                       width={96}
                                       height={96}
                                       loading="lazy"
@@ -3049,7 +3049,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       }}
                                     />
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
-                                      <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                                      <ImageIcon className="size-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
                                     </div>
                                   </button>
                                 )}
@@ -3247,7 +3247,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             <div className="space-y-4">
                               {isLoadingPosts ? (
                                 <div className="flex items-center justify-center py-12">
-                                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+                                  <div className="size-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
                                 </div>
                               ) : posts.length === 0 ? (
                                 <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/30 p-8 text-center">
@@ -3273,7 +3273,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       >
                                         <div className="flex gap-4">
                                           {/* Avatar */}
-                                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-sm font-bold text-white">
+                                          <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-sm font-bold text-white">
                                             {userInitial}
                                           </div>
 
@@ -3340,7 +3340,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                           }}
                                                         />
                                                         <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/30">
-                                                          <ImageIcon className="h-6 w-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                                          <ImageIcon className="size-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                                                         </div>
                                                       </button>
                                                     )}
@@ -3365,7 +3365,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                 {/* Audio - Ancho completo debajo */}
                                                 {post.audioKey && (
                                                   <div className="flex items-center gap-3 rounded-lg border border-cyan-700/35 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-slate-900/60 p-4 shadow-md shadow-black/30 transition-all duration-300 hover:border-cyan-400/60 hover:from-slate-900/80 hover:to-slate-900/80">
-                                                    <Music className="h-5 w-5 flex-shrink-0 text-cyan-400/80" />
+                                                    <Music className="size-5 flex-shrink-0 text-cyan-400/80" />
                                                     <audio
                                                       controls
                                                       className="h-8 flex-1"
@@ -3383,7 +3383,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                   className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                                   title="Me gusta"
                                                 >
-                                                  <ThumbsUp className="h-5 w-5" />
+                                                  <ThumbsUp className="size-5" />
                                                 </button>
                                                 <button
                                                   onClick={() => {
@@ -3407,7 +3407,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                   className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                                   title="Comentarios"
                                                 >
-                                                  <span className="absolute -top-1 -right-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500/20 text-xs font-semibold text-cyan-400">
+                                                  <span className="absolute -top-1 -right-1 inline-flex size-5 items-center justify-center rounded-full bg-cyan-500/20 text-xs font-semibold text-cyan-400">
                                                     {postReplies[post.id]
                                                       ?.length || 0}
                                                   </span>
@@ -3436,7 +3436,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                   className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                                   title="Responder"
                                                 >
-                                                  <CornerDownLeft className="h-5 w-5" />
+                                                  <CornerDownLeft className="size-5" />
                                                 </button>
                                               </div>
 
@@ -3494,7 +3494,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             className="ml-6 rounded-xl bg-gray-800/50 p-4"
                                                           >
                                                             <div className="flex items-start gap-3">
-                                                              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-xs font-bold text-white">
+                                                              <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-xs font-bold text-white">
                                                                 {
                                                                   replyUserInitial
                                                                 }
@@ -3551,7 +3551,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                             <Image
                                                                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
                                                                               alt="Respuesta"
-                                                                              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                                              className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
                                                                               width={
                                                                                 500
                                                                               }
@@ -3565,7 +3565,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                           <div className="relative h-40 w-full overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20">
                                                                             <video
                                                                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
-                                                                              className="h-full w-full object-cover"
+                                                                              className="size-full object-cover"
                                                                               controls
                                                                             />
                                                                           </div>
@@ -3698,7 +3698,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             }
                                                             className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
                                                           >
-                                                            <X className="h-4 w-4" />
+                                                            <X className="size-4" />
                                                           </button>
                                                           <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
                                                             {
@@ -3735,7 +3735,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             }
                                                             className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
                                                           >
-                                                            <X className="h-4 w-4" />
+                                                            <X className="size-4" />
                                                           </button>
                                                           <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
                                                             {
@@ -3748,7 +3748,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       )}
                                                       {replyAudio[post.id] && (
                                                         <div className="relative flex items-center gap-2 rounded-lg border border-cyan-700/40 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-slate-900/60 p-2">
-                                                          <Music className="h-4 w-4 flex-shrink-0 text-cyan-400/80" />
+                                                          <Music className="size-4 flex-shrink-0 text-cyan-400/80" />
                                                           <span className="flex-1 truncate text-xs font-semibold text-white">
                                                             {
                                                               replyAudio[
@@ -3772,7 +3772,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             }
                                                             className="rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
                                                           >
-                                                            <X className="h-3 w-3" />
+                                                            <X className="size-3" />
                                                           </button>
                                                         </div>
                                                       )}
@@ -3809,7 +3809,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                                       title="Subir audio"
                                                     >
-                                                      <Mic className="h-4 w-4" />
+                                                      <Mic className="size-4" />
                                                     </button>
 
                                                     <button
@@ -3836,7 +3836,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                                       title="Grabar audio"
                                                     >
-                                                      <Music className="h-4 w-4" />
+                                                      <Music className="size-4" />
                                                     </button>
 
                                                     <button
@@ -3868,7 +3868,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                                       title="Adjuntar imagen"
                                                     >
-                                                      <ImageIcon className="h-4 w-4" />
+                                                      <ImageIcon className="size-4" />
                                                     </button>
 
                                                     <button
@@ -3900,7 +3900,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
                                                       title="Adjuntar video"
                                                     >
-                                                      <Video className="h-4 w-4" />
+                                                      <Video className="size-4" />
                                                     </button>
 
                                                     <button
@@ -3930,7 +3930,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                     >
                                                       {isSubmittingReply ? (
                                                         <>
-                                                          <div className="mr-1 inline-block h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                                          <div className="mr-1 inline-block size-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
                                                           Enviando...
                                                         </>
                                                       ) : (
@@ -4001,7 +4001,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       alt={project.name}
                                       width={64}
                                       height={64}
-                                      className="h-16 w-16 rounded-xl border border-cyan-500/30 object-cover shadow"
+                                      className="size-16 rounded-xl border border-cyan-500/30 object-cover shadow"
                                       quality={60}
                                     />
                                   )}
@@ -4468,7 +4468,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             onClick={() => setLightboxImage(null)}
             className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
           >
-            <X className="h-6 w-6" />
+            <X className="size-6" />
           </button>
           <Image
             src={lightboxImage}

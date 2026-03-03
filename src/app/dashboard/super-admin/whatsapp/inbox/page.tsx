@@ -104,8 +104,8 @@ function CountdownCircle({ remainingMs, isAlmostExpired }: { remainingMs: number
   const minutes = totalMinutes % 60;
 
   return (
-    <div className="relative w-12 h-12 flex items-center justify-center" title={`${hours}h ${minutes}m`}>
-      <svg className="w-full h-full" viewBox="0 0 40 40">
+    <div className="relative size-12 flex items-center justify-center" title={`${hours}h ${minutes}m`}>
+      <svg className="size-full" viewBox="0 0 40 40">
         {/* Círculo de fondo */}
         <circle
           cx="20"
@@ -199,7 +199,7 @@ function MediaMessage({ item }: { item: InboxItem }) {
       return (
         <div className="space-y-2">
           <div className="flex items-center gap-3 rounded-lg bg-[#1A2930] p-3 border border-gray-700">
-            <FileText className="h-8 w-8 text-blue-400 flex-shrink-0" />
+            <FileText className="size-8 text-blue-400 flex-shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="truncate text-sm font-medium text-gray-100">
                 {item.fileName ?? 'Documento'}
@@ -216,7 +216,7 @@ function MediaMessage({ item }: { item: InboxItem }) {
             href={downloadHref}
             className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 underline"
           >
-            <FileText className="h-3 w-3" />
+            <FileText className="size-3" />
             Descargar
           </a>
         </div>
@@ -846,10 +846,10 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
   };
 
   const getFileIcon = (file: File) => {
-    if (file.type.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
-    if (file.type.startsWith('video/')) return <Video className="h-4 w-4" />;
-    if (file.type.startsWith('audio/')) return <Mic className="h-4 w-4" />;
-    return <FileText className="h-4 w-4" />;
+    if (file.type.startsWith('image/')) return <ImageIcon className="size-4" />;
+    if (file.type.startsWith('video/')) return <Video className="size-4" />;
+    if (file.type.startsWith('audio/')) return <Mic className="size-4" />;
+    return <FileText className="size-4" />;
   };
 
   useEffect(() => {
@@ -874,7 +874,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
           } w-full md:w-72 border-r border-gray-800 bg-[#111B21] text-gray-200 flex-col transition-all duration-200 z-50`}
       >
         {/* Header de sidebar */}
-        <div className="flex-shrink-0 border-b border-gray-800 bg-[#202C33] px-2 py-2 md:px-4 md:py-4">
+        <div className="flex-shrink-0 border-b border-gray-800 bg-[#202C33] p-2 md:p-4">
           <div className="flex items-center justify-between gap-1">
             <a
               href="/dashboard/super-admin"
@@ -882,7 +882,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
               title="Volver al inicio"
               aria-label="Volver al inicio"
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
             </a>
@@ -923,7 +923,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
 
         {/* Filtros avanzados (ocultos en móvil por defecto) */}
         {(showFilters || isDesktop) && (
-          <div className="px-3 md:px-4 pb-2 md:pb-3 pt-2 md:pt-1 space-y-2 text-xs text-[#8696A0] border-b border-gray-800 bg-[#0B141A] flex-shrink-0 overflow-auto max-h-fit">
+          <div className="px-3 md:px-4 py-2 md:pb-3 md:pt-1 space-y-2 text-xs text-[#8696A0] border-b border-gray-800 bg-[#0B141A] flex-shrink-0 overflow-auto max-h-fit">
             <div className="grid grid-cols-2 gap-2">
               <input
                 type="date"
@@ -1001,7 +1001,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
               className={`w-full px-3 md:px-4 py-2.5 md:py-3 text-left flex items-center gap-3 border-b border-gray-800/50 transition-colors hover:bg-[#202C33] ${selected === t.waid ? 'bg-[#2A3942]' : ''}`}
             >
               {/* Avatar */}
-              <div className="h-12 w-12 md:h-11 md:w-11 rounded-full bg-gradient-to-br from-[#25D366] to-[#20BA5A] flex items-center justify-center text-white font-bold flex-shrink-0">
+              <div className="size-12 md:size-11 rounded-full bg-gradient-to-br from-[#25D366] to-[#20BA5A] flex items-center justify-center text-white font-bold flex-shrink-0">
                 {(t.name ?? t.waid).charAt(0).toUpperCase()}
               </div>
 
@@ -1050,8 +1050,8 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
                 {t.isNew24h ? (
                   <CountdownCircle remainingMs={t.remainingMs} isAlmostExpired={t.isAlmostExpired} />
                 ) : (
-                  <div className="w-12 h-12 flex items-center justify-center text-red-500" title="Ventana expirada">
-                    <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="size-12 flex items-center justify-center text-red-500" title="Ventana expirada">
+                    <svg className="size-6" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                     </svg>
                   </div>
@@ -1076,13 +1076,13 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
               aria-label="Volver a chats"
               title="Volver"
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           )}
 
-          <div className="h-10 w-10 md:h-9 md:w-9 rounded-full bg-gradient-to-br from-[#25D366] to-[#20BA5A] flex items-center justify-center text-white font-bold flex-shrink-0">
+          <div className="size-10 md:size-9 rounded-full bg-gradient-to-br from-[#25D366] to-[#20BA5A] flex items-center justify-center text-white font-bold flex-shrink-0">
             {selected ? (threads.find((t) => t.waid === selected)?.name ?? selected ?? '—').charAt(0).toUpperCase() : '—'}
           </div>
 
@@ -1101,7 +1101,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
                 className="md:hidden p-2 hover:bg-white/10 rounded-full text-[#8696A0] hover:text-gray-100 transition-colors"
                 title="Etiquetas"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 0 1 0 2.828l-7 7a2 2 0 0 1-2.828 0l-7-7A1.994 1.994 0 0 1 3 12V7a4 4 0 0 1 4-4z" />
                 </svg>
               </button>
@@ -1114,7 +1114,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
                 title="Volver al inicio"
                 aria-label="Volver al inicio"
               >
-                <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
               </a>
@@ -1127,7 +1127,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
           {/* Área de mensajes */}
           <div
             ref={scrollRef}
-            className="flex-1 space-y-1.5 md:space-y-2 overflow-y-auto px-3 md:px-4 py-3 md:py-4 flex flex-col"
+            className="flex-1 space-y-1.5 md:space-y-2 overflow-y-auto p-3 md:p-4 flex flex-col"
             style={{
               backgroundImage: "url('/wallWhat.png')",
               backgroundRepeat: 'no-repeat',
@@ -1246,7 +1246,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
               className="rounded-full bg-[#2A3942] p-2.5 text-[#8696A0] hover:bg-[#374854] disabled:opacity-50 flex-shrink-0 transition-colors"
               title="Adjuntar"
             >
-              <Paperclip className="h-5 w-5" />
+              <Paperclip className="size-5" />
             </button>
 
             {/* Campo de texto */}
@@ -1287,11 +1287,11 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
               title="Enviar"
             >
               {selectedFile ? (
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
               ) : (
-                <Send className="h-5 w-5" />
+                <Send className="size-5" />
               )}
             </button>
           </div>
@@ -1428,7 +1428,7 @@ export default function WhatsAppInboxPage({ searchParams }: WhatsAppInboxPagePro
                     <div className="min-w-0 flex-1">
                       <div className="text-xs md:text-sm font-medium flex items-center gap-2">
                         <span
-                          className="inline-block h-2 w-2 rounded-full flex-shrink-0"
+                          className="inline-block size-2 rounded-full flex-shrink-0"
                           style={{ background: t.color ?? '#22c55e' }}
                         />
                         <span className="truncate">{t.name}</span>

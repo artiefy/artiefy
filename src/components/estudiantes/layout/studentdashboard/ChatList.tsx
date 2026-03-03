@@ -38,15 +38,15 @@ interface Chat {
 
 const chatTypeConfig = {
   ticket: {
-    icon: <Ticket className="h-4 w-4 text-white" />,
+    icon: <Ticket className="size-4 text-white" />,
     color: 'purple',
   },
   chat: {
-    icon: <IoChatboxEllipses className="h-4 w-4 text-white" />,
+    icon: <IoChatboxEllipses className="size-4 text-white" />,
     color: 'blue',
   },
   project: {
-    icon: <FileText className="h-4 w-4" />,
+    icon: <FileText className="size-4" />,
     color: 'green',
   },
 } as const;
@@ -373,7 +373,7 @@ export const ChatList = ({
   };
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col border-r border-transparent bg-gradient-to-b from-[#061226] to-[#071024] text-white">
+    <div className="flex size-full min-h-0 flex-col border-r border-transparent bg-gradient-to-b from-[#061226] to-[#071024] text-white">
       <div
         className={`border-b border-gray-700 p-4 ${activeType === 'tickets' ? 'pt-6' : ''}`}
       >
@@ -387,7 +387,7 @@ export const ChatList = ({
           ) : (
             <>
               Chats con IA
-              <BsRobot className="h-5 w-5 text-white" />
+              <BsRobot className="size-5 text-white" />
             </>
           )}
         </h2>
@@ -408,14 +408,14 @@ export const ChatList = ({
               <div className="flex items-center justify-center gap-2 font-semibold text-black">
                 {isCreatingChat ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Creando chat...
                   </>
                 ) : (
                   <>
                     <span className="flex items-center gap-2">
                       <span className="rounded-full bg-white/20 p-1 shadow-sm">
-                        <Plus className="h-4 w-4 text-black" />
+                        <Plus className="size-4 text-black" />
                       </span>
                       Crear Nuevo Chat IA
                     </span>
@@ -432,7 +432,7 @@ export const ChatList = ({
                 <div className="flex items-center justify-center gap-2">
                   {isDeleting ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <Loader2 className="size-4 animate-spin" />
                       Eliminando...
                     </>
                   ) : (
@@ -460,12 +460,12 @@ export const ChatList = ({
               <div className="flex items-center justify-center gap-2 font-semibold text-black">
                 {isCreatingTicket ? (
                   <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Creando ticket...
                   </>
                 ) : (
                   <>
-                    <Plus className="h-4 w-4 text-black" />
+                    <Plus className="size-4 text-black" />
                     Crear Nuevo Ticket
                   </>
                 )}
@@ -499,7 +499,7 @@ export const ChatList = ({
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center p-8">
           <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+            <Loader2 className="size-6 animate-spin text-gray-500" />
             <span className="text-sm text-gray-500">Cargando...</span>
           </div>
         </div>
@@ -541,7 +541,7 @@ export const ChatList = ({
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
                       {loadingChatId === chat.id ? (
-                        <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
+                        <Loader2 className="size-5 animate-spin text-gray-600" />
                       ) : (
                         chat.type && chatTypeConfig[chat.type]?.icon
                       )}
@@ -598,7 +598,7 @@ export const ChatList = ({
                     onChange={(e) =>
                       handleSelectChat(chat.id, e.target.checked)
                     }
-                    className="ml-3 h-4 w-4 rounded border-gray-300 text-cyan-400 focus:ring-cyan-300"
+                    className="ml-3 size-4 rounded border-gray-300 text-cyan-400 focus:ring-cyan-300"
                     aria-label={`Seleccionar chat ${chat.title}`}
                   />
                 )}

@@ -127,7 +127,7 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
       onClose={handleModalClose} // Usa nuestro handler personalizado
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
     >
-      <div className="flex h-full w-full items-center justify-center p-4">
+      <div className="flex size-full items-center justify-center p-4">
         <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
           <button
             className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
@@ -135,7 +135,7 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
             aria-label="Cerrar"
             type="button"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
             <span className="sr-only">Close</span>
           </button>
           <div className="flex flex-col space-y-1.5 p-4 pb-0 text-center sm:text-left">

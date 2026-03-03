@@ -1363,11 +1363,11 @@ export function CourseHeader({
                   }
                   if (isVideo) {
                     return (
-                      <div className="relative h-full w-full">
+                      <div className="relative size-full">
                         <video
                           ref={videoRef}
                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverVideoCourseKey}`}
-                          className="h-full w-full cursor-pointer object-cover"
+                          className="size-full cursor-pointer object-cover"
                           autoPlay
                           loop
                           playsInline
@@ -1396,12 +1396,12 @@ export function CourseHeader({
                               isMuted ? 'Activar sonido' : 'Silenciar'
                             }
                             onClick={handleToggleMute}
-                            className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                            className="flex size-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:size-10 sm:p-2"
                           >
                             {isMuted ? (
-                              <FaVolumeMute className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                              <FaVolumeMute className="size-2.5 sm:size-5" />
                             ) : (
-                              <FaVolumeUp className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                              <FaVolumeUp className="size-2.5 sm:size-5" />
                             )}
                           </button>
                           {/* Volumen */}
@@ -1420,9 +1420,9 @@ export function CourseHeader({
                             type="button"
                             aria-label="Pantalla completa"
                             onClick={handleFullscreenClick}
-                            className="flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:h-10 sm:w-10 sm:p-2"
+                            className="flex size-5 cursor-pointer items-center justify-center rounded-full border-none bg-black/60 p-1 text-white transition-all sm:size-10 sm:p-2"
                           >
-                            <FaExpand className="h-2.5 w-2.5 sm:h-5 sm:w-5" />
+                            <FaExpand className="size-2.5 sm:size-5" />
                           </button>
                         </div>
                       </div>
@@ -1483,7 +1483,7 @@ export function CourseHeader({
               <span className="inline">
                 {course.title}{' '}
                 {isEnrolled && (
-                  <CheckCircleIcon className="mb-1 ml-1 inline-block h-5 w-5 flex-shrink-0 align-middle text-green-500" />
+                  <CheckCircleIcon className="mb-1 ml-1 inline-block size-5 flex-shrink-0 align-middle text-green-500" />
                 )}
               </span>
             </h1>
@@ -1492,12 +1492,12 @@ export function CourseHeader({
             <h1 className="mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300 sm:-mt-12 sm:flex sm:items-center md:text-2xl lg:text-3xl">
               {course.title}
               {isEnrolled && (
-                <CheckCircleIcon className="ml-3 h-6 w-6 flex-shrink-0 text-green-500" />
+                <CheckCircleIcon className="ml-3 size-6 flex-shrink-0 text-green-500" />
               )}
             </h1>
           </div>
           {/* MOVED: Mobile metadata section - now below title in mobile view */}
-          <div className="relative z-10 -mt-2 -mb-2 block w-full sm:mb-2 sm:hidden">
+          <div className="relative z-10 -my-2 block w-full sm:mb-2 sm:hidden">
             <div className="flex items-center justify-between gap-2">
               {/* Categoría alineada a la izquierda */}
               <Badge
@@ -1663,7 +1663,7 @@ export function CourseHeader({
                 {Array.from({ length: 5 }).map((_, index) => (
                   <StarIcon
                     key={index}
-                    className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                    className={`size-4 sm:size-5 ${
                       index < Math.floor(course.rating ?? 0)
                         ? 'text-yellow-400'
                         : 'text-gray-300'
@@ -1717,13 +1717,13 @@ export function CourseHeader({
               <div className="flex items-center gap-2">
                 {canAccessCertificate && (
                   <>
-                    <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-8 w-8" />
+                    <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide size-8" />
                     <Button
                       onClick={() => setIsCertModalOpen(true)}
                       className="cert2-button h-10 w-40 text-white"
                       aria-label="Ver Certificado"
                     >
-                      <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                      <PiCertificateFill className="mr-2 size-4 text-white" />
                       <span className="text-xs font-semibold text-white sm:text-sm">
                         Ver Certificado
                       </span>
@@ -1765,11 +1765,11 @@ export function CourseHeader({
                     disabled={!isSignedIn}
                     className={`grades-button flex h-9 items-center rounded px-4 font-semibold ${!isSignedIn ? 'cursor-not-allowed opacity-50' : ''}`}
                   >
-                    <FaTrophy className="mr-2 h-4 w-4" />
+                    <FaTrophy className="mr-2 size-4" />
                     <span className="text-sm font-semibold">
                       Ver Resultados De Notas
                     </span>
-                    <PiNote className="ml-2 h-4 w-4" />
+                    <PiNote className="ml-2 size-4" />
                   </button>
                 </div>
               )}
@@ -1799,18 +1799,18 @@ export function CourseHeader({
               {/* On mobile, Ver Certificado above enrollment buttons with arrows on both sides */}
               {localIsEnrolled && canAccessCertificate && (
                 <div className="mb-2 flex w-full items-center justify-center gap-2 sm:hidden">
-                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-7 w-7 -scale-x-100" />
+                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide size-7 -scale-x-100" />
                   <Button
                     onClick={() => setIsCertModalOpen(true)}
                     className="cert2-button h-10 w-40 text-white"
                     aria-label="Ver Certificado"
                   >
-                    <PiCertificateFill className="mr-2 h-4 w-4 text-white" />
+                    <PiCertificateFill className="mr-2 size-4 text-white" />
                     <span className="text-xs font-semibold text-white sm:text-sm">
                       Ver Certificado
                     </span>
                   </Button>
-                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide h-7 w-7" />
+                  <MdKeyboardDoubleArrowRight className="text-primary animate-arrow-slide size-7" />
                 </div>
               )}
               {/* On mobile, LessonGrades below modalidad, centered (solo si está inscrito) */}
@@ -1848,7 +1848,7 @@ export function CourseHeader({
                     <span className="whitespace-nowrap">
                       Ver Resultados De Notas
                     </span>
-                    <PiNote className="ml-2 inline-block h-4 w-4" />
+                    <PiNote className="ml-2 inline-block size-4" />
                   </button>
                 </div>
               )}
@@ -1954,7 +1954,7 @@ export function CourseHeader({
                     >
                       <strong className="text-sm sm:text-lg">
                         {isEnrolling || isEnrollClicked ? (
-                          <Icons.spinner className="h-5 w-5" />
+                          <Icons.spinner className="size-5" />
                         ) : (
                           <>
                             {getButtonPrice() && (
@@ -1997,7 +1997,7 @@ export function CourseHeader({
                   type="button"
                   aria-label="Cerrar"
                 >
-                  <IoCloseOutline className="h-8 w-8" />
+                  <IoCloseOutline className="size-8" />
                 </button>
                 <div className="flex flex-col items-center gap-4">
                   <Image
@@ -2166,7 +2166,7 @@ export function CourseHeader({
                     >
                       <strong>
                         {isEnrolling || isEnrollClicked ? (
-                          <Icons.spinner className="h-6 w-6" />
+                          <Icons.spinner className="size-6" />
                         ) : (
                           <>
                             {getButtonPrice() && (
@@ -2207,7 +2207,7 @@ export function CourseHeader({
                 type="button"
                 aria-label="Cerrar"
               >
-                <FaTimes className="h-5 w-5" />
+                <FaTimes className="size-5" />
               </button>
             </div>
             <div>

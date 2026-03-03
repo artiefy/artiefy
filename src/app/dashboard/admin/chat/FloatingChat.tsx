@@ -208,11 +208,11 @@ export default function FloatingChat({
     <>
       <button
         onClick={handleToggle}
-        className="fixed right-4 bottom-4 z-[9999] flex h-12 w-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg hover:bg-blue-600"
+        className="fixed right-4 bottom-4 z-[9999] flex size-12 items-center justify-center rounded-full bg-blue-500 text-white shadow-lg hover:bg-blue-600"
       >
-        <MessageCircle className="h-6 w-6" />
+        <MessageCircle className="size-6" />
         {hasNotification && (
-          <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full border-2 border-white bg-red-500" />
+          <span className="absolute -top-1 -right-1 size-3 rounded-full border-2 border-white bg-red-500" />
         )}
       </button>
 
@@ -226,7 +226,7 @@ export default function FloatingChat({
               onClick={handleClose}
               className="text-gray-400 hover:text-white"
             >
-              <X className="h-5 w-5" />
+              <X className="size-5" />
             </button>
           </div>
 
@@ -285,7 +285,7 @@ export default function FloatingChat({
                 type="submit"
                 className="rounded-md bg-blue-500 p-2 text-white hover:bg-blue-600"
               >
-                <Send className="h-5 w-5" />
+                <Send className="size-5" />
               </button>
 
               {showEmojiPicker && (

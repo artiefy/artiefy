@@ -84,7 +84,9 @@ export async function createActivity(params: CreateActivityParams) {
         .limit(1);
 
       if (!defaultCourse[0]) {
-        throw new Error('No hay cursos disponibles para crear una lección temporal');
+        throw new Error(
+          'No hay cursos disponibles para crear una lección temporal'
+        );
       }
 
       courseId = defaultCourse[0].id;
@@ -105,7 +107,9 @@ export async function createActivity(params: CreateActivityParams) {
         .limit(1);
 
       if (!lesson[0]) {
-        console.warn(`⚠️ Lección ${finalLessonsId} no existe, creando lección temporal`);
+        console.warn(
+          `⚠️ Lección ${finalLessonsId} no existe, creando lección temporal`
+        );
         console.log(`📚 Creando lección temporal para curso ${courseId}`);
         finalLessonsId = await createTemporaryLesson(courseId);
       }
@@ -130,7 +134,9 @@ export async function createActivity(params: CreateActivityParams) {
       throw new Error('No se pudo crear la actividad');
     }
 
-    console.log(`✅ Actividad "${newActivity[0].name}" creada con lección temporal ID: ${finalLessonsId}`);
+    console.log(
+      `✅ Actividad "${newActivity[0].name}" creada con lección temporal ID: ${finalLessonsId}`
+    );
     return newActivity[0];
   } catch (error) {
     console.error('Error detallado:', error);
@@ -291,7 +297,8 @@ export const updateActivity = async (
       .where(eq(activities.id, activityId));
   } catch (error) {
     throw new Error(
-      `Error al actualizar la actividad: ${error instanceof Error ? error.message : 'Error desconocido'
+      `Error al actualizar la actividad: ${
+        error instanceof Error ? error.message : 'Error desconocido'
       }`
     );
   }

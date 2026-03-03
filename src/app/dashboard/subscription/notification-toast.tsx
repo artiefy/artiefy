@@ -82,7 +82,7 @@ function Toast({ toast, onRemove }: ToastProps) {
 
   return (
     <div
-      className={` ${baseClasses} ${typeClasses[toast.type]} ${isExiting ? 'slide-out-to-top-2 opacity-0' : ''} `}
+      className={`${baseClasses} ${typeClasses[toast.type]} ${isExiting ? 'slide-out-to-top-2 opacity-0' : ''}`}
     >
       <div className="flex-shrink-0">{icons[toast.type]}</div>
       <div className="flex-1 text-sm sm:text-base">
@@ -99,7 +99,7 @@ function Toast({ toast, onRemove }: ToastProps) {
         className="flex-shrink-0 text-current opacity-60 transition-opacity hover:opacity-100"
         aria-label="Cerrar"
       >
-        <X className="h-4 w-4" />
+        <X className="size-4" />
       </button>
     </div>
   );

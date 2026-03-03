@@ -60,12 +60,12 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
   const modalConfig = {
     title: isEditing ? 'Editar Entrega' : 'Entregar Actividad',
     icon: isEditing ? (
-      <Edit className="h-5 w-5" />
+      <Edit className="size-5" />
     ) : (
-      <UploadCloud className="h-5 w-5" />
+      <UploadCloud className="size-5" />
     ),
     submitButtonText: isEditing ? 'Actualizar Entrega' : 'Entregar',
-    submitButtonIcon: isEditing ? <RefreshCw className="h-4 w-4" /> : null,
+    submitButtonIcon: isEditing ? <RefreshCw className="size-4" /> : null,
     dragText: isEditing
       ? 'Actualiza los archivos de tu entrega'
       : 'Haz clic para subir o arrastra archivos',
@@ -140,15 +140,15 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
     const type = getFileType(file);
     switch (type) {
       case 'document':
-        return <FileText className="h-4 w-4 text-blue-400" />;
+        return <FileText className="size-4 text-blue-400" />;
       case 'image':
-        return <Image className="h-4 w-4 text-green-400" />;
+        return <Image className="size-4 text-green-400" />;
       case 'video':
-        return <Video className="h-4 w-4 text-purple-400" />;
+        return <Video className="size-4 text-purple-400" />;
       case 'compressed':
-        return <Archive className="h-4 w-4 text-orange-400" />;
+        return <Archive className="size-4 text-orange-400" />;
       default:
-        return <File className="h-4 w-4 text-gray-400" />;
+        return <File className="size-4 text-gray-400" />;
     }
   };
 
@@ -318,10 +318,10 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
               className="flex items-center gap-1 rounded border border-blue-700 bg-blue-900/40 px-2 py-1 text-xs text-blue-200 hover:bg-blue-900/60"
               title={archivo.name}
             >
-              {archivo.type === 'document' && <FileText className="h-4 w-4" />}
-              {archivo.type === 'image' && <Image className="h-4 w-4" />}
-              {archivo.type === 'video' && <Video className="h-4 w-4" />}
-              {archivo.type === 'compressed' && <Archive className="h-4 w-4" />}
+              {archivo.type === 'document' && <FileText className="size-4" />}
+              {archivo.type === 'image' && <Image className="size-4" />}
+              {archivo.type === 'video' && <Video className="size-4" />}
+              {archivo.type === 'compressed' && <Archive className="size-4" />}
               <span className="max-w-[120px] truncate">{archivo.name}</span>
             </a>
           ))}
@@ -375,7 +375,7 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
               >
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <UploadCloud
-                    className={`mb-3 h-8 w-8 transition-colors ${
+                    className={`mb-3 size-8 transition-colors ${
                       isDragOver
                         ? 'text-teal-300'
                         : isEditing
@@ -488,7 +488,7 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />{' '}
+                  <Loader2 className="size-4 animate-spin" />{' '}
                   {modalConfig.submitLoadingText}
                 </span>
               ) : (

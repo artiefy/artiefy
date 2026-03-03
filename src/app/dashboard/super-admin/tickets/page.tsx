@@ -609,7 +609,7 @@ export default function TicketsPage() {
             </div>
 
             <div className="inline-flex items-center gap-3 rounded-lg border border-blue-400/30 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-4 text-lg font-semibold text-blue-100 shadow-lg backdrop-blur-sm">
-              <FileText className="h-6 w-6 animate-pulse text-blue-300 drop-shadow-md" />
+              <FileText className="size-6 animate-pulse text-blue-300 drop-shadow-md" />
               <span className="tracking-wide">
                 {filteredTickets.length} ticket(s) encontrado(s)
               </span>
@@ -644,7 +644,7 @@ export default function TicketsPage() {
                             setItemsPerPage(value);
                             setCurrentPage(1); // reiniciar a primera página
                           }}
-                          className="bg-background rounded-md border border-gray-600 px-1 py-1 text-xs text-white"
+                          className="bg-background rounded-md border border-gray-600 p-1 text-xs text-white"
                         >
                           <option value={10}>10</option>
                           <option value={50}>50</option>
@@ -764,7 +764,7 @@ export default function TicketsPage() {
                   {loading ? (
                     <tr>
                       <td colSpan={6} className="px-2 py-8 text-center">
-                        <Loader2 className="mx-auto h-8 w-8 animate-spin text-blue-500" />
+                        <Loader2 className="mx-auto size-8 animate-spin text-blue-500" />
                       </td>
                     </tr>
                   ) : filteredTickets.length === 0 ? (
@@ -1070,7 +1070,7 @@ export default function TicketsPage() {
                           <div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
                             <video
                               controls
-                              className="h-full w-full object-contain"
+                              className="size-full object-contain"
                             >
                               <source
                                 src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${viewTicket.videoKey}`}
@@ -1110,7 +1110,7 @@ export default function TicketsPage() {
                     <div className="max-h-[40vh] space-y-3 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900/50 p-4">
                       {isLoadingComments ? (
                         <div className="flex items-center justify-center py-4">
-                          <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                          <Loader2 className="size-6 animate-spin text-blue-500" />
                         </div>
                       ) : comments.length > 0 ? (
                         comments

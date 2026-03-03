@@ -210,7 +210,7 @@ export default async function StudentListCourses({
         if (userPlanType === 'Premium' && hasPremium) {
           return (
             <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-              <FaCrown className="h-3 w-3" />
+              <FaCrown className="size-3" />
               Premium
             </div>
           );
@@ -219,7 +219,7 @@ export default async function StudentListCourses({
         if ((userPlanType === 'Pro' || userPlanType === 'Premium') && hasPro) {
           return (
             <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-              <FaStar className="h-3 w-3" />
+              <FaStar className="size-3" />
               Pro
             </div>
           );
@@ -228,7 +228,7 @@ export default async function StudentListCourses({
         if (hasFree) {
           return (
             <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-              <IoGiftOutline className="h-3 w-3" />
+              <IoGiftOutline className="size-3" />
               Gratuito
             </div>
           );
@@ -240,7 +240,7 @@ export default async function StudentListCourses({
           );
           return (
             <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-              <FaStar className="h-3 w-3" />${' '}
+              <FaStar className="size-3" />${' '}
               {course.individualPrice
                 ? course.individualPrice.toLocaleString('es-CO')
                 : purchasableType?.price
@@ -259,7 +259,7 @@ export default async function StudentListCourses({
         return (
           <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
             <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-              <FaStar className="h-3 w-3" />${' '}
+              <FaStar className="size-3" />${' '}
               {course.individualPrice
                 ? course.individualPrice.toLocaleString('es-CO')
                 : purchasableType?.price
@@ -299,14 +299,14 @@ export default async function StudentListCourses({
             .join(' + ');
           return (
             <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-              <AiOutlineFire className="h-3 w-3" />
+              <AiOutlineFire className="size-3" />
               {formattedPlans}
             </div>
           );
         }
         return (
           <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-            <FaCrown className="h-3 w-3" />
+            <FaCrown className="size-3" />
             Premium
           </div>
         );
@@ -319,14 +319,14 @@ export default async function StudentListCourses({
             .join(' + ');
           return (
             <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-              <AiOutlineFire className="h-3 w-3" />
+              <AiOutlineFire className="size-3" />
               {formattedPlans}
             </div>
           );
         }
         return (
           <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-            <FaStar className="h-3 w-3" />
+            <FaStar className="size-3" />
             Pro
           </div>
         );
@@ -339,14 +339,14 @@ export default async function StudentListCourses({
             .join(' + ');
           return (
             <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-              <AiOutlineFire className="h-3 w-3" />
+              <AiOutlineFire className="size-3" />
               {formattedPlans}
             </div>
           );
         }
         return (
           <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-            <IoGiftOutline className="h-3 w-3" />
+            <IoGiftOutline className="size-3" />
             Gratuito
           </div>
         );
@@ -361,7 +361,7 @@ export default async function StudentListCourses({
     if (course.courseTypeId === 4 && course.individualPrice) {
       return (
         <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-          <FaStar className="h-3 w-3" />${' '}
+          <FaStar className="size-3" />${' '}
           {course.individualPrice.toLocaleString('es-CO')}
         </div>
       );
@@ -370,7 +370,7 @@ export default async function StudentListCourses({
     if (requiredSubscriptionLevel === 'none') {
       return (
         <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-          <IoGiftOutline className="h-3 w-3" />
+          <IoGiftOutline className="size-3" />
           Gratuito
         </div>
       );
@@ -378,14 +378,14 @@ export default async function StudentListCourses({
     if (requiredSubscriptionLevel === 'premium') {
       return (
         <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-          <FaCrown className="h-3 w-3" />
+          <FaCrown className="size-3" />
           Premium
         </div>
       );
     }
     return (
       <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-        <FaStar className="h-3 w-3" />
+        <FaStar className="size-3" />
         Pro
       </div>
     );
@@ -432,7 +432,7 @@ export default async function StudentListCourses({
         if (userPlanType === 'Premium' && hasPremium) {
           principalType = (
             <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-              <FaCrown className="h-3 w-3" />
+              <FaCrown className="size-3" />
               Premium
             </div>
           );
@@ -442,14 +442,14 @@ export default async function StudentListCourses({
         ) {
           principalType = (
             <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-              <FaCrown className="h-3 w-3" />
+              <FaCrown className="size-3" />
               Pro
             </div>
           );
         } else if (hasFree) {
           principalType = (
             <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-              <IoGiftOutline className="h-3 w-3" />
+              <IoGiftOutline className="size-3" />
               Gratuito
             </div>
           );
@@ -459,7 +459,7 @@ export default async function StudentListCourses({
           );
           principalType = (
             <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-              <FaStar className="h-3 w-3" />${' '}
+              <FaStar className="size-3" />${' '}
               {course.individualPrice
                 ? course.individualPrice.toLocaleString('es-CO')
                 : purchasableType?.price
@@ -475,7 +475,7 @@ export default async function StudentListCourses({
           );
           principalType = (
             <div className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium text-orange-400">
-              <FaStar className="h-3 w-3" />${' '}
+              <FaStar className="size-3" />${' '}
               {course.individualPrice
                 ? course.individualPrice.toLocaleString('es-CO')
                 : purchasableType?.price
@@ -490,14 +490,14 @@ export default async function StudentListCourses({
               .join(' + ');
             principalType = (
               <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-                <AiOutlineFire className="h-3 w-3" />
+                <AiOutlineFire className="size-3" />
                 {formattedPlans}
               </div>
             );
           } else {
             principalType = (
               <div className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-400">
-                <FaCrown className="h-3 w-3" />
+                <FaCrown className="size-3" />
                 Premium
               </div>
             );
@@ -509,14 +509,14 @@ export default async function StudentListCourses({
               .join(' + ');
             principalType = (
               <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-                <AiOutlineFire className="h-3 w-3" />
+                <AiOutlineFire className="size-3" />
                 {formattedPlans}
               </div>
             );
           } else {
             principalType = (
               <div className="flex items-center gap-1 rounded-full border border-blue-500/30 bg-blue-500/20 px-2 py-0.5 text-[10px] font-medium text-blue-400">
-                <FaCrown className="h-3 w-3" />
+                <FaCrown className="size-3" />
                 Pro
               </div>
             );
@@ -528,14 +528,14 @@ export default async function StudentListCourses({
               .join(' + ');
             principalType = (
               <div className="flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/20 px-2 py-0.5 text-[10px] font-medium text-red-400">
-                <AiOutlineFire className="h-3 w-3" />
+                <AiOutlineFire className="size-3" />
                 {formattedPlans}
               </div>
             );
           } else {
             principalType = (
               <div className="flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                <IoGiftOutline className="h-3 w-3" />
+                <IoGiftOutline className="size-3" />
                 Gratuito
               </div>
             );
@@ -579,7 +579,7 @@ export default async function StudentListCourses({
               >
                 <div className="relative -mx-4 -mt-4 overflow-hidden">
                   <AspectRatio ratio={16 / 9}>
-                    <div className="relative h-full w-full">
+                    <div className="relative size-full">
                       <Image
                         src={imageUrl}
                         alt={course.title || 'Imagen del curso'}
@@ -610,7 +610,7 @@ export default async function StudentListCourses({
                       </p>
                       {isEnrolled && (
                         <div className="flex items-center gap-1 rounded-full border border-green-500/30 bg-green-500/20 px-2 py-0.5 text-green-400">
-                          <CheckCircleIcon className="h-3 w-3" />
+                          <CheckCircleIcon className="size-3" />
                           <span className="text-[10px] font-medium">
                             Inscrito
                           </span>

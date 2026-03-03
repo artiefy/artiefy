@@ -31,7 +31,7 @@ export function ConfirmDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-xl">
         <div className="mb-4 flex items-center space-x-2 text-yellow-400">
-          <AlertTriangle className="h-6 w-6" />
+          <AlertTriangle className="size-6" />
           <h3 className="text-lg font-semibold">{title}</h3>
         </div>
         <p className="mb-6 text-gray-300">{message}</p>
@@ -47,7 +47,7 @@ export function ConfirmDialog({
             disabled={loading}
             className="flex items-center rounded-md bg-yellow-500 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-600 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 focus:outline-none"
           >
-            {loading && <Loader2 className="mr-2 h-4 w-4" />}
+            {loading && <Loader2 className="mr-2 size-4" />}
             {loading ? 'Procesando...' : 'Confirmar'}
           </button>
         </div>

@@ -78,7 +78,7 @@ export default function ModalDespublicarProyecto({
           >
             {loading ? (
               <>
-                <RotateCw className="h-4 w-4 animate-spin" />
+                <RotateCw className="size-4 animate-spin" />
                 Despublicando...
               </>
             ) : (

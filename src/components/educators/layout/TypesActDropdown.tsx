@@ -79,7 +79,7 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
       </label>
       {isLoading ? (
         <p
-          className={`my-3 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'} `}
+          className={`my-3 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
         >
           Cargando los tipos de actividades...
         </p>

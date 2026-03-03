@@ -88,14 +88,14 @@ export const Zone = () => {
   if (loading)
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div className="size-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
   if (error) return <p className="text-red-500">{error}</p>;
   if (!forums.length) {
     return (
       <div className="mt-10 flex flex-col items-center justify-center gap-4 rounded-2xl border border-gray-800 bg-gray-900/50 py-16">
-        <MessageSquare className="h-16 w-16 text-gray-600" />
+        <MessageSquare className="size-16 text-gray-600" />
         <p className="text-xl text-gray-400">No hay foros disponibles.</p>
         <p className="text-sm text-gray-500">
           Crea uno nuevo para comenzar las discusiones
@@ -161,7 +161,7 @@ export const Zone = () => {
             {/* Meta info */}
             <div className="mb-4 flex flex-wrap items-center gap-4 text-xs text-gray-500">
               <div className="flex items-center gap-1.5">
-                <User className="h-3.5 w-3.5" />
+                <User className="size-3.5" />
                 <span
                   className="truncate max-w-[100px]"
                   title={forum.instructor?.name ?? 'Sin nombre'}
@@ -170,7 +170,7 @@ export const Zone = () => {
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
+                <Calendar className="size-3.5" />
                 <span>{formatDate(forum.createdAt)}</span>
               </div>
             </div>
@@ -191,7 +191,7 @@ export const Zone = () => {
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <button className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5 text-red-400 transition-all hover:bg-red-500/20">
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="size-4" />
                     </button>
                   </AlertDialogTrigger>
                   <AlertDialogContent className="border-gray-800 bg-gray-900">

@@ -245,8 +245,8 @@ export function ProgramContent({
       )}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-            <BookOpen className="h-5 w-5 text-primary" />
+          <div className="flex size-10 items-center justify-center rounded-xl bg-primary/10">
+            <BookOpen className="size-5 text-primary" />
           </div>
           <div>
             <h2 className="font-display text-xl font-bold text-foreground md:text-2xl">
@@ -316,19 +316,19 @@ export function ProgramContent({
                       src={coverImageUrl}
                       alt={course.title}
                       fill
-                      className="h-full w-full object-cover"
+                      className="size-full object-cover"
                       sizes="96px"
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                      <Play className="h-6 w-6 text-white" />
+                      <Play className="size-6 text-white" />
                     </div>
                     {isEnrolled && (isLoadingProgress || isEnrolledCourse) && (
-                      <div className="absolute top-1 right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
+                      <div className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-emerald-500">
                         {isLoadingProgress ? (
-                          <Icons.spinner className="h-3 w-3 text-white" />
+                          <Icons.spinner className="size-3 text-white" />
                         ) : (
                           isEnrolledCourse && (
-                            <FaCheck className="h-3 w-3 text-white" />
+                            <FaCheck className="size-3 text-white" />
                           )
                         )}
                       </div>
@@ -343,7 +343,7 @@ export function ProgramContent({
                         <>
                           {isLoadingProgress ? (
                             <div className="inline-flex items-center gap-1 rounded-full border border-border/50 bg-[#0b2a4a] px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-                              <Icons.spinner className="h-3 w-3" /> Cargando
+                              <Icons.spinner className="size-3" /> Cargando
                             </div>
                           ) : isCompleted ? (
                             <div className="inline-flex items-center rounded-full border border-transparent bg-emerald-500/20 px-2.5 py-0.5 text-xs font-semibold text-emerald-400 transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
@@ -351,7 +351,7 @@ export function ProgramContent({
                             </div>
                           ) : isEnrolledCourse ? (
                             <div className="inline-flex items-center rounded-full border border-border/50 bg-[#0b2a4a] px-2.5 py-0.5 text-xs font-semibold text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
-                              <Clock className="mr-1 h-3 w-3" /> En progreso
+                              <Clock className="mr-1 size-3" /> En progreso
                             </div>
                           ) : null}
                         </>
@@ -366,14 +366,14 @@ export function ProgramContent({
                   </div>
                   <div className="hidden shrink-0 items-center gap-4 text-sm text-muted-foreground sm:flex">
                     <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
+                      <Clock className="size-4" />
                       {durationLabel}
                     </div>
                     <div className="flex items-center gap-1">
-                      <BookOpen className="h-4 w-4" />
+                      <BookOpen className="size-4" />
                       {totalClasses} clases
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-primary" />
+                    <ChevronRight className="size-5 text-muted-foreground transition-colors group-hover:text-primary" />
                   </div>
                 </a>
               );
@@ -492,8 +492,8 @@ export function ProgramCertificationPanel({
   return (
     <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
       <div className="mb-6 flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
-          <Award className="h-6 w-6 text-white" />
+        <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
+          <Award className="size-6 text-white" />
         </div>
         <div>
           <h3 className="font-display text-xl font-bold text-foreground md:text-2xl">
@@ -538,9 +538,9 @@ export function ProgramCertificationPanel({
           }`}
         >
           {isProgramCertificateUnlocked ? (
-            <FaCheckCircle className="h-4 w-4 text-green-400" />
+            <FaCheckCircle className="size-4 text-green-400" />
           ) : (
-            <FaLock className="h-4 w-4 text-white/70" />
+            <FaLock className="size-4 text-white/70" />
           )}
           {isProgramCertificateUnlocked
             ? 'Ver tu certificado'
@@ -560,8 +560,8 @@ export function ProgramCertificationPanel({
               ×
             </button>
             <div className="flex flex-col items-center gap-4 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500">
-                <Award className="h-7 w-7 text-white" />
+              <div className="flex size-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500">
+                <Award className="size-7 text-white" />
               </div>
               <h4 className="text-lg font-bold text-foreground">
                 ¡Felicidades!

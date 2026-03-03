@@ -220,7 +220,7 @@ export function AdvancedFilterMenu({
       </div>
 
       {/* Options List */}
-      <div className="flex-1 space-y-1 overflow-y-auto px-2 py-2">
+      <div className="flex-1 space-y-1 overflow-y-auto p-2">
         {/* Select All */}
         <button
           onClick={handleSelectAll}

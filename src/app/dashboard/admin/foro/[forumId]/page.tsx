@@ -395,7 +395,7 @@ const ForumPage = () => {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800" />
+            <div className="size-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800" />
             <span className="text-sm font-medium text-white">
               {reply.userId.name}
             </span>
@@ -536,7 +536,7 @@ const ForumPage = () => {
 
       <div className="mx-auto mt-6 w-full max-w-6xl space-y-8 px-4 sm:px-6 lg:px-8">
         <div className="glow-pulse mt-5 mb-10 w-full rounded-lg">
-          <div className="mx-auto w-full max-w-7xl rounded-xl border border-gray-700 bg-[#111827] px-6 py-6 shadow-md">
+          <div className="mx-auto w-full max-w-7xl rounded-xl border border-gray-700 bg-[#111827] p-6 shadow-md">
             {/* Header */}
             <div className="border-secondary flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8 sm:pb-4">
               <div className="min-w-0 flex-1">

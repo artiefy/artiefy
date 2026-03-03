@@ -719,7 +719,7 @@ export default function ModalSolicitudesParticipacion({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 text-slate-400 hover:bg-slate-700 hover:text-white sm:h-10 sm:w-10"
+              className="size-8 text-slate-400 hover:bg-slate-700 hover:text-white sm:size-10"
               onClick={onClose}
             >
               <span className="sr-only">Cerrar</span>
@@ -727,7 +727,7 @@ export default function ModalSolicitudesParticipacion({
                 width={20}
                 height={20}
                 viewBox="0 0 16 16"
-                className="text-white sm:h-6 sm:w-6"
+                className="text-white sm:size-6"
               >
                 <path
                   d="M4 4l8 8M12 4l-8 8"
@@ -756,7 +756,7 @@ export default function ModalSolicitudesParticipacion({
                   disabled={eliminandoTodas || loading}
                   className="w-full shrink-0 bg-red-600 text-xs hover:bg-red-700 sm:w-auto sm:text-sm"
                 >
-                  <Trash2 className="mr-1 h-3 w-3 shrink-0 sm:mr-2 sm:h-4 sm:w-4" />
+                  <Trash2 className="mr-1 size-3 shrink-0 sm:mr-2 sm:size-4" />
                   <span className="break-words">
                     {eliminandoTodas
                       ? 'Eliminando...'
@@ -775,7 +775,7 @@ export default function ModalSolicitudesParticipacion({
 
             {loading ? (
               <div className="flex justify-center py-6 sm:py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-cyan-400 sm:h-8 sm:w-8" />
+                <div className="size-6 animate-spin rounded-full border-b-2 border-cyan-400 sm:size-8" />
               </div>
             ) : (
               <div className="space-y-4 sm:space-y-6">
@@ -783,7 +783,7 @@ export default function ModalSolicitudesParticipacion({
                 <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
                   <CardHeader className="pb-3 sm:pb-4">
                     <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg">
-                      <Clock className="h-4 w-4 shrink-0 text-yellow-400 sm:h-5 sm:w-5" />
+                      <Clock className="size-4 shrink-0 text-yellow-400 sm:size-5" />
                       <span className="min-w-0 break-words">
                         Solicitudes de Participación
                       </span>
@@ -805,7 +805,7 @@ export default function ModalSolicitudesParticipacion({
                             className="flex flex-col gap-3 overflow-hidden rounded-lg border border-slate-600 bg-slate-700/50 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-4"
                           >
                             <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
-                              <Avatar className="h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
+                              <Avatar className="size-8 flex-shrink-0 sm:size-10">
                                 <AvatarFallback className="bg-green-600 text-xs text-white sm:text-sm">
                                   {(solicitud.userName ?? 'AN')
                                     .split(' ')
@@ -833,7 +833,7 @@ export default function ModalSolicitudesParticipacion({
                                 {solicitud.requestMessage && (
                                   <div className="mt-2 rounded bg-slate-600/50 p-2">
                                     <div className="mb-1 flex items-center gap-1 text-xs text-slate-400">
-                                      <MessageSquare className="h-3 w-3 flex-shrink-0" />
+                                      <MessageSquare className="size-3 flex-shrink-0" />
                                       <span className="shrink-0">Mensaje:</span>
                                     </div>
                                     <p className="text-xs break-words whitespace-pre-wrap text-slate-300 sm:text-sm">
@@ -850,7 +850,7 @@ export default function ModalSolicitudesParticipacion({
                                 onClick={() => handleAprobar(solicitud)}
                                 disabled={processingId === solicitud.id}
                               >
-                                <Check className="mr-1 h-3 w-3 shrink-0" />
+                                <Check className="mr-1 size-3 shrink-0" />
                                 <span className="break-words">
                                   {processingId === solicitud.id
                                     ? 'Procesando...'
@@ -864,7 +864,7 @@ export default function ModalSolicitudesParticipacion({
                                 onClick={() => handleRechazar(solicitud)}
                                 disabled={processingId === solicitud.id}
                               >
-                                <X className="mr-1 h-3 w-3 shrink-0" />
+                                <X className="mr-1 size-3 shrink-0" />
                                 <span className="break-words">
                                   {processingId === solicitud.id
                                     ? 'Procesando...'
@@ -883,7 +883,7 @@ export default function ModalSolicitudesParticipacion({
                 <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
                   <CardHeader className="pb-3 sm:pb-4">
                     <CardTitle className="flex items-center gap-2 text-base text-white sm:text-lg">
-                      <Clock className="h-4 w-4 shrink-0 text-orange-400 sm:h-5 sm:w-5" />
+                      <Clock className="size-4 shrink-0 text-orange-400 sm:size-5" />
                       <span className="min-w-0 break-words">
                         Solicitudes de Renuncia
                       </span>
@@ -905,7 +905,7 @@ export default function ModalSolicitudesParticipacion({
                             className="flex flex-col gap-3 overflow-hidden rounded-lg border border-orange-600 bg-orange-900/20 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 sm:p-4"
                           >
                             <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
-                              <Avatar className="h-8 w-8 flex-shrink-0 sm:h-10 sm:w-10">
+                              <Avatar className="size-8 flex-shrink-0 sm:size-10">
                                 <AvatarFallback className="bg-orange-600 text-xs text-white sm:text-sm">
                                   {(solicitud.userName ?? 'AN')
                                     .split(' ')
@@ -933,7 +933,7 @@ export default function ModalSolicitudesParticipacion({
                                 {solicitud.requestMessage && (
                                   <div className="mt-2 rounded bg-orange-600/20 p-2">
                                     <div className="mb-1 flex items-center gap-1 text-xs text-orange-300">
-                                      <MessageSquare className="h-3 w-3 flex-shrink-0" />
+                                      <MessageSquare className="size-3 flex-shrink-0" />
                                       <span className="shrink-0">Motivo:</span>
                                     </div>
                                     <p className="text-xs break-words whitespace-pre-wrap text-orange-200 sm:text-sm">
@@ -950,7 +950,7 @@ export default function ModalSolicitudesParticipacion({
                                 onClick={() => handleAprobar(solicitud)}
                                 disabled={processingId === solicitud.id}
                               >
-                                <Check className="mr-1 h-3 w-3 shrink-0" />
+                                <Check className="mr-1 size-3 shrink-0" />
                                 <span className="break-words">
                                   {processingId === solicitud.id
                                     ? 'Procesando...'
@@ -964,7 +964,7 @@ export default function ModalSolicitudesParticipacion({
                                 onClick={() => handleRechazar(solicitud)}
                                 disabled={processingId === solicitud.id}
                               >
-                                <X className="mr-1 h-3 w-3 shrink-0" />
+                                <X className="mr-1 size-3 shrink-0" />
                                 <span className="break-words">
                                   {processingId === solicitud.id
                                     ? 'Procesando...'
@@ -996,7 +996,7 @@ export default function ModalSolicitudesParticipacion({
                             className="flex flex-col gap-2 overflow-hidden rounded-lg border border-slate-600 bg-slate-700/30 p-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3 sm:p-3"
                           >
                             <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
-                              <Avatar className="h-6 w-6 flex-shrink-0 sm:h-8 sm:w-8">
+                              <Avatar className="size-6 flex-shrink-0 sm:size-8">
                                 <AvatarFallback
                                   className={`${
                                     solicitud.requestType === 'participation'

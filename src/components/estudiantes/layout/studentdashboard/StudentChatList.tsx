@@ -34,15 +34,15 @@ interface Chat {
 
 const chatTypeConfig = {
   ticket: {
-    icon: <Ticket className="h-4 w-4" />,
+    icon: <Ticket className="size-4" />,
     color: 'purple',
   },
   chat: {
-    icon: <MessageSquare className="h-4 w-4" />,
+    icon: <MessageSquare className="size-4" />,
     color: 'blue',
   },
   project: {
-    icon: <FileText className="h-4 w-4" />,
+    icon: <FileText className="size-4" />,
     color: 'green',
   },
 } as const;
@@ -112,7 +112,7 @@ export const ChatList = ({
   }, [user?.id, activeType, setShowChatList]);
 
   return (
-    <div className="flex h-full w-full flex-col border-r border-gray-200 bg-white">
+    <div className="flex size-full flex-col border-r border-gray-200 bg-white">
       <div className="border-b border-gray-200 p-4">
         <h2 className="flex items-center justify-center gap-2 text-center text-lg font-semibold text-gray-800">
           {activeType === 'tickets' ? (
@@ -120,7 +120,7 @@ export const ChatList = ({
           ) : activeType === 'projects' ? (
             'Mis Proyectos'
           ) : (
-            <BsRobot className="h-5 w-5 text-white" />
+            <BsRobot className="size-5 text-white" />
           )}
         </h2>
       </div>
@@ -142,7 +142,7 @@ export const ChatList = ({
             className="w-full rounded-lg bg-purple-500 px-4 py-3 text-center font-medium text-white transition-colors hover:bg-purple-600"
           >
             <div className="flex items-center justify-center gap-2">
-              <Ticket className="h-5 w-5" />
+              <Ticket className="size-5" />
               Crear Nuevo Ticket
             </div>
           </Button>
@@ -208,7 +208,7 @@ export const ChatList = ({
                   }`}
                 >
                   Abrir
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="size-4" />
                 </motion.div>
               </Button>
             </li>
@@ -232,7 +232,7 @@ export const ChatList = ({
             className="w-full rounded-lg bg-purple-500 px-3 py-2 text-center text-sm font-medium text-white transition-colors hover:bg-purple-600"
           >
             <div className="flex items-center justify-center gap-2">
-              <Ticket className="h-4 w-4" />
+              <Ticket className="size-4" />
               Nuevo Ticket
             </div>
           </Button>

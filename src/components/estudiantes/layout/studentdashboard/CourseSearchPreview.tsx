@@ -42,17 +42,17 @@ export default function CourseSearchPreview({
               className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 hover:bg-white/5"
               onClick={() => onSelectCourse?.(course.id)}
             >
-              <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded bg-gray-800">
+              <div className="size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800">
                 {course.coverImageKey ? (
                   <Image
                     src={getImageUrl(course.coverImageKey)}
                     alt={course.title}
                     width={56}
                     height={56}
-                    className="h-full w-full object-cover"
+                    className="size-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                  <div className="flex size-full items-center justify-center text-xs text-gray-400">
                     Sin imagen
                   </div>
                 )}
@@ -81,17 +81,17 @@ export default function CourseSearchPreview({
               className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 hover:bg-white/5"
               onClick={() => onSelectProgram?.(program.id)}
             >
-              <div className="h-14 w-14 flex-shrink-0 overflow-hidden rounded bg-gray-800">
+              <div className="size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800">
                 {program.coverImageKey ? (
                   <Image
                     src={getImageUrl(program.coverImageKey)}
                     alt={program.title}
                     width={56}
                     height={56}
-                    className="h-full w-full object-cover"
+                    className="size-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                  <div className="flex size-full items-center justify-center text-xs text-gray-400">
                     Sin imagen
                   </div>
                 )}

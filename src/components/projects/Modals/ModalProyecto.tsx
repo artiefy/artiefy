@@ -38,10 +38,10 @@ const ModalProyecto: React.FC<ModalProyectoProps> = ({ isOpen, onClose }) => {
 
         {/* Izquierda - Imagen */}
         <div className="flex w-full items-center justify-center bg-[#0F2940] p-4 md:w-1/2 md:p-8">
-          <div className="flex h-32 w-32 items-center justify-center rounded-lg border-4 border-cyan-400 sm:h-40 sm:w-40 md:h-48 md:w-48">
+          <div className="flex size-32 items-center justify-center rounded-lg border-4 border-cyan-400 sm:size-40 md:size-48">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-12 w-12 text-cyan-400 sm:h-16 sm:w-16 md:h-20 md:w-20"
+              className="size-12 text-cyan-400 sm:size-16 md:size-20"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"

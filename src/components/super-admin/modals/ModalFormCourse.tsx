@@ -27,6 +27,14 @@ import { Input } from '~/components/educators/ui/input';
 import { Progress } from '~/components/educators/ui/progress';
 
 // Interfaz para los parámetros del formulario del course
+interface ParametroForm {
+  id: number;
+  name: string;
+  description: string;
+  porcentaje: number;
+  numberOfActivities: number;
+}
+
 interface CourseFormProps {
   onSubmitAction: (
     id: string,
@@ -45,12 +53,7 @@ interface CourseFormProps {
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
     individualPrice: number | null,
-    parametros: {
-      id: number;
-      name: string;
-      description: string;
-      porcentaje: number;
-    }[],
+    parametros: ParametroForm[],
     horario: number | null,
     espacios: number | null,
     certificationTypeId: number | null
@@ -73,20 +76,8 @@ interface CourseFormProps {
   setCoverVideoCourseKey: (val: string | null) => void;
   individualPrice: number | null;
   setIndividualPrice: (price: number | null) => void;
-  parametros: {
-    id: number;
-    name: string;
-    description: string;
-    porcentaje: number;
-  }[];
-  setParametrosAction: (
-    parametros: {
-      id: number;
-      name: string;
-      description: string;
-      porcentaje: number;
-    }[]
-  ) => void;
+  parametros: ParametroForm[];
+  setParametrosAction: (parametros: ParametroForm[]) => void;
   isOpen: boolean;
   onCloseAction: () => void;
   rating: number;
@@ -259,10 +250,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
 
   // 🆕 Estados para parámetros y plantillas existentes
   const [existingParametros, setExistingParametros] = useState<
-    { id: number; name: string; description: string; porcentaje: number }[]
+    {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+      numberOfActivities?: number;
+    }[]
   >([]);
   const [existingTemplates, setExistingTemplates] = useState<
-    { id: number; name: string; description: string | null }[]
+    {
+      id: number;
+      name: string;
+      description: string | null;
+      numberOfActivities?: number;
+    }[]
   >([]);
   const [selectedParametroId, setSelectedParametroId] = useState<number | null>(
     null
@@ -319,6 +321,18 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Función para manejar la adición o creacion de parámetros
   const handleAddParametro = () => {
     if (parametros.length < 10) {
+      // Pedir al usuario el número de actividades (por defecto 1 si cancela o valor inválido)
+      let actividades = 1;
+      const input = window.prompt(
+        '¿Cuántas actividades tendrá este parámetro?',
+        '1'
+      );
+      if (input !== null) {
+        const parsed = parseInt(input);
+        if (!isNaN(parsed) && parsed > 0) {
+          actividades = parsed;
+        }
+      }
       setParametrosAction([
         ...parametros,
         {
@@ -326,6 +340,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           name: '',
           description: '',
           porcentaje: 0,
+          numberOfActivities: actividades,
         },
       ]);
     }
@@ -653,7 +668,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       (p) => p.id === parametroId
     );
     if (selectedParametro) {
-      setParametrosAction([...parametros, selectedParametro]);
+      setParametrosAction([
+        ...parametros,
+        {
+          ...selectedParametro,
+          numberOfActivities: selectedParametro.numberOfActivities ?? 1,
+        },
+      ]);
       setSelectedParametroId(null);
     }
   };
@@ -667,8 +688,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     // Aquí iría la lógica para cargar los parámetros de la plantilla
     const selectedTemplate = existingTemplates.find((t) => t.id === templateId);
     if (selectedTemplate) {
-      // Por ahora, solo limpiamos y mostramos que se cargó
-      setParametrosAction([]);
+      setParametrosAction([
+        {
+          id: 0,
+          name: selectedTemplate.name,
+          description: selectedTemplate.description ?? '',
+          porcentaje: 100,
+          numberOfActivities: selectedTemplate.numberOfActivities ?? 1,
+        },
+      ]);
       toast.success(`Plantilla "${selectedTemplate.name}" seleccionada`);
       setSelectedTemplateId(null);
     }
@@ -1982,6 +2010,27 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                           Math.max(1, Math.min(100, parseFloat(e.target.value)))
                         )
                       }
+                      className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
+                    />
+                    <label className="mt-2 text-sm font-medium text-primary md:text-lg">
+                      Número de actividades
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={parametro.numberOfActivities}
+                      onChange={(e) => {
+                        const value = Math.max(
+                          1,
+                          parseInt(e.target.value) || 1
+                        );
+                        const nuevos = [...parametros];
+                        nuevos[index] = {
+                          ...nuevos[index],
+                          numberOfActivities: value,
+                        };
+                        setParametrosAction(nuevos);
+                      }}
                       className="mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base"
                     />
                   </div>

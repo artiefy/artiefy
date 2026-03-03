@@ -172,7 +172,7 @@ const ParametrosPage = () => {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <div className="loader mb-4 h-12 w-12 rounded-full border-4 border-primary border-t-transparent"></div>
+          <div className="loader mb-4 size-12 rounded-full border-4 border-primary border-t-transparent"></div>
           <p className="text-gray-600">Cargando parámetros...</p>
         </div>
       </div>

@@ -104,12 +104,12 @@ function FileBadge({
           alt={file.name}
           width={48}
           height={48}
-          className="h-12 w-12 rounded object-cover"
+          className="size-12 rounded object-cover"
           unoptimized
           priority
         />
       ) : (
-        <div className="flex h-12 w-12 items-center justify-center rounded bg-[#101a35] text-xs text-gray-300">
+        <div className="flex size-12 items-center justify-center rounded bg-[#101a35] text-xs text-gray-300">
           {isPdf ? 'PDF' : 'FILE'}
         </div>
       )}
@@ -847,12 +847,12 @@ export default function FormModal({ isOpen, onClose }: Props) {
         {showSuccess ? (
           // ==== Pantalla de ÉXITO ====
           <div className="flex flex-col items-center justify-center gap-6 px-8 py-12 text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#1C2541] shadow shadow-cyan-500/30">
+            <div className="flex size-20 items-center justify-center rounded-full bg-[#1C2541] shadow shadow-cyan-500/30">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                className="h-10 w-10 text-cyan-400"
+                className="size-10 text-cyan-400"
                 aria-hidden="true"
               >
                 <path

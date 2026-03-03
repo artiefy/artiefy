@@ -548,9 +548,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                       size="sm"
                       variant="destructive"
                       onClick={() => removeObjective(objective.id)}
-                      className="h-7 w-7 flex-shrink-0 self-end p-0 sm:h-8 sm:w-8 sm:self-start"
+                      className="size-7 flex-shrink-0 self-end p-0 sm:size-8 sm:self-start"
                     >
-                      <X className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <X className="size-3 sm:size-4" />
                     </Button>
                   </div>
 
@@ -632,9 +632,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                                 activityIndex
                               )
                             }
-                            className="h-5 w-5 flex-shrink-0 self-end p-0 sm:h-6 sm:w-6 sm:self-start"
+                            className="size-5 flex-shrink-0 self-end p-0 sm:size-6 sm:self-start"
                           >
-                            <X className="h-2 w-2 sm:h-3 sm:w-3" />
+                            <X className="size-2 sm:size-3" />
                           </Button>
                         </div>
                       );

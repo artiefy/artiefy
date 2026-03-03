@@ -46,7 +46,7 @@ const LessonTranscription = ({
   if (isLoading) {
     return (
       <div className="flex items-center gap-2 py-8 text-muted-foreground">
-        <Icons.spinner className="h-4 w-4" />
+        <Icons.spinner className="size-4" />
         <span className="text-sm">Cargando transcripción...</span>
       </div>
     );
@@ -74,7 +74,7 @@ const LessonTranscription = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full px-4 py-4 text-sm text-white"
+      className="relative w-full p-4 text-sm text-white"
       style={{ minHeight: '10rem', maxHeight: '22rem', overflow: 'auto' }}
     >
       {transcription.map((item, idx) => {

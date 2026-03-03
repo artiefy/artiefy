@@ -171,7 +171,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
 
   // Layout: flex-col, mensajes con overflow, input SIEMPRE pegado abajo
   return (
-    <div className="flex h-full min-h-0 w-full flex-col">
+    <div className="flex size-full min-h-0 flex-col">
       {/* Banner de ticket cerrado */}
       {isTicketClosed && (
         <div className="mb-3 rounded-lg border border-yellow-400/60 bg-yellow-400/10 p-3 text-sm text-yellow-100">
@@ -244,7 +244,7 @@ export const SuportChat: React.FC<SuportChatProps> = ({
         <div ref={messagesEndRef} />
       </div>
       {/* Input fijo abajo, SIEMPRE visible */}
-      <div className="w-full border-t border-gray-700 bg-[#050c1b] px-2 py-2 backdrop-blur-sm">
+      <div className="w-full border-t border-gray-700 bg-[#050c1b] p-2 backdrop-blur-sm">
         <form onSubmit={handleSendMessage} className="flex w-full gap-2">
           <input
             ref={actualInputRef}

@@ -513,7 +513,7 @@ export default function TicketModal({
 
                 {formData.videoKey && (
                   <div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
-                    <video controls className="h-full w-full object-contain">
+                    <video controls className="size-full object-contain">
                       <source
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${formData.videoKey}`}
                         type="video/mp4"
@@ -582,7 +582,7 @@ export default function TicketModal({
                 <div className="max-h-60 space-y-3 overflow-y-auto rounded-lg border border-gray-700/50 bg-gray-800/30 p-4">
                   {isLoadingComments ? (
                     <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                      <Loader2 className="size-6 animate-spin text-blue-500" />
                     </div>
                   ) : comments.length > 0 ? (
                     comments
@@ -651,7 +651,7 @@ export default function TicketModal({
             >
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                   <span>Procesando...</span>
                 </div>
               ) : ticket ? (

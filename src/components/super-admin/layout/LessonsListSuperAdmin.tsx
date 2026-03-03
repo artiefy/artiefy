@@ -281,7 +281,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       <div className="mb-8 flex flex-col gap-4 rounded-lg border border-gray-300 bg-gray-50 p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <SortAsc className="h-5 w-5 text-blue-600" />
+            <SortAsc className="size-5 text-blue-600" />
             <h3 className="text-lg font-semibold">Modo Reordenar Clases</h3>
           </div>
           <div className="flex items-center gap-2">
@@ -336,10 +336,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                               {...provided.dragHandleProps}
                               className="cursor-grab p-1 active:cursor-grabbing"
                             >
-                              <GripVertical className="h-5 w-5 text-gray-400" />
+                              <GripVertical className="size-5 text-gray-400" />
                             </div>
 
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-800">
+                            <div className="flex size-8 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-800">
                               {lesson.orderIndex || index + 1}
                             </div>
 

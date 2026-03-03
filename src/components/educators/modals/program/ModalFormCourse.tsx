@@ -1377,7 +1377,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       <video
                         id="video-player"
                         controls
-                        className="h-full w-full object-cover"
+                        className="size-full object-cover"
                         src={URL.createObjectURL(file)}
                       />
                     </div>

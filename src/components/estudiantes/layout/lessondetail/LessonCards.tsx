@@ -153,7 +153,7 @@ const LessonCards = ({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="h-4 w-4 text-accent"
+            className="size-4 text-accent"
           >
             <circle cx="12" cy="12" r="10" />
             <path d="m9 12 2 2 4-4" />
@@ -161,7 +161,7 @@ const LessonCards = ({
         );
       }
       return (
-        <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30 transition-colors group-hover/lesson:border-muted-foreground/50" />
+        <div className="size-4 rounded-full border-2 border-muted-foreground/30 transition-colors group-hover/lesson:border-muted-foreground/50" />
       );
     };
 
@@ -216,9 +216,9 @@ const LessonCards = ({
 
           <div className="mt-1 flex items-center gap-1">
             {isCompleted ? (
-              <FaCheckCircle className="h-3 w-3 text-green-500" />
+              <FaCheckCircle className="size-3 text-green-500" />
             ) : (
-              <FaClock className="h-3 w-3 text-muted-foreground/70" />
+              <FaClock className="size-3 text-muted-foreground/70" />
             )}
             <span className="text-[10px] text-muted-foreground">
               {isCompleted
@@ -331,8 +331,8 @@ const LessonCards = ({
       {/* Progress section at top */}
       <div className="sticky top-0 z-10 border-b border-border bg-[#061c37cc] px-5 py-3 backdrop-blur-xl">
         <div className="flex items-center gap-4">
-          <div className="relative h-14 w-14">
-            <svg className="h-14 w-14 -rotate-90">
+          <div className="relative size-14">
+            <svg className="size-14 -rotate-90">
               <circle
                 cx="28"
                 cy="28"
@@ -372,8 +372,8 @@ const LessonCards = ({
       <div className="flex-1 overflow-y-auto px-3 pb-4">
         <div className="mb-2">
           <button className="group flex w-full items-center gap-3 rounded-xl p-3 text-left transition-all hover:bg-secondary/50">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-green-600 bg-green-200 transition-colors group-hover:bg-green-300">
-              <SiGoogleclassroom className="h-4 w-4 text-green-600" />
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-green-600 bg-green-200 transition-colors group-hover:bg-green-300">
+              <SiGoogleclassroom className="size-4 text-green-600" />
             </div>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm leading-tight font-medium text-foreground">
@@ -393,7 +393,7 @@ const LessonCards = ({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="h-4 w-4 shrink-0 text-muted-foreground"
+              className="size-4 shrink-0 text-muted-foreground"
             >
               <path d="m6 9 6 6 6-6" />
             </svg>

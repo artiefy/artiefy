@@ -176,24 +176,24 @@ export default function CourseDetails({
   const [projectsCount, setProjectsCount] = useState<number>(0);
   const carouselRef = useRef<HTMLDivElement>(null);
   const getModalidadIcon = (modalidadName?: string) => {
-    if (!modalidadName) return <MdOutlineVideocam className="h-3 w-3" />;
+    if (!modalidadName) return <MdOutlineVideocam className="size-3" />;
     const name = modalidadName.toLowerCase();
     if (name.includes('presencial'))
-      return <FaBuildingUser className="h-3 w-3" />;
+      return <FaBuildingUser className="size-3" />;
     if (
       name.includes('virtual') ||
       name.includes('sincron') ||
       name.includes('sincrónica') ||
       name.includes('sincronica')
     )
-      return <FaChalkboardUser className="h-3 w-3" />;
+      return <FaChalkboardUser className="size-3" />;
     if (
       name.includes('combin') ||
       name.includes('hibr') ||
       name.includes('artiefy')
     )
-      return <FaUserClock className="h-3 w-3" />;
-    return <FaUserClock className="h-3 w-3" />;
+      return <FaUserClock className="size-3" />;
+    return <FaUserClock className="size-3" />;
   };
 
   const recordedCount = Array.isArray(classMeetings)
@@ -1114,7 +1114,7 @@ export default function CourseDetails({
                   >
                     <div className="relative">
                       <AspectRatio ratio={16 / 9}>
-                        <div className="group relative h-full w-full overflow-hidden">
+                        <div className="group relative size-full overflow-hidden">
                           {coverVideoUrl ? (
                             isImageUrl(coverVideoUrl) ? (
                               <Image
@@ -1128,7 +1128,7 @@ export default function CourseDetails({
                               />
                             ) : (
                               <video
-                                className="h-full w-full object-cover"
+                                className="size-full object-cover"
                                 src={coverVideoUrl}
                                 poster={coverImageUrl}
                                 playsInline
@@ -1177,7 +1177,7 @@ export default function CourseDetails({
                                 }
                               }}
                             >
-                              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 transition-transform group-hover:scale-110">
+                              <div className="flex size-16 items-center justify-center rounded-full bg-primary/90 transition-transform group-hover:scale-110">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
@@ -1188,7 +1188,7 @@ export default function CourseDetails({
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="lucide lucide-play ml-1 h-7 w-7 text-black"
+                                  className="lucide lucide-play ml-1 size-7 text-black"
                                 >
                                   <polygon points="6 3 20 12 6 21 6 3"></polygon>
                                 </svg>
@@ -1270,20 +1270,20 @@ export default function CourseDetails({
                           {includedPlans.includes('Premium') &&
                           includedPlans.includes('Pro') ? (
                             <div className="inline-flex items-center gap-2 rounded-full border border-red-400 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400">
-                              <AiFillFire className="h-4 w-4 text-red-400" />
+                              <AiFillFire className="size-4 text-red-400" />
                               <span>Premium + Pro</span>
                             </div>
                           ) : (
                             <div className="inline-flex items-center gap-2">
                               {includedPlans.includes('Premium') && (
                                 <div className="inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-400">
-                                  <FaCrown className="h-3 w-3" />
+                                  <FaCrown className="size-3" />
                                   <span>Premium</span>
                                 </div>
                               )}
                               {includedPlans.includes('Pro') && (
                                 <div className="inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400">
-                                  <FaStar className="h-3 w-3" />
+                                  <FaStar className="size-3" />
                                   <span>Pro</span>
                                 </div>
                               )}
@@ -1320,12 +1320,12 @@ export default function CourseDetails({
                                     } ${includedPlans.join(' + ')}`}
                               {includedPlans.includes('Pro') &&
                               !includedPlans.includes('Premium') ? (
-                                <FaStar className="h-4 w-4 text-blue-400" />
+                                <FaStar className="size-4 text-blue-400" />
                               ) : includedPlans.includes('Premium') &&
                                 !includedPlans.includes('Pro') ? (
-                                <FaCrown className="h-4 w-4 text-amber-400" />
+                                <FaCrown className="size-4 text-amber-400" />
                               ) : (
-                                <AiFillFire className="h-4 w-4 text-red-400" />
+                                <AiFillFire className="size-4 text-red-400" />
                               )}
                             </p>
                           </div>
@@ -1338,7 +1338,7 @@ export default function CourseDetails({
                                 className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold whitespace-nowrap text-emerald-400 ring-offset-background transition-all hover:bg-[#10b9814d] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                               >
                                 <FaCheck
-                                  className="mr-2 h-5 w-5"
+                                  className="mr-2 size-5"
                                   style={{ color: 'rgb(52 211 153)' }}
                                 />
                                 Suscrito
@@ -1350,7 +1350,7 @@ export default function CourseDetails({
                                 disabled={isUnenrolling}
                                 className="group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-destructive/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
                               >
-                                <FaTimes className="h-4 w-4 text-emerald-400 transition-colors group-hover:text-red-500" />
+                                <FaTimes className="size-4 text-emerald-400 transition-colors group-hover:text-red-500" />
                               </button>
                             </div>
 
@@ -1473,7 +1473,7 @@ export default function CourseDetails({
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="lucide lucide-star h-4 w-4 fill-amber-400 text-amber-400"
+                                  className="lucide lucide-star size-4 fill-amber-400 text-amber-400"
                                 >
                                   <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
                                 </svg>
@@ -1488,7 +1488,7 @@ export default function CourseDetails({
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="lucide lucide-star h-4 w-4 fill-amber-400/50 text-amber-400"
+                                className="lucide lucide-star size-4 fill-amber-400/50 text-amber-400"
                               >
                                 <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
                               </svg>
@@ -1508,7 +1508,7 @@ export default function CourseDetails({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="lucide lucide-users h-4 w-4"
+                              className="lucide lucide-users size-4"
                             >
                               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                               <circle cx="9" cy="7" r="4"></circle>
@@ -1532,7 +1532,7 @@ export default function CourseDetails({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="lucide lucide-book-open h-3.5 w-3.5 text-primary"
+                              className="lucide lucide-book-open size-3.5 text-primary"
                             >
                               <path d="M12 7v14"></path>
                               <path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"></path>
@@ -1550,7 +1550,7 @@ export default function CourseDetails({
                               strokeWidth="2"
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              className="lucide lucide-clock h-3.5 w-3.5 text-primary"
+                              className="lucide lucide-clock size-3.5 text-primary"
                             >
                               <circle cx="12" cy="12" r="10"></circle>
                               <polyline points="12 6 12 12 16 14"></polyline>
@@ -1565,7 +1565,7 @@ export default function CourseDetails({
                             style={{ backgroundColor: '#1A2333' }}
                             className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
                           >
-                            <RiEqualizer2Line className="h-3 w-3" />
+                            <RiEqualizer2Line className="size-3" />
                             {course.nivel
                               ? typeof course.nivel === 'string'
                                 ? course.nivel
@@ -1592,7 +1592,7 @@ export default function CourseDetails({
                               style={{ backgroundColor: '#1A2333' }}
                               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-foreground"
                             >
-                              <AiOutlineCalendar className="h-3 w-3" />
+                              <AiOutlineCalendar className="size-3" />
                               {course.scheduleOption?.name || course.horario}
                             </span>
                           ) : null}
@@ -1611,7 +1611,7 @@ export default function CourseDetails({
                                 strokeWidth="2"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                className="h-3 w-3"
+                                className="size-3"
                               >
                                 <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
                                 <circle cx="12" cy="10" r="3"></circle>
@@ -1639,7 +1639,7 @@ export default function CourseDetails({
                           >
                             <div className="relative">
                               <AspectRatio ratio={16 / 9}>
-                                <div className="relative h-full w-full overflow-hidden">
+                                <div className="relative size-full overflow-hidden">
                                   {coverVideoUrl ? (
                                     isImageUrl(coverVideoUrl) ? (
                                       <Image
@@ -1654,7 +1654,7 @@ export default function CourseDetails({
                                       />
                                     ) : (
                                       <video
-                                        className="h-full w-full object-cover"
+                                        className="size-full object-cover"
                                         src={coverVideoUrl}
                                         poster={coverImageUrl}
                                         controls
@@ -1693,20 +1693,20 @@ export default function CourseDetails({
                                   {includedPlans.includes('Premium') &&
                                   includedPlans.includes('Pro') ? (
                                     <div className="inline-flex items-center gap-2 rounded-full border border-red-400 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400">
-                                      <AiFillFire className="h-4 w-4 text-red-400" />
+                                      <AiFillFire className="size-4 text-red-400" />
                                       <span>Premium + Pro</span>
                                     </div>
                                   ) : (
                                     <div className="inline-flex items-center gap-2">
                                       {includedPlans.includes('Premium') && (
                                         <div className="inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-400">
-                                          <FaCrown className="h-3 w-3" />
+                                          <FaCrown className="size-3" />
                                           <span>Premium</span>
                                         </div>
                                       )}
                                       {includedPlans.includes('Pro') && (
                                         <div className="inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400">
-                                          <FaStar className="h-3 w-3" />
+                                          <FaStar className="size-3" />
                                           <span>Pro</span>
                                         </div>
                                       )}
@@ -1730,12 +1730,12 @@ export default function CourseDetails({
                                             } ${includedPlans.join(' + ')}`}
                                       {includedPlans.includes('Pro') &&
                                       !includedPlans.includes('Premium') ? (
-                                        <FaStar className="h-4 w-4 text-blue-400" />
+                                        <FaStar className="size-4 text-blue-400" />
                                       ) : includedPlans.includes('Premium') &&
                                         !includedPlans.includes('Pro') ? (
-                                        <FaCrown className="h-4 w-4 text-amber-400" />
+                                        <FaCrown className="size-4 text-amber-400" />
                                       ) : (
-                                        <AiFillFire className="h-4 w-4 text-red-400" />
+                                        <AiFillFire className="size-4 text-red-400" />
                                       )}
                                     </p>
                                   </div>
@@ -1747,7 +1747,7 @@ export default function CourseDetails({
                                       className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold whitespace-nowrap text-emerald-400 ring-offset-background transition-all hover:bg-[#10b9814d] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
                                     >
                                       <FaCheck
-                                        className="mr-2 h-5 w-5"
+                                        className="mr-2 size-5"
                                         style={{ color: 'rgb(52 211 153)' }}
                                       />
                                       Suscrito
@@ -1761,7 +1761,7 @@ export default function CourseDetails({
                                       disabled={isUnenrolling}
                                       className="group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-destructive/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
                                     >
-                                      <FaTimes className="h-4 w-4 text-emerald-400 transition-colors group-hover:text-red-500" />
+                                      <FaTimes className="size-4 text-emerald-400 transition-colors group-hover:text-red-500" />
                                     </button>
                                   </div>
 
@@ -1804,7 +1804,7 @@ export default function CourseDetails({
                               >
                                 <span>{item.label}</span>
                                 {showBadge && (
-                                  <span className="inline-flex aspect-square h-6 w-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
+                                  <span className="inline-flex aspect-square size-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
                                     {badgeCount}
                                   </span>
                                 )}
@@ -1824,7 +1824,7 @@ export default function CourseDetails({
                       >
                         <button
                           onClick={() => scrollCarousel('left')}
-                          className="inline-flex aspect-square h-9 w-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
+                          className="inline-flex aspect-square size-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
                           aria-label="Anterior"
                         >
                           <svg
@@ -1864,7 +1864,7 @@ export default function CourseDetails({
                               >
                                 <span>{item.label}</span>
                                 {showBadge && (
-                                  <span className="inline-flex aspect-square h-6 w-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
+                                  <span className="inline-flex aspect-square size-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
                                     {badgeCount}
                                   </span>
                                 )}
@@ -1879,7 +1879,7 @@ export default function CourseDetails({
                         </div>
                         <button
                           onClick={() => scrollCarousel('right')}
-                          className="inline-flex aspect-square h-9 w-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
+                          className="inline-flex aspect-square size-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
                           aria-label="Siguiente"
                         >
                           <svg
@@ -1959,7 +1959,7 @@ export default function CourseDetails({
                         isEnrolled ? (
                           <div className="rounded-2xl border border-border bg-card p-6 shadow-xl md:p-8">
                             <div className="mb-6 flex items-center gap-3">
-                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
+                              <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500">
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
@@ -1970,7 +1970,7 @@ export default function CourseDetails({
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="h-6 w-6 text-white"
+                                  className="size-6 text-white"
                                 >
                                   <path d="m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526"></path>
                                   <circle cx="12" cy="8" r="6"></circle>
@@ -2008,9 +2008,9 @@ export default function CourseDetails({
                                 {hasParameters && (
                                   <div className="flex items-center gap-2">
                                     {parametersFullyGraded ? (
-                                      <FaCheckCircle className="h-3.5 w-3.5 text-green-400" />
+                                      <FaCheckCircle className="size-3.5 text-green-400" />
                                     ) : (
-                                      <FaLock className="h-3.5 w-3.5 text-white/70" />
+                                      <FaLock className="size-3.5 text-white/70" />
                                     )}
                                     <span>
                                       Calificación de parámetros:{' '}
@@ -2022,9 +2022,9 @@ export default function CourseDetails({
                                 {hasActivities ? (
                                   <div className="flex items-center gap-2">
                                     {activitiesCompleted ? (
-                                      <FaCheckCircle className="h-3.5 w-3.5 text-green-400" />
+                                      <FaCheckCircle className="size-3.5 text-green-400" />
                                     ) : (
-                                      <FaLock className="h-3.5 w-3.5 text-white/70" />
+                                      <FaLock className="size-3.5 text-white/70" />
                                     )}
                                     <span>
                                       Actividades completadas:{' '}
@@ -2035,9 +2035,9 @@ export default function CourseDetails({
                                 ) : (
                                   <div className="flex items-center gap-2">
                                     {lessonsProgressOk ? (
-                                      <FaCheckCircle className="h-3.5 w-3.5 text-green-400" />
+                                      <FaCheckCircle className="size-3.5 text-green-400" />
                                     ) : (
-                                      <FaLock className="h-3.5 w-3.5 text-white/70" />
+                                      <FaLock className="size-3.5 text-white/70" />
                                     )}
                                     <span>
                                       Clases &gt; 90%: {lessonsAboveNinety}/
@@ -2064,9 +2064,9 @@ export default function CourseDetails({
                                 }`}
                               >
                                 {isCertificateUnlocked ? (
-                                  <FaCheckCircle className="h-4 w-4 text-green-400" />
+                                  <FaCheckCircle className="size-4 text-green-400" />
                                 ) : (
-                                  <FaLock className="h-4 w-4 text-white/70" />
+                                  <FaLock className="size-4 text-white/70" />
                                 )}
                                 {isCertificateUnlocked
                                   ? 'Ver tu certificado'
@@ -2130,7 +2130,7 @@ export default function CourseDetails({
                       >
                         <div className="relative">
                           <AspectRatio ratio={16 / 9}>
-                            <div className="group relative h-full w-full overflow-hidden">
+                            <div className="group relative size-full overflow-hidden">
                               {course.coverVideoCourseKey && coverVideoUrl ? (
                                 isImageUrl(
                                   course.coverVideoCourseKey as string
@@ -2147,7 +2147,7 @@ export default function CourseDetails({
                                   />
                                 ) : (
                                   <video
-                                    className="h-full w-full object-cover"
+                                    className="size-full object-cover"
                                     src={coverVideoUrl}
                                     poster={coverImageUrl}
                                     playsInline
@@ -2205,7 +2205,7 @@ export default function CourseDetails({
                                       }
                                     }}
                                   >
-                                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/90 transition-transform group-hover:scale-110">
+                                    <div className="flex size-16 items-center justify-center rounded-full bg-primary/90 transition-transform group-hover:scale-110">
                                       <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         width="24"
@@ -2216,7 +2216,7 @@ export default function CourseDetails({
                                         strokeWidth="2"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
-                                        className="lucide lucide-play ml-1 h-7 w-7 text-black"
+                                        className="lucide lucide-play ml-1 size-7 text-black"
                                       >
                                         <polygon points="6 3 20 12 6 21 6 3"></polygon>
                                       </svg>
@@ -2300,20 +2300,20 @@ export default function CourseDetails({
                               {includedPlans.includes('Premium') &&
                               includedPlans.includes('Pro') ? (
                                 <div className="inline-flex items-center gap-2 rounded-full border border-red-400 bg-red-500/20 px-3 py-1.5 text-sm font-medium text-red-400">
-                                  <AiFillFire className="h-4 w-4 text-red-400" />
+                                  <AiFillFire className="size-4 text-red-400" />
                                   <span>Premium + Pro</span>
                                 </div>
                               ) : (
                                 <div className="inline-flex items-center gap-2">
                                   {includedPlans.includes('Premium') && (
                                     <div className="inline-flex items-center gap-1 rounded-full border border-amber-400 bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-400">
-                                      <FaCrown className="h-3 w-3" />
+                                      <FaCrown className="size-3" />
                                       <span>Premium</span>
                                     </div>
                                   )}
                                   {includedPlans.includes('Pro') && (
                                     <div className="inline-flex items-center gap-1 rounded-full border border-blue-400 bg-blue-500/20 px-3 py-1.5 text-sm font-medium text-blue-400">
-                                      <FaStar className="h-3 w-3" />
+                                      <FaStar className="size-3" />
                                       <span>Pro</span>
                                     </div>
                                   )}
@@ -2351,12 +2351,12 @@ export default function CourseDetails({
                                         } ${includedPlans.join(' + ')}`}
                                   {includedPlans.includes('Pro') &&
                                   !includedPlans.includes('Premium') ? (
-                                    <FaStar className="h-4 w-4 text-blue-400" />
+                                    <FaStar className="size-4 text-blue-400" />
                                   ) : includedPlans.includes('Premium') &&
                                     !includedPlans.includes('Pro') ? (
-                                    <FaCrown className="h-4 w-4 text-amber-400" />
+                                    <FaCrown className="size-4 text-amber-400" />
                                   ) : (
-                                    <AiFillFire className="h-4 w-4 text-red-400" />
+                                    <AiFillFire className="size-4 text-red-400" />
                                   )}
                                 </p>
                               </div>
@@ -2416,7 +2416,7 @@ export default function CourseDetails({
               onClick={() => setShowPaymentModal(false)}
               className="absolute top-3 right-3 rounded-full p-1 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
             >
-              <FaTimes className="h-5 w-5" />
+              <FaTimes className="size-5" />
             </button>
             <div className="space-y-3 pt-2 text-center">
               <h3 className="text-xl font-semibold text-gray-900">

@@ -26,7 +26,7 @@ export default function MisCoursesPage() {
                     <Skeleton className="mb-8 h-10 w-72" />
                     <div className="mb-8 rounded-lg bg-gray-800 p-6">
                       <div className="flex items-center gap-4">
-                        <Skeleton className="h-16 w-16 rounded-full" />
+                        <Skeleton className="size-16 rounded-full" />
                         <div className="space-y-2">
                           <Skeleton className="h-6 w-48" />
                           <Skeleton className="h-4 w-64" />

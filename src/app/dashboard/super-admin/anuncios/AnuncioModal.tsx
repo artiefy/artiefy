@@ -179,7 +179,7 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
               type="checkbox"
               checked={opcionesSeleccionadas.includes('curso')}
               onChange={() => handleCheckboxChange('curso')}
-              className="form-checkbox h-5 w-5 text-blue-500"
+              className="form-checkbox size-5 text-blue-500"
             />
             <span>Asignar a un Curso</span>
           </label>

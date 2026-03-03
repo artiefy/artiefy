@@ -1153,7 +1153,8 @@ export const conversations = pgTable('conversations', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
   title: text('title').notNull(),
-  // Nota: originalmente `curso_id` tenía `.unique()` lo que forzaba una sola
+  fechaPrograma: date('fecha_programa').notNull(), // renombrado
+  fechaRealPago: date('fecha_real_pago'), // nueva columna, nullable
   // conversación por curso globalmente. Eso provocaba que varios usuarios
   // compartieran la misma conversación de curso. Se eliminó `.unique()` del
   // schema porque la restricción debe manejarse mediante un índice único
@@ -1548,7 +1549,9 @@ export const pagos = pgTable('pagos', {
   }),
   concepto: varchar('concepto', { length: 100 }).notNull(),
   nroPago: integer('nro_pago').notNull(),
-  fecha: date('fecha').notNull(),
+  // fecha eliminada, solo fechaPrograma y fechaRealPago
+  fechaPrograma: date('fecha_programa').notNull(), // nueva columna
+  fechaRealPago: date('fecha_real_pago'), // nueva columna, nullable
   metodo: varchar('metodo', { length: 50 }).notNull(),
   valor: integer('valor').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
