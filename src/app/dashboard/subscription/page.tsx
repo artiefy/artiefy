@@ -291,41 +291,41 @@ export default function BuscarSuscripcionPage() {
       return (
         <div
           className="
-          xs:mt-5 xs:p-4
-          mt-4 rounded-lg border border-red-500/30 bg-red-950/20 p-3
-          sm:mt-6 sm:p-6
-        "
+            xs:mt-5 xs:p-4
+            mt-4 rounded-lg border border-red-500/30 bg-red-950/20 p-3
+            sm:mt-6 sm:p-6
+          "
         >
           <div
             className="
-            xs:gap-3
-            flex flex-col gap-3
-            sm:flex-row sm:items-center sm:gap-4
-          "
+              xs:gap-3
+              flex flex-col gap-3
+              sm:flex-row sm:items-center sm:gap-4
+            "
           >
             <AlertCircle
               className="
-              xs:h-6 xs:w-6
-              size-5 flex-shrink-0 text-red-400
-              sm:size-6
-            "
+                xs:h-6 xs:w-6
+                size-5 flex-shrink-0 text-red-400
+                sm:size-6
+              "
             />
             <div className="flex-1">
               <h3
                 className="
-                xs:text-base
-                text-sm font-semibold text-red-400
-                sm:text-lg
-              "
+                  xs:text-base
+                  text-sm font-semibold text-red-400
+                  sm:text-lg
+                "
               >
                 Usuario no encontrado
               </h3>
               <p
                 className="
-                xs:text-xs
-                mt-1 text-xs text-gray-400
-                sm:text-sm
-              "
+                  xs:text-xs
+                  mt-1 text-xs text-gray-400
+                  sm:text-sm
+                "
               >
                 {result.message ??
                   'No se encontró ningún usuario con los datos proporcionados'}
@@ -343,35 +343,35 @@ export default function BuscarSuscripcionPage() {
     return (
       <div
         className="
-        xs:mt-5 xs:space-y-3
-        mt-4 space-y-2
-        sm:mt-6 sm:space-y-4
-        md:space-y-5
-      "
+          xs:mt-5 xs:space-y-3
+          mt-4 space-y-2
+          sm:mt-6 sm:space-y-4
+          md:space-y-5
+        "
       >
         {/* Información del usuario */}
         <div
           className="
-          xs:p-4
-          rounded-lg border border-gray-700 bg-gray-800/50 p-3
-          sm:p-6
-        "
+            xs:p-4
+            rounded-lg border border-gray-700 bg-gray-800/50 p-3
+            sm:p-6
+          "
         >
           <h3
             className="
-            xs:mb-3 xs:text-lg
-            mb-2 text-base font-bold text-cyan-400
-            sm:mb-4 sm:text-xl
-          "
+              xs:mb-3 xs:text-lg
+              mb-2 text-base font-bold text-cyan-400
+              sm:mb-4 sm:text-xl
+            "
           >
             Información del Usuario
           </h3>
           <div
             className="
-            xs:space-y-2 xs:text-sm
-            space-y-1.5 text-xs text-gray-300
-            sm:text-base
-          "
+              xs:space-y-2 xs:text-sm
+              space-y-1.5 text-xs text-gray-300
+              sm:text-base
+            "
           >
             <p className="break-words">
               <span className="font-semibold text-gray-400">Nombre:</span>{' '}
@@ -394,56 +394,56 @@ export default function BuscarSuscripcionPage() {
         {isActive ? (
           <div
             className="
-            xs:p-4
-            rounded-lg border border-green-500/30 bg-green-950/20 p-3
-            sm:p-6
-          "
+              xs:p-4
+              rounded-lg border border-green-500/30 bg-green-950/20 p-3
+              sm:p-6
+            "
           >
             <div
               className="
-              xs:gap-3
-              flex flex-col gap-3
-              sm:flex-row sm:items-start sm:gap-4
-            "
+                xs:gap-3
+                flex flex-col gap-3
+                sm:flex-row sm:items-start sm:gap-4
+              "
             >
               <CheckCircle
                 className="
-                xs:h-6 xs:w-6
-                size-5 flex-shrink-0 text-green-400
-                sm:size-6
-              "
+                  xs:h-6 xs:w-6
+                  size-5 flex-shrink-0 text-green-400
+                  sm:size-6
+                "
               />
               <div className="flex-1">
                 <h3
                   className="
-                  xs:mb-2 xs:text-base
-                  mb-2 text-sm font-semibold text-green-400
-                  sm:text-lg
-                "
+                    xs:mb-2 xs:text-base
+                    mb-2 text-sm font-semibold text-green-400
+                    sm:text-lg
+                  "
                 >
                   Suscripción Activa
                 </h3>
                 <div
                   className="
-                  xs:space-y-2 xs:text-sm
-                  space-y-1.5 text-xs text-gray-300
-                  sm:text-base
-                "
+                    xs:space-y-2 xs:text-sm
+                    space-y-1.5 text-xs text-gray-300
+                    sm:text-base
+                  "
                 >
                   <div className="flex items-center gap-2">
                     <Clock
                       className="
-                      xs:h-4 xs:w-4
-                      size-3.5 flex-shrink-0 text-cyan-400
-                      sm:size-5
-                    "
+                        xs:h-4 xs:w-4
+                        size-3.5 flex-shrink-0 text-cyan-400
+                        sm:size-5
+                      "
                     />
                     <span
                       className="
-                      xs:text-xs
-                      text-xs
-                      sm:text-sm
-                    "
+                        xs:text-xs
+                        text-xs
+                        sm:text-sm
+                      "
                     >
                       <span className="font-semibold text-cyan-400">
                         {daysRemaining}
@@ -454,10 +454,10 @@ export default function BuscarSuscripcionPage() {
                   {user?.subscriptionEndDate && (
                     <p
                       className="
-                      xs:text-xs
-                      text-xs text-gray-400
-                      sm:text-sm
-                    "
+                        xs:text-xs
+                        text-xs text-gray-400
+                        sm:text-sm
+                      "
                     >
                       Vence el:{' '}
                       {new Date(user.subscriptionEndDate).toLocaleDateString(
@@ -508,51 +508,51 @@ export default function BuscarSuscripcionPage() {
         ) : (
           <div
             className="
-            xs:p-4
-            rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-3
-            sm:p-6
-          "
+              xs:p-4
+              rounded-lg border border-yellow-500/30 bg-yellow-950/20 p-3
+              sm:p-6
+            "
           >
             <div
               className="
-              xs:gap-3
-              flex flex-col gap-3
-              sm:flex-row sm:items-center sm:gap-4
-            "
+                xs:gap-3
+                flex flex-col gap-3
+                sm:flex-row sm:items-center sm:gap-4
+              "
             >
               <AlertCircle
                 className="
-                xs:h-6 xs:w-6
-                size-5 flex-shrink-0 text-yellow-400
-                sm:size-6
-              "
+                  xs:h-6 xs:w-6
+                  size-5 flex-shrink-0 text-yellow-400
+                  sm:size-6
+                "
               />
               <div className="flex-1">
                 <h3
                   className="
-                  xs:text-base
-                  text-sm font-semibold text-yellow-400
-                  sm:text-lg
-                "
+                    xs:text-base
+                    text-sm font-semibold text-yellow-400
+                    sm:text-lg
+                  "
                 >
                   Suscripción Vencida o Inactiva
                 </h3>
                 <p
                   className="
-                  xs:mt-1 xs:text-xs
-                  mt-1 text-xs text-gray-400
-                  sm:text-sm
-                "
+                    xs:mt-1 xs:text-xs
+                    mt-1 text-xs text-gray-400
+                    sm:text-sm
+                  "
                 >
                   Este usuario no tiene una suscripción activa
                 </p>
                 {user?.subscriptionEndDate && (
                   <p
                     className="
-                    xs:mt-2
-                    mt-1.5 text-xs text-gray-500
-                    sm:text-sm
-                  "
+                      xs:mt-2
+                      mt-1.5 text-xs text-gray-500
+                      sm:text-sm
+                    "
                   >
                     Venció el:{' '}
                     {new Date(user.subscriptionEndDate).toLocaleDateString(
@@ -576,54 +576,31 @@ export default function BuscarSuscripcionPage() {
   return (
     <>
       <NotificationToast toasts={toasts} onRemove={removeToast} />
-      <style jsx global>{`
-        body.no-chrome nav.bg-background,
-        body.no-chrome aside[aria-label='Sidebar'] {
-          display: none !important;
-        }
-        body.no-chrome .with-sidebar,
-        body.no-chrome .content-with-sidebar,
-        body.no-chrome .pt-20,
-        body.no-chrome .pl-64 {
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-        body.no-chrome {
-          overflow: auto !important;
-          height: auto !important;
-        }
-        html,
-        body {
-          overflow-x: hidden;
-          overflow-y: auto;
-        }
-      `}</style>
-
       <div
         className="
-        min-h-screen w-full bg-gray-950 px-3 py-4
-        sm:px-4 sm:py-6
-        md:px-6 md:py-8
-      "
+          min-h-screen w-full bg-gray-950 px-3 py-4
+          sm:px-4 sm:py-6
+          md:px-6 md:py-8
+        "
       >
         <div
           className="
-          xs:p-5
-          mx-auto w-full max-w-4xl rounded-lg border border-gray-700 bg-gray-900
-          p-4 shadow-xl shadow-cyan-500/10
-          sm:p-6
-          md:p-8
-          lg:p-10
-        "
+            xs:p-5
+            mx-auto w-full max-w-4xl rounded-lg border border-gray-700
+            bg-gray-900 p-4 shadow-xl shadow-cyan-500/10
+            sm:p-6
+            md:p-8
+            lg:p-10
+          "
         >
           {/* Logo */}
           <div
             className="
-            xs:mb-5
-            mb-4
-            sm:mb-6
-            md:mb-8
-          "
+              xs:mb-5
+              mb-4
+              sm:mb-6
+              md:mb-8
+            "
           >
             <div className="mx-auto flex max-w-xs items-center justify-center">
               <Image
@@ -645,21 +622,22 @@ export default function BuscarSuscripcionPage() {
           {/* Título */}
           <h1
             className="
-            xs:text-2xl
-            mb-2 text-center text-xl font-extrabold tracking-tight text-cyan-400
-            sm:mb-3 sm:text-3xl
-            md:text-4xl
-          "
+              xs:text-2xl
+              mb-2 text-center text-xl font-extrabold tracking-tight
+              text-cyan-400
+              sm:mb-3 sm:text-3xl
+              md:text-4xl
+            "
           >
             Verificación de Suscripción
           </h1>
           <p
             className="
-            xs:mb-5 xs:text-sm
-            mx-auto mb-4 max-w-3xl text-center text-xs text-gray-300
-            sm:mb-6 sm:text-base
-            md:mb-8
-          "
+              xs:mb-5 xs:text-sm
+              mx-auto mb-4 max-w-3xl text-center text-xs text-gray-300
+              sm:mb-6 sm:text-base
+              md:mb-8
+            "
           >
             Busca un usuario por correo electrónico, número de documento o
             nombre para verificar el estado de su suscripción.
@@ -668,11 +646,11 @@ export default function BuscarSuscripcionPage() {
           {/* Formulario de búsqueda */}
           <div
             className="
-            xs:space-y-4
-            space-y-3
-            sm:space-y-5
-            md:space-y-6
-          "
+              xs:space-y-4
+              space-y-3
+              sm:space-y-5
+              md:space-y-6
+            "
           >
             {/* Selector de tipo de búsqueda */}
             <div>
@@ -681,10 +659,10 @@ export default function BuscarSuscripcionPage() {
               </label>
               <div
                 className="
-                xs:gap-2.5
-                flex flex-col gap-2
-                sm:flex-row sm:flex-wrap sm:gap-3
-              "
+                  xs:gap-2.5
+                  flex flex-col gap-2
+                  sm:flex-row sm:flex-wrap sm:gap-3
+                "
               >
                 <button
                   type="button"
@@ -697,9 +675,9 @@ export default function BuscarSuscripcionPage() {
                       searchType === 'email'
                         ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
                         : `
-                        border border-gray-600 bg-gray-800 text-gray-300
-                        hover:border-cyan-500
-                      `
+                          border border-gray-600 bg-gray-800 text-gray-300
+                          hover:border-cyan-500
+                        `
                     }
                   `}
                 >
@@ -716,9 +694,9 @@ export default function BuscarSuscripcionPage() {
                       searchType === 'document'
                         ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
                         : `
-                        border border-gray-600 bg-gray-800 text-gray-300
-                        hover:border-cyan-500
-                      `
+                          border border-gray-600 bg-gray-800 text-gray-300
+                          hover:border-cyan-500
+                        `
                     }
                   `}
                 >
@@ -735,9 +713,9 @@ export default function BuscarSuscripcionPage() {
                       searchType === 'name'
                         ? 'bg-cyan-500 text-black shadow-md shadow-cyan-500/30'
                         : `
-                        border border-gray-600 bg-gray-800 text-gray-300
-                        hover:border-cyan-500
-                      `
+                          border border-gray-600 bg-gray-800 text-gray-300
+                          hover:border-cyan-500
+                        `
                     }
                   `}
                 >
@@ -782,11 +760,11 @@ export default function BuscarSuscripcionPage() {
                 />
                 <Search
                   className="
-                  xs:right-3
-                  absolute top-1/2 right-2.5 size-4 -translate-y-1/2
-                  text-gray-500
-                  sm:right-4 sm:size-5
-                "
+                    xs:right-3
+                    absolute top-1/2 right-2.5 size-4 -translate-y-1/2
+                    text-gray-500
+                    sm:right-4 sm:size-5
+                  "
                 />
               </div>
             </div>
@@ -795,17 +773,17 @@ export default function BuscarSuscripcionPage() {
             {error && (
               <div
                 className="
-                xs:p-3.5
-                rounded-lg border border-red-500/30 bg-red-950/20 p-3
-                sm:p-4
-              "
+                  xs:p-3.5
+                  rounded-lg border border-red-500/30 bg-red-950/20 p-3
+                  sm:p-4
+                "
               >
                 <p
                   className="
-                  xs:text-xs
-                  text-xs text-red-400
-                  sm:text-sm
-                "
+                    xs:text-xs
+                    text-xs text-red-400
+                    sm:text-sm
+                  "
                 >
                   {error}
                 </p>
@@ -815,10 +793,10 @@ export default function BuscarSuscripcionPage() {
             {/* Botón Inteligente - Registrar Acceso */}
             <div
               className="
-              xs:pt-3
-              flex flex-col gap-3 pt-2
-              sm:flex-row sm:justify-center sm:gap-4 sm:pt-4
-            "
+                xs:pt-3
+                flex flex-col gap-3 pt-2
+                sm:flex-row sm:justify-center sm:gap-4 sm:pt-4
+              "
             >
               <button
                 type="button"
@@ -834,25 +812,25 @@ export default function BuscarSuscripcionPage() {
                   ${
                     result?.user?.hasOpenEntry
                       ? `
-                      bg-red-600
-                      hover:bg-red-500 hover:shadow-red-400/50
-                      focus:ring-2 focus:ring-red-500
-                    `
+                        bg-red-600
+                        hover:bg-red-500 hover:shadow-red-400/50
+                        focus:ring-2 focus:ring-red-500
+                      `
                       : `
-                      bg-green-600
-                      hover:bg-green-500 hover:shadow-green-400/50
-                      focus:ring-2 focus:ring-green-500
-                    `
+                        bg-green-600
+                        hover:bg-green-500 hover:shadow-green-400/50
+                        focus:ring-2 focus:ring-green-500
+                      `
                   }
                 `}
               >
                 {loading ? (
                   <span
                     className="
-                    xs:gap-2
-                    flex items-center justify-center gap-2
-                    sm:gap-2
-                  "
+                      xs:gap-2
+                      flex items-center justify-center gap-2
+                      sm:gap-2
+                    "
                   >
                     <svg
                       className="
@@ -895,29 +873,6 @@ export default function BuscarSuscripcionPage() {
           {renderResult()}
         </div>
       </div>
-
-      <style jsx global>{`
-        body.no-chrome nav.bg-background,
-        body.no-chrome aside[aria-label='Sidebar'] {
-          display: none !important;
-        }
-        body.no-chrome .with-sidebar,
-        body.no-chrome .content-with-sidebar,
-        body.no-chrome .pt-20,
-        body.no-chrome .pl-64 {
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-        body.no-chrome {
-          overflow: auto !important;
-          height: auto !important;
-        }
-        html,
-        body {
-          overflow-x: hidden;
-          overflow-y: auto;
-        }
-      `}</style>
     </>
   );
 }

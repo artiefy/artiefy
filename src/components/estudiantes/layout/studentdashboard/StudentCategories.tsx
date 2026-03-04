@@ -212,28 +212,28 @@ export default function StudentCategories({
       <div className="container mx-auto">
         <div
           className="
-          mt-4 mb-2 ml-0 w-full
-          lg:flex lg:flex-row lg:items-center lg:justify-start lg:gap-2
-        "
+            mt-4 mb-2 ml-0 w-full
+            lg:flex lg:flex-row lg:items-center lg:justify-start lg:gap-2
+          "
         >
           <div
             className="
-            relative flex w-full flex-row items-center justify-start
-            lg:w-auto lg:justify-start
-          "
+              relative flex w-full flex-row items-center justify-start
+              lg:w-auto lg:justify-start
+            "
           >
             <div
               className="
-              min-w-0 flex-1 px-0
-              sm:px-6
-            "
+                min-w-0 flex-1 px-0
+                sm:px-6
+              "
             >
               <StudentGradientText
                 className="
-                mx-0 justify-start text-left text-2xl whitespace-nowrap
-                sm:text-xl
-                lg:mt-3 lg:text-2xl
-              "
+                  mx-0 justify-start text-left text-2xl whitespace-nowrap
+                  sm:text-xl
+                  lg:mt-3 lg:text-2xl
+                "
               >
                 Áreas de Conocimiento
               </StudentGradientText>
@@ -242,9 +242,9 @@ export default function StudentCategories({
             {/* Mobile: search icon to the right */}
             <div
               className="
-              ml-0 flex items-center
-              lg:hidden
-            "
+                ml-0 flex items-center
+                lg:hidden
+              "
             >
               <button
                 type="button"
@@ -286,9 +286,9 @@ export default function StudentCategories({
             {/* Desktop: keep original searchbar */}
             <div
               className="
-              hidden
-              lg:-ml-4 lg:block
-            "
+                hidden
+                lg:-ml-4 lg:block
+              "
             >
               <div className="student-searchbar w-full max-w-[260px]">
                 <button
@@ -341,9 +341,9 @@ export default function StudentCategories({
           {showMobileSearch && (
             <div
               className="
-              mt-3 block w-full
-              lg:hidden
-            "
+                mt-3 block w-full
+                lg:hidden
+              "
             >
               <form
                 onSubmit={(e) => {
@@ -535,12 +535,13 @@ export default function StudentCategories({
                   (!selectedCategory && !searchParams?.get('query')) ||
                   buttonsDisabled
                     ? `
-                    cursor-not-allowed bg-foreground text-background opacity-60
-                  `
+                      cursor-not-allowed bg-foreground text-background
+                      opacity-60
+                    `
                     : `
-                    border border-foreground/30 bg-transparent text-[#94A3B8]
-                    hover:border-foreground hover:text-foreground
-                  `
+                      border border-foreground/30 bg-transparent text-[#94A3B8]
+                      hover:border-foreground hover:text-foreground
+                    `
                 }
               `}
               aria-label="Mostrar todos los cursos"
@@ -569,14 +570,14 @@ export default function StudentCategories({
                       ? 'bg-foreground text-background'
                       : buttonsDisabled
                         ? `
-                        cursor-not-allowed border border-foreground/30
-                        bg-transparent text-[#94A3B8] opacity-50
-                      `
+                          cursor-not-allowed border border-foreground/30
+                          bg-transparent text-[#94A3B8] opacity-50
+                        `
                         : `
-                        border border-foreground/30 bg-transparent
-                        text-[#94A3B8]
-                        hover:border-foreground hover:text-foreground
-                      `
+                          border border-foreground/30 bg-transparent
+                          text-[#94A3B8]
+                          hover:border-foreground hover:text-foreground
+                        `
                   }
                 `}
                 aria-label={`Mostrar cursos de ${category.name}`}
@@ -594,48 +595,6 @@ export default function StudentCategories({
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .category-arrow {
-          border: none;
-          outline: none;
-          box-shadow: none;
-          isolation: isolate;
-        }
-        .category-arrow::after {
-          content: '';
-          position: absolute;
-          inset: -10px;
-          border-radius: 9999px;
-          background: radial-gradient(
-            circle,
-            rgba(167, 139, 250, 0.4),
-            rgba(17, 24, 39, 0)
-          );
-          filter: blur(10px);
-          opacity: 0.85;
-          transition:
-            opacity 0.2s ease,
-            transform 0.2s ease;
-          z-index: 0;
-        }
-        .category-arrow:hover::after {
-          opacity: 1;
-          transform: scale(1.08);
-        }
-        .category-arrow svg {
-          position: relative;
-          z-index: 1;
-        }
-        @media (max-width: 768px) {
-          .category-arrow {
-            top: 45% !important;
-          }
-        }
-      `}</style>
     </section>
   );
 }

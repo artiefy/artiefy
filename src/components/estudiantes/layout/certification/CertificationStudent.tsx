@@ -44,68 +44,6 @@ export function CertificationStudent({
 
   return (
     <div className="mx-auto max-w-5xl">
-      <style jsx global>{`
-        @media print {
-          html,
-          body {
-            width: 100% !important;
-            height: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #fff !important;
-            overflow: hidden !important;
-          }
-          @page {
-            size: landscape;
-            margin: 0;
-          }
-          #__next > *:not(.certificate-print-area) {
-            display: none !important;
-          }
-          .certificate-print-area {
-            display: block !important;
-            margin: 0 auto !important;
-            padding: 0 !important;
-            background: #fff !important;
-            box-shadow: none !important;
-            break-inside: avoid !important;
-            break-after: avoid !important;
-            break-before: avoid !important;
-            page-break-inside: avoid !important;
-            page-break-after: avoid !important;
-            page-break-before: avoid !important;
-          }
-          .certificate {
-            display: block !important;
-            margin: auto !important;
-            width: 1122px !important; /* A4 landscape width at 96dpi */
-            height: 793px !important; /* A4 landscape height at 96dpi */
-            max-width: 1122px !important;
-            max-height: 793px !important;
-            min-width: 0 !important;
-            min-height: 0 !important;
-            padding: 0 !important;
-            box-shadow: 0 0 0 8px #fbbf24 !important;
-            border-radius: 1rem !important;
-            border: 8px solid #fbbf24 !important;
-            overflow: visible !important;
-            background: #fff !important;
-            transform: none !important;
-            break-inside: avoid !important;
-            break-after: avoid !important;
-            break-before: avoid !important;
-            page-break-inside: avoid !important;
-            page-break-after: avoid !important;
-            page-break-before: avoid !important;
-          }
-          .confetti,
-          .print:hidden,
-          header,
-          footer {
-            display: none !important;
-          }
-        }
-      `}</style>
       {/* Confetti wrapper with correct positioning */}
       <div
         className="certificate-print-area relative"
@@ -120,9 +58,9 @@ export function CertificationStudent({
         {/* Certificate Content */}
         <div
           className="
-          mb-8 text-center
-          print:hidden
-        "
+            mb-8 text-center
+            print:hidden
+          "
         >
           <h1 className="mb-2 text-4xl font-bold text-primary">
             Constancia de Participación
@@ -251,9 +189,9 @@ export function CertificationStudent({
           <div className="absolute inset-0 opacity-5">
             <div
               className="
-              absolute inset-0 bg-gradient-to-r from-primary via-amber-500
-              to-primary
-            "
+                absolute inset-0 bg-gradient-to-r from-primary via-amber-500
+                to-primary
+              "
             />
           </div>
         </div>
@@ -288,9 +226,8 @@ export function CertificationStudent({
             }
             fileName={`certificado-${course?.title || 'curso'}.pdf`}
             className="
-              rounded bg-primary
-              px-4
-              py-2 font-semibold text-background hover:bg-primary/90
+              rounded bg-primary px-4 py-2 font-semibold text-background
+              hover:bg-primary/90
             "
           >
             {({ loading }) => (loading ? 'Generando PDF...' : 'Descargar PDF')}

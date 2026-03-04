@@ -455,21 +455,21 @@ export default function StudentDetails({
       <main className="grow">
         <div
           className="
-          flex flex-col space-y-12
-          sm:space-y-16
-        "
+            flex flex-col space-y-12
+            sm:space-y-16
+          "
         >
           <div
             className="
-            -mt-6 flex animate-zoom-in flex-col items-center space-y-4 px-2
-            sm:mt-8 sm:px-0
-          "
+              -mt-6 flex animate-zoom-in flex-col items-center space-y-4 px-2
+              sm:mt-8 sm:px-0
+            "
           >
             <div
               className="
-              header-search-wrapper relative flex w-full flex-col items-center
-              justify-center gap-4
-            "
+                header-search-wrapper relative flex w-full flex-col items-center
+                justify-center gap-4
+              "
             >
               <div className="flex flex-col items-center text-center">
                 <div
@@ -482,11 +482,11 @@ export default function StudentDetails({
                 >
                   <span
                     className="
-                    search-illuminate-title font-display text-3xl font-bold
-                    text-foreground
-                    sm:text-4xl
-                    md:text-5xl
-                  "
+                      search-illuminate-title font-display text-3xl font-bold
+                      text-foreground
+                      sm:text-4xl
+                      md:text-5xl
+                    "
                   >
                     Pregúntale a
                   </span>
@@ -498,9 +498,9 @@ export default function StudentDetails({
 
                 <p
                   className="
-                  mt-2 px-4 text-sm text-muted-foreground
-                  sm:mt-3 sm:px-0 sm:text-lg
-                "
+                    mt-2 px-4 text-sm text-muted-foreground
+                    sm:mt-3 sm:px-0 sm:text-lg
+                  "
                 >
                   Tu asistente de IA para encontrar el curso perfecto y comenzar
                   a crear proyectos increíbles.
@@ -565,9 +565,9 @@ export default function StudentDetails({
               {/* Text with sparkles icon below search bar */}
               <p
                 className="
-                mt-3 flex items-center justify-center gap-2 text-center text-sm
-                text-muted-foreground
-              "
+                  mt-3 flex items-center justify-center gap-2 text-center
+                  text-sm text-muted-foreground
+                "
               >
                 <span className="text-gray-400">
                   Aprende con{' '}
@@ -588,16 +588,16 @@ export default function StudentDetails({
           >
             <div
               className="
-              -mt-6 mb-4 flex w-full flex-wrap justify-center gap-2 pr-4
-              sm:-mt-8 sm:mb-0 sm:justify-start
-            "
+                -mt-6 mb-4 flex w-full flex-wrap justify-center gap-2 pr-4
+                sm:-mt-8 sm:mb-0 sm:justify-start
+              "
             >
               <div
                 className="
-                flex flex-wrap items-center justify-center gap-1.5
-                sm:justify-start sm:gap-2
-                md:gap-3
-              "
+                  flex flex-wrap items-center justify-center gap-1.5
+                  sm:justify-start sm:gap-2
+                  md:gap-3
+                "
               >
                 <button
                   onClick={() => handleFilterClick('todos')}
@@ -609,10 +609,10 @@ export default function StudentDetails({
                       activeFilter === 'todos'
                         ? 'bg-foreground text-background'
                         : `
-                        border border-foreground/30 bg-transparent
-                        text-[#94A3B8]
-                        hover:border-foreground hover:text-foreground
-                      `
+                          border border-foreground/30 bg-transparent
+                          text-[#94A3B8]
+                          hover:border-foreground hover:text-foreground
+                        `
                     }
                   `}
                   disabled={isNavigating && pendingFilter === 'todos'}
@@ -637,10 +637,10 @@ export default function StudentDetails({
                       activeFilter === 'cursos'
                         ? 'bg-foreground text-background'
                         : `
-                        border border-foreground/30 bg-transparent
-                        text-[#94A3B8]
-                        hover:border-foreground hover:text-foreground
-                      `
+                          border border-foreground/30 bg-transparent
+                          text-[#94A3B8]
+                          hover:border-foreground hover:text-foreground
+                        `
                     }
                   `}
                   disabled={isNavigating && pendingFilter === 'cursos'}
@@ -665,10 +665,10 @@ export default function StudentDetails({
                       activeFilter === 'programas'
                         ? 'bg-foreground text-background'
                         : `
-                        border border-foreground/30 bg-transparent
-                        text-[#94A3B8]
-                        hover:border-foreground hover:text-foreground
-                      `
+                          border border-foreground/30 bg-transparent
+                          text-[#94A3B8]
+                          hover:border-foreground hover:text-foreground
+                        `
                     }
                   `}
                   disabled={isNavigating && pendingFilter === 'programas'}
@@ -838,23 +838,23 @@ export default function StudentDetails({
           {activeFilter === 'todos' && !isNavigating && (
             <div
               className="
-              animation-delay-200 relative animate-zoom-in pr-0 pl-4
-              sm:px-24
-            "
+                animation-delay-200 relative animate-zoom-in pr-0 pl-4
+                sm:px-24
+              "
             >
               <div
                 className="
-                mb-4 flex justify-start pr-4
-                sm:pr-0
-              "
+                  mb-4 flex justify-start pr-4
+                  sm:pr-0
+                "
               >
                 <div className="flex items-center gap-2">
                   <FaArrowTrendUp className="text-xl text-white" />
                   <StudentGradientText
                     className="
-                    text-2xl
-                    sm:text-3xl
-                  "
+                      text-2xl
+                      sm:text-3xl
+                    "
                   >
                     Top Cursos
                   </StudentGradientText>
@@ -922,9 +922,10 @@ export default function StudentDetails({
                                 {/* Number badge top-left */}
                                 <div
                                   className="
-                                  absolute top-3 left-3 flex size-8 items-center
-                                  justify-center rounded-full bg-primary
-                                "
+                                    absolute top-3 left-3 flex size-8
+                                    items-center justify-center rounded-full
+                                    bg-primary
+                                  "
                                 >
                                   <span className="text-xs font-bold text-black">
                                     {idx + 1}
@@ -934,22 +935,23 @@ export default function StudentDetails({
                                 {/* Bottom gradient overlay: subtle fade from bottom to top */}
                                 <div
                                   className="
-                                  absolute right-0 bottom-0 left-0 h-28
-                                  bg-gradient-to-t from-black/85 via-black/50
-                                  to-transparent
-                                "
+                                    absolute right-0 bottom-0 left-0 h-28
+                                    bg-gradient-to-t from-black/85 via-black/50
+                                    to-transparent
+                                  "
                                 />
 
                                 {/* Bottom overlay: full-width content area */}
                                 <div
                                   className="
-                                  absolute right-0 bottom-0 left-0 pb-0
-                                "
+                                    absolute right-0 bottom-0 left-0 pb-0
+                                  "
                                 >
                                   <div
                                     className="
-                                    relative z-10 w-full rounded-b-2xl px-4 py-3
-                                  "
+                                      relative z-10 w-full rounded-b-2xl px-4
+                                      py-3
+                                    "
                                   >
                                     <h3
                                       className={`
@@ -1014,10 +1016,10 @@ export default function StudentDetails({
                       >
                         <div
                           className="
-                          carousel-mobile-arrow flex size-10 items-center
-                          justify-center rounded-full bg-black/40
-                          backdrop-blur-sm
-                        "
+                            carousel-mobile-arrow flex size-10 items-center
+                            justify-center rounded-full bg-black/40
+                            backdrop-blur-sm
+                          "
                         >
                           <IoIosArrowBack className="text-2xl text-white" />
                         </div>
@@ -1034,9 +1036,10 @@ export default function StudentDetails({
                     >
                       <div
                         className="
-                        carousel-mobile-arrow flex size-10 items-center
-                        justify-center rounded-full bg-black/40 backdrop-blur-sm
-                      "
+                          carousel-mobile-arrow flex size-10 items-center
+                          justify-center rounded-full bg-black/40
+                          backdrop-blur-sm
+                        "
                       >
                         <IoIosArrowForward className="text-2xl text-white" />
                       </div>
@@ -1059,10 +1062,10 @@ export default function StudentDetails({
             >
               <div
                 className="
-                relative z-0 grid grid-cols-1 gap-4
-                sm:grid-cols-2
-                lg:grid-cols-4
-              "
+                  relative z-0 grid grid-cols-1 gap-4
+                  sm:grid-cols-2
+                  lg:grid-cols-4
+                "
               >
                 {courses.length > 0 ? (
                   courses.map((course) => {
@@ -1092,10 +1095,10 @@ export default function StudentDetails({
                           return (
                             <div
                               className="
-                              flex items-center gap-1 rounded-full border
-                              border-orange-500/30 bg-orange-500/20 px-2 py-0.5
-                              text-[10px] font-medium text-orange-400
-                            "
+                                flex items-center gap-1 rounded-full border
+                                border-orange-500/30 bg-orange-500/20 px-2
+                                py-0.5 text-[10px] font-medium text-orange-400
+                              "
                             >
                               <FaStar className="size-3" />${' '}
                               {course.individualPrice
@@ -1108,10 +1111,10 @@ export default function StudentDetails({
                           return (
                             <div
                               className="
-                              flex items-center gap-1 rounded-full border
-                              border-amber-500/30 bg-amber-500/20 px-2 py-0.5
-                              text-[10px] font-medium text-amber-400
-                            "
+                                flex items-center gap-1 rounded-full border
+                                border-amber-500/30 bg-amber-500/20 px-2 py-0.5
+                                text-[10px] font-medium text-amber-400
+                              "
                             >
                               <FaCrown className="size-3" />
                               Premium
@@ -1122,10 +1125,10 @@ export default function StudentDetails({
                           return (
                             <div
                               className="
-                              flex items-center gap-1 rounded-full border
-                              border-blue-500/30 bg-blue-500/20 px-2 py-0.5
-                              text-[10px] font-medium text-blue-400
-                            "
+                                flex items-center gap-1 rounded-full border
+                                border-blue-500/30 bg-blue-500/20 px-2 py-0.5
+                                text-[10px] font-medium text-blue-400
+                              "
                             >
                               <FaStar className="size-3" />
                               Pro
@@ -1136,10 +1139,10 @@ export default function StudentDetails({
                           return (
                             <div
                               className="
-                              flex items-center gap-1 rounded-full border
-                              border-emerald-500/30 bg-emerald-500/20 px-2
-                              py-0.5 text-[10px] font-medium text-emerald-400
-                            "
+                                flex items-center gap-1 rounded-full border
+                                border-emerald-500/30 bg-emerald-500/20 px-2
+                                py-0.5 text-[10px] font-medium text-emerald-400
+                              "
                             >
                               <IoGiftOutline className="size-3" />
                               Gratuito
@@ -1165,13 +1168,13 @@ export default function StudentDetails({
                           >
                             <Card
                               className="
-                              artiefy-course-card zoom-in relative flex h-full
-                              flex-col gap-4 overflow-hidden rounded-2xl
-                              border-0 bg-[#061C37] p-4 text-foreground
-                              shadow-md transition-all duration-300
-                              hover:-translate-y-1 hover:cursor-pointer
-                              hover:border-primary hover:shadow-xl
-                            "
+                                artiefy-course-card zoom-in relative flex h-full
+                                flex-col gap-4 overflow-hidden rounded-2xl
+                                border-0 bg-[#061C37] p-4 text-foreground
+                                shadow-md transition-all duration-300
+                                hover:-translate-y-1 hover:cursor-pointer
+                                hover:border-primary hover:shadow-xl
+                              "
                             >
                               <div className="relative -mx-4 -mt-4 overflow-hidden">
                                 <AspectRatio ratio={16 / 9}>
@@ -1188,10 +1191,10 @@ export default function StudentDetails({
                                     />
                                     <div
                                       className="
-                                      pointer-events-none absolute inset-0
-                                      bg-gradient-to-t from-[#061C37]
-                                      via-[#061C37]/60 to-transparent
-                                    "
+                                        pointer-events-none absolute inset-0
+                                        bg-gradient-to-t from-[#061C37]
+                                        via-[#061C37]/60 to-transparent
+                                      "
                                     />
                                   </div>
                                 </AspectRatio>
@@ -1200,25 +1203,25 @@ export default function StudentDetails({
                               <div className="flex h-full flex-1 flex-col gap-3">
                                 <h3
                                   className="
-                                  line-clamp-2 text-base leading-snug
-                                  font-semibold text-white
-                                  md:text-lg
-                                "
+                                    line-clamp-2 text-base leading-snug
+                                    font-semibold text-white
+                                    md:text-lg
+                                  "
                                 >
                                   {course.title}
                                 </h3>
 
                                 <div
                                   className="
-                                  flex flex-wrap items-center justify-between
-                                  gap-2
-                                  sm:flex-row
-                                "
+                                    flex flex-wrap items-center justify-between
+                                    gap-2
+                                    sm:flex-row
+                                  "
                                 >
                                   <div
                                     className="
-                                    flex flex-wrap items-center gap-2
-                                  "
+                                      flex flex-wrap items-center gap-2
+                                    "
                                   >
                                     <p className="text-xs text-[#94A3B8]">
                                       Por:{' '}
@@ -1255,9 +1258,9 @@ export default function StudentDetails({
 
                                 <p
                                   className="
-                                  mt-3 flex items-center gap-1.5 text-xs
-                                  text-[#94A3B8]
-                                "
+                                    mt-3 flex items-center gap-1.5 text-xs
+                                    text-[#94A3B8]
+                                  "
                                 >
                                   Empieza:{' '}
                                   {course.modalidad &&
@@ -1279,17 +1282,17 @@ export default function StudentDetails({
                         ) : (
                           <div
                             className="
-                            group relative h-full rounded-2xl opacity-80
-                          "
+                              group relative h-full rounded-2xl opacity-80
+                            "
                           >
                             <Card
                               className="
-                              artiefy-course-card zoom-in relative flex h-full
-                              cursor-not-allowed flex-col gap-4 overflow-hidden
-                              rounded-2xl border-0 bg-[#061C37] p-4
-                              text-foreground shadow-md transition-all
-                              duration-300
-                            "
+                                artiefy-course-card zoom-in relative flex h-full
+                                cursor-not-allowed flex-col gap-4
+                                overflow-hidden rounded-2xl border-0
+                                bg-[#061C37] p-4 text-foreground shadow-md
+                                transition-all duration-300
+                              "
                             >
                               <div className="relative -mx-4 -mt-4 overflow-hidden">
                                 <AspectRatio ratio={16 / 9}>
@@ -1306,10 +1309,10 @@ export default function StudentDetails({
                                     />
                                     <div
                                       className="
-                                      pointer-events-none absolute inset-0
-                                      bg-gradient-to-t from-[#061C37]
-                                      via-[#061C37]/60 to-transparent
-                                    "
+                                        pointer-events-none absolute inset-0
+                                        bg-gradient-to-t from-[#061C37]
+                                        via-[#061C37]/60 to-transparent
+                                      "
                                     />
                                   </div>
                                 </AspectRatio>
@@ -1317,10 +1320,10 @@ export default function StudentDetails({
                               <div className="flex h-full flex-1 flex-col gap-3">
                                 <h3
                                   className="
-                                  line-clamp-2 text-base leading-snug
-                                  font-semibold text-white
-                                  md:text-lg
-                                "
+                                    line-clamp-2 text-base leading-snug
+                                    font-semibold text-white
+                                    md:text-lg
+                                  "
                                 >
                                   {course.title}
                                 </h3>
@@ -1328,10 +1331,10 @@ export default function StudentDetails({
                             </Card>
                             <div
                               className="
-                              pointer-events-none absolute inset-0 flex
-                              items-center justify-center rounded-2xl
-                              bg-black/40 text-lg font-semibold
-                            "
+                                pointer-events-none absolute inset-0 flex
+                                items-center justify-center rounded-2xl
+                                bg-black/40 text-lg font-semibold
+                              "
                             >
                               Muy pronto
                             </div>
@@ -1343,8 +1346,8 @@ export default function StudentDetails({
                 ) : (
                   <div
                     className="
-                    col-span-full flex h-56 items-center justify-center
-                  "
+                      col-span-full flex h-56 items-center justify-center
+                    "
                   >
                     <p className="text-lg text-gray-500">
                       No hay cursos disponibles
@@ -1365,13 +1368,13 @@ export default function StudentDetails({
                   ${
                     activeFilter === 'programas'
                       ? `
-                    -mt-2
-                    sm:-mt-4
-                  `
+                        -mt-2
+                        sm:-mt-4
+                      `
                       : `
-                    -mt-8
-                    sm:-mt-10
-                  `
+                        -mt-8
+                        sm:-mt-10
+                      `
                   }
                   pr-0 pl-4
                   sm:px-24
@@ -1379,17 +1382,17 @@ export default function StudentDetails({
               >
                 <div
                   className="
-                  flex justify-start pr-4
-                  sm:pr-0
-                "
+                    flex justify-start pr-4
+                    sm:pr-0
+                  "
                 >
                   <div className="-mb-5 flex items-center gap-2">
                     <IoLibrarySharp className="text-xl text-white" />
                     <StudentGradientText
                       className="
-                      text-2xl
-                      sm:text-3xl
-                    "
+                        text-2xl
+                        sm:text-3xl
+                      "
                     >
                       Programas
                     </StudentGradientText>
@@ -1432,10 +1435,10 @@ export default function StudentDetails({
                           >
                             <div
                               className="
-                              carousel-mobile-arrow flex size-10 items-center
-                              justify-center rounded-full bg-black/40
-                              backdrop-blur-sm
-                            "
+                                carousel-mobile-arrow flex size-10 items-center
+                                justify-center rounded-full bg-black/40
+                                backdrop-blur-sm
+                              "
                             >
                               <IoIosArrowBack className="text-2xl text-white" />
                             </div>
@@ -1452,10 +1455,10 @@ export default function StudentDetails({
                         >
                           <div
                             className="
-                            carousel-mobile-arrow flex size-10 items-center
-                            justify-center rounded-full bg-black/40
-                            backdrop-blur-sm
-                          "
+                              carousel-mobile-arrow flex size-10 items-center
+                              justify-center rounded-full bg-black/40
+                              backdrop-blur-sm
+                            "
                           >
                             <IoIosArrowForward className="text-2xl text-white" />
                           </div>
@@ -1467,10 +1470,10 @@ export default function StudentDetails({
                   // Grid para vista 'programas' (sin carousel)
                   <div
                     className="
-                    my-6 grid gap-4 pr-4
-                    sm:grid-cols-2 sm:pr-0
-                    lg:grid-cols-4
-                  "
+                      my-6 grid gap-4 pr-4
+                      sm:grid-cols-2 sm:pr-0
+                      lg:grid-cols-4
+                    "
                   >
                     {sortedPrograms.map((program) => (
                       <div key={program.id}>
@@ -1494,26 +1497,6 @@ export default function StudentDetails({
         initialSearchQuery={lastSearchQuery}
         onSearchComplete={handleSearchComplete}
       />
-      <style jsx global>{`
-        body[data-hide-server-sections='true'] #student-categories-section,
-        body[data-hide-server-sections='true'] #courses-list-section {
-          display: none !important;
-        }
-        body[data-animate-server-sections='true'] #student-categories-section,
-        body[data-animate-server-sections='true'] #courses-list-section {
-          animation: artiefy-fade-in-up 0.35s ease;
-        }
-        @keyframes artiefy-fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(12px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }
