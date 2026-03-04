@@ -917,18 +917,18 @@ body[data-animate-server-sections='true'] #courses-list-section {
 }
 
 /* StudentCategories: estilos antes definidos con styled-jsx */
-.scrollbar-hide::-webkit-scrollbar {
+#student-categories-section .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
-.category-arrow {
+#student-categories-section .category-arrow {
   border: none;
   outline: none;
   box-shadow: none;
   isolation: isolate;
 }
 
-.category-arrow::after {
+#student-categories-section .category-arrow::after {
   content: '';
   position: absolute;
   inset: -10px;
@@ -946,18 +946,18 @@ body[data-animate-server-sections='true'] #courses-list-section {
   z-index: 0;
 }
 
-.category-arrow:hover::after {
+#student-categories-section .category-arrow:hover::after {
   opacity: 1;
   transform: scale(1.08);
 }
 
-.category-arrow svg {
+#student-categories-section .category-arrow svg {
   position: relative;
   z-index: 1;
 }
 
 @media (max-width: 768px) {
-  .category-arrow {
+  #student-categories-section .category-arrow {
     top: 45% !important;
   }
 }
