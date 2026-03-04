@@ -19,8 +19,16 @@ export function InfoDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-xl">
+    <div
+      className="
+      fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4
+    "
+    >
+      <div
+        className="
+        w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-xl
+      "
+      >
         <div className="mb-4 flex items-center space-x-2 text-blue-400">
           <AlertCircle className="size-6" />
           <h3 className="text-lg font-semibold">{title}</h3>
@@ -31,7 +39,12 @@ export function InfoDialog({
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
+            className="
+              rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700
+              hover:bg-gray-300
+              focus:ring-2 focus:ring-gray-500 focus:ring-offset-2
+              focus:outline-none
+            "
           >
             Cerrar
           </button>

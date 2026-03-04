@@ -255,7 +255,12 @@ const PlantillasPage = () => {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
-          <div className="loader mb-4 size-12 rounded-full border-4 border-primary border-t-transparent"></div>
+          <div
+            className="
+            loader mb-4 size-12 rounded-full border-4 border-primary
+            border-t-transparent
+          "
+          ></div>
           <p className="text-gray-600">Cargando plantillas...</p>
         </div>
       </div>
@@ -274,7 +279,11 @@ const PlantillasPage = () => {
           </div>
           <button
             onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-[#01142B] transition-colors hover:bg-primary/90"
+            className="
+              flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm
+              font-medium text-[#01142B] transition-colors
+              hover:bg-primary/90
+            "
           >
             <FiPlus size={18} />
             Crear Nueva Plantilla
@@ -282,24 +291,42 @@ const PlantillasPage = () => {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+          <div
+            className="
+            mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
+          "
+          >
             {error}
           </div>
         )}
 
         {/* Grid de plantillas */}
         {templates.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
+          <div
+            className="
+            rounded-lg border border-gray-200 bg-white p-8 text-center
+          "
+          >
             <p className="text-gray-500">
               No hay plantillas creadas. ¡Crea una para empezar!
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div
+            className="
+            grid grid-cols-1 gap-6
+            md:grid-cols-2
+            lg:grid-cols-3
+          "
+          >
             {templates.map((template) => (
               <div
                 key={template.id}
-                className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:shadow-md"
+                className="
+                  rounded-lg border border-gray-200 bg-white p-6 shadow-sm
+                  transition-all
+                  hover:shadow-md
+                "
               >
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex-1">
@@ -315,14 +342,20 @@ const PlantillasPage = () => {
                   <div className="ml-2 flex gap-2">
                     <button
                       onClick={() => handleOpenModal(template)}
-                      className="rounded-lg bg-blue-50 p-2 text-blue-600 hover:bg-blue-100"
+                      className="
+                        rounded-lg bg-blue-50 p-2 text-blue-600
+                        hover:bg-blue-100
+                      "
                       title="Editar"
                     >
                       <FiEdit2 size={16} />
                     </button>
                     <button
                       onClick={() => handleDelete(template.id)}
-                      className="rounded-lg bg-red-50 p-2 text-red-600 hover:bg-red-100"
+                      className="
+                        rounded-lg bg-red-50 p-2 text-red-600
+                        hover:bg-red-100
+                      "
                       title="Eliminar"
                     >
                       <FiTrash2 size={16} />
@@ -362,7 +395,10 @@ const PlantillasPage = () => {
                       {template.parametros.map((param) => (
                         <div
                           key={param.id}
-                          className="flex items-center justify-between rounded-md bg-blue-50 px-2 py-1"
+                          className="
+                            flex items-center justify-between rounded-md
+                            bg-blue-50 px-2 py-1
+                          "
                         >
                           <span className="text-xs font-medium text-gray-700">
                             {param.name}
@@ -383,15 +419,27 @@ const PlantillasPage = () => {
 
       {/* Modal */}
       {modal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg">
+        <div
+          className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/50
+        "
+        >
+          <div
+            className="
+            max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white
+            p-6 shadow-lg
+          "
+          >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900">
                 {modal.isEdit ? 'Editar Plantilla' : 'Crear Nueva Plantilla'}
               </h2>
               <button
                 onClick={handleCloseModal}
-                className="rounded-lg p-1 hover:bg-gray-100"
+                className="
+                  rounded-lg p-1
+                  hover:bg-gray-100
+                "
               >
                 <FiX size={20} />
               </button>
@@ -408,7 +456,11 @@ const PlantillasPage = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder-gray-500 focus:border-primary focus:outline-none"
+                  className="
+                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
+                    text-gray-900 placeholder-gray-500
+                    focus:border-primary focus:outline-none
+                  "
                   placeholder="Ej: Plantilla de Evaluación Continua"
                   required
                 />
@@ -423,7 +475,11 @@ const PlantillasPage = () => {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder-gray-500 focus:border-primary focus:outline-none"
+                  className="
+                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
+                    text-gray-900 placeholder-gray-500
+                    focus:border-primary focus:outline-none
+                  "
                   placeholder="Describe esta plantilla..."
                   rows={2}
                 />
@@ -438,13 +494,22 @@ const PlantillasPage = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder-gray-500 focus:border-primary focus:outline-none"
+                  className="
+                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
+                    text-gray-900 placeholder-gray-500
+                    focus:border-primary focus:outline-none
+                  "
                   placeholder="Buscar parámetros..."
                 />
               </div>
 
               {/* Lista de parámetros disponibles */}
-              <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div
+                className="
+                max-h-64 space-y-2 overflow-y-auto rounded-lg border
+                border-gray-200 bg-gray-50 p-4
+              "
+              >
                 {filteredParametros.length === 0 ? (
                   <p className="text-center text-sm text-gray-500">
                     No hay parámetros disponibles
@@ -460,11 +525,17 @@ const PlantillasPage = () => {
                       <div
                         key={param.id}
                         className={cn(
-                          'flex items-center justify-between rounded-lg p-3 transition-colors',
+                          `
+                            flex items-center justify-between rounded-lg p-3
+                            transition-colors
+                          `,
                           isSelected
                             ? 'bg-blue-100'
                             : canAdd
-                              ? 'bg-white hover:bg-gray-50'
+                              ? `
+                                bg-white
+                                hover:bg-gray-50
+                              `
                               : 'bg-red-50 opacity-60'
                         )}
                       >
@@ -485,12 +556,23 @@ const PlantillasPage = () => {
                             onClick={() => toggleParametro(param.id)}
                             disabled={!canAdd && !isSelected}
                             className={cn(
-                              'rounded-lg px-3 py-1 text-sm font-medium transition-colors',
+                              `
+                                rounded-lg px-3 py-1 text-sm font-medium
+                                transition-colors
+                              `,
                               isSelected
-                                ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                ? `
+                                  bg-blue-600 text-white
+                                  hover:bg-blue-700
+                                `
                                 : canAdd
-                                  ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                                  : 'cursor-not-allowed bg-gray-200 text-gray-400'
+                                  ? `
+                                    bg-gray-200 text-gray-700
+                                    hover:bg-gray-300
+                                  `
+                                  : `
+                                    cursor-not-allowed bg-gray-200 text-gray-400
+                                  `
                             )}
                           >
                             {isSelected ? 'Removido' : 'Agregar'}
@@ -542,14 +624,23 @@ const PlantillasPage = () => {
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="
+                    flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm
+                    font-medium text-gray-700
+                    hover:bg-gray-50
+                  "
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={getTotalPercentage() !== 100}
-                  className="flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-[#01142B] hover:bg-primary/90 disabled:opacity-50"
+                  className="
+                    flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium
+                    text-[#01142B]
+                    hover:bg-primary/90
+                    disabled:opacity-50
+                  "
                 >
                   {modal.isEdit ? 'Guardar Cambios' : 'Crear Plantilla'}
                 </button>

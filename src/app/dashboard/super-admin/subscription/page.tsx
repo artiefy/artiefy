@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import {
   FiArrowDownLeft,
   FiArrowUpRight,
@@ -139,14 +139,24 @@ export default function AccessLogsPage() {
   const getStatusBadge = (log: AccessLogItem) => {
     if (!log.exitTime) {
       return (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400">
+        <span
+          className="
+            inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3
+            py-1 text-xs font-semibold text-emerald-400
+          "
+        >
           <span className="size-2 animate-pulse rounded-full bg-emerald-400" />
           Dentro
         </span>
       );
     }
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-600/30 px-3 py-1 text-xs font-semibold text-gray-400">
+      <span
+        className="
+          inline-flex items-center gap-1.5 rounded-full bg-gray-600/30 px-3 py-1
+          text-xs font-semibold text-gray-400
+        "
+      >
         <span className="size-2 rounded-full bg-gray-500" />
         Salió
       </span>
@@ -168,7 +178,12 @@ export default function AccessLogsPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6">
+    <div
+      className="
+        min-h-screen p-4
+        md:p-6
+      "
+    >
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight text-white">
@@ -180,8 +195,18 @@ export default function AccessLogsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-800 p-5">
+      <div
+        className="
+          mb-6 grid grid-cols-1 gap-4
+          sm:grid-cols-3
+        "
+      >
+        <div
+          className="
+            rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900
+            to-gray-800 p-5
+          "
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-400">
@@ -195,7 +220,12 @@ export default function AccessLogsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-emerald-800/50 bg-gradient-to-br from-emerald-900/30 to-gray-900 p-5">
+        <div
+          className="
+            rounded-xl border border-emerald-800/50 bg-gradient-to-br
+            from-emerald-900/30 to-gray-900 p-5
+          "
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-emerald-400">
@@ -211,7 +241,12 @@ export default function AccessLogsPage() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900 to-gray-800 p-5">
+        <div
+          className="
+            rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900
+            to-gray-800 p-5
+          "
+        >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-400">Página</p>
@@ -228,12 +263,23 @@ export default function AccessLogsPage() {
       </div>
 
       {/* Filters */}
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div
+        className="
+          mb-6 flex flex-col gap-4
+          md:flex-row md:items-center md:justify-between
+        "
+      >
         {/* Search */}
         <div className="relative">
-          <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <FiSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400" />
           <input
-            className="w-full rounded-xl border border-gray-700 bg-gray-900/80 px-10 py-3 text-sm font-medium text-white placeholder:text-gray-500 outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/30 md:w-80"
+            className="
+              w-full rounded-xl border border-gray-700 bg-gray-900/80 px-10 py-3
+              text-sm font-medium text-white transition-all outline-none
+              placeholder:text-gray-500
+              focus:border-primary focus:ring-2 focus:ring-primary/30
+              md:w-80
+            "
             placeholder="Buscar por nombre o correo..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
@@ -242,14 +288,21 @@ export default function AccessLogsPage() {
 
         <div className="flex flex-wrap gap-2">
           {/* Filter Buttons */}
-          <div className="flex rounded-lg border border-gray-700 bg-gray-900/50 p-1">
+          <div
+            className="
+              flex rounded-lg border border-gray-700 bg-gray-900/50 p-1
+            "
+          >
             <button
               onClick={() => setFilter('all')}
               className={cn(
                 'rounded-md px-4 py-2 text-sm font-medium transition-all',
                 filter === 'all'
                   ? 'bg-primary text-black'
-                  : 'text-gray-400 hover:text-white'
+                  : `
+                    text-gray-400
+                    hover:text-white
+                  `
               )}
             >
               Todos
@@ -260,7 +313,10 @@ export default function AccessLogsPage() {
                 'rounded-md px-4 py-2 text-sm font-medium transition-all',
                 filter === 'inside'
                   ? 'bg-emerald-500 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  : `
+                    text-gray-400
+                    hover:text-white
+                  `
               )}
             >
               Dentro
@@ -271,7 +327,10 @@ export default function AccessLogsPage() {
                 'rounded-md px-4 py-2 text-sm font-medium transition-all',
                 filter === 'completed'
                   ? 'bg-gray-600 text-white'
-                  : 'text-gray-400 hover:text-white'
+                  : `
+                    text-gray-400
+                    hover:text-white
+                  `
               )}
             >
               Completados
@@ -281,7 +340,11 @@ export default function AccessLogsPage() {
           {/* Refresh Button */}
           <button
             onClick={() => fetchLogs(page, debouncedQ, filter)}
-            className="flex items-center gap-2 rounded-xl bg-gray-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-700"
+            className="
+              flex items-center gap-2 rounded-xl bg-gray-800 px-4 py-2.5 text-sm
+              font-medium text-white transition-colors
+              hover:bg-gray-700
+            "
           >
             <FiRefreshCw className={cn('size-4', loading && 'animate-spin')} />
             Actualizar
@@ -290,33 +353,68 @@ export default function AccessLogsPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 shadow-xl">
+      <div
+        className="
+          overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50
+          shadow-xl
+        "
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-800 bg-gray-800/80">
               <tr>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
+                >
                   Persona
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
+                >
                   Estado
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
+                >
                   <div className="flex items-center gap-1.5">
                     <FiArrowDownLeft className="size-4 text-emerald-400" />
                     Entrada
                   </div>
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
+                >
                   <div className="flex items-center gap-1.5">
                     <FiArrowUpRight className="size-4 text-red-400" />
                     Salida
                   </div>
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
+                >
                   Duración
                 </th>
-                <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-gray-300">
+                <th
+                  className="
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
+                >
                   Suscripción
                 </th>
               </tr>
@@ -350,13 +448,22 @@ export default function AccessLogsPage() {
                   <tr
                     key={log.id}
                     className={cn(
-                      'transition-colors hover:bg-gray-800/40',
+                      `
+                        transition-colors
+                        hover:bg-gray-800/40
+                      `,
                       !log.exitTime && 'bg-emerald-900/10'
                     )}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-primary/30 to-secondary/30">
+                        <div
+                          className="
+                            flex size-10 items-center justify-center
+                            rounded-full bg-gradient-to-br from-primary/30
+                            to-secondary/30
+                          "
+                        >
                           <FiUser className="size-5 text-primary" />
                         </div>
                         <div>
@@ -438,7 +545,10 @@ export default function AccessLogsPage() {
               'rounded-xl px-5 py-2.5 text-sm font-medium transition-all',
               page <= 1
                 ? 'cursor-not-allowed bg-gray-800/50 text-gray-600'
-                : 'bg-gray-800 text-white hover:bg-gray-700'
+                : `
+                  bg-gray-800 text-white
+                  hover:bg-gray-700
+                `
             )}
           >
             Anterior
@@ -450,7 +560,10 @@ export default function AccessLogsPage() {
               'rounded-xl px-5 py-2.5 text-sm font-medium transition-all',
               page >= totalPages
                 ? 'cursor-not-allowed bg-gray-800/50 text-gray-600'
-                : 'bg-primary text-black hover:opacity-90'
+                : `
+                  bg-primary text-black
+                  hover:opacity-90
+                `
             )}
           >
             Siguiente

@@ -56,10 +56,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# editor folders
-.vscode/
+# editor folders (VS Code)
+# Ignore everything inside `.vscode` except the shared `settings.json` file
+.vscode/*
 !.vscode/settings.json
-.vscode/mcp.json
 .idea/
 
 # system files

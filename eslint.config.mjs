@@ -28,6 +28,11 @@ export default defineConfig([
       '@typescript-eslint': typescriptEslint,
       'better-tailwindcss': betterTailwindCSS,
     },
+    settings: {
+      'better-tailwindcss': {
+        entryPoint: 'src/styles/globals.css',
+      },
+    },
     rules: {
       // TypeScript
       '@typescript-eslint/no-unused-vars': [
@@ -83,13 +88,21 @@ export default defineConfig([
       'better-tailwindcss/no-unnecessary-whitespace': 'warn',
       'better-tailwindcss/no-duplicate-classes': 'warn',
       'better-tailwindcss/enforce-shorthand-classes': 'warn',
+      'better-tailwindcss/enforce-consistent-line-wrapping': [
+        'warn',
+        {
+          printWidth: 80,
+          classesPerLine: 0,
+          group: 'newLine',
+          preferSingleLine: false,
+          indent: 2,
+          lineBreakStyle: 'unix',
+          strictness: 'loose',
+        },
+      ],
       'react/display-name': 'off',
     },
   },
-  // 3. Prettier (debe ir después para desactivar conflictos)
-  prettier,
-
-  // 4. Archivos ignorados
   {
     ignores: [
       '**/node_modules/**',
@@ -130,4 +143,6 @@ export default defineConfig([
       'src/components/reactbits/**',
     ],
   },
+   // 4. Prettier (debe ir al final para desactivar conflictos)
+  prettier,
 ]);

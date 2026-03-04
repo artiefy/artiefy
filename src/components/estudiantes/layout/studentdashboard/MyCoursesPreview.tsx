@@ -81,11 +81,26 @@ export default function MyCoursesPreview() {
   // Skeleton while loading
   if (isLoading) {
     return (
-      <section className="mb-8 overflow-visible px-4 sm:px-24">
-        <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
+      <section
+        className="
+        mb-8 overflow-visible px-4
+        sm:px-24
+      "
+      >
+        <div
+          className="
+          mb-4 flex items-center justify-between pr-4
+          sm:pr-0
+        "
+        >
           <div className="flex items-center gap-2">
             <GrOverview className="text-xl text-white" />
-            <StudentGradientText className="text-2xl sm:text-3xl">
+            <StudentGradientText
+              className="
+              text-2xl
+              sm:text-3xl
+            "
+            >
               Seguir viendo
             </StudentGradientText>
           </div>
@@ -97,9 +112,17 @@ export default function MyCoursesPreview() {
               {Array.from({ length: 4 }).map((_, i) => (
                 <CarouselItem
                   key={i}
-                  className="basis-[280px] px-1 sm:basis-[320px] sm:px-2"
+                  className="
+                    basis-[280px] px-1
+                    sm:basis-[320px] sm:px-2
+                  "
                 >
-                  <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-[#061C37]">
+                  <div
+                    className="
+                    flex h-full flex-col overflow-hidden rounded-2xl border
+                    border-border bg-[#061C37]
+                  "
+                  >
                     <Skeleton className="h-40 w-full rounded-none" />
                     <div className="flex-1 space-y-3 p-4">
                       <Skeleton className="h-4 w-3/4" />
@@ -120,11 +143,26 @@ export default function MyCoursesPreview() {
 
   if (error) {
     return (
-      <section className="mb-8 overflow-visible px-4 sm:px-24">
-        <div className="mb-4 flex items-center justify-between pr-4 sm:pr-0">
+      <section
+        className="
+        mb-8 overflow-visible px-4
+        sm:px-24
+      "
+      >
+        <div
+          className="
+          mb-4 flex items-center justify-between pr-4
+          sm:pr-0
+        "
+        >
           <div className="flex items-center gap-2">
             <GrOverview className="text-xl text-white" />
-            <StudentGradientText className="text-2xl sm:text-3xl">
+            <StudentGradientText
+              className="
+              text-2xl
+              sm:text-3xl
+            "
+            >
               Seguir viendo
             </StudentGradientText>
           </div>
@@ -140,17 +178,35 @@ export default function MyCoursesPreview() {
   if (!courses || courses.length === 0) return null;
 
   return (
-    <section className="-mt-12 mb-8 overflow-visible px-4 sm:px-24">
-      <div className="flex items-center justify-between pr-4 sm:pr-0">
+    <section
+      className="
+      -mt-12 mb-8 overflow-visible px-4
+      sm:px-24
+    "
+    >
+      <div
+        className="
+        flex items-center justify-between pr-4
+        sm:pr-0
+      "
+      >
         <div className="flex items-center gap-2">
           <GrOverview className="text-xl text-white" />
-          <StudentGradientText className="text-2xl sm:text-3xl">
+          <StudentGradientText
+            className="
+            text-2xl
+            sm:text-3xl
+          "
+          >
             Seguir viendo
           </StudentGradientText>
         </div>
         <Link
           href="/estudiantes/myaccount"
-          className="text-sm text-primary no-underline hover:underline"
+          className="
+            text-sm text-primary no-underline
+            hover:underline
+          "
         >
           Ver Todos
         </Link>
@@ -189,13 +245,28 @@ export default function MyCoursesPreview() {
               return (
                 <CarouselItem
                   key={course.id}
-                  className="basis-[280px] px-1 sm:basis-[320px] sm:px-2"
+                  className="
+                    basis-[280px] px-1
+                    sm:basis-[320px] sm:px-2
+                  "
                 >
                   <Link
                     href={courseHref}
-                    className="group relative flex h-full transform-gpu flex-col overflow-hidden rounded-2xl bg-[#061C37] shadow-none transition-all duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform hover:-translate-y-2 hover:shadow-[0_18px_32px_-10px_rgba(0,0,0,0.65)]"
+                    className="
+                      group relative flex h-full transform-gpu flex-col
+                      overflow-hidden rounded-2xl bg-[#061C37] shadow-none
+                      transition-all duration-[1200ms]
+                      ease-[cubic-bezier(0.16,1,0.3,1)] will-change-transform
+                      hover:-translate-y-2
+                      hover:shadow-[0_18px_32px_-10px_rgba(0,0,0,0.65)]
+                    "
                   >
-                    <div className="relative h-40 w-full overflow-hidden border-t border-r border-l border-border bg-[#061C37] will-change-transform">
+                    <div
+                      className="
+                      relative h-40 w-full overflow-hidden border-t border-r
+                      border-l border-border bg-[#061C37] will-change-transform
+                    "
+                    >
                       <Image
                         src={getImageUrl(course.coverImageKey)}
                         alt={course.title}
@@ -203,14 +274,32 @@ export default function MyCoursesPreview() {
                         className="size-full object-cover"
                         sizes="(max-width: 768px) 100vw, 420px"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#061C37] via-[#061C37]/60 to-transparent" />
+                      <div
+                        className="
+                        absolute inset-0 bg-gradient-to-t from-[#061C37]
+                        via-[#061C37]/60 to-transparent
+                      "
+                      />
 
-                      <div className="absolute top-3 right-3 rounded-2xl bg-primary px-3 py-1.5 text-[#0b1220] shadow-lg">
-                        <p className="mb-1 text-xs leading-tight font-semibold text-[#0b1220]">
+                      <div
+                        className="
+                        absolute top-3 right-3 rounded-2xl bg-primary px-3
+                        py-1.5 text-[#0b1220] shadow-lg
+                      "
+                      >
+                        <p
+                          className="
+                          mb-1 text-xs leading-tight font-semibold
+                          text-[#0b1220]
+                        "
+                        >
                           {badgeHeading}
                         </p>
                         <p
-                          className="max-w-[140px] truncate text-[10px] leading-tight font-normal text-[#0b1220] opacity-90"
+                          className="
+                            max-w-[140px] truncate text-[10px] leading-tight
+                            font-normal text-[#0b1220] opacity-90
+                          "
                           title={badgeSubtitle}
                         >
                           {badgeSubtitle}
@@ -218,26 +307,47 @@ export default function MyCoursesPreview() {
                       </div>
                     </div>
 
-                    <div className="flex flex-1 flex-col border-r border-b border-l border-border bg-[#061C37] p-4">
+                    <div
+                      className="
+                      flex flex-1 flex-col border-r border-b border-l
+                      border-border bg-[#061C37] p-4
+                    "
+                    >
                       <h4
-                        className="mb-1 line-clamp-2 min-h-[38px] text-sm leading-snug font-semibold text-white"
+                        className="
+                          mb-1 line-clamp-2 min-h-[38px] text-sm leading-snug
+                          font-semibold text-white
+                        "
                         title={course.title}
                       >
                         {course.title}
                       </h4>
 
                       <p
-                        className={`${categorySpacingClass} text-xs text-[#94A3B8]`}
+                        className={`
+                          ${categorySpacingClass}
+                          text-xs text-[#94A3B8]
+                        `}
                       >
                         {course.category?.name ?? 'Sin categoria'}
                       </p>
 
                       <div
-                        className={`${progressSpacingClass} flex items-center gap-3`}
+                        className={`
+                          ${progressSpacingClass}
+                          flex items-center gap-3
+                        `}
                       >
-                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-[#0f2744]">
+                        <div
+                          className="
+                          h-1 flex-1 overflow-hidden rounded-full bg-[#0f2744]
+                        "
+                        >
                           <div
-                            className="h-full rounded-full bg-primary transition-all duration-500"
+                            className="
+                              h-full rounded-full bg-primary transition-all
+                              duration-500
+                            "
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -258,20 +368,36 @@ export default function MyCoursesPreview() {
         {canScrollPrev && (
           <button
             onClick={() => carouselApi?.scrollPrev()}
-            className="pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2 sm:hidden"
+            className="
+              pointer-events-auto absolute top-1/2 left-2 -translate-y-1/2
+              sm:hidden
+            "
             aria-label="Anterior"
           >
-            <div className="carousel-mobile-arrow flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+            <div
+              className="
+              carousel-mobile-arrow flex size-10 items-center justify-center
+              rounded-full bg-black/40 backdrop-blur-sm
+            "
+            >
               <IoIosArrowBack className="text-2xl text-white" />
             </div>
           </button>
         )}
         <button
           onClick={() => carouselApi?.scrollNext()}
-          className="pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2 sm:hidden"
+          className="
+            pointer-events-auto absolute top-1/2 right-2 -translate-y-1/2
+            sm:hidden
+          "
           aria-label="Siguiente"
         >
-          <div className="carousel-mobile-arrow flex size-10 items-center justify-center rounded-full bg-black/40 backdrop-blur-sm">
+          <div
+            className="
+            carousel-mobile-arrow flex size-10 items-center justify-center
+            rounded-full bg-black/40 backdrop-blur-sm
+          "
+          >
             <IoIosArrowForward className="text-2xl text-white" />
           </div>
         </button>

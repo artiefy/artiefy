@@ -391,11 +391,19 @@ const ForumPage = () => {
     return replies.map((reply) => (
       <div
         key={reply.id}
-        className="relative mt-4 rounded-xl border border-gray-700 bg-gray-800 px-4 py-3 shadow sm:ml-10 sm:px-6 sm:py-4"
+        className="
+          relative mt-4 rounded-xl border border-gray-700 bg-gray-800 px-4 py-3
+          shadow
+          sm:ml-10 sm:px-6 sm:py-4
+        "
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="size-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800" />
+            <div
+              className="
+              size-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800
+            "
+            />
             <span className="text-sm font-medium text-white">
               {reply.userId.name}
             </span>
@@ -408,19 +416,27 @@ const ForumPage = () => {
         {editingReplyId === reply.id ? (
           <div className="mt-3">
             <textarea
-              className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white"
+              className="
+                w-full rounded border border-gray-700 bg-gray-900 p-3 text-white
+              "
               value={editReplyContent}
               onChange={(e) => setEditReplyContent(e.target.value)}
             />
             <div className="mt-2 flex justify-end gap-2">
               <button
-                className="rounded bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
+                className="
+                  rounded bg-green-500 px-3 py-1 text-sm text-white
+                  hover:bg-green-600
+                "
                 onClick={() => handleReplyUpdate(reply.id)}
               >
                 Actualizar
               </button>
               <button
-                className="rounded bg-gray-700 px-4 py-2 text-sm text-white hover:bg-gray-600"
+                className="
+                  rounded bg-gray-700 px-4 py-2 text-sm text-white
+                  hover:bg-gray-600
+                "
                 onClick={() => setEditingReplyId(null)}
               >
                 Cancelar
@@ -452,7 +468,7 @@ const ForumPage = () => {
                   <video
                     controls
                     src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
-                    className="max-h-64 rounded w-full"
+                    className="max-h-64 w-full rounded"
                   />
                 )}
               </div>
@@ -466,9 +482,17 @@ const ForumPage = () => {
             <CollapsibleTrigger>
               <EllipsisVertical className="cursor-pointer text-gray-500 hover:text-white" />
             </CollapsibleTrigger>
-            <CollapsibleContent className="absolute right-0 mt-1 flex flex-col rounded border border-gray-700 bg-gray-800 shadow-lg">
+            <CollapsibleContent
+              className="
+              absolute right-0 mt-1 flex flex-col rounded border border-gray-700
+              bg-gray-800 shadow-lg
+            "
+            >
               <button
-                className="px-4 py-2 text-left text-sm text-green-400 hover:bg-gray-700"
+                className="
+                  px-4 py-2 text-left text-sm text-green-400
+                  hover:bg-gray-700
+                "
                 onClick={() => {
                   setEditingReplyId(reply.id);
                   setEditReplyContent(reply.content);
@@ -477,7 +501,10 @@ const ForumPage = () => {
                 Editar
               </button>
               <button
-                className="px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
+                className="
+                  px-4 py-2 text-left text-sm text-red-400
+                  hover:bg-gray-700
+                "
                 onClick={() => handleDeleteReply(reply.id)}
               >
                 Eliminar
@@ -493,7 +520,11 @@ const ForumPage = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 animate-spin rounded-full border-y-2">
+        <div
+          className="
+          size-32 animate-spin rounded-full border-y-2 border-primary
+        "
+        >
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -507,7 +538,10 @@ const ForumPage = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/"
             >
               Inicio
@@ -516,7 +550,10 @@ const ForumPage = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href={`/dashboard/admin/foro`}
             >
               Foros
@@ -525,7 +562,10 @@ const ForumPage = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href={`/dashboard/admin/foro/${forumData?.id}`}
             >
               Foro: {forumData?.title}
@@ -536,26 +576,53 @@ const ForumPage = () => {
 
       <div className="mx-auto mt-6 w-full max-w-6xl space-y-8 px-4 sm:px-6 lg:px-8">
         <div className="glow-pulse mt-5 mb-10 w-full rounded-lg">
-          <div className="mx-auto w-full max-w-7xl rounded-xl border border-gray-700 bg-[#111827] p-6 shadow-md">
+          <div
+            className="
+            mx-auto w-full max-w-7xl rounded-xl border border-gray-700
+            bg-[#111827] p-6 shadow-md
+          "
+          >
             {/* Header */}
-            <div className="border-secondary flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-start sm:justify-between sm:gap-8 sm:pb-4">
+            <div
+              className="
+              flex flex-col gap-4 border-b border-secondary pb-6
+              sm:flex-row sm:items-start sm:justify-between sm:gap-8 sm:pb-4
+            "
+            >
               <div className="min-w-0 flex-1">
-                <h1 className="text-primary text-2xl font-bold break-words sm:text-3xl">
+                <h1
+                  className="
+                  text-2xl font-bold break-words text-primary
+                  sm:text-3xl
+                "
+                >
                   {forumData?.title}
                 </h1>
-                <p className="mt-2 text-base leading-relaxed whitespace-pre-wrap text-white">
+                <p
+                  className="
+                  mt-2 text-base leading-relaxed whitespace-pre-wrap text-white
+                "
+                >
                   {forumData?.description}
                 </p>
               </div>
 
-              <div className="mt-2 flex-shrink-0 sm:mt-0">
+              <div
+                className="
+                mt-2 flex-shrink-0
+                sm:mt-0
+              "
+              >
                 <div className="flex max-w-xs items-center gap-2 overflow-hidden">
-                  <span className="text-secondary text-sm whitespace-nowrap">
+                  <span className="text-sm whitespace-nowrap text-secondary">
                     Educador:
                   </span>
                   <span
                     title={forumData?.userId.name}
-                    className="bg-primary text-background w-full truncate rounded-full px-3 py-1 text-sm font-semibold shadow-sm"
+                    className="
+                      w-full truncate rounded-full bg-primary px-3
+                      py-1 text-sm font-semibold text-background shadow-sm
+                    "
                   >
                     {forumData?.userId.name}
                   </span>
@@ -564,14 +631,30 @@ const ForumPage = () => {
             </div>
 
             {(forumData?.coverImageKey ?? forumData?.documentKey) && (
-              <div className="mt-6 flex flex-col gap-4 sm:flex-row">
+              <div
+                className="
+                mt-6 flex flex-col gap-4
+                sm:flex-row
+              "
+              >
                 {/* Imagen */}
                 {forumData?.coverImageKey && (
-                  <div className="w-full sm:w-1/2">
+                  <div
+                    className="
+                    w-full
+                    sm:w-1/2
+                  "
+                  >
                     <p className="text-sm font-medium text-gray-300">
                       Imagen adjunta
                     </p>
-                    <div className="mt-2 max-w-md overflow-hidden rounded-lg border border-white/10 shadow-md transition hover:shadow-xl">
+                    <div
+                      className="
+                      mt-2 max-w-md overflow-hidden rounded-lg border
+                      border-white/10 shadow-md transition
+                      hover:shadow-xl
+                    "
+                    >
                       <Image
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
                         alt="Imagen adjunta"
@@ -585,17 +668,30 @@ const ForumPage = () => {
 
                 {/* Documento */}
                 {forumData?.documentKey && (
-                  <div className="w-full sm:w-1/2">
+                  <div
+                    className="
+                    w-full
+                    sm:w-1/2
+                  "
+                  >
                     <p className="text-sm font-medium text-gray-300">
                       Documento adjunto
                     </p>
-                    <div className="mt-2 flex items-center gap-3 rounded-lg bg-white/5 p-4 text-sm text-green-300 shadow-inner">
+                    <div
+                      className="
+                      mt-2 flex items-center gap-3 rounded-lg bg-white/5 p-4
+                      text-sm text-green-300 shadow-inner
+                    "
+                    >
                       <span className="text-xl">📄</span>
                       <a
                         href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.documentKey}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="break-all underline hover:text-green-200"
+                        className="
+                          break-all underline
+                          hover:text-green-200
+                        "
                       >
                         Ver documento
                       </a>
@@ -615,9 +711,19 @@ const ForumPage = () => {
             posts.map((post) => (
               <div
                 key={post.id}
-                className="relative rounded-2xl border border-gray-700 bg-gray-900 p-5 shadow-md transition duration-300 hover:shadow-xl sm:p-6"
+                className="
+                  relative rounded-2xl border border-gray-700 bg-gray-900 p-5
+                  shadow-md transition duration-300
+                  hover:shadow-xl
+                  sm:p-6
+                "
               >
-                <div className="mb-3 flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div
+                  className="
+                  mb-3 flex flex-col
+                  sm:flex-row sm:items-center sm:justify-between
+                "
+                >
                   <h2 className="text-lg font-bold text-white">
                     {post.content}
                   </h2>
@@ -629,20 +735,29 @@ const ForumPage = () => {
                 {editingPostId === post.id ? (
                   <div className="mb-3">
                     <textarea
-                      className="w-full rounded border-gray-700 bg-gray-900 p-3 font-bold text-white"
+                      className="
+                        w-full rounded border-gray-700 bg-gray-900 p-3 font-bold
+                        text-white
+                      "
                       value={editPostContent}
                       onChange={(e) => setEditPostContent(e.target.value)}
                     />
                     <div className="mt-2 flex justify-end gap-2">
                       <button
                         onClick={() => handlePostUpdate(post.id)}
-                        className="rounded bg-green-500 px-3 py-1 text-sm text-white hover:bg-green-600"
+                        className="
+                          rounded bg-green-500 px-3 py-1 text-sm text-white
+                          hover:bg-green-600
+                        "
                       >
                         Actualizar
                       </button>
                       <button
                         onClick={() => setEditingPostId(null)}
-                        className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+                        className="
+                          rounded bg-red-500 px-3 py-1 text-sm text-white
+                          hover:bg-red-600
+                        "
                       >
                         Cancelar
                       </button>
@@ -675,7 +790,7 @@ const ForumPage = () => {
                       <video
                         controls
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.videoKey}`}
-                        className="max-h-64 rounded w-full"
+                        className="max-h-64 w-full rounded"
                       />
                     )}
                   </div>
@@ -685,11 +800,24 @@ const ForumPage = () => {
                 {post.userId.id === user?.id && (
                   <Collapsible className="absolute top-6 right-2">
                     <CollapsibleTrigger>
-                      <EllipsisVertical className="cursor-pointer text-gray-400 hover:text-white" />
+                      <EllipsisVertical
+                        className="
+                        cursor-pointer text-gray-400
+                        hover:text-white
+                      "
+                      />
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="absolute right-0 mt-1 flex flex-col rounded border border-gray-700 bg-gray-900 shadow-lg">
+                    <CollapsibleContent
+                      className="
+                      absolute right-0 mt-1 flex flex-col rounded border
+                      border-gray-700 bg-gray-900 shadow-lg
+                    "
+                    >
                       <button
-                        className="px-4 py-2 text-left text-sm text-green-400 hover:bg-gray-700"
+                        className="
+                          px-4 py-2 text-left text-sm text-green-400
+                          hover:bg-gray-700
+                        "
                         onClick={() => {
                           setEditingPostId(post.id);
                           setEditPostContent(post.content);
@@ -698,7 +826,10 @@ const ForumPage = () => {
                         Editar
                       </button>
                       <button
-                        className="px-4 py-2 text-left text-sm text-red-400 hover:bg-gray-700"
+                        className="
+                          px-4 py-2 text-left text-sm text-red-400
+                          hover:bg-gray-700
+                        "
                         onClick={() => handleDeletePost(post.id)}
                       >
                         Eliminar
@@ -709,7 +840,10 @@ const ForumPage = () => {
 
                 {/* Botón responder */}
                 <button
-                  className="mt-4 text-sm text-blue-400 hover:underline"
+                  className="
+                    mt-4 text-sm text-blue-400
+                    hover:underline
+                  "
                   onClick={() => setReplyingToPostId(post.id)}
                 >
                   Responder
@@ -719,7 +853,10 @@ const ForumPage = () => {
                 {replyingToPostId === post.id && (
                   <div className="mt-3">
                     <textarea
-                      className="w-full rounded border border-gray-700 bg-gray-900 p-3 text-white mb-3"
+                      className="
+                        mb-3 w-full rounded border border-gray-700 bg-gray-900
+                        p-3 text-white
+                      "
                       placeholder="Escribe tu respuesta..."
                       value={replyMessage}
                       onChange={(e) => setReplyMessage(e.target.value)}
@@ -734,7 +871,14 @@ const ForumPage = () => {
                           }
                           className="hidden"
                         />
-                        <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-2 text-center hover:bg-gray-700 text-xs text-white">
+                        <div
+                          className="
+                          rounded border border-dashed border-gray-600
+                          bg-gray-800 p-2 text-center
+                          text-xs
+                          text-white hover:bg-gray-700
+                        "
+                        >
                           {replyImage
                             ? '✓ ' + replyImage.name.slice(0, 12)
                             : '□ Imagen'}
@@ -749,7 +893,14 @@ const ForumPage = () => {
                           }
                           className="hidden"
                         />
-                        <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-2 text-center hover:bg-gray-700 text-xs text-white">
+                        <div
+                          className="
+                          rounded border border-dashed border-gray-600
+                          bg-gray-800 p-2 text-center
+                          text-xs
+                          text-white hover:bg-gray-700
+                        "
+                        >
                           {replyAudio
                             ? '✓ ' + replyAudio.name.slice(0, 12)
                             : '♪ Audio'}
@@ -764,7 +915,14 @@ const ForumPage = () => {
                           }
                           className="hidden"
                         />
-                        <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-2 text-center hover:bg-gray-700 text-xs text-white">
+                        <div
+                          className="
+                          rounded border border-dashed border-gray-600
+                          bg-gray-800 p-2 text-center
+                          text-xs
+                          text-white hover:bg-gray-700
+                        "
+                        >
                           {replyVideo
                             ? '✓ ' + replyVideo.name.slice(0, 12)
                             : '▶ Video'}
@@ -773,13 +931,19 @@ const ForumPage = () => {
                     </div>
                     <div className="mt-2 flex justify-end gap-2">
                       <button
-                        className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
+                        className="
+                          rounded bg-blue-500 px-3 py-1 text-sm text-white
+                          hover:bg-blue-600
+                        "
                         onClick={handleReplySubmit}
                       >
                         Enviar
                       </button>
                       <button
-                        className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
+                        className="
+                          rounded bg-red-500 px-3 py-1 text-sm text-white
+                          hover:bg-red-600
+                        "
                         onClick={() => setReplyingToPostId(null)}
                       >
                         Cancelar
@@ -800,7 +964,12 @@ const ForumPage = () => {
         {/* Crear nuevo post */}
         <div className="mx-full mt-6 max-w-4xl">
           <textarea
-            className="min-h-[120px] w-full resize-none rounded-lg border border-gray-600 bg-white/10 p-4 text-white placeholder-gray-400 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-300 mb-3"
+            className="
+              mb-3 min-h-[120px] w-full resize-none rounded-lg border
+              border-gray-600 bg-white/10 p-4 text-white placeholder-gray-400
+              outline-none focus:border-blue-500 focus:ring-2
+              focus:ring-blue-300
+            "
             placeholder="Escribe un nuevo mensaje..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -813,7 +982,14 @@ const ForumPage = () => {
                 onChange={(e) => setPostImage(e.target.files?.[0] || null)}
                 className="hidden"
               />
-              <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-3 text-center hover:bg-gray-700 text-sm text-white">
+              <div
+                className="
+                rounded border border-dashed border-gray-600 bg-gray-800 p-3
+                text-center
+                text-sm
+                text-white hover:bg-gray-700
+              "
+              >
                 {postImage ? '✓ ' + postImage.name.slice(0, 15) : '□ Imagen'}
               </div>
             </label>
@@ -824,7 +1000,14 @@ const ForumPage = () => {
                 onChange={(e) => setPostAudio(e.target.files?.[0] || null)}
                 className="hidden"
               />
-              <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-3 text-center hover:bg-gray-700 text-sm text-white">
+              <div
+                className="
+                rounded border border-dashed border-gray-600 bg-gray-800 p-3
+                text-center
+                text-sm
+                text-white hover:bg-gray-700
+              "
+              >
                 {postAudio ? '✓ ' + postAudio.name.slice(0, 15) : '♪ Audio'}
               </div>
             </label>
@@ -835,13 +1018,23 @@ const ForumPage = () => {
                 onChange={(e) => setPostVideo(e.target.files?.[0] || null)}
                 className="hidden"
               />
-              <div className="rounded border border-dashed border-gray-600 bg-gray-800 p-3 text-center hover:bg-gray-700 text-sm text-white">
+              <div
+                className="
+                rounded border border-dashed border-gray-600 bg-gray-800 p-3
+                text-center
+                text-sm
+                text-white hover:bg-gray-700
+              "
+              >
                 {postVideo ? '✓ ' + postVideo.name.slice(0, 15) : '▶ Video'}
               </div>
             </label>
           </div>
           <button
-            className="rounded bg-blue-500 px-4 py-2 text-white hover:bg-blue-600"
+            className="
+              rounded bg-blue-500 px-4 py-2 text-white
+              hover:bg-blue-600
+            "
             onClick={handlePostSubmit}
           >
             Enviar

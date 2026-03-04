@@ -202,19 +202,50 @@ export default function StudentCategories({
   return (
     <section
       id="student-categories-section"
-      className="div-filters px-8 sm:px-12 md:px-10 lg:px-20"
+      className="
+        div-filters px-8
+        sm:px-12
+        md:px-10
+        lg:px-20
+      "
     >
       <div className="container mx-auto">
-        <div className="mt-4 mb-2 ml-0 w-full lg:flex lg:flex-row lg:items-center lg:justify-start lg:gap-2">
-          <div className="relative flex w-full flex-row items-center justify-start lg:w-auto lg:justify-start">
-            <div className="min-w-0 flex-1 px-0 sm:px-6">
-              <StudentGradientText className="mx-0 justify-start text-left text-2xl whitespace-nowrap sm:text-xl lg:mt-3 lg:text-2xl">
+        <div
+          className="
+            mt-4 mb-2 ml-0 w-full
+            lg:flex lg:flex-row lg:items-center lg:justify-start lg:gap-2
+          "
+        >
+          <div
+            className="
+              relative flex w-full flex-row items-center justify-start
+              lg:w-auto lg:justify-start
+            "
+          >
+            <div
+              className="
+                min-w-0 flex-1 px-0
+                sm:px-6
+              "
+            >
+              <StudentGradientText
+                className="
+                  mx-0 justify-start text-left text-2xl whitespace-nowrap
+                  sm:text-xl
+                  lg:mt-3 lg:text-2xl
+                "
+              >
                 Áreas de Conocimiento
               </StudentGradientText>
             </div>
 
             {/* Mobile: search icon to the right */}
-            <div className="ml-0 flex items-center lg:hidden">
+            <div
+              className="
+                ml-0 flex items-center
+                lg:hidden
+              "
+            >
               <button
                 type="button"
                 className="mt-2 mr-2 size-4 -translate-y-2 transform text-white"
@@ -253,11 +284,19 @@ export default function StudentCategories({
             </div>
 
             {/* Desktop: keep original searchbar */}
-            <div className="hidden lg:-ml-4 lg:block">
+            <div
+              className="
+                hidden
+                lg:-ml-4 lg:block
+              "
+            >
               <div className="student-searchbar w-full max-w-[260px]">
                 <button
                   type="button"
-                  className="student-searchbar__icon absolute top-[60%] right-6 -translate-y-1/2 text-white"
+                  className="
+                    student-searchbar__icon absolute top-[60%] right-6
+                    -translate-y-1/2 text-white
+                  "
                   tabIndex={-1}
                   aria-label="Buscar cursos"
                   onClick={handleSearch}
@@ -300,7 +339,12 @@ export default function StudentCategories({
           </div>
 
           {showMobileSearch && (
-            <div className="mt-3 block w-full lg:hidden">
+            <div
+              className="
+                mt-3 block w-full
+                lg:hidden
+              "
+            >
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -420,12 +464,23 @@ export default function StudentCategories({
               checkScroll();
             }
           }}
-          className="group/categories relative -mb-6 -ml-4 px-0 pt-3 sm:-mb-0 sm:-ml-0 sm:px-3 sm:pt-0"
+          className="
+            group/categories relative -mb-6 -ml-4 px-0 pt-3
+            sm:-mb-0 sm:-ml-0 sm:px-3 sm:pt-0
+          "
         >
           {(isPressing || showLeftArrow) && (
             <button
               onClick={() => scroll('left')}
-              className={`category-arrow absolute top-[35%] left-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-focus-within/categories:opacity-95 group-hover/categories:opacity-95 hover:scale-110 ${isPressing ? 'scale-110 opacity-95' : ''}`}
+              className={`
+                category-arrow absolute top-[35%] left-0 z-10 flex h-10 w-8
+                -translate-y-1/2 items-center justify-center rounded-full
+                bg-transparent opacity-0 transition-transform duration-300
+                group-focus-within/categories:opacity-95
+                group-hover/categories:opacity-95
+                hover:scale-110
+                ${isPressing ? 'scale-110 opacity-95' : ''}
+              `}
               aria-label="Scroll left"
             >
               <IoIosArrowBack className="size-5 text-white" />
@@ -435,7 +490,15 @@ export default function StudentCategories({
           {(isPressing || showRightArrow) && (
             <button
               onClick={() => scroll('right')}
-              className={`category-arrow absolute top-[35%] right-0 z-10 flex h-10 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-transparent opacity-0 transition-transform duration-300 group-focus-within/categories:opacity-95 group-hover/categories:opacity-95 hover:scale-110 ${isPressing ? 'scale-110 opacity-95' : ''}`}
+              className={`
+                category-arrow absolute top-[35%] right-0 z-10 flex h-10 w-8
+                -translate-y-1/2 items-center justify-center rounded-full
+                bg-transparent opacity-0 transition-transform duration-300
+                group-focus-within/categories:opacity-95
+                group-hover/categories:opacity-95
+                hover:scale-110
+                ${isPressing ? 'scale-110 opacity-95' : ''}
+              `}
               aria-label="Scroll right"
             >
               <IoIosArrowForward className="size-5 text-white" />
@@ -444,7 +507,10 @@ export default function StudentCategories({
 
           <div
             ref={scrollContainerRef}
-            className="scrollbar-hide flex justify-start gap-3 overflow-x-auto px-4 pb-4 sm:px-3"
+            className="
+              scrollbar-hide flex justify-start gap-3 overflow-x-auto px-4 pb-4
+              sm:px-3
+            "
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -461,12 +527,23 @@ export default function StudentCategories({
                 (!selectedCategory && !searchParams?.get('query')) ||
                 buttonsDisabled
               }
-              className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
-                (!selectedCategory && !searchParams?.get('query')) ||
-                buttonsDisabled
-                  ? 'cursor-not-allowed bg-foreground text-background opacity-60'
-                  : 'border border-foreground/30 bg-transparent text-[#94A3B8] hover:border-foreground hover:text-foreground'
-              }`}
+              className={`
+                flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium
+                whitespace-nowrap transition-all duration-300
+                sm:px-5 sm:py-2 sm:text-sm
+                ${
+                  (!selectedCategory && !searchParams?.get('query')) ||
+                  buttonsDisabled
+                    ? `
+                      cursor-not-allowed bg-foreground text-background
+                      opacity-60
+                    `
+                    : `
+                      border border-foreground/30 bg-transparent text-[#94A3B8]
+                      hover:border-foreground hover:text-foreground
+                    `
+                }
+              `}
               aria-label="Mostrar todos los cursos"
             >
               {loadingCategory === 'all' ? (
@@ -484,13 +561,25 @@ export default function StudentCategories({
                 key={category.id}
                 onClick={() => handleCategorySelect(category.id.toString())}
                 disabled={buttonsDisabled}
-                className={`flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all duration-300 sm:px-5 sm:py-2 sm:text-sm ${
-                  selectedCategory === category.id.toString()
-                    ? 'bg-foreground text-background'
-                    : buttonsDisabled
-                      ? 'cursor-not-allowed border border-foreground/30 bg-transparent text-[#94A3B8] opacity-50'
-                      : 'border border-foreground/30 bg-transparent text-[#94A3B8] hover:border-foreground hover:text-foreground'
-                }`}
+                className={`
+                  flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium
+                  whitespace-nowrap transition-all duration-300
+                  sm:px-5 sm:py-2 sm:text-sm
+                  ${
+                    selectedCategory === category.id.toString()
+                      ? 'bg-foreground text-background'
+                      : buttonsDisabled
+                        ? `
+                          cursor-not-allowed border border-foreground/30
+                          bg-transparent text-[#94A3B8] opacity-50
+                        `
+                        : `
+                          border border-foreground/30 bg-transparent
+                          text-[#94A3B8]
+                          hover:border-foreground hover:text-foreground
+                        `
+                  }
+                `}
                 aria-label={`Mostrar cursos de ${category.name}`}
               >
                 {loadingCategory === category.id.toString() ? (
@@ -506,48 +595,6 @@ export default function StudentCategories({
           </div>
         </div>
       </div>
-
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .category-arrow {
-          border: none;
-          outline: none;
-          box-shadow: none;
-          isolation: isolate;
-        }
-        .category-arrow::after {
-          content: '';
-          position: absolute;
-          inset: -10px;
-          border-radius: 9999px;
-          background: radial-gradient(
-            circle,
-            rgba(167, 139, 250, 0.4),
-            rgba(17, 24, 39, 0)
-          );
-          filter: blur(10px);
-          opacity: 0.85;
-          transition:
-            opacity 0.2s ease,
-            transform 0.2s ease;
-          z-index: 0;
-        }
-        .category-arrow:hover::after {
-          opacity: 1;
-          transform: scale(1.08);
-        }
-        .category-arrow svg {
-          position: relative;
-          z-index: 1;
-        }
-        @media (max-width: 768px) {
-          .category-arrow {
-            top: 45% !important;
-          }
-        }
-      `}</style>
     </section>
   );
 }

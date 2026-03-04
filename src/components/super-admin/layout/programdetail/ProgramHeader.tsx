@@ -79,7 +79,12 @@ export function ProgramHeader({
             placeholder="blur"
             blurDataURL={blurDataURL}
           />
-          <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70 to-transparent p-6">
+          <div
+            className="
+            absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70
+            to-transparent p-6
+          "
+          >
             <h1 className="text-3xl font-bold text-white">{program.title}</h1>
           </div>
         </AspectRatio>
@@ -91,7 +96,10 @@ export function ProgramHeader({
           <div className="flex items-center space-x-4">
             <Badge
               variant="outline"
-              className="border-primary bg-background text-primary hover:bg-black/70"
+              className="
+                border-primary bg-background text-primary
+                hover:bg-black/70
+              "
             >
               {program.category?.name ?? 'Sin categoría'}
             </Badge>
@@ -113,7 +121,9 @@ export function ProgramHeader({
               {Array.from({ length: 5 }).map((_, index) => (
                 <StarIcon
                   key={index}
-                  className={`size-5 ${index < Math.floor(program.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
+                  className={`
+                    size-5
+                    ${index < Math.floor(program.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
                 />
               ))}
               <span className="ml-2 text-lg font-semibold text-yellow-400">
@@ -138,13 +148,23 @@ export function ProgramHeader({
             {isEnrolled ? (
               <div className="flex w-full flex-col space-y-4">
                 <Button
-                  className="bg-primary text-background hover:bg-primary/90 h-12 w-64 justify-center border-white/20 text-lg font-semibold transition-colors active:scale-95"
+                  className="
+                    h-12 w-64
+                    justify-center
+                    border-white/20 bg-primary text-lg font-semibold text-background
+                    transition-colors hover:bg-primary/90
+                    active:scale-95
+                  "
                   disabled={true}
                 >
                   <FaCheck className="mr-2" /> Suscrito Al Programa
                 </Button>
                 <Button
-                  className="h-12 w-64 justify-center border-white/20 bg-red-500 text-lg font-semibold hover:bg-red-600"
+                  className="
+                    h-12 w-64 justify-center border-white/20 bg-red-500 text-lg
+                    font-semibold
+                    hover:bg-red-600
+                  "
                   onClick={onUnenrollAction}
                   disabled={isUnenrolling}
                 >
@@ -159,11 +179,33 @@ export function ProgramHeader({
               <Button
                 onClick={onEnrollAction}
                 disabled={isEnrolling || !canEnroll}
-                className="relative inline-block h-12 w-64 cursor-pointer rounded-xl bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl shadow-zinc-900 transition-transform duration-300 ease-in-out hover:scale-105 active:scale-95 disabled:opacity-50"
+                className="
+                  relative inline-block h-12 w-64 cursor-pointer rounded-xl
+                  bg-gray-800 p-px leading-6 font-semibold text-white shadow-2xl
+                  shadow-zinc-900 transition-transform duration-300 ease-in-out
+                  hover:scale-105
+                  active:scale-95
+                  disabled:opacity-50
+                "
               >
-                <span className="absolute inset-0 rounded-xl bg-linear-to-r from-teal-400 via-blue-500 to-purple-500 p-[2px] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                <span className="relative z-10 block rounded-xl bg-gray-950 px-6 py-3">
-                  <div className="relative z-10 flex items-center justify-center space-x-2">
+                <span
+                  className="
+                  absolute inset-0 rounded-xl bg-linear-to-r from-teal-400
+                  via-blue-500 to-purple-500 p-[2px] opacity-0
+                  transition-opacity duration-500
+                  group-hover:opacity-100
+                "
+                />
+                <span
+                  className="
+                  relative z-10 block rounded-xl bg-gray-950 px-6 py-3
+                "
+                >
+                  <div
+                    className="
+                    relative z-10 flex items-center justify-center space-x-2
+                  "
+                  >
                     {isEnrolling ? (
                       <Icons.spinner
                         className="text-white"
@@ -171,13 +213,21 @@ export function ProgramHeader({
                       />
                     ) : (
                       <>
-                        <span className="transition-all duration-500 group-hover:translate-x-1">
+                        <span
+                          className="
+                          transition-all duration-500
+                          group-hover:translate-x-1
+                        "
+                        >
                           {!canEnroll
                             ? 'Requiere Plan Premium'
                             : 'Inscribirse al programa'}
                         </span>
                         <svg
-                          className="size-6 transition-transform duration-500 group-hover:translate-x-1"
+                          className="
+                            size-6 transition-transform duration-500
+                            group-hover:translate-x-1
+                          "
                           data-slot="icon"
                           aria-hidden="true"
                           fill="currentColor"

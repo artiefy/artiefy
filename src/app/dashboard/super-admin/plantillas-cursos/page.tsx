@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
-import { FiArrowRight,FiBook } from 'react-icons/fi';
+import { FiArrowRight, FiBook } from 'react-icons/fi';
 
 interface Curso {
   id: number;
@@ -40,7 +40,12 @@ const SeleccionarCursoPlantillasPage = () => {
     return (
       <div className="flex min-h-screen items-center justify-center p-8">
         <div className="text-center">
-          <div className="loader mx-auto mb-4 size-12 rounded-full border-4 border-primary border-t-transparent"></div>
+          <div
+            className="
+            loader mx-auto mb-4 size-12 rounded-full border-4 border-primary
+            border-t-transparent
+          "
+          ></div>
           <p className="text-gray-600">Cargando cursos...</p>
         </div>
       </div>
@@ -60,26 +65,49 @@ const SeleccionarCursoPlantillasPage = () => {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+          <div
+            className="
+            mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
+          "
+          >
             {error}
           </div>
         )}
 
         {cursos.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-white p-8 text-center">
+          <div
+            className="
+            rounded-lg border border-gray-200 bg-white p-8 text-center
+          "
+          >
             <p className="text-gray-500">No hay cursos disponibles</p>
           </div>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div
+            className="
+            grid gap-4
+            md:grid-cols-2
+            lg:grid-cols-3
+          "
+          >
             {cursos.map((curso) => (
               <div
                 key={curso.id}
-                className="group rounded-lg border border-gray-200 bg-white p-6 transition-all hover:border-primary hover:shadow-lg"
+                className="
+                  group rounded-lg border border-gray-200 bg-white p-6
+                  transition-all
+                  hover:border-primary hover:shadow-lg
+                "
               >
                 <div className="mb-4 flex items-start justify-between">
                   <FiBook size={24} className="text-primary" />
                   {curso.rating && (
-                    <span className="rounded-full bg-yellow-50 px-2 py-1 text-xs font-semibold text-yellow-700">
+                    <span
+                      className="
+                      rounded-full bg-yellow-50 px-2 py-1 text-xs font-semibold
+                      text-yellow-700
+                    "
+                    >
                       ⭐ {curso.rating.toFixed(1)}
                     </span>
                   )}
@@ -94,7 +122,12 @@ const SeleccionarCursoPlantillasPage = () => {
                 )}
                 <Link
                   href={`/dashboard/super-admin/parametros/plantillas?courseId=${curso.id}`}
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-[#01142B] transition-colors group-hover:bg-primary/90"
+                  className="
+                    mt-4 flex w-full items-center justify-center gap-2
+                    rounded-lg bg-primary px-4 py-2 text-sm font-medium
+                    text-[#01142B] transition-colors
+                    group-hover:bg-primary/90
+                  "
                 >
                   Ver Plantillas
                   <FiArrowRight size={16} />

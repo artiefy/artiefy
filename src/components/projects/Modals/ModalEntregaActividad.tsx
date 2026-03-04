@@ -315,7 +315,11 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
               href={archivo.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 rounded border border-blue-700 bg-blue-900/40 px-2 py-1 text-xs text-blue-200 hover:bg-blue-900/60"
+              className="
+                flex items-center gap-1 rounded border border-blue-700
+                bg-blue-900/40 px-2 py-1 text-xs text-blue-200
+                hover:bg-blue-900/60
+              "
               title={archivo.name}
             >
               {archivo.type === 'document' && <FileText className="size-4" />}
@@ -332,7 +336,12 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[80vh] max-w-2xl overflow-y-auto rounded-lg border border-slate-700 bg-slate-800 shadow-xl">
+      <DialogContent
+        className="
+        max-h-[80vh] max-w-2xl overflow-y-auto rounded-lg border
+        border-slate-700 bg-slate-800 shadow-xl
+      "
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-teal-400">
             {modalConfig.icon}
@@ -344,7 +353,11 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
             </p>
           )}
           {isEditing && (
-            <div className="mb-2 rounded-md border border-blue-700 bg-blue-900/30 p-3">
+            <div
+              className="
+              mb-2 rounded-md border border-blue-700 bg-blue-900/30 p-3
+            "
+            >
               <p className="text-sm text-blue-200">
                 <strong>Modo edición:</strong> Los archivos que subas
                 reemplazarán completamente la entrega anterior.
@@ -362,26 +375,45 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
 
             <div className="flex w-full items-center justify-center">
               <label
-                className={`flex h-32 w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-all duration-200 ${
-                  isDragOver
-                    ? 'scale-105 border-teal-400 bg-teal-900/30'
-                    : isEditing
-                      ? 'border-blue-500 bg-blue-900/20 hover:bg-blue-800/30'
-                      : 'border-slate-600 bg-slate-700 hover:bg-slate-600'
-                } ${loading ? 'cursor-not-allowed opacity-50' : ''}`}
+                className={`
+                  flex h-32 w-full cursor-pointer flex-col items-center
+                  justify-center rounded-lg border-2 border-dashed
+                  transition-all duration-200
+                  ${
+                    isDragOver
+                      ? 'scale-105 border-teal-400 bg-teal-900/30'
+                      : isEditing
+                        ? `
+                        border-blue-500 bg-blue-900/20
+                        hover:bg-blue-800/30
+                      `
+                        : `
+                        border-slate-600 bg-slate-700
+                        hover:bg-slate-600
+                      `
+                  }
+                  ${loading ? 'cursor-not-allowed opacity-50' : ''}
+                `}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
               >
-                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                <div
+                  className="
+                  flex flex-col items-center justify-center pt-5 pb-6
+                "
+                >
                   <UploadCloud
-                    className={`mb-3 size-8 transition-colors ${
-                      isDragOver
-                        ? 'text-teal-300'
-                        : isEditing
-                          ? 'text-blue-400'
-                          : 'text-teal-400'
-                    }`}
+                    className={`
+                      mb-3 size-8 transition-colors
+                      ${
+                        isDragOver
+                          ? 'text-teal-300'
+                          : isEditing
+                            ? 'text-blue-400'
+                            : 'text-teal-400'
+                      }
+                    `}
                   />
                   <p className="mb-2 text-center text-sm text-gray-300">
                     {isDragOver ? (
@@ -418,7 +450,10 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
                 {selectedFiles.map((file, index) => (
                   <div
                     key={index}
-                    className="animate-fadeIn flex items-center justify-between rounded border border-slate-600 bg-slate-700 p-2"
+                    className="
+                      animate-fadeIn flex items-center justify-between rounded
+                      border border-slate-600 bg-slate-700 p-2
+                    "
                   >
                     <div className="flex min-w-0 flex-1 items-center gap-2 pr-2">
                       {getFileIcon(file)}
@@ -437,7 +472,10 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => removeFile(index)}
-                      className="flex-shrink-0 p-1 text-red-400 hover:text-red-300"
+                      className="
+                        flex-shrink-0 p-1 text-red-400
+                        hover:text-red-300
+                      "
                       disabled={loading}
                     >
                       ✕
@@ -455,11 +493,21 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
             <textarea
               value={comentario}
               onChange={(e) => setComentario(e.target.value)}
-              className={`w-full rounded border p-2 text-white transition focus:ring-2 ${
-                isEditing
-                  ? 'border-blue-600 bg-blue-900/20 focus:border-blue-400 focus:ring-blue-500'
-                  : 'border-slate-600 bg-slate-700 focus:border-teal-400 focus:ring-teal-500'
-              }`}
+              className={`
+                w-full rounded border p-2 text-white transition
+                focus:ring-2
+                ${
+                  isEditing
+                    ? `
+                    border-blue-600 bg-blue-900/20
+                    focus:border-blue-400 focus:ring-blue-500
+                  `
+                    : `
+                    border-slate-600 bg-slate-700
+                    focus:border-teal-400 focus:ring-teal-500
+                  `
+                }
+              `}
               rows={3}
               placeholder={modalConfig.commentPlaceholder}
               disabled={loading}
@@ -479,11 +527,20 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
             </Button>
             <Button
               type="submit"
-              className={`truncate font-bold text-white ${
-                isEditing
-                  ? 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'
-                  : 'bg-gradient-to-r from-teal-600 to-teal-400 hover:from-teal-700 hover:to-teal-500'
-              }`}
+              className={`
+                truncate font-bold text-white
+                ${
+                  isEditing
+                    ? `
+                    bg-gradient-to-r from-blue-600 to-blue-400
+                    hover:from-blue-700 hover:to-blue-500
+                  `
+                    : `
+                    bg-gradient-to-r from-teal-600 to-teal-400
+                    hover:from-teal-700 hover:to-teal-500
+                  `
+                }
+              `}
               disabled={loading || selectedFiles.length === 0}
             >
               {loading ? (

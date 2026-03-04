@@ -1,6 +1,5 @@
 'use client';
 
-
 import { FaTrophy } from 'react-icons/fa';
 
 import {
@@ -59,11 +58,13 @@ export function ProgramGradesModal({
               Promedio General del Programa
             </p>
             {isLoading ? (
-              <Icons.spinner className="text-background mx-auto size-6" />
+              <Icons.spinner className="mx-auto size-6 text-background" />
             ) : (
               <span
-                className={`text-3xl font-bold ${finalGrade >= 3 ? 'text-green-600' : 'text-red-600'
-                  }`}
+                className={`
+                  text-3xl font-bold
+                  ${finalGrade >= 3 ? 'text-green-600' : 'text-red-600'}
+                `}
               >
                 {formatScore(finalGrade)}
               </span>
@@ -71,17 +72,21 @@ export function ProgramGradesModal({
           </div>
 
           {/* Tabla de Calificaciones por Curso */}
-          <div className="mt-4 max-h-80 overflow-hidden overflow-y-auto rounded-lg border">
+          <div
+            className="
+            mt-4 max-h-80 overflow-hidden overflow-y-auto rounded-lg border
+          "
+          >
             <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4">
-              <div className="text-background font-semibold">Curso</div>
-              <div className="text-background text-center font-semibold">
+              <div className="font-semibold text-background">Curso</div>
+              <div className="text-center font-semibold text-background">
                 Calificación Final
               </div>
             </div>
             <div className="divide-y">
               {isLoading ? (
                 <div className="flex justify-center p-4">
-                  <Icons.spinner className="text-background size-6" />
+                  <Icons.spinner className="size-6 text-background" />
                 </div>
               ) : coursesGrades.length > 0 ? (
                 coursesGrades.map((course, index) => (
@@ -89,15 +94,19 @@ export function ProgramGradesModal({
                     key={index}
                     className="grid grid-cols-2 gap-4 bg-white p-4"
                   >
-                    <div className="text-background text-sm font-bold">
+                    <div className="text-sm font-bold text-background">
                       {course.courseTitle}
                     </div>
                     <div className="text-center">
                       <span
-                        className={`font-semibold ${course.finalGrade >= 3
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                          }`}
+                        className={`
+                          font-semibold
+                          ${
+                            course.finalGrade >= 3
+                              ? 'text-green-600'
+                              : 'text-red-600'
+                          }
+                        `}
                       >
                         {formatScore(course.finalGrade)}
                       </span>

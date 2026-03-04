@@ -124,22 +124,35 @@ export default function EditUserModal({
 
   return (
     <div
-      className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/80"
+      className="
+        fixed inset-0 z-[10000] flex items-center justify-center bg-black/80
+      "
       onClick={onClose}
     >
       <div
-        className="relative mx-auto my-4 h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl bg-[#01142B] shadow-2xl"
+        className="
+          relative mx-auto my-4 h-[90vh] w-full max-w-4xl overflow-hidden
+          rounded-xl bg-[#01142B] shadow-2xl
+        "
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header fijo */}
-        <div className="absolute top-0 right-0 left-0 z-10 border-b border-white/10 bg-[#01142B] p-6">
+        <div
+          className="
+          absolute top-0 right-0 left-0 z-10 border-b border-white/10
+          bg-[#01142B] p-6
+        "
+        >
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-[#3AF4EF]">
               Editar Usuario
             </h2>
             <button
               onClick={onClose}
-              className="rounded-lg bg-white/5 p-2 hover:bg-white/10"
+              className="
+                rounded-lg bg-white/5 p-2
+                hover:bg-white/10
+              "
             >
               <X className="size-5" />
             </button>
@@ -148,10 +161,20 @@ export default function EditUserModal({
 
         {/* Contenido scrolleable */}
         <div className="h-full overflow-y-auto px-6 py-24">
-          <div className="grid gap-8 md:grid-cols-[250px_1fr]">
+          <div
+            className="
+            grid gap-8
+            md:grid-cols-[250px_1fr]
+          "
+          >
             {/* Sidebar - Profile Image & Quick Info */}
             <div className="space-y-6">
-              <div className="relative mx-auto size-48 overflow-hidden rounded-xl border-2 border-[#3AF4EF] shadow-lg">
+              <div
+                className="
+                relative mx-auto size-48 overflow-hidden rounded-xl border-2
+                border-[#3AF4EF] shadow-lg
+              "
+              >
                 {/* Priorizar profileImageKey de la BD si existe y el usuario es educador */}
                 {editedUser.role === 'educador' &&
                 editedUser.profileImageKey ? (
@@ -159,7 +182,10 @@ export default function EditUserModal({
                     src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${editedUser.profileImageKey}`}
                     alt={`${editedUser.firstName} ${editedUser.lastName}`}
                     fill
-                    className="object-cover transition duration-200 hover:scale-105"
+                    className="
+                      object-cover transition duration-200
+                      hover:scale-105
+                    "
                     unoptimized
                   />
                 ) : editedUser.profileImage ? (
@@ -167,11 +193,19 @@ export default function EditUserModal({
                     src={editedUser.profileImage}
                     alt={`${editedUser.firstName} ${editedUser.lastName}`}
                     fill
-                    className="object-cover transition duration-200 hover:scale-105"
+                    className="
+                      object-cover transition duration-200
+                      hover:scale-105
+                    "
                     unoptimized
                   />
                 ) : (
-                  <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#012A5C] to-[#01142B] text-4xl font-bold text-white">
+                  <div
+                    className="
+                    flex size-full items-center justify-center bg-gradient-to-br
+                    from-[#012A5C] to-[#01142B] text-4xl font-bold text-white
+                  "
+                  >
                     {editedUser.firstName[0]}
                   </div>
                 )}
@@ -209,7 +243,12 @@ export default function EditUserModal({
                           firstName: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-white/10 bg-background
+                        px-4 py-2 text-white
+                        focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF]
+                        focus:outline-none
+                      "
                     />
                   </div>
                   <div>
@@ -225,7 +264,12 @@ export default function EditUserModal({
                           lastName: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-white/10 bg-background
+                        px-4 py-2 text-white
+                        focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF]
+                        focus:outline-none
+                      "
                     />
                   </div>
                 </div>
@@ -236,7 +280,12 @@ export default function EditUserModal({
                 <h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
                   Rol y Estado
                 </h3>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div
+                  className="
+                  grid gap-4
+                  md:grid-cols-2
+                "
+                >
                   <div>
                     <label className="mb-2 block text-sm text-gray-400">
                       Rol
@@ -249,7 +298,12 @@ export default function EditUserModal({
                           role: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-white/10 bg-background
+                        px-4 py-2 text-white
+                        focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF]
+                        focus:outline-none
+                      "
                     >
                       <option value="estudiante">Estudiante</option>
                       <option value="educador">Educador</option>
@@ -269,7 +323,12 @@ export default function EditUserModal({
                           status: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-white/10 bg-background
+                        px-4 py-2 text-white
+                        focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF]
+                        focus:outline-none
+                      "
                     >
                       <option value="activo">Activo</option>
                       <option value="inactivo">Inactivo</option>
@@ -282,7 +341,12 @@ export default function EditUserModal({
                 <h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
                   Suscripción
                 </h3>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div
+                  className="
+                  grid gap-4
+                  md:grid-cols-2
+                "
+                >
                   <div>
                     <label className="mb-2 block text-sm text-gray-400">
                       Fin de la Suscripción
@@ -298,7 +362,12 @@ export default function EditUserModal({
                           subscriptionEndDate: e.target.value,
                         })
                       }
-                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-white/10 bg-background
+                        px-4 py-2 text-white
+                        focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF]
+                        focus:outline-none
+                      "
                     />
                   </div>
                   <div>
@@ -324,7 +393,12 @@ export default function EditUserModal({
                           });
                         }
                       }}
-                      className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                      className="
+                        w-full rounded-lg border border-white/10 bg-background
+                        px-4 py-2 text-white
+                        focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF]
+                        focus:outline-none
+                      "
                     >
                       <option value="none">Ninguno</option>
                       <option value="Pro">Pro</option>
@@ -356,7 +430,12 @@ export default function EditUserModal({
                           })
                         }
                         placeholder="Ej: Ingeniero de Software, Profesor de Matemáticas"
-                        className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                        className="
+                          w-full rounded-lg border border-white/10 bg-background
+                          px-4 py-2 text-white
+                          focus:border-[#3AF4EF] focus:ring-1
+                          focus:ring-[#3AF4EF] focus:outline-none
+                        "
                       />
                     </div>
                     <div>
@@ -373,7 +452,12 @@ export default function EditUserModal({
                         }
                         placeholder="Describe la experiencia y especialización del educador..."
                         rows={4}
-                        className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                        className="
+                          w-full rounded-lg border border-white/10 bg-background
+                          px-4 py-2 text-white
+                          focus:border-[#3AF4EF] focus:ring-1
+                          focus:ring-[#3AF4EF] focus:outline-none
+                        "
                       />
                     </div>
                     <div>
@@ -383,7 +467,12 @@ export default function EditUserModal({
 
                       {/* Preview de la imagen */}
                       {editedUser.profileImageKey && (
-                        <div className="mb-3 overflow-hidden rounded-lg border border-[#3AF4EF]/30">
+                        <div
+                          className="
+                          mb-3 overflow-hidden rounded-lg border
+                          border-[#3AF4EF]/30
+                        "
+                        >
                           <Image
                             src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${editedUser.profileImageKey}`}
                             alt="Preview"
@@ -412,11 +501,22 @@ export default function EditUserModal({
                         />
                         <label
                           htmlFor="profile-image-upload"
-                          className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#3AF4EF]/50 bg-[#3AF4EF]/10 px-4 py-2 text-sm font-semibold text-[#3AF4EF] transition-all hover:bg-[#3AF4EF]/20"
+                          className="
+                            inline-flex cursor-pointer items-center gap-2
+                            rounded-lg border border-[#3AF4EF]/50
+                            bg-[#3AF4EF]/10 px-4 py-2 text-sm font-semibold
+                            text-[#3AF4EF] transition-all
+                            hover:bg-[#3AF4EF]/20
+                          "
                         >
                           {uploadingImage ? (
                             <>
-                              <span className="size-4 animate-spin rounded-full border-2 border-[#3AF4EF] border-t-transparent" />
+                              <span
+                                className="
+                                size-4 animate-spin rounded-full border-2
+                                border-[#3AF4EF] border-t-transparent
+                              "
+                              />
                               Subiendo...
                             </>
                           ) : (
@@ -450,7 +550,12 @@ export default function EditUserModal({
                           })
                         }
                         placeholder="uploads/profile-image-123.jpg"
-                        className="w-full rounded-lg border border-white/10 bg-background px-4 py-2 text-white focus:border-[#3AF4EF] focus:ring-1 focus:ring-[#3AF4EF] focus:outline-none"
+                        className="
+                          w-full rounded-lg border border-white/10 bg-background
+                          px-4 py-2 text-white
+                          focus:border-[#3AF4EF] focus:ring-1
+                          focus:ring-[#3AF4EF] focus:outline-none
+                        "
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         Ruta del archivo en S3 (sin incluir el dominio base)
@@ -465,11 +570,20 @@ export default function EditUserModal({
                 <h3 className="mb-4 text-lg font-semibold text-[#3AF4EF]">
                   Permisos
                 </h3>
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div
+                  className="
+                  grid gap-3
+                  sm:grid-cols-2
+                "
+                >
                   {availablePermissions.map((permission) => (
                     <label
                       key={permission.id}
-                      className="flex cursor-pointer items-center gap-2 rounded-lg border border-white/10 p-3 hover:bg-white/5"
+                      className="
+                        flex cursor-pointer items-center gap-2 rounded-lg border
+                        border-white/10 p-3
+                        hover:bg-white/5
+                      "
                     >
                       <input
                         type="checkbox"
@@ -483,7 +597,9 @@ export default function EditUserModal({
                                 )
                           );
                         }}
-                        className="rounded border-white/20 bg-white/5 text-[#3AF4EF]"
+                        className="
+                          rounded border-white/20 bg-white/5 text-[#3AF4EF]
+                        "
                       />
                       <span>{permission.label}</span>
                     </label>
@@ -495,11 +611,19 @@ export default function EditUserModal({
         </div>
 
         {/* Footer fijo */}
-        <div className="absolute right-0 bottom-0 left-0 border-t border-white/10 bg-[#01142B] p-6">
+        <div
+          className="
+          absolute right-0 bottom-0 left-0 border-t border-white/10 bg-[#01142B]
+          p-6
+        "
+        >
           <div className="flex justify-end gap-4">
             <button
               onClick={onClose}
-              className="rounded-lg bg-white/5 px-4 py-2 hover:bg-white/10"
+              className="
+                rounded-lg bg-white/5 px-4 py-2
+                hover:bg-white/10
+              "
             >
               Cancelar
             </button>
@@ -514,7 +638,10 @@ export default function EditUserModal({
                 };
                 onSave(formattedUser, selectedPermissions);
               }}
-              className="rounded-lg bg-[#3AF4EF] px-4 py-2 text-black hover:bg-[#3AF4EF]/90"
+              className="
+                rounded-lg bg-[#3AF4EF] px-4 py-2 text-black
+                hover:bg-[#3AF4EF]/90
+              "
             >
               Guardar Cambios
             </button>

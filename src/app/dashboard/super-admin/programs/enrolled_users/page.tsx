@@ -2977,25 +2977,42 @@ export default function EnrolledUsersPage() {
     };
 
     return (
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div
+        className="
+        flex flex-col gap-2
+        sm:flex-row sm:items-center
+      "
+      >
         <input
           type="text"
           placeholder="Nombre del campo"
           value={fieldKey}
           onChange={(e) => setFieldKey(e.target.value)}
-          className="w-full rounded border border-gray-700 bg-gray-800 p-2 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:flex-1"
+          className="
+            w-full rounded border border-gray-700 bg-gray-800 p-2 transition
+            focus:ring-2 focus:ring-blue-500 focus:outline-none
+            sm:flex-1
+          "
         />
         <input
           type="text"
           placeholder="Descripción (opcional)"
           value={fieldDescription}
           onChange={(e) => setFieldDescription(e.target.value)}
-          className="w-full rounded border border-gray-700 bg-gray-800 p-2 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:flex-1"
+          className="
+            w-full rounded border border-gray-700 bg-gray-800 p-2 transition
+            focus:ring-2 focus:ring-blue-500 focus:outline-none
+            sm:flex-1
+          "
         />
         <select
           value={fieldType}
           onChange={(e) => setFieldType(e.target.value)}
-          className="w-full rounded border border-gray-700 bg-gray-800 p-2 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:flex-1"
+          className="
+            w-full rounded border border-gray-700 bg-gray-800 p-2 transition
+            focus:ring-2 focus:ring-blue-500 focus:outline-none
+            sm:flex-1
+          "
         >
           <option value="text">Texto</option>
           <option value="integer">Número entero</option>
@@ -3009,12 +3026,21 @@ export default function EnrolledUsersPage() {
           placeholder="Valor inicial (opcional)"
           value={fieldValue}
           onChange={(e) => setFieldValue(e.target.value)}
-          className="w-full rounded border border-gray-700 bg-gray-800 p-2 transition focus:ring-2 focus:ring-blue-500 focus:outline-none sm:flex-1"
+          className="
+            w-full rounded border border-gray-700 bg-gray-800 p-2 transition
+            focus:ring-2 focus:ring-blue-500 focus:outline-none
+            sm:flex-1
+          "
         />
         <button
           disabled={loading || !fieldKey}
           onClick={handleSubmit}
-          className="w-full rounded bg-blue-600 px-4 py-2 font-semibold transition hover:bg-blue-700 disabled:opacity-50 sm:w-auto"
+          className="
+            w-full rounded bg-blue-600 px-4 py-2 font-semibold transition
+            hover:bg-blue-700
+            disabled:opacity-50
+            sm:w-auto
+          "
         >
           {loading ? 'Guardando...' : 'Agregar'}
         </button>
@@ -3293,27 +3319,64 @@ export default function EnrolledUsersPage() {
 
       {/* ✅ Toast de mensaje de éxito */}
       {successMessage && (
-        <div className="animate-in fade-in fixed right-6 bottom-6 z-50 rounded-lg bg-green-600 px-6 py-3 text-white shadow-lg">
+        <div
+          className="
+          animate-in fade-in fixed right-6 bottom-6 z-50 rounded-lg bg-green-600
+          px-6 py-3 text-white shadow-lg
+        "
+        >
           {successMessage}
         </div>
       )}
 
-      <div className="min-h-screen space-y-8 bg-gray-900 p-6 text-white print:hidden">
+      <div
+        className="
+        min-h-screen space-y-8 bg-gray-900 p-6 text-white
+        print:hidden
+      "
+      >
         <div
           ref={headerRef}
-          className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center"
+          className="
+            flex flex-col items-start justify-between gap-4
+            sm:flex-row sm:items-center
+          "
         >
           <h1 className="text-2xl font-bold">Matricular Estudiantes</h1>
 
-          <div className="relative w-full sm:w-auto">
+          <div
+            className="
+            relative w-full
+            sm:w-auto
+          "
+          >
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowCreateForm(true)}
-                className="group/button relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+                className="
+                  group/button relative inline-flex items-center gap-1
+                  overflow-hidden rounded-md border border-white/20
+                  bg-background px-2 py-1.5 text-xs text-primary transition
+                  hover:bg-primary/10
+                  sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+                "
               >
                 <span className="relative z-10 font-medium">Crear Usuario</span>
-                <UserPlus className="relative z-10 size-3.5 sm:size-4" />
-                <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+                <UserPlus
+                  className="
+                  relative z-10 size-3.5
+                  sm:size-4
+                "
+                />
+                <div
+                  className="
+                  absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                  via-white/10 to-transparent opacity-0 transition-all
+                  duration-500
+                  group-hover/button:[transform:translateX(100%)]
+                  group-hover/button:opacity-100
+                "
+                />
               </button>
 
               <button
@@ -3321,11 +3384,30 @@ export default function EnrolledUsersPage() {
                   setSendWhatsapp(false);
                   setShowPhoneModal(true);
                 }}
-                className="group/button relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+                className="
+                  group/button relative inline-flex items-center gap-1
+                  overflow-hidden rounded-md border border-white/20
+                  bg-background px-2 py-1.5 text-xs text-primary transition
+                  hover:bg-primary/10
+                  sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+                "
               >
                 <span className="relative z-10 font-medium">📧 Correo</span>
-                <Mail className="relative z-10 size-3.5 sm:size-4" />
-                <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+                <Mail
+                  className="
+                  relative z-10 size-3.5
+                  sm:size-4
+                "
+                />
+                <div
+                  className="
+                  absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                  via-white/10 to-transparent opacity-0 transition-all
+                  duration-500
+                  group-hover/button:[transform:translateX(100%)]
+                  group-hover/button:opacity-100
+                "
+                />
               </button>
 
               <button
@@ -3333,23 +3415,51 @@ export default function EnrolledUsersPage() {
                   setSendWhatsapp(true);
                   setShowPhoneModal(true);
                 }}
-                className="group/button relative inline-flex items-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+                className="
+                  group/button relative inline-flex items-center gap-1
+                  overflow-hidden rounded-md border border-white/20
+                  bg-background px-2 py-1.5 text-xs text-primary transition
+                  hover:bg-primary/10
+                  sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+                "
               >
                 <span className="relative z-10 font-medium">💬 WhatsApp</span>
-                <MessageCircle className="relative z-10 size-3.5 sm:size-4" />
-                <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+                <MessageCircle
+                  className="
+                  relative z-10 size-3.5
+                  sm:size-4
+                "
+                />
+                <div
+                  className="
+                  absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                  via-white/10 to-transparent opacity-0 transition-all
+                  duration-500
+                  group-hover/button:[transform:translateX(100%)]
+                  group-hover/button:opacity-100
+                "
+                />
               </button>
 
               <button
                 onClick={() => setShowColumnSelector((v) => !v)}
-                className="rounded-md bg-gray-700 px-4 py-2 text-white transition hover:bg-gray-600"
+                className="
+                  rounded-md bg-gray-700 px-4 py-2 text-white transition
+                  hover:bg-gray-600
+                "
               >
                 ⚙️ Columnas
               </button>
             </div>
 
             {showColumnSelector && (
-              <div className="absolute right-0 z-50 mt-2 max-h-60 w-full max-w-xs overflow-y-auto rounded-md bg-gray-800 p-4 shadow-lg sm:w-64">
+              <div
+                className="
+                absolute right-0 z-50 mt-2 max-h-60 w-full max-w-xs
+                overflow-y-auto rounded-md bg-gray-800 p-4 shadow-lg
+                sm:w-64
+              "
+              >
                 <h3 className="mb-2 font-semibold text-white">
                   Mostrar columnas
                 </h3>
@@ -3381,7 +3491,14 @@ export default function EnrolledUsersPage() {
         </div>
 
         {/* Filtros */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div
+          className="
+          grid grid-cols-1 gap-4
+          sm:grid-cols-2
+          md:grid-cols-3
+          lg:grid-cols-4
+        "
+        >
           <input
             type="text"
             placeholder="Nombre"
@@ -3435,7 +3552,11 @@ export default function EnrolledUsersPage() {
             {/* “Input” con chips + búsqueda */}
             <div
               onClick={() => setProgramOpen(true)}
-              className="flex min-h-[40px] w-full cursor-text flex-wrap items-center gap-1 rounded border border-gray-700 bg-gray-800 px-2 py-1 focus-within:ring-2 focus-within:ring-blue-500"
+              className="
+                flex min-h-[40px] w-full cursor-text flex-wrap items-center
+                gap-1 rounded border border-gray-700 bg-gray-800 px-2 py-1
+                focus-within:ring-2 focus-within:ring-blue-500
+              "
             >
               {selectedPrograms.length === 0 && (
                 <span className="px-1 text-sm text-gray-400">
@@ -3447,7 +3568,10 @@ export default function EnrolledUsersPage() {
               {selectedPrograms.map((p) => (
                 <span
                   key={p}
-                  className="group inline-flex max-w-[160px] items-center gap-1 truncate rounded bg-blue-700/70 px-2 py-0.5 text-xs"
+                  className="
+                    group inline-flex max-w-[160px] items-center gap-1 truncate
+                    rounded bg-blue-700/70 px-2 py-0.5 text-xs
+                  "
                   title={p}
                 >
                   <span className="truncate">{p}</span>
@@ -3457,7 +3581,10 @@ export default function EnrolledUsersPage() {
                       e.stopPropagation();
                       removeProgram(p);
                     }}
-                    className="opacity-80 transition group-hover:opacity-100"
+                    className="
+                      opacity-80 transition
+                      group-hover:opacity-100
+                    "
                     aria-label={`Quitar ${p}`}
                   >
                     ×
@@ -3472,13 +3599,22 @@ export default function EnrolledUsersPage() {
                 onChange={(e) => setProgramQuery(e.target.value)}
                 onFocus={() => setProgramOpen(true)}
                 placeholder={selectedPrograms.length ? '' : ''}
-                className="min-w-[80px] flex-1 bg-transparent text-sm text-white outline-none placeholder:text-gray-500"
+                className="
+                  min-w-[80px] flex-1 bg-transparent text-sm text-white
+                  outline-none
+                  placeholder:text-gray-500
+                "
               />
             </div>
 
             {/* Dropdown de opciones */}
             {programOpen && (
-              <div className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded border border-gray-700 bg-gray-800 shadow-xl">
+              <div
+                className="
+                absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded border
+                border-gray-700 bg-gray-800 shadow-xl
+              "
+              >
                 {filteredProgramOptions.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-gray-400">
                     Sin resultados
@@ -3492,7 +3628,11 @@ export default function EnrolledUsersPage() {
                         toggleProgram(opt);
                         setProgramQuery('');
                       }}
-                      className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-gray-700"
+                      className="
+                        flex w-full items-center justify-between px-3 py-2
+                        text-left text-sm
+                        hover:bg-gray-700
+                      "
                     >
                       <span>{opt}</span>
                       {selectedPrograms.includes(opt) && <span>✓</span>}
@@ -3534,7 +3674,11 @@ export default function EnrolledUsersPage() {
                 });
                 setSelectedPrograms([]);
               }}
-              className="rounded bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 active:bg-red-800"
+              className="
+                rounded bg-red-700 px-4 py-2 text-sm font-medium text-white
+                hover:bg-red-600
+                active:bg-red-800
+              "
               title="Limpiar todos los filtros"
             >
               🗑️ Limpiar Filtros
@@ -3548,11 +3692,18 @@ export default function EnrolledUsersPage() {
             {/* Botón "Todos" */}
             <button
               onClick={() => setFilters({ ...filters, enrollmentStatus: '' })}
-              className={`rounded-t-lg px-4 py-2 font-semibold whitespace-nowrap transition-all ${
-                filters.enrollmentStatus === ''
-                  ? 'border-b-2 border-cyan-400 text-white'
-                  : 'border-b-2 border-transparent text-gray-400 hover:text-gray-200'
-              }`}
+              className={`
+                rounded-t-lg px-4 py-2 font-semibold whitespace-nowrap
+                transition-all
+                ${
+                  filters.enrollmentStatus === ''
+                    ? 'border-b-2 border-cyan-400 text-white'
+                    : `
+                    border-b-2 border-transparent text-gray-400
+                    hover:text-gray-200
+                  `
+                }
+              `}
             >
               Todos
             </button>
@@ -3564,15 +3715,27 @@ export default function EnrolledUsersPage() {
                 onClick={() =>
                   setFilters({ ...filters, enrollmentStatus: status })
                 }
-                className={`relative rounded-t-lg px-4 py-2 font-semibold whitespace-nowrap transition-all ${
-                  filters.enrollmentStatus === status
-                    ? 'border-b-2 border-cyan-400 text-white'
-                    : 'border-b-2 border-transparent text-gray-400 hover:text-gray-200'
-                }`}
+                className={`
+                  relative rounded-t-lg px-4 py-2 font-semibold
+                  whitespace-nowrap transition-all
+                  ${
+                    filters.enrollmentStatus === status
+                      ? 'border-b-2 border-cyan-400 text-white'
+                      : `
+                      border-b-2 border-transparent text-gray-400
+                      hover:text-gray-200
+                    `
+                  }
+                `}
               >
                 {status}
                 {enrollmentStatusCounts[status] > 0 && (
-                  <span className="ml-2 inline-flex items-center justify-center rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                  <span
+                    className="
+                    ml-2 inline-flex items-center justify-center rounded-full
+                    bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950
+                  "
+                  >
                     {enrollmentStatusCounts[status]}
                   </span>
                 )}
@@ -3585,7 +3748,12 @@ export default function EnrolledUsersPage() {
           <h2 className="mb-2 text-xl font-semibold">
             Seleccionar Estudiantes
           </h2>
-          <div className="mb-2 flex flex-wrap items-center gap-3 text-xs text-gray-300 sm:text-sm">
+          <div
+            className="
+            mb-2 flex flex-wrap items-center gap-3 text-xs text-gray-300
+            sm:text-sm
+          "
+          >
             <span>
               Seleccionados: <strong>{selectedStudents.length}</strong> /{' '}
               {sortedStudents.length}
@@ -3597,7 +3765,10 @@ export default function EnrolledUsersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedStudents([])}
-                className="rounded bg-gray-700 px-2 py-1 text-xs hover:bg-gray-600"
+                className="
+                  rounded bg-gray-700 px-2 py-1 text-xs
+                  hover:bg-gray-600
+                "
                 title="Limpiar selección"
               >
                 Limpiar
@@ -3609,7 +3780,10 @@ export default function EnrolledUsersPage() {
               <button
                 type="button"
                 onClick={() => setAdvancedFilters({})}
-                className="rounded bg-blue-700 px-2 py-1 text-xs font-medium hover:bg-blue-600"
+                className="
+                  rounded bg-blue-700 px-2 py-1 text-xs font-medium
+                  hover:bg-blue-600
+                "
                 title="Limpiar filtros avanzados"
               >
                 ✓ Limpiar filtros avanzados
@@ -3618,13 +3792,22 @@ export default function EnrolledUsersPage() {
           </div>
 
           <div
-            className="max-h-[60vh] w-full overflow-auto rounded-lg border border-gray-700"
+            className="
+              max-h-[60vh] w-full overflow-auto rounded-lg border
+              border-gray-700
+            "
             onScroll={handleScroll}
           >
             <table className="w-full min-w-max table-auto border-collapse">
               {/* Cabecera fija */}
               <thead className="sticky top-0 z-10 bg-gray-900">
-                <tr className="border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] text-xs text-white sm:text-sm">
+                <tr
+                  className="
+                  border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF]
+                  via-[#00BDD8] to-[#01142B] text-xs text-white
+                  sm:text-sm
+                "
+                >
                   <th className="w-12 px-4 py-2">
                     <input
                       type="checkbox"
@@ -3672,11 +3855,21 @@ export default function EnrolledUsersPage() {
                                 });
                                 setAdvancedFilterOpen(col.id);
                               }}
-                              className={`inline-flex items-center justify-center rounded px-1.5 py-0.5 text-xs transition ${
-                                (advancedFilters[col.id]?.length ?? 0) > 0
-                                  ? 'bg-blue-600 hover:bg-blue-700'
-                                  : 'bg-gray-700 hover:bg-gray-600'
-                              }`}
+                              className={`
+                                inline-flex items-center justify-center rounded
+                                px-1.5 py-0.5 text-xs transition
+                                ${
+                                  (advancedFilters[col.id]?.length ?? 0) > 0
+                                    ? `
+                                    bg-blue-600
+                                    hover:bg-blue-700
+                                  `
+                                    : `
+                                    bg-gray-700
+                                    hover:bg-gray-600
+                                  `
+                                }
+                              `}
                               title="Filtro avanzado"
                             >
                               <ChevronDown className="size-3.5" />
@@ -3720,7 +3913,12 @@ export default function EnrolledUsersPage() {
                                     elem.classList.add('hidden');
                                   }
                                 }}
-                                className="flex min-h-[32px] w-full cursor-pointer flex-wrap items-center gap-1 rounded bg-gray-700 px-2 py-1 text-xs sm:text-sm"
+                                className="
+                                  flex min-h-[32px] w-full cursor-pointer
+                                  flex-wrap items-center gap-1 rounded
+                                  bg-gray-700 px-2 py-1 text-xs
+                                  sm:text-sm
+                                "
                               >
                                 {(columnFiltersMulti[col.id] || []).length ===
                                   0 && (
@@ -3730,7 +3928,10 @@ export default function EnrolledUsersPage() {
                                   (val) => (
                                     <span
                                       key={val}
-                                      className="inline-flex items-center gap-1 rounded bg-blue-600 px-2 py-0.5 text-xs"
+                                      className="
+                                        inline-flex items-center gap-1 rounded
+                                        bg-blue-600 px-2 py-0.5 text-xs
+                                      "
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setColumnFiltersMulti((prev) => ({
@@ -3751,7 +3952,11 @@ export default function EnrolledUsersPage() {
                               {/* Dropdown de opciones - AHORA CON POSITION FIXED */}
                               <div
                                 id={`multi-${col.id}`}
-                                className="fixed z-[60] hidden max-h-64 overflow-auto rounded border border-gray-600 bg-gray-800 shadow-2xl"
+                                className="
+                                  fixed z-[60] hidden max-h-64 overflow-auto
+                                  rounded border border-gray-600 bg-gray-800
+                                  shadow-2xl
+                                "
                                 style={{ minWidth: '200px' }}
                               >
                                 {col.options?.map((opt) => {
@@ -3773,7 +3978,12 @@ export default function EnrolledUsersPage() {
                                           };
                                         });
                                       }}
-                                      className="flex w-full items-center justify-between px-3 py-2 text-left text-xs hover:bg-gray-700 sm:text-sm"
+                                      className="
+                                        flex w-full items-center justify-between
+                                        px-3 py-2 text-left text-xs
+                                        hover:bg-gray-700
+                                        sm:text-sm
+                                      "
                                     >
                                       <span>{opt}</span>
                                       {isSelected && <span>✓</span>}
@@ -3793,7 +4003,10 @@ export default function EnrolledUsersPage() {
                                 }))
                               }
                               placeholder={`Filtrar ${col.label.toLowerCase()}…`}
-                              className="w-full rounded bg-gray-700 p-1 text-xs sm:text-sm"
+                              className="
+                                w-full rounded bg-gray-700 p-1 text-xs
+                                sm:text-sm
+                              "
                             />
                           )}
                         </div>
@@ -3802,7 +4015,12 @@ export default function EnrolledUsersPage() {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-700/50 text-xs sm:text-sm">
+              <tbody
+                className="
+                divide-y divide-gray-700/50 text-xs
+                sm:text-sm
+              "
+              >
                 {displayedStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-700">
                     <td className="px-4 py-2 align-top">
@@ -3846,7 +4064,11 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="min-w-[120px] rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
+                                className="
+                                  min-w-[120px] rounded bg-gray-800 p-1 text-xs
+                                  text-white
+                                  sm:text-sm
+                                "
                               >
                                 <option value="">-- Seleccionar --</option>
                                 {col.options?.map((opt) => (
@@ -3861,7 +4083,12 @@ export default function EnrolledUsersPage() {
                                   void fetchUserPrograms(student.id);
                                   setShowUserProgramsModal(true);
                                 }}
-                                className="ml-2 inline-flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                                className="
+                                  ml-2 inline-flex items-center gap-1
+                                  rounded-full bg-blue-600 px-3 py-1 text-xs
+                                  font-medium text-white
+                                  hover:bg-blue-700
+                                "
                               >
                                 Ver más
                               </button>
@@ -3935,14 +4162,23 @@ export default function EnrolledUsersPage() {
                               className="px-4 py-2 align-top whitespace-nowrap"
                             >
                               <span
-                                className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}`}
+                                className={`
+                                  inline-block rounded-full px-2 py-0.5 text-xs
+                                  font-semibold
+                                  ${badgeClass}
+                                `}
                                 title={etiqueta}
                               >
                                 {etiqueta}
                               </span>
                               <button
                                 onClick={() => openCarteraModal(student.id)}
-                                className="ml-2 inline-flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1 text-xs font-medium hover:bg-indigo-700"
+                                className="
+                                  ml-2 inline-flex items-center gap-1
+                                  rounded-full bg-indigo-600 px-3 py-1 text-xs
+                                  font-medium
+                                  hover:bg-indigo-700
+                                "
                               >
                                 Ver más
                               </button>
@@ -3966,7 +4202,11 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="min-w-[120px] rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
+                                className="
+                                  min-w-[120px] rounded bg-gray-800 p-1 text-xs
+                                  text-white
+                                  sm:text-sm
+                                "
                               >
                                 <option value="">-- Seleccionar --</option>
                                 {col.options?.map((opt) => (
@@ -3981,7 +4221,12 @@ export default function EnrolledUsersPage() {
                                   void fetchUserCourses(student.id);
                                   setShowUserCoursesModal(true);
                                 }}
-                                className="ml-2 inline-flex items-center gap-1 rounded-full bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
+                                className="
+                                  ml-2 inline-flex items-center gap-1
+                                  rounded-full bg-green-600 px-3 py-1 text-xs
+                                  font-medium text-white
+                                  hover:bg-green-700
+                                "
                               >
                                 Ver más
                               </button>
@@ -3993,7 +4238,9 @@ export default function EnrolledUsersPage() {
                         return (
                           <td
                             key={col.id}
-                            className="px-4 py-2 align-top break-words whitespace-normal"
+                            className="
+                              px-4 py-2 align-top break-words whitespace-normal
+                            "
                           >
                             {col.type === 'select' && col.options ? (
                               <select
@@ -4005,7 +4252,11 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
+                                className="
+                                  w-full rounded bg-gray-800 p-1 text-xs
+                                  text-white
+                                  sm:text-sm
+                                "
                               >
                                 <option value="">-- Seleccionar --</option>
                                 {col.options.map((opt) => (
@@ -4025,7 +4276,11 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
+                                className="
+                                  w-full rounded bg-gray-800 p-1 text-xs
+                                  text-white
+                                  sm:text-sm
+                                "
                               />
                             ) : (
                               <input
@@ -4038,7 +4293,11 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full rounded bg-gray-800 p-1 text-xs text-white sm:text-sm"
+                                className="
+                                  w-full rounded bg-gray-800 p-1 text-xs
+                                  text-white
+                                  sm:text-sm
+                                "
                               />
                             )}
                           </td>
@@ -4139,37 +4398,74 @@ export default function EnrolledUsersPage() {
         </div>
 
         {/* Acciones */}
-        <div className="mt-4 flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
+        <div
+          className="
+          mt-4 flex flex-col space-y-2
+          sm:flex-row sm:space-y-0 sm:space-x-4
+        "
+        >
           <button
             disabled={selectedStudents.length === 0}
             onClick={() => {
               setSelectedCourses([]);
               setShowModal(true);
             }}
-            className="w-full rounded bg-green-600 px-4 py-2 font-semibold text-white transition hover:bg-green-700 disabled:opacity-50 sm:flex-1"
+            className="
+              w-full rounded bg-green-600 px-4 py-2 font-semibold text-white
+              transition
+              hover:bg-green-700
+              disabled:opacity-50
+              sm:flex-1
+            "
           >
             Matricular a curso
           </button>
           <button
             disabled={selectedStudents.length === 0}
             onClick={downloadSelectedAsExcel}
-            className="w-full rounded bg-indigo-600 px-4 py-2 font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50 sm:flex-1"
+            className="
+              w-full rounded bg-indigo-600 px-4 py-2 font-semibold text-white
+              transition
+              hover:bg-indigo-700
+              disabled:opacity-50
+              sm:flex-1
+            "
           >
             Descargar seleccionados en Excel
           </button>
           <button
             disabled={selectedStudents.length === 0}
             onClick={() => setShowMassiveEditModal(true)}
-            className="w-full rounded bg-yellow-600 px-4 py-2 font-semibold text-white transition hover:bg-yellow-700 disabled:opacity-50 sm:flex-1"
+            className="
+              w-full rounded bg-yellow-600 px-4 py-2 font-semibold text-white
+              transition
+              hover:bg-yellow-700
+              disabled:opacity-50
+              sm:flex-1
+            "
           >
             Editar masivamente
           </button>
         </div>
 
         {showUserProgramsModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-            <div className="w-full max-w-xs rounded-lg bg-white p-6 dark:bg-gray-800">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div
+            className="
+            fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4
+          "
+          >
+            <div
+              className="
+              w-full max-w-xs rounded-lg bg-white p-6
+              dark:bg-gray-800
+            "
+            >
+              <h3
+                className="
+                mb-4 text-lg font-semibold text-gray-900
+                dark:text-gray-100
+              "
+              >
                 Programas de {currentUser?.name ?? 'Usuario'}
               </h3>
               <ul className="mb-4 max-h-64 space-y-2 overflow-y-auto">
@@ -4179,7 +4475,13 @@ export default function EnrolledUsersPage() {
                   </li>
                 ) : (
                   userPrograms.map((p) => (
-                    <li key={p.id} className="text-gray-900 dark:text-gray-100">
+                    <li
+                      key={p.id}
+                      className="
+                      text-gray-900
+                      dark:text-gray-100
+                    "
+                    >
                       • {p.title}
                     </li>
                   ))
@@ -4187,7 +4489,11 @@ export default function EnrolledUsersPage() {
               </ul>
               <button
                 onClick={() => setShowUserProgramsModal(false)}
-                className="w-full rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="
+                  w-full rounded bg-blue-600 px-4 py-2 text-white transition
+                  hover:bg-blue-700
+                  focus:ring-2 focus:ring-blue-500 focus:outline-none
+                "
               >
                 Cerrar
               </button>
@@ -4196,9 +4502,23 @@ export default function EnrolledUsersPage() {
         )}
 
         {showUserCoursesModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-            <div className="w-full max-w-xs rounded-lg bg-white p-6 dark:bg-gray-800">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+          <div
+            className="
+            fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4
+          "
+          >
+            <div
+              className="
+              w-full max-w-xs rounded-lg bg-white p-6
+              dark:bg-gray-800
+            "
+            >
+              <h3
+                className="
+                mb-4 text-lg font-semibold text-gray-900
+                dark:text-gray-100
+              "
+              >
                 Cursos de {currentUser?.name ?? 'Usuario'}
               </h3>
               <ul className="mb-4 max-h-64 space-y-2 overflow-y-auto">
@@ -4211,10 +4531,18 @@ export default function EnrolledUsersPage() {
                     return (
                       <li
                         key={c.id}
-                        className="text-gray-900 dark:text-gray-100"
+                        className="
+                          text-gray-900
+                          dark:text-gray-100
+                        "
                       >
                         <div>• {c.title}</div>
-                        <div className="mt-0.5 ml-4 text-xs text-emerald-600 dark:text-emerald-400">
+                        <div
+                          className="
+                          mt-0.5 ml-4 text-xs text-emerald-600
+                          dark:text-emerald-400
+                        "
+                        >
                           👨‍🏫 {instructorName}
                         </div>
                       </li>
@@ -4224,7 +4552,10 @@ export default function EnrolledUsersPage() {
               </ul>
               <button
                 onClick={() => setShowUserCoursesModal(false)}
-                className="w-full rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                className="
+                  w-full rounded bg-blue-600 px-4 py-2 text-white
+                  hover:bg-blue-700
+                "
               >
                 Cerrar
               </button>
@@ -4233,15 +4564,30 @@ export default function EnrolledUsersPage() {
         )}
 
         {showCreateForm && (
-          <div className="bg-opacity-30 fixed inset-0 z-[9999] flex items-center justify-center p-4 backdrop-blur-md">
-            <div className="relative z-50 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-2xl">
+          <div
+            className="
+            bg-opacity-30 fixed inset-0 z-[9999] flex items-center
+            justify-center p-4 backdrop-blur-md
+          "
+          >
+            <div
+              className="
+              relative z-50 w-full max-w-md rounded-lg bg-gray-800 p-6
+              shadow-2xl
+            "
+            >
               {/* Header del formulario con botón de cierre */}
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white">
                   Crear Nuevo Usuario
                 </h2>
                 <button onClick={() => setShowCreateForm(false)}>
-                  <X className="size-6 text-gray-300 hover:text-white" />
+                  <X
+                    className="
+                    size-6 text-gray-300
+                    hover:text-white
+                  "
+                  />
                 </button>
               </div>
 
@@ -4250,7 +4596,10 @@ export default function EnrolledUsersPage() {
                 <input
                   type="text"
                   placeholder="Nombre"
-                  className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+                  className="
+                    w-full rounded-md border border-gray-600 bg-gray-700 px-3
+                    py-2 text-white
+                  "
                   value={newUser.firstName}
                   onChange={(e) => {
                     // Eliminar espacios y tomar solo la primera palabra
@@ -4268,7 +4617,10 @@ export default function EnrolledUsersPage() {
                 <input
                   type="text"
                   placeholder="Apellido"
-                  className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+                  className="
+                    w-full rounded-md border border-gray-600 bg-gray-700 px-3
+                    py-2 text-white
+                  "
                   value={newUser.lastName}
                   onChange={(e) =>
                     setNewUser({ ...newUser, lastName: e.target.value })
@@ -4277,14 +4629,20 @@ export default function EnrolledUsersPage() {
                 <input
                   type="email"
                   placeholder="Correo electrónico"
-                  className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+                  className="
+                    w-full rounded-md border border-gray-600 bg-gray-700 px-3
+                    py-2 text-white
+                  "
                   value={newUser.email}
                   onChange={(e) =>
                     setNewUser({ ...newUser, email: e.target.value })
                   }
                 />
                 <select
-                  className="w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white"
+                  className="
+                    w-full rounded-md border border-gray-600 bg-gray-700 px-3
+                    py-2 text-white
+                  "
                   value={newUser.role}
                   onChange={(e) =>
                     setNewUser({ ...newUser, role: e.target.value })
@@ -4300,7 +4658,11 @@ export default function EnrolledUsersPage() {
               {/* Botón para crear usuario */}
               <button
                 onClick={handleCreateUser}
-                className="mt-4 flex w-full justify-center rounded-md bg-primary px-4 py-2 font-bold text-white hover:bg-secondary"
+                className="
+                  mt-4 flex w-full justify-center rounded-md bg-primary px-4
+                  py-2 font-bold text-white
+                  hover:bg-secondary
+                "
                 disabled={creatingUser}
               >
                 {creatingUser ? (
@@ -4313,11 +4675,24 @@ export default function EnrolledUsersPage() {
           </div>
         )}
         {showPhoneModal && (
-          <div className="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-            <div className="relative max-h-screen w-full max-w-3xl overflow-y-auto rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+          <div
+            className="
+            bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center
+            p-4 backdrop-blur-md
+          "
+          >
+            <div
+              className="
+              relative max-h-screen w-full max-w-3xl overflow-y-auto rounded-lg
+              bg-gray-900 p-6 text-white shadow-2xl
+            "
+            >
               <button
                 onClick={() => setShowPhoneModal(false)}
-                className="absolute top-4 right-4 text-white hover:text-red-500"
+                className="
+                  absolute top-4 right-4 text-white
+                  hover:text-red-500
+                "
               >
                 <X size={24} />
               </button>
@@ -4330,21 +4705,33 @@ export default function EnrolledUsersPage() {
               <div className="mb-6 flex gap-2 border-b border-gray-700">
                 <button
                   onClick={() => setSendWhatsapp(false)}
-                  className={`px-4 py-2 font-semibold transition ${
-                    !sendWhatsapp
-                      ? 'border-b-2 border-blue-500 text-blue-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`
+                    px-4 py-2 font-semibold transition
+                    ${
+                      !sendWhatsapp
+                        ? 'border-b-2 border-blue-500 text-blue-400'
+                        : `
+                        text-gray-400
+                        hover:text-white
+                      `
+                    }
+                  `}
                 >
                   📧 Correo
                 </button>
                 <button
                   onClick={() => setSendWhatsapp(true)}
-                  className={`px-4 py-2 font-semibold transition ${
-                    sendWhatsapp
-                      ? 'border-b-2 border-green-500 text-green-400'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
+                  className={`
+                    px-4 py-2 font-semibold transition
+                    ${
+                      sendWhatsapp
+                        ? 'border-b-2 border-green-500 text-green-400'
+                        : `
+                        text-gray-400
+                        hover:text-white
+                      `
+                    }
+                  `}
                 >
                   📱 WhatsApp
                 </button>
@@ -4375,7 +4762,10 @@ export default function EnrolledUsersPage() {
                             setNewManualEmail('');
                           }
                         }}
-                        className="rounded bg-blue-600 px-4 py-2 font-semibold hover:bg-blue-700"
+                        className="
+                          rounded bg-blue-600 px-4 py-2 font-semibold
+                          hover:bg-blue-700
+                        "
                       >
                         ➕ Agregar
                       </button>
@@ -4391,7 +4781,9 @@ export default function EnrolledUsersPage() {
                       {buildEmailsList().map((email, idx) => (
                         <span
                           key={idx}
-                          className="flex items-center rounded-full bg-blue-600 px-3 py-1"
+                          className="
+                            flex items-center rounded-full bg-blue-600 px-3 py-1
+                          "
                         >
                           {email}
                           <button
@@ -4453,7 +4845,10 @@ export default function EnrolledUsersPage() {
                         {attachments.map((file, idx) => (
                           <div
                             key={idx}
-                            className="flex items-center justify-between rounded bg-gray-800 p-2"
+                            className="
+                              flex items-center justify-between rounded
+                              bg-gray-800 p-2
+                            "
                           >
                             <span className="text-sm">{file.name}</span>
                             <button
@@ -4462,7 +4857,10 @@ export default function EnrolledUsersPage() {
                                   prev.filter((_, i) => i !== idx)
                                 )
                               }
-                              className="text-red-400 hover:text-red-600"
+                              className="
+                                text-red-400
+                                hover:text-red-600
+                              "
                             >
                               ✕
                             </button>
@@ -4476,14 +4874,21 @@ export default function EnrolledUsersPage() {
                   <div className="mt-6 flex justify-center gap-4">
                     <button
                       onClick={sendEmail}
-                      className="rounded bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+                      className="
+                        rounded bg-blue-600 px-6 py-3 font-semibold text-white
+                        hover:bg-blue-700
+                        disabled:opacity-50
+                      "
                       disabled={loadingEmail}
                     >
                       {loadingEmail ? '⏳ Enviando...' : '✉️ Enviar Correo'}
                     </button>
                     <button
                       onClick={() => setShowPhoneModal(false)}
-                      className="rounded bg-gray-700 px-6 py-3 font-semibold text-white hover:bg-gray-600"
+                      className="
+                        rounded bg-gray-700 px-6 py-3 font-semibold text-white
+                        hover:bg-gray-600
+                      "
                     >
                       Cerrar
                     </button>
@@ -4543,7 +4948,10 @@ export default function EnrolledUsersPage() {
                             setNewManualPhone('');
                           }
                         }}
-                        className="rounded bg-green-600 px-4 py-2 font-semibold hover:bg-green-700"
+                        className="
+                          rounded bg-green-600 px-4 py-2 font-semibold
+                          hover:bg-green-700
+                        "
                       >
                         ➕ Agregar
                       </button>
@@ -4560,7 +4968,10 @@ export default function EnrolledUsersPage() {
                         buildWhatsappNumbers().map((phone, idx) => (
                           <span
                             key={idx}
-                            className="flex items-center rounded-full bg-green-600 px-3 py-1"
+                            className="
+                              flex items-center rounded-full bg-green-600 px-3
+                              py-1
+                            "
                           >
                             {phone}
                           </span>
@@ -4580,18 +4991,30 @@ export default function EnrolledUsersPage() {
                       {waError && (
                         <button
                           onClick={() => void loadWhatsAppTemplates()}
-                          className="rounded bg-yellow-600 px-2 py-1 text-xs transition hover:bg-yellow-700"
+                          className="
+                            rounded bg-yellow-600 px-2 py-1 text-xs transition
+                            hover:bg-yellow-700
+                          "
                         >
                           🔄 Reintentar
                         </button>
                       )}
                     </div>
                     {waLoading ? (
-                      <div className="rounded bg-gray-800 p-3 text-sm text-gray-400">
+                      <div
+                        className="
+                        rounded bg-gray-800 p-3 text-sm text-gray-400
+                      "
+                      >
                         ⏳ Cargando plantillas...
                       </div>
                     ) : waError ? (
-                      <div className="rounded border border-red-600/50 bg-red-900/30 p-3 text-sm text-red-400">
+                      <div
+                        className="
+                        rounded border border-red-600/50 bg-red-900/30 p-3
+                        text-sm text-red-400
+                      "
+                      >
                         ⚠️ {waError}
                       </div>
                     ) : (
@@ -4621,7 +5044,11 @@ export default function EnrolledUsersPage() {
                         {waSelectedTemplate !== '__TEXT_ONLY__' && (
                           <button
                             onClick={() => setShowTemplatePreview(true)}
-                            className="w-full rounded bg-blue-600 px-3 py-1.5 text-sm transition hover:bg-blue-700"
+                            className="
+                              w-full rounded bg-blue-600 px-3 py-1.5 text-sm
+                              transition
+                              hover:bg-blue-700
+                            "
                           >
                             👁️ Ver preview
                           </button>
@@ -4652,7 +5079,11 @@ export default function EnrolledUsersPage() {
                   <div className="mt-6 flex justify-center gap-4">
                     <button
                       onClick={sendWhatsApp}
-                      className="rounded bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-50"
+                      className="
+                        rounded bg-green-600 px-6 py-3 font-semibold text-white
+                        hover:bg-green-700
+                        disabled:opacity-50
+                      "
                       disabled={loadingWhatsApp}
                     >
                       {loadingWhatsApp
@@ -4661,7 +5092,10 @@ export default function EnrolledUsersPage() {
                     </button>
                     <button
                       onClick={() => setShowPhoneModal(false)}
-                      className="rounded bg-gray-700 px-6 py-3 font-semibold text-white hover:bg-gray-600"
+                      className="
+                        rounded bg-gray-700 px-6 py-3 font-semibold text-white
+                        hover:bg-gray-600
+                      "
                     >
                       Cerrar
                     </button>
@@ -4673,14 +5107,33 @@ export default function EnrolledUsersPage() {
         )}
 
         {showMassiveEditModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-            <div className="animate-fadeIn w-full max-w-lg rounded-xl bg-gray-800 p-6 text-white shadow-2xl transition-transform duration-300">
-              <h2 className="mb-4 text-center text-2xl font-bold tracking-wide text-white">
+          <div
+            className="
+            fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4
+            backdrop-blur-sm
+          "
+          >
+            <div
+              className="
+              animate-fadeIn w-full max-w-lg rounded-xl bg-gray-800 p-6
+              text-white shadow-2xl transition-transform duration-300
+            "
+            >
+              <h2
+                className="
+                mb-4 text-center text-2xl font-bold tracking-wide text-white
+              "
+              >
                 Editar Masivamente
               </h2>
 
               {/* Mostrar estudiantes seleccionados */}
-              <div className="mb-6 max-h-28 overflow-y-auto rounded-md border border-gray-700 bg-gray-900 p-3 shadow-inner">
+              <div
+                className="
+                mb-6 max-h-28 overflow-y-auto rounded-md border border-gray-700
+                bg-gray-900 p-3 shadow-inner
+              "
+              >
                 {selectedStudents.length === 0 ? (
                   <p className="text-center text-gray-400">
                     No hay estudiantes seleccionados
@@ -4691,7 +5144,10 @@ export default function EnrolledUsersPage() {
                     .map((s) => (
                       <div
                         key={s.id}
-                        className="mb-1 rounded bg-gray-700 px-3 py-1 text-sm hover:bg-gray-600"
+                        className="
+                          mb-1 rounded bg-gray-700 px-3 py-1 text-sm
+                          hover:bg-gray-600
+                        "
                       >
                         {s.name}
                       </div>
@@ -4704,11 +5160,19 @@ export default function EnrolledUsersPage() {
                   Campos a editar
                 </label>
 
-                <div className="relative w-full rounded-lg border border-gray-600 bg-gray-800 p-2 shadow-inner">
+                <div
+                  className="
+                  relative w-full rounded-lg border border-gray-600 bg-gray-800
+                  p-2 shadow-inner
+                "
+                >
                   <input
                     type="text"
                     placeholder="Buscar campo..."
-                    className="mb-2 w-full rounded bg-gray-700 p-2 text-sm text-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    className="
+                      mb-2 w-full rounded bg-gray-700 p-2 text-sm text-white
+                      focus:border-blue-500 focus:ring-2 focus:ring-blue-500
+                    "
                     value={searchFieldTerm}
                     onChange={(e) => setSearchFieldTerm(e.target.value)}
                   />
@@ -4729,11 +5193,18 @@ export default function EnrolledUsersPage() {
                                   : [...prev, col.id]
                               )
                             }
-                            className={`cursor-pointer rounded px-3 py-2 text-sm transition ${
-                              isSelected
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-300 hover:bg-gray-600'
-                            }`}
+                            className={`
+                              cursor-pointer rounded px-3 py-2 text-sm
+                              transition
+                              ${
+                                isSelected
+                                  ? 'bg-blue-600 text-white'
+                                  : `
+                                  text-gray-300
+                                  hover:bg-gray-600
+                                `
+                              }
+                            `}
                           >
                             {col.label}
                           </div>
@@ -4759,13 +5230,22 @@ export default function EnrolledUsersPage() {
                       key={field}
                       className="rounded-lg bg-gray-700 p-4 shadow-inner"
                     >
-                      <label className="mb-1 block text-sm font-semibold text-gray-200">
+                      <label
+                        className="
+                        mb-1 block text-sm font-semibold text-gray-200
+                      "
+                      >
                         {col.label}
                       </label>
 
                       {field === 'programTitle' ? (
                         <select
-                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                          className="
+                            w-full rounded border border-gray-600 bg-gray-800
+                            p-2
+                            focus:border-blue-500 focus:ring-2
+                            focus:ring-blue-500
+                          "
                           onChange={(e) =>
                             setMassiveEditFields((prev) => ({
                               ...prev,
@@ -4782,7 +5262,12 @@ export default function EnrolledUsersPage() {
                         </select>
                       ) : field === 'courseTitle' ? (
                         <select
-                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                          className="
+                            w-full rounded border border-gray-600 bg-gray-800
+                            p-2
+                            focus:border-blue-500 focus:ring-2
+                            focus:ring-blue-500
+                          "
                           onChange={(e) =>
                             setMassiveEditFields((prev) => ({
                               ...prev,
@@ -4799,7 +5284,12 @@ export default function EnrolledUsersPage() {
                         </select>
                       ) : col.type === 'select' && col.options ? (
                         <select
-                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                          className="
+                            w-full rounded border border-gray-600 bg-gray-800
+                            p-2
+                            focus:border-blue-500 focus:ring-2
+                            focus:ring-blue-500
+                          "
                           onChange={(e) =>
                             setMassiveEditFields((prev) => ({
                               ...prev,
@@ -4817,7 +5307,12 @@ export default function EnrolledUsersPage() {
                       ) : col.type === 'date' ? (
                         <input
                           type="date"
-                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                          className="
+                            w-full rounded border border-gray-600 bg-gray-800
+                            p-2
+                            focus:border-blue-500 focus:ring-2
+                            focus:ring-blue-500
+                          "
                           onChange={(e) =>
                             setMassiveEditFields((prev) => ({
                               ...prev,
@@ -4828,7 +5323,12 @@ export default function EnrolledUsersPage() {
                       ) : (
                         <input
                           type="text"
-                          className="w-full rounded border border-gray-600 bg-gray-800 p-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                          className="
+                            w-full rounded border border-gray-600 bg-gray-800
+                            p-2
+                            focus:border-blue-500 focus:ring-2
+                            focus:ring-blue-500
+                          "
                           onChange={(e) =>
                             setMassiveEditFields((prev) => ({
                               ...prev,
@@ -4843,10 +5343,20 @@ export default function EnrolledUsersPage() {
               </div>
 
               {/* Acciones */}
-              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <div
+                className="
+                mt-6 flex flex-col-reverse gap-3
+                sm:flex-row sm:justify-end
+              "
+              >
                 <button
                   onClick={() => setShowMassiveEditModal(false)}
-                  className="w-full rounded bg-gray-600 px-4 py-2 transition hover:bg-gray-500 focus:ring-2 focus:ring-gray-400 focus:outline-none sm:w-auto"
+                  className="
+                    w-full rounded bg-gray-600 px-4 py-2 transition
+                    hover:bg-gray-500
+                    focus:ring-2 focus:ring-gray-400 focus:outline-none
+                    sm:w-auto
+                  "
                 >
                   Cancelar
                 </button>
@@ -4869,7 +5379,14 @@ export default function EnrolledUsersPage() {
                         );
                       });
                   }}
-                  className="hover:bg-primary-700 focus:ring-primary-400 w-full rounded bg-primary px-4 py-2 font-semibold text-white transition focus:ring-2 focus:outline-none sm:w-auto"
+                  className="
+                    hover:bg-primary-700
+                    focus:ring-primary-400
+                    w-full rounded bg-primary px-4 py-2 font-semibold text-white
+                    transition
+                    focus:ring-2 focus:outline-none
+                    sm:w-auto
+                  "
                 >
                   Guardar Cambios
                 </button>
@@ -4878,11 +5395,33 @@ export default function EnrolledUsersPage() {
           </div>
         )}
         {showCarteraModal && currentUser && (
-          <div className="showCarteraModal fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-            <div className="max-h-[90vh] w-full max-w-[min(100vw-1rem,72rem)] overflow-y-auto rounded-lg bg-white text-gray-900 shadow-2xl dark:bg-gray-800 dark:text-gray-100">
+          <div
+            className="
+            showCarteraModal fixed inset-0 z-50 flex items-center justify-center
+            bg-black/80 p-4
+          "
+          >
+            <div
+              className="
+              max-h-[90vh] w-full max-w-[min(100vw-1rem,72rem)] overflow-y-auto
+              rounded-lg bg-white text-gray-900 shadow-2xl
+              dark:bg-gray-800 dark:text-gray-100
+            "
+            >
               {/* CABECERA / LOGOS */}
-              <div className="border-b border-gray-200 p-4 sm:p-6 dark:border-gray-700">
-                <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
+              <div
+                className="
+                border-b border-gray-200 p-4
+                sm:p-6
+                dark:border-gray-700
+              "
+              >
+                <div
+                  className="
+                  flex flex-col items-center justify-between gap-4
+                  sm:flex-row
+                "
+                >
                   {/* Logos: Artiefy primero */}
                   <div className="flex items-center gap-4">
                     <Image
@@ -4890,19 +5429,35 @@ export default function EnrolledUsersPage() {
                       alt="Artiefy"
                       width={160}
                       height={48}
-                      className="h-10 w-auto object-contain sm:h-12"
+                      className="
+                        h-10 w-auto object-contain
+                        sm:h-12
+                      "
                     />
                     <Image
                       src="/logo-ponao.png"
                       alt="PONAO"
                       width={160}
                       height={48}
-                      className="h-10 w-auto object-contain sm:h-12"
+                      className="
+                        h-10 w-auto object-contain
+                        sm:h-12
+                      "
                     />
                   </div>
 
-                  <div className="text-center sm:text-right">
-                    <p className="text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-300">
+                  <div
+                    className="
+                    text-center
+                    sm:text-right
+                  "
+                  >
+                    <p
+                      className="
+                      text-xs font-semibold tracking-wide text-gray-500
+                      dark:text-gray-300
+                    "
+                    >
                       POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
                     </p>
                     <h3 className="text-lg font-bold">
@@ -4913,7 +5468,13 @@ export default function EnrolledUsersPage() {
               </div>
 
               {/* INFO INSTITUCIÓN / ESTUDIANTE */}
-              <div className="grid grid-cols-1 gap-4 border-b border-gray-200 p-4 text-sm sm:grid-cols-2 sm:p-6 dark:border-gray-700">
+              <div
+                className="
+                grid grid-cols-1 gap-4 border-b border-gray-200 p-4 text-sm
+                sm:grid-cols-2 sm:p-6
+                dark:border-gray-700
+              "
+              >
                 <div className="space-y-1">
                   <p>
                     <span className="font-semibold">NOMBRE ESTUDIANTE: </span>
@@ -4930,7 +5491,13 @@ export default function EnrolledUsersPage() {
                   <p>
                     <span className="font-semibold">PROGRAMA: </span>
                     {userPrograms?.[0]?.title ?? '—'}
-                    <span className="ml-2 rounded bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                    <span
+                      className="
+                      ml-2 rounded bg-gray-200 px-2 py-0.5 text-xs font-medium
+                      text-gray-700
+                      dark:bg-gray-700 dark:text-gray-100
+                    "
+                    >
                       {currentUser.modalidad ?? 'virtual'}
                     </span>
                   </p>
@@ -4940,7 +5507,12 @@ export default function EnrolledUsersPage() {
                   </p>
                 </div>
 
-                <div className="space-y-1 sm:text-right">
+                <div
+                  className="
+                  space-y-1
+                  sm:text-right
+                "
+                >
                   <p>
                     <span className="font-semibold">DIRECCIÓN: </span>
                     {currentUser.address ?? '-'}
@@ -4985,12 +5557,31 @@ export default function EnrolledUsersPage() {
               </div>
 
               {/* TABLA DE PAGOS */}
-              <div className="p-4 sm:p-6">
-                <h4 className="mb-3 flex items-center justify-between text-base font-semibold">
+              <div
+                className="
+                p-4
+                sm:p-6
+              "
+              >
+                <h4
+                  className="
+                  mb-3 flex items-center justify-between text-base font-semibold
+                "
+                >
                   <span>Detalle de pagos</span>
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  <span
+                    className="
+                    text-sm font-medium text-gray-600
+                    dark:text-gray-300
+                  "
+                  >
                     Valor restante a pagar:{' '}
-                    <strong className="text-red-600 dark:text-red-400">
+                    <strong
+                      className="
+                      text-red-600
+                      dark:text-red-400
+                    "
+                    >
                       {formatCOP(
                         price -
                           editablePagos.slice(0, 12).reduce((sum, p) => {
@@ -5004,35 +5595,85 @@ export default function EnrolledUsersPage() {
                     </strong>
                   </span>
                 </h4>
-                <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+                <div
+                  className="
+                  overflow-x-auto rounded border border-gray-200
+                  dark:border-gray-700
+                "
+                >
                   <table className="min-w-full border-collapse text-sm">
-                    <thead className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                    <thead
+                      className="
+                      bg-gray-100 text-gray-700
+                      dark:bg-gray-700 dark:text-gray-100
+                    "
+                    >
                       <tr>
-                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                        <th
+                          className="
+                          border-b border-gray-200 px-3 py-2 text-left
+                          dark:border-gray-600
+                        "
+                        >
                           PRODUCTO
                         </th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                        <th
+                          className="
+                          border-b border-gray-200 px-3 py-2 text-left
+                          dark:border-gray-600
+                        "
+                        >
                           N° PAGO{' '}
                         </th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                        <th
+                          className="
+                          border-b border-gray-200 px-3 py-2 text-left
+                          dark:border-gray-600
+                        "
+                        >
                           FECHA PROGRAMA
                         </th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                        <th
+                          className="
+                          border-b border-gray-200 px-3 py-2 text-left
+                          dark:border-gray-600
+                        "
+                        >
                           FECHA REAL DE PAGO
                         </th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                        <th
+                          className="
+                          border-b border-gray-200 px-3 py-2 text-left
+                          dark:border-gray-600
+                        "
+                        >
                           MÉTODO DE PAGO
                         </th>
-                        <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
+                        <th
+                          className="
+                          border-b border-gray-200 px-3 py-2 text-right
+                          dark:border-gray-600
+                        "
+                        >
                           VALOR
                         </th>
 
                         {/* 👇 NUEVA COLUMNA */}
-                        <th className="border-b border-gray-200 px-3 py-2 text-center dark:border-gray-600">
+                        <th
+                          className="
+                          border-b border-gray-200 px-3 py-2 text-center
+                          dark:border-gray-600
+                        "
+                        >
                           VERIFICADO
                         </th>
 
-                        <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
+                        <th
+                          className="
+                          border-b border-gray-200 px-3 py-2 text-right
+                          dark:border-gray-600
+                        "
+                        >
                           ACCIONES
                         </th>
                       </tr>
@@ -5053,10 +5694,21 @@ export default function EnrolledUsersPage() {
                         return (
                           <tr
                             key={`cuota-${cuotaNum}`}
-                            className="align-top odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-900"
+                            className="
+                              align-top
+                              odd:bg-white
+                              even:bg-gray-50
+                              dark:odd:bg-gray-800
+                              dark:even:bg-gray-900
+                            "
                           >
                             {/* PRODUCTO */}
-                            <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                            <td
+                              className="
+                              border-b border-gray-100 px-3 py-2
+                              dark:border-gray-700
+                            "
+                            >
                               <input
                                 type="text"
                                 value={row.concepto ?? `Cuota ${cuotaNum}`}
@@ -5067,12 +5719,22 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                className="
+                                  w-full rounded border border-gray-300 bg-white
+                                  p-1 text-xs
+                                  dark:border-gray-600 dark:bg-gray-800
+                                  dark:text-gray-100
+                                "
                               />
                             </td>
 
                             {/* N° PAGO */}
-                            <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
+                            <td
+                              className="
+                              border-b border-gray-100 px-3 py-2 text-center
+                              dark:border-gray-700
+                            "
+                            >
                               <input
                                 type="text"
                                 value={String(
@@ -5085,12 +5747,22 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-24 rounded border border-gray-300 bg-white p-1 text-center text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                className="
+                                  w-24 rounded border border-gray-300 bg-white
+                                  p-1 text-center text-xs
+                                  dark:border-gray-600 dark:bg-gray-800
+                                  dark:text-gray-100
+                                "
                               />
                             </td>
 
                             {/* FECHA PROGRAMA */}
-                            <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                            <td
+                              className="
+                              border-b border-gray-100 px-3 py-2
+                              dark:border-gray-700
+                            "
+                            >
                               <input
                                 type="date"
                                 value={
@@ -5109,12 +5781,22 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-36 rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                className="
+                                  w-36 rounded border border-gray-300 bg-white
+                                  p-1 text-xs
+                                  dark:border-gray-600 dark:bg-gray-800
+                                  dark:text-gray-100
+                                "
                               />
                             </td>
 
                             {/* FECHA REAL DE PAGO */}
-                            <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                            <td
+                              className="
+                              border-b border-gray-100 px-3 py-2
+                              dark:border-gray-700
+                            "
+                            >
                               <input
                                 type="date"
                                 value={
@@ -5133,12 +5815,22 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-36 rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                className="
+                                  w-36 rounded border border-gray-300 bg-white
+                                  p-1 text-xs
+                                  dark:border-gray-600 dark:bg-gray-800
+                                  dark:text-gray-100
+                                "
                               />
                             </td>
 
                             {/* MÉTODO */}
-                            <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                            <td
+                              className="
+                              border-b border-gray-100 px-3 py-2
+                              dark:border-gray-700
+                            "
+                            >
                               <select
                                 value={row.metodo ?? ''}
                                 onChange={(e) =>
@@ -5148,7 +5840,12 @@ export default function EnrolledUsersPage() {
                                     e.target.value
                                   )
                                 }
-                                className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                className="
+                                  w-full rounded border border-gray-300 bg-white
+                                  p-1 text-xs
+                                  dark:border-gray-600 dark:bg-gray-800
+                                  dark:text-gray-100
+                                "
                               >
                                 <option value="">—</option>
                                 <option value="Transferencia">
@@ -5159,8 +5856,19 @@ export default function EnrolledUsersPage() {
                             </td>
 
                             {/* VALOR */}
-                            <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
-                              <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
+                            <td
+                              className="
+                              border-b border-gray-100 px-3 py-2 text-right
+                              tabular-nums
+                              dark:border-gray-700
+                            "
+                            >
+                              <div
+                                className="
+                                flex flex-col items-end gap-1
+                                sm:flex-row sm:items-center sm:justify-end
+                              "
+                              >
                                 <input
                                   type="text"
                                   inputMode="numeric"
@@ -5172,20 +5880,34 @@ export default function EnrolledUsersPage() {
                                       e.target.value
                                     )
                                   }
-                                  className="w-28 rounded border border-gray-300 bg-white p-1 text-right text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                  className="
+                                    w-28 rounded border border-gray-300 bg-white
+                                    p-1 text-right text-xs
+                                    dark:border-gray-600 dark:bg-gray-800
+                                    dark:text-gray-100
+                                  "
                                 />
                               </div>
                             </td>
 
                             {/* VERIFICADO */}
-                            <td className="border-b border-gray-100 px-3 py-2 text-center dark:border-gray-700">
+                            <td
+                              className="
+                              border-b border-gray-100 px-3 py-2 text-center
+                              dark:border-gray-700
+                            "
+                            >
                               <div className="flex flex-col items-center gap-1">
                                 <span
-                                  className={`rounded px-2 py-0.5 text-[10px] font-semibold ${
-                                    editablePagos[idx]?.receiptVerified
-                                      ? 'bg-green-600 text-white'
-                                      : 'bg-gray-500 text-white'
-                                  }`}
+                                  className={`
+                                    rounded px-2 py-0.5 text-[10px]
+                                    font-semibold
+                                    ${
+                                      editablePagos[idx]?.receiptVerified
+                                        ? 'bg-green-600 text-white'
+                                        : 'bg-gray-500 text-white'
+                                    }
+                                  `}
                                   title="Estado de verificación del comprobante"
                                 >
                                   {editablePagos[idx]?.receiptVerified
@@ -5213,13 +5935,29 @@ export default function EnrolledUsersPage() {
                               </div>
                             </td>
 
-                            <td className="border-b border-gray-100 px-3 py-2 text-right dark:border-gray-700">
-                              <div className="flex flex-wrap items-center justify-end gap-1.5">
+                            <td
+                              className="
+                              border-b border-gray-100 px-3 py-2 text-right
+                              dark:border-gray-700
+                            "
+                            >
+                              <div
+                                className="
+                                flex flex-wrap items-center justify-end gap-1.5
+                              "
+                              >
                                 {/* Guardar */}
                                 <button
                                   type="button"
                                   onClick={() => savePagoRow(idx)}
-                                  className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 focus:ring-2 focus:ring-emerald-400/60 focus:outline-none"
+                                  className="
+                                    inline-flex items-center gap-1 rounded-md
+                                    bg-emerald-600 px-2.5 py-1 text-xs
+                                    font-semibold text-white shadow-sm
+                                    hover:bg-emerald-700
+                                    focus:ring-2 focus:ring-emerald-400/60
+                                    focus:outline-none
+                                  "
                                   title="Guardar cambios de esta cuota"
                                 >
                                   <svg
@@ -5281,7 +6019,15 @@ export default function EnrolledUsersPage() {
                                     setShowReceiptUploadModal(true);
                                     setReceiptUploadFile(null);
                                   }}
-                                  className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400/60 focus:outline-none"
+                                  className="
+                                    inline-flex items-center gap-1 rounded-md
+                                    bg-blue-600 px-2.5 py-1 text-xs
+                                    font-semibold text-white shadow-sm
+                                    transition
+                                    hover:bg-blue-700
+                                    focus:ring-2 focus:ring-blue-400/60
+                                    focus:outline-none
+                                  "
                                   title="Subir comprobante 1"
                                 >
                                   <svg
@@ -5307,7 +6053,14 @@ export default function EnrolledUsersPage() {
                                           'Comprobante'
                                       )
                                     }
-                                    className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700/60"
+                                    className="
+                                      inline-flex items-center gap-1 rounded-md
+                                      border border-gray-300 px-2.5 py-1 text-xs
+                                      font-medium text-gray-700
+                                      hover:bg-gray-50
+                                      dark:border-gray-600 dark:text-gray-200
+                                      dark:hover:bg-gray-700/60
+                                    "
                                     title={
                                       editablePagos[idx]?.receiptName ??
                                       'Ver comprobante'
@@ -5324,7 +6077,13 @@ export default function EnrolledUsersPage() {
                                   </button>
                                 ) : (
                                   <span
-                                    className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-dashed border-gray-300 px-2.5 py-1 text-xs text-gray-400 dark:border-gray-700 dark:text-gray-500"
+                                    className="
+                                      inline-flex cursor-not-allowed
+                                      items-center gap-1 rounded-md border
+                                      border-dashed border-gray-300 px-2.5 py-1
+                                      text-xs text-gray-400
+                                      dark:border-gray-700 dark:text-gray-500
+                                    "
                                     title="Sin comprobante"
                                   >
                                     <svg
@@ -5340,11 +6099,23 @@ export default function EnrolledUsersPage() {
 
                                 {/* Badge de verificación (compacto) */}
                                 <span
-                                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                                    editablePagos[idx]?.receiptVerified
-                                      ? 'bg-green-100 text-green-700 ring-1 ring-green-600/20 dark:bg-green-900/40 dark:text-green-300'
-                                      : 'bg-gray-100 text-gray-700 ring-1 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-300'
-                                  }`}
+                                  className={`
+                                    inline-flex items-center gap-1 rounded-full
+                                    px-2 py-0.5 text-[10px] font-semibold
+                                    ${
+                                      editablePagos[idx]?.receiptVerified
+                                        ? `
+                                        bg-green-100 text-green-700 ring-1
+                                        ring-green-600/20
+                                        dark:bg-green-900/40 dark:text-green-300
+                                      `
+                                        : `
+                                        bg-gray-100 text-gray-700 ring-1
+                                        ring-gray-600/20
+                                        dark:bg-gray-800 dark:text-gray-300
+                                      `
+                                    }
+                                  `}
                                   title="Estado de verificación del comprobante"
                                 >
                                   <svg
@@ -5418,7 +6189,14 @@ export default function EnrolledUsersPage() {
                                       );
                                       alert('✅ Comprobante verificado');
                                     }}
-                                    className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-amber-700 focus:ring-2 focus:ring-amber-400/60 focus:outline-none"
+                                    className="
+                                      inline-flex items-center gap-1 rounded-md
+                                      bg-amber-600 px-2.5 py-1 text-xs
+                                      font-semibold text-white shadow-sm
+                                      hover:bg-amber-700
+                                      focus:ring-2 focus:ring-amber-400/60
+                                      focus:outline-none
+                                    "
                                     title="Marcar como verificado"
                                   >
                                     <svg
@@ -5442,14 +6220,29 @@ export default function EnrolledUsersPage() {
                       {/* Encabezado plan */}
                       <tr>
                         <td colSpan={5} className="p-3">
-                          <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                            <span className="font-semibold text-gray-700 dark:text-gray-200">
+                          <div
+                            className="
+                            flex items-center justify-between rounded-lg
+                            bg-gray-50 p-3
+                            dark:bg-gray-800
+                          "
+                          >
+                            <span
+                              className="
+                              font-semibold text-gray-700
+                              dark:text-gray-200
+                            "
+                            >
                               PLAN / VALOR PROGRAMA
                             </span>
                             <input
                               type="text"
                               inputMode="numeric"
-                              className="w-32 rounded border bg-gray-50 px-2 py-1 text-right font-semibold text-gray-900 dark:bg-gray-800 dark:text-white"
+                              className="
+                                w-32 rounded border bg-gray-50 px-2 py-1
+                                text-right font-semibold text-gray-900
+                                dark:bg-gray-800 dark:text-white
+                              "
                               value={price ? String(price) : ''} // muestra 150000
                               onChange={(e) => {
                                 // acepta 150000, 150.000, 150,000 → siempre queda 150000
@@ -5470,11 +6263,27 @@ export default function EnrolledUsersPage() {
                       {/* Valor pagado */}
                       <tr>
                         <td colSpan={5} className="p-3">
-                          <div className="flex items-center justify-between rounded-lg bg-green-50 p-3 dark:bg-green-900/30">
-                            <span className="font-semibold text-green-700 dark:text-green-400">
+                          <div
+                            className="
+                            flex items-center justify-between rounded-lg
+                            bg-green-50 p-3
+                            dark:bg-green-900/30
+                          "
+                          >
+                            <span
+                              className="
+                              font-semibold text-green-700
+                              dark:text-green-400
+                            "
+                            >
                               VALOR PAGADO
                             </span>
-                            <span className="font-semibold text-green-700 dark:text-green-400">
+                            <span
+                              className="
+                              font-semibold text-green-700
+                              dark:text-green-400
+                            "
+                            >
                               {formatCOP(
                                 editablePagos.slice(0, 12).reduce((sum, p) => {
                                   const v =
@@ -5492,11 +6301,27 @@ export default function EnrolledUsersPage() {
                       {/* Deuda restante */}
                       <tr>
                         <td colSpan={5} className="p-3">
-                          <div className="flex items-center justify-between rounded-lg bg-red-50 p-3 dark:bg-red-900/30">
-                            <span className="font-semibold text-red-700 dark:text-red-400">
+                          <div
+                            className="
+                            flex items-center justify-between rounded-lg
+                            bg-red-50 p-3
+                            dark:bg-red-900/30
+                          "
+                          >
+                            <span
+                              className="
+                              font-semibold text-red-700
+                              dark:text-red-400
+                            "
+                            >
                               DEUDA RESTANTE
                             </span>
-                            <span className="font-semibold text-red-700 dark:text-red-400">
+                            <span
+                              className="
+                              font-semibold text-red-700
+                              dark:text-red-400
+                            "
+                            >
                               {formatCOP(
                                 price -
                                   editablePagos
@@ -5522,26 +6347,66 @@ export default function EnrolledUsersPage() {
                     <h4 className="mb-3 text-base font-semibold">
                       Conceptos especiales
                     </h4>
-                    <div className="overflow-x-auto rounded border border-gray-200 dark:border-gray-700">
+                    <div
+                      className="
+                      overflow-x-auto rounded border border-gray-200
+                      dark:border-gray-700
+                    "
+                    >
                       <table className="min-w-full border-collapse text-sm">
-                        <thead className="bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100">
+                        <thead
+                          className="
+                          bg-gray-100 text-gray-700
+                          dark:bg-gray-700 dark:text-gray-100
+                        "
+                        >
                           <tr>
-                            <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                            <th
+                              className="
+                              border-b border-gray-200 px-3 py-2 text-left
+                              dark:border-gray-600
+                            "
+                            >
                               PRODUCTO
                             </th>
-                            <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                            <th
+                              className="
+                              border-b border-gray-200 px-3 py-2 text-left
+                              dark:border-gray-600
+                            "
+                            >
                               FECHA PROGRAMA
                             </th>
-                            <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                            <th
+                              className="
+                              border-b border-gray-200 px-3 py-2 text-left
+                              dark:border-gray-600
+                            "
+                            >
                               FECHA REAL DE PAGO
                             </th>
-                            <th className="border-b border-gray-200 px-3 py-2 text-left dark:border-gray-600">
+                            <th
+                              className="
+                              border-b border-gray-200 px-3 py-2 text-left
+                              dark:border-gray-600
+                            "
+                            >
                               MÉTODO DE PAGO
                             </th>
-                            <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
+                            <th
+                              className="
+                              border-b border-gray-200 px-3 py-2 text-right
+                              dark:border-gray-600
+                            "
+                            >
                               VALOR
                             </th>
-                            <th className="border-b border-gray-200 px-3 py-2 text-right dark:border-gray-600">
+                            <th
+                              className="
+                              border-b border-gray-200 px-3 py-2 text-right
+                              dark:border-gray-600
+                            "
+                            >
                               ACCIONES
                             </th>
                           </tr>
@@ -5563,10 +6428,21 @@ export default function EnrolledUsersPage() {
                             return (
                               <tr
                                 key={`especial-${nroPago}`}
-                                className="align-top odd:bg-white even:bg-gray-50 dark:odd:bg-gray-800 dark:even:bg-gray-900"
+                                className="
+                                  align-top
+                                  odd:bg-white
+                                  even:bg-gray-50
+                                  dark:odd:bg-gray-800
+                                  dark:even:bg-gray-900
+                                "
                               >
                                 {/* CONCEPTO (editable, se guarda tal cual en 'pagos') */}
-                                <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                <td
+                                  className="
+                                  border-b border-gray-100 px-3 py-2
+                                  dark:border-gray-700
+                                "
+                                >
                                   <input
                                     type="text"
                                     value={row.concepto ?? label}
@@ -5577,12 +6453,22 @@ export default function EnrolledUsersPage() {
                                         e.target.value
                                       )
                                     }
-                                    className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                    className="
+                                      w-full rounded border border-gray-300
+                                      bg-white p-1 text-xs
+                                      dark:border-gray-600 dark:bg-gray-800
+                                      dark:text-gray-100
+                                    "
                                   />
                                 </td>
 
                                 {/* FECHA PROGRAMA */}
-                                <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                <td
+                                  className="
+                                  border-b border-gray-100 px-3 py-2
+                                  dark:border-gray-700
+                                "
+                                >
                                   <input
                                     type="date"
                                     value={
@@ -5602,12 +6488,22 @@ export default function EnrolledUsersPage() {
                                         e.target.value
                                       )
                                     }
-                                    className="w-36 rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                    className="
+                                      w-36 rounded border border-gray-300
+                                      bg-white p-1 text-xs
+                                      dark:border-gray-600 dark:bg-gray-800
+                                      dark:text-gray-100
+                                    "
                                   />
                                 </td>
 
                                 {/* FECHA REAL DE PAGO */}
-                                <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                <td
+                                  className="
+                                  border-b border-gray-100 px-3 py-2
+                                  dark:border-gray-700
+                                "
+                                >
                                   <input
                                     type="date"
                                     value={
@@ -5627,12 +6523,22 @@ export default function EnrolledUsersPage() {
                                         e.target.value
                                       )
                                     }
-                                    className="w-36 rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                    className="
+                                      w-36 rounded border border-gray-300
+                                      bg-white p-1 text-xs
+                                      dark:border-gray-600 dark:bg-gray-800
+                                      dark:text-gray-100
+                                    "
                                   />
                                 </td>
 
                                 {/* SELECT MÉTODO */}
-                                <td className="border-b border-gray-100 px-3 py-2 dark:border-gray-700">
+                                <td
+                                  className="
+                                  border-b border-gray-100 px-3 py-2
+                                  dark:border-gray-700
+                                "
+                                >
                                   <select
                                     value={row.metodo ?? ''}
                                     onChange={(e) =>
@@ -5642,7 +6548,12 @@ export default function EnrolledUsersPage() {
                                         e.target.value
                                       )
                                     }
-                                    className="w-full rounded border border-gray-300 bg-white p-1 text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                    className="
+                                      w-full rounded border border-gray-300
+                                      bg-white p-1 text-xs
+                                      dark:border-gray-600 dark:bg-gray-800
+                                      dark:text-gray-100
+                                    "
                                   >
                                     <option value="">—</option>
                                     <option value="Transferencia">
@@ -5653,8 +6564,19 @@ export default function EnrolledUsersPage() {
                                 </td>
 
                                 {/* VALOR + acciones */}
-                                <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
-                                  <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
+                                <td
+                                  className="
+                                  border-b border-gray-100 px-3 py-2 text-right
+                                  tabular-nums
+                                  dark:border-gray-700
+                                "
+                                >
+                                  <div
+                                    className="
+                                    flex flex-col items-end gap-1
+                                    sm:flex-row sm:items-center sm:justify-end
+                                  "
+                                  >
                                     <input
                                       type="text"
                                       inputMode="numeric"
@@ -5666,17 +6588,37 @@ export default function EnrolledUsersPage() {
                                           e.target.value
                                         )
                                       }
-                                      className="w-28 rounded border border-gray-300 bg-white p-1 text-right text-xs dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                                      className="
+                                        w-28 rounded border border-gray-300
+                                        bg-white p-1 text-right text-xs
+                                        dark:border-gray-600 dark:bg-gray-800
+                                        dark:text-gray-100
+                                      "
                                     />
                                   </div>
                                 </td>
-                                <td className="border-b border-gray-100 px-3 py-2 text-right tabular-nums dark:border-gray-700">
-                                  <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:justify-end">
+                                <td
+                                  className="
+                                  border-b border-gray-100 px-3 py-2 text-right
+                                  tabular-nums
+                                  dark:border-gray-700
+                                "
+                                >
+                                  <div
+                                    className="
+                                    flex flex-col items-end gap-1
+                                    sm:flex-row sm:items-center sm:justify-end
+                                  "
+                                  >
                                     <div className="flex items-center gap-1">
                                       <button
                                         type="button"
                                         onClick={() => savePagoRow(idxBase)}
-                                        className="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                                        className="
+                                          rounded bg-emerald-600 px-2 py-1
+                                          text-xs font-semibold text-white
+                                          hover:bg-emerald-700
+                                        "
                                       >
                                         Guardar
                                       </button>
@@ -5729,7 +6671,11 @@ export default function EnrolledUsersPage() {
                                           setShowReceiptUploadModal(true);
                                           setReceiptUploadFile(null);
                                         }}
-                                        className="rounded bg-blue-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-blue-700"
+                                        className="
+                                          rounded bg-blue-600 px-2 py-1 text-xs
+                                          font-semibold text-white transition
+                                          hover:bg-blue-700
+                                        "
                                       >
                                         Subir comprobante 2
                                       </button>
@@ -5773,15 +6719,29 @@ export default function EnrolledUsersPage() {
                 </div>
                 {/* Acciones de cartera (cuando NO está al día) */}
                 {currentUser.carteraStatus !== 'activo' && (
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div
+                    className="
+                    mt-4 grid grid-cols-1 gap-3
+                    sm:grid-cols-2
+                  "
+                  >
                     <button
                       onClick={markCarteraActivo}
-                      className="w-full rounded bg-emerald-600 px-4 py-2 font-semibold text-white hover:bg-emerald-700"
+                      className="
+                        w-full rounded bg-emerald-600 px-4 py-2 font-semibold
+                        text-white
+                        hover:bg-emerald-700
+                      "
                     >
                       Marcar AL DÍA
                     </button>
 
-                    <div className="rounded border border-gray-300 p-3 dark:border-gray-700">
+                    <div
+                      className="
+                      rounded border border-gray-300 p-3
+                      dark:border-gray-700
+                    "
+                    >
                       <label className="mb-2 block text-sm font-medium">
                         Subir comprobante de pago
                       </label>
@@ -5833,7 +6793,11 @@ export default function EnrolledUsersPage() {
                             setCarteraReceipt(null);
                             setShowCarteraReceiptUploadModal(true);
                           }}
-                          className="rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700"
+                          className="
+                            rounded bg-blue-600 px-4 py-2 font-semibold
+                            text-white transition
+                            hover:bg-blue-700
+                          "
                         >
                           Subir comprobante 3
                         </button>
@@ -5851,11 +6815,19 @@ export default function EnrolledUsersPage() {
                 {/* Contenido específico para impresión - agregarlo después del botón imprimir */}
                 <div
                   id="printable-invoice"
-                  className="pointer-events-none hidden print:block"
+                  className="
+                    pointer-events-none hidden
+                    print:block
+                  "
                 >
                   <div className="bg-white p-8 text-black">
                     {/* Cabecera */}
-                    <div className="mb-6 flex items-center justify-between border-b border-black pb-4">
+                    <div
+                      className="
+                      mb-6 flex items-center justify-between border-b
+                      border-black pb-4
+                    "
+                    >
                       <div className="flex items-center gap-4">
                         <Image
                           src="/artiefy-logo.png"
@@ -5874,7 +6846,11 @@ export default function EnrolledUsersPage() {
                         />
                       </div>
                       <div className="text-right">
-                        <p className="text-xs font-semibold tracking-wide text-black">
+                        <p
+                          className="
+                          text-xs font-semibold tracking-wide text-black
+                        "
+                        >
                           POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
                         </p>
                         <h3 className="text-lg font-bold text-black">
@@ -5932,25 +6908,59 @@ export default function EnrolledUsersPage() {
                     </div>
 
                     {/* Tabla de pagos solo con información, sin inputs */}
-                    <table className="mb-6 w-full border-collapse border border-black text-sm">
+                    <table
+                      className="
+                      mb-6 w-full border-collapse border border-black text-sm
+                    "
+                    >
                       <thead>
                         <tr className="bg-white">
-                          <th className="border border-black px-3 py-2 text-left font-bold text-black">
+                          <th
+                            className="
+                            border border-black px-3 py-2 text-left font-bold
+                            text-black
+                          "
+                          >
                             PRODUCTO
                           </th>
-                          <th className="border border-black px-3 py-2 text-center font-bold text-black">
+                          <th
+                            className="
+                            border border-black px-3 py-2 text-center font-bold
+                            text-black
+                          "
+                          >
                             N° PAGO
                           </th>
-                          <th className="border border-black px-3 py-2 text-left font-bold text-black">
+                          <th
+                            className="
+                            border border-black px-3 py-2 text-left font-bold
+                            text-black
+                          "
+                          >
                             FECHA PROGRAMA
                           </th>
-                          <th className="border border-black px-3 py-2 text-left font-bold text-black">
+                          <th
+                            className="
+                            border border-black px-3 py-2 text-left font-bold
+                            text-black
+                          "
+                          >
                             FECHA REAL DE PAGO
                           </th>
-                          <th className="border border-black px-3 py-2 text-left font-bold text-black">
+                          <th
+                            className="
+                            border border-black px-3 py-2 text-left font-bold
+                            text-black
+                          "
+                          >
                             MÉTODO DE PAGO
                           </th>
-                          <th className="border border-black px-3 py-2 text-right font-bold text-black">
+                          <th
+                            className="
+                            border border-black px-3 py-2 text-right font-bold
+                            text-black
+                          "
+                          >
                             VALOR
                           </th>
                         </tr>
@@ -5970,30 +6980,56 @@ export default function EnrolledUsersPage() {
                               key={`print-cuota-${cuotaNum}`}
                               className="bg-white"
                             >
-                              <td className="border border-black px-3 py-2 text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-black
+                              "
+                              >
                                 {row.concepto ?? `Cuota ${cuotaNum}`}
                               </td>
-                              <td className="border border-black px-3 py-2 text-center text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-center
+                                text-black
+                              "
+                              >
                                 {row.nro_pago ?? row.nroPago ?? cuotaNum}
                               </td>
-                              <td className="border border-black px-3 py-2 text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-black
+                              "
+                              >
                                 {row.fechaPrograma
                                   ? new Date(
                                       row.fechaPrograma
                                     ).toLocaleDateString('es-CO')
                                   : '-'}
                               </td>
-                              <td className="border border-black px-3 py-2 text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-black
+                              "
+                              >
                                 {row.fechaRealPago
                                   ? new Date(
                                       row.fechaRealPago as string | Date
                                     ).toLocaleDateString('es-CO')
                                   : '-'}
                               </td>
-                              <td className="border border-black px-3 py-2 text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-black
+                              "
+                              >
                                 {row.metodo ?? '-'}
                               </td>
-                              <td className="border border-black px-3 py-2 text-right text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-right
+                                text-black
+                              "
+                              >
                                 {formatCOP(valor)}
                               </td>
                             </tr>
@@ -6017,30 +7053,57 @@ export default function EnrolledUsersPage() {
                               key={`print-especial-${idxBase}`}
                               className="bg-white"
                             >
-                              <td className="border border-black px-3 py-2 font-semibold text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 font-semibold
+                                text-black
+                              "
+                              >
                                 {row.concepto ?? label}
                               </td>
-                              <td className="border border-black px-3 py-2 text-center text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-center
+                                text-black
+                              "
+                              >
                                 {idxBase + 1}
                               </td>
-                              <td className="border border-black px-3 py-2 text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-black
+                              "
+                              >
                                 {row.fechaPrograma
                                   ? new Date(
                                       row.fechaPrograma as string | Date
                                     ).toLocaleDateString('es-CO')
                                   : '-'}
                               </td>
-                              <td className="border border-black px-3 py-2 text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-black
+                              "
+                              >
                                 {row.fechaRealPago
                                   ? new Date(
                                       row.fechaRealPago as string | Date
                                     ).toLocaleDateString('es-CO')
                                   : '-'}
                               </td>
-                              <td className="border border-black px-3 py-2 text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-black
+                              "
+                              >
                                 {row.metodo ?? '-'}
                               </td>
-                              <td className="border border-black px-3 py-2 text-right text-black">
+                              <td
+                                className="
+                                border border-black px-3 py-2 text-right
+                                text-black
+                              "
+                              >
                                 {formatCOP(valor)}
                               </td>
                             </tr>
@@ -6067,7 +7130,12 @@ export default function EnrolledUsersPage() {
                           {formatCOP(carteraInfo?.totalPagado ?? 0)}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between border-t border-black pt-2">
+                      <div
+                        className="
+                        flex items-center justify-between border-t border-black
+                        pt-2
+                      "
+                      >
                         <span className="text-lg font-bold text-black">
                           DEUDA RESTANTE:
                         </span>
@@ -6078,7 +7146,12 @@ export default function EnrolledUsersPage() {
                     </div>
 
                     {/* Pie de página opcional */}
-                    <div className="mt-8 border-t border-black pt-4 text-center text-xs text-black">
+                    <div
+                      className="
+                      mt-8 border-t border-black pt-4 text-center text-xs
+                      text-black
+                    "
+                    >
                       <p>
                         Este documento es un comprobante de los pagos
                         registrados
@@ -6091,17 +7164,33 @@ export default function EnrolledUsersPage() {
                 </div>
               </div>
               {/* FOOTER / BOTONES */}
-              <div className="flex flex-col gap-2 border-t border-gray-200 p-4 sm:flex-row sm:justify-end dark:border-gray-700">
+              <div
+                className="
+                flex flex-col gap-2 border-t border-gray-200 p-4
+                sm:flex-row sm:justify-end
+                dark:border-gray-700
+              "
+              >
                 <button
                   onClick={handlePrint}
-                  className="rounded bg-gray-200 px-4 py-2 font-semibold text-gray-900 hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                  className="
+                    rounded bg-gray-200 px-4 py-2 font-semibold text-gray-900
+                    hover:bg-gray-300
+                    dark:bg-gray-700 dark:text-white
+                    dark:hover:bg-gray-600
+                  "
                 >
                   Imprimir / Guardar PDF
                 </button>
 
                 <button
                   onClick={() => setShowCarteraModal(false)}
-                  className="rounded bg-gray-900 px-4 py-2 font-semibold text-white hover:bg-black dark:bg-gray-600 dark:hover:bg-gray-700"
+                  className="
+                    rounded bg-gray-900 px-4 py-2 font-semibold text-white
+                    hover:bg-black
+                    dark:bg-gray-600
+                    dark:hover:bg-gray-700
+                  "
                 >
                   Cerrar
                 </button>
@@ -6113,7 +7202,10 @@ export default function EnrolledUsersPage() {
         {/* ✅ MODAL: Drag & Drop para comprobantes */}
         {showReceiptUploadModal && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            className="
+              fixed inset-0 z-50 flex items-center justify-center bg-black/80
+              p-4
+            "
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -6127,13 +7219,28 @@ export default function EnrolledUsersPage() {
               e.stopPropagation();
             }}
           >
-            <div className="w-full max-w-md animate-fade-in rounded-xl bg-white p-8 shadow-2xl dark:bg-gray-800">
+            <div
+              className="
+              w-full max-w-md animate-fade-in rounded-xl bg-white p-8 shadow-2xl
+              dark:bg-gray-800
+            "
+            >
               {/* Header */}
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h2
+                  className="
+                  text-2xl font-bold text-gray-900
+                  dark:text-white
+                "
+                >
                   📋 Subir Comprobante
                 </h2>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                <p
+                  className="
+                  mt-1 text-sm text-gray-600
+                  dark:text-gray-400
+                "
+                >
                   Carga un PDF o imagen del comprobante de pago
                 </p>
               </div>
@@ -6141,8 +7248,18 @@ export default function EnrolledUsersPage() {
               {/* Información de la cuota */}
               {pendingRowForReceipt !== null &&
                 editablePagos[pendingRowForReceipt] && (
-                  <div className="mb-6 rounded-lg border-2 border-amber-200 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/30">
-                    <h3 className="mb-3 font-semibold text-amber-900 dark:text-amber-100">
+                  <div
+                    className="
+                    mb-6 rounded-lg border-2 border-amber-200 bg-amber-50 p-4
+                    dark:border-amber-700 dark:bg-amber-900/30
+                  "
+                  >
+                    <h3
+                      className="
+                      mb-3 font-semibold text-amber-900
+                      dark:text-amber-100
+                    "
+                    >
                       📍 Información{' '}
                       {pendingRowForReceipt >= 12
                         ? 'del Concepto'
@@ -6150,18 +7267,38 @@ export default function EnrolledUsersPage() {
                     </h3>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
-                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                        <p
+                          className="
+                          text-xs font-medium text-amber-700
+                          dark:text-amber-300
+                        "
+                        >
                           {pendingRowForReceipt >= 12 ? 'Número' : 'Cuota #'}
                         </p>
-                        <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                        <p
+                          className="
+                          mt-1 font-semibold text-gray-900
+                          dark:text-white
+                        "
+                        >
                           {pendingRowForReceipt + 1}
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                        <p
+                          className="
+                          text-xs font-medium text-amber-700
+                          dark:text-amber-300
+                        "
+                        >
                           {pendingRowForReceipt >= 12 ? 'Producto' : 'Concepto'}
                         </p>
-                        <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                        <p
+                          className="
+                          mt-1 font-semibold text-gray-900
+                          dark:text-white
+                        "
+                        >
                           {pendingRowForReceipt === 12
                             ? 'PÓLIZA Y CARNET'
                             : pendingRowForReceipt === 13
@@ -6174,10 +7311,20 @@ export default function EnrolledUsersPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                        <p
+                          className="
+                          text-xs font-medium text-amber-700
+                          dark:text-amber-300
+                        "
+                        >
                           Fecha
                         </p>
-                        <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                        <p
+                          className="
+                          mt-1 font-semibold text-gray-900
+                          dark:text-white
+                        "
+                        >
                           {editablePagos[pendingRowForReceipt].fechaPrograma
                             ? new Date(
                                 editablePagos[pendingRowForReceipt]
@@ -6191,10 +7338,20 @@ export default function EnrolledUsersPage() {
                         </p>
                       </div>
                       <div>
-                        <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                        <p
+                          className="
+                          text-xs font-medium text-amber-700
+                          dark:text-amber-300
+                        "
+                        >
                           Monto
                         </p>
-                        <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                        <p
+                          className="
+                          mt-1 font-semibold text-gray-900
+                          dark:text-white
+                        "
+                        >
                           $
                           {Number(
                             editablePagos[pendingRowForReceipt].valor ?? 0
@@ -6206,10 +7363,20 @@ export default function EnrolledUsersPage() {
                       </div>
                       {editablePagos[pendingRowForReceipt].metodo && (
                         <div className="col-span-2">
-                          <p className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                          <p
+                            className="
+                            text-xs font-medium text-amber-700
+                            dark:text-amber-300
+                          "
+                          >
                             Método de Pago
                           </p>
-                          <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                          <p
+                            className="
+                            mt-1 font-semibold text-gray-900
+                            dark:text-white
+                          "
+                          >
                             {editablePagos[pendingRowForReceipt].metodo}
                           </p>
                         </div>
@@ -6220,15 +7387,30 @@ export default function EnrolledUsersPage() {
 
               {/* Mostrar archivo seleccionado */}
               {receiptUploadFile ? (
-                <div className="mb-6 rounded-lg bg-green-50 p-4 dark:bg-green-900/30">
+                <div
+                  className="
+                  mb-6 rounded-lg bg-green-50 p-4
+                  dark:bg-green-900/30
+                "
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex flex-1 items-start gap-3">
                       <div className="mt-1 text-2xl">✅</div>
                       <div className="flex-1">
-                        <p className="font-semibold break-all text-gray-900 dark:text-white">
+                        <p
+                          className="
+                          font-semibold break-all text-gray-900
+                          dark:text-white
+                        "
+                        >
                           {receiptUploadFile.name}
                         </p>
-                        <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        <p
+                          className="
+                          mt-1 text-xs text-gray-600
+                          dark:text-gray-400
+                        "
+                        >
                           {(receiptUploadFile.size / 1024).toFixed(2)} KB
                         </p>
                       </div>
@@ -6237,7 +7419,13 @@ export default function EnrolledUsersPage() {
                   <button
                     type="button"
                     onClick={() => setReceiptUploadFile(null)}
-                    className="mt-3 w-full rounded bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                    className="
+                      mt-3 w-full rounded bg-white px-3 py-2 text-xs
+                      font-semibold text-gray-700 transition
+                      hover:bg-gray-50
+                      dark:bg-gray-700 dark:text-white
+                      dark:hover:bg-gray-600
+                    "
                   >
                     🔄 Cambiar archivo
                   </button>
@@ -6274,24 +7462,51 @@ export default function EnrolledUsersPage() {
                     };
                     input.click();
                   }}
-                  className={`relative mb-6 cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all ${
-                    receiptUploadDragOver
-                      ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30'
-                      : 'border-gray-300 bg-gray-50 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-900/50 dark:hover:border-gray-500'
-                  }`}
+                  className={`
+                    relative mb-6 cursor-pointer rounded-lg border-2
+                    border-dashed p-8 text-center transition-all
+                    ${
+                      receiptUploadDragOver
+                        ? `
+                        border-blue-500 bg-blue-50
+                        dark:border-blue-400 dark:bg-blue-900/30
+                      `
+                        : `
+                        border-gray-300 bg-gray-50
+                        hover:border-gray-400
+                        dark:border-gray-600 dark:bg-gray-900/50
+                        dark:hover:border-gray-500
+                      `
+                    }
+                  `}
                 >
                   <div className="mb-3 text-5xl">📁</div>
-                  <p className="mb-2 text-base font-semibold text-gray-900 dark:text-white">
+                  <p
+                    className="
+                    mb-2 text-base font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
                     {receiptUploadDragOver
                       ? 'Suelta aquí'
                       : 'Arrastra o haz clic'}
                   </p>
-                  <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                  <p
+                    className="
+                    mb-3 text-sm text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
                     {receiptUploadDragOver
                       ? 'El archivo se cargará'
                       : 'Para seleccionar PDF o imagen'}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                  <p
+                    className="
+                    text-xs text-gray-500
+                    dark:text-gray-500
+                  "
+                  >
                     Máximo 10 MB • PDF, PNG, JPEG, JPG
                   </p>
                 </div>
@@ -6304,7 +7519,13 @@ export default function EnrolledUsersPage() {
                     setShowReceiptUploadModal(false);
                     setReceiptUploadFile(null);
                   }}
-                  className="flex-1 rounded-lg bg-gray-200 px-4 py-3 font-semibold text-gray-900 transition hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                  className="
+                    flex-1 rounded-lg bg-gray-200 px-4 py-3 font-semibold
+                    text-gray-900 transition
+                    hover:bg-gray-300
+                    dark:bg-gray-700 dark:text-white
+                    dark:hover:bg-gray-600
+                  "
                 >
                   ✕ Cancelar
                 </button>
@@ -6359,7 +7580,13 @@ export default function EnrolledUsersPage() {
                     }
                   }}
                   disabled={!receiptUploadFile}
-                  className="flex-1 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-600"
+                  className="
+                    flex-1 rounded-lg bg-green-600 px-4 py-3 font-semibold
+                    text-white transition
+                    hover:bg-green-700
+                    disabled:cursor-not-allowed disabled:bg-gray-400
+                    dark:disabled:bg-gray-600
+                  "
                 >
                   {receiptUploadFile ? '✓ Enviar' : '⊙ Selecciona archivo'}
                 </button>
@@ -6371,7 +7598,10 @@ export default function EnrolledUsersPage() {
         {/* ✅ MODAL: Drag & Drop para comprobantes de CARTERA */}
         {showCarteraReceiptUploadModal && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            className="
+              fixed inset-0 z-50 flex items-center justify-center bg-black/80
+              p-4
+            "
             onDragOver={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -6385,28 +7615,58 @@ export default function EnrolledUsersPage() {
               e.stopPropagation();
             }}
           >
-            <div className="w-full max-w-md animate-fade-in rounded-xl bg-white p-8 shadow-2xl dark:bg-gray-800">
+            <div
+              className="
+              w-full max-w-md animate-fade-in rounded-xl bg-white p-8 shadow-2xl
+              dark:bg-gray-800
+            "
+            >
               {/* Header */}
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h2
+                  className="
+                  text-2xl font-bold text-gray-900
+                  dark:text-white
+                "
+                >
                   💳 Comprobante Cartera
                 </h2>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                <p
+                  className="
+                  mt-1 text-sm text-gray-600
+                  dark:text-gray-400
+                "
+                >
                   Sube el comprobante para marcar el estado como ACTIVO
                 </p>
               </div>
 
               {/* Mostrar archivo seleccionado */}
               {carteraReceipt ? (
-                <div className="mb-6 rounded-lg bg-green-50 p-4 dark:bg-green-900/30">
+                <div
+                  className="
+                  mb-6 rounded-lg bg-green-50 p-4
+                  dark:bg-green-900/30
+                "
+                >
                   <div className="flex items-start justify-between">
                     <div className="flex flex-1 items-start gap-3">
                       <div className="mt-1 text-2xl">✅</div>
                       <div className="flex-1">
-                        <p className="font-semibold break-all text-gray-900 dark:text-white">
+                        <p
+                          className="
+                          font-semibold break-all text-gray-900
+                          dark:text-white
+                        "
+                        >
                           {carteraReceipt.name}
                         </p>
-                        <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                        <p
+                          className="
+                          mt-1 text-xs text-gray-600
+                          dark:text-gray-400
+                        "
+                        >
                           {(carteraReceipt.size / 1024).toFixed(2)} KB
                         </p>
                       </div>
@@ -6415,7 +7675,13 @@ export default function EnrolledUsersPage() {
                   <button
                     type="button"
                     onClick={() => setCarteraReceipt(null)}
-                    className="mt-3 w-full rounded bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                    className="
+                      mt-3 w-full rounded bg-white px-3 py-2 text-xs
+                      font-semibold text-gray-700 transition
+                      hover:bg-gray-50
+                      dark:bg-gray-700 dark:text-white
+                      dark:hover:bg-gray-600
+                    "
                   >
                     🔄 Cambiar archivo
                   </button>
@@ -6452,24 +7718,51 @@ export default function EnrolledUsersPage() {
                     };
                     input.click();
                   }}
-                  className={`relative mb-6 cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all ${
-                    carteraReceiptUploadDragOver
-                      ? 'border-blue-500 bg-blue-50 dark:border-blue-400 dark:bg-blue-900/30'
-                      : 'border-gray-300 bg-gray-50 hover:border-gray-400 dark:border-gray-600 dark:bg-gray-900/50 dark:hover:border-gray-500'
-                  }`}
+                  className={`
+                    relative mb-6 cursor-pointer rounded-lg border-2
+                    border-dashed p-8 text-center transition-all
+                    ${
+                      carteraReceiptUploadDragOver
+                        ? `
+                        border-blue-500 bg-blue-50
+                        dark:border-blue-400 dark:bg-blue-900/30
+                      `
+                        : `
+                        border-gray-300 bg-gray-50
+                        hover:border-gray-400
+                        dark:border-gray-600 dark:bg-gray-900/50
+                        dark:hover:border-gray-500
+                      `
+                    }
+                  `}
                 >
                   <div className="mb-3 text-5xl">📁</div>
-                  <p className="mb-2 text-base font-semibold text-gray-900 dark:text-white">
+                  <p
+                    className="
+                    mb-2 text-base font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
                     {carteraReceiptUploadDragOver
                       ? 'Suelta aquí'
                       : 'Arrastra o haz clic'}
                   </p>
-                  <p className="mb-3 text-sm text-gray-600 dark:text-gray-400">
+                  <p
+                    className="
+                    mb-3 text-sm text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
                     {carteraReceiptUploadDragOver
                       ? 'El archivo se cargará'
                       : 'Para seleccionar PDF o imagen'}
                   </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                  <p
+                    className="
+                    text-xs text-gray-500
+                    dark:text-gray-500
+                  "
+                  >
                     Máximo 10 MB • PDF, PNG, JPEG, JPG
                   </p>
                 </div>
@@ -6482,7 +7775,13 @@ export default function EnrolledUsersPage() {
                     setShowCarteraReceiptUploadModal(false);
                     setCarteraReceipt(null);
                   }}
-                  className="flex-1 rounded-lg bg-gray-200 px-4 py-3 font-semibold text-gray-900 transition hover:bg-gray-300 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                  className="
+                    flex-1 rounded-lg bg-gray-200 px-4 py-3 font-semibold
+                    text-gray-900 transition
+                    hover:bg-gray-300
+                    dark:bg-gray-700 dark:text-white
+                    dark:hover:bg-gray-600
+                  "
                 >
                   ✕ Cancelar
                 </button>
@@ -6535,7 +7834,13 @@ export default function EnrolledUsersPage() {
                     }
                   }}
                   disabled={!carteraReceipt}
-                  className="flex-1 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-gray-400 dark:disabled:bg-gray-600"
+                  className="
+                    flex-1 rounded-lg bg-green-600 px-4 py-3 font-semibold
+                    text-white transition
+                    hover:bg-green-700
+                    disabled:cursor-not-allowed disabled:bg-gray-400
+                    dark:disabled:bg-gray-600
+                  "
                 >
                   {carteraReceipt ? '✓ Enviar' : '⊙ Selecciona archivo'}
                 </button>
@@ -6545,21 +7850,40 @@ export default function EnrolledUsersPage() {
         )}
 
         {showModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-            <div className="animate-fadeIn w-full max-w-md scale-100 rounded-lg bg-gray-800 p-6 shadow-xl transition-transform duration-300">
+          <div
+            className="
+            fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4
+            backdrop-blur-sm
+          "
+          >
+            <div
+              className="
+              animate-fadeIn w-full max-w-md scale-100 rounded-lg bg-gray-800
+              p-6 shadow-xl transition-transform duration-300
+            "
+            >
               <h3 className="mb-4 text-center text-xl font-bold text-white">
                 Matricular {selectedStudents.length} estudiante
                 {selectedStudents.length !== 1 && 's'}
               </h3>
 
               {/* Lista de estudiantes seleccionados */}
-              <div className="mb-4 max-h-40 overflow-y-auto rounded-md border border-gray-600 bg-gray-700 p-3 shadow-inner">
+              <div
+                className="
+                mb-4 max-h-40 overflow-y-auto rounded-md border border-gray-600
+                bg-gray-700 p-3 shadow-inner
+              "
+              >
                 {students
                   .filter((s) => selectedStudents.includes(s.id))
                   .map((s) => (
                     <div
                       key={s.id}
-                      className="mb-2 rounded bg-gray-900 p-2 text-sm text-gray-200 shadow hover:bg-gray-700"
+                      className="
+                        mb-2 rounded bg-gray-900 p-2 text-sm text-gray-200
+                        shadow
+                        hover:bg-gray-700
+                      "
                     >
                       {s.name}
                     </div>
@@ -6579,7 +7903,11 @@ export default function EnrolledUsersPage() {
                 <input
                   type="text"
                   placeholder="Buscar curso..."
-                  className="mb-3 w-full rounded border border-gray-600 bg-gray-700 p-2 text-white placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  className="
+                    mb-3 w-full rounded border border-gray-600 bg-gray-700 p-2
+                    text-white placeholder-gray-400
+                    focus:border-blue-500 focus:ring-2 focus:ring-blue-500
+                  "
                   onChange={(e) => {
                     const term = e.target.value.toLowerCase();
                     const filtered = availableCourses.filter((c) =>
@@ -6589,7 +7917,12 @@ export default function EnrolledUsersPage() {
                   }}
                 />
 
-                <div className="max-h-48 space-y-2 overflow-y-auto rounded border border-gray-600 bg-gray-700 p-2 shadow-inner">
+                <div
+                  className="
+                  max-h-48 space-y-2 overflow-y-auto rounded border
+                  border-gray-600 bg-gray-700 p-2 shadow-inner
+                "
+                >
                   {(filteredCourseResults.length > 0
                     ? filteredCourseResults
                     : availableCourses
@@ -6607,7 +7940,10 @@ export default function EnrolledUsersPage() {
                               : [...prev, c.id]
                           )
                         }
-                        className={`flex cursor-pointer items-start justify-between rounded px-3 py-2 transition ${isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-gray-600'}`}
+                        className={`
+                          flex cursor-pointer items-start justify-between
+                          rounded px-3 py-2 transition
+                          ${isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-gray-600'}`}
                       >
                         <div className="flex-1">
                           <div>{c.title}</div>
@@ -6628,17 +7964,34 @@ export default function EnrolledUsersPage() {
               </div>
 
               {/* Acciones */}
-              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <div
+                className="
+                flex flex-col gap-3
+                sm:flex-row sm:justify-end
+              "
+              >
                 <button
                   onClick={() => setShowModal(false)}
-                  className="w-full rounded bg-gray-600 px-4 py-2 text-white transition hover:bg-gray-500 focus:ring-2 focus:ring-gray-400 focus:outline-none sm:w-auto"
+                  className="
+                    w-full rounded bg-gray-600 px-4 py-2 text-white transition
+                    hover:bg-gray-500
+                    focus:ring-2 focus:ring-gray-400 focus:outline-none
+                    sm:w-auto
+                  "
                 >
                   Cancelar
                 </button>
                 <button
                   disabled={selectedCourses.length === 0}
                   onClick={handleEnroll}
-                  className={`w-full rounded bg-blue-600 px-4 py-2 font-semibold text-white transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-400 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto`}
+                  className={`
+                    w-full rounded bg-blue-600 px-4 py-2 font-semibold
+                    text-white transition
+                    hover:bg-blue-700
+                    focus:ring-2 focus:ring-blue-400 focus:outline-none
+                    disabled:cursor-not-allowed disabled:opacity-50
+                    sm:w-auto
+                  `}
                 >
                   Matricular
                 </button>
@@ -6660,7 +8013,12 @@ export default function EnrolledUsersPage() {
           />
 
           {/* Caja */}
-          <div className="relative mx-4 w-full max-w-md rounded-2xl border border-white/10 bg-neutral-900 p-5 shadow-2xl">
+          <div
+            className="
+            relative mx-4 w-full max-w-md rounded-2xl border border-white/10
+            bg-neutral-900 p-5 shadow-2xl
+          "
+          >
             <div className="mb-4">
               <h3 className="text-lg font-semibold">Seleccionar estudiantes</h3>
               <p className="mt-1 text-sm text-neutral-300">
@@ -6686,18 +8044,29 @@ export default function EnrolledUsersPage() {
             </div>
 
             {/* Botones */}
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+            <div
+              className="
+              flex flex-col gap-2
+              sm:flex-row sm:justify-end
+            "
+            >
               <button
                 type="button"
                 onClick={() => setBulkSelectOpen(false)}
-                className="rounded-xl border border-white/15 px-4 py-2 text-sm hover:bg-white/5"
+                className="
+                  rounded-xl border border-white/15 px-4 py-2 text-sm
+                  hover:bg-white/5
+                "
               >
                 Cancelar
               </button>
               <button
                 type="button"
                 onClick={() => handleBulkSelect('visible')}
-                className="rounded-xl bg-neutral-800 px-4 py-2 text-sm hover:bg-neutral-700"
+                className="
+                  rounded-xl bg-neutral-800 px-4 py-2 text-sm
+                  hover:bg-neutral-700
+                "
                 title={`Seleccionar solo los visibles (${displayedStudents.length})`}
               >
                 Solo visibles ({displayedStudents.length})
@@ -6705,7 +8074,11 @@ export default function EnrolledUsersPage() {
               <button
                 type="button"
                 onClick={() => handleBulkSelect('all')}
-                className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-neutral-900 hover:bg-white/90"
+                className="
+                  rounded-xl bg-white px-4 py-2 text-sm font-semibold
+                  text-neutral-900
+                  hover:bg-white/90
+                "
                 title={`Seleccionar todos los filtrados (${sortedStudents.length})`}
               >
                 Todos los filtrados ({sortedStudents.length})
@@ -6717,16 +8090,43 @@ export default function EnrolledUsersPage() {
 
       {/* Modal Vista previa de comprobante */}
       {receiptPreview.open && receiptPreview.url && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4">
-          <div className="relative grid max-h-[90vh] w-full max-w-4xl grid-rows-[auto,1fr,auto] overflow-hidden rounded-xl bg-white shadow-2xl dark:bg-gray-900">
+        <div
+          className="
+          fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4
+        "
+        >
+          <div
+            className="
+            relative grid max-h-[90vh] w-full max-w-4xl
+            grid-rows-[auto,1fr,auto] overflow-hidden rounded-xl bg-white
+            shadow-2xl
+            dark:bg-gray-900
+          "
+          >
             {/* Header */}
-            <div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-              <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <div
+              className="
+              flex items-center justify-between gap-3 border-b border-gray-200
+              px-4 py-3
+              dark:border-gray-700
+            "
+            >
+              <h3
+                className="
+                truncate text-sm font-semibold text-gray-900
+                dark:text-gray-100
+              "
+              >
                 {receiptPreview.name ?? 'Comprobante'}
               </h3>
               <button
                 onClick={closeReceiptPreview}
-                className="inline-flex items-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-800"
+                className="
+                  inline-flex items-center rounded-md p-1.5 text-gray-500
+                  hover:bg-gray-100 hover:text-gray-800
+                  dark:text-gray-300
+                  dark:hover:bg-gray-800
+                "
                 aria-label="Cerrar"
                 title="Cerrar"
               >
@@ -6758,19 +8158,37 @@ export default function EnrolledUsersPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-700">
+            <div
+              className="
+              flex items-center justify-end gap-2 border-t border-gray-200 px-4
+              py-3
+              dark:border-gray-700
+            "
+            >
               <a
                 href={receiptPreview.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="
+                  inline-flex items-center gap-1 rounded-md border
+                  border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700
+                  hover:bg-gray-50
+                  dark:border-gray-600 dark:text-gray-200
+                  dark:hover:bg-gray-800
+                "
               >
                 Abrir en pestaña
               </a>
               <a
                 href={receiptPreview.url}
                 download={receiptPreview.name ?? 'comprobante'}
-                className="inline-flex items-center gap-1 rounded-md bg-gray-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-gray-800 dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-white"
+                className="
+                  inline-flex items-center gap-1 rounded-md bg-gray-900 px-3
+                  py-1.5 text-xs font-semibold text-white
+                  hover:bg-gray-800
+                  dark:bg-gray-100 dark:text-gray-900
+                  dark:hover:bg-white
+                "
               >
                 Descargar
               </a>
@@ -6781,13 +8199,25 @@ export default function EnrolledUsersPage() {
 
       {/* Modal Preview de Plantilla de WhatsApp - IGUAL QUE SUPER-ADMIN */}
       {showTemplatePreview && waSelectedTemplate !== '__TEXT_ONLY__' && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-2xl">
+        <div
+          className="
+          fixed inset-0 z-[9999] flex items-center justify-center bg-black/70
+          p-4 backdrop-blur-sm
+        "
+        >
+          <div
+            className="
+            w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-2xl
+          "
+          >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold">Preview de Plantilla</h3>
               <button
                 onClick={() => setShowTemplatePreview(false)}
-                className="text-gray-400 hover:text-white"
+                className="
+                  text-gray-400
+                  hover:text-white
+                "
               >
                 <X size={24} />
               </button>
@@ -6799,7 +8229,12 @@ export default function EnrolledUsersPage() {
                 {/* Simulación de chat WhatsApp */}
                 <div className="overflow-hidden rounded-xl border border-gray-700">
                   <div className="flex items-center gap-3 bg-[#202C33] px-3 py-2">
-                    <div className="flex size-8 items-center justify-center rounded-full bg-[#00a884]/30 text-xs text-[#00a884]">
+                    <div
+                      className="
+                      flex size-8 items-center justify-center rounded-full
+                      bg-[#00a884]/30 text-xs text-[#00a884]
+                    "
+                    >
                       WA
                     </div>
                     <div className="flex-1">
@@ -6813,14 +8248,22 @@ export default function EnrolledUsersPage() {
 
                   <div className="bg-[#0B141A] p-3">
                     <div
-                      className="ml-auto max-w-[85%] rounded-lg bg-[#005C4B] px-3 py-2 text-[14px] text-white shadow"
+                      className="
+                        ml-auto max-w-[85%] rounded-lg bg-[#005C4B] px-3 py-2
+                        text-[14px] text-white shadow
+                      "
                       style={{ borderTopRightRadius: 4 }}
                     >
                       <div className="break-words whitespace-pre-wrap">
                         {selectedWaTemplate.body}
                       </div>
 
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-gray-200/80">
+                      <div
+                        className="
+                        mt-1 flex items-center justify-end gap-1 text-[11px]
+                        text-gray-200/80
+                      "
+                      >
                         <span>
                           {new Date().toLocaleTimeString([], {
                             hour: '2-digit',
@@ -6879,7 +8322,11 @@ export default function EnrolledUsersPage() {
 
                 <button
                   onClick={() => setShowTemplatePreview(false)}
-                  className="w-full rounded bg-blue-600 px-4 py-2 font-semibold transition hover:bg-blue-700"
+                  className="
+                    w-full rounded bg-blue-600 px-4 py-2 font-semibold
+                    transition
+                    hover:bg-blue-700
+                  "
                 >
                   Cerrar
                 </button>

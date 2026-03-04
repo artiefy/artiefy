@@ -30,19 +30,36 @@ export default function CourseSearchPreview({
 
   if (!hasCourses && !hasPrograms) return null;
   return (
-    <div className="bg-background/95 absolute inset-x-4 z-50 mt-2 max-h-96 overflow-y-auto rounded-lg border border-[#1d283a] text-white shadow-lg sm:inset-x-0">
+    <div
+      className="
+      absolute inset-x-4 z-50 mt-2 max-h-96 overflow-y-auto rounded-lg
+      border border-[#1d283a] bg-background/95 text-white shadow-lg
+      sm:inset-x-0
+    "
+    >
       {hasCourses && (
-        <div className="border-b border-[#1d283a] px-1 pb-2 pt-3 text-white">
-          <p className="mb-1 px-3 text-[11px] uppercase tracking-[0.3em] text-[#94a3b8]">
+        <div className="border-b border-[#1d283a] px-1 pt-3 pb-2 text-white">
+          <p
+            className="
+            mb-1 px-3 text-[11px] tracking-[0.3em] text-[#94a3b8] uppercase
+          "
+          >
             Cursos
           </p>
           {courses.map((course) => (
             <div
               key={course.id}
-              className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 hover:bg-white/5"
+              className="
+                flex cursor-pointer items-center gap-3 rounded-md px-3 py-2
+                hover:bg-white/5
+              "
               onClick={() => onSelectCourse?.(course.id)}
             >
-              <div className="size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800">
+              <div
+                className="
+                size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800
+              "
+              >
                 {course.coverImageKey ? (
                   <Image
                     src={getImageUrl(course.coverImageKey)}
@@ -52,7 +69,12 @@ export default function CourseSearchPreview({
                     className="size-full object-cover"
                   />
                 ) : (
-                  <div className="flex size-full items-center justify-center text-xs text-gray-400">
+                  <div
+                    className="
+                    flex size-full items-center justify-center text-xs
+                    text-gray-400
+                  "
+                  >
                     Sin imagen
                   </div>
                 )}
@@ -71,17 +93,28 @@ export default function CourseSearchPreview({
         </div>
       )}
       {hasPrograms && (
-        <div className={`px-1 pb-2 pt-3`}>
-          <p className="mb-1 px-3 text-[11px] uppercase tracking-[0.3em] text-[#94a3b8]">
+        <div className={`px-1 pt-3 pb-2`}>
+          <p
+            className="
+            mb-1 px-3 text-[11px] tracking-[0.3em] text-[#94a3b8] uppercase
+          "
+          >
             Programas
           </p>
           {programs.map((program) => (
             <div
               key={`program-${program.id}`}
-              className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-2 hover:bg-white/5"
+              className="
+                flex cursor-pointer items-center gap-3 rounded-md px-3 py-2
+                hover:bg-white/5
+              "
               onClick={() => onSelectProgram?.(program.id)}
             >
-              <div className="size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800">
+              <div
+                className="
+                size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800
+              "
+              >
                 {program.coverImageKey ? (
                   <Image
                     src={getImageUrl(program.coverImageKey)}
@@ -91,7 +124,12 @@ export default function CourseSearchPreview({
                     className="size-full object-cover"
                   />
                 ) : (
-                  <div className="flex size-full items-center justify-center text-xs text-gray-400">
+                  <div
+                    className="
+                    flex size-full items-center justify-center text-xs
+                    text-gray-400
+                  "
+                  >
                     Sin imagen
                   </div>
                 )}

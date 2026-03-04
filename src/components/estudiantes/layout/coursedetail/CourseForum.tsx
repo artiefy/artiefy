@@ -437,7 +437,14 @@ export function CourseForum({ courseId }: CourseForumProps) {
 
     return (
       <div
-        className={`focus:ring-ring inline-flex items-center rounded-full border px-2.5 font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none ${item.classes} py-0 text-xs`}
+        className={`
+          inline-flex
+          items-center rounded-full border px-2.5 font-semibold transition-colors
+          focus:ring-2
+          focus:ring-ring focus:ring-offset-2 focus:outline-none
+          ${item.classes}
+          py-0 text-xs
+        `}
       >
         {item.icon}
         {item.label}
@@ -448,10 +455,13 @@ export function CourseForum({ courseId }: CourseForumProps) {
   if (!isSignedIn) {
     return (
       <div
-        className="border-border/50 flex flex-col items-center gap-2 rounded-xl border p-6 text-center"
+        className="
+          flex flex-col items-center gap-2 rounded-xl border border-border/50
+          p-6 text-center
+        "
         style={{ backgroundColor: 'rgba(6, 28, 55)' }}
       >
-        <h3 className="text-foreground text-lg font-semibold">
+        <h3 className="text-lg font-semibold text-foreground">
           Inicia sesión para participar
         </h3>
         <p className="text-sm text-[#94a3b8]">
@@ -464,7 +474,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
   if (forumLoading) {
     return (
       <div
-        className="border-border/50 rounded-xl border p-4 text-sm text-[#94a3b8]"
+        className="
+          rounded-xl border border-border/50 p-4 text-sm text-[#94a3b8]
+        "
         style={{ backgroundColor: 'rgba(6, 28, 55)' }}
       >
         Cargando foro...
@@ -475,10 +487,18 @@ export function CourseForum({ courseId }: CourseForumProps) {
   if (!forum?.id) {
     return (
       <div
-        className="border-border/50 flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center"
+        className="
+          flex flex-col items-center justify-center rounded-xl border
+          border-dashed border-border/50 px-6 py-12 text-center
+        "
         style={{ backgroundColor: 'rgba(6, 28, 55)' }}
       >
-        <div className="bg-muted/50 mb-4 flex size-16 items-center justify-center rounded-full text-black">
+        <div
+          className="
+          mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50
+          text-black
+        "
+        >
           <MessagesSquare className="size-8" />
         </div>
         <h3 className="mb-2 text-lg font-semibold text-slate-100">
@@ -512,8 +532,13 @@ export function CourseForum({ courseId }: CourseForumProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-foreground text-xl font-semibold">
-          <span className="mr-2 inline-flex size-8 items-center justify-center rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]">
+        <h3 className="text-xl font-semibold text-foreground">
+          <span
+            className="
+            mr-2 inline-flex size-8 items-center justify-center rounded-full
+            border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]
+          "
+          >
             <MdOutlineForum className="size-4" />
           </span>
           Foro del curso
@@ -524,14 +549,32 @@ export function CourseForum({ courseId }: CourseForumProps) {
         </p>
       </div>
 
-      <div className="space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4 shadow-sm">
+      <div
+        className="
+        space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4
+        shadow-sm
+      "
+      >
         {errorMessage && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <div
+            className="
+            rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm
+            text-red-400
+          "
+          >
             <p className="font-medium">⚠️ {errorMessage}</p>
           </div>
         )}
         <textarea
-          className="text-foreground focus-visible:ring-primary focus-visible:ring-offset-background min-h-[90px] w-full resize-none rounded-[16px] border border-[#1d283a80] bg-[#01152D80] px-3 py-2 text-sm placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="
+            min-h-[90px]
+            w-full resize-none
+            rounded-[16px] border border-[#1d283a80] bg-[#01152D80] px-3
+            py-2 text-sm text-foreground placeholder:text-[#94a3b8] focus-visible:ring-2
+            focus-visible:ring-primary
+            focus-visible:ring-offset-2 focus-visible:ring-offset-background
+            focus-visible:outline-none
+          "
           placeholder="Inicia una nueva discusión o comparte tu avance..."
           value={newPost}
           onChange={(e) => setNewPost(e.target.value)}
@@ -547,13 +590,19 @@ export function CourseForum({ courseId }: CourseForumProps) {
               alt="Vista previa"
               width={80}
               height={80}
-              className="size-20 rounded-lg border border-[#1d283a80] object-cover"
+              className="
+                size-20 rounded-lg border border-[#1d283a80] object-cover
+              "
               unoptimized
             />
             <button
               type="button"
               onClick={() => setSelectedImage(null)}
-              className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+              className="
+                absolute -top-2 -right-2 flex size-5 items-center justify-center
+                rounded-full bg-red-500 text-white
+                hover:bg-red-600
+              "
             >
               ×
             </button>
@@ -563,7 +612,11 @@ export function CourseForum({ courseId }: CourseForumProps) {
           <div className="flex items-center gap-1 text-[#94a3b8]">
             <label
               htmlFor="forum-image-input"
-              className="inline-flex size-8 cursor-pointer items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
+              className="
+                inline-flex size-8 cursor-pointer items-center justify-center
+                rounded-full transition
+                hover:bg-[#22C4D3] hover:text-white
+              "
               aria-label="Adjuntar imagen"
             >
               <ImageIcon className="size-4" />
@@ -577,7 +630,11 @@ export function CourseForum({ courseId }: CourseForumProps) {
             </label>
             <button
               type="button"
-              className="inline-flex size-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
+              className="
+                inline-flex size-8 items-center justify-center rounded-full
+                transition
+                hover:bg-[#22C4D3] hover:text-white
+              "
               aria-label="Adjuntar video"
               disabled
             >
@@ -585,7 +642,11 @@ export function CourseForum({ courseId }: CourseForumProps) {
             </button>
             <button
               type="button"
-              className="inline-flex size-8 items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white"
+              className="
+                inline-flex size-8 items-center justify-center rounded-full
+                transition
+                hover:bg-[#22C4D3] hover:text-white
+              "
               aria-label="Adjuntar audio"
               disabled
             >
@@ -597,7 +658,18 @@ export function CourseForum({ courseId }: CourseForumProps) {
             onClick={handlePublish}
             disabled={!newPost.trim() || isPublishing || uploadingImage}
             className={cn(
-              'ring-offset-background focus-visible:ring-ring hover:bg-primary/90 inline-flex h-9 items-center justify-center gap-2 rounded-[14px] bg-[#22C4D3] px-3 text-sm font-medium whitespace-nowrap text-[#080C16] transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+              `
+                inline-flex
+                h-9
+                items-center
+                justify-center gap-2 rounded-[14px] bg-[#22C4D3] px-3 text-sm
+                font-medium whitespace-nowrap text-[#080C16] ring-offset-background transition-colors
+                hover:bg-primary/90 focus-visible:ring-2
+                focus-visible:ring-ring focus-visible:ring-offset-2
+                focus-visible:outline-none
+                disabled:pointer-events-none disabled:opacity-50
+                [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+              `,
               (!newPost.trim() || isPublishing || uploadingImage) &&
                 'opacity-60'
             )}
@@ -626,15 +698,23 @@ export function CourseForum({ courseId }: CourseForumProps) {
             return (
               <div
                 key={post.id}
-                className="space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4 shadow-sm"
+                className="
+                  space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780]
+                  p-4 shadow-sm
+                "
               >
                 <div className="flex gap-3">
-                  <span className="bg-accent/20 text-accent flex size-10 items-center justify-center rounded-full text-sm font-semibold">
+                  <span
+                    className="
+                    flex size-10 items-center justify-center rounded-full
+                    bg-accent/20 text-sm font-semibold text-accent
+                  "
+                  >
                     {initials(post.userId?.name)}
                   </span>
                   <div className="flex-1 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-foreground font-semibold">
+                      <span className="font-semibold text-foreground">
                         {post.userId?.name}
                       </span>
                       {renderRoleBadge(post.userId?.role)}
@@ -646,7 +726,13 @@ export function CourseForum({ courseId }: CourseForumProps) {
                       {editingPostId === post.id ? (
                         <div className="space-y-2">
                           <textarea
-                            className="text-foreground/90 text-sm whitespace-pre-wrap w-full resize-none rounded-md border border-[#1d283a80] bg-[#01152D80] px-3 py-2 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                            className="
+                              w-full resize-none rounded-md
+                              border border-[#1d283a80] bg-[#01152D80] px-3
+                              py-2 text-sm whitespace-pre-wrap text-foreground/90
+                              focus-visible:ring-2 focus-visible:ring-primary
+                              focus-visible:outline-none
+                            "
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
                             rows={3}
@@ -658,7 +744,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                 setEditingPostId(null);
                                 setEditContent('');
                               }}
-                              className="px-3 py-1 text-xs text-[#94a3b8] hover:text-white"
+                              className="
+                                px-3 py-1 text-xs text-[#94a3b8]
+                                hover:text-white
+                              "
                             >
                               Cancelar
                             </button>
@@ -669,7 +758,12 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               }
                               disabled={savingPostId === post.id}
                               aria-busy={savingPostId === post.id}
-                              className="px-3 py-1 text-xs bg-[#22C4D3] text-[#080C16] rounded-md hover:bg-[#22C4D3]/90 disabled:opacity-70 disabled:cursor-wait"
+                              className="
+                                rounded-md bg-[#22C4D3] px-3 py-1 text-xs
+                                text-[#080C16]
+                                hover:bg-[#22C4D3]/90
+                                disabled:cursor-wait disabled:opacity-70
+                              "
                             >
                               {savingPostId === post.id ? (
                                 <Loader2 className="size-4 animate-spin" />
@@ -681,10 +775,14 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          <div className="text-foreground/90 text-sm whitespace-pre-wrap group">
+                          <div
+                            className="
+                            group text-sm whitespace-pre-wrap text-foreground/90
+                          "
+                          >
                             {post.content}
                             {post.userId?.id === user?.id && (
-                              <span className="relative inline-block ml-2">
+                              <span className="relative ml-2 inline-block">
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -694,14 +792,26 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                         : post.id
                                     )
                                   }
-                                  className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
+                                  className="
+                                    rounded-full p-1 text-[#94a3b8]
+                                    opacity-0
+                                    transition-opacity
+                                    group-hover:opacity-100
+                                    hover:bg-[#1d283a80]
+                                    hover:text-white
+                                  "
                                   aria-label="Abrir menú"
                                 >
                                   <MoreHorizontal className="size-4" />
                                 </button>
                                 {showMenuPostId === post.id && (
                                   <div
-                                    className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border border-[#1d283a80] shadow-lg z-10 menu-post"
+                                    className="
+                                      menu-post absolute top-1/2
+                                      left-full z-10 ml-2 w-40
+                                      -translate-y-1/2 rounded-lg border border-[#1d283a80]
+                                      shadow-lg
+                                    "
                                     style={{
                                       backgroundColor: '#01152d',
                                       borderColor: 'hsla(217, 27%, 17%, 0.5)',
@@ -714,7 +824,11 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                         setEditContent(post.content);
                                         setShowMenuPostId(null);
                                       }}
-                                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
+                                      className="
+                                        flex w-full items-center gap-2 px-3 py-2
+                                        text-xs text-[#94a3b8]
+                                        hover:bg-[#1d283a80] hover:text-white
+                                      "
                                     >
                                       <Pencil className="size-3" />
                                       Editar
@@ -725,7 +839,11 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                         handleDeletePost(post.id);
                                         setShowMenuPostId(null);
                                       }}
-                                      className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
+                                      className="
+                                        flex w-full items-center gap-2 px-3 py-2
+                                        text-xs text-red-400
+                                        hover:bg-[#1d283a80]
+                                      "
                                     >
                                       <Trash2 className="size-3" />
                                       Eliminar
@@ -741,7 +859,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               alt="Imagen del post"
                               width={640}
                               height={360}
-                              className="mt-2 max-w-md rounded-lg border border-[#1d283a80] h-auto w-full"
+                              className="
+                                mt-2 h-auto w-full max-w-md
+                                rounded-lg border border-[#1d283a80]
+                              "
                               sizes="(max-width: 768px) 100vw, 640px"
                               unoptimized
                             />
@@ -749,15 +870,25 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 pt-1 text-xs text-[#94a3b8]">
+                    <div
+                      className="
+                      flex items-center gap-4 pt-1 text-xs text-[#94a3b8]
+                    "
+                    >
                       <button
                         type="button"
                         onClick={() => toggleLike(post.id)}
                         className={cn(
                           'flex items-center gap-1 transition',
                           likedPosts.has(post.id)
-                            ? 'text-[#22C4D3] hover:text-[#22C4D3]'
-                            : 'text-[#94a3b8] hover:text-white'
+                            ? `
+                              text-[#22C4D3]
+                              hover:text-[#22C4D3]
+                            `
+                            : `
+                              text-[#94a3b8]
+                              hover:text-white
+                            `
                         )}
                       >
                         <ThumbsUp
@@ -775,7 +906,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
                       </button>
                       <button
                         type="button"
-                        className="flex items-center gap-1 transition hover:text-white"
+                        className="
+                          flex items-center gap-1 transition
+                          hover:text-white
+                        "
                         onClick={() =>
                           setReplyingTo((prev) =>
                             prev === post.id ? null : post.id
@@ -795,7 +929,16 @@ export function CourseForum({ courseId }: CourseForumProps) {
                 {replyingTo === post.id && (
                   <div className="ml-12 space-y-2">
                     <textarea
-                      className="border-border/50 text-foreground focus-visible:ring-primary focus-visible:ring-offset-background min-h-[70px] w-full resize-none rounded-md border px-3 py-2 text-sm placeholder:text-[#94a3b8] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+                      className="
+                        min-h-[70px] w-full
+                        resize-none
+                        rounded-md
+                        border border-border/50 px-3 py-2 text-sm text-foreground
+                        placeholder:text-[#94a3b8] focus-visible:ring-2
+                        focus-visible:ring-primary
+                        focus-visible:ring-offset-2 focus-visible:ring-offset-background
+                        focus-visible:outline-none
+                      "
                       style={{ backgroundColor: 'rgba(6, 28, 55, 0.45)' }}
                       placeholder="Escribe una respuesta..."
                       value={replyDrafts[post.id] ?? ''}
@@ -817,7 +960,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
                           alt="Vista previa"
                           width={80}
                           height={80}
-                          className="size-20 rounded-lg border border-[#1d283a80] object-cover"
+                          className="
+                            size-20 rounded-lg border border-[#1d283a80]
+                            object-cover
+                          "
                           unoptimized
                         />
                         <button
@@ -828,16 +974,25 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               [post.id]: null,
                             }))
                           }
-                          className="absolute -right-2 -top-2 flex size-5 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600"
+                          className="
+                            absolute -top-2 -right-2 flex size-5 items-center
+                            justify-center rounded-full bg-red-500 text-white
+                            hover:bg-red-600
+                          "
                         >
                           ×
                         </button>
                       </div>
                     )}
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <label
                         htmlFor={`reply-image-input-${post.id}`}
-                        className="inline-flex size-8 cursor-pointer items-center justify-center rounded-full transition hover:bg-[#22C4D3] hover:text-white text-[#94a3b8]"
+                        className="
+                          inline-flex size-8 cursor-pointer items-center
+                          justify-center rounded-full text-[#94a3b8]
+                          transition hover:bg-[#22C4D3]
+                          hover:text-white
+                        "
                         aria-label="Adjuntar imagen"
                       >
                         <ImageIcon className="size-4" />
@@ -858,8 +1013,18 @@ export function CourseForum({ courseId }: CourseForumProps) {
                           uploadingImage
                         }
                         className={cn(
-                          'inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
-                          'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-primary focus-visible:ring-offset-background',
+                          `
+                            inline-flex items-center gap-2 rounded-md px-3 py-2
+                            text-sm font-medium transition
+                            focus-visible:ring-2 focus-visible:ring-offset-2
+                            focus-visible:outline-none
+                          `,
+                          `
+                            bg-secondary text-secondary-foreground
+                            hover:bg-secondary/80
+                            focus-visible:ring-primary
+                            focus-visible:ring-offset-background
+                          `,
                           (!replyDrafts[post.id]?.trim() ||
                             isReplying[post.id] ||
                             uploadingImage) &&
@@ -883,15 +1048,29 @@ export function CourseForum({ courseId }: CourseForumProps) {
 
                 {postReplies.length > 0 && (
                   <div className="relative mt-3 space-y-4 pl-10">
-                    <span className="pointer-events-none absolute left-4 top-0 h-full w-px bg-[#1f2a3d]" />
+                    <span
+                      className="
+                      pointer-events-none absolute top-0 left-4 h-full w-px
+                      bg-[#1f2a3d]
+                    "
+                    />
                     {postReplies.map((reply) => (
                       <div key={reply.id} className="flex gap-3 pl-1">
-                        <span className="bg-accent/20 text-accent mt-1 flex size-9 items-center justify-center rounded-full text-xs font-semibold">
+                        <span
+                          className="
+                          mt-1 flex size-9 items-center justify-center rounded-full
+                          bg-accent/20 text-xs font-semibold text-accent
+                        "
+                        >
                           {initials(reply.userId?.name)}
                         </span>
-                        <div className="flex-1 space-y-1 border-l border-[#1f2a3d] pl-4">
+                        <div
+                          className="
+                          flex-1 space-y-1 border-l border-[#1f2a3d] pl-4
+                        "
+                        >
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-foreground font-semibold">
+                            <span className="font-semibold text-foreground">
                               {reply.userId?.name}
                             </span>
                             {renderRoleBadge(reply.userId?.role)}
@@ -903,7 +1082,15 @@ export function CourseForum({ courseId }: CourseForumProps) {
                             {editingReplyId === reply.id ? (
                               <div className="space-y-2">
                                 <textarea
-                                  className="text-foreground/90 text-sm whitespace-pre-wrap w-full resize-none rounded-md border border-[#1d283a80] bg-[#01152D80] px-3 py-2 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+                                  className="
+                                    w-full resize-none
+                                    rounded-md border border-[#1d283a80]
+                                    bg-[#01152D80] px-3 py-2
+                                    text-sm whitespace-pre-wrap text-foreground/90
+                                    focus-visible:ring-2
+                                    focus-visible:ring-primary
+                                    focus-visible:outline-none
+                                  "
                                   value={editContent}
                                   onChange={(e) =>
                                     setEditContent(e.target.value)
@@ -917,7 +1104,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                       setEditingReplyId(null);
                                       setEditContent('');
                                     }}
-                                    className="px-3 py-1 text-xs text-[#94a3b8] hover:text-white"
+                                    className="
+                                      px-3 py-1 text-xs text-[#94a3b8]
+                                      hover:text-white
+                                    "
                                   >
                                     Cancelar
                                   </button>
@@ -928,7 +1118,12 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                     }
                                     disabled={savingReplyId === reply.id}
                                     aria-busy={savingReplyId === reply.id}
-                                    className="px-3 py-1 text-xs bg-[#22C4D3] text-[#080C16] rounded-md hover:bg-[#22C4D3]/90 disabled:opacity-70 disabled:cursor-wait"
+                                    className="
+                                      rounded-md bg-[#22C4D3] px-3 py-1
+                                      text-xs text-[#080C16]
+                                      hover:bg-[#22C4D3]/90
+                                      disabled:cursor-wait disabled:opacity-70
+                                    "
                                   >
                                     {savingReplyId === reply.id ? (
                                       <Loader2 className="size-4 animate-spin" />
@@ -940,10 +1135,15 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               </div>
                             ) : (
                               <div className="space-y-2">
-                                <div className="text-foreground/90 text-sm whitespace-pre-wrap group">
+                                <div
+                                  className="
+                                  group text-sm whitespace-pre-wrap
+                                  text-foreground/90
+                                "
+                                >
                                   {reply.content}
                                   {reply.userId?.id === user?.id && (
-                                    <span className="relative inline-block ml-2">
+                                    <span className="relative ml-2 inline-block">
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -953,14 +1153,26 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                               : reply.id
                                           )
                                         }
-                                        className="p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-[#1d283a80] text-[#94a3b8] hover:text-white"
+                                        className="
+                                          rounded-full p-1 text-[#94a3b8]
+                                          opacity-0
+                                          transition-opacity
+                                          group-hover:opacity-100
+                                          hover:bg-[#1d283a80]
+                                          hover:text-white
+                                        "
                                         aria-label="Abrir menú"
                                       >
                                         <MoreHorizontal className="size-4" />
                                       </button>
                                       {showMenuReplyId === reply.id && (
                                         <div
-                                          className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border border-[#1d283a80] shadow-lg z-10 menu-reply"
+                                          className="
+                                            menu-reply absolute top-1/2
+                                            left-full z-10 ml-2
+                                            w-40 -translate-y-1/2 rounded-lg
+                                            border border-[#1d283a80] shadow-lg
+                                          "
                                           style={{
                                             backgroundColor: '#01152d',
                                             borderColor:
@@ -974,7 +1186,12 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                               setEditContent(reply.content);
                                               setShowMenuReplyId(null);
                                             }}
-                                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-[#94a3b8] hover:bg-[#1d283a80] hover:text-white"
+                                            className="
+                                              flex w-full items-center gap-2
+                                              px-3 py-2 text-xs text-[#94a3b8]
+                                              hover:bg-[#1d283a80]
+                                              hover:text-white
+                                            "
                                           >
                                             <Pencil className="size-3" />
                                             Editar
@@ -985,7 +1202,11 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                               handleDeleteReply(reply.id);
                                               setShowMenuReplyId(null);
                                             }}
-                                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-red-400 hover:bg-[#1d283a80]"
+                                            className="
+                                              flex w-full items-center gap-2
+                                              px-3 py-2 text-xs text-red-400
+                                              hover:bg-[#1d283a80]
+                                            "
                                           >
                                             <Trash2 className="size-3" />
                                             Eliminar
@@ -1001,7 +1222,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                     alt="Imagen de respuesta"
                                     width={480}
                                     height={270}
-                                    className="mt-2 max-w-sm rounded-lg border border-[#1d283a80] h-auto w-full"
+                                    className="
+                                      mt-2 h-auto w-full max-w-sm
+                                      rounded-lg border border-[#1d283a80]
+                                    "
                                     sizes="(max-width: 768px) 100vw, 480px"
                                     unoptimized
                                   />
@@ -1019,7 +1243,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
           })
         ) : (
           <div
-            className="border-border/50 rounded-xl border border-dashed p-6 text-center text-sm text-slate-300"
+            className="
+              rounded-xl border border-dashed border-border/50 p-6 text-center
+              text-sm text-slate-300
+            "
             style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
           >
             Aún no hay discusiones. ¡Sé el primero en comentar!

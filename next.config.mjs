@@ -36,7 +36,9 @@ const nextConfig = {
     // Nueva sintaxis remotePatterns Next.js 16 (usa new URL)
     remotePatterns: [
       new URL('https://s3.us-east-2.amazonaws.com/artiefy-upload/**'),
+      new URL('https://artiefy-upload.s3.us-east-2.amazonaws.com/**'),
       new URL('https://placehold.co/**'),
+      new URL('https://i.pravatar.cc/**'),
       new URL('https://img.clerk.com/**'),
       new URL('https://assets.example.com/**'),
     ],

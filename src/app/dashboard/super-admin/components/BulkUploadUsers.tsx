@@ -291,15 +291,27 @@ const BulkUploadUsers = ({
     <div>
       <button
         onClick={() => setModalIsOpen(true)}
-        className="flex items-center gap-2 rounded-md bg-[#00BDD8] px-6 py-2 text-white transition hover:scale-105"
+        className="
+          flex items-center gap-2 rounded-md bg-[#00BDD8] px-6 py-2 text-white
+          transition
+          hover:scale-105
+        "
       >
         <FiUpload /> Usuarios Masivos
       </button>
 
       {modalIsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-all duration-300">
+        <div
+          className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/50
+          backdrop-blur-sm transition-all duration-300
+        "
+        >
           <div
-            className="relative w-full max-w-7xl transform overflow-hidden rounded-2xl bg-white shadow-2xl transition-all duration-300"
+            className="
+              relative w-full max-w-7xl transform overflow-hidden rounded-2xl
+              bg-white shadow-2xl transition-all duration-300
+            "
             style={{ maxHeight: '95vh' }}
           >
             {/* Header */}
@@ -322,7 +334,10 @@ const BulkUploadUsers = ({
                     setFile(null);
                     setMappings([]);
                   }}
-                  className="rounded-full bg-white/10 p-2 transition-colors hover:bg-white/20"
+                  className="
+                    rounded-full bg-white/10 p-2 transition-colors
+                    hover:bg-white/20
+                  "
                 >
                   <FiX size={24} className="text-white" />
                 </button>
@@ -337,14 +352,27 @@ const BulkUploadUsers = ({
               {!showMapping ? (
                 <div className="space-y-6">
                   {/* Drop Zone */}
-                  <div className="group relative rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center transition-all hover:border-[#00BDD8] hover:bg-[#00BDD8]/5">
+                  <div
+                    className="
+                    group relative rounded-xl border-2 border-dashed
+                    border-gray-300 bg-gray-50 p-12 text-center transition-all
+                    hover:border-[#00BDD8] hover:bg-[#00BDD8]/5
+                  "
+                  >
                     <input
                       type="file"
                       accept=".xlsx"
                       onChange={handleFileChange}
-                      className="absolute inset-0 size-full cursor-pointer opacity-0"
+                      className="
+                        absolute inset-0 size-full cursor-pointer opacity-0
+                      "
                     />
-                    <FiUpload className="mx-auto mb-4 text-5xl text-gray-400 transition-colors group-hover:text-[#00BDD8]" />
+                    <FiUpload
+                      className="
+                      mx-auto mb-4 text-5xl text-gray-400 transition-colors
+                      group-hover:text-[#00BDD8]
+                    "
+                    />
                     <p className="mb-2 text-lg font-semibold text-gray-700">
                       {file ? file.name : 'Arrastra tu archivo aquí'}
                     </p>
@@ -367,7 +395,11 @@ const BulkUploadUsers = ({
                     </p>
                     <button
                       onClick={handleDownloadTemplate}
-                      className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white transition-all hover:bg-blue-700 hover:shadow-md"
+                      className="
+                        flex items-center gap-2 rounded-lg bg-blue-600 px-5
+                        py-2.5 font-medium text-white transition-all
+                        hover:bg-blue-700 hover:shadow-md
+                      "
                     >
                       <FiDownload /> Descargar Plantilla
                     </button>
@@ -376,7 +408,12 @@ const BulkUploadUsers = ({
               ) : (
                 <div className="space-y-6">
                   {/* Info Banner */}
-                  <div className="rounded-xl border-l-4 border-blue-500 bg-blue-50 p-5 shadow-sm">
+                  <div
+                    className="
+                    rounded-xl border-l-4 border-blue-500 bg-blue-50 p-5
+                    shadow-sm
+                  "
+                  >
                     <div className="flex items-start gap-3">
                       <div className="rounded-full bg-blue-100 p-2">
                         <FiMove className="text-xl text-blue-600" />
@@ -397,14 +434,24 @@ const BulkUploadUsers = ({
 
                   {/* Status Badge */}
                   {allRequiredMapped ? (
-                    <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700">
+                    <div
+                      className="
+                      flex items-center gap-2 rounded-lg border border-green-200
+                      bg-green-50 px-4 py-3 text-green-700
+                    "
+                    >
                       <FiCheck className="text-lg" />
                       <span className="font-medium">
                         Todos los campos obligatorios están mapeados
                       </span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-700">
+                    <div
+                      className="
+                      flex items-center gap-2 rounded-lg border border-amber-200
+                      bg-amber-50 px-4 py-3 text-amber-700
+                    "
+                    >
                       <FiAlertCircle className="text-lg" />
                       <span className="font-medium">
                         Faltan campos obligatorios por mapear (
@@ -414,7 +461,11 @@ const BulkUploadUsers = ({
                   )}
 
                   {/* Tabla tipo Excel */}
-                  <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+                  <div
+                    className="
+                    overflow-x-auto rounded-xl border border-gray-200 shadow-sm
+                  "
+                  >
                     <table className="w-full border-collapse">
                       <thead>
                         <tr className="border-b-2 border-gray-300 bg-gray-100">
@@ -435,34 +486,57 @@ const BulkUploadUsers = ({
                                 onDrop={(e) =>
                                   handleColumnDrop(e, mapping.excelColumn)
                                 }
-                                className={`border border-gray-300 p-3 text-left transition-all ${
-                                  isOver ? 'scale-105 bg-[#00BDD8]/20' : ''
-                                }`}
+                                className={`
+                                  border border-gray-300 p-3 text-left
+                                  transition-all
+                                  ${isOver ? 'scale-105 bg-[#00BDD8]/20' : ''}
+                                `}
                               >
                                 <div className="space-y-2">
                                   {/* Nombre de la columna Excel */}
-                                  <div className="text-sm font-semibold text-gray-900">
+                                  <div
+                                    className="
+                                    text-sm font-semibold text-gray-900
+                                  "
+                                  >
                                     {mapping.excelColumn}
                                   </div>
 
                                   {/* Campo mapeado o zona de drop */}
                                   <div
-                                    className={`min-h-[60px] rounded-lg border-2 border-dashed p-2 transition-all ${
-                                      isOver
-                                        ? 'border-[#00BDD8] bg-[#00BDD8]/10'
-                                        : mappedField
-                                          ? 'border-green-400 bg-green-50'
-                                          : 'border-gray-300 bg-gray-50'
-                                    }`}
+                                    className={`
+                                      min-h-[60px] rounded-lg border-2
+                                      border-dashed p-2 transition-all
+                                      ${
+                                        isOver
+                                          ? 'border-[#00BDD8] bg-[#00BDD8]/10'
+                                          : mappedField
+                                            ? 'border-green-400 bg-green-50'
+                                            : 'border-gray-300 bg-gray-50'
+                                      }
+                                    `}
                                   >
                                     {mappedField ? (
-                                      <div className="flex items-center justify-between gap-2">
+                                      <div
+                                        className="
+                                        flex items-center justify-between gap-2
+                                      "
+                                      >
                                         <div className="flex-1">
-                                          <div className="text-xs font-semibold text-gray-900">
+                                          <div
+                                            className="
+                                            text-xs font-semibold text-gray-900
+                                          "
+                                          >
                                             {mappedField.label}
                                           </div>
                                           {mappedField.required && (
-                                            <div className="mt-1 flex items-center gap-1 text-xs text-green-600">
+                                            <div
+                                              className="
+                                              mt-1 flex items-center gap-1
+                                              text-xs text-green-600
+                                            "
+                                            >
                                               <FiCheck className="text-xs" />
                                               Obligatorio
                                             </div>
@@ -474,13 +548,21 @@ const BulkUploadUsers = ({
                                               mapping.excelColumn
                                             )
                                           }
-                                          className="text-red-500 transition-colors hover:text-red-700"
+                                          className="
+                                            text-red-500 transition-colors
+                                            hover:text-red-700
+                                          "
                                         >
                                           <FiX size={16} />
                                         </button>
                                       </div>
                                     ) : (
-                                      <div className="flex h-full items-center justify-center text-xs text-gray-400 italic">
+                                      <div
+                                        className="
+                                        flex h-full items-center justify-center
+                                        text-xs text-gray-400 italic
+                                      "
+                                      >
                                         Arrastra campo aquí
                                       </div>
                                     )}
@@ -497,7 +579,10 @@ const BulkUploadUsers = ({
                             {mappings.map((mapping) => (
                               <td
                                 key={`${idx}-${mapping.excelColumn}`}
-                                className="border border-gray-300 p-3 text-sm text-gray-700"
+                                className="
+                                  border border-gray-300 p-3 text-sm
+                                  text-gray-700
+                                "
                               >
                                 {(() => {
                                   const val = row[mapping.excelColumn];
@@ -521,7 +606,10 @@ const BulkUploadUsers = ({
                           <tr>
                             <td
                               colSpan={mappings.length}
-                              className="border border-gray-300 p-3 text-center text-sm text-gray-500 italic"
+                              className="
+                                border border-gray-300 p-3 text-center text-sm
+                                text-gray-500 italic
+                              "
                             >
                               ... y {sampleData.length - 5} filas más
                             </td>
@@ -532,25 +620,55 @@ const BulkUploadUsers = ({
                   </div>
 
                   {/* Campos disponibles para arrastrar */}
-                  <div className="rounded-xl border-2 border-gray-300 bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-                    <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-800">
+                  <div
+                    className="
+                    rounded-xl border-2 border-gray-300 bg-gradient-to-br
+                    from-gray-50 to-gray-100 p-6
+                  "
+                  >
+                    <h3
+                      className="
+                      mb-4 flex items-center gap-2 text-lg font-semibold
+                      text-gray-800
+                    "
+                    >
                       <FiMove className="text-[#00BDD8]" />
                       Campos Disponibles (Arrastra hacia las columnas)
                     </h3>
-                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+                    <div
+                      className="
+                      grid grid-cols-2 gap-3
+                      md:grid-cols-3
+                      lg:grid-cols-6
+                    "
+                    >
                       {dbFields.map((field) => (
                         <div
                           key={field.value}
                           draggable
                           onDragStart={() => handleFieldDragStart(field.value)}
                           onDragEnd={handleFieldDragEnd}
-                          className={`cursor-move rounded-lg border-2 p-3 text-center transition-all hover:scale-105 hover:shadow-lg ${
-                            draggedField === field.value
-                              ? 'scale-105 border-[#00BDD8] bg-[#00BDD8] text-white shadow-lg'
-                              : field.required
-                                ? 'border-red-300 bg-white hover:border-red-400'
-                                : 'border-gray-300 bg-white hover:border-[#00BDD8]'
-                          }`}
+                          className={`
+                            cursor-move rounded-lg border-2 p-3 text-center
+                            transition-all
+                            hover:scale-105 hover:shadow-lg
+                            ${
+                              draggedField === field.value
+                                ? `
+                                scale-105 border-[#00BDD8] bg-[#00BDD8]
+                                text-white shadow-lg
+                              `
+                                : field.required
+                                  ? `
+                                  border-red-300 bg-white
+                                  hover:border-red-400
+                                `
+                                  : `
+                                  border-gray-300 bg-white
+                                  hover:border-[#00BDD8]
+                                `
+                            }
+                          `}
                         >
                           <FiMove className="mx-auto mb-2 text-lg" />
                           <div className="text-sm font-semibold">
@@ -558,11 +676,14 @@ const BulkUploadUsers = ({
                           </div>
                           {field.required && (
                             <div
-                              className={`mt-1 text-xs font-medium ${
-                                draggedField === field.value
-                                  ? 'text-white'
-                                  : 'text-red-600'
-                              }`}
+                              className={`
+                                mt-1 text-xs font-medium
+                                ${
+                                  draggedField === field.value
+                                    ? 'text-white'
+                                    : 'text-red-600'
+                                }
+                              `}
                             >
                               Requerido *
                             </div>
@@ -585,18 +706,33 @@ const BulkUploadUsers = ({
                       setFile(null);
                       setMappings([]);
                     }}
-                    className="rounded-lg border-2 border-gray-300 bg-white px-6 py-2.5 font-medium text-gray-700 transition-all hover:bg-gray-50"
+                    className="
+                      rounded-lg border-2 border-gray-300 bg-white px-6 py-2.5
+                      font-medium text-gray-700 transition-all
+                      hover:bg-gray-50
+                    "
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleUpload}
                     disabled={uploading || !allRequiredMapped}
-                    className="flex items-center gap-2 rounded-md bg-[#00BDD8] px-8 py-2.5 font-semibold text-white transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                    className="
+                      flex items-center gap-2 rounded-md bg-[#00BDD8] px-8
+                      py-2.5 font-semibold text-white transition-all
+                      hover:scale-105
+                      disabled:cursor-not-allowed disabled:opacity-50
+                      disabled:hover:scale-100
+                    "
                   >
                     {uploading ? (
                       <>
-                        <div className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        <div
+                          className="
+                          size-5 animate-spin rounded-full border-2 border-white
+                          border-t-transparent
+                        "
+                        />
                         Subiendo...
                       </>
                     ) : (

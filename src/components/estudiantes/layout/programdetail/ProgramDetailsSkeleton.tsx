@@ -9,7 +9,13 @@ import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 export function ProgramDetailsSkeleton() {
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto max-w-7xl pb-4 md:pb-6 lg:pb-8">
+      <main
+        className="
+        mx-auto max-w-7xl pb-4
+        md:pb-6
+        lg:pb-8
+      "
+      >
         <Card className="overflow-hidden p-0">
           <CardHeader className="px-0">
             <AspectRatio ratio={16 / 6}>

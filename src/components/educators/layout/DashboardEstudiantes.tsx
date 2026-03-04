@@ -145,17 +145,28 @@ function UserModal({ user, isOpen, onClose }: UserModalProps) {
     <Dialog
       open={isOpen}
       onClose={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      className="
+        fixed inset-0 z-50 flex items-center justify-center bg-black/60
+        backdrop-blur-sm
+      "
     >
       <div className="min-h-screen px-4 text-center">
         <span className="inline-block h-screen align-middle" aria-hidden="true">
           &#8203;
         </span>
 
-        <div className="inline-block w-full max-w-2xl transform overflow-hidden rounded-xl bg-gray-900 p-6 text-left align-middle shadow-2xl transition-all">
+        <div
+          className="
+          inline-block w-full max-w-2xl transform overflow-hidden rounded-xl
+          bg-gray-900 p-6 text-left align-middle shadow-2xl transition-all
+        "
+        >
           <Dialog.Title
             as="h3"
-            className="mb-4 border-b border-gray-700 pb-3 text-2xl font-semibold text-white"
+            className="
+              mb-4 border-b border-gray-700 pb-3 text-2xl font-semibold
+              text-white
+            "
           >
             👤 Detalles del Estudiante
           </Dialog.Title>
@@ -211,7 +222,10 @@ function UserModal({ user, isOpen, onClose }: UserModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md bg-blue-600 px-5 py-2 text-sm text-white transition hover:bg-blue-700"
+              className="
+                rounded-md bg-blue-600 px-5 py-2 text-sm text-white transition
+                hover:bg-blue-700
+              "
             >
               Cerrar
             </button>
@@ -289,7 +303,9 @@ function MobileUserCard({
               min={0}
               max={100}
               step={0.5}
-              className="w-12 rounded bg-gray-600 p-[2px] text-center text-xs text-white"
+              className="
+                w-12 rounded bg-gray-600 p-[2px] text-center text-xs text-white
+              "
               value={grades[user.id]?.[activity.id] ?? ''}
               placeholder="--"
               onChange={(e) =>
@@ -317,7 +333,11 @@ function MobileUserCard({
       <div className="mt-2 text-right">
         <button
           onClick={() => onViewDetails(user)}
-          className="inline-flex items-center gap-1 rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700"
+          className="
+            inline-flex items-center gap-1 rounded bg-blue-600 px-2 py-1 text-xs
+            font-medium text-white
+            hover:bg-blue-700
+          "
         >
           <Eye size={14} /> Ver
         </button>
@@ -608,10 +628,22 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
       />
 
       <div className="group relative">
-        <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] opacity-0 blur-sm transition duration-500" />
+        <div
+          className="
+          absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF]
+          opacity-0 blur-sm transition duration-500
+        "
+        />
 
         {/* Header */}
-        <header className="relative z-20 flex flex-col rounded-lg bg-primary p-6 text-center text-2xl font-bold text-[#01142B] shadow-md sm:flex-row sm:items-center sm:justify-between sm:text-left sm:text-3xl">
+        <header
+          className="
+          relative z-20 flex flex-col rounded-lg bg-primary p-6 text-center
+          text-2xl font-bold text-[#01142B] shadow-md
+          sm:flex-row sm:items-center sm:justify-between sm:text-left
+          sm:text-3xl
+        "
+        >
           <h1>📊 Estadísticas de Estudiantes</h1>
         </header>
 
@@ -624,11 +656,17 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                 setActiveTab(tab);
                 setCurrentPage(1);
               }}
-              className={`rounded-lg px-4 py-2 ${
-                activeTab === tab
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
+              className={`
+                rounded-lg px-4 py-2
+                ${
+                  activeTab === tab
+                    ? 'bg-blue-600 text-white'
+                    : `
+                    bg-gray-700 text-gray-300
+                    hover:bg-gray-600
+                  `
+                }
+              `}
             >
               {tab === 'actuales'
                 ? 'Estudiantes Actuales'
@@ -640,7 +678,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         {/* Content */}
         <div className="relative z-20 mt-4 rounded-lg bg-gray-800 p-6">
           {error && currentUsers.length === 0 && (
-            <div className="mb-6 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+            <div
+              className="
+              mb-6 rounded border border-red-400 bg-red-100 px-4 py-3
+              text-red-700
+            "
+            >
               <p>{error}</p>
             </div>
           )}
@@ -662,7 +705,11 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                   placeholder="Nombre o correo..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-md border border-gray-500 px-4 py-2 text-sm text-black focus:ring-2 focus:ring-primary focus:outline-none"
+                  className="
+                    w-full rounded-md border border-gray-500 px-4 py-2 text-sm
+                    text-black
+                    focus:ring-2 focus:ring-primary focus:outline-none
+                  "
                 />
               </div>
 
@@ -671,7 +718,11 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                 <button
                   disabled={!selectedIds.length}
                   onClick={() => handleMarkComplete(selectedIds)}
-                  className="mb-4 rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 disabled:opacity-50"
+                  className="
+                    mb-4 rounded bg-green-600 px-4 py-2 text-sm text-white
+                    hover:bg-green-700
+                    disabled:opacity-50
+                  "
                 >
                   Marcar como completos
                 </button>
@@ -679,14 +730,23 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                 <button
                   disabled={!selectedIds.length}
                   onClick={() => handleMarkIncomplete(selectedIds)}
-                  className="mb-4 rounded bg-red-700 px-4 py-2 text-sm text-white hover:bg-red-950 disabled:opacity-50"
+                  className="
+                    mb-4 rounded bg-red-700 px-4 py-2 text-sm text-white
+                    hover:bg-red-950
+                    disabled:opacity-50
+                  "
                 >
                   Desmarcar como completo
                 </button>
               )}
 
               {/* Mobile cards */}
-              <div className="block space-y-3 bg-gray-800 p-2 sm:hidden">
+              <div
+                className="
+                block space-y-3 bg-gray-800 p-2
+                sm:hidden
+              "
+              >
                 {currentUsers.map((user) => (
                   <MobileUserCard
                     key={user.id}
@@ -701,7 +761,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
               </div>
 
               {/* Desktop table */}
-              <div className="hidden overflow-x-auto rounded-lg border border-gray-600 shadow-md sm:block">
+              <div
+                className="
+                hidden overflow-x-auto rounded-lg border border-gray-600
+                shadow-md
+                sm:block
+              "
+              >
                 <table className="w-full divide-y divide-gray-700 text-white">
                   <thead className="sticky top-0 bg-gray-900">
                     <tr>
@@ -721,34 +787,69 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                           }
                         />
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase">
+                      <th
+                        className="
+                        px-4 py-3 text-left text-xs font-semibold uppercase
+                      "
+                      >
                         Nombre
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase">
+                      <th
+                        className="
+                        px-4 py-3 text-left text-xs font-semibold uppercase
+                      "
+                      >
                         Correo
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold whitespace-nowrap uppercase">
+                      <th
+                        className="
+                        px-4 py-3 text-left text-xs font-semibold
+                        whitespace-nowrap uppercase
+                      "
+                      >
                         Progreso
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold whitespace-nowrap uppercase">
+                      <th
+                        className="
+                        px-4 py-3 text-left text-xs font-semibold
+                        whitespace-nowrap uppercase
+                      "
+                      >
                         Última conexión
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold whitespace-nowrap uppercase">
+                      <th
+                        className="
+                        px-4 py-3 text-left text-xs font-semibold
+                        whitespace-nowrap uppercase
+                      "
+                      >
                         Tiempo
                       </th>
 
                       {activities.map((activity) => (
                         <th
                           key={`${activity.parametro}-${activity.id}`}
-                          className="hidden px-4 py-3 text-center text-xs font-semibold whitespace-nowrap uppercase lg:table-cell"
+                          className="
+                            hidden px-4 py-3 text-center text-xs font-semibold
+                            whitespace-nowrap uppercase
+                            lg:table-cell
+                          "
                         >
-                          <span className="mb-1 block text-[10px] text-blue-400 italic">
+                          <span
+                            className="
+                            mb-1 block text-[10px] text-blue-400 italic
+                          "
+                          >
                             {activity.parametro} ({activity.parametroPeso}%)
                           </span>
                           {activity.name === 'Sin actividad' ? (
                             <button
                               type="button"
-                              className="rounded bg-green-600 px-1 py-0.5 text-[9px] font-bold text-white hover:bg-green-700"
+                              className="
+                                rounded bg-green-600 px-1 py-0.5 text-[9px]
+                                font-bold text-white
+                                hover:bg-green-700
+                              "
                               onClick={() =>
                                 handleCrearActividad(activity.parametroId)
                               }
@@ -761,10 +862,20 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                         </th>
                       ))}
 
-                      <th className="px-4 py-3 text-center text-xs font-semibold whitespace-nowrap uppercase">
+                      <th
+                        className="
+                        px-4 py-3 text-center text-xs font-semibold
+                        whitespace-nowrap uppercase
+                      "
+                      >
                         Nota Final
                       </th>
-                      <th className="px-4 py-3 text-center text-xs font-semibold whitespace-nowrap uppercase">
+                      <th
+                        className="
+                        px-4 py-3 text-center text-xs font-semibold
+                        whitespace-nowrap uppercase
+                      "
+                      >
                         Acciones
                       </th>
                     </tr>
@@ -774,7 +885,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                     {currentUsers.map((user) => (
                       <tr
                         key={user.id}
-                        className="transition-colors hover:bg-gray-700"
+                        className="
+                          transition-colors
+                          hover:bg-gray-700
+                        "
                       >
                         <td className="px-4 text-center">
                           <input
@@ -811,20 +925,36 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                           </div>
                         </td>
 
-                        <td className="px-4 py-2 text-xs whitespace-nowrap text-gray-400">
+                        <td
+                          className="
+                          px-4 py-2 text-xs whitespace-nowrap text-gray-400
+                        "
+                        >
                           {user.lastConnection ?? 'N/D'}
                         </td>
-                        <td className="px-4 py-2 text-xs whitespace-nowrap text-gray-400">
+                        <td
+                          className="
+                          px-4 py-2 text-xs whitespace-nowrap text-gray-400
+                        "
+                        >
                           {user.tiempoEnCurso ?? 'N/D'}
                         </td>
 
                         {activities.map((activity) => (
                           <td
                             key={`${user.id}-${activity.id}`}
-                            className="hidden px-4 py-2 text-center text-xs whitespace-nowrap lg:table-cell"
+                            className="
+                              hidden px-4 py-2 text-center text-xs
+                              whitespace-nowrap
+                              lg:table-cell
+                            "
                           >
                             {activity.name === 'Sin actividad' ? (
-                              <div className="flex items-center justify-center space-x-2">
+                              <div
+                                className="
+                                flex items-center justify-center space-x-2
+                              "
+                              >
                                 <input
                                   type="number"
                                   value={
@@ -834,7 +964,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                     )?.grade ?? 0
                                   }
                                   disabled
-                                  className="w-16 cursor-not-allowed rounded bg-gray-700 p-1 text-center text-white opacity-50"
+                                  className="
+                                    w-16 cursor-not-allowed rounded bg-gray-700
+                                    p-1 text-center text-white opacity-50
+                                  "
                                 />
                                 <button
                                   onClick={() =>
@@ -843,7 +976,11 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                       activity.numberOfActivities
                                     )
                                   }
-                                  className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700"
+                                  className="
+                                    rounded bg-green-600 px-2 py-1 text-xs
+                                    text-white
+                                    hover:bg-green-700
+                                  "
                                 >
                                   Crear
                                 </button>
@@ -854,7 +991,10 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                 min={0}
                                 max={100}
                                 step={0.5}
-                                className="w-16 rounded bg-gray-700 p-1 text-center text-white"
+                                className="
+                                  w-16 rounded bg-gray-700 p-1 text-center
+                                  text-white
+                                "
                                 value={grades[user.id]?.[activity.id] ?? ''}
                                 onChange={(e) =>
                                   handleGradeChange(
@@ -875,20 +1015,33 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                           </td>
                         ))}
 
-                        <td className="px-4 py-2 text-center text-sm font-semibold whitespace-nowrap text-green-300">
+                        <td
+                          className="
+                          px-4 py-2 text-center text-sm font-semibold
+                          whitespace-nowrap text-green-300
+                        "
+                        >
                           {calcNotaFinal(user, activities, grades)}
                         </td>
 
                         <td className="px-4 py-2 text-center whitespace-nowrap">
                           <button
                             onClick={() => openUserDetails(user)}
-                            className="inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
+                            className="
+                              inline-flex items-center gap-1 rounded-md
+                              bg-blue-600 px-3 py-1 text-xs font-medium
+                              text-white
+                              hover:bg-blue-700
+                            "
                           >
                             <Eye size={14} /> Ver
                           </button>
                           <button
                             onClick={() => handleMarkComplete([user.id])}
-                            className="ml-2 text-xs text-green-400 hover:underline"
+                            className="
+                              ml-2 text-xs text-green-400
+                              hover:underline
+                            "
                           >
                             Completar
                           </button>
@@ -907,16 +1060,30 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                   }
                   disabled={currentPage === 1}
                   aria-label="Página anterior"
-                  className="flex size-8 items-center justify-center rounded bg-gray-700 text-white transition hover:bg-gray-600 disabled:opacity-50"
+                  className="
+                    flex size-8 items-center justify-center rounded bg-gray-700
+                    text-white transition
+                    hover:bg-gray-600
+                    disabled:opacity-50
+                  "
                 >
                   <ChevronLeft className="size-4" />
                 </button>
 
-                <span className="rounded bg-gray-800 px-3 py-1 text-sm font-medium text-white">
+                <span
+                  className="
+                  rounded bg-gray-800 px-3 py-1 text-sm font-medium text-white
+                "
+                >
                   <span className="sm:hidden">
                     {currentPage} / {totalPages}
                   </span>
-                  <span className="hidden sm:inline">
+                  <span
+                    className="
+                    hidden
+                    sm:inline
+                  "
+                  >
                     Página {currentPage} de {totalPages}
                   </span>
                 </span>
@@ -927,7 +1094,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                   }
                   disabled={currentPage === totalPages}
                   aria-label="Página siguiente"
-                  className="flex size-8 items-center justify-center rounded bg-gray-700 text-white transition hover:bg-gray-600 disabled:opacity-50"
+                  className="
+                    flex size-8 items-center justify-center rounded bg-gray-700
+                    text-white transition
+                    hover:bg-gray-600
+                    disabled:opacity-50
+                  "
                 >
                   <ChevronRight className="size-4" />
                 </button>

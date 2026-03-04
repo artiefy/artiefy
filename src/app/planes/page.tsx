@@ -5,6 +5,7 @@ import { createElement, useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 import { useAuth } from '@clerk/nextjs';
+import { type OAuthStrategy } from '@clerk/shared/types';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimes, FaTimesCircle } from 'react-icons/fa';
 
@@ -31,12 +32,19 @@ const PlansPage: React.FC = () => {
   const PENDING_PLAN_KEY = 'pendingPlanPurchaseId';
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [oauthTransferStrategy, setOauthTransferStrategy] =
+    useState<OAuthStrategy | null>(null);
   const [authDismissed, setAuthDismissed] = useState(false);
 
   const planIdParam = searchParams?.get('plan_id') ?? null;
+  const shouldShowSignupFromOAuth = searchParams?.get('show_signup') === 'true';
+  const isLoginModalOpen = showLoginModal && !shouldShowSignupFromOAuth;
+  const isSignUpModalOpen = showSignUpModal || shouldShowSignupFromOAuth;
 
   // Detectar plan_id en la URL y abrir modal si corresponde (solo una vez)
   useEffect(() => {
+    if (shouldShowSignupFromOAuth) return;
+
     // Guardar searchParams inicial solo una vez
     if (!initialSearchParamsRef.current) {
       initialSearchParamsRef.current = searchParams;
@@ -112,11 +120,20 @@ const PlansPage: React.FC = () => {
   }, [
     isSignedIn,
     planIdParam,
+    shouldShowSignupFromOAuth,
     showLoginModal,
     showSignUpModal,
     authDismissed,
     searchParams,
   ]);
+
+  const clearShowSignupParam = () => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has('show_signup')) return;
+    url.searchParams.delete('show_signup');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}`);
+  };
 
   // Permitir abrir el modal siempre
   const handlePlanSelect = (plan: Plan) => {
@@ -146,31 +163,38 @@ const PlansPage: React.FC = () => {
 
   const handleLoginSuccess = () => {
     setShowLoginModal(false);
+    setOauthTransferStrategy(null);
     // No abrir manualmente aquí: el useEffect lo hace al detectar isSignedIn + pendingPlanPurchaseId
   };
 
   const handleSignUpSuccess = () => {
     setShowSignUpModal(false);
+    setOauthTransferStrategy(null);
     // No abrir manualmente aquí: el useEffect lo hace al detectar isSignedIn + pendingPlanPurchaseId
   };
 
   const handleAuthClose = () => {
     setShowLoginModal(false);
     setShowSignUpModal(false);
+    setOauthTransferStrategy(null);
     setAuthDismissed(true);
+    clearShowSignupParam();
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(PENDING_PLAN_KEY);
     }
   };
 
-  const handleSwitchToSignUp = () => {
+  const handleSwitchToSignUp = (strategy?: OAuthStrategy) => {
+    setOauthTransferStrategy(strategy ?? null);
     setShowLoginModal(false);
     setShowSignUpModal(true);
   };
 
   const handleSwitchToLogin = () => {
+    setOauthTransferStrategy(null);
     setShowSignUpModal(false);
     setShowLoginModal(true);
+    clearShowSignupParam();
   };
 
   const selectedProduct = selectedPlan ? getProductById(selectedPlan.id) : null;
@@ -183,10 +207,21 @@ const PlansPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <div className="mb-12 px-4 py-12 sm:px-6 lg:px-8">
+      <div
+        className="
+          mb-12 px-4 py-12
+          sm:px-6
+          lg:px-8
+        "
+      >
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto mb-12 max-w-2xl text-center">
-            <h2 className="text-4xl font-extrabold text-white md:text-5xl">
+            <h2
+              className="
+                text-4xl font-extrabold text-white
+                md:text-5xl
+              "
+            >
               Elige tu plan <span className="text-primary">perfecto</span>
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
@@ -195,7 +230,12 @@ const PlansPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
+          <div
+            className="
+              mx-auto grid max-w-6xl gap-6
+              md:grid-cols-3
+            "
+          >
             {allPlans.map((plan) => {
               const isPremium = plan.name === 'Premium';
               const isPro = plan.name === 'Pro';
@@ -211,34 +251,60 @@ const PlansPage: React.FC = () => {
                 <div
                   key={plan.id}
                   aria-disabled={isPlanDisabled}
-                  className={`relative overflow-hidden rounded-lg border border-border bg-card text-card-foreground shadow-sm transition-all duration-300 ${
-                    isEnterprise
-                      ? 'cursor-not-allowed'
-                      : 'hover:-translate-y-2 hover:border-primary/50'
-                  } ${
-                    isCurrentPlanProcessing
-                      ? 'pointer-events-none cursor-not-allowed opacity-60'
-                      : ''
-                  }`}
+                  className={`
+                    relative overflow-hidden rounded-lg border border-border
+                    bg-card text-card-foreground shadow-sm transition-all
+                    duration-300
+                    ${
+                      isEnterprise
+                        ? 'cursor-not-allowed'
+                        : 'hover:-translate-y-2 hover:border-primary/50'
+                    }
+                    ${
+                      isCurrentPlanProcessing
+                        ? 'pointer-events-none cursor-not-allowed opacity-60'
+                        : ''
+                    }
+                  `}
                 >
                   {isPro && (
-                    <div className="absolute top-0 right-0 rounded-bl-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white">
+                    <div
+                      className="
+                        absolute top-0 right-0 rounded-bl-lg bg-green-500 px-3
+                        py-1 text-xs font-semibold text-white
+                      "
+                    >
                       15 días gratis
                     </div>
                   )}
                   {isPremium && (
-                    <div className="absolute top-0 right-0 rounded-bl-lg bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground">
+                    <div
+                      className="
+                        absolute top-0 right-0 rounded-bl-lg bg-primary px-3
+                        py-1 text-xs font-semibold text-primary-foreground
+                      "
+                    >
                       Más popular
                     </div>
                   )}
                   {isEnterprise && (
-                    <div className="absolute top-0 right-0 rounded-bl-lg bg-amber-400 px-3 py-1 text-xs font-semibold text-black">
+                    <div
+                      className="
+                        absolute top-0 right-0 rounded-bl-lg bg-amber-400 px-3
+                        py-1 text-xs font-semibold text-black
+                      "
+                    >
                       Muy pronto
                     </div>
                   )}
 
                   <div className="flex flex-col space-y-1.5 p-6 pb-2 text-center">
-                    <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary text-white">
+                    <div
+                      className="
+                        mx-auto mb-4 flex size-14 items-center justify-center
+                        rounded-2xl bg-primary text-white
+                      "
+                    >
                       {createElement(
                         plan.icon as React.ComponentType<{ className: string }>,
                         { className: 'h-6 w-6' }
@@ -251,7 +317,11 @@ const PlansPage: React.FC = () => {
                       {planDescription}
                     </p>
                     <div className="mt-4">
-                      <span className="font-display text-4xl font-bold text-foreground">
+                      <span
+                        className="
+                          font-display text-4xl font-bold text-foreground
+                        "
+                      >
                         ${getDisplayCopPrice(plan).toLocaleString('es-CO')}
                       </span>
                       <span className="text-muted-foreground">/mes</span>
@@ -265,7 +335,12 @@ const PlansPage: React.FC = () => {
                           key={feature.text}
                           className="flex items-start gap-3"
                         >
-                          <div className="mt-0.5 flex size-5 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
+                          <div
+                            className="
+                              mt-0.5 flex size-5 flex-shrink-0 items-center
+                              justify-center rounded-full bg-primary/20
+                            "
+                          >
                             {feature.available ? (
                               <BsCheck2Circle className="size-3 text-primary" />
                             ) : (
@@ -281,7 +356,12 @@ const PlansPage: React.FC = () => {
                     <Button
                       onClick={() => handlePlanSelect(plan)}
                       disabled={isPlanDisabled}
-                      className="h-10 w-full border border-transparent bg-secondary text-white hover:border-primary/60 hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="
+                        h-10 w-full border border-transparent bg-secondary
+                        text-white
+                        hover:border-primary/60 hover:bg-secondary/80
+                        disabled:cursor-not-allowed disabled:opacity-50
+                      "
                     >
                       {isCurrentPlanProcessing ? 'Cargando...' : ctaLabel}
                     </Button>
@@ -294,17 +374,29 @@ const PlansPage: React.FC = () => {
       </div>
 
       {showModal && selectedPlan && selectedProduct && (
-        <div className="pointer-events-auto fixed inset-0 z-[1000] flex items-center justify-center bg-black/50">
+        <div
+          className="
+            pointer-events-auto fixed inset-0 z-[1000] flex items-center
+            justify-center bg-black/50
+          "
+        >
           <div className="relative w-full max-w-lg rounded-lg bg-white p-4">
             <div className="relative mb-4 flex items-center justify-between">
-              <h3 className="w-full text-center text-xl font-semibold text-gray-900">
+              <h3
+                className="
+                  w-full text-center text-xl font-semibold text-gray-900
+                "
+              >
                 Llena este formulario
                 <br />
                 <span className="font-bold">Plan {selectedPlan.name}</span>
               </h3>
               <button
                 onClick={handleCloseModal}
-                className="absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500 hover:text-gray-700"
+                className="
+                  absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500
+                  hover:text-gray-700
+                "
                 type="button"
               >
                 <FaTimes className="size-6" />
@@ -329,7 +421,7 @@ const PlansPage: React.FC = () => {
 
       {/* Auth primero (planes) */}
       <MiniLoginModal
-        isOpen={showLoginModal}
+        isOpen={isLoginModalOpen}
         onClose={handleAuthClose}
         onLoginSuccess={handleLoginSuccess}
         redirectUrl={pathname}
@@ -337,10 +429,12 @@ const PlansPage: React.FC = () => {
       />
 
       <MiniSignUpModal
-        isOpen={showSignUpModal}
+        isOpen={isSignUpModalOpen}
         onClose={handleAuthClose}
         onSignUpSuccess={handleSignUpSuccess}
         redirectUrl={pathname}
+        autoStartOAuthStrategy={oauthTransferStrategy}
+        onAutoStartOAuthHandled={() => setOauthTransferStrategy(null)}
         onSwitchToLogin={handleSwitchToLogin}
       />
       <Footer />

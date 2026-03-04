@@ -50,7 +50,13 @@ const LessonTopNavBar = ({
 
   return (
     <div className="fixed top-16 right-0 left-0 z-[60] w-full px-4 py-2">
-      <div className="mx-auto grid max-w-[1800px] grid-cols-[minmax(0,1fr)_auto] items-center gap-3 md:grid-cols-[auto_1fr_auto] md:gap-4">
+      <div
+        className="
+        mx-auto grid max-w-[1800px] grid-cols-[minmax(0,1fr)_auto] items-center
+        gap-3
+        md:grid-cols-[auto_1fr_auto] md:gap-4
+      "
+      >
         {/* Left: Close button */}
         <div className="flex min-w-0 items-center gap-2">
           {/* Desktop close X */}
@@ -58,7 +64,15 @@ const LessonTopNavBar = ({
             type="button"
             onClick={onToggleSidebar}
             style={{ backgroundColor: '#061c37cc' }}
-            className="hidden size-10 items-center justify-center gap-2 rounded-full border border-border/50 bg-primary text-sm font-medium whitespace-nowrap backdrop-blur-xl transition-colors hover:bg-purple-600 hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:flex"
+            className="
+              hidden size-10 items-center justify-center gap-2 rounded-full
+              border border-border/50 bg-primary text-sm font-medium
+              whitespace-nowrap backdrop-blur-xl transition-colors
+              hover:bg-purple-600 hover:text-white
+              focus-visible:ring-2 focus-visible:ring-ring
+              focus-visible:outline-none
+              lg:flex
+            "
             aria-label="Close sidebar"
           >
             {isSidebarOpen ? (
@@ -102,7 +116,15 @@ const LessonTopNavBar = ({
             type="button"
             onClick={onToggleSidebar}
             style={{ backgroundColor: '#061c37cc' }}
-            className="inline-flex size-10 items-center justify-center gap-2 rounded-full border border-border/50 bg-primary text-sm font-medium whitespace-nowrap backdrop-blur-xl transition-colors hover:bg-purple-600 hover:text-white focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none lg:hidden"
+            className="
+              inline-flex size-10 items-center justify-center gap-2 rounded-full
+              border border-border/50 bg-primary text-sm font-medium
+              whitespace-nowrap backdrop-blur-xl transition-colors
+              hover:bg-purple-600 hover:text-white
+              focus-visible:ring-2 focus-visible:ring-ring
+              focus-visible:outline-none
+              lg:hidden
+            "
             aria-label="Toggle sidebar"
           >
             {isSidebarOpen ? (
@@ -145,7 +167,13 @@ const LessonTopNavBar = ({
           <Link
             href={`/estudiantes/cursos/${courseId}`}
             style={{ backgroundColor: '#061c37cc' }}
-            className="group hidden min-w-0 items-center gap-2 rounded-full border border-border/50 bg-primary px-4 py-2.5 backdrop-blur-xl transition-all hover:bg-card md:flex"
+            className="
+              group hidden min-w-0 items-center gap-2 rounded-full border
+              border-border/50 bg-primary px-4 py-2.5 backdrop-blur-xl
+              transition-all
+              hover:bg-card
+              md:flex
+            "
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -157,12 +185,17 @@ const LessonTopNavBar = ({
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="size-4 text-muted-foreground transition-colors group-hover:text-foreground"
+              className="
+                size-4 text-muted-foreground transition-colors
+                group-hover:text-foreground
+              "
             >
               <path d="m15 18-6-6 6-6" />
             </svg>
             <span
-              className="max-w-[220px] truncate text-sm font-medium text-foreground"
+              className="
+                max-w-[220px] truncate text-sm font-medium text-foreground
+              "
               title={courseTitle}
               aria-label={courseTitle}
             >
@@ -172,11 +205,19 @@ const LessonTopNavBar = ({
         </div>
 
         {/* Center: Progress indicator */}
-        <div className="hidden min-w-0 items-center gap-3 md:flex md:justify-center">
+        <div
+          className="
+          hidden min-w-0 items-center gap-3
+          md:flex md:justify-center
+        "
+        >
           {/* Progress bars */}
           <div
             style={{ backgroundColor: '#061c37cc' }}
-            className="flex min-w-0 items-center gap-3 rounded-full border border-border/50 bg-[#061c37cc] px-4 py-2.5 backdrop-blur-xl"
+            className="
+              flex min-w-0 items-center gap-3 rounded-full border
+              border-border/50 bg-[#061c37cc] px-4 py-2.5 backdrop-blur-xl
+            "
           >
             <span className="text-xs whitespace-nowrap text-muted-foreground">
               {currentLessonIndex} / {totalLessons}
@@ -186,9 +227,13 @@ const LessonTopNavBar = ({
               {Array.from({ length: 22 }).map((_, i) => (
                 <div
                   key={i}
-                  className={`h-1.5 w-3 rounded-full transition-all duration-300 md:w-4 lg:w-5 xl:w-6 ${
-                    i < completedBars ? 'bg-primary' : 'bg-[#1d283a]'
-                  }`}
+                  className={`
+                    h-1.5 w-3 rounded-full transition-all duration-300
+                    md:w-4
+                    lg:w-5
+                    xl:w-6
+                    ${i < completedBars ? 'bg-primary' : 'bg-[#1d283a]'}
+                  `}
                 />
               ))}
             </div>
@@ -207,11 +252,20 @@ const LessonTopNavBar = ({
             }}
             disabled={isCompleted}
             style={{ backgroundColor: '#061c37cc' }}
-            className={`inline-flex h-10 items-center justify-center gap-2 rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap backdrop-blur-xl transition-all [&_svg]:size-4 [&_svg]:shrink-0 ${
-              isCompleted
-                ? 'border-emerald-400/50 bg-emerald-500/20 text-emerald-300'
-                : 'border-border/50 bg-card/80 text-foreground hover:scale-105'
-            }`}
+            className={`
+              inline-flex h-10 items-center justify-center gap-2 rounded-full
+              border px-4 py-2 text-sm font-medium whitespace-nowrap
+              backdrop-blur-xl transition-all
+              [&_svg]:size-4 [&_svg]:shrink-0
+              ${
+                isCompleted
+                  ? 'border-emerald-400/50 bg-emerald-500/20 text-emerald-300'
+                  : `
+                  border-border/50 bg-card/80 text-foreground
+                  hover:scale-105
+                `
+              }
+            `}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -228,7 +282,12 @@ const LessonTopNavBar = ({
               <circle cx="12" cy="12" r="10" />
               <path d="m9 12 2 2 4-4" />
             </svg>
-            <span className="hidden text-sm font-medium sm:inline">
+            <span
+              className="
+              hidden text-sm font-medium
+              sm:inline
+            "
+            >
               {isCompleted ? 'Completada' : 'Completar'}
             </span>
           </button>

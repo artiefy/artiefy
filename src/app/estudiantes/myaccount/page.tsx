@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 
-import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/nextjs';
+import { RedirectToSignIn, Show } from '@clerk/nextjs';
 
 import { CourseCardSkeleton } from '~/components/estudiantes/layout/CourseCardSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
@@ -14,7 +14,7 @@ export const revalidate = 0;
 export default function MisCoursesPage() {
   return (
     <>
-      <SignedIn>
+      <Show when="signed-in">
         <div className="flex min-h-screen flex-col">
           <Header />
           <main className="flex-1">
@@ -38,7 +38,12 @@ export default function MisCoursesPage() {
                   {/* Programs Section Skeleton */}
                   <section className="mb-12">
                     <Skeleton className="mb-6 h-8 w-64" />
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div
+                      className="
+                        grid grid-cols-1 gap-4
+                        md:grid-cols-2
+                      "
+                    >
                       {[1, 2].map((i) => (
                         <CourseCardSkeleton key={`program-${i}`} />
                       ))}
@@ -48,7 +53,12 @@ export default function MisCoursesPage() {
                   {/* Courses Section Skeleton */}
                   <section className="mb-12">
                     <Skeleton className="mb-6 h-8 w-64" />
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div
+                      className="
+                        grid grid-cols-1 gap-4
+                        md:grid-cols-2
+                      "
+                    >
                       {[1, 2].map((i) => (
                         <CourseCardSkeleton key={`course-${i}`} />
                       ))}
@@ -62,10 +72,10 @@ export default function MisCoursesPage() {
           </main>
           <Footer />
         </div>
-      </SignedIn>
-      <SignedOut>
+      </Show>
+      <Show when="signed-out">
         <RedirectToSignIn />
-      </SignedOut>
+      </Show>
     </>
   );
 }

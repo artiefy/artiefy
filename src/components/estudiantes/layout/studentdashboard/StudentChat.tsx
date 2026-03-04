@@ -528,11 +528,15 @@ export const ChatMessages: React.FC<ChatProps> = ({
     >
       <div
         ref={headerRef}
-        className={`${
-          forceFixedHeader
-            ? 'fixed right-0 left-0 z-30'
-            : 'sticky top-0 left-0 z-20'
-        } flex items-center justify-end gap-2 border-b border-gray-700 bg-[#071024] px-3 py-1.5`}
+        className={`
+          ${
+            forceFixedHeader
+              ? 'fixed right-0 left-0 z-30'
+              : 'sticky top-0 left-0 z-20'
+          }
+          flex items-center justify-end gap-2 border-b border-gray-700
+          bg-[#071024] px-3 py-1.5
+        `}
         style={{ top: 'env(safe-area-inset-top, 0px)' }}
       >
         <button
@@ -546,7 +550,10 @@ export const ChatMessages: React.FC<ChatProps> = ({
               onDeleteHistory();
             }
           }}
-          className="rounded px-3 py-1 text-sm font-semibold text-red-400 transition hover:bg-red-900/30 hover:text-red-300"
+          className="
+            rounded px-3 py-1 text-sm font-semibold text-red-400 transition
+            hover:bg-red-900/30 hover:text-red-300
+          "
           title="Borrar historial"
         >
           Borrar historial
@@ -558,14 +565,20 @@ export const ChatMessages: React.FC<ChatProps> = ({
           message.sender === 'bot' && message.text === '' ? null : (
             <div
               key={message.id}
-              className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} ${message.sender === 'bot' && message.buttons && compactWelcome ? 'mb-1' : 'mb-2'}`}
+              className={`
+                flex
+                ${message.sender === 'user' ? 'justify-end' : 'justify-start'}
+                ${message.sender === 'bot' && message.buttons && compactWelcome ? 'mb-1' : 'mb-2'}`}
             >
               <div
-                className={`flex max-w-[80%] items-start space-x-2 ${
-                  message.sender === 'user'
-                    ? 'flex-row-reverse space-x-reverse'
-                    : 'flex-row'
-                }`}
+                className={`
+                  flex max-w-[80%] items-start space-x-2
+                  ${
+                    message.sender === 'user'
+                      ? 'flex-row-reverse space-x-reverse'
+                      : 'flex-row'
+                  }
+                `}
               >
                 {message.sender === 'bot' ? (
                   <HiMiniCpuChip className="mt-2 text-3xl text-blue-500" />
@@ -584,8 +597,14 @@ export const ChatMessages: React.FC<ChatProps> = ({
                 <div
                   className={
                     message.sender === 'user'
-                      ? 'rounded-2xl bg-gradient-to-r from-[#00bdd8] to-[#009fbf] px-4 py-3 text-white shadow-lg shadow-[#00bdd8]/30'
-                      : 'rounded-2xl border border-white/40 bg-[#102843] px-4 py-3 text-white shadow-lg shadow-black/30'
+                      ? `
+                        rounded-2xl bg-gradient-to-r from-[#00bdd8] to-[#009fbf]
+                        px-4 py-3 text-white shadow-lg shadow-[#00bdd8]/30
+                      `
+                      : `
+                        rounded-2xl border border-white/40 bg-[#102843] px-4
+                        py-3 text-white shadow-lg shadow-black/30
+                      `
                   }
                   style={{
                     overflowWrap: 'anywhere',
@@ -605,11 +624,24 @@ export const ChatMessages: React.FC<ChatProps> = ({
                             key={bidx}
                             type="button"
                             onClick={() => handleLocalButton(btn.action)}
-                            className={`chatbot-menu-btn flex items-center justify-center gap-2 rounded px-4 py-2 font-semibold shadow-md transition ${
-                              isWhatsAppButton
-                                ? 'border-2 border-[#128C7E] bg-white text-[#128C7E] hover:bg-[#f0fdf4]'
-                                : 'border border-[#00bdd8] bg-[#eaf7fa] text-[#00a5c0] hover:bg-[#00bdd8] hover:text-white'
-                            }`}
+                            className={`
+                              chatbot-menu-btn flex items-center justify-center
+                              gap-2 rounded px-4 py-2 font-semibold shadow-md
+                              transition
+                              ${
+                                isWhatsAppButton
+                                  ? `
+                                  border-2 border-[#128C7E] bg-white
+                                  text-[#128C7E]
+                                  hover:bg-[#f0fdf4]
+                                `
+                                  : `
+                                  border border-[#00bdd8] bg-[#eaf7fa]
+                                  text-[#00a5c0]
+                                  hover:bg-[#00bdd8] hover:text-white
+                                `
+                              }
+                            `}
                             style={
                               isWhatsAppButton
                                 ? {
@@ -641,7 +673,11 @@ export const ChatMessages: React.FC<ChatProps> = ({
                             }
                           >
                             <span
-                              className={`flex items-center justify-center gap-2 whitespace-nowrap ${isWhatsAppButton ? 'text-[#128C7E]' : ''}`}
+                              className={`
+                                flex items-center justify-center gap-2
+                                whitespace-nowrap
+                                ${isWhatsAppButton ? 'text-[#128C7E]' : ''}
+                              `}
                             >
                               {isWhatsAppButton && (
                                 <Image
@@ -696,21 +732,35 @@ export const ChatMessages: React.FC<ChatProps> = ({
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder={'Escribe un mensaje...'}
-              className="min-h-10 flex-1 rounded-lg border border-gray-600 bg-gray-900 px-3 py-2 text-base text-white placeholder-gray-400 focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF] focus:outline-none"
+              className="
+                min-h-10 flex-1 rounded-lg border border-gray-600 bg-gray-900
+                px-3 py-2 text-base text-white placeholder-gray-400
+                focus:border-[#3AF4EF] focus:ring-2 focus:ring-[#3AF4EF]
+                focus:outline-none
+              "
               disabled={isLoading}
               style={{ width: '100%', minWidth: 0, maxWidth: '100%' }}
             />
             <button
               type="submit"
               disabled={isLoading}
-              className="bg-secondary group relative flex size-10 flex-shrink-0 items-center justify-center rounded-lg transition-all hover:bg-[#00A5C0] active:scale-90 disabled:bg-gray-300"
+              className="
+                group relative flex size-10 flex-shrink-0 items-center
+                justify-center rounded-lg bg-secondary transition-all
+                hover:bg-[#00A5C0]
+                active:scale-90
+                disabled:bg-gray-300
+              "
             >
               <Image
                 src="/send-svgrepo-com.svg"
                 alt="Send message"
                 width={24}
                 height={24}
-                className="size-6 transition-all duration-200 group-hover:scale-110 group-hover:rotate-12"
+                className="
+                  size-6 transition-all duration-200
+                  group-hover:scale-110 group-hover:rotate-12
+                "
                 priority
               />
             </button>

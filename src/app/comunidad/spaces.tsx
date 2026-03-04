@@ -134,34 +134,68 @@ export default function Component() {
       <main className="container mx-auto px-4 py-8">
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
-          <div className="flex flex-col gap-4 md:flex-row">
+          <div
+            className="
+            flex flex-col gap-4
+            md:flex-row
+          "
+          >
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute top-1/2 left-3 size-5 -translate-y-1/2 transform text-gray-400" />
+                <Search
+                  className="
+                  absolute top-1/2 left-3 size-5 -translate-y-1/2 transform
+                  text-gray-400
+                "
+                />
                 <input
                   type="text"
                   placeholder="Buscar Espacios..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full rounded-lg border border-teal-700/50 bg-slate-800/50 py-3 pr-4 pl-10 text-white placeholder-gray-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
+                  className="
+                    w-full rounded-lg border border-teal-700/50 bg-slate-800/50
+                    py-3 pr-4 pl-10 text-white placeholder-gray-400
+                    focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20
+                    focus:outline-none
+                  "
                 />
               </div>
             </div>
-            <div className="relative w-full md:w-64">
+            <div
+              className="
+              relative w-full
+              md:w-64
+            "
+            >
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex w-full items-center justify-between rounded-lg border border-teal-700/50 bg-slate-800/50 px-4 py-3 text-white hover:border-cyan-400/50 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
+                className="
+                  flex w-full items-center justify-between rounded-lg border
+                  border-teal-700/50 bg-slate-800/50 px-4 py-3 text-white
+                  hover:border-cyan-400/50
+                  focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20
+                  focus:outline-none
+                "
               >
                 <div className="flex items-center">
                   <Filter className="mr-2 size-4" />
                   <span>{selectedCategoryLabel}</span>
                 </div>
                 <ChevronDown
-                  className={`size-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                  className={`
+                    size-4 transition-transform
+                    ${isDropdownOpen ? 'rotate-180' : ''}
+                  `}
                 />
               </button>
               {isDropdownOpen && (
-                <div className="absolute top-full right-0 left-0 z-10 mt-1 rounded-lg border border-teal-700/50 bg-slate-800 shadow-lg">
+                <div
+                  className="
+                  absolute top-full right-0 left-0 z-10 mt-1 rounded-lg border
+                  border-teal-700/50 bg-slate-800 shadow-lg
+                "
+                >
                   {categories.map((category) => (
                     <button
                       key={category.value}
@@ -169,7 +203,12 @@ export default function Component() {
                         setSelectedCategory(category.value);
                         setIsDropdownOpen(false);
                       }}
-                      className="w-full px-4 py-3 text-left text-white first:rounded-t-lg last:rounded-b-lg hover:bg-teal-700/30"
+                      className="
+                        w-full px-4 py-3 text-left text-white
+                        first:rounded-t-lg
+                        last:rounded-b-lg
+                        hover:bg-teal-700/30
+                      "
                     >
                       {category.label} ({category.count})
                     </button>
@@ -182,7 +221,12 @@ export default function Component() {
 
         {/* Page Title */}
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-white md:text-5xl">
+          <h1
+            className="
+            mb-4 text-4xl font-bold text-white
+            md:text-5xl
+          "
+          >
             Espacios <span className="text-cyan-400">Artie</span>
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-gray-300">
@@ -192,11 +236,22 @@ export default function Component() {
         </div>
 
         {/* spaces Grid */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div
+          className="
+          grid grid-cols-1 gap-6
+          md:grid-cols-2
+          lg:grid-cols-3
+        "
+        >
           {filteredspaces.map((space) => (
             <div
               key={space.id}
-              className="overflow-hidden rounded-lg border border-teal-700/30 bg-slate-800/50 transition-all duration-300 hover:border-cyan-400/50 hover:shadow-lg hover:shadow-cyan-400/10"
+              className="
+                overflow-hidden rounded-lg border border-teal-700/30
+                bg-slate-800/50 transition-all duration-300
+                hover:border-cyan-400/50 hover:shadow-lg
+                hover:shadow-cyan-400/10
+              "
             >
               <div className="relative">
                 <Image
@@ -208,11 +263,14 @@ export default function Component() {
                 />
                 <div className="absolute top-3 right-3">
                   <span
-                    className={`rounded-full px-2 py-1 text-xs font-medium ${
-                      space.status === 'Completado'
-                        ? 'bg-green-600 text-white'
-                        : 'bg-orange-600 text-white'
-                    }`}
+                    className={`
+                      rounded-full px-2 py-1 text-xs font-medium
+                      ${
+                        space.status === 'Completado'
+                          ? 'bg-green-600 text-white'
+                          : 'bg-orange-600 text-white'
+                      }
+                    `}
                   >
                     {space.status}
                   </span>
@@ -221,7 +279,11 @@ export default function Component() {
               <div className="p-6">
                 <div className="space-y-4">
                   <div>
-                    <h3 className="mb-2 line-clamp-1 text-xl font-semibold text-white">
+                    <h3
+                      className="
+                      mb-2 line-clamp-1 text-xl font-semibold text-white
+                    "
+                    >
                       {space.title}
                     </h3>
                     <p className="line-clamp-3 text-sm text-gray-300">
@@ -233,19 +295,31 @@ export default function Component() {
                     {space.tags.slice(0, 3).map((tag) => (
                       <span
                         key={tag}
-                        className="rounded-full border border-cyan-400/30 px-2 py-1 text-xs text-cyan-300"
+                        className="
+                          rounded-full border border-cyan-400/30 px-2 py-1
+                          text-xs text-cyan-300
+                        "
                       >
                         {tag}
                       </span>
                     ))}
                     {space.tags.length > 3 && (
-                      <span className="rounded-full border border-gray-600 px-2 py-1 text-xs text-gray-400">
+                      <span
+                        className="
+                        rounded-full border border-gray-600 px-2 py-1 text-xs
+                        text-gray-400
+                      "
+                      >
                         +{space.tags.length - 3}
                       </span>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between text-sm text-gray-400">
+                  <div
+                    className="
+                    flex items-center justify-between text-sm text-gray-400
+                  "
+                  >
                     <div className="flex items-center space-x-1">
                       <User className="size-4" />
                       <span>{space.author}</span>
@@ -256,7 +330,11 @@ export default function Component() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm text-gray-400">
+                  <div
+                    className="
+                    flex items-center justify-between text-sm text-gray-400
+                  "
+                  >
                     <div className="flex items-center space-x-1">
                       <Calendar className="size-4" />
                       <span>
@@ -270,11 +348,23 @@ export default function Component() {
                   </div>
 
                   <div className="flex space-x-2 pt-2">
-                    <button className="flex flex-1 items-center justify-center rounded-lg bg-cyan-600 px-4 py-2 text-white transition-colors hover:bg-cyan-700">
+                    <button
+                      className="
+                      flex flex-1 items-center justify-center rounded-lg
+                      bg-cyan-600 px-4 py-2 text-white transition-colors
+                      hover:bg-cyan-700
+                    "
+                    >
                       <Eye className="mr-2 size-4" />
                       Ver Espacio
                     </button>
-                    <button className="rounded-lg border border-teal-600 px-3 py-2 text-teal-300 transition-colors hover:bg-teal-600/20">
+                    <button
+                      className="
+                      rounded-lg border border-teal-600 px-3 py-2 text-teal-300
+                      transition-colors
+                      hover:bg-teal-600/20
+                    "
+                    >
                       <ExternalLink className="size-4" />
                     </button>
                   </div>
@@ -286,7 +376,12 @@ export default function Component() {
 
         {/* Load More Button */}
         <div className="mt-12 text-center">
-          <button className="rounded-lg bg-cyan-600 px-8 py-3 text-white transition-colors hover:bg-cyan-700">
+          <button
+            className="
+            rounded-lg bg-cyan-600 px-8 py-3 text-white transition-colors
+            hover:bg-cyan-700
+          "
+          >
             Cargar más Espacios
           </button>
         </div>

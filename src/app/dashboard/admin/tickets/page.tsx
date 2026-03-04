@@ -457,12 +457,36 @@ export default function TicketsPage() {
 
   return (
     <>
-      <div className="relative min-h-screen overflow-visible p-4 sm:p-6">
+      <div
+        className="
+        relative min-h-screen overflow-visible p-4
+        sm:p-6
+      "
+      >
         {/* Header with gradient effect */}
         <header className="group relative overflow-hidden rounded-lg p-[1px]">
-          <div className="animate-gradient absolute -inset-0.5 bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
-          <div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
-            <h1 className="text-primary flex items-center gap-3 text-xl font-extrabold tracking-tight sm:text-2xl lg:text-3xl">
+          <div
+            className="
+            absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF]
+            via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500
+          "
+          />
+          <div
+            className="
+            relative flex flex-col items-start justify-between rounded-lg
+            bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
+            group-hover:bg-gray-800/95
+            sm:flex-row sm:items-center sm:p-6
+          "
+          >
+            <h1
+              className="
+              flex items-center gap-3 text-xl font-extrabold tracking-tight
+              text-primary
+              sm:text-2xl
+              lg:text-3xl
+            "
+            >
               Tickets de Soporte
             </h1>
           </div>
@@ -473,41 +497,65 @@ export default function TicketsPage() {
           <div className="flex space-x-8">
             <button
               onClick={() => setActiveTab('created')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === 'created'
-                  ? 'border-blue-500 text-blue-500'
-                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-              }`}
+              className={`
+                border-b-2 pb-4 text-sm font-medium transition-colors
+                ${
+                  activeTab === 'created'
+                    ? 'border-blue-500 text-blue-500'
+                    : `
+                    border-transparent text-gray-400
+                    hover:border-gray-400 hover:text-gray-300
+                  `
+                }
+              `}
             >
               Tickets Creados
             </button>
             <button
               onClick={() => setActiveTab('assigned')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === 'assigned'
-                  ? 'border-blue-500 text-blue-500'
-                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-              }`}
+              className={`
+                border-b-2 pb-4 text-sm font-medium transition-colors
+                ${
+                  activeTab === 'assigned'
+                    ? 'border-blue-500 text-blue-500'
+                    : `
+                    border-transparent text-gray-400
+                    hover:border-gray-400 hover:text-gray-300
+                  `
+                }
+              `}
             >
               Tickets Asignados
             </button>
             <button
               onClick={() => setActiveTab('logs')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === 'logs'
-                  ? 'border-blue-500 text-blue-500'
-                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-              }`}
+              className={`
+                border-b-2 pb-4 text-sm font-medium transition-colors
+                ${
+                  activeTab === 'logs'
+                    ? 'border-blue-500 text-blue-500'
+                    : `
+                    border-transparent text-gray-400
+                    hover:border-gray-400 hover:text-gray-300
+                  `
+                }
+              `}
             >
               Logs
             </button>
             <button
               onClick={() => setActiveTab('chats')}
-              className={`border-b-2 pb-4 text-sm font-medium transition-colors ${
-                activeTab === 'chats'
-                  ? 'border-blue-500 text-blue-500'
-                  : 'border-transparent text-gray-400 hover:border-gray-400 hover:text-gray-300'
-              }`}
+              className={`
+                border-b-2 pb-4 text-sm font-medium transition-colors
+                ${
+                  activeTab === 'chats'
+                    ? 'border-blue-500 text-blue-500'
+                    : `
+                    border-transparent text-gray-400
+                    hover:border-gray-400 hover:text-gray-300
+                  `
+                }
+              `}
             >
               Chats
             </button>
@@ -521,13 +569,33 @@ export default function TicketsPage() {
           <div className="flex flex-wrap items-center gap-4">
             <button
               onClick={handleOpenCreateModal}
-              className="group/button bg-background text-primary hover:bg-primary/10 relative inline-flex items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 px-2 py-1.5 text-xs transition-all sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+              className="
+                group/button relative inline-flex
+                items-center
+                justify-center gap-1 overflow-hidden rounded-md border
+                border-white/20 bg-background px-2 py-1.5 text-xs text-primary
+                transition-all hover:bg-primary/10
+                sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+              "
             >
               <span className="relative z-10 font-medium">
                 Crear Nuevo Ticket
               </span>
-              <Plus className="relative z-10 size-3.5 sm:size-4" />
-              <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+              <Plus
+                className="
+                relative z-10 size-3.5
+                sm:size-4
+              "
+              />
+              <div
+                className="
+                absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                via-white/10 to-transparent opacity-0 transition-all
+                duration-500
+                group-hover/button:[transform:translateX(100%)]
+                group-hover/button:opacity-100
+              "
+              />
             </button>
 
             <button
@@ -561,11 +629,17 @@ export default function TicketsPage() {
                 }
               }}
               disabled={selectedIds.length === 0}
-              className={`rounded-md border px-4 py-2 text-sm transition ${
-                selectedIds.length === 0
-                  ? 'cursor-not-allowed bg-gray-700 text-gray-400'
-                  : 'bg-red-600 text-white hover:bg-red-700'
-              }`}
+              className={`
+                rounded-md border px-4 py-2 text-sm transition
+                ${
+                  selectedIds.length === 0
+                    ? 'cursor-not-allowed bg-gray-700 text-gray-400'
+                    : `
+                    bg-red-600 text-white
+                    hover:bg-red-700
+                  `
+                }
+              `}
             >
               Eliminar Seleccionados
             </button>
@@ -573,7 +647,14 @@ export default function TicketsPage() {
 
           {/* Filtros y contador a la derecha */}
           <div className="flex flex-wrap items-center gap-4">
-            <div className="flex flex-col gap-4 rounded-xl border border-white/10 bg-gradient-to-br from-gray-800/50 to-gray-900/50 p-4 shadow-md backdrop-blur-lg sm:flex-row sm:items-center">
+            <div
+              className="
+              flex flex-col gap-4 rounded-xl border border-white/10
+              bg-gradient-to-br from-gray-800/50 to-gray-900/50 p-4 shadow-md
+              backdrop-blur-lg
+              sm:flex-row sm:items-center
+            "
+            >
               <div className="flex flex-col">
                 <label className="mb-1 text-sm font-medium text-blue-300">
                   Desde
@@ -582,7 +663,13 @@ export default function TicketsPage() {
                   type="date"
                   value={filterStartDate}
                   onChange={(e) => setFilterStartDate(e.target.value)}
-                  className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-400 shadow-inner transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="
+                    rounded-lg border border-gray-700 bg-gray-800 px-3 py-2
+                    text-sm text-white placeholder-gray-400 shadow-inner
+                    transition
+                    focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+                    focus:outline-none
+                  "
                 />
               </div>
               <div className="flex flex-col">
@@ -593,12 +680,25 @@ export default function TicketsPage() {
                   type="date"
                   value={filterEndDate}
                   onChange={(e) => setFilterEndDate(e.target.value)}
-                  className="rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white placeholder-gray-400 shadow-inner transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                  className="
+                    rounded-lg border border-gray-700 bg-gray-800 px-3 py-2
+                    text-sm text-white placeholder-gray-400 shadow-inner
+                    transition
+                    focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+                    focus:outline-none
+                  "
                 />
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-3 rounded-lg border border-blue-400/30 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-4 text-lg font-semibold text-blue-100 shadow-lg backdrop-blur-sm">
+            <div
+              className="
+              inline-flex items-center gap-3 rounded-lg border
+              border-blue-400/30 bg-gradient-to-r from-blue-900 via-blue-800
+              to-blue-900 px-6 py-4 text-lg font-semibold text-blue-100
+              shadow-lg backdrop-blur-sm
+            "
+            >
               <FileText className="size-6 animate-pulse text-blue-300 drop-shadow-md" />
               <span className="tracking-wide">
                 {filteredTickets.length} ticket(s) encontrado(s)
@@ -618,15 +718,34 @@ export default function TicketsPage() {
             />
           </div>
         ) : (
-          <div className="mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl backdrop-blur-sm">
+          <div
+            className="
+            mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl
+            backdrop-blur-sm
+          "
+          >
             <div className="overflow-x-auto">
-              <table className="min-w-full table-auto border-collapse text-xs sm:text-sm">
+              <table
+                className="
+                min-w-full table-auto border-collapse text-xs
+                sm:text-sm
+              "
+              >
                 <thead>
                   {/* Filtros */}
-                  <tr className="border-b border-gray-700 bg-gray-600 text-xs text-white sm:text-sm">
+                  <tr
+                    className="
+                    border-b border-gray-700 bg-gray-600 text-xs text-white
+                    sm:text-sm
+                  "
+                  >
                     <th className="w-6 px-0.5 py-2 text-center">
                       {' '}
-                      <div className="flex items-center justify-center text-xs text-white">
+                      <div
+                        className="
+                        flex items-center justify-center text-xs text-white
+                      "
+                      >
                         <select
                           value={itemsPerPage}
                           onChange={(e) => {
@@ -634,7 +753,10 @@ export default function TicketsPage() {
                             setItemsPerPage(value);
                             setCurrentPage(1); // reiniciar a primera página
                           }}
-                          className="bg-background rounded-md border border-gray-600 p-1 text-xs text-white"
+                          className="
+                            rounded-md border border-gray-600 bg-background p-1
+                            text-xs text-white
+                          "
                         >
                           <option value={10}>10</option>
                           <option value={50}>50</option>
@@ -649,7 +771,12 @@ export default function TicketsPage() {
                         placeholder="ID"
                         value={filterId}
                         onChange={(e) => setFilterId(e.target.value)}
-                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 placeholder-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="
+                          w-full rounded border border-gray-700 bg-background
+                          px-2 py-1 text-xs text-gray-500 placeholder-gray-500
+                          focus:text-white focus:ring-1 focus:ring-blue-500
+                          focus:outline-none
+                        "
                       />
                     </th>
                     <th className="min-w-[140px] px-1 py-2">
@@ -657,7 +784,12 @@ export default function TicketsPage() {
                         value={filterEmail}
                         onChange={(e) => setFilterEmail(e.target.value)}
                         title={filterEmail || 'Todos los emails'}
-                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="
+                          w-full rounded border border-gray-700 bg-background
+                          px-2 py-1 text-xs text-gray-500
+                          focus:text-white focus:ring-1 focus:ring-blue-500
+                          focus:outline-none
+                        "
                       >
                         <option value="">Todos los emails</option>
                         {uniqueUsers.map((user) => (
@@ -674,7 +806,12 @@ export default function TicketsPage() {
                         title={
                           filterType === 'all' ? 'Todos los tipos' : filterType
                         }
-                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="
+                          w-full rounded border border-gray-700 bg-background
+                          px-2 py-1 text-xs text-gray-500
+                          focus:text-white focus:ring-1 focus:ring-blue-500
+                          focus:outline-none
+                        "
                       >
                         <option value="all">Todos los tipos</option>
                         <option value="bug">Bug</option>
@@ -692,7 +829,12 @@ export default function TicketsPage() {
                             ? 'Todos los estados'
                             : filterStatus
                         }
-                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="
+                          w-full rounded border border-gray-700 bg-background
+                          px-2 py-1 text-xs text-gray-500
+                          focus:text-white focus:ring-1 focus:ring-blue-500
+                          focus:outline-none
+                        "
                       >
                         <option value="all">Todos los estados</option>
                         <option value="abierto">Abierto</option>
@@ -707,7 +849,12 @@ export default function TicketsPage() {
                         value={filterAssignedTo}
                         onChange={(e) => setFilterAssignedTo(e.target.value)}
                         title={filterAssignedTo || 'Todos los asignados'}
-                        className="bg-background w-full rounded border border-gray-700 px-2 py-1 text-xs text-gray-500 focus:text-white focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                        className="
+                          w-full rounded border border-gray-700 bg-background
+                          px-2 py-1 text-xs text-gray-500
+                          focus:text-white focus:ring-1 focus:ring-blue-500
+                          focus:outline-none
+                        "
                       >
                         <option value="">Todos los asignados</option>
                         {uniqueAssignedTo.map((name) => (
@@ -724,10 +871,18 @@ export default function TicketsPage() {
                   </tr>
 
                   {/* Títulos */}
-                  <tr className="bg-background border-b border-gray-700 text-xs text-gray-300 sm:text-sm">
+                  <tr
+                    className="
+                    border-b border-gray-700 bg-background text-xs text-gray-300
+                    sm:text-sm
+                  "
+                  >
                     <th className="w-6 px-0.5 py-2 text-center" />
                     <th
-                      className="w-12 cursor-pointer px-0.5 py-2 text-left whitespace-nowrap"
+                      className="
+                        w-12 cursor-pointer px-0.5 py-2 text-left
+                        whitespace-nowrap
+                      "
                       onClick={() => setSortByIdAsc((prev) => !prev)}
                     >
                       ID {sortByIdAsc ? '↑' : '↓'}
@@ -770,7 +925,10 @@ export default function TicketsPage() {
                     paginatedTickets.map((ticket) => (
                       <tr
                         key={ticket.id}
-                        className="group transition-colors hover:bg-gray-700/50"
+                        className="
+                          group transition-colors
+                          hover:bg-gray-700/50
+                        "
                       >
                         <td className="w-6 px-0.5 py-2 text-center">
                           <input
@@ -783,7 +941,9 @@ export default function TicketsPage() {
                           #{ticket.id}
                         </td>
                         <td
-                          className="max-w-[180px] truncate px-1 py-2 whitespace-nowrap"
+                          className="
+                            max-w-[180px] truncate px-1 py-2 whitespace-nowrap
+                          "
                           title={ticket.email}
                         >
                           {ticket.email}
@@ -791,20 +951,29 @@ export default function TicketsPage() {
                         <td className="px-1 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span
-                              className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                                ticket.tipo === 'bug'
-                                  ? 'bg-red-500/10 text-red-500'
-                                  : ticket.tipo === 'revision'
-                                    ? 'bg-yellow-500/10 text-yellow-500'
-                                    : ticket.tipo === 'logs'
-                                      ? 'bg-purple-500/10 text-purple-500'
-                                      : 'bg-gray-500/10 text-gray-500'
-                              }`}
+                              className={`
+                                inline-block rounded-full px-1.5 py-0.5
+                                text-[10px] font-medium
+                                ${
+                                  ticket.tipo === 'bug'
+                                    ? 'bg-red-500/10 text-red-500'
+                                    : ticket.tipo === 'revision'
+                                      ? 'bg-yellow-500/10 text-yellow-500'
+                                      : ticket.tipo === 'logs'
+                                        ? 'bg-purple-500/10 text-purple-500'
+                                        : 'bg-gray-500/10 text-gray-500'
+                                }
+                              `}
                             >
                               {ticket.tipo}
                             </span>
                             {ticket.unreadCount && ticket.unreadCount > 0 && (
-                              <span className="inline-flex items-center rounded-full bg-red-500 px-2 py-0.5 text-[10px] font-semibold text-white">
+                              <span
+                                className="
+                                inline-flex items-center rounded-full bg-red-500
+                                px-2 py-0.5 text-[10px] font-semibold text-white
+                              "
+                              >
                                 Nuevo
                               </span>
                             )}
@@ -812,23 +981,29 @@ export default function TicketsPage() {
                         </td>
                         <td className="px-1 py-2 whitespace-nowrap">
                           <span
-                            className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
-                              ticket.estado === 'abierto'
-                                ? 'bg-green-500/10 text-green-500'
-                                : ticket.estado === 'en proceso'
-                                  ? 'bg-blue-500/10 text-blue-500'
-                                  : ticket.estado === 'en revision'
-                                    ? 'bg-yellow-500/10 text-yellow-500'
-                                    : ticket.estado === 'solucionado'
-                                      ? 'bg-purple-500/10 text-purple-500'
-                                      : 'bg-gray-500/10 text-gray-500'
-                            }`}
+                            className={`
+                              inline-block rounded-full px-1.5 py-0.5
+                              text-[10px] font-medium
+                              ${
+                                ticket.estado === 'abierto'
+                                  ? 'bg-green-500/10 text-green-500'
+                                  : ticket.estado === 'en proceso'
+                                    ? 'bg-blue-500/10 text-blue-500'
+                                    : ticket.estado === 'en revision'
+                                      ? 'bg-yellow-500/10 text-yellow-500'
+                                      : ticket.estado === 'solucionado'
+                                        ? 'bg-purple-500/10 text-purple-500'
+                                        : 'bg-gray-500/10 text-gray-500'
+                              }
+                            `}
                           >
                             {ticket.estado}
                           </span>
                         </td>
                         <td
-                          className="max-w-[150px] truncate px-1 py-2 whitespace-nowrap"
+                          className="
+                            max-w-[150px] truncate px-1 py-2 whitespace-nowrap
+                          "
                           title={
                             ticket.assignedUsers &&
                             ticket.assignedUsers.length > 0
@@ -861,10 +1036,18 @@ export default function TicketsPage() {
                                 void markTicketAsRead(ticket.id);
                                 setViewTicket(ticket);
                               }}
-                              className="rounded-md p-1 hover:bg-blue-500/10 hover:text-blue-500"
+                              className="
+                                rounded-md p-1
+                                hover:bg-blue-500/10 hover:text-blue-500
+                              "
                               title="Ver detalles"
                             >
-                              <Info className="size-3.5 sm:size-4" />
+                              <Info
+                                className="
+                                size-3.5
+                                sm:size-4
+                              "
+                              />
                             </button>
                             <button
                               onClick={() => {
@@ -872,17 +1055,33 @@ export default function TicketsPage() {
                                 setSelectedTicket(ticket);
                                 setIsModalOpen(true);
                               }}
-                              className="rounded-md p-1 hover:bg-gray-700"
+                              className="
+                                rounded-md p-1
+                                hover:bg-gray-700
+                              "
                               title="Editar"
                             >
-                              <Pencil className="size-3.5 sm:size-4" />
+                              <Pencil
+                                className="
+                                size-3.5
+                                sm:size-4
+                              "
+                              />
                             </button>
                             <button
                               onClick={() => void handleDelete(ticket.id)}
-                              className="rounded-md p-1 hover:bg-red-500/10 hover:text-red-500"
+                              className="
+                                rounded-md p-1
+                                hover:bg-red-500/10 hover:text-red-500
+                              "
                               title="Eliminar"
                             >
-                              <Trash2 className="size-3.5 sm:size-4" />
+                              <Trash2
+                                className="
+                                size-3.5
+                                sm:size-4
+                              "
+                              />
                             </button>
                           </div>
                         </td>
@@ -892,13 +1091,21 @@ export default function TicketsPage() {
                 </tbody>
               </table>
               {itemsPerPage !== -1 && (
-                <div className="mt-4 mb-6 flex items-center justify-center gap-2 text-sm text-white">
+                <div
+                  className="
+                  mt-4 mb-6 flex items-center justify-center gap-2 text-sm
+                  text-white
+                "
+                >
                   <button
                     onClick={() =>
                       setCurrentPage((prev) => Math.max(prev - 1, 1))
                     }
                     disabled={currentPage === 1}
-                    className="rounded-md border border-gray-600 bg-gray-800 px-3 py-1 disabled:opacity-50"
+                    className="
+                      rounded-md border border-gray-600 bg-gray-800 px-3 py-1
+                      disabled:opacity-50
+                    "
                   >
                     Anterior
                   </button>
@@ -920,7 +1127,10 @@ export default function TicketsPage() {
                       currentPage >=
                       Math.ceil(filteredTickets.length / itemsPerPage)
                     }
-                    className="rounded-md border border-gray-600 bg-gray-800 px-3 py-1 disabled:opacity-50"
+                    className="
+                      rounded-md border border-gray-600 bg-gray-800 px-3 py-1
+                      disabled:opacity-50
+                    "
                   >
                     Siguiente
                   </button>
@@ -931,31 +1141,73 @@ export default function TicketsPage() {
         )}
 
         {viewTicket && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/60 p-4">
-            <div className="relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-gray-700 bg-gray-900 p-4 shadow-2xl md:p-6 lg:p-10">
+          <div
+            className="
+            fixed inset-0 z-50 flex items-center justify-center overflow-hidden
+            bg-black/60 p-4
+          "
+          >
+            <div
+              className="
+              relative max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl
+              border border-gray-700 bg-gray-900 p-4 shadow-2xl
+              md:p-6
+              lg:p-10
+            "
+            >
               <button
                 onClick={() => setViewTicket(null)}
-                className="absolute top-4 right-4 rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                className="
+                  absolute top-4 right-4 rounded-full p-2 text-gray-400
+                  transition-colors
+                  hover:bg-gray-800 hover:text-white
+                "
                 aria-label="Close modal"
               >
                 ✕
               </button>
 
-              <h2 className="mb-6 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+              <h2
+                className="
+                mb-6 text-2xl font-extrabold tracking-tight text-white
+                sm:text-3xl
+              "
+              >
                 Detalles del Ticket #{viewTicket.id}
               </h2>
 
-              <div className="grid gap-8 lg:grid-cols-2">
+              <div
+                className="
+                grid gap-8
+                lg:grid-cols-2
+              "
+              >
                 <div className="space-y-6">
-                  <div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
-                    <h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
+                  <div
+                    className="
+                    rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                  "
+                  >
+                    <h3
+                      className="
+                      mb-2 text-sm font-semibold text-gray-400 uppercase
+                    "
+                    >
                       Usuario
                     </h3>
                     <p className="text-lg text-white">{viewTicket.email}</p>
                   </div>
 
-                  <div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
-                    <h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
+                  <div
+                    className="
+                    rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                  "
+                  >
+                    <h3
+                      className="
+                      mb-2 text-sm font-semibold text-gray-400 uppercase
+                    "
+                    >
                       Descripción
                     </h3>
                     <p className="text-lg whitespace-pre-wrap text-white">
@@ -963,20 +1215,32 @@ export default function TicketsPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
-                    <h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
+                  <div
+                    className="
+                    rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                  "
+                  >
+                    <h3
+                      className="
+                      mb-2 text-sm font-semibold text-gray-400 uppercase
+                    "
+                    >
                       Tipo
                     </h3>
                     <span
-                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${
-                        viewTicket.tipo === 'bug'
-                          ? 'bg-red-500/10 text-red-400'
-                          : viewTicket.tipo === 'revision'
-                            ? 'bg-yellow-500/10 text-yellow-400'
-                            : viewTicket.tipo === 'logs'
-                              ? 'bg-purple-500/10 text-purple-400'
-                              : 'bg-gray-500/10 text-gray-400'
-                      }`}
+                      className={`
+                        inline-block rounded-full px-3 py-1 text-sm font-medium
+                        capitalize
+                        ${
+                          viewTicket.tipo === 'bug'
+                            ? 'bg-red-500/10 text-red-400'
+                            : viewTicket.tipo === 'revision'
+                              ? 'bg-yellow-500/10 text-yellow-400'
+                              : viewTicket.tipo === 'logs'
+                                ? 'bg-purple-500/10 text-purple-400'
+                                : 'bg-gray-500/10 text-gray-400'
+                        }
+                      `}
                     >
                       {viewTicket.tipo}
                     </span>
@@ -984,29 +1248,49 @@ export default function TicketsPage() {
                 </div>
 
                 <div className="space-y-6">
-                  <div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
-                    <h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
+                  <div
+                    className="
+                    rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                  "
+                  >
+                    <h3
+                      className="
+                      mb-2 text-sm font-semibold text-gray-400 uppercase
+                    "
+                    >
                       Estado
                     </h3>
                     <span
-                      className={`inline-block rounded-full px-3 py-1 text-sm font-medium capitalize ${
-                        viewTicket.estado === 'abierto'
-                          ? 'bg-green-500/10 text-green-400'
-                          : viewTicket.estado === 'en proceso'
-                            ? 'bg-blue-500/10 text-blue-400'
-                            : viewTicket.estado === 'en revision'
-                              ? 'bg-yellow-500/10 text-yellow-400'
-                              : viewTicket.estado === 'solucionado'
-                                ? 'bg-purple-500/10 text-purple-400'
-                                : 'bg-gray-500/10 text-gray-400'
-                      }`}
+                      className={`
+                        inline-block rounded-full px-3 py-1 text-sm font-medium
+                        capitalize
+                        ${
+                          viewTicket.estado === 'abierto'
+                            ? 'bg-green-500/10 text-green-400'
+                            : viewTicket.estado === 'en proceso'
+                              ? 'bg-blue-500/10 text-blue-400'
+                              : viewTicket.estado === 'en revision'
+                                ? 'bg-yellow-500/10 text-yellow-400'
+                                : viewTicket.estado === 'solucionado'
+                                  ? 'bg-purple-500/10 text-purple-400'
+                                  : 'bg-gray-500/10 text-gray-400'
+                        }
+                      `}
                     >
                       {viewTicket.estado}
                     </span>
                   </div>
 
-                  <div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
-                    <h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
+                  <div
+                    className="
+                    rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                  "
+                  >
+                    <h3
+                      className="
+                      mb-2 text-sm font-semibold text-gray-400 uppercase
+                    "
+                    >
                       Asignado a
                     </h3>
                     <p className="text-lg text-white">
@@ -1017,8 +1301,16 @@ export default function TicketsPage() {
                     </p>
                   </div>
 
-                  <div className="rounded-lg border border-gray-800 bg-gray-800/50 p-4">
-                    <h3 className="mb-2 text-sm font-semibold text-gray-400 uppercase">
+                  <div
+                    className="
+                    rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                  "
+                  >
+                    <h3
+                      className="
+                      mb-2 text-sm font-semibold text-gray-400 uppercase
+                    "
+                    >
                       Comentario Principal
                     </h3>
                     <p className="text-lg whitespace-pre-wrap text-white">
@@ -1029,18 +1321,34 @@ export default function TicketsPage() {
 
                 {/* Archivos Adjuntos */}
                 <div className="lg:col-span-2">
-                  <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+                  <div
+                    className="
+                    space-y-4 rounded-lg border border-gray-800 bg-gray-800/50
+                    p-4
+                  "
+                  >
                     <h3 className="text-lg font-medium text-white">
                       Archivos Adjuntos
                     </h3>
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div
+                      className="
+                      grid gap-4
+                      sm:grid-cols-2
+                      lg:grid-cols-3
+                    "
+                    >
                       {/* Imagen */}
                       {viewTicket.coverImageKey && (
                         <div className="space-y-2">
                           <p className="text-sm font-medium text-gray-300">
                             📷 Imagen
                           </p>
-                          <div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
+                          <div
+                            className="
+                            relative h-32 overflow-hidden rounded-lg border
+                            border-gray-600
+                          "
+                          >
                             <Image
                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${viewTicket.coverImageKey}`}
                               alt="Imagen de soporte"
@@ -1057,7 +1365,12 @@ export default function TicketsPage() {
                           <p className="text-sm font-medium text-gray-300">
                             🎥 Video
                           </p>
-                          <div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
+                          <div
+                            className="
+                            relative h-32 overflow-hidden rounded-lg border
+                            border-gray-600
+                          "
+                          >
                             <video
                               controls
                               className="size-full object-contain"
@@ -1081,7 +1394,11 @@ export default function TicketsPage() {
                             href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${viewTicket.documentKey}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="inline-block rounded-lg bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-400 hover:bg-blue-500/20"
+                            className="
+                              inline-block rounded-lg bg-blue-500/10 px-3 py-2
+                              text-sm font-medium text-blue-400
+                              hover:bg-blue-500/20
+                            "
                           >
                             📄 Ver Documento
                           </a>
@@ -1093,11 +1410,21 @@ export default function TicketsPage() {
 
                 {/* Comentarios */}
                 <div className="lg:col-span-2">
-                  <div className="space-y-4 rounded-lg border border-gray-800 bg-gray-800/50 p-4">
+                  <div
+                    className="
+                    space-y-4 rounded-lg border border-gray-800 bg-gray-800/50
+                    p-4
+                  "
+                  >
                     <h3 className="text-lg font-medium text-white">
                       Historial de Chat
                     </h3>
-                    <div className="max-h-[40vh] space-y-3 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900/50 p-4">
+                    <div
+                      className="
+                      max-h-[40vh] space-y-3 overflow-y-auto rounded-lg border
+                      border-gray-700 bg-gray-900/50 p-4
+                    "
+                    >
                       {isLoadingComments ? (
                         <div className="flex items-center justify-center py-4">
                           <Loader2 className="size-6 animate-spin text-blue-500" />
@@ -1111,9 +1438,17 @@ export default function TicketsPage() {
                           .map((comment, index) => (
                             <div
                               key={index}
-                              className="rounded-lg border border-gray-700 bg-gray-800/80 p-4 backdrop-blur-sm"
+                              className="
+                                rounded-lg border border-gray-700 bg-gray-800/80
+                                p-4 backdrop-blur-sm
+                              "
                             >
-                              <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div
+                                className="
+                                flex flex-wrap items-center justify-between
+                                gap-2
+                              "
+                              >
                                 <span className="font-medium text-blue-400">
                                   {comment.user?.name || 'Usuario'}
                                 </span>

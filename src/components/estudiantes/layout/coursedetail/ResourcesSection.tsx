@@ -232,10 +232,17 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
   if (lessons.length === 0) {
     return (
       <div
-        className="border-border/50 flex flex-col items-center justify-center rounded-xl border border-dashed py-12"
+        className="
+          flex flex-col items-center justify-center rounded-xl border
+          border-dashed border-border/50 py-12
+        "
         style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
       >
-        <div className="bg-muted/50 mb-4 flex size-16 items-center justify-center rounded-full">
+        <div
+          className="
+          mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50
+        "
+        >
           <FaFilePdf className="size-8 text-black" />
         </div>
         <h3 className="mb-2 text-lg font-semibold text-slate-100">
@@ -252,12 +259,24 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-foreground text-xl font-semibold">
+        <h3 className="text-xl font-semibold text-foreground">
           Recursos del curso
         </h3>
         <button
           onClick={handleDownloadAll}
-          className="bg-background hover:text-accent-foreground ring-offset-background focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 border px-3 text-sm font-medium whitespace-nowrap transition-colors hover:bg-[#22c4d3] focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+          className="
+            inline-flex
+            h-9
+            items-center
+            justify-center
+            gap-2 border bg-background px-3 text-sm font-medium whitespace-nowrap
+            ring-offset-background transition-colors hover:bg-[#22c4d3] hover:text-accent-foreground
+            focus-visible:ring-2
+            focus-visible:ring-ring focus-visible:ring-offset-2
+            focus-visible:outline-none
+            disabled:pointer-events-none disabled:opacity-50
+            [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+          "
           style={{
             borderRadius: '16px',
             borderColor: 'hsla(217, 33%, 17%, 0.5)',
@@ -281,12 +300,17 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
             <div key={lesson.id} className="space-y-3">
               {/* Header de la clase */}
               <div className="flex items-center gap-3">
-                <div className="bg-accent/20 flex size-6 items-center justify-center rounded-full">
-                  <span className="text-accent text-xs font-medium">
+                <div
+                  className="
+                  flex size-6 items-center justify-center rounded-full
+                  bg-accent/20
+                "
+                >
+                  <span className="text-xs font-medium text-accent">
                     {lesson.order}
                   </span>
                 </div>
-                <h4 className="text-foreground text-sm font-medium">
+                <h4 className="text-sm font-medium text-foreground">
                   {lesson.title}
                 </h4>
               </div>
@@ -296,7 +320,11 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
                 {resources.map((resource, index) => (
                   <div
                     key={index}
-                    className="group flex items-center justify-between border p-3 transition-all duration-200 hover:cursor-pointer"
+                    className="
+                      group flex items-center justify-between border p-3
+                      transition-all duration-200
+                      hover:cursor-pointer
+                    "
                     style={{
                       backgroundColor: '#061c3799',
                       borderColor: 'hsla(217, 33%, 17%, 0.5)',
@@ -313,21 +341,37 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
                     }}
                   >
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="bg-background/50 rounded-lg p-2">
+                      <div className="rounded-lg bg-background/50 p-2">
                         {getFileIcon(resource.fileName, resource.key)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-foreground truncate text-sm font-medium">
+                        <p
+                          className="
+                          truncate text-sm font-medium text-foreground
+                        "
+                        >
                           {resource.fileName}
                         </p>
-                        <p className="text-muted-foreground text-xs">
+                        <p className="text-xs text-muted-foreground">
                           {getFileSize(resource.fileName)}
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={() => handleDownload(resource)}
-                      className="ring-offset-background focus-visible:ring-ring inline-flex h-9 items-center justify-center gap-2 rounded-2xl px-3 text-sm font-medium whitespace-nowrap opacity-0 transition-opacity group-hover:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                      className="
+                        inline-flex
+                        h-9
+                        items-center justify-center gap-2 rounded-2xl px-3
+                        text-sm font-medium whitespace-nowrap opacity-0 ring-offset-background
+                        transition-opacity group-hover:opacity-100
+                        focus-visible:ring-2
+                        focus-visible:ring-ring focus-visible:ring-offset-2
+                        focus-visible:outline-none
+                        disabled:pointer-events-none disabled:opacity-50
+                        [&_svg]:pointer-events-none [&_svg]:size-4
+                        [&_svg]:shrink-0
+                      "
                       style={{
                         transition:
                           'background-color 0.2s, opacity 0.2s, color 0.2s',

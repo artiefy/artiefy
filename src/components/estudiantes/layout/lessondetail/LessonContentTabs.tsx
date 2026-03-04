@@ -140,11 +140,21 @@ const LessonContentTabs = ({
   return (
     <div className="w-full">
       {/* Mobile: menu con flechas */}
-      <div className="flex items-center gap-2 sm:hidden">
+      <div
+        className="
+        flex items-center gap-2
+        sm:hidden
+      "
+      >
         <button
           type="button"
           onClick={() => scrollTabs('left')}
-          className="inline-flex aspect-square size-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
+          className="
+            inline-flex aspect-square size-9 items-center justify-center
+            rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white
+            transition
+            hover:bg-[#0b2747] hover:text-white
+          "
           aria-label="Anterior"
         >
           <svg
@@ -163,24 +173,42 @@ const LessonContentTabs = ({
         </button>
         <div
           ref={navRef}
-          className="relative flex w-full gap-2 overflow-x-auto px-2 py-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="
+            relative flex w-full gap-2 overflow-x-auto px-2 py-1.5
+            [-ms-overflow-style:none] [scrollbar-width:none]
+            [&::-webkit-scrollbar]:hidden
+          "
           style={{ scrollSnapType: 'x mandatory' }}
         >
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex shrink-0 items-center gap-2 rounded-full border px-[20px] py-[10px] text-sm font-semibold whitespace-nowrap transition-all ${
-                activeTab === tab.id
-                  ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
-                  : 'border-transparent bg-transparent text-white/80 hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50 hover:text-white'
-              }`}
+              className={`
+                flex shrink-0 items-center gap-2 rounded-full border px-[20px]
+                py-[10px] text-sm font-semibold whitespace-nowrap transition-all
+                ${
+                  activeTab === tab.id
+                    ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
+                    : `
+                    border-transparent bg-transparent text-white/80
+                    hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50
+                    hover:text-white
+                  `
+                }
+              `}
               style={{ scrollSnapAlign: 'start' }}
             >
               {tab.icon}
               {tab.label}
               {tab.count !== undefined && (
-                <span className="inline-flex aspect-square size-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
+                <span
+                  className="
+                  inline-flex aspect-square size-6 justify-center rounded-full
+                  border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs
+                  text-black
+                "
+                >
                   {tab.count}
                 </span>
               )}
@@ -190,7 +218,12 @@ const LessonContentTabs = ({
         <button
           type="button"
           onClick={() => scrollTabs('right')}
-          className="inline-flex aspect-square size-9 items-center justify-center rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white transition hover:bg-[#0b2747] hover:text-white"
+          className="
+            inline-flex aspect-square size-9 items-center justify-center
+            rounded-full border border-[#061c3799] bg-[#011329] p-0 text-white
+            transition
+            hover:bg-[#0b2747] hover:text-white
+          "
           aria-label="Siguiente"
         >
           <svg
@@ -210,21 +243,40 @@ const LessonContentTabs = ({
       </div>
 
       {/* Desktop */}
-      <nav className="hidden items-center gap-2 sm:flex">
+      <nav
+        className="
+        hidden items-center gap-2
+        sm:flex
+      "
+      >
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
-            className={`relative flex items-center gap-2 rounded-full border px-[20px] py-[10px] text-sm font-semibold whitespace-nowrap transition-all ${
-              activeTab === tab.id
-                ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
-                : 'border-transparent bg-transparent text-white/80 hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50 hover:text-white'
-            }`}
+            className={`
+              relative flex items-center gap-2 rounded-full border px-[20px]
+              py-[10px] text-sm font-semibold whitespace-nowrap transition-all
+              ${
+                activeTab === tab.id
+                  ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
+                  : `
+                  border-transparent bg-transparent text-white/80
+                  hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50
+                  hover:text-white
+                `
+              }
+            `}
           >
             {tab.icon}
             {tab.label}
             {tab.count !== undefined && (
-              <span className="inline-flex aspect-square size-6 justify-center rounded-full border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs text-black">
+              <span
+                className="
+                inline-flex aspect-square size-6 justify-center rounded-full
+                border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs
+                text-black
+              "
+              >
                 {tab.count}
               </span>
             )}

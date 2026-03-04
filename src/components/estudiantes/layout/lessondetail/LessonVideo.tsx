@@ -233,27 +233,64 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     };
 
     const renderLoadingState = () => (
-      <div className="absolute inset-0 z-50 flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg">
+      <div
+        className="
+        absolute inset-0 z-50 flex aspect-video w-full items-center
+        justify-center overflow-hidden rounded-lg
+      "
+      >
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-[#3498db] to-[#2ecc71] shadow-lg" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)] bg-[length:20px_20px] opacity-50" />
+          <div
+            className="
+            absolute inset-0 bg-gradient-to-r from-[#3498db] to-[#2ecc71]
+            shadow-lg
+          "
+          />
+          <div
+            className="
+            absolute inset-0
+            bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)]
+            bg-[length:20px_20px] opacity-50
+          "
+          />
         </div>
-        <div className="relative z-10 flex flex-col items-center justify-center space-y-6 text-center">
+        <div
+          className="
+          relative z-10 flex flex-col items-center justify-center space-y-6
+          text-center
+        "
+        >
           {!videoKey ||
           videoKey === 'null' ||
           videoKey === 'none' ||
           isLocked ? (
             <>
-              <h2 className="animate-pulse text-4xl font-bold tracking-tight text-white">
+              <h2
+                className="
+                animate-pulse text-4xl font-bold tracking-tight text-white
+              "
+              >
                 Video no disponible
               </h2>
               <p className="text-lg font-medium text-white">
                 Este video aún no está disponible para esta clase
               </p>
               <div className="mt-4 flex items-center space-x-2">
-                <div className="size-2 animate-bounce rounded-full bg-white delay-100" />
-                <div className="size-2 animate-bounce rounded-full bg-white delay-200" />
-                <div className="size-2 animate-bounce rounded-full bg-white delay-300" />
+                <div
+                  className="
+                  size-2 animate-bounce rounded-full bg-white delay-100
+                "
+                />
+                <div
+                  className="
+                  size-2 animate-bounce rounded-full bg-white delay-200
+                "
+                />
+                <div
+                  className="
+                  size-2 animate-bounce rounded-full bg-white delay-300
+                "
+                />
               </div>
             </>
           ) : (
@@ -362,7 +399,13 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
         ) : null}
         {shouldShowLoading && renderLoadingState()}
         {showCompletedIndicator && (
-          <div className="pointer-events-none absolute top-3 left-3 rounded-full bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-emerald-950 shadow">
+          <div
+            className="
+            pointer-events-none absolute top-3 left-3 rounded-full
+            bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-emerald-950
+            shadow
+          "
+          >
             Completado
           </div>
         )}
@@ -370,7 +413,11 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           <button
             type="button"
             onClick={handleReplay}
-            className="absolute right-3 bottom-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-900 shadow transition hover:bg-white"
+            className="
+              absolute right-3 bottom-3 rounded-full bg-white/90 px-3 py-1
+              text-xs font-semibold text-slate-900 shadow transition
+              hover:bg-white
+            "
           >
             Repetir desde el inicio
           </button>

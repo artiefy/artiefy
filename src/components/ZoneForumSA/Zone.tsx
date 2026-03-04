@@ -88,13 +88,23 @@ export const Zone = () => {
   if (loading)
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="size-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <div
+          className="
+          size-10 animate-spin rounded-full border-4 border-primary
+          border-t-transparent
+        "
+        />
       </div>
     );
   if (error) return <p className="text-red-500">{error}</p>;
   if (!forums.length) {
     return (
-      <div className="mt-10 flex flex-col items-center justify-center gap-4 rounded-2xl border border-gray-800 bg-gray-900/50 py-16">
+      <div
+        className="
+        mt-10 flex flex-col items-center justify-center gap-4 rounded-2xl border
+        border-gray-800 bg-gray-900/50 py-16
+      "
+      >
         <MessageSquare className="size-16 text-gray-600" />
         <p className="text-xl text-gray-400">No hay foros disponibles.</p>
         <p className="text-sm text-gray-500">
@@ -116,11 +126,22 @@ export const Zone = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div
+      className="
+      grid grid-cols-1 gap-6
+      sm:grid-cols-2
+      lg:grid-cols-3
+    "
+    >
       {forums.map((forum) => (
         <div
           key={forum.id}
-          className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-800 bg-gradient-to-b from-gray-900 to-gray-950 shadow-xl transition-all duration-300 hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10"
+          className="
+            group relative flex h-full flex-col overflow-hidden rounded-2xl
+            border border-gray-800 bg-gradient-to-b from-gray-900 to-gray-950
+            shadow-xl transition-all duration-300
+            hover:border-primary/50 hover:shadow-2xl hover:shadow-primary/10
+          "
         >
           {/* Imagen de portada con overlay */}
           <div className="relative h-44 flex-shrink-0 overflow-hidden">
@@ -131,21 +152,34 @@ export const Zone = () => {
                   : '/login-fondo.webp'
               }
               alt={forum.title}
-              className="object-cover transition-transform duration-500 group-hover:scale-110"
+              className="
+                object-cover transition-transform duration-500
+                group-hover:scale-110
+              "
               fill
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60 to-transparent" />
+            <div
+              className="
+              absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60
+              to-transparent
+            "
+            />
 
             {/* Badge del curso */}
             <div className="absolute top-3 left-3">
-              <span className="rounded-full bg-primary/20 px-3 py-1 text-xs font-medium text-primary backdrop-blur-sm">
+              <span
+                className="
+                rounded-full bg-primary/20 px-3 py-1 text-xs font-medium
+                text-primary backdrop-blur-sm
+              "
+              >
                 {forum.course.title}
               </span>
             </div>
 
             {/* Título sobre la imagen */}
-            <div className="absolute bottom-3 left-4 right-4">
-              <h2 className="text-lg font-bold text-white line-clamp-2">
+            <div className="absolute right-4 bottom-3 left-4">
+              <h2 className="line-clamp-2 text-lg font-bold text-white">
                 {forum.title}
               </h2>
             </div>
@@ -154,16 +188,20 @@ export const Zone = () => {
           {/* Contenido */}
           <div className="flex flex-1 flex-col p-4">
             {/* Descripción - altura fija */}
-            <p className="mb-4 h-10 line-clamp-2 text-sm text-gray-400">
+            <p className="mb-4 line-clamp-2 h-10 text-sm text-gray-400">
               {forum.description}
             </p>
 
             {/* Meta info */}
-            <div className="mb-4 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+            <div
+              className="
+              mb-4 flex flex-wrap items-center gap-4 text-xs text-gray-500
+            "
+            >
               <div className="flex items-center gap-1.5">
                 <User className="size-3.5" />
                 <span
-                  className="truncate max-w-[100px]"
+                  className="max-w-[100px] truncate"
                   title={forum.instructor?.name ?? 'Sin nombre'}
                 >
                   {forum.instructor?.name ?? 'Sin nombre'}
@@ -182,7 +220,11 @@ export const Zone = () => {
             <div className="mt-auto flex items-center justify-between gap-2">
               <Link
                 href={`/dashboard/super-admin/foro/${forum.id}`}
-                className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-black transition-all hover:opacity-90"
+                className="
+                  flex-1 rounded-xl bg-primary px-4 py-2.5 text-center text-sm
+                  font-semibold text-black transition-all
+                  hover:opacity-90
+                "
               >
                 Ver foro
               </Link>
@@ -190,7 +232,13 @@ export const Zone = () => {
               {forum.user.id === user?.id && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <button className="rounded-xl border border-red-500/30 bg-red-500/10 p-2.5 text-red-400 transition-all hover:bg-red-500/20">
+                    <button
+                      className="
+                      rounded-xl border border-red-500/30 bg-red-500/10 p-2.5
+                      text-red-400 transition-all
+                      hover:bg-red-500/20
+                    "
+                    >
                       <Trash2 className="size-4" />
                     </button>
                   </AlertDialogTrigger>
@@ -206,12 +254,20 @@ export const Zone = () => {
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel className="border-gray-700 bg-gray-800 text-white hover:bg-gray-700">
+                      <AlertDialogCancel
+                        className="
+                        border-gray-700 bg-gray-800 text-white
+                        hover:bg-gray-700
+                      "
+                      >
                         Cancelar
                       </AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDelete(forum.id)}
-                        className="bg-red-600 text-white hover:bg-red-700"
+                        className="
+                          bg-red-600 text-white
+                          hover:bg-red-700
+                        "
                       >
                         Eliminar
                       </AlertDialogAction>

@@ -348,7 +348,7 @@ export default function CourseComments({
         <h3 className="text-xl font-semibold text-slate-100">
           Opiniones del curso
         </h3>
-        <p className="text-sm text-slate-300 mt-1">
+        <p className="mt-1 text-sm text-slate-300">
           Comparte tu experiencia y lee lo que otros estudiantes opinan
         </p>
       </div>
@@ -357,9 +357,10 @@ export default function CourseComments({
 
       <form onSubmit={handleSubmit}>
         <div
-          className={`space-y-3 p-4 rounded-xl border ${
-            !isSignedIn || !localIsEnrolled ? 'pointer-events-none' : ''
-          }`}
+          className={`
+            space-y-3 rounded-xl border p-4
+            ${!isSignedIn || !localIsEnrolled ? 'pointer-events-none' : ''}
+          `}
           style={{
             backgroundColor: '#061c3780',
             borderColor: 'hsla(217, 33%, 17%, 0.5)',
@@ -373,7 +374,10 @@ export default function CourseComments({
                 <button
                   type="button"
                   onClick={() => setRating(1)}
-                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                  className="
+                    relative cursor-pointer transition-all duration-300
+                    hover:scale-125
+                  "
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -385,11 +389,14 @@ export default function CourseComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star size-5 transition-all duration-300 ${
-                      1 <= rating
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-[#94a3b8]/40'
-                    }`}
+                    className={`
+                      lucide lucide-star size-5 transition-all duration-300
+                      ${
+                        1 <= rating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-[#94a3b8]/40'
+                      }
+                    `}
                   >
                     <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
                   </svg>
@@ -397,14 +404,18 @@ export default function CourseComments({
               </div>
               <div className="flex items-center">
                 <div
-                  className={`h-0.5 transition-all duration-300 w-2 ${
-                    2 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'
-                  }`}
+                  className={`
+                    h-0.5 w-2 transition-all duration-300
+                    ${2 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'}
+                  `}
                 />
                 <button
                   type="button"
                   onClick={() => setRating(2)}
-                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                  className="
+                    relative cursor-pointer transition-all duration-300
+                    hover:scale-125
+                  "
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -416,11 +427,14 @@ export default function CourseComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star size-5 transition-all duration-300 ${
-                      2 <= rating
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-[#94a3b8]/40'
-                    }`}
+                    className={`
+                      lucide lucide-star size-5 transition-all duration-300
+                      ${
+                        2 <= rating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-[#94a3b8]/40'
+                      }
+                    `}
                   >
                     <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
                   </svg>
@@ -428,14 +442,18 @@ export default function CourseComments({
               </div>
               <div className="flex items-center">
                 <div
-                  className={`h-0.5 transition-all duration-300 w-2 ${
-                    3 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'
-                  }`}
+                  className={`
+                    h-0.5 w-2 transition-all duration-300
+                    ${3 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'}
+                  `}
                 />
                 <button
                   type="button"
                   onClick={() => setRating(3)}
-                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                  className="
+                    relative cursor-pointer transition-all duration-300
+                    hover:scale-125
+                  "
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -447,11 +465,14 @@ export default function CourseComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star size-5 transition-all duration-300 ${
-                      3 <= rating
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-[#94a3b8]/40'
-                    }`}
+                    className={`
+                      lucide lucide-star size-5 transition-all duration-300
+                      ${
+                        3 <= rating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-[#94a3b8]/40'
+                      }
+                    `}
                   >
                     <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
                   </svg>
@@ -459,14 +480,18 @@ export default function CourseComments({
               </div>
               <div className="flex items-center">
                 <div
-                  className={`h-0.5 transition-all duration-300 w-2 ${
-                    4 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'
-                  }`}
+                  className={`
+                    h-0.5 w-2 transition-all duration-300
+                    ${4 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'}
+                  `}
                 />
                 <button
                   type="button"
                   onClick={() => setRating(4)}
-                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                  className="
+                    relative cursor-pointer transition-all duration-300
+                    hover:scale-125
+                  "
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -478,11 +503,14 @@ export default function CourseComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star size-5 transition-all duration-300 ${
-                      4 <= rating
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-[#94a3b8]/40'
-                    }`}
+                    className={`
+                      lucide lucide-star size-5 transition-all duration-300
+                      ${
+                        4 <= rating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-[#94a3b8]/40'
+                      }
+                    `}
                   >
                     <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
                   </svg>
@@ -490,14 +518,18 @@ export default function CourseComments({
               </div>
               <div className="flex items-center">
                 <div
-                  className={`h-0.5 transition-all duration-300 w-2 ${
-                    5 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'
-                  }`}
+                  className={`
+                    h-0.5 w-2 transition-all duration-300
+                    ${5 <= rating ? 'bg-yellow-400' : 'bg-[#94a3b8]/20'}
+                  `}
                 />
                 <button
                   type="button"
                   onClick={() => setRating(5)}
-                  className="relative transition-all duration-300 cursor-pointer hover:scale-125"
+                  className="
+                    relative cursor-pointer transition-all duration-300
+                    hover:scale-125
+                  "
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -509,11 +541,14 @@ export default function CourseComments({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className={`lucide lucide-star size-5 transition-all duration-300 ${
-                      5 <= rating
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-[#94a3b8]/40'
-                    }`}
+                    className={`
+                      lucide lucide-star size-5 transition-all duration-300
+                      ${
+                        5 <= rating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-[#94a3b8]/40'
+                      }
+                    `}
                   >
                     <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z" />
                   </svg>
@@ -532,7 +567,10 @@ export default function CourseComments({
             }
             required
             placeholder="Comparte tu opinión sobre el curso..."
-            className="min-h-[80px] resize-none text-slate-100 placeholder:text-slate-400"
+            className="
+              min-h-[80px] resize-none text-slate-100
+              placeholder:text-slate-400
+            "
             style={{
               backgroundColor: '#01152d80',
               borderColor: 'hsla(217, 33%, 17%, 0.5)',
@@ -547,7 +585,10 @@ export default function CourseComments({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-8 text-slate-400 hover:text-slate-100"
+                className="
+                  size-8 text-slate-400
+                  hover:text-slate-100
+                "
               >
                 <Icons.image className="size-4" />
               </Button>
@@ -555,7 +596,10 @@ export default function CourseComments({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-8 text-slate-400 hover:text-slate-100"
+                className="
+                  size-8 text-slate-400
+                  hover:text-slate-100
+                "
               >
                 <Icons.video className="size-4" />
               </Button>
@@ -563,7 +607,10 @@ export default function CourseComments({
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="size-8 text-slate-400 hover:text-slate-100"
+                className="
+                  size-8 text-slate-400
+                  hover:text-slate-100
+                "
               >
                 <Icons.mic className="size-4" />
               </Button>
@@ -573,7 +620,18 @@ export default function CourseComments({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex items-center text-[#080c16] justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-primary hover:bg-primary/90 h-9 rounded-[14px] px-3 gap-2"
+                className="
+                  inline-flex h-9 items-center justify-center
+                  gap-2 rounded-[14px] bg-primary px-3
+                  text-sm
+                  font-medium whitespace-nowrap
+                  text-[#080c16] ring-offset-background
+                  transition-colors hover:bg-primary/90
+                  focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                  focus-visible:outline-none
+                  disabled:pointer-events-none
+                  disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                "
                 style={{ backgroundColor: '#22c4d3' }}
               >
                 {isSubmitting ? (
@@ -619,7 +677,7 @@ export default function CourseComments({
           {comments.map((comment) => (
             <li
               key={comment.id}
-              className="p-4 rounded-xl border"
+              className="rounded-xl border p-4"
               style={{
                 backgroundColor: '#061c3780',
                 borderColor: 'hsla(217, 33%, 17%, 0.5)',
@@ -627,8 +685,17 @@ export default function CourseComments({
             >
               <div className="flex gap-3">
                 {/* Avatar */}
-                <div className="relative flex overflow-hidden rounded-full size-10 shrink-0">
-                  <span className="flex size-full items-center justify-center rounded-full bg-accent/20 text-accent text-sm font-semibold">
+                <div
+                  className="
+                  relative flex size-10 shrink-0 overflow-hidden rounded-full
+                "
+                >
+                  <span
+                    className="
+                    flex size-full items-center justify-center rounded-full
+                    bg-accent/20 text-sm font-semibold text-accent
+                  "
+                  >
                     {comment.userName
                       .split(' ')
                       .map((n) => n[0])
@@ -640,37 +707,51 @@ export default function CourseComments({
 
                 <div className="flex-1 space-y-2">
                   {/* Header with name, date and rating */}
-                  <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-slate-100">
                       {comment.userName}
                     </span>
                     <span className="text-xs text-slate-400">
                       {formatDate(comment.createdAt)}
                     </span>
-                    <div className="flex items-center gap-0.5 ml-auto">
+                    <div className="ml-auto flex items-center gap-0.5">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <StarIcon
                           key={star}
-                          className={`size-4 ${
-                            star <= comment.rating
-                              ? 'text-yellow-400 fill-yellow-400'
-                              : 'text-[#94a3b8]'
-                          }`}
+                          className={`
+                            size-4
+                            ${
+                              star <= comment.rating
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-[#94a3b8]'
+                            }
+                          `}
                         />
                       ))}
                     </div>
                   </div>
 
                   {/* Content */}
-                  <div className="flex items-start gap-2 group">
-                    <div className="text-sm text-slate-300 whitespace-pre-wrap flex-1">
+                  <div className="group flex items-start gap-2">
+                    <div
+                      className="
+                      flex-1 text-sm whitespace-pre-wrap text-slate-300
+                    "
+                    >
                       {comment.content}
                     </div>
                     {userId === comment.userId && (
                       <div className="relative inline-flex">
                         <button
                           onClick={() => toggleMenu(comment.id)}
-                          className="ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700/20 text-slate-400 hover:text-slate-100"
+                          className="
+                            ml-2 rounded-full p-1 text-slate-400
+                            opacity-0
+                            transition-opacity
+                            group-hover:opacity-100
+                            hover:bg-slate-700/20
+                            hover:text-slate-100
+                          "
                           aria-label="Abrir menú"
                         >
                           <svg
@@ -694,7 +775,10 @@ export default function CourseComments({
                         {/* Dropdown Menu */}
                         {openMenuId === comment.id && (
                           <div
-                            className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border shadow-lg z-10"
+                            className="
+                              absolute top-1/2 left-full z-10 ml-2
+                              w-40 -translate-y-1/2 rounded-lg border shadow-lg
+                            "
                             style={{
                               backgroundColor: '#01152d',
                               borderColor: 'hsla(217, 33%, 17%, 0.5)',
@@ -702,7 +786,12 @@ export default function CourseComments({
                           >
                             <button
                               onClick={() => handleEditFromMenu(comment)}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-slate-100 hover:bg-slate-700/20 rounded-t-lg transition-colors"
+                              className="
+                                flex w-full items-center gap-2 rounded-t-lg px-4
+                                py-2 text-left text-sm
+                                text-slate-300 transition-colors
+                                hover:bg-slate-700/20 hover:text-slate-100
+                              "
                             >
                               <PencilIcon className="size-4" />
                               Editar
@@ -710,7 +799,12 @@ export default function CourseComments({
                             <button
                               onClick={() => handleDeleteFromMenu(comment.id)}
                               disabled={deletingComment === comment.id}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-red-400 hover:bg-slate-700/20 rounded-b-lg transition-colors"
+                              className="
+                                flex w-full items-center gap-2 rounded-b-lg px-4
+                                py-2 text-left text-sm
+                                text-slate-300 transition-colors
+                                hover:bg-slate-700/20 hover:text-red-400
+                              "
                             >
                               {deletingComment === comment.id ? (
                                 <Icons.spinner className="size-4" />
@@ -730,17 +824,26 @@ export default function CourseComments({
                     <button
                       onClick={() => handleLike(comment.id)}
                       disabled={likingComment === comment.id}
-                      className={`flex items-center gap-1.5 text-xs transition-colors ${
-                        comment.hasLiked
-                          ? 'text-cyan-400'
-                          : 'text-slate-400 hover:text-slate-100'
-                      }`}
+                      className={`
+                        flex items-center gap-1.5 text-xs transition-colors
+                        ${
+                          comment.hasLiked
+                            ? 'text-cyan-400'
+                            : `
+                            text-slate-400
+                            hover:text-slate-100
+                          `
+                        }
+                      `}
                     >
                       {likingComment === comment.id ? (
                         <Icons.spinner className="size-4" />
                       ) : (
                         <HandThumbUpIcon
-                          className={`size-4 ${comment.hasLiked ? 'fill-current' : ''}`}
+                          className={`
+                            size-4
+                            ${comment.hasLiked ? 'fill-current' : ''}
+                          `}
                         />
                       )}
                       {comment.likes}
@@ -748,7 +851,11 @@ export default function CourseComments({
 
                     <button
                       onClick={() => setReplyingTo(comment.id)}
-                      className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-100 transition-colors"
+                      className="
+                        flex items-center gap-1.5 text-xs text-slate-400
+                        transition-colors
+                        hover:text-slate-100
+                      "
                     >
                       <Icons.reply className="size-4" />
                       Responder
@@ -757,7 +864,11 @@ export default function CourseComments({
                     {replies[comment.id] && replies[comment.id].length > 0 && (
                       <button
                         onClick={() => toggleReplies(comment.id)}
-                        className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-100 transition-colors"
+                        className="
+                          flex items-center gap-1.5 text-xs text-slate-400
+                          transition-colors
+                          hover:text-slate-100
+                        "
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -769,7 +880,10 @@ export default function CourseComments({
                           strokeWidth="2"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          className={`lucide size-4 transition-transform ${showReplies[comment.id] ? 'rotate-180' : ''}`}
+                          className={`
+                            lucide size-4 transition-transform
+                            ${showReplies[comment.id] ? 'rotate-180' : ''}
+                          `}
                         >
                           <path d="m18 15-6-6-6 6" />
                         </svg>
@@ -786,7 +900,10 @@ export default function CourseComments({
                         value={replyContent}
                         onChange={(e) => setReplyContent(e.target.value)}
                         placeholder="Escribe tu respuesta..."
-                        className="min-h-[60px] resize-none text-slate-100 placeholder:text-slate-400"
+                        className="
+                          min-h-[60px] resize-none text-slate-100
+                          placeholder:text-slate-400
+                        "
                         style={{
                           backgroundColor: '#01152d80',
                           borderColor: 'hsla(217, 33%, 17%, 0.5)',
@@ -795,7 +912,15 @@ export default function CourseComments({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleReply(comment.id)}
-                          className="inline-flex items-center text-[#080c16] justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 h-8 rounded-md px-3 gap-2"
+                          className="
+                            inline-flex h-8 items-center
+                            justify-center gap-2 rounded-md px-3
+                            text-sm font-medium
+                            whitespace-nowrap text-[#080c16]
+                            ring-offset-background transition-colors
+                            focus-visible:ring-2 focus-visible:ring-ring
+                            focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50
+                          "
                           style={{ backgroundColor: '#22c4d3' }}
                         >
                           <Icons.send className="size-3" />
@@ -806,7 +931,12 @@ export default function CourseComments({
                             setReplyingTo(null);
                             setReplyContent('');
                           }}
-                          className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors h-8 rounded-md px-3 text-slate-400 hover:text-slate-100"
+                          className="
+                            inline-flex h-8 items-center
+                            justify-center rounded-md px-3
+                            text-sm font-medium whitespace-nowrap text-slate-400 transition-colors
+                            hover:text-slate-100
+                          "
                         >
                           Cancelar
                         </button>
@@ -819,11 +949,22 @@ export default function CourseComments({
                     replies[comment.id].length > 0 &&
                     showReplies[comment.id] && (
                       <div className="mt-3">
-                        <div className="space-y-3 pl-4 border-l-2 border-slate-700">
+                        <div className="space-y-3 border-l-2 border-slate-700 pl-4">
                           {replies[comment.id].map((reply) => (
                             <div key={reply.id} className="flex gap-2">
-                              <div className="relative flex overflow-hidden rounded-full size-8 shrink-0">
-                                <span className="flex size-full items-center justify-center rounded-full bg-accent/20 text-accent text-xs font-semibold">
+                              <div
+                                className="
+                                relative flex size-8 shrink-0
+                                overflow-hidden rounded-full
+                              "
+                              >
+                                <span
+                                  className="
+                                  flex size-full items-center justify-center
+                                  rounded-full bg-accent/20 text-xs font-semibold
+                                  text-accent
+                                "
+                                >
                                   {reply.userName
                                     .split(' ')
                                     .map((n) => n[0])
@@ -834,15 +975,19 @@ export default function CourseComments({
                               </div>
                               <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-sm font-medium text-slate-100">
+                                  <span
+                                    className="
+                                    text-sm font-medium text-slate-100
+                                  "
+                                  >
                                     {reply.userName}
                                   </span>
                                   <span className="text-xs text-slate-400">
                                     {formatDate(reply.createdAt)}
                                   </span>
                                 </div>
-                                <div className="flex items-start gap-2 group mt-1">
-                                  <div className="text-sm text-slate-300 flex-1">
+                                <div className="group mt-1 flex items-start gap-2">
+                                  <div className="flex-1 text-sm text-slate-300">
                                     {reply.content}
                                   </div>
                                   {userId === reply.userId && (
@@ -855,7 +1000,14 @@ export default function CourseComments({
                                               : reply.id
                                           )
                                         }
-                                        className="ml-2 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-700/20 text-slate-400 hover:text-slate-100"
+                                        className="
+                                          ml-2 rounded-full p-1 text-slate-400
+                                          opacity-0
+                                          transition-opacity
+                                          group-hover:opacity-100
+                                          hover:bg-slate-700/20
+                                          hover:text-slate-100
+                                        "
                                         aria-label="Abrir menú"
                                       >
                                         <svg
@@ -868,7 +1020,9 @@ export default function CourseComments({
                                           strokeWidth="2"
                                           strokeLinecap="round"
                                           strokeLinejoin="round"
-                                          className="lucide lucide-ellipsis size-4"
+                                          className="
+                                            lucide lucide-ellipsis size-4
+                                          "
                                         >
                                           <circle
                                             cx="12"
@@ -886,7 +1040,11 @@ export default function CourseComments({
 
                                       {openReplyMenuId === reply.id && (
                                         <div
-                                          className="absolute left-full top-1/2 -translate-y-1/2 ml-2 w-40 rounded-lg border shadow-lg z-10"
+                                          className="
+                                            absolute top-1/2 left-full
+                                            z-10 ml-2 w-40
+                                            -translate-y-1/2 rounded-lg border shadow-lg
+                                          "
                                           style={{
                                             backgroundColor: '#01152d',
                                             borderColor:
@@ -903,7 +1061,14 @@ export default function CourseComments({
                                             disabled={
                                               deletingReply === reply.id
                                             }
-                                            className="flex items-center gap-2 w-full px-4 py-2 text-left text-sm text-slate-300 hover:text-red-400 hover:bg-slate-700/20 rounded-lg transition-colors"
+                                            className="
+                                              flex w-full items-center gap-2
+                                              rounded-lg px-4 py-2 text-left
+                                              text-sm
+                                              text-slate-300
+                                              transition-colors
+                                              hover:bg-slate-700/20 hover:text-red-400
+                                            "
                                           >
                                             {deletingReply === reply.id ? (
                                               <Icons.spinner className="size-4" />
@@ -940,7 +1105,7 @@ export default function CourseComments({
 
         {!loading && comments.length === 0 && (
           <div
-            className="text-center p-8 rounded-xl border"
+            className="rounded-xl border p-8 text-center"
             style={{
               backgroundColor: '#061c3780',
               borderColor: 'hsla(217, 33%, 17%, 0.5)',

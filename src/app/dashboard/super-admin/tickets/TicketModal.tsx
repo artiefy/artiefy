@@ -259,7 +259,12 @@ export default function TicketModal({
       isOpen={isOpen}
       onClose={onCloseAction}
       title={
-        <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">
+        <span
+          className="
+          bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text
+          text-transparent
+        "
+        >
           {ticket ? 'Editar Ticket' : 'Crear Nuevo Ticket'}
         </span>
       }
@@ -268,7 +273,11 @@ export default function TicketModal({
         <form onSubmit={handleSubmit} className="mt-4 space-y-6">
           {/* Info del creador */}
           {ticket?.creatorName && (
-            <div className="rounded-lg border border-gray-700/50 bg-gray-800/30 p-4">
+            <div
+              className="
+              rounded-lg border border-gray-700/50 bg-gray-800/30 p-4
+            "
+            >
               <p className="text-sm text-gray-400">
                 Creado por:{' '}
                 <span className="font-medium text-white">
@@ -279,7 +288,12 @@ export default function TicketModal({
           )}
 
           {/* Grid principal responsivo */}
-          <div className="grid gap-6 md:grid-cols-2">
+          <div
+            className="
+            grid gap-6
+            md:grid-cols-2
+          "
+          >
             {/* Primera columna */}
             <div className="space-y-4">
               <div className="space-y-2">
@@ -368,7 +382,11 @@ export default function TicketModal({
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white shadow-inner transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  className="
+                    w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4
+                    py-2.5 text-sm text-white shadow-inner transition
+                    focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                  "
                   required
                 />
               </div>
@@ -382,7 +400,11 @@ export default function TicketModal({
                   onChange={(e) =>
                     setFormData({ ...formData, tipo: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white shadow-inner transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  className="
+                    w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4
+                    py-2.5 text-sm text-white shadow-inner transition
+                    focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                  "
                   required
                 >
                   <option value="otro">Otro</option>
@@ -404,7 +426,11 @@ export default function TicketModal({
                   onChange={(e) =>
                     setFormData({ ...formData, estado: e.target.value })
                   }
-                  className="w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white shadow-inner transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  className="
+                    w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4
+                    py-2.5 text-sm text-white shadow-inner transition
+                    focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                  "
                   required
                 >
                   <option value="abierto">Abierto</option>
@@ -425,7 +451,11 @@ export default function TicketModal({
                     setFormData({ ...formData, description: e.target.value })
                   }
                   rows={3}
-                  className="w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white shadow-inner transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  className="
+                    w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4
+                    py-2.5 text-sm text-white shadow-inner transition
+                    focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                  "
                   required
                 />
               </div>
@@ -440,7 +470,11 @@ export default function TicketModal({
                     setFormData({ ...formData, comments: e.target.value })
                   }
                   rows={3}
-                  className="w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white shadow-inner transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  className="
+                    w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4
+                    py-2.5 text-sm text-white shadow-inner transition
+                    focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                  "
                 />
               </div>
             </div>
@@ -451,7 +485,13 @@ export default function TicketModal({
             <h3 className="mb-4 text-sm font-medium text-white">
               Archivos Adjuntos
             </h3>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div
+              className="
+              grid gap-4
+              sm:grid-cols-2
+              lg:grid-cols-3
+            "
+            >
               {/* Imagen */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-300">
@@ -470,11 +510,19 @@ export default function TicketModal({
                       setFormData((prev) => ({ ...prev, coverImageKey: key }));
                     }
                   }}
-                  className="w-full cursor-pointer rounded-lg border border-gray-600 bg-gray-800/50 px-3 py-2 text-sm text-white"
+                  className="
+                    w-full cursor-pointer rounded-lg border border-gray-600
+                    bg-gray-800/50 px-3 py-2 text-sm text-white
+                  "
                 />
 
                 {formData.coverImageKey && (
-                  <div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
+                  <div
+                    className="
+                    relative h-32 overflow-hidden rounded-lg border
+                    border-gray-600
+                  "
+                  >
                     <Image
                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${formData.coverImageKey}`}
                       alt="Imagen subida"
@@ -508,11 +556,19 @@ export default function TicketModal({
                       }));
                     }
                   }}
-                  className="w-full cursor-pointer rounded-lg border border-gray-600 bg-gray-800/50 px-3 py-2 text-sm text-white"
+                  className="
+                    w-full cursor-pointer rounded-lg border border-gray-600
+                    bg-gray-800/50 px-3 py-2 text-sm text-white
+                  "
                 />
 
                 {formData.videoKey && (
-                  <div className="relative h-32 overflow-hidden rounded-lg border border-gray-600">
+                  <div
+                    className="
+                    relative h-32 overflow-hidden rounded-lg border
+                    border-gray-600
+                  "
+                  >
                     <video controls className="size-full object-contain">
                       <source
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${formData.videoKey}`}
@@ -539,7 +595,10 @@ export default function TicketModal({
                       setFormData((prev) => ({ ...prev, documentKey: key }));
                     }
                   }}
-                  className="w-full cursor-pointer rounded-lg border border-gray-600 bg-gray-800/50 px-3 py-2 text-sm text-white"
+                  className="
+                    w-full cursor-pointer rounded-lg border border-gray-600
+                    bg-gray-800/50 px-3 py-2 text-sm text-white
+                  "
                 />
 
                 {formData.documentKey && (
@@ -547,7 +606,11 @@ export default function TicketModal({
                     href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${formData.documentKey}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-2 rounded-lg bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-400 hover:bg-blue-500/20"
+                    className="
+                      mt-2 inline-flex items-center gap-2 rounded-lg
+                      bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-400
+                      hover:bg-blue-500/20
+                    "
                   >
                     📄 Ver Documento
                   </a>
@@ -568,7 +631,11 @@ export default function TicketModal({
                   setFormData({ ...formData, newComment: e.target.value })
                 }
                 rows={3}
-                className="w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4 py-2.5 text-sm text-white shadow-inner transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                className="
+                  w-full rounded-lg border border-gray-600 bg-gray-800/50 px-4
+                  py-2.5 text-sm text-white shadow-inner transition
+                  focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20
+                "
                 placeholder="Escribe un nuevo comentario..."
               />
             </div>
@@ -579,7 +646,12 @@ export default function TicketModal({
                 <h3 className="text-sm font-medium text-gray-300">
                   Historial de Chat
                 </h3>
-                <div className="max-h-60 space-y-3 overflow-y-auto rounded-lg border border-gray-700/50 bg-gray-800/30 p-4">
+                <div
+                  className="
+                  max-h-60 space-y-3 overflow-y-auto rounded-lg border
+                  border-gray-700/50 bg-gray-800/30 p-4
+                "
+                >
                   {isLoadingComments ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="size-6 animate-spin text-blue-500" />
@@ -593,7 +665,10 @@ export default function TicketModal({
                       .map((comment, index) => (
                         <div
                           key={index}
-                          className="rounded-lg border border-gray-700/50 bg-gray-800/50 p-4"
+                          className="
+                            rounded-lg border border-gray-700/50 bg-gray-800/50
+                            p-4
+                          "
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
@@ -601,13 +676,17 @@ export default function TicketModal({
                                 {comment.user?.name || 'Usuario'}
                               </span>
                               <span
-                                className={`rounded-full px-2 py-0.5 text-xs font-semibold uppercase ${
-                                  comment.sender === 'user'
-                                    ? 'bg-sky-500/20 text-sky-300'
-                                    : comment.sender === 'admin'
-                                      ? 'bg-amber-500/20 text-amber-300'
-                                      : 'bg-purple-500/20 text-purple-200'
-                                }`}
+                                className={`
+                                  rounded-full px-2 py-0.5 text-xs font-semibold
+                                  uppercase
+                                  ${
+                                    comment.sender === 'user'
+                                      ? 'bg-sky-500/20 text-sky-300'
+                                      : comment.sender === 'admin'
+                                        ? 'bg-amber-500/20 text-amber-300'
+                                        : 'bg-purple-500/20 text-purple-200'
+                                  }
+                                `}
                               >
                                 {comment.sender === 'user'
                                   ? 'Estudiante'
@@ -636,18 +715,33 @@ export default function TicketModal({
           </div>
 
           {/* Action buttons */}
-          <div className="sticky bottom-0 flex justify-end gap-3 border-t border-gray-700 bg-gray-900/80 pt-4 backdrop-blur">
+          <div
+            className="
+            sticky bottom-0 flex justify-end gap-3 border-t border-gray-700
+            bg-gray-900/80 pt-4 backdrop-blur
+          "
+          >
             <button
               type="button"
               onClick={onCloseAction}
-              className="rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-800 hover:text-white"
+              className="
+                rounded-lg border border-gray-600 px-4 py-2 text-sm font-medium
+                text-gray-300 transition
+                hover:bg-gray-800 hover:text-white
+              "
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-6 py-2 text-sm font-medium text-white shadow-lg transition hover:brightness-110 disabled:opacity-50"
+              className="
+                rounded-lg bg-gradient-to-r from-blue-600 via-indigo-600
+                to-purple-600 px-6 py-2 text-sm font-medium text-white shadow-lg
+                transition
+                hover:brightness-110
+                disabled:opacity-50
+              "
             >
               {isSubmitting ? (
                 <div className="flex items-center gap-2">

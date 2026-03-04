@@ -119,6 +119,64 @@ export const postLikes = pgTable(
   (table) => [unique('uniq_post_like').on(table.postId, table.userId)]
 );
 
+export const projectLikes = pgTable(
+  'project_likes',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .references(() => projects.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('uniq_project_like').on(table.projectId, table.userId),
+    index('project_likes_project_idx').on(table.projectId),
+    index('project_likes_user_idx').on(table.userId),
+  ]
+);
+
+export const projectSaves = pgTable(
+  'project_saves',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .references(() => projects.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('uniq_project_save').on(table.projectId, table.userId),
+    index('project_saves_project_idx').on(table.projectId),
+    index('project_saves_user_idx').on(table.userId),
+  ]
+);
+
+export const projectComments = pgTable(
+  'project_comments',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .references(() => projects.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    content: text('content').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    index('project_comments_project_idx').on(table.projectId),
+    index('project_comments_user_idx').on(table.userId),
+  ]
+);
+
 // Tabla de nivel
 export const nivel = pgTable('nivel', {
   id: serial('id').primaryKey(),
@@ -576,7 +634,9 @@ export const parametros = pgTable('parametros', {
   description: text('description').notNull(),
   porcentaje: integer('porcentaje').notNull(),
   numberOfActivities: integer('number_of_activities').default(0).notNull(),
-  courseId: integer('course_id').references(() => courses.id),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .default(sql`NULL`),
 });
 
 // Tabla de plantillas de parámetros
@@ -585,7 +645,9 @@ export const parameterTemplates = pgTable('parameter_templates', {
   name: varchar('name', { length: 255 }).notNull(),
   description: text('description'),
   totalPercentage: integer('total_percentage').notNull().default(0),
-  courseId: integer('course_id').references(() => courses.id),
+  courseId: integer('course_id')
+    .references(() => courses.id)
+    .default(sql`NULL`),
   creatorId: text('creator_id')
     .references(() => users.id)
     .notNull(),
@@ -849,6 +911,9 @@ export const usersRelations = relations(users, ({ many }) => ({
   coursesTaken: many(coursesTaken),
   projects: many(projects),
   projectsTaken: many(projectsTaken),
+  projectLikes: many(projectLikes),
+  projectSaves: many(projectSaves),
+  projectComments: many(projectComments),
   userLessonsProgress: many(userLessonsProgress),
   userActivitiesProgress: many(userActivitiesProgress),
 }));
@@ -955,6 +1020,9 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
     references: [courses.id],
   }),
   projectsTaken: many(projectsTaken),
+  projectLikes: many(projectLikes),
+  projectSaves: many(projectSaves),
+  projectComments: many(projectComments),
   specificObjectives: many(specificObjectives),
   addedSections: many(projectAddedSections),
 }));
@@ -969,6 +1037,42 @@ export const projectsTakenRelations = relations(projectsTaken, ({ one }) => ({
     references: [projects.id],
   }),
 }));
+
+export const projectLikesRelations = relations(projectLikes, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectLikes.projectId],
+    references: [projects.id],
+  }),
+  user: one(users, {
+    fields: [projectLikes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const projectSavesRelations = relations(projectSaves, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectSaves.projectId],
+    references: [projects.id],
+  }),
+  user: one(users, {
+    fields: [projectSaves.userId],
+    references: [users.id],
+  }),
+}));
+
+export const projectCommentsRelations = relations(
+  projectComments,
+  ({ one }) => ({
+    project: one(projects, {
+      fields: [projectComments.projectId],
+      references: [projects.id],
+    }),
+    user: one(users, {
+      fields: [projectComments.userId],
+      references: [users.id],
+    }),
+  })
+);
 
 export const userLessonsProgressRelations = relations(
   userLessonsProgress,
@@ -1171,7 +1275,7 @@ export const chat_messages = pgTable('chat_messages', {
   senderId: text('sender_id').references(() => users.id),
   message: text('message').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
-  courses_data: jsonb('courses_data').default(null), // <-- Asegura default null para evitar errores de consulta
+  courses_data: jsonb('courses_data').default(sql`NULL`), // Default null explícito y tipado para Drizzle
 });
 
 // Tabla de roles secundarios

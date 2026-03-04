@@ -239,125 +239,47 @@ const _getContrastYIQ = (hexcolor: string) => {
 
 // Add this CSS block at the top of the file after imports:
 const styles = `
-    .svg-frame {
-      position: relative;
-      width: 300px;
-      height:
-      transform-style: preserve-3d;
-      display: flex;
-      justify-content: center;
-      align-items:
-    }
-
-     svg
-       absolute;
-      transition: .5s;
-      z-index: calc(1 - (0.2 * var(--j)));
-      transform-origin:
-       344px;
-       
-      fill: none;
-    
-
-    .svg-frame:hover
-      transform: rotate(-80deg) skew(30deg) translateX(calc(45px var(--i))) translateY(calc(-35px var(--i)));
-    
-
-    #out2
-      animation: rotate16 7s ease-in-out infinite alternate;
-       
-    
-
-    #out3
-        3s
-       
-      stroke: #ff0;
-    
-
-    @keyframes
-      to
-       rotate(360deg);
-      
-    
-
-     slideInFromLeft
-      from
-        opacity: 0;
-         translateX(-20px);
-      
-       
-         1;
-         translateX(0);
-      
-    
-
-     slideInFromRight
-       
-         
-         translateX(20px);
-      
-       
-         
-         
-      
-    
-
-     slideInFromBottom
-       
-         
-         translateY(20px);
-      
-       
-         
-         translateY(0);
-      
-    
-
-     fadeIn
-       
-         
-      
-       
-         
-      
-    
-
-    .animate-in
-        0.5s ease-out forwards;
-    
-
-    .slide-in-from-left-4
-          
-    
-
-    .slide-in-from-right-4
-          
-    
-
-    .slide-in-from-left-8
-        0.7s
-    
-
-    .slide-in-from-right-8
-          
-    
-
-    .slide-in-from-bottom-8
-          
-    
-
-    .delay-150
-      animation-delay: 150ms;
-    
-
-    .duration-500
-      animation-duration: 500ms;
-    
-
-    .duration-700
-       700ms;
-    
-    `;
+  .svg-frame {
+  position:
+  relative;
+  width:
+  300px;
+  height:
+  transform-style:
+  preserve-3d;
+  display:
+  flex;
+  justify-content:
+  center;
+  align-items:
+  } svg absolute;
+  transition:
+  .5s;
+  z-index:
+  calc(1 - (0.2 * var(--j)));
+  transform-origin:
+  344px;
+  fill:
+  none;
+  .svg-frame:hover
+  transform:
+  rotate(-80deg) skew(30deg) translateX(calc(45px var(--i)))
+  translateY(calc(-35px var(--i))); #out2
+  animation:
+  rotate16 7s ease-in-out infinite alternate; #out3 3s
+  stroke:
+  #ff0; @keyframes to rotate(360deg); slideInFromLeft from
+  opacity:
+  0; translateX(-20px); 1; translateX(0); slideInFromRight translateX(20px);
+  slideInFromBottom translateY(20px); translateY(0); fadeIn .animate-in 0.5s
+  ease-out forwards; .slide-in-from-left-4 .slide-in-from-right-4
+  .slide-in-from-left-8 0.7s .slide-in-from-right-8 .slide-in-from-bottom-8
+  .delay-150
+  animation-delay:
+  150ms; .duration-500
+  animation-duration:
+  500ms; .duration-700 700ms;
+`;
 
 // Replace the stylesheet append code
 if (typeof document !== 'undefined') {
@@ -370,7 +292,12 @@ if (typeof document !== 'undefined') {
 const FullscreenLoader = () => {
   return (
     <Portal>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/20 backdrop-blur-sm">
+      <div
+        className="
+          fixed inset-0 z-50 flex items-center justify-center bg-background/20
+          backdrop-blur-sm
+        "
+      >
         <TechLoader />
       </div>
     </Portal>
@@ -1300,6 +1227,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       name: string;
       description: string;
       porcentaje: number;
+      numberOfActivities: number;
     }[],
     horario: number | null,
     espacios: number | null,
@@ -1411,6 +1339,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   name: parametro.name,
                   description: parametro.description,
                   porcentaje: parametro.porcentaje,
+                  numberOfActivities: parametro.numberOfActivities,
                   courseId: Number(courseIdString2),
                 }),
                 credentials: 'include',
@@ -1434,6 +1363,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 name: parametro.name,
                 description: parametro.description,
                 porcentaje: parametro.porcentaje,
+                numberOfActivities: parametro.numberOfActivities,
                 courseId: Number(courseIdString2),
               }),
               credentials: 'include',
@@ -1708,9 +1638,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       <div className="flex flex-col gap-6">
         {/* Mostrar educador actual cuando no hay búsqueda abierta */}
         {!isOpen && (
-          <div className="rounded border border-cyan-500/25 bg-cyan-500/5 px-2 py-1.5 sm:px-3 sm:py-2">
-            <div className="flex flex-col gap-0.5 sm:gap-1">
-              <p className="text-xs font-semibold tracking-tight text-cyan-400/70 uppercase sm:tracking-wide">
+          <div
+            className="
+              rounded border border-cyan-500/25 bg-cyan-500/5 px-2 py-1.5
+              sm:px-3 sm:py-2
+            "
+          >
+            <div
+              className="
+                flex flex-col gap-0.5
+                sm:gap-1
+              "
+            >
+              <p
+                className="
+                  text-xs font-semibold tracking-tight text-cyan-400/70
+                  uppercase
+                  sm:tracking-wide
+                "
+              >
                 👨‍🏫{' '}
                 {displayEducator?.name ?? course.instructorName ?? 'Sin nombre'}
               </p>
@@ -1728,11 +1674,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="w-full rounded-md border border-cyan-500/50 bg-slate-900 p-3 text-left text-sm text-cyan-400 transition-colors hover:border-cyan-400 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 focus:outline-none"
+            className="
+              w-full rounded-md border border-cyan-500/50 bg-slate-900 p-3
+              text-left text-sm text-cyan-400 transition-colors
+              hover:border-cyan-400
+              focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20
+              focus:outline-none
+            "
           >
             <div className="flex items-center justify-between">
               <div className="flex-1">
-                <p className="text-xs font-semibold tracking-wide text-cyan-400/70 uppercase">
+                <p
+                  className="
+                    text-xs font-semibold tracking-wide text-cyan-400/70
+                    uppercase
+                  "
+                >
                   {selectedInstructor ? 'Cambiar a' : 'Seleccionar educador'}
                 </p>
                 <p className="mt-1 font-medium">
@@ -1741,7 +1698,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     'Sin nombre'}
                 </p>
                 {displayEducator?.email && (
-                  <p className="mt-1 flex items-center gap-1 text-xs text-cyan-400/70">
+                  <p
+                    className="
+                      mt-1 flex items-center gap-1 text-xs text-cyan-400/70
+                    "
+                  >
                     <span>✉️</span>
                     <span>{displayEducator.email}</span>
                   </p>
@@ -1753,7 +1714,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
               </div>
               <svg
-                className={`size-5 flex-shrink-0 text-cyan-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                className={`
+                  size-5 flex-shrink-0 text-cyan-400 transition-transform
+                  ${isOpen ? 'rotate-180' : ''}
+                `}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -1778,7 +1742,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               />
 
               <div
-                className="fixed z-[9999] overflow-hidden rounded-md border border-cyan-500/50 bg-slate-900 shadow-2xl"
+                className="
+                  fixed z-[9999] overflow-hidden rounded-md border
+                  border-cyan-500/50 bg-slate-900 shadow-2xl
+                "
                 style={{
                   top: '300px',
                   left: '50%',
@@ -1794,7 +1761,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     placeholder="Buscar por nombre o correo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full rounded border border-cyan-500/40 bg-slate-900 px-3 py-2 text-sm text-cyan-400 placeholder:text-cyan-400/50 focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 focus:outline-none"
+                    className="
+                      w-full rounded border border-cyan-500/40 bg-slate-900 px-3
+                      py-2 text-sm text-cyan-400
+                      placeholder:text-cyan-400/50
+                      focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20
+                      focus:outline-none
+                    "
                     onClick={(e) => e.stopPropagation()}
                   />
                 </div>
@@ -1805,12 +1778,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     filteredEducators.map((educator) => (
                       <div
                         key={educator.id}
-                        className={`group border-b border-cyan-500/20 p-3 transition-colors last:border-b-0 hover:bg-cyan-500/10 ${
-                          educator.id ===
-                          (selectedInstructor ?? course.instructor)
-                            ? 'bg-cyan-500/20'
-                            : ''
-                        }`}
+                        className={`
+                          group border-b border-cyan-500/20 p-3
+                          transition-colors
+                          last:border-b-0
+                          hover:bg-cyan-500/10
+                          ${
+                            educator.id ===
+                            (selectedInstructor ?? course.instructor)
+                              ? 'bg-cyan-500/20'
+                              : ''
+                          }
+                        `}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <button
@@ -1826,7 +1805,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               {educator.name}
                             </p>
                             {educator.email ? (
-                              <p className="mt-1 flex items-center gap-1 text-xs text-cyan-400/70">
+                              <p
+                                className="
+                                  mt-1 flex items-center gap-1 text-xs
+                                  text-cyan-400/70
+                                "
+                              >
                                 <span>✉️</span>
                                 <span>{educator.email}</span>
                               </p>
@@ -1838,14 +1822,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           </button>
 
                           {/* Botones de copiar */}
-                          <div className="flex flex-col gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                          <div
+                            className="
+                              flex flex-col gap-1 opacity-0 transition-opacity
+                              group-hover:opacity-100
+                            "
+                          >
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 copyToClipboard(educator.name ?? '', 'Nombre');
                               }}
-                              className="rounded p-1 text-cyan-400/60 hover:bg-cyan-400/10 hover:text-cyan-400"
+                              className="
+                                rounded p-1 text-cyan-400/60
+                                hover:bg-cyan-400/10 hover:text-cyan-400
+                              "
                               title="Copiar nombre"
                             >
                               <svg
@@ -1872,7 +1864,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     'Correo'
                                   );
                                 }}
-                                className="rounded p-1 text-cyan-400/60 hover:bg-cyan-400/10 hover:text-cyan-400"
+                                className="
+                                  rounded p-1 text-cyan-400/60
+                                  hover:bg-cyan-400/10 hover:text-cyan-400
+                                "
                                 title="Copiar correo"
                               >
                                 <svg
@@ -1910,12 +1905,21 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <Button
             size="sm"
             onClick={onSaveChange}
-            className="relative w-full border-cyan-500 bg-cyan-500/20 text-cyan-400 transition-colors hover:bg-cyan-500/40"
+            className="
+              relative w-full border-cyan-500 bg-cyan-500/20 text-cyan-400
+              transition-colors
+              hover:bg-cyan-500/40
+            "
             disabled={isUpdating}
           >
             {isUpdating ? (
               <>
-                <span className="mr-2 inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                <span
+                  className="
+                    mr-2 inline-block size-4 animate-spin rounded-full border-2
+                    border-current border-t-transparent
+                  "
+                />
                 Guardando...
               </>
             ) : (
@@ -2073,7 +2077,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Renderizar el componente
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden px-1 py-2 md:px-3 md:py-4"
+      className="
+        relative min-h-screen w-full overflow-hidden px-1 py-2
+        md:px-3 md:py-4
+      "
       style={{
         backgroundColor: 'rgb(1, 11, 23)',
         backgroundSize: 'cover',
@@ -2081,17 +2088,39 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       }}
     >
       {/* Overlay oscuro para mejorar legibilidad */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/70 via-[#010b17]/60 to-black/70" />
+      <div
+        className="
+          pointer-events-none absolute inset-0 bg-gradient-to-br from-black/70
+          via-[#010b17]/60 to-black/70
+        "
+      />
 
       {/* Fondo decorativo con patrón */}
       <div className="pointer-events-none absolute inset-0 opacity-20">
-        <div className="absolute -top-40 -right-40 size-80 rounded-full bg-green-500 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 size-80 rounded-full bg-purple-500 blur-3xl" />
+        <div
+          className="
+            absolute -top-40 -right-40 size-80 rounded-full bg-green-500
+            blur-3xl
+          "
+        />
+        <div
+          className="
+            absolute -bottom-40 -left-40 size-80 rounded-full bg-purple-500
+            blur-3xl
+          "
+        />
       </div>
 
       {/* Tarjeta Mini Sticky - Premium Glass */}
       {showStickyCard && course && (
-        <div className="surface-glass animate-slideInDown fixed inset-x-0 top-4 z-[9999] flex max-w-full items-center justify-between gap-4 px-2 py-3 shadow-lg md:top-6 md:px-4 md:py-3">
+        <div
+          className="
+            surface-glass animate-slideInDown fixed inset-x-0 top-4 z-[9999]
+            flex max-w-full items-center justify-between gap-4 px-2 py-3
+            shadow-lg
+            md:top-6 md:px-4 md:py-3
+          "
+        >
           {/* Mini Imagen y Info */}
           <div className="flex min-w-0 flex-1 items-center gap-4">
             {/* Mini Imagen - Premium */}
@@ -2108,10 +2137,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
             {/* Información compacta */}
             <div className="min-w-0 flex-1">
-              <h3 className="line-clamp-1 text-sm font-semibold text-white md:text-base">
+              <h3
+                className="
+                  line-clamp-1 text-sm font-semibold text-white
+                  md:text-base
+                "
+              >
                 {course.title}
               </h3>
-              <p className="line-clamp-1 text-xs font-medium text-green-400 md:text-sm">
+              <p
+                className="
+                  line-clamp-1 text-xs font-medium text-green-400
+                  md:text-sm
+                "
+              >
                 {course.categoryName ?? 'Curso'} • {course.nivelName ?? 'Nivel'}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -2133,7 +2172,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="btn-primary hidden px-4 py-2 sm:flex"
+              className="
+                btn-primary hidden px-4 py-2
+                sm:flex
+              "
             >
               ↑ Arriba
             </Button>
@@ -2141,7 +2183,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
-              className="btn-primary px-3 py-2 sm:hidden"
+              className="
+                btn-primary px-3 py-2
+                sm:hidden
+              "
             >
               ↑
             </Button>
@@ -2153,7 +2198,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         <BreadcrumbList className="flex flex-wrap gap-2">
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-cyan-400 transition-colors duration-300 hover:text-cyan-300"
+              className="
+                text-cyan-400 transition-colors duration-300
+                hover:text-cyan-300
+              "
               href="/dashboard/super-admin"
             >
               Inicio
@@ -2162,7 +2210,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-cyan-400 transition-colors duration-300 hover:text-cyan-300"
+              className="
+                text-cyan-400 transition-colors duration-300
+                hover:text-cyan-300
+              "
               href="/dashboard/super-admin/cursos"
             >
               Cursos
@@ -2175,19 +2226,63 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="relative w-full">
-        <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-cyan-300 to-teal-400 opacity-0 blur-3xl transition-all duration-700 group-hover:opacity-100" />
-        <Card className="zoom-in sticky top-0 z-30 mt-3 h-auto overflow-hidden border-2 border-cyan-500/30 bg-slate-950 p-4 shadow-2xl transition-all duration-500 ease-out hover:border-cyan-500/60 hover:shadow-cyan-500/30 sm:p-8">
-          <CardHeader className="grid w-full grid-cols-1 gap-6 border-b border-cyan-500/20 p-0 pb-8 md:grid-cols-2 md:gap-12">
-            <div className="animate-in fade-in slide-in-from-left-4 space-y-3 duration-500">
-              <p className="text-sm font-semibold tracking-widest text-cyan-400 uppercase">
+        <div
+          className="
+            absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400
+            via-cyan-300 to-teal-400 opacity-0 blur-3xl transition-all
+            duration-700
+            group-hover:opacity-100
+          "
+        />
+        <Card
+          className="
+            zoom-in sticky top-0 z-30 mt-3 h-auto overflow-hidden border-2
+            border-cyan-500/30 bg-slate-950 p-4 shadow-2xl transition-all
+            duration-500 ease-out
+            hover:border-cyan-500/60 hover:shadow-cyan-500/30
+            sm:p-8
+          "
+        >
+          <CardHeader
+            className="
+              grid w-full grid-cols-1 gap-6 border-b border-cyan-500/20 p-0 pb-8
+              md:grid-cols-2 md:gap-12
+            "
+          >
+            <div
+              className="
+                animate-in fade-in slide-in-from-left-4 space-y-3 duration-500
+              "
+            >
+              <p
+                className="
+                  text-sm font-semibold tracking-widest text-cyan-400 uppercase
+                "
+              >
                 Detalles del Curso
               </p>
-              <CardTitle className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+              <CardTitle
+                className="
+                  text-3xl font-bold text-white
+                  md:text-4xl
+                  lg:text-5xl
+                "
+              >
                 {course.title}
               </CardTitle>
             </div>
-            <div className="animate-in fade-in slide-in-from-right-4 flex flex-col justify-start gap-4 duration-500">
-              <Label className="flex items-center gap-2 text-sm font-bold tracking-wider text-cyan-400 uppercase">
+            <div
+              className="
+                animate-in fade-in slide-in-from-right-4 flex flex-col
+                justify-start gap-4 duration-500
+              "
+            >
+              <Label
+                className="
+                  flex items-center gap-2 text-sm font-bold tracking-wider
+                  text-cyan-400 uppercase
+                "
+              >
                 Tema Visual
               </Label>
               <div className="flex flex-wrap gap-3">
@@ -2196,36 +2291,78 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     key={color}
                     onClick={() => handlePredefinedColorChange(color)}
                     style={{ backgroundColor: color }}
-                    className={`size-12 rounded-xl border-2 transition-all duration-300 hover:scale-125 hover:shadow-lg hover:shadow-cyan-500/50 ${
-                      selectedColor === color
-                        ? `scale-110 border-white shadow-lg ring-2 ring-cyan-400 ring-offset-2`
-                        : 'border-white/20 hover:border-cyan-400'
-                    }`}
+                    className={`
+                      size-12 rounded-xl border-2 transition-all duration-300
+                      hover:scale-125 hover:shadow-lg hover:shadow-cyan-500/50
+                      ${
+                        selectedColor === color
+                          ? `
+                            scale-110 border-white shadow-lg ring-2
+                            ring-cyan-400 ring-offset-2
+                          `
+                          : `
+                            border-white/20
+                            hover:border-cyan-400
+                          `
+                      }
+                    `}
                     title={`Cambiar tema a ${color}`}
                   />
                 ))}
               </div>
             </div>
           </CardHeader>
-          <div className="mt-8 grid gap-8 md:grid-cols-2">
+          <div
+            className="
+              mt-8 grid gap-8
+              md:grid-cols-2
+            "
+          >
             {/* Left Column - Cover Image */}
-            <div className="animate-slideInLeft order-2 flex w-full flex-col space-y-6 md:order-1">
+            <div
+              className="
+                animate-slideInLeft order-2 flex w-full flex-col space-y-6
+                md:order-1
+              "
+            >
               {/* Image Container - Premium Glass */}
-              <div className="card-premium group relative aspect-video w-full overflow-hidden">
-                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-40 transition-opacity duration-300 group-hover:opacity-20" />
+              <div
+                className="
+                  card-premium group relative aspect-video w-full
+                  overflow-hidden
+                "
+              >
+                <div
+                  className="
+                    absolute inset-0 z-10 bg-gradient-to-t from-black/50
+                    via-transparent to-transparent opacity-40 transition-opacity
+                    duration-300
+                    group-hover:opacity-20
+                  "
+                />
                 <Image
                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
                   alt={course.title}
                   width={400}
                   height={225}
-                  className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  className="
+                    size-full object-cover transition-transform duration-500
+                    group-hover:scale-110
+                  "
                   priority
                   quality={85}
                 />
               </div>
 
               {/* Action Buttons Grid */}
-              <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 md:gap-3 lg:gap-4">
+              <div
+                className="
+                  grid w-full grid-cols-2 gap-2
+                  sm:grid-cols-3
+                  md:grid-cols-5 md:gap-3
+                  lg:gap-4
+                "
+              >
                 <Button
                   onClick={handleEnrollAndRedirect}
                   className="btn-primary w-full"
@@ -2234,37 +2371,90 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </Button>
                 <Button
                   onClick={() => setIsSearchModalOpen(true)}
-                  className="btn-secondary flex w-full items-center justify-center gap-1"
+                  className="
+                    btn-secondary flex w-full items-center justify-center gap-1
+                  "
                   title="Buscar información del curso con IA"
                 >
-                  <Brain className="size-3 md:size-4" />
-                  <span className="hidden sm:inline">IA</span>
+                  <Brain
+                    className="
+                      size-3
+                      md:size-4
+                    "
+                  />
+                  <span
+                    className="
+                      hidden
+                      sm:inline
+                    "
+                  >
+                    IA
+                  </span>
                 </Button>
                 <Button
                   onClick={handleGenerateEmbeddings}
                   disabled={isGeneratingEmbeddings}
-                  className="flex w-full items-center justify-center gap-1 bg-indigo-600 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 md:px-4 md:py-3 md:text-sm"
+                  className="
+                    flex w-full items-center justify-center gap-1 bg-indigo-600
+                    px-3 py-2 text-xs font-semibold text-white transition-all
+                    duration-300
+                    hover:bg-indigo-700
+                    disabled:cursor-not-allowed disabled:opacity-50
+                    md:px-4 md:py-3 md:text-sm
+                  "
                   title="Regenerar embeddings del curso para búsqueda"
                 >
                   {isGeneratingEmbeddings ? (
                     <>
-                      <div className="size-3 animate-spin rounded-full border-2 border-white border-t-transparent md:size-4" />
-                      <span className="hidden sm:inline">Indexando...</span>
+                      <div
+                        className="
+                          size-3 animate-spin rounded-full border-2 border-white
+                          border-t-transparent
+                          md:size-4
+                        "
+                      />
+                      <span
+                        className="
+                          hidden
+                          sm:inline
+                        "
+                      >
+                        Indexando...
+                      </span>
                     </>
                   ) : (
                     <>
                       <span className="text-lg">⚡</span>
-                      <span className="hidden sm:inline">Indexar</span>
+                      <span
+                        className="
+                          hidden
+                          sm:inline
+                        "
+                      >
+                        Indexar
+                      </span>
                     </>
                   )}
                 </Button>
                 <Button
                   onClick={handleEditCourse}
-                  className="w-full bg-yellow-500 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-yellow-600 md:px-4 md:py-3 md:text-sm"
+                  className="
+                    w-full bg-yellow-500 px-3 py-2 text-xs font-semibold
+                    text-white transition-all duration-300
+                    hover:bg-yellow-600
+                    md:px-4 md:py-3 md:text-sm
+                  "
                 >
                   ✏️ Editar
                 </Button>
-                <Button className="w-full bg-blue-500 px-3 py-2 text-xs font-semibold text-white transition-all duration-300 hover:bg-blue-600 md:px-4 md:py-3 md:text-sm">
+                <Button
+                  className="
+                    w-full bg-blue-500 px-3 py-2 text-xs font-semibold
+                    text-white transition-all duration-300
+                    hover:bg-blue-600
+                    md:px-4 md:py-3 md:text-sm
+                  "
+                >
                   <Link
                     href={`/dashboard/super-admin/detailsDashboard/${course.id}`}
                   >
@@ -2275,7 +2465,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <AlertDialogTrigger asChild>
                     <Button
                       variant="destructive"
-                      className="w-full bg-red-500 px-3 py-2 text-xs font-semibold transition-all duration-300 hover:bg-red-600 md:px-4 md:py-3 md:text-sm"
+                      className="
+                        w-full bg-red-500 px-3 py-2 text-xs font-semibold
+                        transition-all duration-300
+                        hover:bg-red-600
+                        md:px-4 md:py-3 md:text-sm
+                      "
                     >
                       🗑️ Eliminar
                     </Button>
@@ -2294,7 +2489,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <AlertDialogCancel>Cancelar</AlertDialogCancel>
                       <AlertDialogAction
                         onClick={() => handleDelete()}
-                        className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                        className="
+                          border-red-600 bg-red-600 text-white
+                          hover:border-red-700 hover:bg-transparent
+                          hover:text-red-700
+                        "
                       >
                         Eliminar
                       </AlertDialogAction>
@@ -2304,53 +2503,137 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
             </div>
             {/* Right Column - Information */}
-            <div className="animate-in fade-in slide-in-from-right-8 space-y-6 duration-700">
-              <h2 className="text-2xl font-bold text-white md:text-3xl">
+            <div
+              className="
+                animate-in fade-in slide-in-from-right-8 space-y-6 duration-700
+              "
+            >
+              <h2
+                className="
+                  text-2xl font-bold text-white
+                  md:text-3xl
+                "
+              >
                 Información del Curso
               </h2>
 
               {/* Grid de información rápida */}
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
-                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+              <div
+                className="
+                  grid grid-cols-1 gap-4
+                  md:grid-cols-2
+                "
+              >
+                <div
+                  className="
+                    rounded-xl border border-cyan-500/30 bg-white/5 p-4
+                    backdrop-blur-sm transition-all duration-300
+                    hover:border-cyan-500/60 hover:bg-white/10
+                  "
+                >
+                  <p
+                    className="
+                      mb-2 text-xs font-semibold tracking-wide text-cyan-400
+                      uppercase
+                    "
+                  >
                     Categoría
                   </p>
-                  <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
+                  <Badge
+                    className="
+                      border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300
+                    "
+                  >
                     {course.categoryName ?? course.categoryid}
                   </Badge>
                 </div>
 
-                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
-                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                <div
+                  className="
+                    rounded-xl border border-cyan-500/30 bg-white/5 p-4
+                    backdrop-blur-sm transition-all duration-300
+                    hover:border-cyan-500/60 hover:bg-white/10
+                  "
+                >
+                  <p
+                    className="
+                      mb-2 text-xs font-semibold tracking-wide text-cyan-400
+                      uppercase
+                    "
+                  >
                     Nivel
                   </p>
-                  <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
+                  <Badge
+                    className="
+                      border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300
+                    "
+                  >
                     {course.nivelName ?? course.nivelid}
                   </Badge>
                 </div>
 
-                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
-                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                <div
+                  className="
+                    rounded-xl border border-cyan-500/30 bg-white/5 p-4
+                    backdrop-blur-sm transition-all duration-300
+                    hover:border-cyan-500/60 hover:bg-white/10
+                  "
+                >
+                  <p
+                    className="
+                      mb-2 text-xs font-semibold tracking-wide text-cyan-400
+                      uppercase
+                    "
+                  >
                     Modalidad
                   </p>
-                  <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
+                  <Badge
+                    className="
+                      border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300
+                    "
+                  >
                     {course.modalidadesName ?? course.modalidadesid}
                   </Badge>
                 </div>
 
-                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
-                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                <div
+                  className="
+                    rounded-xl border border-cyan-500/30 bg-white/5 p-4
+                    backdrop-blur-sm transition-all duration-300
+                    hover:border-cyan-500/60 hover:bg-white/10
+                  "
+                >
+                  <p
+                    className="
+                      mb-2 text-xs font-semibold tracking-wide text-cyan-400
+                      uppercase
+                    "
+                  >
                     Certificación
                   </p>
-                  <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
+                  <Badge
+                    className="
+                      border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300
+                    "
+                  >
                     {certificationTypeName ?? 'No asignado'}
                   </Badge>
                 </div>
               </div>
 
               {/* Descripción */}
-              <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-5 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
-                <h3 className="mb-3 text-sm font-bold tracking-wide text-cyan-400 uppercase">
+              <div
+                className="
+                  rounded-xl border border-cyan-500/30 bg-white/5 p-5
+                  backdrop-blur-sm transition-all duration-300
+                  hover:border-cyan-500/60 hover:bg-white/10
+                "
+              >
+                <h3
+                  className="
+                    mb-3 text-sm font-bold tracking-wide text-cyan-400 uppercase
+                  "
+                >
                   Descripción
                 </h3>
                 <p className="text-sm leading-relaxed text-white/80">
@@ -2359,8 +2642,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
 
               {/* Educadores */}
-              <div className="rounded-xl border-2 border-cyan-500/40 bg-cyan-500/10 p-6 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/70">
-                <h2 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-wider text-cyan-400 uppercase">
+              <div
+                className="
+                  rounded-xl border-2 border-cyan-500/40 bg-cyan-500/10 p-6
+                  backdrop-blur-sm transition-all duration-300
+                  hover:border-cyan-500/70
+                "
+              >
+                <h2
+                  className="
+                    mb-4 flex items-center gap-2 text-sm font-bold
+                    tracking-wider text-cyan-400 uppercase
+                  "
+                >
                   Instructores Asignados
                 </h2>
 
@@ -2374,7 +2668,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       return (
                         <div
                           key={instructorId}
-                          className="text-primary-300 flex items-center gap-2 rounded-full border border-primary bg-primary/20 px-4 py-2 text-sm text-white"
+                          className="
+                            text-primary-300 flex items-center gap-2
+                            rounded-full border border-primary bg-primary/20
+                            px-4 py-2 text-sm text-white
+                          "
                         >
                           <span className="font-semibold text-white">
                             {educator?.name || instructorId}
@@ -2425,7 +2723,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               }
                             }}
                             disabled={isUpdating}
-                            className="rounded-full text-purple-300 transition-colors hover:text-red-400 disabled:opacity-50"
+                            className="
+                              rounded-full text-purple-300 transition-colors
+                              hover:text-red-400
+                              disabled:opacity-50
+                            "
                           >
                             ✕
                           </button>
@@ -2444,7 +2746,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <select
                     value={selectedInstructor}
                     onChange={(e) => setSelectedInstructor(e.target.value)}
-                    className="flex-1 rounded-lg border border-cyan-500/30 bg-slate-900 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                    className="
+                      flex-1 rounded-lg border border-cyan-500/30 bg-slate-900
+                      px-3 py-2 text-sm text-white
+                      focus:border-cyan-500 focus:outline-none
+                    "
                     disabled={isUpdating}
                   >
                     <option value="">Seleccionar instructor...</option>
@@ -2502,7 +2808,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       }
                     }}
                     disabled={isUpdating || !selectedInstructor}
-                    className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+                    className="
+                      rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold
+                      text-white transition-colors
+                      hover:bg-cyan-600
+                      disabled:opacity-50
+                    "
                   >
                     {isUpdating ? '...' : '+ Agregar'}
                   </button>
@@ -2516,78 +2827,145 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         <LoadingCourses />
       ) : (
         courseIdNumber !== null && (
-          <div className="-mx-1 mt-16 space-y-8 px-1 md:-mx-3 md:px-3">
+          <div
+            className="
+              -mx-1 mt-16 space-y-8 px-1
+              md:-mx-3 md:px-3
+            "
+          >
             {/* TABS MENU HORIZONTAL */}
             <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
               {/* Tabs Navigation */}
-              <div className="-mx-1 mb-8 border-b border-cyan-500/20 px-1 md:-mx-3 md:px-3">
+              <div
+                className="
+                  -mx-1 mb-8 border-b border-cyan-500/20 px-1
+                  md:-mx-3 md:px-3
+                "
+              >
                 <div className="flex gap-4 overflow-x-auto pb-4 md:gap-6 lg:gap-8">
                   <button
                     onClick={() => setActiveTab('lecciones')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'lecciones'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
+                    className={`
+                      border-b-2 pb-4 font-semibold whitespace-nowrap
+                      transition-all
+                      ${
+                        activeTab === 'lecciones'
+                          ? 'border-cyan-400 text-white'
+                          : `
+                            border-transparent text-white/60
+                            hover:text-white
+                          `
+                      }
+                    `}
                   >
                     Lista de Clases
                   </button>
                   <button
                     onClick={() => setActiveTab('en-vivo')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'en-vivo'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
+                    className={`
+                      border-b-2 pb-4 font-semibold whitespace-nowrap
+                      transition-all
+                      ${
+                        activeTab === 'en-vivo'
+                          ? 'border-cyan-400 text-white'
+                          : `
+                            border-transparent text-white/60
+                            hover:text-white
+                          `
+                      }
+                    `}
                   >
                     Clases en Vivo
                   </button>
                   <button
                     onClick={() => setActiveTab('estudiantes')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'estudiantes'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
+                    className={`
+                      border-b-2 pb-4 font-semibold whitespace-nowrap
+                      transition-all
+                      ${
+                        activeTab === 'estudiantes'
+                          ? 'border-cyan-400 text-white'
+                          : `
+                            border-transparent text-white/60
+                            hover:text-white
+                          `
+                      }
+                    `}
                   >
                     Estudiantes
                   </button>
                   <button
                     onClick={() => setActiveTab('grabadas')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'grabadas'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
+                    className={`
+                      border-b-2 pb-4 font-semibold whitespace-nowrap
+                      transition-all
+                      ${
+                        activeTab === 'grabadas'
+                          ? 'border-cyan-400 text-white'
+                          : `
+                            border-transparent text-white/60
+                            hover:text-white
+                          `
+                      }
+                    `}
                   >
                     Clases grabadas{' '}
-                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                    <span
+                      className="
+                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                        text-xs font-bold text-slate-950
+                      "
+                    >
                       {meetingsForList.length}
                     </span>
                   </button>
                   <button
                     onClick={() => setActiveTab('foros')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'foros'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
+                    className={`
+                      border-b-2 pb-4 font-semibold whitespace-nowrap
+                      transition-all
+                      ${
+                        activeTab === 'foros'
+                          ? 'border-cyan-400 text-white'
+                          : `
+                            border-transparent text-white/60
+                            hover:text-white
+                          `
+                      }
+                    `}
                   >
                     Foros{' '}
-                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                    <span
+                      className="
+                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                        text-xs font-bold text-slate-950
+                      "
+                    >
                       {forums.length}
                     </span>
                   </button>
                   <button
                     onClick={() => setActiveTab('proyectos')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'proyectos'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
+                    className={`
+                      border-b-2 pb-4 font-semibold whitespace-nowrap
+                      transition-all
+                      ${
+                        activeTab === 'proyectos'
+                          ? 'border-cyan-400 text-white'
+                          : `
+                            border-transparent text-white/60
+                            hover:text-white
+                          `
+                      }
+                    `}
                   >
                     Proyectos{' '}
-                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                    <span
+                      className="
+                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                        text-xs font-bold text-slate-950
+                      "
+                    >
                       {Array.isArray(studentProjects)
                         ? studentProjects.length
                         : 0}
@@ -2595,39 +2973,70 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </button>
                   <button
                     onClick={() => setActiveTab('recursos')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'recursos'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
+                    className={`
+                      border-b-2 pb-4 font-semibold whitespace-nowrap
+                      transition-all
+                      ${
+                        activeTab === 'recursos'
+                          ? 'border-cyan-400 text-white'
+                          : `
+                            border-transparent text-white/60
+                            hover:text-white
+                          `
+                      }
+                    `}
                   >
                     Recursos{' '}
-                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                    <span
+                      className="
+                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                        text-xs font-bold text-slate-950
+                      "
+                    >
                       3
                     </span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('actividades')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'actividades'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
+                    className={`
+                      border-b-2 pb-4 font-semibold whitespace-nowrap
+                      transition-all
+                      ${
+                        activeTab === 'actividades'
+                          ? 'border-cyan-400 text-white'
+                          : `
+                            border-transparent text-white/60
+                            hover:text-white
+                          `
+                      }
+                    `}
                   >
                     Actividades{' '}
-                    <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                    <span
+                      className="
+                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                        text-xs font-bold text-slate-950
+                      "
+                    >
                       5
                     </span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('embeddings')}
-                    className={`border-b-2 pb-4 font-semibold whitespace-nowrap transition-all ${
-                      activeTab === 'embeddings'
-                        ? 'border-cyan-400 text-white'
-                        : 'border-transparent text-white/60 hover:text-white'
-                    }`}
+                    className={`
+                      border-b-2 pb-4 font-semibold whitespace-nowrap
+                      transition-all
+                      ${
+                        activeTab === 'embeddings'
+                          ? 'border-cyan-400 text-white'
+                          : `
+                            border-transparent text-white/60
+                            hover:text-white
+                          `
+                      }
+                    `}
                   >
                     🧠 Embeddings
                   </button>
@@ -2635,30 +3044,73 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
 
               {/* TAB CONTENT */}
-              <div className="-mx-1 space-y-6 px-1 md:-mx-3 md:px-3">
+              <div
+                className="
+                  -mx-1 space-y-6 px-1
+                  md:-mx-3 md:px-3
+                "
+              >
                 {/* Curso Tab - Solo Clase en Vivo */}
                 {activeTab === 'curso' && (
                   <div className="animate-in fade-in space-y-8 duration-500">
                     {/* Sobre el educador */}
                     {course.instructorProfileImageKey && (
-                      <div className="group relative overflow-hidden rounded-2xl border-2 border-cyan-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-8 shadow-xl transition-all duration-300 hover:border-cyan-500/60 hover:shadow-2xl hover:shadow-cyan-500/20">
+                      <div
+                        className="
+                          group relative overflow-hidden rounded-2xl border-2
+                          border-cyan-500/30 bg-gradient-to-br from-slate-900
+                          via-slate-900 to-cyan-950/30 p-8 shadow-xl
+                          transition-all duration-300
+                          hover:border-cyan-500/60 hover:shadow-2xl
+                          hover:shadow-cyan-500/20
+                        "
+                      >
                         {/* Efecto de brillo en hover */}
-                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                        <div
+                          className="
+                            absolute inset-0 -translate-x-full bg-gradient-to-r
+                            from-transparent via-cyan-500/10 to-transparent
+                            transition-transform duration-700
+                            group-hover:translate-x-full
+                          "
+                        />
 
-                        <h2 className="mb-6 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-3xl font-bold text-transparent">
+                        <h2
+                          className="
+                            mb-6 bg-gradient-to-r from-cyan-400 to-blue-400
+                            bg-clip-text text-3xl font-bold text-transparent
+                          "
+                        >
                           Sobre el educador
                         </h2>
 
-                        <div className="relative flex flex-col items-start gap-6 md:flex-row md:items-center">
+                        <div
+                          className="
+                            relative flex flex-col items-start gap-6
+                            md:flex-row md:items-center
+                          "
+                        >
                           {/* Foto del educador con efecto */}
                           <div className="relative">
-                            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 opacity-75 blur-lg transition-opacity duration-300 group-hover:opacity-100" />
+                            <div
+                              className="
+                                absolute -inset-1 rounded-full bg-gradient-to-r
+                                from-cyan-500 to-blue-500 opacity-75 blur-lg
+                                transition-opacity duration-300
+                                group-hover:opacity-100
+                              "
+                            />
                             <Image
                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.instructorProfileImageKey}`}
                               alt={course.instructorName}
                               width={128}
                               height={128}
-                              className="relative size-32 rounded-full object-cover ring-4 ring-cyan-500/50 transition-transform duration-300 group-hover:scale-105"
+                              className="
+                                relative size-32 rounded-full object-cover
+                                ring-4 ring-cyan-500/50 transition-transform
+                                duration-300
+                                group-hover:scale-105
+                              "
                               quality={70}
                             />
                           </div>
@@ -2669,7 +3121,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               {course.instructorName}
                             </h3>
                             {course.instructorProfesion && (
-                              <p className="mt-2 text-base font-semibold text-cyan-400">
+                              <p
+                                className="
+                                  mt-2 text-base font-semibold text-cyan-400
+                                "
+                              >
                                 {course.instructorProfesion}
                               </p>
                             )}
@@ -2696,11 +3152,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
 
                     {/* Botones de acción */}
-                    <div className="flex w-full flex-col gap-3 sm:flex-row">
+                    <div
+                      className="
+                        flex w-full flex-col gap-3
+                        sm:flex-row
+                      "
+                    >
                       <Button
                         onClick={() => void handleSyncVideos()}
                         disabled={isSyncingVideos}
-                        className="w-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-cyan-600 disabled:opacity-50 sm:w-auto md:px-6 md:py-3 md:text-base"
+                        className="
+                          w-full bg-cyan-500 px-5 py-3 text-sm font-semibold
+                          text-white transition-all duration-300
+                          hover:bg-cyan-600
+                          disabled:opacity-50
+                          sm:w-auto
+                          md:px-6 md:py-3 md:text-base
+                        "
                       >
                         {isSyncingVideos
                           ? 'Sincronizando...'
@@ -2709,7 +3177,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                       <Button
                         onClick={() => setIsMeetingModalOpen(true)}
-                        className="w-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-cyan-600 sm:w-auto md:px-6 md:py-3 md:text-base"
+                        className="
+                          w-full bg-cyan-500 px-5 py-3 text-sm font-semibold
+                          text-white transition-all duration-300
+                          hover:bg-cyan-600
+                          sm:w-auto
+                          md:px-6 md:py-3 md:text-base
+                        "
                       >
                         Agendar Clase
                       </Button>
@@ -2718,7 +3192,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Lista de Clases Tab */}
                 {activeTab === 'lecciones' && (
-                  <div className="animate-in fade-in -mx-1 px-1 duration-500 md:-mx-3 md:px-3">
+                  <div
+                    className="
+                      animate-in fade-in -mx-1 px-1 duration-500
+                      md:-mx-3 md:px-3
+                    "
+                  >
                     <LessonsListEducator
                       courseId={courseIdNumber}
                       selectedColor={selectedColor}
@@ -2727,27 +3206,70 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Clases en Vivo Tab */}
                 {activeTab === 'en-vivo' && (
-                  <div className="animate-in fade-in -mx-1 space-y-8 px-1 duration-500 md:-mx-3 md:px-3">
+                  <div
+                    className="
+                      animate-in fade-in -mx-1 space-y-8 px-1 duration-500
+                      md:-mx-3 md:px-3
+                    "
+                  >
                     {/* Sobre el educador */}
                     {course.instructorProfileImageKey && (
-                      <div className="group relative overflow-hidden rounded-2xl border-2 border-cyan-500/30 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-8 shadow-xl transition-all duration-300 hover:border-cyan-500/60 hover:shadow-2xl hover:shadow-cyan-500/20">
+                      <div
+                        className="
+                          group relative overflow-hidden rounded-2xl border-2
+                          border-cyan-500/30 bg-gradient-to-br from-slate-900
+                          via-slate-900 to-cyan-950/30 p-8 shadow-xl
+                          transition-all duration-300
+                          hover:border-cyan-500/60 hover:shadow-2xl
+                          hover:shadow-cyan-500/20
+                        "
+                      >
                         {/* Efecto de brillo en hover */}
-                        <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-cyan-500/10 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                        <div
+                          className="
+                            absolute inset-0 -translate-x-full bg-gradient-to-r
+                            from-transparent via-cyan-500/10 to-transparent
+                            transition-transform duration-700
+                            group-hover:translate-x-full
+                          "
+                        />
 
-                        <h2 className="mb-6 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-3xl font-bold text-transparent">
+                        <h2
+                          className="
+                            mb-6 bg-gradient-to-r from-cyan-400 to-blue-400
+                            bg-clip-text text-3xl font-bold text-transparent
+                          "
+                        >
                           Sobre el educador
                         </h2>
 
-                        <div className="relative flex flex-col items-start gap-6 md:flex-row md:items-center">
+                        <div
+                          className="
+                            relative flex flex-col items-start gap-6
+                            md:flex-row md:items-center
+                          "
+                        >
                           {/* Foto del educador con efecto */}
                           <div className="relative">
-                            <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 opacity-75 blur-lg transition-opacity duration-300 group-hover:opacity-100" />
+                            <div
+                              className="
+                                absolute -inset-1 rounded-full bg-gradient-to-r
+                                from-cyan-500 to-blue-500 opacity-75 blur-lg
+                                transition-opacity duration-300
+                                group-hover:opacity-100
+                              "
+                            />
                             <Image
                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.instructorProfileImageKey}`}
                               alt={course.instructorName}
                               width={128}
                               height={128}
-                              className="relative size-32 rounded-full object-cover ring-4 ring-cyan-500/50 transition-transform duration-300 group-hover:scale-105"
+                              className="
+                                relative size-32 rounded-full object-cover
+                                ring-4 ring-cyan-500/50 transition-transform
+                                duration-300
+                                group-hover:scale-105
+                              "
                               quality={70}
                             />
                           </div>
@@ -2758,7 +3280,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               {course.instructorName}
                             </h3>
                             {course.instructorProfesion && (
-                              <p className="mt-2 text-base font-semibold text-cyan-400">
+                              <p
+                                className="
+                                  mt-2 text-base font-semibold text-cyan-400
+                                "
+                              >
                                 {course.instructorProfesion}
                               </p>
                             )}
@@ -2777,11 +3303,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </h2>
 
                     {/* Botones de acción */}
-                    <div className="flex w-full flex-col gap-3 sm:flex-row">
+                    <div
+                      className="
+                        flex w-full flex-col gap-3
+                        sm:flex-row
+                      "
+                    >
                       <Button
                         onClick={() => void handleSyncVideos()}
                         disabled={isSyncingVideos}
-                        className="w-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-cyan-600 disabled:opacity-50 sm:w-auto md:px-6 md:py-3 md:text-base"
+                        className="
+                          w-full bg-cyan-500 px-5 py-3 text-sm font-semibold
+                          text-white transition-all duration-300
+                          hover:bg-cyan-600
+                          disabled:opacity-50
+                          sm:w-auto
+                          md:px-6 md:py-3 md:text-base
+                        "
                       >
                         {isSyncingVideos
                           ? 'Sincronizando...'
@@ -2790,7 +3328,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                       <Button
                         onClick={() => setIsMeetingModalOpen(true)}
-                        className="w-full bg-cyan-500 px-5 py-3 text-sm font-semibold text-white transition-all duration-300 hover:bg-cyan-600 sm:w-auto md:px-6 md:py-3 md:text-base"
+                        className="
+                          w-full bg-cyan-500 px-5 py-3 text-sm font-semibold
+                          text-white transition-all duration-300
+                          hover:bg-cyan-600
+                          sm:w-auto
+                          md:px-6 md:py-3 md:text-base
+                        "
                       >
                         Agendar Clase
                       </Button>
@@ -2807,7 +3351,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Estudiantes Tab */}
                 {activeTab === 'estudiantes' && (
-                  <div className="animate-in fade-in -mx-1 px-1 duration-500 md:-mx-3 md:px-3">
+                  <div
+                    className="
+                      animate-in fade-in -mx-1 px-1 duration-500
+                      md:-mx-3 md:px-3
+                    "
+                  >
                     <DashboardEstudiantes
                       courseId={courseIdNumber}
                       selectedColor={selectedColor}
@@ -2816,7 +3365,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 )}
                 {/* Clases Grabadas Tab */}
                 {activeTab === 'grabadas' && (
-                  <div className="animate-in fade-in -mx-1 px-1 duration-500 md:-mx-3 md:px-3">
+                  <div
+                    className="
+                      animate-in fade-in -mx-1 px-1 duration-500
+                      md:-mx-3 md:px-3
+                    "
+                  >
                     <h2 className="mb-6 text-2xl font-bold text-white">
                       Clases Grabadas ({meetingsForList.length})
                     </h2>
@@ -2832,7 +3386,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 {activeTab === 'foros' && (
                   <div className="animate-in fade-in duration-500">
                     {/* Formulario de creación de foro siempre visible */}
-                    <div className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow">
+                    <div
+                      className="
+                        mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b]
+                        p-6 shadow
+                      "
+                    >
                       <h2 className="mb-1 text-xl font-bold text-cyan-300">
                         Foro del curso
                       </h2>
@@ -2845,7 +3404,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           value={newForumTitle}
                           onChange={(e) => setNewForumTitle(e.target.value)}
                           rows={2}
-                          className="w-full resize-none rounded-xl border border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-base text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                          className="
+                            w-full resize-none rounded-xl border
+                            border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-base
+                            text-white
+                            placeholder:text-white/30
+                            focus:border-cyan-500 focus:outline-none
+                          "
                           style={{ minHeight: '60px' }}
                         />
 
@@ -2856,7 +3421,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             setNewForumDescription(e.target.value)
                           }
                           rows={2}
-                          className="w-full resize-none rounded-xl border border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                          className="
+                            w-full resize-none rounded-xl border
+                            border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-sm
+                            text-white
+                            placeholder:text-white/30
+                            focus:border-cyan-500 focus:outline-none
+                          "
                           style={{ minHeight: '50px' }}
                         />
 
@@ -2871,7 +3442,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               }
                               className="hidden"
                             />
-                            <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                            <div
+                              className="
+                                rounded-lg border border-dashed
+                                border-cyan-700/30 bg-slate-900/50 p-3
+                                text-center transition
+                                hover:border-cyan-500 hover:bg-slate-900
+                              "
+                            >
                               <div className="text-lg">□</div>
                               <div className="text-xs text-white/70">
                                 {forumImage
@@ -2890,7 +3468,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               }
                               className="hidden"
                             />
-                            <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                            <div
+                              className="
+                                rounded-lg border border-dashed
+                                border-cyan-700/30 bg-slate-900/50 p-3
+                                text-center transition
+                                hover:border-cyan-500 hover:bg-slate-900
+                              "
+                            >
                               <div className="text-lg">📄</div>
                               <div className="text-xs text-white/70">
                                 {forumDocument
@@ -2908,7 +3493,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 setForumImage(null);
                                 setForumDocument(null);
                               }}
-                              className="px-3 py-2 text-xs text-white/60 transition-colors hover:text-white"
+                              className="
+                                px-3 py-2 text-xs text-white/60
+                                transition-colors
+                                hover:text-white
+                              "
                             >
                               Limpiar archivos
                             </button>
@@ -2921,7 +3510,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               setNewForumDescription('');
                             }}
                             disabled={isCreatingForum || !newForumTitle.trim()}
-                            className="flex items-center gap-2 rounded-xl bg-cyan-500 px-6 py-2 text-base font-semibold hover:bg-cyan-600"
+                            className="
+                              flex items-center gap-2 rounded-xl bg-cyan-500
+                              px-6 py-2 text-base font-semibold
+                              hover:bg-cyan-600
+                            "
                           >
                             {isCreatingForum ? 'Creando...' : '+ Nuevo Foro'}
                           </Button>
@@ -2929,13 +3522,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       </div>
                     </div>
                     {/* Layout de dos columnas */}
-                    <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+                    <div
+                      className="
+                        grid gap-6
+                        lg:grid-cols-[380px_1fr]
+                      "
+                    >
                       {/* Columna izquierda - Lista de foros */}
                       <div className="space-y-4">
                         {/* Lista de foros */}
                         <div className="space-y-2">
                           {forums.length === 0 ? (
-                            <div className="rounded-xl border border-dashed border-white/20 bg-slate-900/30 p-8 text-center">
+                            <div
+                              className="
+                                rounded-xl border border-dashed border-white/20
+                                bg-slate-900/30 p-8 text-center
+                              "
+                            >
                               <p className="text-sm text-white/60">
                                 No hay foros aún
                               </p>
@@ -2945,28 +3548,58 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               <button
                                 key={forum.id}
                                 onClick={() => handleSelectForum(forum.id)}
-                                className={`w-full rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-5 text-left shadow transition-all duration-200 hover:border-cyan-400/60 hover:bg-[#14243a] ${
-                                  selectedForum === forum.id
-                                    ? 'border-cyan-400 bg-[#16263b] shadow-cyan-500/10'
-                                    : ''
-                                }`}
+                                className={`
+                                  w-full rounded-2xl border border-cyan-700/30
+                                  bg-[#101c2b] p-5 text-left shadow
+                                  transition-all duration-200
+                                  hover:border-cyan-400/60 hover:bg-[#14243a]
+                                  ${
+                                    selectedForum === forum.id
+                                      ? `
+                                        border-cyan-400 bg-[#16263b]
+                                        shadow-cyan-500/10
+                                      `
+                                      : ''
+                                  }
+                                `}
                                 style={{ marginBottom: '18px' }}
                               >
                                 <div className="mb-2 flex items-center gap-4">
-                                  <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-lg font-bold text-white">
+                                  <div
+                                    className="
+                                      flex size-10 flex-shrink-0 items-center
+                                      justify-center rounded-full
+                                      bg-gradient-to-br from-cyan-700
+                                      to-cyan-400 text-lg font-bold text-white
+                                    "
+                                  >
                                     {forum.title?.[0]?.toUpperCase() || '?'}
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <span className="block truncate text-base font-semibold text-cyan-300">
+                                    <span
+                                      className="
+                                        block truncate text-base font-semibold
+                                        text-cyan-300
+                                      "
+                                    >
                                       {forum.title}
                                     </span>
                                     {forum.description && (
-                                      <span className="block truncate text-xs text-white/50">
+                                      <span
+                                        className="
+                                          block truncate text-xs text-white/50
+                                        "
+                                      >
                                         {forum.description}
                                       </span>
                                     )}
                                   </div>
-                                  <span className="ml-auto text-xs whitespace-nowrap text-white/40">
+                                  <span
+                                    className="
+                                      ml-auto text-xs whitespace-nowrap
+                                      text-white/40
+                                    "
+                                  >
                                     {forum.createdAt
                                       ? new Date(
                                           forum.createdAt
@@ -2978,7 +3611,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       : ''}
                                   </span>
                                 </div>
-                                <div className="mt-1 flex items-center gap-4 text-xs text-cyan-400">
+                                <div
+                                  className="
+                                    mt-1 flex items-center gap-4 text-xs
+                                    text-cyan-400
+                                  "
+                                >
                                   <span>
                                     {forum._count?.posts || 0} comentarios
                                   </span>
@@ -2990,9 +3628,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       </div>
 
                       {/* Columna derecha - Contenido del foro */}
-                      <div className="rounded-xl border border-white/10 bg-slate-900/50 p-6">
+                      <div
+                        className="
+                          rounded-xl border border-white/10 bg-slate-900/50 p-6
+                        "
+                      >
                         {!selectedForum ? (
-                          <div className="flex h-full min-h-[500px] flex-col items-center justify-center text-center">
+                          <div
+                            className="
+                              flex h-full min-h-[500px] flex-col items-center
+                              justify-center text-center
+                            "
+                          >
                             <div className="mb-4 size-20 rounded-full bg-white/5" />
                             <h3 className="mb-2 text-xl font-bold text-white">
                               Selecciona un foro
@@ -3006,9 +3653,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           <div className="space-y-6">
                             {/* Header del foro */}
                             <div className="border-b border-white/10 pb-4">
-                              <div className="flex items-start justify-between gap-4">
+                              <div
+                                className="
+                                  flex items-start justify-between gap-4
+                                "
+                              >
                                 <div>
-                                  <h2 className="mb-1 text-2xl font-bold text-white">
+                                  <h2
+                                    className="
+                                      mb-1 text-2xl font-bold text-white
+                                    "
+                                  >
                                     {
                                       forums.find((f) => f.id === selectedForum)
                                         ?.title
@@ -3031,7 +3686,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         }`
                                       )
                                     }
-                                    className="group relative flex-shrink-0 overflow-hidden rounded-lg border border-cyan-700/30 transition-colors hover:border-cyan-500/60"
+                                    className="
+                                      group relative flex-shrink-0
+                                      overflow-hidden rounded-lg border
+                                      border-cyan-700/30 transition-colors
+                                      hover:border-cyan-500/60
+                                    "
                                   >
                                     <Image
                                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${
@@ -3040,7 +3700,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         )?.coverImageKey
                                       }`}
                                       alt="Imagen del foro"
-                                      className="size-24 object-cover transition-opacity group-hover:opacity-80"
+                                      className="
+                                        size-24 object-cover transition-opacity
+                                        group-hover:opacity-80
+                                      "
                                       width={96}
                                       height={96}
                                       loading="lazy"
@@ -3051,8 +3714,21 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         e.currentTarget.style.display = 'none';
                                       }}
                                     />
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors group-hover:bg-black/40">
-                                      <ImageIcon className="size-6 text-white opacity-0 transition-opacity group-hover:opacity-100" />
+                                    <div
+                                      className="
+                                        absolute inset-0 flex items-center
+                                        justify-center bg-black/0
+                                        transition-colors
+                                        group-hover:bg-black/40
+                                      "
+                                    >
+                                      <ImageIcon
+                                        className="
+                                          size-6 text-white opacity-0
+                                          transition-opacity
+                                          group-hover:opacity-100
+                                        "
+                                      />
                                     </div>
                                   </button>
                                 )}
@@ -3060,7 +3736,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             </div>
 
                             {/* Formulario de crear post con media */}
-                            <div className="rounded-lg border border-cyan-700/30 bg-[#0d1726] p-4">
+                            <div
+                              className="
+                                rounded-lg border border-cyan-700/30
+                                bg-[#0d1726] p-4
+                              "
+                            >
                               <textarea
                                 placeholder="Comparte tu pensamiento, pregunta o avance..."
                                 value={newPostContent}
@@ -3068,7 +3749,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                   setNewPostContent(e.target.value)
                                 }
                                 rows={3}
-                                className="mb-3 w-full resize-none rounded-lg border border-cyan-700/20 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-white/30 focus:border-cyan-500 focus:outline-none"
+                                className="
+                                  mb-3 w-full resize-none rounded-lg border
+                                  border-cyan-700/20 bg-slate-900 px-3 py-2
+                                  text-sm text-white
+                                  placeholder:text-white/30
+                                  focus:border-cyan-500 focus:outline-none
+                                "
                               />
 
                               {/* Inputs de media */}
@@ -3085,7 +3772,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     }
                                     className="hidden"
                                   />
-                                  <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                                  <div
+                                    className="
+                                      rounded-lg border border-dashed
+                                      border-cyan-700/30 bg-slate-900/50 p-3
+                                      text-center transition
+                                      hover:border-cyan-500 hover:bg-slate-900
+                                    "
+                                  >
                                     <div className="text-lg">□</div>
                                     <div className="text-xs text-white/70">
                                       {selectedImage
@@ -3108,7 +3802,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     }
                                     className="group w-full cursor-pointer"
                                   >
-                                    <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                                    <div
+                                      className="
+                                        rounded-lg border border-dashed
+                                        border-cyan-700/30 bg-slate-900/50 p-3
+                                        text-center transition
+                                        hover:border-cyan-500 hover:bg-slate-900
+                                      "
+                                    >
                                       <div className="text-lg">♪</div>
                                       <div className="text-xs text-white/70">
                                         {selectedAudio
@@ -3137,7 +3838,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                                   {/* Menú desplegable con grabador */}
                                   {showAudioRecorder && (
-                                    <div className="absolute right-0 bottom-full z-50 mb-2 w-80 rounded-lg border border-cyan-700/30 bg-slate-900 p-4 shadow-lg">
+                                    <div
+                                      className="
+                                        absolute right-0 bottom-full z-50 mb-2
+                                        w-80 rounded-lg border
+                                        border-cyan-700/30 bg-slate-900 p-4
+                                        shadow-lg
+                                      "
+                                    >
                                       <div className="space-y-3">
                                         <button
                                           type="button"
@@ -3149,7 +3857,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                               ?.click();
                                             setShowAudioRecorder(false);
                                           }}
-                                          className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+                                          className="
+                                            w-full rounded-lg bg-blue-600 px-3
+                                            py-2 text-sm font-medium text-white
+                                            transition-colors
+                                            hover:bg-blue-700
+                                          "
                                         >
                                           📁 Subir archivo
                                         </button>
@@ -3169,7 +3882,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                           onClick={() =>
                                             setShowAudioRecorder(false)
                                           }
-                                          className="w-full rounded-lg bg-gray-700 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-600"
+                                          className="
+                                            w-full rounded-lg bg-gray-700 px-3
+                                            py-2 text-sm font-medium text-white
+                                            transition-colors
+                                            hover:bg-gray-600
+                                          "
                                         >
                                           Cerrar
                                         </button>
@@ -3190,7 +3908,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     }
                                     className="hidden"
                                   />
-                                  <div className="rounded-lg border border-dashed border-cyan-700/30 bg-slate-900/50 p-3 text-center transition hover:border-cyan-500 hover:bg-slate-900">
+                                  <div
+                                    className="
+                                      rounded-lg border border-dashed
+                                      border-cyan-700/30 bg-slate-900/50 p-3
+                                      text-center transition
+                                      hover:border-cyan-500 hover:bg-slate-900
+                                    "
+                                  >
                                     <div className="text-lg">▶</div>
                                     <div className="text-xs text-white/70">
                                       {selectedVideo
@@ -3209,7 +3934,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               {(selectedImage ||
                                 selectedAudio ||
                                 selectedVideo) && (
-                                <div className="mb-3 rounded-lg bg-cyan-700/10 p-2 text-xs text-cyan-300">
+                                <div
+                                  className="
+                                    mb-3 rounded-lg bg-cyan-700/10 p-2 text-xs
+                                    text-cyan-300
+                                  "
+                                >
                                   <div className="font-semibold">
                                     Archivos seleccionados:
                                   </div>
@@ -3237,7 +3967,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     !newPostContent.trim() || isUploadingPost
                                   }
                                   size="sm"
-                                  className="bg-cyan-500 hover:bg-cyan-600"
+                                  className="
+                                    bg-cyan-500
+                                    hover:bg-cyan-600
+                                  "
                                 >
                                   {isUploadingPost
                                     ? 'Subiendo...'
@@ -3249,11 +3982,26 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             {/* Lista de posts */}
                             <div className="space-y-4">
                               {isLoadingPosts ? (
-                                <div className="flex items-center justify-center py-12">
-                                  <div className="size-6 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+                                <div
+                                  className="
+                                    flex items-center justify-center py-12
+                                  "
+                                >
+                                  <div
+                                    className="
+                                      size-6 animate-spin rounded-full border-2
+                                      border-cyan-500 border-t-transparent
+                                    "
+                                  />
                                 </div>
                               ) : posts.length === 0 ? (
-                                <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/30 p-8 text-center">
+                                <div
+                                  className="
+                                    rounded-2xl border border-dashed
+                                    border-white/10 bg-slate-900/30 p-8
+                                    text-center
+                                  "
+                                >
                                   <p className="text-sm text-white/60">
                                     No hay posts aún. ¡Sé el primero en
                                     compartir!
@@ -3272,21 +4020,48 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     return (
                                       <div
                                         key={post.id}
-                                        className="mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b] p-6 shadow transition-all hover:border-cyan-700/60"
+                                        className="
+                                          mb-6 rounded-2xl border
+                                          border-cyan-700/30 bg-[#101c2b] p-6
+                                          shadow transition-all
+                                          hover:border-cyan-700/60
+                                        "
                                       >
                                         <div className="flex gap-4">
                                           {/* Avatar */}
-                                          <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-sm font-bold text-white">
+                                          <div
+                                            className="
+                                              flex size-10 flex-shrink-0
+                                              items-center justify-center
+                                              rounded-full bg-gradient-to-br
+                                              from-cyan-700 to-cyan-400 text-sm
+                                              font-bold text-white
+                                            "
+                                          >
                                             {userInitial}
                                           </div>
 
                                           {/* Content */}
                                           <div className="min-w-0 flex-1">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                              <span className="text-base font-semibold text-cyan-300">
+                                            <div
+                                              className="
+                                                flex flex-wrap items-center
+                                                gap-2
+                                              "
+                                            >
+                                              <span
+                                                className="
+                                                  text-base font-semibold
+                                                  text-cyan-300
+                                                "
+                                              >
                                                 {userName || 'Usuario'}
                                               </span>
-                                              <span className="text-xs text-white/40">
+                                              <span
+                                                className="
+                                                  text-xs text-white/40
+                                                "
+                                              >
                                                 {post.createdAt
                                                   ? new Date(
                                                       post.createdAt
@@ -3304,7 +4079,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                               </span>
                                             </div>
 
-                                            <p className="mt-2 text-sm leading-relaxed text-white/90">
+                                            <p
+                                              className="
+                                                mt-2 text-sm leading-relaxed
+                                                text-white/90
+                                              "
+                                            >
                                               {post.content}
                                             </p>
 
@@ -3316,7 +4096,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                 {/* Imagen y Video lado a lado */}
                                                 {(post.imageKey ||
                                                   post.videoKey) && (
-                                                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                  <div
+                                                    className="
+                                                      grid grid-cols-1 gap-4
+                                                      sm:grid-cols-2
+                                                    "
+                                                  >
                                                     {/* Imagen - Marco premium */}
                                                     {post.imageKey && (
                                                       <button
@@ -3325,12 +4110,30 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`
                                                           )
                                                         }
-                                                        className="group relative overflow-hidden rounded-lg border border-cyan-700/35 shadow-lg shadow-black/50 transition-all duration-300 hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/30"
+                                                        className="
+                                                          group relative
+                                                          overflow-hidden
+                                                          rounded-lg border
+                                                          border-cyan-700/35
+                                                          shadow-lg
+                                                          shadow-black/50
+                                                          transition-all
+                                                          duration-300
+                                                          hover:border-cyan-400
+                                                          hover:shadow-xl
+                                                          hover:shadow-cyan-500/30
+                                                        "
                                                       >
                                                         <Image
                                                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.imageKey}`}
                                                           alt="Imagen del post"
-                                                          className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                          className="
+                                                            h-64 w-full
+                                                            object-cover
+                                                            transition-transform
+                                                            duration-300
+                                                            group-hover:scale-110
+                                                          "
                                                           loading="lazy"
                                                           width={500}
                                                           height={256}
@@ -3342,18 +4145,52 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             );
                                                           }}
                                                         />
-                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/30">
-                                                          <ImageIcon className="size-6 text-white opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                                                        <div
+                                                          className="
+                                                            absolute inset-0
+                                                            flex items-center
+                                                            justify-center
+                                                            bg-black/0
+                                                            transition-colors
+                                                            duration-300
+                                                            group-hover:bg-black/30
+                                                          "
+                                                        >
+                                                          <ImageIcon
+                                                            className="
+                                                              size-6 text-white
+                                                              opacity-0
+                                                              transition-opacity
+                                                              duration-300
+                                                              group-hover:opacity-100
+                                                            "
+                                                          />
                                                         </div>
                                                       </button>
                                                     )}
                                                     {/* Video */}
                                                     {post.videoKey && (
-                                                      <div className="overflow-hidden rounded-lg border border-cyan-700/35 bg-black shadow-lg shadow-black/50 transition-all duration-300 hover:border-cyan-400 hover:shadow-xl hover:shadow-cyan-500/30">
+                                                      <div
+                                                        className="
+                                                          overflow-hidden
+                                                          rounded-lg border
+                                                          border-cyan-700/35
+                                                          bg-black shadow-lg
+                                                          shadow-black/50
+                                                          transition-all
+                                                          duration-300
+                                                          hover:border-cyan-400
+                                                          hover:shadow-xl
+                                                          hover:shadow-cyan-500/30
+                                                        "
+                                                      >
                                                         <video
                                                           controls
                                                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${post.videoKey}`}
-                                                          className="h-64 w-full object-cover"
+                                                          className="
+                                                            h-64 w-full
+                                                            object-cover
+                                                          "
                                                           onError={() =>
                                                             console.error(
                                                               'Error cargando video:',
@@ -3367,8 +4204,29 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                 )}
                                                 {/* Audio - Ancho completo debajo */}
                                                 {post.audioKey && (
-                                                  <div className="flex items-center gap-3 rounded-lg border border-cyan-700/35 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-slate-900/60 p-4 shadow-md shadow-black/30 transition-all duration-300 hover:border-cyan-400/60 hover:from-slate-900/80 hover:to-slate-900/80">
-                                                    <Music className="size-5 flex-shrink-0 text-cyan-400/80" />
+                                                  <div
+                                                    className="
+                                                      flex items-center gap-3
+                                                      rounded-lg border
+                                                      border-cyan-700/35
+                                                      bg-gradient-to-r
+                                                      from-slate-900/60
+                                                      via-slate-900/40
+                                                      to-slate-900/60 p-4
+                                                      shadow-md shadow-black/30
+                                                      transition-all
+                                                      duration-300
+                                                      hover:border-cyan-400/60
+                                                      hover:from-slate-900/80
+                                                      hover:to-slate-900/80
+                                                    "
+                                                  >
+                                                    <Music
+                                                      className="
+                                                        size-5 flex-shrink-0
+                                                        text-cyan-400/80
+                                                      "
+                                                    />
                                                     <audio
                                                       controls
                                                       className="h-8 flex-1"
@@ -3380,10 +4238,24 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                             )}
 
                                             {/* Acciones */}
-                                            <div className="mt-4 space-y-3 border-t border-white/10 pt-3">
-                                              <div className="flex items-center gap-2">
+                                            <div
+                                              className="
+                                                mt-4 space-y-3 border-t
+                                                border-white/10 pt-3
+                                              "
+                                            >
+                                              <div
+                                                className="
+                                                  flex items-center gap-2
+                                                "
+                                              >
                                                 <button
-                                                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                  className="
+                                                    rounded-lg p-2 text-gray-400
+                                                    transition-colors
+                                                    hover:bg-gray-800
+                                                    hover:text-white
+                                                  "
                                                   title="Me gusta"
                                                 >
                                                   <ThumbsUp className="size-5" />
@@ -3407,10 +4279,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       new Set(expandedPosts)
                                                     );
                                                   }}
-                                                  className="relative rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                  className="
+                                                    relative rounded-lg p-2
+                                                    text-gray-400
+                                                    transition-colors
+                                                    hover:bg-gray-800
+                                                    hover:text-white
+                                                  "
                                                   title="Comentarios"
                                                 >
-                                                  <span className="absolute -top-1 -right-1 inline-flex size-5 items-center justify-center rounded-full bg-cyan-500/20 text-xs font-semibold text-cyan-400">
+                                                  <span
+                                                    className="
+                                                      absolute -top-1 -right-1
+                                                      inline-flex size-5
+                                                      items-center
+                                                      justify-center
+                                                      rounded-full
+                                                      bg-cyan-500/20 text-xs
+                                                      font-semibold
+                                                      text-cyan-400
+                                                    "
+                                                  >
                                                     {postReplies[post.id]
                                                       ?.length || 0}
                                                   </span>
@@ -3436,7 +4325,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       }
                                                     );
                                                   }}
-                                                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                  className="
+                                                    rounded-lg p-2 text-gray-400
+                                                    transition-colors
+                                                    hover:bg-gray-800
+                                                    hover:text-white
+                                                  "
                                                   title="Responder"
                                                 >
                                                   <CornerDownLeft className="size-5" />
@@ -3444,7 +4338,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                               </div>
 
                                               {/* Respuestas colapsables - Diseño profesional */}
-                                              <div className="mt-3 border-t border-gray-800 pt-3">
+                                              <div
+                                                className="
+                                                  mt-3 border-t border-gray-800
+                                                  pt-3
+                                                "
+                                              >
                                                 {!expandedPosts.has(post.id) ? (
                                                   <button
                                                     onClick={() => {
@@ -3455,7 +4354,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         new Set(expandedPosts)
                                                       );
                                                     }}
-                                                    className="text-sm text-gray-400 transition-colors hover:text-cyan-300"
+                                                    className="
+                                                      text-sm text-gray-400
+                                                      transition-colors
+                                                      hover:text-cyan-300
+                                                    "
                                                   >
                                                     Ver{' '}
                                                     {postReplies[post.id]
@@ -3477,7 +4380,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                           new Set(expandedPosts)
                                                         );
                                                       }}
-                                                      className="text-sm text-gray-400 transition-colors hover:text-cyan-300"
+                                                      className="
+                                                        text-sm text-gray-400
+                                                        transition-colors
+                                                        hover:text-cyan-300
+                                                      "
                                                     >
                                                       Ocultar respuestas
                                                     </button>
@@ -3494,22 +4401,66 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         return (
                                                           <div
                                                             key={reply.id}
-                                                            className="ml-6 rounded-xl bg-gray-800/50 p-4"
+                                                            className="
+                                                              ml-6 rounded-xl
+                                                              bg-gray-800/50 p-4
+                                                            "
                                                           >
-                                                            <div className="flex items-start gap-3">
-                                                              <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-cyan-700 to-cyan-400 text-xs font-bold text-white">
+                                                            <div
+                                                              className="
+                                                                flex items-start
+                                                                gap-3
+                                                              "
+                                                            >
+                                                              <div
+                                                                className="
+                                                                  flex size-8
+                                                                  flex-shrink-0
+                                                                  items-center
+                                                                  justify-center
+                                                                  rounded-full
+                                                                  bg-gradient-to-br
+                                                                  from-cyan-700
+                                                                  to-cyan-400
+                                                                  text-xs
+                                                                  font-bold
+                                                                  text-white
+                                                                "
+                                                              >
                                                                 {
                                                                   replyUserInitial
                                                                 }
                                                               </div>
-                                                              <div className="min-w-0 flex-1">
-                                                                <div className="flex flex-wrap items-center gap-2">
-                                                                  <span className="text-sm font-semibold text-white">
+                                                              <div
+                                                                className="
+                                                                  min-w-0 flex-1
+                                                                "
+                                                              >
+                                                                <div
+                                                                  className="
+                                                                    flex
+                                                                    flex-wrap
+                                                                    items-center
+                                                                    gap-2
+                                                                  "
+                                                                >
+                                                                  <span
+                                                                    className="
+                                                                      text-sm
+                                                                      font-semibold
+                                                                      text-white
+                                                                    "
+                                                                  >
                                                                     {
                                                                       replyUserName
                                                                     }
                                                                   </span>
-                                                                  <span className="text-xs text-gray-500">
+                                                                  <span
+                                                                    className="
+                                                                      text-xs
+                                                                      text-gray-500
+                                                                    "
+                                                                  >
                                                                     {reply.createdAt
                                                                       ? new Date(
                                                                           reply.createdAt
@@ -3529,7 +4480,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                   </span>
                                                                 </div>
                                                                 {reply.content && (
-                                                                  <p className="mt-2 text-sm text-gray-300">
+                                                                  <p
+                                                                    className="
+                                                                      mt-2
+                                                                      text-sm
+                                                                      text-gray-300
+                                                                    "
+                                                                  >
                                                                     {
                                                                       reply.content
                                                                     }
@@ -3538,13 +4495,34 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                 {(reply.imageKey ||
                                                                   reply.videoKey ||
                                                                   reply.audioKey) && (
-                                                                  <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                                                  <div
+                                                                    className="
+                                                                      mt-3 grid
+                                                                      grid-cols-1
+                                                                      gap-4
+                                                                      sm:grid-cols-2
+                                                                    "
+                                                                  >
                                                                     {(reply.imageKey ||
                                                                       reply.videoKey) && (
                                                                       <>
                                                                         {reply.imageKey && (
                                                                           <button
-                                                                            className="group relative h-40 w-full cursor-pointer overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20"
+                                                                            className="
+                                                                              group
+                                                                              relative
+                                                                              h-40
+                                                                              w-full
+                                                                              cursor-pointer
+                                                                              overflow-hidden
+                                                                              rounded-lg
+                                                                              border
+                                                                              border-cyan-700/40
+                                                                              bg-gray-900
+                                                                              transition-all
+                                                                              hover:shadow-lg
+                                                                              hover:shadow-cyan-500/20
+                                                                            "
                                                                             onClick={() =>
                                                                               setLightboxImage(
                                                                                 `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`
@@ -3554,7 +4532,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                             <Image
                                                                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.imageKey}`}
                                                                               alt="Respuesta"
-                                                                              className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                                              className="
+                                                                                size-full
+                                                                                object-cover
+                                                                                transition-transform
+                                                                                duration-300
+                                                                                group-hover:scale-105
+                                                                              "
                                                                               width={
                                                                                 500
                                                                               }
@@ -3565,10 +4549,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                           </button>
                                                                         )}
                                                                         {reply.videoKey && (
-                                                                          <div className="relative h-40 w-full overflow-hidden rounded-lg border border-cyan-700/40 bg-gray-900 transition-all hover:shadow-lg hover:shadow-cyan-500/20">
+                                                                          <div
+                                                                            className="
+                                                                              relative
+                                                                              h-40
+                                                                              w-full
+                                                                              overflow-hidden
+                                                                              rounded-lg
+                                                                              border
+                                                                              border-cyan-700/40
+                                                                              bg-gray-900
+                                                                              transition-all
+                                                                              hover:shadow-lg
+                                                                              hover:shadow-cyan-500/20
+                                                                            "
+                                                                          >
                                                                             <video
                                                                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
-                                                                              className="size-full object-cover"
+                                                                              className="
+                                                                                size-full
+                                                                                object-cover
+                                                                              "
                                                                               controls
                                                                             />
                                                                           </div>
@@ -3576,10 +4577,21 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                       </>
                                                                     )}
                                                                     {reply.audioKey && (
-                                                                      <div className="col-span-1 sm:col-span-2">
+                                                                      <div
+                                                                        className="
+                                                                          col-span-1
+                                                                          sm:col-span-2
+                                                                        "
+                                                                      >
                                                                         <audio
                                                                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.audioKey}`}
-                                                                          className="w-full rounded-lg border border-cyan-700/40 bg-gray-900"
+                                                                          className="
+                                                                            w-full
+                                                                            rounded-lg
+                                                                            border
+                                                                            border-cyan-700/40
+                                                                            bg-gray-900
+                                                                          "
                                                                           controls
                                                                         />
                                                                       </div>
@@ -3600,9 +4612,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                               {replyingToPostId.has(
                                                 post.id
                                               ) && (
-                                                <div className="mt-4 space-y-3 border-l-2 border-cyan-700/30 pl-4">
+                                                <div
+                                                  className="
+                                                    mt-4 space-y-3 border-l-2
+                                                    border-cyan-700/30 pl-4
+                                                  "
+                                                >
                                                   <textarea
-                                                    className="w-full resize-none rounded-xl border border-cyan-700/30 bg-slate-900 p-3 text-sm text-white placeholder:text-gray-500 focus:border-primary focus:outline-none"
+                                                    className="
+                                                      w-full resize-none
+                                                      rounded-xl border
+                                                      border-cyan-700/30
+                                                      bg-slate-900 p-3 text-sm
+                                                      text-white
+                                                      placeholder:text-gray-500
+                                                      focus:border-primary
+                                                      focus:outline-none
+                                                    "
                                                     placeholder="Escribe tu respuesta..."
                                                     value={
                                                       replyMessage[post.id] ||
@@ -3671,9 +4697,21 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                   {(replyImage[post.id] ||
                                                     replyVideo[post.id] ||
                                                     replyAudio[post.id]) && (
-                                                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                                    <div
+                                                      className="
+                                                        grid grid-cols-1 gap-2
+                                                        sm:grid-cols-2
+                                                      "
+                                                    >
                                                       {replyImage[post.id] && (
-                                                        <div className="relative overflow-hidden rounded-lg border border-cyan-700/40">
+                                                        <div
+                                                          className="
+                                                            relative
+                                                            overflow-hidden
+                                                            rounded-lg border
+                                                            border-cyan-700/40
+                                                          "
+                                                        >
                                                           <Image
                                                             src={URL.createObjectURL(
                                                               replyImage[
@@ -3681,7 +4719,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                               ]
                                                             )}
                                                             alt="Preview"
-                                                            className="h-40 w-full object-cover"
+                                                            className="
+                                                              h-40 w-full
+                                                              object-cover
+                                                            "
                                                             width={500}
                                                             height={160}
                                                           />
@@ -3699,11 +4740,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                 }
                                                               )
                                                             }
-                                                            className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
+                                                            className="
+                                                              absolute top-1
+                                                              right-1
+                                                              rounded-full
+                                                              bg-red-600 p-1
+                                                              text-white
+                                                              hover:bg-red-700
+                                                            "
                                                           >
                                                             <X className="size-4" />
                                                           </button>
-                                                          <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
+                                                          <span
+                                                            className="
+                                                              absolute bottom-1
+                                                              left-1 rounded
+                                                              bg-black/60 px-2
+                                                              py-1 text-xs
+                                                              font-semibold
+                                                              text-white
+                                                            "
+                                                          >
                                                             {
                                                               replyImage[
                                                                 post.id
@@ -3713,14 +4770,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         </div>
                                                       )}
                                                       {replyVideo[post.id] && (
-                                                        <div className="relative overflow-hidden rounded-lg border border-cyan-700/40 bg-black">
+                                                        <div
+                                                          className="
+                                                            relative
+                                                            overflow-hidden
+                                                            rounded-lg border
+                                                            border-cyan-700/40
+                                                            bg-black
+                                                          "
+                                                        >
                                                           <video
                                                             src={URL.createObjectURL(
                                                               replyVideo[
                                                                 post.id
                                                               ]
                                                             )}
-                                                            className="h-40 w-full object-cover"
+                                                            className="
+                                                              h-40 w-full
+                                                              object-cover
+                                                            "
                                                           />
                                                           <button
                                                             type="button"
@@ -3736,11 +4804,27 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                 }
                                                               )
                                                             }
-                                                            className="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
+                                                            className="
+                                                              absolute top-1
+                                                              right-1
+                                                              rounded-full
+                                                              bg-red-600 p-1
+                                                              text-white
+                                                              hover:bg-red-700
+                                                            "
                                                           >
                                                             <X className="size-4" />
                                                           </button>
-                                                          <span className="absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1 text-xs font-semibold text-white">
+                                                          <span
+                                                            className="
+                                                              absolute bottom-1
+                                                              left-1 rounded
+                                                              bg-black/60 px-2
+                                                              py-1 text-xs
+                                                              font-semibold
+                                                              text-white
+                                                            "
+                                                          >
                                                             {
                                                               replyVideo[
                                                                 post.id
@@ -3750,9 +4834,33 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         </div>
                                                       )}
                                                       {replyAudio[post.id] && (
-                                                        <div className="relative flex items-center gap-2 rounded-lg border border-cyan-700/40 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-slate-900/60 p-2">
-                                                          <Music className="size-4 flex-shrink-0 text-cyan-400/80" />
-                                                          <span className="flex-1 truncate text-xs font-semibold text-white">
+                                                        <div
+                                                          className="
+                                                            relative flex
+                                                            items-center gap-2
+                                                            rounded-lg border
+                                                            border-cyan-700/40
+                                                            bg-gradient-to-r
+                                                            from-slate-900/60
+                                                            via-slate-900/40
+                                                            to-slate-900/60 p-2
+                                                          "
+                                                        >
+                                                          <Music
+                                                            className="
+                                                              size-4
+                                                              flex-shrink-0
+                                                              text-cyan-400/80
+                                                            "
+                                                          />
+                                                          <span
+                                                            className="
+                                                              flex-1 truncate
+                                                              text-xs
+                                                              font-semibold
+                                                              text-white
+                                                            "
+                                                          >
                                                             {
                                                               replyAudio[
                                                                 post.id
@@ -3773,7 +4881,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                 }
                                                               )
                                                             }
-                                                            className="rounded-full bg-red-600 p-1 text-white hover:bg-red-700"
+                                                            className="
+                                                              rounded-full
+                                                              bg-red-600 p-1
+                                                              text-white
+                                                              hover:bg-red-700
+                                                            "
                                                           >
                                                             <X className="size-3" />
                                                           </button>
@@ -3782,7 +4895,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                     </div>
                                                   )}
 
-                                                  <div className="flex flex-wrap items-center gap-2">
+                                                  <div
+                                                    className="
+                                                      flex flex-wrap
+                                                      items-center gap-2
+                                                    "
+                                                  >
                                                     <button
                                                       type="button"
                                                       onClick={() => {
@@ -3809,7 +4927,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         };
                                                         input.click();
                                                       }}
-                                                      className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                      className="
+                                                        rounded-lg p-2
+                                                        text-gray-400
+                                                        transition-colors
+                                                        hover:bg-gray-800
+                                                        hover:text-white
+                                                      "
                                                       title="Subir audio"
                                                     >
                                                       <Mic className="size-4" />
@@ -3836,7 +4960,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                                 ])
                                                         )
                                                       }
-                                                      className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                      className="
+                                                        rounded-lg p-2
+                                                        text-gray-400
+                                                        transition-colors
+                                                        hover:bg-gray-800
+                                                        hover:text-white
+                                                      "
                                                       title="Grabar audio"
                                                     >
                                                       <Music className="size-4" />
@@ -3868,7 +4998,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         };
                                                         input.click();
                                                       }}
-                                                      className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                      className="
+                                                        rounded-lg p-2
+                                                        text-gray-400
+                                                        transition-colors
+                                                        hover:bg-gray-800
+                                                        hover:text-white
+                                                      "
                                                       title="Adjuntar imagen"
                                                     >
                                                       <ImageIcon className="size-4" />
@@ -3900,7 +5036,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         };
                                                         input.click();
                                                       }}
-                                                      className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-800 hover:text-white"
+                                                      className="
+                                                        rounded-lg p-2
+                                                        text-gray-400
+                                                        transition-colors
+                                                        hover:bg-gray-800
+                                                        hover:text-white
+                                                      "
                                                       title="Adjuntar video"
                                                     >
                                                       <Video className="size-4" />
@@ -3929,11 +5071,29 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                           ]) ||
                                                         isSubmittingReply
                                                       }
-                                                      className="ml-auto rounded bg-cyan-700 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-cyan-600 disabled:opacity-50"
+                                                      className="
+                                                        ml-auto rounded
+                                                        bg-cyan-700 px-3 py-1
+                                                        text-xs font-semibold
+                                                        text-white
+                                                        transition-colors
+                                                        hover:bg-cyan-600
+                                                        disabled:opacity-50
+                                                      "
                                                     >
                                                       {isSubmittingReply ? (
                                                         <>
-                                                          <div className="mr-1 inline-block size-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                                          <div
+                                                            className="
+                                                              mr-1 inline-block
+                                                              size-3
+                                                              animate-spin
+                                                              rounded-full
+                                                              border-2
+                                                              border-white
+                                                              border-t-transparent
+                                                            "
+                                                          />
                                                           Enviando...
                                                         </>
                                                       ) : (
@@ -3954,7 +5114,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                         );
                                                         setReplyMessage('');
                                                       }}
-                                                      className="rounded border border-white/20 px-3 py-1 text-xs text-white/60 transition-colors hover:text-white"
+                                                      className="
+                                                        rounded border
+                                                        border-white/20 px-3
+                                                        py-1 text-xs
+                                                        text-white/60
+                                                        transition-colors
+                                                        hover:text-white
+                                                      "
                                                     >
                                                       Cancelar
                                                     </button>
@@ -3995,7 +5162,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             studentProjects.map((project) => (
                               <div
                                 key={project.id}
-                                className="group rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-slate-900 via-cyan-900/30 to-cyan-950/30 p-6 shadow-xl transition-all duration-300 hover:scale-[1.03] hover:border-cyan-400 hover:shadow-2xl"
+                                className="
+                                  group rounded-2xl border border-cyan-500/30
+                                  bg-gradient-to-br from-slate-900
+                                  via-cyan-900/30 to-cyan-950/30 p-6 shadow-xl
+                                  transition-all duration-300
+                                  hover:scale-[1.03] hover:border-cyan-400
+                                  hover:shadow-2xl
+                                "
                               >
                                 <div className="mb-4 flex items-center gap-4">
                                   {project.cover_image_key && (
@@ -4004,15 +5178,28 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       alt={project.name}
                                       width={64}
                                       height={64}
-                                      className="size-16 rounded-xl border border-cyan-500/30 object-cover shadow"
+                                      className="
+                                        size-16 rounded-xl border
+                                        border-cyan-500/30 object-cover shadow
+                                      "
                                       quality={60}
                                     />
                                   )}
                                   <div>
-                                    <h3 className="mb-1 text-xl font-bold text-cyan-300">
+                                    <h3
+                                      className="
+                                        mb-1 text-xl font-bold text-cyan-300
+                                      "
+                                    >
                                       {project.name}
                                     </h3>
-                                    <span className="inline-block rounded bg-cyan-500/20 px-2 py-0.5 text-xs font-semibold text-cyan-300">
+                                    <span
+                                      className="
+                                        inline-block rounded bg-cyan-500/20 px-2
+                                        py-0.5 text-xs font-semibold
+                                        text-cyan-300
+                                      "
+                                    >
                                       {project.type_project}
                                     </span>
                                   </div>
@@ -4021,7 +5208,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                   <span className="text-xs text-cyan-400">
                                     Estudiante:
                                   </span>
-                                  <span className="text-xs font-semibold text-white/80">
+                                  <span
+                                    className="
+                                      text-xs font-semibold text-white/80
+                                    "
+                                  >
                                     {project.studentName ||
                                       project.users_name ||
                                       project.user?.name ||
@@ -4038,7 +5229,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                   )}
                                 </div>
                                 <button
-                                  className="mt-4 w-full rounded bg-cyan-500/20 px-4 py-2 font-semibold text-cyan-300 transition hover:bg-cyan-500/40 hover:text-white"
+                                  className="
+                                    mt-4 w-full rounded bg-cyan-500/20 px-4 py-2
+                                    font-semibold text-cyan-300 transition
+                                    hover:bg-cyan-500/40 hover:text-white
+                                  "
                                   onClick={() => setSelectedProject(project)}
                                 >
                                   Ver más
@@ -4056,9 +5251,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         {/* Modal de detalles del proyecto */}
                         {selectedProject && (
                           <Portal>
-                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                            <div
+                              className="
+                                fixed inset-0 z-50 flex items-center
+                                justify-center bg-black/60 backdrop-blur-sm
+                              "
+                            >
                               <div
-                                className="relative w-full max-w-2xl rounded-2xl border border-cyan-500/40 bg-slate-900 p-4 shadow-2xl sm:p-8"
+                                className="
+                                  relative w-full max-w-2xl rounded-2xl border
+                                  border-cyan-500/40 bg-slate-900 p-4 shadow-2xl
+                                  sm:p-8
+                                "
                                 style={{
                                   maxHeight: '90vh',
                                   display: 'flex',
@@ -4066,20 +5270,38 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 }}
                               >
                                 <button
-                                  className="absolute top-4 right-4 text-cyan-400 hover:text-white"
+                                  className="
+                                    absolute top-4 right-4 text-cyan-400
+                                    hover:text-white
+                                  "
                                   onClick={() => setSelectedProject(null)}
                                 >
                                   ✕
                                 </button>
-                                <h3 className="mb-4 text-center text-2xl font-bold break-words text-cyan-300">
+                                <h3
+                                  className="
+                                    mb-4 text-center text-2xl font-bold
+                                    break-words text-cyan-300
+                                  "
+                                >
                                   {selectedProject.name}
                                 </h3>
                                 {/* Imagen y video juntos, una sola vez, lado a lado */}
                                 {(selectedProject.cover_image_key ||
                                   selectedProject.cover_video_key) && (
-                                  <div className="mb-6 flex w-full flex-row items-center justify-center gap-4">
+                                  <div
+                                    className="
+                                      mb-6 flex w-full flex-row items-center
+                                      justify-center gap-4
+                                    "
+                                  >
                                     {selectedProject.cover_image_key && (
-                                      <div className="flex flex-1 items-center justify-center">
+                                      <div
+                                        className="
+                                          flex flex-1 items-center
+                                          justify-center
+                                        "
+                                      >
                                         <Image
                                           src={
                                             selectedProject.cover_image_key.startsWith(
@@ -4091,7 +5313,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                           alt={selectedProject.name}
                                           width={400}
                                           height={240}
-                                          className="max-h-60 w-full rounded-xl border border-cyan-500/20 object-contain shadow"
+                                          className="
+                                            max-h-60 w-full rounded-xl border
+                                            border-cyan-500/20 object-contain
+                                            shadow
+                                          "
                                           style={{
                                             objectFit: 'contain',
                                             maxWidth: '100%',
@@ -4104,7 +5330,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       </div>
                                     )}
                                     {selectedProject.cover_video_key && (
-                                      <div className="flex flex-1 items-center justify-center">
+                                      <div
+                                        className="
+                                          flex flex-1 items-center
+                                          justify-center
+                                        "
+                                      >
                                         <video
                                           src={
                                             selectedProject.cover_video_key.startsWith(
@@ -4114,7 +5345,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                               : `https://s3.us-east-2.amazonaws.com/artiefy-upload/${selectedProject.cover_video_key}`
                                           }
                                           controls
-                                          className="max-h-60 w-full rounded-xl border border-cyan-500/20 object-contain shadow"
+                                          className="
+                                            max-h-60 w-full rounded-xl border
+                                            border-cyan-500/20 object-contain
+                                            shadow
+                                          "
                                           style={{
                                             objectFit: 'contain',
                                             maxWidth: '100%',
@@ -4161,7 +5396,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       Planteamiento:
                                     </span>
                                     <p
-                                      className="break-words whitespace-pre-line text-white/80"
+                                      className="
+                                        break-words whitespace-pre-line
+                                        text-white/80
+                                      "
                                       style={{ wordBreak: 'break-word' }}
                                     >
                                       {selectedProject.planteamiento}
@@ -4172,7 +5410,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       Justificación:
                                     </span>
                                     <p
-                                      className="break-words whitespace-pre-line text-white/80"
+                                      className="
+                                        break-words whitespace-pre-line
+                                        text-white/80
+                                      "
                                       style={{ wordBreak: 'break-word' }}
                                     >
                                       {selectedProject.justificacion}
@@ -4183,7 +5424,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       Objetivo general:
                                     </span>
                                     <p
-                                      className="break-words whitespace-pre-line text-white/80"
+                                      className="
+                                        break-words whitespace-pre-line
+                                        text-white/80
+                                      "
                                       style={{ wordBreak: 'break-word' }}
                                     >
                                       {selectedProject.objetivo_general}
@@ -4194,7 +5438,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       <span className="text-xs text-cyan-400">
                                         Inicio:
                                       </span>
-                                      <div className="text-xs break-words text-white/60">
+                                      <div
+                                        className="
+                                          text-xs break-words text-white/60
+                                        "
+                                      >
                                         {selectedProject.fecha_inicio}
                                       </div>
                                     </div>
@@ -4202,7 +5450,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       <span className="text-xs text-cyan-400">
                                         Fin:
                                       </span>
-                                      <div className="text-xs break-words text-white/60">
+                                      <div
+                                        className="
+                                          text-xs break-words text-white/60
+                                        "
+                                      >
                                         {selectedProject.fecha_fin}
                                       </div>
                                     </div>
@@ -4211,19 +5463,31 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     <span className="text-xs text-cyan-400">
                                       Horas/día:
                                     </span>
-                                    <span className="text-xs break-words text-white/70">
+                                    <span
+                                      className="
+                                        text-xs break-words text-white/70
+                                      "
+                                    >
                                       {selectedProject.horas_por_dia}
                                     </span>
                                     <span className="text-xs text-cyan-400">
                                       Total horas:
                                     </span>
-                                    <span className="text-xs break-words text-white/70">
+                                    <span
+                                      className="
+                                        text-xs break-words text-white/70
+                                      "
+                                    >
                                       {selectedProject.total_horas}
                                     </span>
                                     <span className="text-xs text-cyan-400">
                                       Días estimados:
                                     </span>
-                                    <span className="text-xs break-words text-white/70">
+                                    <span
+                                      className="
+                                        text-xs break-words text-white/70
+                                      "
+                                    >
                                       {selectedProject.dias_estimados}
                                     </span>
                                   </div>
@@ -4233,7 +5497,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         Comentario público:
                                       </span>
                                       <p
-                                        className="text-xs break-words whitespace-pre-line text-white/60"
+                                        className="
+                                          text-xs break-words
+                                          whitespace-pre-line text-white/60
+                                        "
                                         style={{ wordBreak: 'break-word' }}
                                       >
                                         {selectedProject.public_comment}
@@ -4255,7 +5522,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     <h2 className="mb-6 text-2xl font-bold text-white">
                       Recursos
                     </h2>
-                    <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6">
+                    <div
+                      className="
+                        rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6
+                      "
+                    >
                       <p className="text-white/60">
                         Aquí irán los recursos del curso...
                       </p>
@@ -4268,7 +5539,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     <h2 className="mb-6 text-2xl font-bold text-white">
                       Actividades
                     </h2>
-                    <div className="rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6">
+                    <div
+                      className="
+                        rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6
+                      "
+                    >
                       <p className="text-white/60">
                         Aquí irán las actividades del curso...
                       </p>
@@ -4291,10 +5566,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
 
                     {/* Dos opciones: Completo o Solo Curso */}
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div
+                      className="
+                        grid gap-6
+                        md:grid-cols-2
+                      "
+                    >
                       {/* Opción 1: Embeddings Completo */}
-                      <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-6 backdrop-blur-sm">
-                        <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-blue-400">
+                      <div
+                        className="
+                          rounded-lg border border-blue-500/30 bg-blue-500/5 p-6
+                          backdrop-blur-sm
+                        "
+                      >
+                        <h3
+                          className="
+                            mb-2 flex items-center gap-2 text-lg font-semibold
+                            text-blue-400
+                          "
+                        >
                           <span>🚀</span> Completo (Recomendado)
                         </h3>
                         <p className="mb-4 text-sm text-white/70">
@@ -4315,8 +5605,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       </div>
 
                       {/* Opción 2: Embeddings Simple */}
-                      <div className="rounded-lg border border-purple-500/30 bg-purple-500/5 p-6 backdrop-blur-sm">
-                        <h3 className="mb-2 flex items-center gap-2 text-lg font-semibold text-purple-400">
+                      <div
+                        className="
+                          rounded-lg border border-purple-500/30 bg-purple-500/5
+                          p-6 backdrop-blur-sm
+                        "
+                      >
+                        <h3
+                          className="
+                            mb-2 flex items-center gap-2 text-lg font-semibold
+                            text-purple-400
+                          "
+                        >
                           <span>⚡</span> Simple (Solo Metadata)
                         </h3>
                         <p className="mb-4 text-sm text-white/70">
@@ -4339,7 +5639,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
 
                     {/* Información general */}
-                    <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4">
+                    <div
+                      className="
+                        rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4
+                      "
+                    >
                       <p className="text-xs text-cyan-400/70">
                         <strong>💡 Recomendación:</strong> Usa la opción
                         <strong> Completo</strong> para obtener búsquedas
@@ -4466,10 +5770,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
       {/* Lightbox Modal */}
       {lightboxImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
+        <div
+          className="
+            fixed inset-0 z-50 flex items-center justify-center bg-black/80
+          "
+        >
           <button
             onClick={() => setLightboxImage(null)}
-            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
+            className="
+              absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white
+              transition-colors
+              hover:bg-white/20
+            "
           >
             <X className="size-6" />
           </button>

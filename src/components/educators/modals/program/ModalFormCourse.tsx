@@ -946,22 +946,50 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
       <DialogContent className="max-h-[90vh] w-[95vw] max-w-4xl overflow-y-auto p-3 md:p-6">
-        <DialogHeader className="mt-2 md:mt-4">
-          <DialogTitle className="text-xl md:text-4xl">
+        <DialogHeader
+          className="
+          mt-2
+          md:mt-4
+        "
+        >
+          <DialogTitle
+            className="
+            text-xl
+            md:text-4xl
+          "
+          >
             {editingCourseId ? 'Editar Curso' : 'Crear Curso'}
           </DialogTitle>
-          <DialogDescription className="text-sm text-white md:text-xl">
+          <DialogDescription
+            className="
+            text-sm text-white
+            md:text-xl
+          "
+          >
             {editingCourseId
               ? 'Edita los detalles del curso'
               : 'Llena los detalles para crear un nuevo curso'}
           </DialogDescription>
         </DialogHeader>
-        <div className="rounded-lg bg-background px-2 py-3 text-black shadow-md md:px-6 md:py-4">
-          <div className="space-y-3 md:space-y-4">
+        <div
+          className="
+          rounded-lg bg-background px-2 py-3 text-black shadow-md
+          md:px-6 md:py-4
+        "
+        >
+          <div
+            className="
+            space-y-3
+            md:space-y-4
+          "
+          >
             <div>
               <label
                 htmlFor="title"
-                className="text-sm font-medium text-primary md:text-lg"
+                className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
               >
                 Título
               </label>
@@ -970,10 +998,19 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 placeholder="Título"
                 value={title}
                 onChange={(e) => handleFieldChange('title', e.target.value)}
-                className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.title ? 'border-red-500' : 'border-primary'}`}
+                className={`
+                  mt-1 w-full rounded border p-2 text-sm text-white outline-none
+                  md:text-base
+                  ${errors.title ? 'border-red-500' : 'border-primary'}
+                `}
               />
               {errors.title && (
-                <p className="text-xs text-red-500 md:text-sm">
+                <p
+                  className="
+                  text-xs text-red-500
+                  md:text-sm
+                "
+                >
                   Este campo es obligatorio.
                 </p>
               )}
@@ -981,7 +1018,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div>
               <label
                 htmlFor="description"
-                className="text-sm font-medium text-primary md:text-lg"
+                className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
               >
                 Descripción
               </label>
@@ -991,22 +1031,40 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 onChange={(e) =>
                   handleFieldChange('description', e.target.value)
                 }
-                className={`mt-1 w-full rounded border p-2 text-sm text-white outline-none md:text-base ${errors.description ? 'border-red-500' : 'border-primary'}`}
+                className={`
+                  mt-1 w-full rounded border p-2 text-sm text-white outline-none
+                  md:text-base
+                  ${errors.description ? 'border-red-500' : 'border-primary'}
+                `}
                 rows={4}
               />
               {errors.description && (
-                <p className="text-xs text-red-500 md:text-sm">
+                <p
+                  className="
+                  text-xs text-red-500
+                  md:text-sm
+                "
+                >
                   Este campo es obligatorio.
                 </p>
               )}
             </div>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
               <div className="w-full">
-                <label className="text-sm font-medium text-primary md:text-lg">
+                <label
+                  className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
+                >
                   Nivel
                 </label>
                 <select
-                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  className="
+                    mt-1 w-full rounded border bg-background p-2 text-sm
+                    text-white
+                    md:text-base
+                  "
                   value={nivelid}
                   onChange={(e) => setNivelid(Number(e.target.value))}
                   disabled={isLoadingNiveles}
@@ -1023,17 +1081,31 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   )}
                 </select>
                 {errors.nivelid && (
-                  <p className="text-xs text-red-500 md:text-sm">
+                  <p
+                    className="
+                    text-xs text-red-500
+                    md:text-sm
+                  "
+                  >
                     Este campo es obligatorio.
                   </p>
                 )}
               </div>
               <div className="w-full">
-                <label className="text-sm font-medium text-primary md:text-lg">
+                <label
+                  className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
+                >
                   Categoría
                 </label>
                 <select
-                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  className="
+                    mt-1 w-full rounded border bg-background p-2 text-sm
+                    text-white
+                    md:text-base
+                  "
                   value={categoryid}
                   onChange={(e) => setCategoryid(Number(e.target.value))}
                   disabled={isLoadingCategories}
@@ -1050,17 +1122,31 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   )}
                 </select>
                 {errors.categoryid && (
-                  <p className="text-xs text-red-500 md:text-sm">
+                  <p
+                    className="
+                    text-xs text-red-500
+                    md:text-sm
+                  "
+                  >
                     Este campo es obligatorio.
                   </p>
                 )}
               </div>
               <div className="w-full">
-                <label className="text-sm font-medium text-primary md:text-lg">
+                <label
+                  className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
+                >
                   Modalidad
                 </label>
                 <select
-                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  className="
+                    mt-1 w-full rounded border bg-background p-2 text-sm
+                    text-white
+                    md:text-base
+                  "
                   value={
                     Array.isArray(modalidadesid)
                       ? (modalidadesid[0] ?? '')
@@ -1081,17 +1167,31 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   )}
                 </select>
                 {errors.modalidadesid && (
-                  <p className="text-xs text-red-500 md:text-sm">
+                  <p
+                    className="
+                    text-xs text-red-500
+                    md:text-sm
+                  "
+                  >
                     Este campo es obligatorio.
                   </p>
                 )}
               </div>
               <div className="w-full">
-                <label className="text-sm font-medium text-primary md:text-lg">
+                <label
+                  className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
+                >
                   Horario
                 </label>
                 <select
-                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  className="
+                    mt-1 w-full rounded border bg-background p-2 text-sm
+                    text-white
+                    md:text-base
+                  "
                   value={horario ?? ''}
                   onChange={(e) => {
                     const value = e.target.value
@@ -1109,11 +1209,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </select>
               </div>
               <div className="w-full">
-                <label className="text-sm font-medium text-primary md:text-lg">
+                <label
+                  className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
+                >
                   Espacios
                 </label>
                 <select
-                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  className="
+                    mt-1 w-full rounded border bg-background p-2 text-sm
+                    text-white
+                    md:text-base
+                  "
                   value={espacios ?? ''}
                   onChange={(e) => {
                     const value = e.target.value
@@ -1131,11 +1240,20 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </select>
               </div>
               <div className="w-full">
-                <label className="text-sm font-medium text-primary md:text-lg">
+                <label
+                  className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
+                >
                   Tipo de Certificación
                 </label>
                 <select
-                  className="mt-1 w-full rounded border bg-background p-2 text-sm text-white md:text-base"
+                  className="
+                    mt-1 w-full rounded border bg-background p-2 text-sm
+                    text-white
+                    md:text-base
+                  "
                   value={certificationTypeId ?? ''}
                   onChange={(e) => {
                     const newValue = e.target.value
@@ -1160,7 +1278,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </select>
               </div>
               <div className="w-full">
-                <label className="text-sm font-medium text-primary md:text-lg">
+                <label
+                  className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
+                >
                   Tipo de Curso
                 </label>
                 <Select
@@ -1186,13 +1309,23 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 />
               </div>
               {errors.courseTypeId && (
-                <p className="text-xs text-red-500 md:text-sm">
+                <p
+                  className="
+                  text-xs text-red-500
+                  md:text-sm
+                "
+                >
                   Este campo es obligatorio.
                 </p>
               )}
               {selectedCourseType.includes(4) && (
                 <div className="w-full">
-                  <label className="text-sm font-medium text-primary md:text-lg">
+                  <label
+                    className="
+                    text-sm font-medium text-primary
+                    md:text-lg
+                  "
+                  >
                     Precio Individual
                   </label>
                   <input
@@ -1200,12 +1333,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     placeholder="Ingrese el precio"
                     value={individualPrice ?? ''}
                     onChange={(e) => setIndividualPrice(Number(e.target.value))}
-                    className="mt-1 w-full rounded border border-primary p-2 text-sm text-white md:text-base"
+                    className="
+                      mt-1 w-full rounded border border-primary p-2 text-sm
+                      text-white
+                      md:text-base
+                    "
                   />
                 </div>
               )}
               <div className="w-full">
-                <label className="text-sm font-medium text-primary md:text-lg">
+                <label
+                  className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
+                >
                   Estado del Curso
                 </label>
                 <ActiveDropdown isActive={isActive} setIsActive={setIsActive} />
@@ -1214,7 +1356,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div>
               <label
                 htmlFor="rating"
-                className="text-sm font-medium text-primary md:text-lg"
+                className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
               >
                 Rating
               </label>
@@ -1224,7 +1369,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 max="5"
                 step="0.1"
                 placeholder="0-5"
-                className="mt-1 w-full rounded border border-primary p-2 text-sm text-white outline-none focus:no-underline md:text-base"
+                className="
+                  mt-1 w-full rounded border border-primary p-2 text-sm
+                  text-white outline-none
+                  focus:no-underline
+                  md:text-base
+                "
                 value={isNaN(rating) ? '' : rating}
                 onChange={(e) => setRating(Number(e.target.value))}
               />
@@ -1232,7 +1382,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div>
               <label
                 htmlFor="instructors"
-                className="text-sm font-medium text-primary md:text-lg"
+                className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
               >
                 Instructores (Múltiples)
               </label>
@@ -1323,31 +1476,57 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
             <div className="w-full">
               <label
                 htmlFor="file"
-                className="text-sm font-medium text-primary md:text-lg"
+                className="
+                  text-sm font-medium text-primary
+                  md:text-lg
+                "
               >
                 Imagen de portada
               </label>
               <div
-                className={`relative mt-3 rounded-lg border-2 border-dashed p-6 transition-colors md:p-8 ${
-                  isDragging
-                    ? 'border-blue-500 bg-blue-500/10'
-                    : errors.file
-                      ? 'border-red-500 bg-red-500/10'
-                      : 'border-primary/30 bg-primary/5'
-                }`}
+                className={`
+                  relative mt-3 rounded-lg border-2 border-dashed p-6
+                  transition-colors
+                  md:p-8
+                  ${
+                    isDragging
+                      ? 'border-blue-500 bg-blue-500/10'
+                      : errors.file
+                        ? 'border-red-500 bg-red-500/10'
+                        : 'border-primary/30 bg-primary/5'
+                  }
+                `}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
               >
                 {!file ? (
-                  <div className="flex flex-col items-center justify-center gap-2 py-6">
+                  <div
+                    className="
+                    flex flex-col items-center justify-center gap-2 py-6
+                  "
+                  >
                     <FiUploadCloud
-                      className={`size-8 md:size-10 ${errors.file ? 'text-red-500' : 'text-primary'}`}
+                      className={`
+                        size-8
+                        md:size-10
+                        ${errors.file ? 'text-red-500' : 'text-primary'}
+                      `}
                     />
-                    <p className="text-center text-sm text-white md:text-base">
+                    <p
+                      className="
+                      text-center text-sm text-white
+                      md:text-base
+                    "
+                    >
                       Arrastra tu archivo aquí o haz clic para seleccionar
                     </p>
-                    <p className="text-center text-xs text-gray-400 md:text-sm">
+                    <p
+                      className="
+                      text-center text-xs text-gray-400
+                      md:text-sm
+                    "
+                    >
                       Soporta: Imágenes (JPG, PNG, GIF) y Videos (MP4, MOV,
                       WEBM) — Máx: 100MB
                     </p>
@@ -1359,7 +1538,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                         ) as HTMLInputElement;
                         fileInput?.click();
                       }}
-                      className="mt-2 text-xs text-primary hover:underline md:text-sm"
+                      className="
+                        mt-2 text-xs text-primary
+                        hover:underline
+                        md:text-sm
+                      "
                     >
                       Seleccionar archivo
                     </button>
@@ -1372,8 +1555,18 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     />
                   </div>
                 ) : file.type.startsWith('video') ? (
-                  <div className="relative flex flex-col items-center justify-center gap-3 md:gap-4">
-                    <div className="relative h-40 w-full md:h-48">
+                  <div
+                    className="
+                    relative flex flex-col items-center justify-center gap-3
+                    md:gap-4
+                  "
+                  >
+                    <div
+                      className="
+                      relative h-40 w-full
+                      md:h-48
+                    "
+                    >
                       <video
                         id="video-player"
                         controls
@@ -1417,7 +1610,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                             }, 'image/jpeg');
                           }
                         }}
-                        className="rounded bg-green-600 px-2 py-1 text-xs text-white hover:bg-green-700 md:px-3 md:text-sm"
+                        className="
+                          rounded bg-green-600 px-2 py-1 text-xs text-white
+                          hover:bg-green-700
+                          md:px-3 md:text-sm
+                        "
                       >
                         Capturar Frame
                       </button>
@@ -1429,7 +1626,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     alt="preview"
                     width={500}
                     height={200}
-                    className="h-40 w-full object-cover md:h-48"
+                    className="
+                      h-40 w-full object-cover
+                      md:h-48
+                    "
                   />
                 )}
                 {file && (
@@ -1441,11 +1641,25 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                         setFileSize(null);
                         setErrors((prev) => ({ ...prev, file: true }));
                       }}
-                      className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                      className="
+                        absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                        text-white
+                        hover:opacity-70
+                      "
                     >
-                      <MdClose className="z-20 size-4 md:size-5" />
+                      <MdClose
+                        className="
+                        z-20 size-4
+                        md:size-5
+                      "
+                      />
                     </button>
-                    <div className="mt-2 flex justify-between text-xs text-gray-400 md:text-sm">
+                    <div
+                      className="
+                      mt-2 flex justify-between text-xs text-gray-400
+                      md:text-sm
+                    "
+                    >
                       <p className="truncate">{fileName}</p>
                       <p>{((fileSize ?? 0) / 1024).toFixed(2)} KB</p>
                     </div>
@@ -1453,14 +1667,29 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 )}
               </div>
               {errors.file && (
-                <p className="text-xs text-red-500 md:text-sm">
+                <p
+                  className="
+                  text-xs text-red-500
+                  md:text-sm
+                "
+                >
                   Este campo es obligatorio.
                 </p>
               )}
             </div>
-            <div className="mt-6 flex flex-col gap-4 text-white md:mt-8">
+            <div
+              className="
+              mt-6 flex flex-col gap-4 text-white
+              md:mt-8
+            "
+            >
               <div className="flex items-center justify-between">
-                <p className="text-sm md:text-base">
+                <p
+                  className="
+                  text-sm
+                  md:text-base
+                "
+                >
                   ¿Es calificable? {editingCourseId ? 'Actualizar' : 'Agregar'}{' '}
                   parámetros
                 </p>
@@ -1511,13 +1740,22 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               </div>
               {addParametros && (
                 <div className="my-4 flex flex-col">
-                  <label className="text-sm font-medium text-primary md:text-lg">
+                  <label
+                    className="
+                    text-sm font-medium text-primary
+                    md:text-lg
+                  "
+                  >
                     Parámetros de evaluación
                   </label>
                   <Button
                     onClick={handleAddParametro}
                     disabled={parametros.length >= 10}
-                    className="mt-2 w-full bg-primary text-white hover:opacity-90 md:w-auto"
+                    className="
+                      mt-2 w-full bg-primary text-white
+                      hover:opacity-90
+                      md:w-auto
+                    "
                   >
                     {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
                     parámetro
@@ -1529,19 +1767,32 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       className="mt-4 rounded-lg border border-primary/30 p-4"
                     >
                       <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-medium text-primary md:text-base">
+                        <h3
+                          className="
+                          text-sm font-medium text-primary
+                          md:text-base
+                        "
+                        >
                           Parámetro {index + 1}
                         </h3>
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => handleRemoveParametro(index)}
-                          className="h-8 px-2 text-xs md:text-sm"
+                          className="
+                            h-8 px-2 text-xs
+                            md:text-sm
+                          "
                         >
                           Eliminar
                         </Button>
                       </div>
-                      <label className="mt-3 block text-xs font-medium text-primary md:text-sm">
+                      <label
+                        className="
+                        mt-3 block text-xs font-medium text-primary
+                        md:text-sm
+                      "
+                      >
                         Nombre
                       </label>
                       <input
@@ -1550,9 +1801,18 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                         onChange={(e) =>
                           handleParametroChange(index, 'name', e.target.value)
                         }
-                        className="mt-1 w-full rounded border border-primary/30 bg-background p-2 text-xs text-white outline-none md:text-sm"
+                        className="
+                          mt-1 w-full rounded border border-primary/30
+                          bg-background p-2 text-xs text-white outline-none
+                          md:text-sm
+                        "
                       />
-                      <label className="mt-3 block text-xs font-medium text-primary md:text-sm">
+                      <label
+                        className="
+                        mt-3 block text-xs font-medium text-primary
+                        md:text-sm
+                      "
+                      >
                         Descripción
                       </label>
                       <textarea
@@ -1564,10 +1824,19 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                             e.target.value
                           )
                         }
-                        className="mt-1 w-full rounded border border-primary/30 bg-background p-2 text-xs text-white outline-none md:text-sm"
+                        className="
+                          mt-1 w-full rounded border border-primary/30
+                          bg-background p-2 text-xs text-white outline-none
+                          md:text-sm
+                        "
                         rows={3}
                       />
-                      <label className="mt-3 block text-xs font-medium text-primary md:text-sm">
+                      <label
+                        className="
+                        mt-3 block text-xs font-medium text-primary
+                        md:text-sm
+                      "
+                      >
                         Porcentaje %
                       </label>
                       <input
@@ -1583,7 +1852,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                             )
                           )
                         }
-                        className="mt-1 w-full rounded border border-primary/30 bg-background p-2 text-xs text-white outline-none md:text-sm"
+                        className="
+                          mt-1 w-full rounded border border-primary/30
+                          bg-background p-2 text-xs text-white outline-none
+                          md:text-sm
+                        "
                       />
                     </div>
                   ))}
@@ -1594,7 +1867,10 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               <div className="my-4 flex flex-col">
                 <label
                   htmlFor="subjects"
-                  className="text-sm font-medium text-primary md:text-lg"
+                  className="
+                    text-sm font-medium text-primary
+                    md:text-lg
+                  "
                 >
                   Asignar Materias
                 </label>
@@ -1629,33 +1905,59 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     setSubjects(selectedSubjects);
                   }}
                   classNamePrefix="react-select"
-                  className="mt-2 w-full md:w-3/4"
+                  className="
+                    mt-2 w-full
+                    md:w-3/4
+                  "
                 />
               </div>
             )}
             {(uploading || isUploading) && (
-              <div className="mt-4 md:mt-6">
+              <div
+                className="
+                mt-4
+                md:mt-6
+              "
+              >
                 <Progress
                   value={uploading ? progress : uploadProgress}
                   className="w-full"
                 />
-                <p className="mt-2 text-center text-xs text-gray-400 md:text-sm">
+                <p
+                  className="
+                  mt-2 text-center text-xs text-gray-400
+                  md:text-sm
+                "
+                >
                   {uploading ? progress : uploadProgress}% Completado
                 </p>
               </div>
             )}
           </div>
         </div>
-        <DialogFooter className="mt-4 grid grid-cols-2 gap-2 md:mt-6 md:gap-4">
+        <DialogFooter
+          className="
+          mt-4 grid grid-cols-2 gap-2
+          md:mt-6 md:gap-4
+        "
+        >
           <Button
             onClick={handleCancel}
-            className="w-full border-transparent bg-gray-600 p-2 text-xs hover:bg-gray-700 md:p-3 md:text-base"
+            className="
+              w-full border-transparent bg-gray-600 p-2 text-xs
+              hover:bg-gray-700
+              md:p-3 md:text-base
+            "
           >
             Cancelar
           </Button>
           <Button
             onClick={handleSubmit}
-            className="w-full bg-green-400 text-xs text-gray-900 hover:bg-green-500 md:text-base"
+            className="
+              w-full bg-green-400 text-xs text-gray-900
+              hover:bg-green-500
+              md:text-base
+            "
             disabled={uploading}
           >
             {uploading

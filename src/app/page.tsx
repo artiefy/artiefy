@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
+import { type OAuthStrategy } from '@clerk/shared/types';
 import { FaArrowRight } from 'react-icons/fa';
 
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
@@ -57,6 +58,8 @@ export default function HomePage() {
   // Estados para los modales de autenticación
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [oauthTransferStrategy, setOauthTransferStrategy] =
+    useState<OAuthStrategy | null>(null);
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [postAuthAction, setPostAuthAction] = useState<'dashboard' | null>(
     null
@@ -173,7 +176,13 @@ export default function HomePage() {
             </p>
             <div>
               <Button
-                className="join-button relative skew-x-[-20deg] rounded-none border border-primary bg-primary py-8 text-2xl font-semibold text-background italic hover:border-primary hover:bg-transparent hover:text-primary active:scale-95"
+                className={
+                  'join-button relative skew-x-[-20deg] rounded-none border ' +
+                  'border-primary bg-primary py-8 text-2xl font-semibold ' +
+                  'text-background italic ' +
+                  'hover:border-primary hover:bg-transparent hover:text-primary ' +
+                  'active:scale-95'
+                }
                 style={{
                   boxShadow: '6px 6px 0 black',
                   transition: '0.5s',
@@ -189,7 +198,12 @@ export default function HomePage() {
                       <span className="inline-block skew-x-[15deg]">
                         COMIENZA YA
                       </span>
-                      <FaArrowRight className="ml-2 inline-block skew-x-[15deg] animate-bounce-right transition-transform duration-500" />
+                      <FaArrowRight
+                        className="
+                          ml-2 inline-block skew-x-[15deg] animate-bounce-right
+                          transition-transform duration-500
+                        "
+                      />
                     </>
                   )}
                 </div>
@@ -198,9 +212,22 @@ export default function HomePage() {
           </section>
         </main>
       </div>
-      <div className="fixed right-35 bottom-10 z-10 translate-x-1/2 sm:right-32 sm:bottom-20 sm:translate-x-0">
+      <div
+        className="
+          fixed right-35 bottom-10 z-10 translate-x-1/2
+          sm:right-32 sm:bottom-20 sm:translate-x-0
+        "
+      >
         {/* Triangulo tipo burbuja */}
-        <span className="absolute bottom-[63px] left-1/2 inline size-0 translate-x-[75px] rotate-[360deg] transform border-t-[8px] border-r-[6px] border-l-[6px] border-t-blue-500 border-r-transparent border-l-transparent sm:bottom-[63px] sm:translate-x-[250px]" />
+        <span
+          className="
+            absolute bottom-[63px] left-1/2 inline size-0 translate-x-[75px]
+            rotate-[360deg] transform border-t-[8px] border-r-[6px]
+            border-l-[6px] border-t-blue-500 border-r-transparent
+            border-l-transparent
+            sm:bottom-[63px] sm:translate-x-[250px]
+          "
+        />
       </div>
 
       <TourComponent />
@@ -220,17 +247,20 @@ export default function HomePage() {
         isOpen={showLoginModal}
         onClose={() => {
           setShowLoginModal(false);
+          setOauthTransferStrategy(null);
           setOauthError(null);
           setPostAuthAction(null);
           setLoading(false);
         }}
         onLoginSuccess={() => {
           setShowLoginModal(false);
+          setOauthTransferStrategy(null);
           setOauthError(null);
           handlePostAuthAction();
         }}
         redirectUrl="/"
-        onSwitchToSignUp={() => {
+        onSwitchToSignUp={(strategy) => {
+          setOauthTransferStrategy(strategy ?? null);
           setShowLoginModal(false);
           setShowSignUpModal(true);
         }}
@@ -240,15 +270,20 @@ export default function HomePage() {
         isOpen={showSignUpModal}
         onClose={() => {
           setShowSignUpModal(false);
+          setOauthTransferStrategy(null);
           setPostAuthAction(null);
           setLoading(false);
         }}
         onSignUpSuccess={() => {
           setShowSignUpModal(false);
+          setOauthTransferStrategy(null);
           handlePostAuthAction();
         }}
         redirectUrl="/"
+        autoStartOAuthStrategy={oauthTransferStrategy}
+        onAutoStartOAuthHandled={() => setOauthTransferStrategy(null)}
         onSwitchToLogin={() => {
+          setOauthTransferStrategy(null);
           setShowSignUpModal(false);
           setShowLoginModal(true);
         }}

@@ -25,7 +25,7 @@ export default function Page() {
         forceRedirectUrl={finalRedirectUrl}
         signInForceRedirectUrl={finalRedirectUrl}
         appearance={{
-          layout: {
+          options: {
             logoPlacement: 'inside', // Ubicación del logo: 'inside' o 'outside'
             privacyPageUrl: 'https://clerk.com/legal/privacy', // URL de tu política de privacidad
             animations: true, // Activa/desactiva las animaciones

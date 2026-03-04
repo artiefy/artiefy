@@ -147,7 +147,12 @@ function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
   return (
     <>
       {/* En móviles: apilar fecha y hora verticalmente con tamaños más pequeños */}
-      <div className="block sm:hidden">
+      <div
+        className="
+        block
+        sm:hidden
+      "
+      >
         <span className="block text-sm font-bold text-yellow-400">
           {weekdayCapitalized}, {String(day)} de {mesNombreCapitalized}, {year}
         </span>
@@ -157,7 +162,12 @@ function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
         </span>
       </div>
       {/* En desktop: mantener diseño inline original */}
-      <div className="hidden sm:block">
+      <div
+        className="
+        hidden
+        sm:block
+      "
+      >
         <span className="text-base font-bold text-yellow-400">
           {weekdayCapitalized}, {String(day)} de {mesNombreCapitalized}, {year}
         </span>{' '}
@@ -456,7 +466,11 @@ export function CourseContent({
                 {isUnlocked &&
                   lesson.isNew &&
                   lesson.porcentajecompletado === 0 && (
-                    <span className="ml-2 rounded bg-green-500 px-2 py-1 text-xs text-white">
+                    <span
+                      className="
+                      ml-2 rounded bg-green-500 px-2 py-1 text-xs text-white
+                    "
+                    >
                       Nuevo
                     </span>
                   )}
@@ -471,7 +485,10 @@ export function CourseContent({
           </button>
           {expandedLesson === lesson.id && isUnlocked && (
             <div
-              className="border-t bg-[#1a233366] px-6 py-4 transition-colors hover:bg-[#01152d]"
+              className="
+                border-t bg-[#1a233366] px-6 py-4 transition-colors
+                hover:bg-[#01152d]
+              "
               style={{
                 borderColor: '#1d283a',
               }}
@@ -481,7 +498,10 @@ export function CourseContent({
                   lesson.description && lesson.description.length > 150;
                 const descriptionContent = (
                   <p
-                    className="mb-4 line-clamp-3 max-w-full break-words whitespace-pre-wrap text-gray-300"
+                    className="
+                      mb-4 line-clamp-3 max-w-full break-words
+                      whitespace-pre-wrap text-gray-300
+                    "
                     style={{ overflowWrap: 'anywhere' }}
                   >
                     <IoPlayCircleOutline className="-mt-1 mr-2 inline size-4 text-white" />
@@ -519,7 +539,11 @@ export function CourseContent({
                   {displayProgress}%
                 </span>
                 <a
-                  className="group inline-flex shrink-0 items-center gap-2 overflow-hidden rounded-full px-4 py-2 text-sm font-medium transition-all"
+                  className="
+                    group inline-flex shrink-0 items-center gap-2
+                    overflow-hidden rounded-full px-4 py-2 text-sm font-medium
+                    transition-all
+                  "
                   href={`/estudiantes/clases/${lesson.id}`}
                   onClick={handleClick}
                   onMouseEnter={() => setHoveredLesson(lesson.id)}
@@ -541,7 +565,13 @@ export function CourseContent({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="lucide lucide-navigation size-4 -rotate-[25deg] transition-all duration-300 group-hover:translate-x-2 group-hover:-translate-y-4 group-hover:opacity-0 group-active:animate-[rocket-launch_0.4s_ease-out]"
+                      className="
+                        lucide lucide-navigation size-4 -rotate-[25deg]
+                        transition-all duration-300
+                        group-hover:translate-x-2 group-hover:-translate-y-4
+                        group-hover:opacity-0
+                        group-active:animate-[rocket-launch_0.4s_ease-out]
+                      "
                     >
                       <polygon points="3 11 22 2 13 21 11 13 3 11" />
                     </svg>
@@ -555,7 +585,13 @@ export function CourseContent({
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="lucide lucide-navigation absolute inset-0 size-4 -translate-x-2 translate-y-4 -rotate-[25deg] opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:translate-y-0 group-hover:opacity-100"
+                      className="
+                        lucide lucide-navigation absolute inset-0 size-4
+                        -translate-x-2 translate-y-4 -rotate-[25deg] opacity-0
+                        transition-all duration-300
+                        group-hover:translate-x-0 group-hover:translate-y-0
+                        group-hover:opacity-100
+                      "
                     >
                       <polygon points="3 11 22 2 13 21 11 13 3 11" />
                     </svg>
@@ -832,7 +868,10 @@ export function CourseContent({
   return (
     <div
       className={cn(
-        'relative px-4 sm:px-0',
+        `
+          relative px-4
+          sm:px-0
+        `,
         viewMode === 'recorded' || upcomingMeetings.length === 0
           ? 'pt-0'
           : 'pt-6'
@@ -859,7 +898,12 @@ export function CourseContent({
                   </p>
                   <Button
                     onClick={handleSubscriptionRedirect}
-                    className="transform rounded-lg bg-red-500 px-6 py-2 font-semibold text-white transition-all duration-300 hover:scale-105 hover:bg-red-600 active:scale-95"
+                    className="
+                      transform rounded-lg bg-red-500 px-6 py-2 font-semibold
+                      text-white transition-all duration-300
+                      hover:scale-105 hover:bg-red-600
+                      active:scale-95
+                    "
                   >
                     Renovar Suscripción Ahora
                   </Button>
@@ -875,7 +919,10 @@ export function CourseContent({
           {/* Fondo animado SOLO para el bloque interno de bienvenida/no inscrito */}
           {upcomingMeetings.length > 0 && (!isSignedIn || !isEnrolled) ? (
             <div
-              className="mb-6 rounded-[12px] border p-4 sm:p-5"
+              className="
+                mb-6 rounded-[12px] border p-4
+                sm:p-5
+              "
               style={{
                 backgroundColor: '#061c3799',
                 borderColor: 'hsla(217, 33%, 17%, 0.5)',
@@ -884,16 +931,35 @@ export function CourseContent({
               <div className="flex w-full flex-col items-stretch gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                      <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
+                    <span
+                      className="
+                      flex items-center gap-1.5 rounded-full bg-red-500/20 px-2
+                      py-0.5 text-xs font-medium text-red-400
+                    "
+                    >
+                      <span
+                        className="
+                        size-1.5 animate-pulse rounded-full bg-red-500
+                      "
+                      />
                       EN VIVO
                     </span>
-                    <span className="text-base font-semibold text-slate-100 sm:text-lg">
+                    <span
+                      className="
+                      text-base font-semibold text-slate-100
+                      sm:text-lg
+                    "
+                    >
                       Clase en vivo
                     </span>
                   </div>
                   {featuredLiveDetails && (
-                    <span className="rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-100">
+                    <span
+                      className="
+                      rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3
+                      py-1 text-xs font-semibold text-cyan-100
+                    "
+                    >
                       Próxima
                     </span>
                   )}
@@ -901,7 +967,12 @@ export function CourseContent({
 
                 {featuredLiveDetails && (
                   <>
-                    <p className="text-xs text-slate-300 sm:text-sm">
+                    <p
+                      className="
+                      text-xs text-slate-300
+                      sm:text-sm
+                    "
+                    >
                       La primera clase en vivo del curso es el{' '}
                       <span className="font-semibold text-white">
                         {featuredLiveDetails.dateLabel}
@@ -916,8 +987,18 @@ export function CourseContent({
                         </>
                       )}
                     </p>
-                    <div className="flex flex-col gap-2 text-xs text-slate-300 sm:flex-row sm:items-center sm:text-sm">
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1">
+                    <div
+                      className="
+                      flex flex-col gap-2 text-xs text-slate-300
+                      sm:flex-row sm:items-center sm:text-sm
+                    "
+                    >
+                      <span
+                        className="
+                        inline-flex items-center gap-1.5 rounded-md border
+                        border-white/10 px-2 py-1
+                      "
+                      >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
@@ -944,7 +1025,12 @@ export function CourseContent({
                         {featuredLiveDetails.compactDateLabel ||
                           featuredLiveDetails.dateLabel}
                       </span>
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2 py-1">
+                      <span
+                        className="
+                        inline-flex items-center gap-1.5 rounded-md border
+                        border-white/10 px-2 py-1
+                      "
+                      >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
@@ -973,7 +1059,12 @@ export function CourseContent({
                   </>
                 )}
 
-                <div className="text-xs text-slate-300 sm:text-sm">
+                <div
+                  className="
+                  text-xs text-slate-300
+                  sm:text-sm
+                "
+                >
                   {!isSignedIn ? (
                     <>
                       <span className="font-semibold text-white">
@@ -994,13 +1085,24 @@ export function CourseContent({
                 {!isSignedIn ? (
                   <Link
                     href="/sign-in"
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 sm:w-auto"
+                    className="
+                      inline-flex w-full items-center justify-center gap-2
+                      rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-4
+                      py-2 text-xs font-semibold text-cyan-100 transition
+                      hover:bg-cyan-500/20
+                      sm:w-auto
+                    "
                   >
                     <FaLock className="size-4" />
                     Inicia sesión
                   </Link>
                 ) : (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-200">
+                  <div
+                    className="
+                    inline-flex items-center gap-1.5 text-xs font-semibold
+                    text-red-200
+                  "
+                  >
                     <FaLock className="size-3.5" />
                     Acceso restringido para estudiantes inscritos
                   </div>
@@ -1015,11 +1117,20 @@ export function CourseContent({
                   {/* Header con variantes responsive */}
                   {/* Mobile: icono videocam + texto centrado */}
                   <div
-                    className={`${recordedSectionTopMargin} mb-1 flex flex-col items-center rounded-2xl border sm:hidden`}
+                    className={`
+                      ${recordedSectionTopMargin}
+                      mb-1 flex flex-col items-center rounded-2xl border
+                      sm:hidden
+                    `}
                     style={{ backgroundColor: '#01152d' }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
+                      <div
+                        className="
+                        flex items-center justify-center rounded-full
+                        bg-red-500/20 p-2
+                      "
+                      >
                         <LuVideo className="size-5 text-red-400" />
                       </div>
                       <h2 className="text-lg font-bold text-white">
@@ -1029,9 +1140,19 @@ export function CourseContent({
                   </div>
 
                   {/* Desktop: icono videocam + texto alineados */}
-                  <div className="mb-2 hidden items-center sm:flex">
+                  <div
+                    className="
+                    mb-2 hidden items-center
+                    sm:flex
+                  "
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center rounded-full bg-red-500/20 p-2">
+                      <div
+                        className="
+                        flex items-center justify-center rounded-full
+                        bg-red-500/20 p-2
+                      "
+                      >
                         <LuVideo className="size-5 text-red-400" />
                       </div>
                       <h2 className="text-xl font-bold text-white">
@@ -1172,7 +1293,12 @@ export function CourseContent({
                           <div
                             key={meeting.id}
                             className={cn(
-                              'relative flex flex-col gap-3 rounded-[12px] border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4',
+                              `
+                                relative flex flex-col gap-3 rounded-[12px]
+                                border p-3
+                                sm:flex-row sm:items-center sm:justify-between
+                                sm:p-4
+                              `,
                               'sm:hover:neon-live-class'
                             )}
                             style={{
@@ -1181,32 +1307,60 @@ export function CourseContent({
                             }}
                           >
                             {/* MOBILE: layout vertical y centrado */}
-                            <div className="block w-full sm:hidden">
-                              <div className="flex w-full flex-col items-stretch gap-3">
+                            <div
+                              className="
+                              block w-full
+                              sm:hidden
+                            "
+                            >
+                              <div
+                                className="
+                                flex w-full flex-col items-stretch gap-3
+                              "
+                              >
                                 {/* Header compacto sin fondo, solo texto y chips */}
-                                <div className="flex items-start justify-between gap-2">
+                                <div
+                                  className="
+                                  flex items-start justify-between gap-2
+                                "
+                                >
                                   <div className="flex items-center gap-2">
                                     <span
-                                      className="flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+                                      className="
+                                        flex items-center gap-1.5 rounded-full
+                                        px-2 py-0.5 text-xs font-medium
+                                      "
                                       style={{
                                         backgroundColor: '#061c3799',
                                         color: '#E6F7F8',
                                       }}
                                     >
                                       <span
-                                        className="size-1.5 animate-pulse rounded-full"
+                                        className="
+                                          size-1.5 animate-pulse rounded-full
+                                        "
                                         style={{ backgroundColor: '#061c37' }}
                                       />
                                       EN VIVO
                                     </span>
-                                    <h3 className="text-lg leading-snug font-semibold text-slate-100">
+                                    <h3
+                                      className="
+                                      text-lg leading-snug font-semibold
+                                      text-slate-100
+                                    "
+                                    >
                                       {meeting.title}
                                     </h3>
                                   </div>
                                   {isToday && (
                                     <span
                                       className={cn(
-                                        'rounded-full border border-emerald-400/40 bg-emerald-500/10 px-3 py-1 text-xs font-semibold',
+                                        `
+                                          rounded-full border
+                                          border-emerald-400/40
+                                          bg-emerald-500/10 px-3 py-1 text-xs
+                                          font-semibold
+                                        `,
                                         isJoinEnabled && !isMeetingEnded
                                           ? 'text-emerald-200'
                                           : 'text-slate-300'
@@ -1220,7 +1374,10 @@ export function CourseContent({
                                 </div>
                                 {/* Chips fecha+hora y duracion (móvil) en una sola línea */}
                                 <div
-                                  className="flex flex-wrap items-center gap-2 text-xs sm:text-sm sm:whitespace-nowrap"
+                                  className="
+                                    flex flex-wrap items-center gap-2 text-xs
+                                    sm:text-sm sm:whitespace-nowrap
+                                  "
                                   style={{ color: '#94a3b8' }}
                                 >
                                   <span className="inline-flex items-center gap-1.5">
@@ -1279,7 +1436,11 @@ export function CourseContent({
                                       {isNext && !isJoinEnabled && (
                                         <button
                                           type="button"
-                                          className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
+                                          className={`
+                                            ${buttonClass}
+                                            ${buttonExtraClass}
+                                            ${buttonBg}
+                                          `}
                                           disabled={buttonDisabled}
                                           style={{
                                             fontFamily:
@@ -1300,7 +1461,10 @@ export function CourseContent({
                                             href={meeting.joinUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className={`${buttonClass} ${buttonBg}`}
+                                            className={`
+                                              ${buttonClass}
+                                              ${buttonBg}
+                                            `}
                                             tabIndex={
                                               !isSubscriptionActive ? -1 : 0
                                             }
@@ -1336,7 +1500,10 @@ export function CourseContent({
                                         isMeetingEnded && (
                                           <button
                                             type="button"
-                                            className={`${buttonClass} ${buttonBg}`}
+                                            className={`
+                                              ${buttonClass}
+                                              ${buttonBg}
+                                            `}
                                             disabled={buttonDisabled}
                                             style={{
                                               fontFamily:
@@ -1352,7 +1519,10 @@ export function CourseContent({
                                       {!isAvailable && !isNext && !isToday && (
                                         <button
                                           type="button"
-                                          className={`${buttonClass} ${buttonBg}`}
+                                          className={`
+                                            ${buttonClass}
+                                            ${buttonBg}
+                                          `}
                                           disabled={buttonDisabled}
                                           style={{
                                             fontFamily:
@@ -1366,7 +1536,12 @@ export function CourseContent({
                                         </button>
                                       )}
                                       {!isSubscriptionActive && (
-                                        <div className="mt-2 w-full text-center text-xs font-semibold text-red-600">
+                                        <div
+                                          className="
+                                          mt-2 w-full text-center text-xs
+                                          font-semibold text-red-600
+                                        "
+                                        >
                                           Debes tener una suscripción activa
                                           para acceder a las clases en vivo.
                                         </div>
@@ -1377,18 +1552,42 @@ export function CourseContent({
                               </div>
                             </div>
                             {/* DESKTOP: badge + title on one line, date/time/duration below */}
-                            <div className="hidden min-w-0 flex-1 flex-col gap-2 sm:flex">
+                            <div
+                              className="
+                              hidden min-w-0 flex-1 flex-col gap-2
+                              sm:flex
+                            "
+                            >
                               <div className="flex items-center gap-3">
-                                <span className="flex items-center gap-1.5 rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
-                                  <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
+                                <span
+                                  className="
+                                  flex items-center gap-1.5 rounded-full
+                                  bg-red-500/20 px-2 py-0.5 text-xs font-medium
+                                  text-red-400
+                                "
+                                >
+                                  <span
+                                    className="
+                                    size-1.5 animate-pulse rounded-full
+                                    bg-red-500
+                                  "
+                                  />
                                   EN VIVO
                                 </span>
-                                <div className="text-base leading-tight font-semibold text-slate-100">
+                                <div
+                                  className="
+                                  text-base leading-tight font-semibold
+                                  text-slate-100
+                                "
+                                >
                                   {meeting.title}
                                 </div>
                               </div>
                               <div
-                                className="flex flex-wrap items-center gap-2 text-xs sm:text-sm sm:whitespace-nowrap"
+                                className="
+                                  flex flex-wrap items-center gap-2 text-xs
+                                  sm:text-sm sm:whitespace-nowrap
+                                "
                                 style={{
                                   color: '#94a3b8',
                                   background: '#061c3799',
@@ -1446,13 +1645,22 @@ export function CourseContent({
                             </div>
                             {/* Badges desktop removed: 'Hoy' badge disabled per request */}
                             {/* Botón desktop */}
-                            <div className="mt-3 hidden min-w-fit flex-col sm:mt-0 sm:ml-4 sm:flex">
+                            <div
+                              className="
+                              mt-3 hidden min-w-fit flex-col
+                              sm:mt-0 sm:ml-4 sm:flex
+                            "
+                            >
                               {meeting.joinUrl && (
                                 <>
                                   {isNext && !isJoinEnabled && (
                                     <button
                                       type="button"
-                                      className={`${buttonClass} ${buttonExtraClass} ${buttonBg}`}
+                                      className={`
+                                        ${buttonClass}
+                                        ${buttonExtraClass}
+                                        ${buttonBg}
+                                      `}
                                       disabled={buttonDisabled}
                                       style={{
                                         fontFamily:
@@ -1473,7 +1681,10 @@ export function CourseContent({
                                         href={meeting.joinUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className={`${buttonClass} ${buttonBg}`}
+                                        className={`
+                                          ${buttonClass}
+                                          ${buttonBg}
+                                        `}
                                         tabIndex={
                                           !isSubscriptionActive ? -1 : 0
                                         }
@@ -1506,7 +1717,10 @@ export function CourseContent({
                                     isMeetingEnded && (
                                       <button
                                         type="button"
-                                        className={`${buttonClass} ${buttonBg}`}
+                                        className={`
+                                          ${buttonClass}
+                                          ${buttonBg}
+                                        `}
                                         disabled={buttonDisabled}
                                         style={{
                                           fontFamily:
@@ -1522,7 +1736,10 @@ export function CourseContent({
                                   {!isAvailable && !isNext && !isToday && (
                                     <button
                                       type="button"
-                                      className={`${buttonClass} ${buttonBg}`}
+                                      className={`
+                                        ${buttonClass}
+                                        ${buttonBg}
+                                      `}
                                       disabled={buttonDisabled}
                                       style={{
                                         fontFamily:
@@ -1536,7 +1753,11 @@ export function CourseContent({
                                     </button>
                                   )}
                                   {!isSubscriptionActive && (
-                                    <div className="mt-2 text-xs font-semibold text-red-600">
+                                    <div
+                                      className="
+                                      mt-2 text-xs font-semibold text-red-600
+                                    "
+                                    >
                                       Debes tener una suscripción activa para
                                       acceder a las clases en vivo.
                                     </div>
@@ -1557,11 +1778,19 @@ export function CourseContent({
                 <div>
                   {/* Header con variantes responsive para grabadas */}
                   <div
-                    className="mb-3 flex flex-col items-start rounded-2xl sm:hidden"
+                    className="
+                      mb-3 flex flex-col items-start rounded-2xl
+                      sm:hidden
+                    "
                     style={{ backgroundColor: '#01152d' }}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center rounded-full bg-emerald-500/20 p-2">
+                      <div
+                        className="
+                        flex items-center justify-center rounded-full
+                        bg-emerald-500/20 p-2
+                      "
+                      >
                         <IoIosSave className="size-5 text-emerald-400" />
                       </div>
                       <h3 className="text-lg font-bold text-white">
@@ -1571,10 +1800,16 @@ export function CourseContent({
                   </div>
 
                   <div
-                    className={`${recordedSectionTopMargin} mb-4 hidden items-center justify-between sm:flex`}
+                    className={`
+                      ${recordedSectionTopMargin} mb-4 hidden items-center justify-between sm:flex`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center justify-center rounded-full bg-emerald-500/20 p-2">
+                      <div
+                        className="
+                        flex items-center justify-center rounded-full
+                        bg-emerald-500/20 p-2
+                      "
+                      >
                         <IoIosSave className="size-5 text-emerald-400" />
                       </div>
                       <h3 className="text-xl font-bold text-white">
@@ -1583,15 +1818,30 @@ export function CourseContent({
                     </div>
                     <button
                       onClick={toggleRecordedClasses}
-                      className="flex items-center gap-2 rounded-full border border-secondary/30 bg-gradient-to-r from-secondary/10 to-secondary/5 px-3 py-1.5 text-sm font-semibold text-black shadow-sm transition-all duration-300 hover:border-secondary hover:shadow-md hover:ring-1 hover:ring-secondary/30"
+                      className="
+                        flex items-center gap-2 rounded-full border
+                        border-secondary/30 bg-gradient-to-r from-secondary/10
+                        to-secondary/5 px-3 py-1.5 text-sm font-semibold
+                        text-black shadow-sm transition-all duration-300
+                        hover:border-secondary hover:shadow-md hover:ring-1
+                        hover:ring-secondary/30
+                      "
                     >
                       <span className="tracking-wide text-white">
                         {showRecordedClasses ? 'Ver menos' : 'Ver más'}
                       </span>
                       {showRecordedClasses ? (
-                        <FaChevronUp className="text-white transition-transform duration-200" />
+                        <FaChevronUp
+                          className="
+                          text-white transition-transform duration-200
+                        "
+                        />
                       ) : (
-                        <FaChevronDown className="text-white transition-transform duration-200" />
+                        <FaChevronDown
+                          className="
+                          text-white transition-transform duration-200
+                        "
+                        />
                       )}
                     </button>
                   </div>
@@ -1633,25 +1883,56 @@ export function CourseContent({
                                 handleOpenRecordedModal(meeting)
                               }
                               className={cn(
-                                'group flex w-full items-center gap-4 rounded-xl border p-4 text-left transition-all duration-200',
-                                'border-border/50 bg-card/50 hover:border-border hover:bg-card',
+                                `
+                                  group flex w-full items-center gap-4
+                                  rounded-xl border p-4 text-left transition-all
+                                  duration-200
+                                `,
+                                `
+                                  border-border/50 bg-card/50
+                                  hover:border-border hover:bg-card
+                                `,
                                 !isSubscriptionActive &&
                                   'cursor-not-allowed opacity-60'
                               )}
                             >
-                              <div className="relative flex h-10 w-16 shrink-0 items-center justify-center rounded-lg bg-accent/20">
-                                <Play className="size-4 text-accent transition-transform group-hover:scale-110" />
+                              <div
+                                className="
+                                relative flex h-10 w-16 shrink-0 items-center
+                                justify-center rounded-lg bg-accent/20
+                              "
+                              >
+                                <Play
+                                  className="
+                                  size-4 text-accent transition-transform
+                                  group-hover:scale-110
+                                "
+                                />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium text-muted-foreground">
+                                  <span
+                                    className="
+                                    text-xs font-medium text-muted-foreground
+                                  "
+                                  >
                                     {indexLabel}
                                   </span>
-                                  <h4 className="truncate text-sm font-medium text-foreground">
+                                  <h4
+                                    className="
+                                    truncate text-sm font-medium text-foreground
+                                  "
+                                  >
                                     {meeting.title ?? `Clase ${indexLabel}`}
                                   </h4>
                                 </div>
-                                <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:hidden">
+                                <div
+                                  className="
+                                  mt-2 flex flex-wrap items-center gap-3 text-xs
+                                  text-muted-foreground
+                                  sm:hidden
+                                "
+                                >
                                   <div className="flex items-center gap-1">
                                     <FaCalendarAlt className="size-3.5" />
                                     <span>{dateLabel}</span>
@@ -1665,13 +1946,23 @@ export function CourseContent({
                                   {isCompleted ? (
                                     <FaCheckCircle className="size-4 text-accent" />
                                   ) : (
-                                    <span className="text-xs font-semibold text-accent">
+                                    <span
+                                      className="
+                                      text-xs font-semibold text-accent
+                                    "
+                                    >
                                       {currentProgress}%
                                     </span>
                                   )}
                                 </div>
                               </div>
-                              <div className="hidden shrink-0 items-center gap-3 text-muted-foreground sm:flex">
+                              <div
+                                className="
+                                hidden shrink-0 items-center gap-3
+                                text-muted-foreground
+                                sm:flex
+                              "
+                              >
                                 <div className="flex items-center gap-1 text-xs">
                                   <FaCalendarAlt className="size-3.5" />
                                   <span>{dateLabel}</span>
@@ -1685,7 +1976,11 @@ export function CourseContent({
                                 {isCompleted ? (
                                   <FaCheckCircle className="size-4 text-accent" />
                                 ) : (
-                                  <span className="text-xs font-semibold text-accent">
+                                  <span
+                                    className="
+                                    text-xs font-semibold text-accent
+                                  "
+                                  >
                                     {currentProgress}%
                                   </span>
                                 )}
@@ -1719,15 +2014,31 @@ export function CourseContent({
           }}
         >
           <h2
-            className={`${lessonsSectionTopMargin} mb-4 flex items-center justify-between text-xl font-bold text-white`}
+            className={`
+              ${lessonsSectionTopMargin}
+              mb-4 flex items-center justify-between text-xl font-bold
+              text-white
+            `}
           >
             <div className="flex items-center gap-3">
-              <span className="inline-flex items-center justify-center rounded-full border border-transparent bg-blue-500/20 p-2 text-blue-300">
+              <span
+                className="
+                inline-flex items-center justify-center rounded-full border
+                border-transparent bg-blue-500/20 p-2 text-blue-300
+              "
+              >
                 <MdVideoLibrary className="size-4" />
               </span>
               Clases del Curso
             </div>
-            <div className="inline-flex items-center rounded-full border border-primary/30 px-2.5 py-0.5 text-xs font-semibold text-primary transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+            <div
+              className="
+              inline-flex items-center rounded-full border border-primary/30
+              px-2.5 py-0.5 text-xs font-semibold text-primary transition-colors
+              focus:ring-2 focus:ring-ring focus:ring-offset-2
+              focus:outline-none
+            "
+            >
               {course.lessons?.length || 0} clases
             </div>
           </h2>

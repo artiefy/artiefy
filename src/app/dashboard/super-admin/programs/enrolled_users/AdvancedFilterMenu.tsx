@@ -148,7 +148,10 @@ export function AdvancedFilterMenu({
 
   return (
     <div
-      className="fixed z-[70] flex max-h-[600px] flex-col overflow-hidden rounded-lg border border-gray-600 bg-gray-800 shadow-2xl"
+      className="
+        fixed z-[70] flex max-h-[600px] flex-col overflow-hidden rounded-lg
+        border border-gray-600 bg-gray-800 shadow-2xl
+      "
       style={
         adjustedPosition
           ? {
@@ -166,7 +169,10 @@ export function AdvancedFilterMenu({
           <h3 className="font-semibold text-white">{columnLabel}</h3>
           <button
             onClick={onClose}
-            className="text-gray-400 transition hover:text-white"
+            className="
+              text-gray-400 transition
+              hover:text-white
+            "
           >
             <X className="size-5" />
           </button>
@@ -180,7 +186,11 @@ export function AdvancedFilterMenu({
             placeholder="Buscar..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded bg-gray-700 py-2 pr-3 pl-8 text-sm text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500"
+            className="
+              w-full rounded bg-gray-700 py-2 pr-3 pl-8 text-sm text-white
+              placeholder-gray-400 outline-none
+              focus:ring-2 focus:ring-blue-500
+            "
           />
         </div>
 
@@ -188,31 +198,49 @@ export function AdvancedFilterMenu({
         <div className="mt-2 flex gap-1">
           <button
             onClick={() => setSortOrder('asc')}
-            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition ${
-              sortOrder === 'asc'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+            className={`
+              flex-1 rounded px-2 py-1 text-xs font-medium transition
+              ${
+                sortOrder === 'asc'
+                  ? 'bg-blue-600 text-white'
+                  : `
+                  bg-gray-700 text-gray-300
+                  hover:bg-gray-600
+                `
+              }
+            `}
           >
             A → Z
           </button>
           <button
             onClick={() => setSortOrder('desc')}
-            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition ${
-              sortOrder === 'desc'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+            className={`
+              flex-1 rounded px-2 py-1 text-xs font-medium transition
+              ${
+                sortOrder === 'desc'
+                  ? 'bg-blue-600 text-white'
+                  : `
+                  bg-gray-700 text-gray-300
+                  hover:bg-gray-600
+                `
+              }
+            `}
           >
             Z → A
           </button>
           <button
             onClick={() => setSortOrder('count')}
-            className={`flex-1 rounded px-2 py-1 text-xs font-medium transition ${
-              sortOrder === 'count'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-            }`}
+            className={`
+              flex-1 rounded px-2 py-1 text-xs font-medium transition
+              ${
+                sortOrder === 'count'
+                  ? 'bg-blue-600 text-white'
+                  : `
+                  bg-gray-700 text-gray-300
+                  hover:bg-gray-600
+                `
+              }
+            `}
           >
             Conteo
           </button>
@@ -224,7 +252,11 @@ export function AdvancedFilterMenu({
         {/* Select All */}
         <button
           onClick={handleSelectAll}
-          className="w-full rounded px-3 py-2 text-left text-sm font-medium text-blue-400 transition hover:bg-gray-700"
+          className="
+            w-full rounded px-3 py-2 text-left text-sm font-medium text-blue-400
+            transition
+            hover:bg-gray-700
+          "
         >
           {selectedFilters.size === filterOptions.length
             ? '☑ Deseleccionar todo'
@@ -246,7 +278,11 @@ export function AdvancedFilterMenu({
               <button
                 key={opt.value}
                 onClick={() => handleToggle(opt.value)}
-                className="group flex w-full items-center justify-between rounded px-3 py-2 text-left transition hover:bg-gray-700"
+                className="
+                  group flex w-full items-center justify-between rounded px-3
+                  py-2 text-left transition
+                  hover:bg-gray-700
+                "
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2">
                   <input
@@ -272,10 +308,18 @@ export function AdvancedFilterMenu({
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-750 flex items-center justify-between gap-2 border-t border-gray-700 px-4 py-3">
+      <div
+        className="
+        bg-gray-750 flex items-center justify-between gap-2 border-t
+        border-gray-700 px-4 py-3
+      "
+      >
         <button
           onClick={handleClear}
-          className="rounded bg-gray-700 px-3 py-2 text-sm text-white transition hover:bg-gray-600"
+          className="
+            rounded bg-gray-700 px-3 py-2 text-sm text-white transition
+            hover:bg-gray-600
+          "
         >
           Limpiar
         </button>
@@ -283,13 +327,20 @@ export function AdvancedFilterMenu({
         <div className="flex gap-2">
           <button
             onClick={onClose}
-            className="rounded bg-gray-700 px-3 py-2 text-sm text-white transition hover:bg-gray-600"
+            className="
+              rounded bg-gray-700 px-3 py-2 text-sm text-white transition
+              hover:bg-gray-600
+            "
           >
             Cancelar
           </button>
           <button
             onClick={handleApply}
-            className="rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
+            className="
+              rounded bg-blue-600 px-3 py-2 text-sm font-medium text-white
+              transition
+              hover:bg-blue-700
+            "
           >
             Aplicar
           </button>

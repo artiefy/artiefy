@@ -26,9 +26,24 @@ export function CourseBreadcrumb({
 }: CourseBreadcrumbProps) {
   return (
     // Solo oculta en móviles, visible en md y arriba
-    <div className="relative z-20 hidden w-full backdrop-blur-sm md:block md:bg-transparent md:backdrop-blur-none">
-      <Breadcrumb className="w-full overflow-x-auto py-2 md:pt-0">
-        <BreadcrumbList className="flex w-full flex-nowrap items-center gap-1 px-4 whitespace-nowrap md:px-0">
+    <div
+      className="
+      relative z-20 hidden w-full backdrop-blur-sm
+      md:block md:bg-transparent md:backdrop-blur-none
+    "
+    >
+      <Breadcrumb
+        className="
+        w-full overflow-x-auto py-2
+        md:pt-0
+      "
+      >
+        <BreadcrumbList
+          className="
+          flex w-full flex-nowrap items-center gap-1 px-4 whitespace-nowrap
+          md:px-0
+        "
+        >
           <BreadcrumbItem>
             <BreadcrumbLink href="/">
               <FaHome className="mr-1 inline-block" /> Inicio
@@ -49,7 +64,11 @@ export function CourseBreadcrumb({
                 >
                   <HiAcademicCap className="mr-1 inline-block" />
                   <span
-                    className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-none"
+                    className="
+                      sm:truncate-none
+                      inline-block max-w-none truncate align-middle
+                      sm:max-w-none
+                    "
                     title={programInfo.title}
                   >
                     {programInfo.title}
@@ -71,7 +90,11 @@ export function CourseBreadcrumb({
           <BreadcrumbItem>
             <BreadcrumbPage>
               <span
-                className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-none"
+                className="
+                  sm:truncate-none
+                  inline-block max-w-none truncate align-middle
+                  sm:max-w-none
+                "
                 title={title}
               >
                 {title}

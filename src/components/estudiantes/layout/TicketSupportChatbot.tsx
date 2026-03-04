@@ -611,8 +611,17 @@ const TicketSupportChatbot = () => {
         >
           <div className="flex h-full flex-col bg-transparent text-white">
             {/* Header */}
-            <div className="relative z-[5] flex flex-shrink-0 flex-col bg-[#050c1b]/95 backdrop-blur-lg">
-              <div className="flex items-center justify-between border-b border-gray-700 p-4">
+            <div
+              className="
+                relative z-[5] flex flex-shrink-0 flex-col bg-[#050c1b]/95
+                backdrop-blur-lg
+              "
+            >
+              <div
+                className="
+                  flex items-center justify-between border-b border-gray-700 p-4
+                "
+              >
                 <MdSupportAgent className="text-4xl text-[#3AF4EF]" />
                 <div className="flex flex-1 flex-col items-center">
                   <h2 className="text-lg font-semibold text-white">
@@ -623,7 +632,12 @@ const TicketSupportChatbot = () => {
                       {user?.fullName}
                     </em>
                     <div className="relative inline-flex">
-                      <div className="absolute top-1/2 left-1/2 size-4 -translate-1/2 animate-pulse rounded-full bg-green-400/20" />
+                      <div
+                        className="
+                          absolute top-1/2 left-1/2 size-4 -translate-1/2
+                          animate-pulse rounded-full bg-green-400/20
+                        "
+                      />
                       <div className="relative size-2.5 rounded-full bg-green-400" />
                     </div>
                   </div>
@@ -633,7 +647,12 @@ const TicketSupportChatbot = () => {
                   {/* Solo mostrar botón de flecha hacia atrás si NO estamos en el menú principal */}
                   {currentTicketId !== null && (
                     <button
-                      className="rounded-full p-1.5 text-white/70 transition-all duration-200 hover:bg-white/10 active:scale-95"
+                      className="
+                        rounded-full p-1.5 text-white/70 transition-all
+                        duration-200
+                        hover:bg-white/10
+                        active:scale-95
+                      "
                       aria-label="Volver atrás"
                       onClick={() => {
                         setIsOpen(false);
@@ -654,7 +673,13 @@ const TicketSupportChatbot = () => {
                       // Notificar cierre para resetear estados asociados
                       window.dispatchEvent(new Event('support-chat-close'));
                     }}
-                    className={`${currentTicketId !== null ? 'ml-2' : ''} rounded-full p-1.5 text-white/70 transition-all duration-200 hover:bg-white/10 active:scale-95`}
+                    className={`
+                      ${currentTicketId !== null ? 'ml-2' : ''}
+                      rounded-full p-1.5 text-white/70 transition-all
+                      duration-200
+                      hover:bg-white/10
+                      active:scale-95
+                    `}
                     aria-label="Cerrar chatbot"
                   >
                     <IoClose className="text-xl" />

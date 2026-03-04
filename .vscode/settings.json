@@ -13,8 +13,8 @@
     "strings": "on"
   },
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll": "always",
+    "source.fixAll.eslint": "always"
   },
   "eslint.rules.customizations": [
     {
@@ -114,7 +114,7 @@
     "typescript",
     "typescriptreact"
   ],
-  "eslint.codeActionsOnSave.mode": "problems",
+  "eslint.codeActionsOnSave.mode": "all",
   // Tailwind CSS Configuration
   "tailwindCSS.includeLanguages": {
     "typescript": "javascript",

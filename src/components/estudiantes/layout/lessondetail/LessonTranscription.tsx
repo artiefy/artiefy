@@ -83,20 +83,25 @@ const LessonTranscription = ({
           <div
             key={`${item.start}-${idx}`}
             data-transcription-idx={idx}
-            className={`mb-3 flex items-start gap-3 transition-all ${
-              isCurrent ? 'rounded-md bg-accent/20 p-2' : ''
-            }`}
+            className={`
+              mb-3 flex items-start gap-3 transition-all
+              ${isCurrent ? 'rounded-md bg-accent/20 p-2' : ''}
+            `}
           >
             <div className="flex-shrink-0">
               <span
-                className={`inline-block font-mono text-xs text-muted-foreground`}
+                className={`
+                  inline-block font-mono text-xs text-muted-foreground
+                `}
               >
                 {formatTime(item.start)}
               </span>
             </div>
             <div className="min-w-0 flex-1">
               <p
-                className={`text-sm leading-relaxed ${isCurrent ? 'font-semibold text-foreground' : 'text-white/90'}`}
+                className={`
+                  text-sm leading-relaxed
+                  ${isCurrent ? 'font-semibold text-foreground' : 'text-white/90'}`}
               >
                 {item.text}
               </p>
@@ -108,7 +113,12 @@ const LessonTranscription = ({
                   Fin: {formatTime(item.end)}
                 </span>
                 {isCurrent && (
-                  <span className="ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-xs font-medium text-foreground">
+                  <span
+                    className="
+                    ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-xs
+                    font-medium text-foreground
+                  "
+                  >
                     {Math.floor(currentTime)}s
                   </span>
                 )}
