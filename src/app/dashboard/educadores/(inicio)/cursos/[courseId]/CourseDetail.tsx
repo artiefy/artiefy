@@ -116,7 +116,6 @@ export interface Parametros {
   name: string;
   description: string;
   porcentaje: number;
-  numberOfActivities?: number;
   courseId: number;
   numberOfActivities?: number;
 }
