@@ -123,6 +123,7 @@ export interface Parametros {
   porcentaje: number;
   numberOfActivities?: number;
   courseId: number;
+  numberOfActivities?: number;
 }
 
 type UIMeeting = ScheduledMeeting & {
