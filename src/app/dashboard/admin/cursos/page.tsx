@@ -36,10 +36,10 @@ export function LoadingCourses() {
   return (
     <div
       className="
-      mt-10 grid grid-cols-1 gap-4
-      md:grid-cols-2
-      lg:grid-cols-3
-    "
+        mt-10 grid grid-cols-1 gap-4
+        md:grid-cols-2
+        lg:grid-cols-3
+      "
     >
       {Array.from({ length: 9 }).map((_, index) => (
         <SkeletonCard key={index} />
@@ -63,7 +63,13 @@ export default function Page() {
     []
   );
   const [parametrosList, setParametrosList] = useState<
-    { id: number; name: string; description: string; porcentaje: number }[]
+    {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+      numberOfActivities: number;
+    }[]
   >([]);
   const [educators, setEducators] = useState<{ id: string; name: string }[]>(
     []
@@ -213,6 +219,7 @@ export default function Page() {
       name: string;
       description: string;
       porcentaje: number;
+      numberOfActivities: number;
     }[]
   ) => {
     if (!user) return;
@@ -348,6 +355,7 @@ export default function Page() {
                     name: parametro.name,
                     description: parametro.description,
                     porcentaje: parametro.porcentaje,
+                    numberOfActivities: parametro.numberOfActivities,
                     courseId: responseData.id, // ✅ Asegura que `courseId` es válido
                   }),
                 }
@@ -438,8 +446,8 @@ export default function Page() {
       <main className="flex h-screen flex-col items-center justify-center">
         <div
           className="
-          size-32 animate-spin rounded-full border-y-2 border-primary
-        "
+            size-32 animate-spin rounded-full border-y-2 border-primary
+          "
         >
           <span className="sr-only" />
         </div>
@@ -452,33 +460,33 @@ export default function Page() {
   return (
     <div
       className="
-      p-4
-      sm:p-6
-    "
+        p-4
+        sm:p-6
+      "
     >
       {/* Header with gradient effect */}
       <header className="group relative overflow-hidden rounded-lg p-[1px]">
         <div
           className="
-          absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF]
-          via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500
-        "
+            absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF]
+            via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500
+          "
         />
         <div
           className="
-          relative flex flex-col items-start justify-between rounded-lg
-          bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
-          group-hover:bg-gray-800/95
-          sm:flex-row sm:items-center sm:p-6
-        "
+            relative flex flex-col items-start justify-between rounded-lg
+            bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
+            group-hover:bg-gray-800/95
+            sm:flex-row sm:items-center sm:p-6
+          "
         >
           <h1
             className="
-            flex items-center gap-3 text-xl font-extrabold tracking-tight
-            text-primary
-            sm:text-2xl
-            lg:text-3xl
-          "
+              flex items-center gap-3 text-xl font-extrabold tracking-tight
+              text-primary
+              sm:text-2xl
+              lg:text-3xl
+            "
           >
             Gestión de Cursos
           </h1>
@@ -488,68 +496,68 @@ export default function Page() {
       {/* Stats Cards */}
       <div
         className="
-        my-4 grid grid-cols-1 gap-4
-        sm:grid-cols-2
-        lg:grid-cols-3
-      "
+          my-4 grid grid-cols-1 gap-4
+          sm:grid-cols-2
+          lg:grid-cols-3
+        "
       >
         <div
           className="
-          rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
-          sm:p-6
-        "
+            rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            sm:p-6
+          "
         >
           <h2
             className="
-            text-base font-semibold text-gray-400
-            sm:text-lg
-          "
+              text-base font-semibold text-gray-400
+              sm:text-lg
+            "
           >
             Total de Cursos
           </h2>
           <p
             className="
-            mt-2 text-2xl font-bold text-white
-            sm:text-3xl
-          "
+              mt-2 text-2xl font-bold text-white
+              sm:text-3xl
+            "
           >
             {totalCourses}
           </p>
         </div>
         <div
           className="
-          rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
-          sm:p-6
-        "
+            rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            sm:p-6
+          "
         >
           <h2
             className="
-            text-base font-semibold text-gray-400
-            sm:text-lg
-          "
+              text-base font-semibold text-gray-400
+              sm:text-lg
+            "
           >
             Estudiantes Inscritos
           </h2>
           <p
             className="
-            mt-2 text-2xl font-bold text-white
-            sm:text-3xl
-          "
+              mt-2 text-2xl font-bold text-white
+              sm:text-3xl
+            "
           >
             {totalStudents}
           </p>
         </div>
         <div
           className="
-          rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
-          sm:p-6
-        "
+            rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            sm:p-6
+          "
         >
           <h2
             className="
-            text-base font-semibold text-gray-400
-            sm:text-lg
-          "
+              text-base font-semibold text-gray-400
+              sm:text-lg
+            "
           >
             Filtrar por Categoría
           </h2>
@@ -575,16 +583,16 @@ export default function Page() {
       {/* Search and Add Button */}
       <div
         className="
-        mb-6 grid grid-cols-1 gap-4
-        sm:grid-cols-2
-        lg:grid-cols-4
-      "
+          mb-6 grid grid-cols-1 gap-4
+          sm:grid-cols-2
+          lg:grid-cols-4
+        "
       >
         <div
           className="
-          col-span-1 rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
-          lg:col-span-3
-        "
+            col-span-1 rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+            lg:col-span-3
+          "
         >
           <input
             type="text"
@@ -613,17 +621,18 @@ export default function Page() {
             <span className="relative z-10 font-medium">Crear Curso</span>
             <FiPlus
               className="
-              relative z-10 size-3.5
-              sm:size-4
-            "
+                relative z-10 size-3.5
+                sm:size-4
+              "
             />
             <div
               className="
-              absolute inset-0 z-0 bg-gradient-to-r from-transparent
-              via-white/10 to-transparent opacity-0 transition-all duration-500
-              group-hover/button:[transform:translateX(100%)]
-              group-hover/button:opacity-100
-            "
+                absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                via-white/10 to-transparent opacity-0 transition-all
+                duration-500
+                group-hover/button:[transform:translateX(100%)]
+                group-hover/button:opacity-100
+              "
             />
           </button>
         </div>
@@ -745,6 +754,7 @@ export default function Page() {
           parametros={parametrosList.map((parametro, index) => ({
             ...parametro,
             id: index,
+            numberOfActivities: parametro.numberOfActivities ?? 1,
           }))}
           setParametrosAction={setParametrosList}
           courseTypeId={

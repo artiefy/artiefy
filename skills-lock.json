@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "nextjs-seo": {
+      "source": "laguagu/claude-code-nextjs-skills",
+      "sourceType": "github",
+      "computedHash": "cb162b4dddde7d73157a338d2a86347b816e67db691c39a8c29f1e1e7145cba5"
+    }
+  }
+}

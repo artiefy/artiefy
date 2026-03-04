@@ -636,7 +636,7 @@ export const parametros = pgTable('parametros', {
   numberOfActivities: integer('number_of_activities').default(0).notNull(),
   courseId: integer('course_id')
     .references(() => courses.id)
-    .default(null),
+    .default(sql`NULL`),
 });
 
 // Tabla de plantillas de parámetros
@@ -647,7 +647,7 @@ export const parameterTemplates = pgTable('parameter_templates', {
   totalPercentage: integer('total_percentage').notNull().default(0),
   courseId: integer('course_id')
     .references(() => courses.id)
-    .default(null),
+    .default(sql`NULL`),
   creatorId: text('creator_id')
     .references(() => users.id)
     .notNull(),
@@ -1275,7 +1275,7 @@ export const chat_messages = pgTable('chat_messages', {
   senderId: text('sender_id').references(() => users.id),
   message: text('message').notNull(),
   created_at: timestamp('created_at').defaultNow().notNull(),
-  courses_data: jsonb('courses_data').default(null), // <-- Asegura default null para evitar errores de consulta
+  courses_data: jsonb('courses_data').default(sql`NULL`), // Default null explícito y tipado para Drizzle
 });
 
 // Tabla de roles secundarios

@@ -8,7 +8,7 @@ export const env = createEnv({
    */
   server: {
     POSTGRES_URL: z.url(),
-    POSTGRES_URL_NON_POOLING: z.url(),
+    POSTGRES_URL_NON_POOLING: z.url().optional(),
     POSTGRES_USER: z.string().min(1),
     POSTGRES_HOST: z.string().min(1),
     POSTGRES_PASSWORD: z.string().min(1),

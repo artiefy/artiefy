@@ -83,6 +83,7 @@ export interface Parametros {
   name: string;
   description: string;
   porcentaje: number;
+  numberOfActivities?: number;
   courseId: number;
 }
 
@@ -151,9 +152,9 @@ const FullscreenLoader = () => {
     <Portal>
       <div
         className="
-        fixed inset-0 z-50 flex items-center justify-center bg-background/20
-        backdrop-blur-sm
-      "
+          fixed inset-0 z-50 flex items-center justify-center bg-background/20
+          backdrop-blur-sm
+        "
       >
         <TechLoader />
       </div>
@@ -209,6 +210,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       name: string;
       description: string;
       porcentaje: number;
+      numberOfActivities: number;
     }[]
   >([]); // Nuevo estado para los parámetros
   const [editRating, setEditRating] = useState(0); // Añadir esta línea
@@ -368,6 +370,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       name: string;
       description: string;
       porcentaje: number;
+      numberOfActivities: number;
     }[],
     courseTypeName?: string // Add the new argument, optional if not always present
   ): Promise<void> => {
@@ -475,6 +478,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   name: parametro.name,
                   description: parametro.description,
                   porcentaje: parametro.porcentaje,
+                  numberOfActivities: parametro.numberOfActivities,
                   courseId: Number(courseIdString2),
                 }),
                 credentials: 'include',
@@ -500,6 +504,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 name: parametro.name,
                 description: parametro.description,
                 porcentaje: parametro.porcentaje,
+                numberOfActivities: parametro.numberOfActivities,
                 courseId: Number(courseIdString2),
               }),
               credentials: 'include',
@@ -563,6 +568,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         name: parametro.name,
         description: parametro.description,
         porcentaje: parametro.porcentaje,
+        numberOfActivities: parametro.numberOfActivities ?? 1,
       }))
     );
     setEditRating(course.rating);
@@ -750,9 +756,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="
-              text-primary
-              hover:text-gray-300
-            "
+                text-primary
+                hover:text-gray-300
+              "
             >
               Detalles del curso
             </BreadcrumbLink>
@@ -762,11 +768,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       <div className="group relative h-auto w-full">
         <div
           className="
-          absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
-          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition
-          duration-500
-          group-hover:opacity-100
-        "
+            absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
+            transition duration-500
+            group-hover:opacity-100
+          "
         />
         <Card
           className={`
@@ -781,16 +787,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         >
           <CardHeader
             className="
-            grid w-full grid-cols-1 gap-4
-            md:grid-cols-2 md:gap-8
-            lg:gap-16
-          "
+              grid w-full grid-cols-1 gap-4
+              md:grid-cols-2 md:gap-8
+              lg:gap-16
+            "
           >
             <CardTitle
               className="
-              text-xl font-bold text-primary
-              sm:text-2xl
-            "
+                text-xl font-bold text-primary
+                sm:text-2xl
+              "
             >
               Curso: {course.title}
             </CardTitle>
@@ -823,9 +829,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </CardHeader>
           <div
             className="
-            grid gap-6
-            md:grid-cols-2
-          "
+              grid gap-6
+              md:grid-cols-2
+            "
           >
             {/* Left Column - Image */}
             <div className="flex w-full flex-col space-y-4">
@@ -842,17 +848,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
               <div
                 className="
-                grid grid-cols-1 gap-2
-                sm:grid-cols-2 sm:gap-4
-                lg:grid-cols-4
-              "
+                  grid grid-cols-1 gap-2
+                  sm:grid-cols-2 sm:gap-4
+                  lg:grid-cols-4
+                "
               >
                 <Button
                   className="
-                  w-full bg-green-400 text-white
-                  hover:bg-green-500
-                  sm:w-auto
-                "
+                    w-full bg-green-400 text-white
+                    hover:bg-green-500
+                    sm:w-auto
+                  "
                 >
                   <Link href={`./${course.id}/ver/${course.id}`}>
                     Visualizar curso
@@ -869,9 +875,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </Button>
                 <Button
                   className="
-                  border-primary bg-primary text-white
-                  hover:bg-primary/90
-                "
+                    border-primary bg-primary text-white
+                    hover:bg-primary/90
+                  "
                 >
                   <Link href={`/dashboard/admin/detailsDashboard/${course.id}`}>
                     Estadisticas
@@ -912,17 +918,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             <div className="space-y-6">
               <h2
                 className="
-                text-xl font-bold text-primary
-                sm:text-2xl
-              "
+                  text-xl font-bold text-primary
+                  sm:text-2xl
+                "
               >
                 Información del curso
               </h2>
               <div
                 className="
-                grid grid-cols-1 gap-4
-                sm:grid-cols-2
-              "
+                  grid grid-cols-1 gap-4
+                  sm:grid-cols-2
+                "
               >
                 <div className="space-y-2">
                   <h2
@@ -940,9 +946,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </h2>
                   <h1
                     className="
-                    text-xl font-bold text-primary
-                    sm:text-2xl
-                  "
+                      text-xl font-bold text-primary
+                      sm:text-2xl
+                    "
                   >
                     {course.title}
                   </h1>
@@ -1194,15 +1200,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div
                   className="
-                  materias-container col-span-1
-                  sm:col-span-2
-                "
+                    materias-container col-span-1
+                    sm:col-span-2
+                  "
                 >
                   <h3
                     className="
-                    mb-2 text-base font-semibold
-                    sm:text-lg
-                  "
+                      mb-2 text-base font-semibold
+                      sm:text-lg
+                    "
                   >
                     Materias:
                   </h3>
