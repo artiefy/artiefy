@@ -63,29 +63,31 @@ export default function RootLayout({
   const organizationSchema = getOrganizationSchema();
 
   return (
-    <ClerkProvider localization={esMX}>
-      <html
-        lang="es"
-        className={`${montserrat.variable} ${merriweather.variable}`}
-      >
-        {/* Canonical URL en los metadatos de la página */}
-        <link rel="canonical" href={canonical} />
+    <html
+      lang="es"
+      className={`
+        ${montserrat.variable}
+        ${merriweather.variable}
+      `}
+    >
+      {/* Canonical URL en los metadatos de la página */}
+      <link rel="canonical" href={canonical} />
 
-        {/* Verificación de Google */}
-        <meta
-          name="google-site-verification"
-          content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
-        />
+      {/* Verificación de Google */}
+      <meta
+        name="google-site-verification"
+        content="QmeSGzDRcYJKY61p9oFybVx-HXlsoT5ZK6z9x2L3Wp4"
+      />
 
-        {/* Verificación de dominio de Facebook */}
-        <meta
-          name="facebook-domain-verification"
-          content="zxh6j216xifuou0gxlb1hp0zomyjx0"
-        />
+      {/* Verificación de dominio de Facebook */}
+      <meta
+        name="facebook-domain-verification"
+        content="zxh6j216xifuou0gxlb1hp0zomyjx0"
+      />
 
-        {/* Meta Pixel Code */}
-        {/* Eliminar o comentar este bloque, ya no es necesario aquí */}
-        {/*
+      {/* Meta Pixel Code */}
+      {/* Eliminar o comentar este bloque, ya no es necesario aquí */}
+      {/*
         <Script id="meta-pixel" strategy="afterInteractive">
           {`
             !function(f,b,e,v,n,t,s)
@@ -101,33 +103,34 @@ export default function RootLayout({
           `}
         </Script>
         */}
-        {/* End Meta Pixel Code */}
+      {/* End Meta Pixel Code */}
 
-        {/* Schema.org con componentes Script de Next.js */}
-        <Script id="schema-website" type="application/ld+json">
-          {JSON.stringify(websiteSchema).replace(/</g, '\\u003c')}
-        </Script>
+      {/* Schema.org con componentes Script de Next.js */}
+      <Script id="schema-website" type="application/ld+json">
+        {JSON.stringify(websiteSchema).replace(/</g, '\\u003c')}
+      </Script>
 
-        <Script id="schema-webpages" type="application/ld+json">
-          {JSON.stringify(webPagesSchema).replace(/</g, '\\u003c')}
-        </Script>
+      <Script id="schema-webpages" type="application/ld+json">
+        {JSON.stringify(webPagesSchema).replace(/</g, '\\u003c')}
+      </Script>
 
-        <Script id="schema-navigation" type="application/ld+json">
-          {JSON.stringify(siteNavigationSchema).replace(/</g, '\\u003c')}
-        </Script>
+      <Script id="schema-navigation" type="application/ld+json">
+        {JSON.stringify(siteNavigationSchema).replace(/</g, '\\u003c')}
+      </Script>
 
-        <Script id="schema-breadcrumb" type="application/ld+json">
-          {JSON.stringify(breadcrumbSchema).replace(/</g, '\\u003c')}
-        </Script>
+      <Script id="schema-breadcrumb" type="application/ld+json">
+        {JSON.stringify(breadcrumbSchema).replace(/</g, '\\u003c')}
+      </Script>
 
-        <Script id="schema-organization" type="application/ld+json">
-          {JSON.stringify(organizationSchema).replace(/</g, '\\u003c')}
-        </Script>
+      <Script id="schema-organization" type="application/ld+json">
+        {JSON.stringify(organizationSchema).replace(/</g, '\\u003c')}
+      </Script>
 
-        <body
-          className="bg-background text-primary font-sans"
-          suppressHydrationWarning
-        >
+      <body
+        className="bg-background font-sans text-primary"
+        suppressHydrationWarning
+      >
+        <ClerkProvider localization={esMX}>
           {/* Meta Pixel noscript fallback */}
           <noscript>
             <img
@@ -159,8 +162,8 @@ export default function RootLayout({
           <SpeedInsights />
           <Analytics />
           <Toaster />
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }

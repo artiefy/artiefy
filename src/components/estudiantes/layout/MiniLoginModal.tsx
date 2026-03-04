@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
-import { useAuth, useSignIn, useSignUp } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
-import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
+import { useSignIn, useSignUp } from '@clerk/nextjs/legacy';
+import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 

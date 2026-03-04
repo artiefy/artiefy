@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
-import { type OAuthStrategy } from '@clerk/types';
+import { type OAuthStrategy } from '@clerk/shared/types';
 
 import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
 import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';

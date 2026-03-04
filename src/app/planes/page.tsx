@@ -5,7 +5,7 @@ import { createElement, useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 import { useAuth } from '@clerk/nextjs';
-import { type OAuthStrategy } from '@clerk/types';
+import { type OAuthStrategy } from '@clerk/shared/types';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimes, FaTimesCircle } from 'react-icons/fa';
 

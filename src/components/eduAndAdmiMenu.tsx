@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { UserButton, useUser } from '@clerk/clerk-react';
+import { UserButton, useUser } from '@clerk/nextjs';
 import { FaWhatsapp } from 'react-icons/fa';
 import {
   FiBook,
@@ -254,14 +254,15 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       {/* Navbar */}
       <nav
         className="
-        fixed top-0 z-40 w-full border-b border-gray-200 bg-background shadow-xs
-      "
+          fixed top-0 z-40 w-full border-b border-gray-200 bg-background
+          shadow-xs
+        "
       >
         <div
           className="
-          p-2.5
-          lg:px-4 lg:pl-3
-        "
+            p-2.5
+            lg:px-4 lg:pl-3
+          "
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -322,9 +323,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       >
         <div
           className="
-          h-full overflow-x-hidden overflow-y-auto bg-background px-2 pb-4
-          dark:bg-gray-800
-        "
+            h-full overflow-x-hidden overflow-y-auto bg-background px-2 pb-4
+            dark:bg-gray-800
+          "
         >
           <ul className="mt-3 space-y-1.5 font-medium">
             {navItems.map((item) => (
@@ -357,11 +358,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     {!shouldShowText && item.badge && item.badge > 0 && (
                       <span
                         className="
-                        absolute -top-2 -right-2 flex h-4 min-w-[16px]
-                        animate-pulse items-center justify-center rounded-full
-                        bg-red-600 px-1 text-[9px] font-bold text-white ring-1
-                        ring-background
-                      "
+                          absolute -top-2 -right-2 flex h-4 min-w-[16px]
+                          animate-pulse items-center justify-center rounded-full
+                          bg-red-600 px-1 text-[9px] font-bold text-white ring-1
+                          ring-background
+                        "
                       >
                         {item.badge > 99 ? '99+' : item.badge}
                       </span>
@@ -371,18 +372,18 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   {shouldShowText && (
                     <span
                       className="
-                      ml-2.5 flex flex-1 items-center justify-between text-xs
-                      font-medium whitespace-nowrap
-                    "
+                        ml-2.5 flex flex-1 items-center justify-between text-xs
+                        font-medium whitespace-nowrap
+                      "
                     >
                       {item.title}
                       {item.badge && item.badge > 0 && (
                         <span
                           className="
-                          ml-2 flex h-5 min-w-[20px] animate-pulse items-center
-                          justify-center rounded-full bg-red-600 px-1.5
-                          text-[10px] font-bold text-white
-                        "
+                            ml-2 flex h-5 min-w-[20px] animate-pulse
+                            items-center justify-center rounded-full bg-red-600
+                            px-1.5 text-[10px] font-bold text-white
+                          "
                         >
                           {item.badge > 99 ? '99+' : item.badge}
                         </span>
@@ -414,9 +415,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <>
                         <span
                           className="
-                          ml-2.5 flex-1 text-left text-xs font-medium
-                          whitespace-nowrap
-                        "
+                            ml-2.5 flex-1 text-left text-xs font-medium
+                            whitespace-nowrap
+                          "
                         >
                           Formulario
                         </span>
@@ -523,9 +524,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <>
                         <span
                           className="
-                          ml-2.5 flex-1 text-left text-xs font-medium
-                          whitespace-nowrap
-                        "
+                            ml-2.5 flex-1 text-left text-xs font-medium
+                            whitespace-nowrap
+                          "
                         >
                           WhatsApp
                         </span>
@@ -582,9 +583,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <>
                         <span
                           className="
-                          ml-2.5 flex-1 text-left text-xs font-medium
-                          whitespace-nowrap
-                        "
+                            ml-2.5 flex-1 text-left text-xs font-medium
+                            whitespace-nowrap
+                          "
                         >
                           Finanzas
                         </span>
@@ -592,9 +593,10 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           {totalRecaudado > 0 && (
                             <span
                               className="
-                              rounded bg-green-500/20 px-1.5 py-0.5 text-[10px]
-                              font-semibold whitespace-nowrap text-green-400
-                            "
+                                rounded bg-green-500/20 px-1.5 py-0.5
+                                text-[10px] font-semibold whitespace-nowrap
+                                text-green-400
+                              "
                             >
                               ${(totalRecaudado / 1000000).toFixed(1)}M
                             </span>
@@ -669,9 +671,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <>
                         <span
                           className="
-                          ml-2.5 flex-1 text-left text-xs font-medium
-                          whitespace-nowrap
-                        "
+                            ml-2.5 flex-1 text-left text-xs font-medium
+                            whitespace-nowrap
+                          "
                         >
                           Cursos
                         </span>
@@ -844,9 +846,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <>
                         <span
                           className="
-                          ml-2.5 flex-1 text-left text-xs font-medium
-                          whitespace-nowrap
-                        "
+                            ml-2.5 flex-1 text-left text-xs font-medium
+                            whitespace-nowrap
+                          "
                         >
                           Parámetros
                         </span>
@@ -919,9 +921,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       <>
                         <span
                           className="
-                          ml-2.5 flex-1 text-left text-xs font-medium
-                          whitespace-nowrap
-                        "
+                            ml-2.5 flex-1 text-left text-xs font-medium
+                            whitespace-nowrap
+                          "
                         >
                           Programas
                         </span>

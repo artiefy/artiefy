@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import { FiEye, FiRefreshCw, FiSearch, FiTrash2, FiX } from 'react-icons/fi';
 
 import { cn } from '~/lib/utils';
@@ -151,15 +151,15 @@ export default function CredentialsLogsPage() {
   return (
     <div
       className="
-          p-4
-          md:p-6
-        "
+        p-4
+        md:p-6
+      "
     >
       <div
         className="
-              mb-6 flex flex-col gap-3
-              md:flex-row md:items-center md:justify-between
-            "
+          mb-6 flex flex-col gap-3
+          md:flex-row md:items-center md:justify-between
+        "
       >
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-white">
@@ -175,13 +175,11 @@ export default function CredentialsLogsPage() {
             <FiSearch className="absolute top-2.5 left-2 text-gray-400" />
             <input
               className="
-                              w-72 rounded-lg border border-gray-700 bg-gray-900
-                              px-8 py-2.5 text-sm font-medium text-white
-                              outline-none
-                              placeholder:text-gray-500
-                              focus:border-primary focus:ring-1
-                              focus:ring-primary
-                            "
+                w-72 rounded-lg border border-gray-700 bg-gray-900 px-8 py-2.5
+                text-sm font-medium text-white outline-none
+                placeholder:text-gray-500
+                focus:border-primary focus:ring-1 focus:ring-primary
+              "
               placeholder="Buscar por usuario, correo o nota..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
@@ -190,11 +188,10 @@ export default function CredentialsLogsPage() {
           <button
             onClick={() => fetchLogs(1, debouncedQ)}
             className="
-                          flex items-center gap-2 rounded-lg bg-gray-800 px-4
-                          py-2.5 text-sm font-medium text-white
-                          transition-colors
-                          hover:bg-gray-700
-                        "
+              flex items-center gap-2 rounded-lg bg-gray-800 px-4 py-2.5 text-sm
+              font-medium text-white transition-colors
+              hover:bg-gray-700
+            "
           >
             <FiRefreshCw className="size-4" /> Recargar
           </button>
@@ -203,15 +200,15 @@ export default function CredentialsLogsPage() {
 
       <div
         className="
-              overflow-hidden rounded-xl border border-gray-800 bg-gray-900
-            "
+          overflow-hidden rounded-xl border border-gray-800 bg-gray-900
+        "
       >
         <table className="w-full text-left text-sm text-gray-200">
           <thead
             className="
-                      bg-gray-800 text-xs font-semibold tracking-wider text-gray-300
-                      uppercase
-                    "
+              bg-gray-800 text-xs font-semibold tracking-wider text-gray-300
+              uppercase
+            "
           >
             <tr>
               <th className="px-5 py-4">Usuario</th>
@@ -226,12 +223,7 @@ export default function CredentialsLogsPage() {
           <tbody>
             {loading && (
               <tr>
-                <td
-                  colSpan={6}
-                  className="
-                                  px-4 py-6 text-center text-gray-400
-                                "
-                >
+                <td colSpan={6} className="px-4 py-6 text-center text-gray-400">
                   Cargando...
                 </td>
               </tr>
@@ -239,12 +231,7 @@ export default function CredentialsLogsPage() {
 
             {!loading && items.length === 0 && (
               <tr>
-                <td
-                  colSpan={6}
-                  className="
-                                  px-4 py-6 text-center text-gray-400
-                                "
-                >
+                <td colSpan={6} className="px-4 py-6 text-center text-gray-400">
                   No hay registros
                 </td>
               </tr>
@@ -255,9 +242,9 @@ export default function CredentialsLogsPage() {
                 <tr
                   key={it.id}
                   className="
-                                  hover:bg-gray-850 border-t border-gray-800
-                                  transition-colors
-                                "
+                    hover:bg-gray-850
+                    border-t border-gray-800 transition-colors
+                  "
                 >
                   <td className="px-5 py-4 font-medium">{it.usuario}</td>
                   <td className="px-5 py-4">{it.correo}</td>
@@ -269,11 +256,7 @@ export default function CredentialsLogsPage() {
                     )}
                   </td>
                   <td className="px-5 py-4">{it.nota}</td>
-                  <td
-                    className="
-                                      px-5 py-4 text-xs text-gray-400
-                                    "
-                  >
+                  <td className="px-5 py-4 text-xs text-gray-400">
                     {new Date(it.createdAt).toLocaleString('es-CO')}
                   </td>
                   <td className="px-4 py-3">
@@ -282,9 +265,9 @@ export default function CredentialsLogsPage() {
                         onClick={() => openView(it)}
                         title="Ver / editar"
                         className="
-                                                  rounded-md bg-gray-800 p-2
-                                                  hover:bg-gray-700
-                                                "
+                          rounded-md bg-gray-800 p-2
+                          hover:bg-gray-700
+                        "
                       >
                         <FiEye />
                       </button>
@@ -292,9 +275,9 @@ export default function CredentialsLogsPage() {
                         onClick={() => deleteItem(it.id)}
                         title="Eliminar"
                         className="
-                                                  rounded-md bg-red-700/80 p-2
-                                                  hover:bg-red-600
-                                                "
+                          rounded-md bg-red-700/80 p-2
+                          hover:bg-red-600
+                        "
                       >
                         <FiTrash2 />
                       </button>
@@ -316,16 +299,13 @@ export default function CredentialsLogsPage() {
             disabled={page <= 1}
             onClick={() => fetchLogs(page - 1, debouncedQ)}
             className={cn(
-              `
-                              rounded-lg px-4 py-2 text-sm font-medium
-                              transition-colors
-                            `,
+              `rounded-lg px-4 py-2 text-sm font-medium transition-colors`,
               page <= 1
                 ? 'cursor-not-allowed bg-gray-800 text-gray-500'
                 : `
-                                  bg-gray-700 text-white
-                                  hover:bg-gray-600
-                                `
+                  bg-gray-700 text-white
+                  hover:bg-gray-600
+                `
             )}
           >
             Anterior
@@ -334,16 +314,13 @@ export default function CredentialsLogsPage() {
             disabled={page >= totalPages}
             onClick={() => fetchLogs(page + 1, debouncedQ)}
             className={cn(
-              `
-                              rounded-lg px-4 py-2 text-sm font-medium
-                              transition-colors
-                            `,
+              `rounded-lg px-4 py-2 text-sm font-medium transition-colors`,
               page >= totalPages
                 ? 'cursor-not-allowed bg-gray-800 text-gray-500'
                 : `
-                                  bg-gray-700 text-white
-                                  hover:bg-gray-600
-                                `
+                  bg-gray-700 text-white
+                  hover:bg-gray-600
+                `
             )}
           >
             Siguiente
@@ -353,16 +330,11 @@ export default function CredentialsLogsPage() {
 
       {/* modal */}
       {openModal && modalItem && (
-        <div
-          className="
-                  fixed inset-0 z-50 grid place-items-center bg-black/60 p-4
-                "
-        >
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
           <div
             className="
-                      w-full max-w-lg rounded-2xl border border-gray-800
-                      bg-gray-900 p-6
-                    "
+              w-full max-w-lg rounded-2xl border border-gray-800 bg-gray-900 p-6
+            "
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-white">
@@ -371,9 +343,9 @@ export default function CredentialsLogsPage() {
               <button
                 onClick={() => setOpenModal(false)}
                 className="
-                                  rounded-md p-1
-                                  hover:bg-gray-800
-                                "
+                  rounded-md p-1
+                  hover:bg-gray-800
+                "
               >
                 <FiX />
               </button>
@@ -404,23 +376,17 @@ export default function CredentialsLogsPage() {
               </div>
 
               <div className="pt-3">
-                <label
-                  className="
-                                  mb-2 block text-sm font-medium text-gray-400
-                                "
-                >
+                <label className="mb-2 block text-sm font-medium text-gray-400">
                   Nota (editable)
                 </label>
                 <input
                   value={notaEdit}
                   onChange={(e) => setNotaEdit(e.target.value)}
                   className="
-                                      w-full rounded-lg border border-gray-700
-                                      bg-gray-950 px-4 py-2.5 text-base
-                                      text-white transition-colors outline-none
-                                      focus:border-primary focus:ring-1
-                                      focus:ring-primary
-                                    "
+                    w-full rounded-lg border border-gray-700 bg-gray-950 px-4
+                    py-2.5 text-base text-white transition-colors outline-none
+                    focus:border-primary focus:ring-1 focus:ring-primary
+                  "
                 />
               </div>
             </div>
@@ -429,10 +395,10 @@ export default function CredentialsLogsPage() {
               <button
                 onClick={() => setOpenModal(false)}
                 className="
-                                  rounded-lg bg-gray-800 px-5 py-2.5 text-sm
-                                  font-medium text-white transition-colors
-                                  hover:bg-gray-700
-                                "
+                  rounded-lg bg-gray-800 px-5 py-2.5 text-sm font-medium
+                  text-white transition-colors
+                  hover:bg-gray-700
+                "
               >
                 Cancelar
               </button>
@@ -440,11 +406,11 @@ export default function CredentialsLogsPage() {
                 disabled={saving}
                 onClick={saveNota}
                 className="
-                                  rounded-lg bg-primary px-5 py-2.5 text-sm
-                                  font-semibold text-black transition-opacity
-                                  hover:opacity-90
-                                  disabled:opacity-50
-                                "
+                  rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold
+                  text-black transition-opacity
+                  hover:opacity-90
+                  disabled:opacity-50
+                "
               >
                 {saving ? 'Guardando...' : 'Guardar'}
               </button>

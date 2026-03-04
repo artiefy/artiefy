@@ -6,9 +6,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { useAuth, useSignIn } from '@clerk/nextjs';
+import { useAuth } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
-import { type ClerkAPIError, type OAuthStrategy } from '@clerk/types';
+import { useSignIn } from '@clerk/nextjs/legacy';
+import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
 
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';

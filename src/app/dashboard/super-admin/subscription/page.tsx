@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/nextjs';
 import {
   FiArrowDownLeft,
   FiArrowUpRight,
@@ -141,9 +141,9 @@ export default function AccessLogsPage() {
       return (
         <span
           className="
-          inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3
-          py-1 text-xs font-semibold text-emerald-400
-        "
+            inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-3
+            py-1 text-xs font-semibold text-emerald-400
+          "
         >
           <span className="size-2 animate-pulse rounded-full bg-emerald-400" />
           Dentro
@@ -153,9 +153,9 @@ export default function AccessLogsPage() {
     return (
       <span
         className="
-        inline-flex items-center gap-1.5 rounded-full bg-gray-600/30 px-3 py-1
-        text-xs font-semibold text-gray-400
-      "
+          inline-flex items-center gap-1.5 rounded-full bg-gray-600/30 px-3 py-1
+          text-xs font-semibold text-gray-400
+        "
       >
         <span className="size-2 rounded-full bg-gray-500" />
         Salió
@@ -180,9 +180,9 @@ export default function AccessLogsPage() {
   return (
     <div
       className="
-      min-h-screen p-4
-      md:p-6
-    "
+        min-h-screen p-4
+        md:p-6
+      "
     >
       {/* Header */}
       <div className="mb-6">
@@ -197,15 +197,15 @@ export default function AccessLogsPage() {
       {/* Stats Cards */}
       <div
         className="
-        mb-6 grid grid-cols-1 gap-4
-        sm:grid-cols-3
-      "
+          mb-6 grid grid-cols-1 gap-4
+          sm:grid-cols-3
+        "
       >
         <div
           className="
-          rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900
-          to-gray-800 p-5
-        "
+            rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900
+            to-gray-800 p-5
+          "
         >
           <div className="flex items-center justify-between">
             <div>
@@ -222,9 +222,9 @@ export default function AccessLogsPage() {
 
         <div
           className="
-          rounded-xl border border-emerald-800/50 bg-gradient-to-br
-          from-emerald-900/30 to-gray-900 p-5
-        "
+            rounded-xl border border-emerald-800/50 bg-gradient-to-br
+            from-emerald-900/30 to-gray-900 p-5
+          "
         >
           <div className="flex items-center justify-between">
             <div>
@@ -243,9 +243,9 @@ export default function AccessLogsPage() {
 
         <div
           className="
-          rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900
-          to-gray-800 p-5
-        "
+            rounded-xl border border-gray-800 bg-gradient-to-br from-gray-900
+            to-gray-800 p-5
+          "
         >
           <div className="flex items-center justify-between">
             <div>
@@ -265,9 +265,9 @@ export default function AccessLogsPage() {
       {/* Filters */}
       <div
         className="
-        mb-6 flex flex-col gap-4
-        md:flex-row md:items-center md:justify-between
-      "
+          mb-6 flex flex-col gap-4
+          md:flex-row md:items-center md:justify-between
+        "
       >
         {/* Search */}
         <div className="relative">
@@ -275,9 +275,8 @@ export default function AccessLogsPage() {
           <input
             className="
               w-full rounded-xl border border-gray-700 bg-gray-900/80 px-10 py-3
-              text-sm font-medium text-white
-              transition-all
-              outline-none placeholder:text-gray-500
+              text-sm font-medium text-white transition-all outline-none
+              placeholder:text-gray-500
               focus:border-primary focus:ring-2 focus:ring-primary/30
               md:w-80
             "
@@ -291,8 +290,8 @@ export default function AccessLogsPage() {
           {/* Filter Buttons */}
           <div
             className="
-            flex rounded-lg border border-gray-700 bg-gray-900/50 p-1
-          "
+              flex rounded-lg border border-gray-700 bg-gray-900/50 p-1
+            "
           >
             <button
               onClick={() => setFilter('all')}
@@ -356,9 +355,9 @@ export default function AccessLogsPage() {
       {/* Table */}
       <div
         className="
-        overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50
-        shadow-xl
-      "
+          overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50
+          shadow-xl
+        "
       >
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -366,25 +365,25 @@ export default function AccessLogsPage() {
               <tr>
                 <th
                   className="
-                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
-                  uppercase
-                "
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
                 >
                   Persona
                 </th>
                 <th
                   className="
-                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
-                  uppercase
-                "
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
                 >
                   Estado
                 </th>
                 <th
                   className="
-                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
-                  uppercase
-                "
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
                 >
                   <div className="flex items-center gap-1.5">
                     <FiArrowDownLeft className="size-4 text-emerald-400" />
@@ -393,9 +392,9 @@ export default function AccessLogsPage() {
                 </th>
                 <th
                   className="
-                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
-                  uppercase
-                "
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
                 >
                   <div className="flex items-center gap-1.5">
                     <FiArrowUpRight className="size-4 text-red-400" />
@@ -404,17 +403,17 @@ export default function AccessLogsPage() {
                 </th>
                 <th
                   className="
-                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
-                  uppercase
-                "
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
                 >
                   Duración
                 </th>
                 <th
                   className="
-                  px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
-                  uppercase
-                "
+                    px-6 py-4 text-xs font-semibold tracking-wider text-gray-300
+                    uppercase
+                  "
                 >
                   Suscripción
                 </th>
@@ -460,9 +459,10 @@ export default function AccessLogsPage() {
                       <div className="flex items-center gap-3">
                         <div
                           className="
-                          flex size-10 items-center justify-center rounded-full
-                          bg-gradient-to-br from-primary/30 to-secondary/30
-                        "
+                            flex size-10 items-center justify-center
+                            rounded-full bg-gradient-to-br from-primary/30
+                            to-secondary/30
+                          "
                         >
                           <FiUser className="size-5 text-primary" />
                         </div>

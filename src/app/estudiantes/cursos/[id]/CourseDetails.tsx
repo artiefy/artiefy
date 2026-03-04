@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { type OAuthStrategy } from '@clerk/types';
+import { type OAuthStrategy } from '@clerk/shared/types';
 import { AiFillFire, AiOutlineCalendar } from 'react-icons/ai';
 import {
   FaCheck,

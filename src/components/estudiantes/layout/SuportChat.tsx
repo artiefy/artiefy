@@ -10,7 +10,12 @@ import { MdSupportAgent } from 'react-icons/md';
 import { formatDateColombia } from '~/lib/formatDate';
 import { getOrCreateSuportChat } from '~/server/actions/estudiantes/chats/suportChatBot';
 
-import type { UserResource } from '@clerk/types';
+type SupportChatUser = {
+  id: string;
+  fullName?: string | null;
+  imageUrl?: string;
+  emailAddresses?: Array<{ emailAddress?: string }>;
+};
 
 interface SuportChatProps {
   messages: {
@@ -40,7 +45,7 @@ interface SuportChatProps {
   messagesEndRef: React.RefObject<HTMLDivElement>;
   inputText: string;
   setInputText: (text: string) => void;
-  user: UserResource | null | undefined;
+  user: SupportChatUser | null | undefined;
   inputRef?: React.RefObject<HTMLInputElement>;
   skipInitialLoad?: boolean;
   onBotButtonClick?: (action: string) => void;
@@ -176,9 +181,9 @@ export const SuportChat: React.FC<SuportChatProps> = ({
       {isTicketClosed && (
         <div
           className="
-          mb-3 rounded-lg border border-yellow-400/60 bg-yellow-400/10 p-3
-          text-sm text-yellow-100
-        "
+            mb-3 rounded-lg border border-yellow-400/60 bg-yellow-400/10 p-3
+            text-sm text-yellow-100
+          "
         >
           <div className="flex items-center gap-2">
             <span className="text-xl">🔒</span>
@@ -234,9 +239,9 @@ export const SuportChat: React.FC<SuportChatProps> = ({
                     ${
                       message.sender === 'user'
                         ? `
-                      bg-gradient-to-r from-[#00bdd8] to-[#009fbf] text-white
-                      shadow-[#00bdd8]/30
-                    `
+                          bg-gradient-to-r from-[#00bdd8] to-[#009fbf]
+                          text-white shadow-[#00bdd8]/30
+                        `
                         : 'border border-white/10 bg-[#08142a] text-white'
                     }
                   `}
@@ -271,8 +276,8 @@ export const SuportChat: React.FC<SuportChatProps> = ({
       {/* Input fijo abajo, SIEMPRE visible */}
       <div
         className="
-        w-full border-t border-gray-700 bg-[#050c1b] p-2 backdrop-blur-sm
-      "
+          w-full border-t border-gray-700 bg-[#050c1b] p-2 backdrop-blur-sm
+        "
       >
         <form onSubmit={handleSendMessage} className="flex w-full gap-2">
           <input

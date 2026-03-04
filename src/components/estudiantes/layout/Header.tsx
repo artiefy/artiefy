@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-import { SignedIn, SignedOut, useAuth, useUser } from '@clerk/nextjs';
+import { Show, useAuth, useUser } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 import { Search, X } from 'lucide-react';
@@ -123,7 +123,11 @@ export function Header({
     const Icon = config.icon;
     return (
       <span
-        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${config.classes}`}
+        className={`
+          inline-flex items-center gap-1 rounded-full border px-2 py-0.5
+          text-[10px] font-medium
+          ${config.classes}
+        `}
         title={`Plan ${config.label}`}
       >
         {Icon ? <Icon className="size-3" /> : null}
@@ -204,11 +208,17 @@ export function Header({
           </div>
         ) : (
           <>
-            <SignedOut>
+            <Show when="signed-out">
               <div className="flex items-center">
                 <Button
                   asChild
-                  className="ml-2 hidden h-9 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium whitespace-nowrap text-black transition-colors hover:bg-primary/90 md:inline-flex"
+                  className="
+                    ml-2 hidden h-9 items-center justify-center gap-2 rounded-md
+                    bg-primary px-3 text-sm font-medium whitespace-nowrap
+                    text-black transition-colors
+                    hover:bg-primary/90
+                    md:inline-flex
+                  "
                 >
                   <Link
                     href={signInHref}
@@ -222,7 +232,15 @@ export function Header({
 
                 <Button
                   asChild
-                  className="relative skew-x-[-15deg] cursor-pointer rounded-none border border-primary bg-primary p-5 text-xl font-light text-background italic transition-all duration-200 hover:bg-background hover:text-primary hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)] active:scale-95 md:hidden"
+                  className="
+                    relative skew-x-[-15deg] cursor-pointer rounded-none border
+                    border-primary bg-primary p-5 text-xl font-light
+                    text-background italic transition-all duration-200
+                    hover:bg-background hover:text-primary
+                    hover:shadow-[0_0_30px_5px_rgba(0,189,216,0.815)]
+                    active:scale-95
+                    md:hidden
+                  "
                   style={{
                     transition: '0.5s',
                     width: '180px',
@@ -234,20 +252,28 @@ export function Header({
                       if (isMobileMenu) setMobileMenuOpen(false);
                     }}
                   >
-                    <span className="relative skew-x-[15deg] overflow-hidden font-semibold">
+                    <span
+                      className="
+                        relative skew-x-[15deg] overflow-hidden font-semibold
+                      "
+                    >
                       Iniciar Sesión
                     </span>
                   </Link>
                 </Button>
               </div>
-            </SignedOut>
+            </Show>
 
-            <SignedIn>
+            <Show when="signed-in">
               {isMobileMenu ? (
                 <div className="flex w-full flex-col items-center gap-2">
                   <Suspense
                     fallback={
-                      <div className="flex min-w-[180px] items-center justify-start">
+                      <div
+                        className="
+                          flex min-w-[180px] items-center justify-start
+                        "
+                      >
                         <Icons.spinner className="ml-2 size-5 text-primary" />
                       </div>
                     }
@@ -257,7 +283,12 @@ export function Header({
                   {mobilePlanBadge ? (
                     <div className="mt-1">{mobilePlanBadge}</div>
                   ) : null}
-                  <div className="campana-header relative md:text-white">
+                  <div
+                    className="
+                      campana-header relative
+                      md:text-white
+                    "
+                  >
                     <NotificationHeader />
                   </div>
                 </div>
@@ -273,17 +304,31 @@ export function Header({
                     >
                       <UserButtonWrapper />
                     </Suspense>
-                    <div className="campana-header relative md:text-white">
+                    <div
+                      className="
+                        campana-header relative
+                        md:text-white
+                      "
+                    >
                       <NotificationHeader />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 md:hidden">
+                  <div
+                    className="
+                      flex items-center gap-2
+                      md:hidden
+                    "
+                  >
                     {mobilePlanBadge}
                     <div className="perfil-header">
                       <Suspense
                         fallback={
-                          <div className="flex min-w-[180px] items-center justify-start">
+                          <div
+                            className="
+                              flex min-w-[180px] items-center justify-start
+                            "
+                          >
                             <Icons.spinner className="ml-2 size-5 text-primary" />
                           </div>
                         }
@@ -291,13 +336,18 @@ export function Header({
                         <UserButtonWrapper />
                       </Suspense>
                     </div>
-                    <div className="campana-header relative md:text-white">
+                    <div
+                      className="
+                        campana-header relative
+                        md:text-white
+                      "
+                    >
                       <NotificationHeader />
                     </div>
                   </div>
                 </>
               )}
-            </SignedIn>
+            </Show>
           </>
         )}
       </>
@@ -333,15 +383,30 @@ export function Header({
   };
 
   return (
-    <nav className="sticky top-0 z-[100] mb-8 w-full border-b bg-[#01152d] backdrop-blur-md sm:mb-8">
+    <nav
+      className="
+        sticky top-0 z-[100] mb-8 w-full border-b bg-[#01152d] backdrop-blur-md
+        sm:mb-8
+      "
+    >
       <Dialog
         open={showEspaciosModal}
         onClose={() => setShowEspaciosModal(false)}
         className="fixed inset-0 z-[100] flex items-center justify-center"
       >
         <div className="fixed inset-0" aria-hidden="true" />
-        <DialogPanel className="relative mx-auto flex w-full max-w-md flex-col items-center rounded-2xl bg-white p-8 shadow-2xl">
-          <span className="mb-4 flex size-16 items-center justify-center rounded-full bg-gradient-to-tr from-primary to-blue-400 shadow-lg">
+        <DialogPanel
+          className="
+            relative mx-auto flex w-full max-w-md flex-col items-center
+            rounded-2xl bg-white p-8 shadow-2xl
+          "
+        >
+          <span
+            className="
+              mb-4 flex size-16 items-center justify-center rounded-full
+              bg-gradient-to-tr from-primary to-blue-400 shadow-lg
+            "
+          >
             <svg
               className="size-10 text-white"
               fill="none"
@@ -367,19 +432,32 @@ export function Header({
             ¡Gracias por tu interés!
           </p>
           <button
-            className="mt-2 rounded bg-secondary px-6 py-2 font-semibold text-white shadow transition hover:bg-blue-700"
+            className="
+              mt-2 rounded bg-secondary px-6 py-2 font-semibold text-white
+              shadow transition
+              hover:bg-blue-700
+            "
             onClick={() => setShowEspaciosModal(false)}
           >
             Cerrar
           </button>
         </DialogPanel>
       </Dialog>
-      <div className="container mx-auto flex h-16 max-w-7xl items-center justify-between gap-12 px-4 sm:px-6">
+      <div
+        className="
+          container mx-auto flex h-16 max-w-7xl items-center justify-between
+          gap-12 px-4
+          sm:px-6
+        "
+      >
         <div className="hidden w-full items-center justify-between gap-12 md:flex">
           {/* Logo */}
           <Link
             href="/"
-            className="ml-0 flex shrink-0 items-center gap-2 md:-ml-8"
+            className="
+              ml-0 flex shrink-0 items-center gap-2
+              md:-ml-8
+            "
           >
             <div className="relative h-8 w-32">
               <Image
@@ -396,7 +474,10 @@ export function Header({
           {/* Search Bar - Hidden on mobile */}
           <form
             onSubmit={handleSearch}
-            className="hidden max-w-xl flex-1 md:block"
+            className="
+              hidden max-w-xl flex-1
+              md:block
+            "
           >
             <div className="relative">
               <input
@@ -404,11 +485,22 @@ export function Header({
                 placeholder="¡Aprende con IA!"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3 pr-10 pl-4 text-sm text-foreground transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+                className="
+                  w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3
+                  pr-10 pl-4 text-sm text-foreground transition-all
+                  placeholder:text-gray-400
+                  hover:border-[#334155]
+                  focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2
+                  focus:ring-[#3AF4EF]/50 focus:outline-none
+                "
                 autoComplete="off"
               />
               <Search
-                className="absolute top-1/2 right-3 size-4 -translate-y-1/2 cursor-pointer text-primary/70 transition-colors hover:text-primary"
+                className="
+                  absolute top-1/2 right-3 size-4 -translate-y-1/2
+                  cursor-pointer text-primary/70 transition-colors
+                  hover:text-primary
+                "
                 onClick={(e) => {
                   e.preventDefault();
                   if (!searchQuery.trim()) return;
@@ -437,9 +529,19 @@ export function Header({
           </form>
 
           {/* Navigation & Auth */}
-          <div className="mr-0 flex items-center gap-4 md:-mr-8">
+          <div
+            className="
+              mr-0 flex items-center gap-4
+              md:-mr-8
+            "
+          >
             {/* Desktop Navigation */}
-            <ul className="hidden items-center gap-1 lg:flex">
+            <ul
+              className="
+                hidden items-center gap-1
+                lg:flex
+              "
+            >
               {navItems.map((item) => {
                 const isActive =
                   pathname === item.href ||
@@ -451,11 +553,26 @@ export function Header({
                       <div className="group relative">
                         <Link
                           href={item.href}
-                          className={`inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none ${
-                            isActive
-                              ? 'border-[#22C4D333] bg-[#22c4d31a] text-[#22C4D3]'
-                              : 'border-transparent text-[#94A3B8] hover:border-[#22C4D333] hover:bg-[#22c4d31a] hover:text-[#22C4D3] focus-visible:border-[#22C4D333] focus-visible:bg-[#22c4d31a] focus-visible:text-[#22C4D3]'
-                          }`}
+                          className={`
+                            inline-flex items-center gap-1 rounded-lg border
+                            px-3 py-2 text-sm font-medium transition-colors
+                            focus-visible:outline-none
+                            ${
+                              isActive
+                                ? `
+                                  border-[#22C4D333] bg-[#22c4d31a]
+                                  text-[#22C4D3]
+                                `
+                                : `
+                                  border-transparent text-[#94A3B8]
+                                  hover:border-[#22C4D333] hover:bg-[#22c4d31a]
+                                  hover:text-[#22C4D3]
+                                  focus-visible:border-[#22C4D333]
+                                  focus-visible:bg-[#22c4d31a]
+                                  focus-visible:text-[#22C4D3]
+                                `
+                            }
+                          `}
                         >
                           {item.label}
                           <svg
@@ -468,19 +585,42 @@ export function Header({
                             strokeWidth="2"
                             strokeLinecap="round"
                             strokeLinejoin="round"
-                            className="mt-0.5 size-3.5 transition-transform duration-200 group-hover:rotate-180"
+                            className="
+                              mt-0.5 size-3.5 transition-transform duration-200
+                              group-hover:rotate-180
+                            "
                           >
                             <path d="m6 9 6 6 6-6" />
                           </svg>
                         </Link>
 
-                        <div className="invisible absolute top-full left-0 z-50 mt-3 w-[360px] rounded-xl border border-border/60 bg-[#061c37] p-3 opacity-0 shadow-2xl transition-all duration-200 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                        <div
+                          className="
+                            invisible absolute top-full left-0 z-50 mt-3
+                            w-[360px] rounded-xl border border-border/60
+                            bg-[#061c37] p-3 opacity-0 shadow-2xl transition-all
+                            duration-200
+                            group-focus-within:visible
+                            group-focus-within:opacity-100
+                            group-hover:visible group-hover:opacity-100
+                          "
+                        >
                           <div className="space-y-1">
                             <Link
                               href="/estudiantes/myaccount"
-                              className="group/item flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-primary/10"
+                              className="
+                                group/item flex items-center gap-3 rounded-lg
+                                px-3 py-2.5 transition-colors
+                                hover:bg-primary/10
+                              "
                             >
-                              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/15 transition-colors group-hover/item:bg-primary/25">
+                              <div
+                                className="
+                                  flex size-8 items-center justify-center
+                                  rounded-lg bg-primary/15 transition-colors
+                                  group-hover/item:bg-primary/25
+                                "
+                              >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
@@ -499,7 +639,11 @@ export function Header({
                                 </svg>
                               </div>
                               <div>
-                                <p className="text-sm font-medium text-foreground">
+                                <p
+                                  className="
+                                    text-sm font-medium text-foreground
+                                  "
+                                >
                                   Mi Aprendizaje
                                 </p>
                                 <p className="text-xs text-muted-foreground">
@@ -510,7 +654,12 @@ export function Header({
 
                             <div className="mx-2 my-1 h-px bg-border/40" />
 
-                            <p className="px-3 pt-1 pb-1.5 text-[10px] font-semibold tracking-wider text-muted-foreground uppercase">
+                            <p
+                              className="
+                                px-3 pt-1 pb-1.5 text-[10px] font-semibold
+                                tracking-wider text-muted-foreground uppercase
+                              "
+                            >
                               Continuar viendo
                             </p>
 
@@ -532,9 +681,18 @@ export function Header({
                                   <Link
                                     key={course.id}
                                     href={courseHref}
-                                    className="group/item flex items-center gap-3 rounded-lg px-3 py-2 transition-colors hover:bg-secondary/60"
+                                    className="
+                                      group/item flex items-center gap-3
+                                      rounded-lg px-3 py-2 transition-colors
+                                      hover:bg-secondary/60
+                                    "
                                   >
-                                    <div className="size-10 shrink-0 overflow-hidden rounded-lg border border-border/30">
+                                    <div
+                                      className="
+                                        size-10 shrink-0 overflow-hidden
+                                        rounded-lg border border-border/30
+                                      "
+                                    >
                                       <Image
                                         src={getCourseImageUrl(
                                           course.coverImageKey
@@ -546,17 +704,37 @@ export function Header({
                                       />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                      <p className="truncate text-xs font-medium text-foreground">
+                                      <p
+                                        className="
+                                          truncate text-xs font-medium
+                                          text-foreground
+                                        "
+                                      >
                                         {course.title ?? 'Curso'}
                                       </p>
-                                      <div className="mt-0.5 flex items-center gap-2">
-                                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
+                                      <div
+                                        className="
+                                          mt-0.5 flex items-center gap-2
+                                        "
+                                      >
+                                        <div
+                                          className="
+                                            h-1 flex-1 overflow-hidden
+                                            rounded-full bg-muted
+                                          "
+                                        >
                                           <div
-                                            className="h-full rounded-full bg-primary"
+                                            className="
+                                              h-full rounded-full bg-primary
+                                            "
                                             style={{ width: `${progress}%` }}
                                           />
                                         </div>
-                                        <span className="text-[10px] text-muted-foreground">
+                                        <span
+                                          className="
+                                            text-[10px] text-muted-foreground
+                                          "
+                                        >
                                           {progress}%
                                         </span>
                                       </div>
@@ -571,7 +749,11 @@ export function Header({
                                       strokeWidth="2"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      className="size-3.5 text-primary opacity-0 transition-opacity group-hover/item:opacity-100"
+                                      className="
+                                        size-3.5 text-primary opacity-0
+                                        transition-opacity
+                                        group-hover/item:opacity-100
+                                      "
                                     >
                                       <polygon points="6 3 20 12 6 21 6 3" />
                                     </svg>
@@ -579,7 +761,11 @@ export function Header({
                                 );
                               })
                             ) : (
-                              <div className="px-3 py-2 text-xs text-muted-foreground">
+                              <div
+                                className="
+                                  px-3 py-2 text-xs text-muted-foreground
+                                "
+                              >
                                 Aún no tienes cursos en progreso.
                               </div>
                             )}
@@ -588,7 +774,12 @@ export function Header({
 
                             <Link
                               href="/estudiantes/myaccount"
-                              className="flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                              className="
+                                flex items-center justify-center gap-1.5
+                                rounded-lg px-3 py-2 text-xs font-medium
+                                text-primary transition-colors
+                                hover:bg-primary/10
+                              "
                             >
                               Ver todo mi aprendizaje
                               <svg
@@ -612,11 +803,25 @@ export function Header({
                     ) : (
                       <Link
                         href={item.href}
-                        className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none ${
-                          isActive
-                            ? 'border-[#22C4D333] bg-[#22c4d31a] text-[#22C4D3]'
-                            : 'border-transparent text-[#94A3B8] hover:border-[#22C4D333] hover:bg-[#22c4d31a] hover:text-[#22C4D3] focus-visible:border-[#22C4D333] focus-visible:bg-[#22c4d31a] focus-visible:text-[#22C4D3]'
-                        }`}
+                        className={`
+                          rounded-lg border px-3 py-2 text-sm font-medium
+                          transition-colors
+                          focus-visible:outline-none
+                          ${
+                            isActive
+                              ? `
+                                border-[#22C4D333] bg-[#22c4d31a] text-[#22C4D3]
+                              `
+                              : `
+                                border-transparent text-[#94A3B8]
+                                hover:border-[#22C4D333] hover:bg-[#22c4d31a]
+                                hover:text-[#22C4D3]
+                                focus-visible:border-[#22C4D333]
+                                focus-visible:bg-[#22c4d31a]
+                                focus-visible:text-[#22C4D3]
+                              `
+                          }
+                        `}
                       >
                         {item.label}
                       </Link>
@@ -631,9 +836,19 @@ export function Header({
           </div>
         </div>
 
-        <div className="relative flex w-full items-center justify-between md:hidden">
+        <div
+          className="
+            relative flex w-full items-center justify-between
+            md:hidden
+          "
+        >
           <Link href="/">
-            <div className="relative size-[110px] md:size-[150px]">
+            <div
+              className="
+                relative size-[110px]
+                md:size-[150px]
+              "
+            >
               <Image
                 src="/artiefy-logo.png"
                 alt="Logo Artiefy"
@@ -648,7 +863,10 @@ export function Header({
             <button
               type="button"
               aria-label="Buscar"
-              className="rounded-full p-1 text-white transition hover:text-orange-500"
+              className="
+                rounded-full p-1 text-white transition
+                hover:text-orange-500
+              "
               onClick={() => {
                 setShowMobileSearch((prev) => !prev);
                 setMobileMenuOpen(false);
@@ -661,7 +879,10 @@ export function Header({
               aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
-              className="hamburger flex size-8 items-center justify-center md:size-12"
+              className="
+                hamburger flex size-8 items-center justify-center
+                md:size-12
+              "
               data-open={mobileMenuOpen ? 'true' : 'false'}
               onClick={() => {
                 setMobileMenuOpen((prev) => {
@@ -683,7 +904,13 @@ export function Header({
         </div>
       </div>
       {showMobileSearch && (
-        <div className="absolute top-full right-0 left-0 z-50 w-full border-b border-gray-700 bg-[#01152d] p-4 md:hidden">
+        <div
+          className="
+            absolute top-full right-0 left-0 z-50 w-full border-b
+            border-gray-700 bg-[#01152d] p-4
+            md:hidden
+          "
+        >
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -697,7 +924,14 @@ export function Header({
               placeholder="¡Aprende con IA!"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] px-10 py-3 text-sm text-foreground transition-all placeholder:text-gray-400 hover:border-[#334155] focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2 focus:ring-[#3AF4EF]/50 focus:outline-none"
+              className="
+                w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] px-10
+                py-3 text-sm text-foreground transition-all
+                placeholder:text-gray-400
+                hover:border-[#334155]
+                focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2
+                focus:ring-[#3AF4EF]/50 focus:outline-none
+              "
               autoComplete="off"
               autoFocus
             />
@@ -745,14 +979,25 @@ export function Header({
         as="div"
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
-        className="fixed inset-0 z-[99999] md:hidden"
+        className="
+          fixed inset-0 z-[99999]
+          md:hidden
+        "
       >
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
         <DialogPanel
           id="mobile-menu"
-          className="fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%] max-w-sm flex-col overflow-hidden bg-white p-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl"
+          className="
+            fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%]
+            max-w-sm flex-col overflow-hidden bg-white p-4
+            pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl
+          "
         >
-          <div className="relative mt-3 mb-2 flex w-full items-center justify-center">
+          <div
+            className="
+              relative mt-3 mb-2 flex w-full items-center justify-center
+            "
+          >
             <div className="mx-auto mt-16 w-fit">
               <Link href="/">
                 <div className="relative h-10 w-36">
@@ -769,7 +1014,13 @@ export function Header({
             </div>
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className="absolute top-3 right-3 rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 focus:outline-none active:bg-gray-200"
+              className="
+                absolute top-3 right-3 rounded-full text-gray-600 transition-all
+                duration-200
+                hover:bg-gray-100
+                focus:outline-none
+                active:bg-gray-200
+              "
               aria-label="Close menu"
             >
               <XMarkIconSolid className="size-8" />
@@ -790,7 +1041,10 @@ export function Header({
                       <li key={item.href}>
                         <Link
                           href={item.href}
-                          className={`mx-auto block w-fit text-lg transition-colors active:scale-95 ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
+                          className={`
+                            mx-auto block w-fit text-lg transition-colors
+                            active:scale-95
+                            ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
                           onClick={() => setMobileMenuOpen(false)}
                         >
                           <span className="relative">{item.label}</span>
@@ -803,7 +1057,12 @@ export function Header({
                       <li key={item.href}>
                         <button
                           type="button"
-                          className={`mx-auto block w-fit cursor-pointer border-0 bg-transparent text-left text-lg transition-colors outline-none active:scale-95 ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
+                          className={`
+                            mx-auto block w-fit cursor-pointer border-0
+                            bg-transparent text-left text-lg transition-colors
+                            outline-none
+                            active:scale-95
+                            ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
                           onClick={(e) => {
                             setMobileMenuOpen(false);
                             handleEspaciosClick(e);
@@ -818,7 +1077,10 @@ export function Header({
                     <li key={item.href}>
                       <Link
                         href={item.href}
-                        className={`mx-auto block w-fit text-lg transition-colors active:scale-95 ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
+                        className={`
+                          mx-auto block w-fit text-lg transition-colors
+                          active:scale-95
+                          ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
                         onClick={() => setMobileMenuOpen(false)}
                       >
                         <span className="relative">{item.label}</span>
