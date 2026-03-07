@@ -1701,11 +1701,29 @@ export default function EnrolledUsersPage() {
                 ? r.nroPago
                 : null,
             fechaPrograma:
-              typeof r.fecha === 'string' ||
-              typeof r.fecha === 'number' ||
-              r.fecha instanceof Date
-                ? r.fecha
-                : null,
+              typeof r.fechaPrograma === 'string' ||
+              typeof r.fechaPrograma === 'number' ||
+              r.fechaPrograma instanceof Date
+                ? r.fechaPrograma
+                : typeof r.fecha_programa === 'string' ||
+                    typeof r.fecha_programa === 'number' ||
+                    r.fecha_programa instanceof Date
+                  ? r.fecha_programa
+                  : typeof r.fecha === 'string' ||
+                      typeof r.fecha === 'number' ||
+                      r.fecha instanceof Date
+                    ? r.fecha
+                    : null,
+            fechaRealPago:
+              typeof r.fechaRealPago === 'string' ||
+              typeof r.fechaRealPago === 'number' ||
+              r.fechaRealPago instanceof Date
+                ? r.fechaRealPago
+                : typeof r.fecha_real_pago === 'string' ||
+                    typeof r.fecha_real_pago === 'number' ||
+                    r.fecha_real_pago instanceof Date
+                  ? r.fecha_real_pago
+                  : null,
             metodo: typeof r.metodo === 'string' ? r.metodo : null,
             valor:
               typeof r.valor === 'string' || typeof r.valor === 'number'

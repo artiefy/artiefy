@@ -249,24 +249,24 @@ export default function VerRespuestasArchivos({
                 <CardContent className="space-y-6 p-6">
                   {/* Encabezado con datos del estudiante */}
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-gray-800">
+                    <h3 className="text-lg font-semibold text-white">
                       Estudiante:{' '}
                       {respuesta.userName && respuesta.userName !== 'user'
                         ? respuesta.userName
                         : `ID: ${respuesta.userId}`}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-white">
                       Archivo: <b>{respuesta.fileName}</b>
                     </p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-white">
                       Enviado:{' '}
                       {new Date(respuesta.submittedAt).toLocaleString()}
                     </p>
                     <span
                       className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
                         respuesta.status === 'pendiente'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-green-100 text-green-800'
+                          ? 'bg-yellow-100 text-white'
+                          : 'bg-green-100 text-white'
                       }`}
                     >
                       {respuesta.status === 'calificado'
@@ -277,7 +277,7 @@ export default function VerRespuestasArchivos({
 
                   {/* Comentario del docente */}
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                    <label className="mb-1 block text-sm font-medium text-white">
                       Comentario para el estudiante:
                     </label>
                     <textarea
@@ -294,7 +294,7 @@ export default function VerRespuestasArchivos({
                     />
                   </div>
                   {respuesta.comment && (
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-1 text-sm text-white">
                       Último comentario guardado: <i>{respuesta.comment}</i>
                     </p>
                   )}
@@ -303,7 +303,7 @@ export default function VerRespuestasArchivos({
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     {/* Calificación */}
                     <div className="space-y-2 md:w-1/3">
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-white">
                         Calificación (0 - 5):
                       </label>
                       <Input
@@ -334,7 +334,7 @@ export default function VerRespuestasArchivos({
                     <div className="md:w-1/3">
                       <Button
                         onClick={() => descargarArchivo(key)}
-                        className="w-full border-slate-300 bg-gray-100 text-black hover:bg-blue-50"
+                        className="w-full border-slate-300 bg-slate-600 text-white hover:bg-slate-700"
                       >
                         Descargar archivo
                       </Button>
@@ -345,7 +345,7 @@ export default function VerRespuestasArchivos({
             );
           })
         ) : (
-          <p className="col-span-2 text-center text-gray-500">
+          <p className="col-span-2 text-center text-white">
             No hay respuestas disponibles
           </p>
         )}
