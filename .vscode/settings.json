@@ -102,10 +102,10 @@
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
   },
-  // TypeScript Configuration
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "typescript.tsserver.maxTsServerMemory": 8192,
+  // JavaScript / TypeScript Configuration (VS Code 1.110)
+  "js/ts.tsdk.path": "node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true,
+  "js/ts.tsserver.maxMemory": 8192,
   // ESLint Configuration
   "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/42288_1771013362460/node",
   "eslint.validate": [
@@ -159,8 +159,8 @@
     "/dist": true,
     "/.git": true
   },
-  "javascript.suggest.completeFunctionCalls": true,
-  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+  "js/ts.suggest.completeFunctionCalls": true,
+  "js/ts.tsserver.experimental.enableProjectDiagnostics": true,
   "svg.preview.background": "editor",
   "[ignore]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
@@ -435,9 +435,16 @@
   // VS Code 1.107 agent + MCP improvements
   "chat.viewSessions.enabled": true,
   "chat.viewSessions.orientation": "sideBySide",
+  // VS Code 1.110 recommended agent/browser settings
+  "chat.plugins.enabled": true,
+  "workbench.browser.enableChatTools": true,
+  "chat.editMode.hidden": true,
+  "chat.notifyWindowOnResponseReceived": "always",
+  "chat.notifyWindowOnConfirmation": "always",
+  "chat.tools.terminal.simpleCollapsible": true,
+  "workbench.notifications.position": "bottom-left",
   "chat.agent.thinking.collapsedTools": "withThinking",
   "chat.customAgentInSubagent.enabled": true,
-  "github.copilot.chat.customAgents.showOrganizationAndEnterpriseAgents": true,
   "github.copilot.chat.cli.customAgents.enabled": true,
   "github.copilot.chat.githubMcpServer.enabled": true,
   "github.copilot.chat.githubMcpServer.readonly": false,
@@ -449,11 +456,7 @@
     ".github/instructions/copilot-instructions.md": true
   },
   "chat.tools.edits.autoApprove": {
-    "**/*": true,
-    "**/.vscode/*.json": false,
-    "**/.git/**": false,
-    "**/{package.json,package-lock.json,server.xml,build.rs,web.config,.gitattributes,.env}": false,
-    "**/*.{code-workspace,csproj,fsproj,vbproj,vcxproj,proj,targets,props}": false
+    "**/*": true
   },
   "chat.tools.eligibleForAutoApproval": {},
   "chat.instructionsFilesLocations": {
@@ -476,15 +479,10 @@
     ".agents": true,
     "~/.vscode/agents": true
   },
-  "chat.agentCustomizationSkill.enabled": true,
-  "chat.askQuestions.enabled": true,
   "github.copilot.chat.searchSubagent.enabled": true,
   "github.copilot.chat.copilotMemory.enabled": true,
-  "chat.thinking.style": "compact",
   "chat.tools.autoExpandFailures": true,
   "workbench.browser.openLocalhostLinks": true,
-  "simpleBrowser.useIntegratedBrowser": true,
-  "livePreview.useIntegratedBrowser": true,
   "inlineChat.defaultModel": "Auto (copilot)",
   "github.copilot.chat.implementAgent.model": "Auto (copilot)",
   "terminal.integrated.stickyScroll.ignoredCommands": [
@@ -494,7 +492,6 @@
     "codex",
     "gemini"
   ],
-  "task.allowAutomaticTasks": "off",
   "workbench.editor.restoreEditors": true,
   "chat.restoreLastPanelSession": false,
   "chat.tools.terminal.enableAutoApprove": true,
