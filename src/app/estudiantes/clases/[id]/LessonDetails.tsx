@@ -893,7 +893,10 @@ export default function LessonDetails({
         {/* Left Sidebar - LessonCards */}
         {!isMobile && isSidebarOpen && (
           <aside
-            className="hide-scrollbar sticky top-[calc(4rem-0.75rem)] z-[50] h-[calc(100vh-4rem+0.75rem)] w-80 flex-shrink-0 overflow-y-auto"
+            className="
+              hide-scrollbar sticky top-[calc(4rem-0.75rem)] z-[50]
+              h-[calc(100vh-4rem+0.75rem)] w-80 flex-shrink-0 overflow-y-auto
+            "
             style={{ backgroundColor: '#061c37cc' }}
           >
             <LessonCards
@@ -925,7 +928,17 @@ export default function LessonDetails({
 
           {/* Content Tabs Navigation */}
           <div
-            className={`w-full px-4 ${lesson.coverVideoKey === 'none' ? 'mt-12 md:mt-6' : ''}`}
+            className={`
+              w-full px-4
+              ${
+                lesson.coverVideoKey === 'none'
+                  ? `
+                    mt-12
+                    md:mt-6
+                  `
+                  : ''
+              }
+            `}
           >
             <LessonContentTabs
               activeTab={activeTab}
@@ -1007,17 +1020,29 @@ export default function LessonDetails({
           />
           {/* Drawer */}
           <aside
-            className="hide-scrollbar fixed top-0 left-0 z-[101] h-full w-80 overflow-y-auto shadow-2xl"
+            className="
+              hide-scrollbar fixed top-0 left-0 z-[101] h-full w-80
+              overflow-y-auto shadow-2xl
+            "
             style={{ backgroundColor: '#061c37' }}
           >
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border/50 bg-[#061c37] px-4 py-3">
+            <div
+              className="
+                sticky top-0 z-10 flex items-center justify-between border-b
+                border-border/50 bg-[#061c37] px-4 py-3
+              "
+            >
               <span className="text-sm font-semibold text-foreground">
                 Clases
               </span>
               <button
                 type="button"
                 onClick={() => setIsMobileDrawerOpen(false)}
-                className="flex size-8 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20"
+                className="
+                  flex size-8 items-center justify-center rounded-full
+                  bg-white/10 text-white
+                  hover:bg-white/20
+                "
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
