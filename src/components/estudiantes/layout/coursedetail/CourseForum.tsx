@@ -438,10 +438,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
     return (
       <div
         className={`
-          inline-flex
-          items-center rounded-full border px-2.5 font-semibold transition-colors
-          focus:ring-2
-          focus:ring-ring focus:ring-offset-2 focus:outline-none
+          inline-flex items-center rounded-full border px-2.5 font-semibold
+          transition-colors
+          focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none
           ${item.classes}
           py-0 text-xs
         `}
@@ -495,9 +494,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
       >
         <div
           className="
-          mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50
-          text-black
-        "
+            mb-4 flex size-16 items-center justify-center rounded-full
+            bg-muted/50 text-black
+          "
         >
           <MessagesSquare className="size-8" />
         </div>
@@ -535,9 +534,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
         <h3 className="text-xl font-semibold text-foreground">
           <span
             className="
-            mr-2 inline-flex size-8 items-center justify-center rounded-full
-            border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]
-          "
+              mr-2 inline-flex size-8 items-center justify-center rounded-full
+              border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]
+            "
           >
             <MdOutlineForum className="size-4" />
           </span>
@@ -551,27 +550,26 @@ export function CourseForum({ courseId }: CourseForumProps) {
 
       <div
         className="
-        space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4
-        shadow-sm
-      "
+          space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780] p-4
+          shadow-sm
+        "
       >
         {errorMessage && (
           <div
             className="
-            rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm
-            text-red-400
-          "
+              rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3
+              text-sm text-red-400
+            "
           >
             <p className="font-medium">⚠️ {errorMessage}</p>
           </div>
         )}
         <textarea
           className="
-            min-h-[90px]
-            w-full resize-none
-            rounded-[16px] border border-[#1d283a80] bg-[#01152D80] px-3
-            py-2 text-sm text-foreground placeholder:text-[#94a3b8] focus-visible:ring-2
-            focus-visible:ring-primary
+            min-h-[90px] w-full resize-none rounded-[16px] border
+            border-[#1d283a80] bg-[#01152D80] px-3 py-2 text-sm text-foreground
+            placeholder:text-[#94a3b8]
+            focus-visible:ring-2 focus-visible:ring-primary
             focus-visible:ring-offset-2 focus-visible:ring-offset-background
             focus-visible:outline-none
           "
@@ -659,14 +657,12 @@ export function CourseForum({ courseId }: CourseForumProps) {
             disabled={!newPost.trim() || isPublishing || uploadingImage}
             className={cn(
               `
-                inline-flex
-                h-9
-                items-center
-                justify-center gap-2 rounded-[14px] bg-[#22C4D3] px-3 text-sm
-                font-medium whitespace-nowrap text-[#080C16] ring-offset-background transition-colors
-                hover:bg-primary/90 focus-visible:ring-2
-                focus-visible:ring-ring focus-visible:ring-offset-2
-                focus-visible:outline-none
+                inline-flex h-9 items-center justify-center gap-2 rounded-[14px]
+                bg-[#22C4D3] px-3 text-sm font-medium whitespace-nowrap
+                text-[#080C16] ring-offset-background transition-colors
+                hover:bg-primary/90
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
                 disabled:pointer-events-none disabled:opacity-50
                 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
               `,
@@ -699,16 +695,25 @@ export function CourseForum({ courseId }: CourseForumProps) {
               <div
                 key={post.id}
                 className="
-                  space-y-3 rounded-xl border border-[#1d283a80] bg-[#061c3780]
-                  p-4 shadow-sm
+                  relative space-y-3 rounded-xl border border-[#1d283a80]
+                  bg-[#061c3780] p-4 shadow-sm
                 "
               >
+                {postReplies.length > 0 && (
+                  <span
+                    className="
+                      pointer-events-none absolute top-14 bottom-4 left-8 w-px
+                      bg-[#1f2a3d]
+                    "
+                  />
+                )}
                 <div className="flex gap-3">
                   <span
                     className="
-                    flex size-10 items-center justify-center rounded-full
-                    bg-accent/20 text-sm font-semibold text-accent
-                  "
+                      relative z-10 flex size-10 items-center justify-center
+                      rounded-full bg-accent/20 text-sm font-semibold
+                      text-accent ring-4 ring-[#061c37]
+                    "
                   >
                     {initials(post.userId?.name)}
                   </span>
@@ -727,9 +732,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         <div className="space-y-2">
                           <textarea
                             className="
-                              w-full resize-none rounded-md
-                              border border-[#1d283a80] bg-[#01152D80] px-3
-                              py-2 text-sm whitespace-pre-wrap text-foreground/90
+                              w-full resize-none rounded-md border
+                              border-[#1d283a80] bg-[#01152D80] px-3 py-2
+                              text-sm whitespace-pre-wrap text-foreground/90
                               focus-visible:ring-2 focus-visible:ring-primary
                               focus-visible:outline-none
                             "
@@ -777,8 +782,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         <div className="space-y-2">
                           <div
                             className="
-                            group text-sm whitespace-pre-wrap text-foreground/90
-                          "
+                              group text-sm whitespace-pre-wrap
+                              text-foreground/90
+                            "
                           >
                             {post.content}
                             {post.userId?.id === user?.id && (
@@ -793,12 +799,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                     )
                                   }
                                   className="
-                                    rounded-full p-1 text-[#94a3b8]
-                                    opacity-0
+                                    rounded-full p-1 text-[#94a3b8] opacity-0
                                     transition-opacity
                                     group-hover:opacity-100
-                                    hover:bg-[#1d283a80]
-                                    hover:text-white
+                                    hover:bg-[#1d283a80] hover:text-white
                                   "
                                   aria-label="Abrir menú"
                                 >
@@ -807,10 +811,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                 {showMenuPostId === post.id && (
                                   <div
                                     className="
-                                      menu-post absolute top-1/2
-                                      left-full z-10 ml-2 w-40
-                                      -translate-y-1/2 rounded-lg border border-[#1d283a80]
-                                      shadow-lg
+                                      menu-post absolute top-1/2 left-full z-10
+                                      ml-2 w-40 -translate-y-1/2 rounded-lg
+                                      border border-[#1d283a80] shadow-lg
                                     "
                                     style={{
                                       backgroundColor: '#01152d',
@@ -860,8 +863,8 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               width={640}
                               height={360}
                               className="
-                                mt-2 h-auto w-full max-w-md
-                                rounded-lg border border-[#1d283a80]
+                                mt-2 h-auto w-full max-w-md rounded-lg border
+                                border-[#1d283a80]
                               "
                               sizes="(max-width: 768px) 100vw, 640px"
                               unoptimized
@@ -872,8 +875,8 @@ export function CourseForum({ courseId }: CourseForumProps) {
                     </div>
                     <div
                       className="
-                      flex items-center gap-4 pt-1 text-xs text-[#94a3b8]
-                    "
+                        flex items-center gap-4 pt-1 text-xs text-[#94a3b8]
+                      "
                     >
                       <button
                         type="button"
@@ -930,13 +933,12 @@ export function CourseForum({ courseId }: CourseForumProps) {
                   <div className="ml-12 space-y-2">
                     <textarea
                       className="
-                        min-h-[70px] w-full
-                        resize-none
-                        rounded-md
-                        border border-border/50 px-3 py-2 text-sm text-foreground
-                        placeholder:text-[#94a3b8] focus-visible:ring-2
-                        focus-visible:ring-primary
-                        focus-visible:ring-offset-2 focus-visible:ring-offset-background
+                        min-h-[70px] w-full resize-none rounded-md border
+                        border-border/50 px-3 py-2 text-sm text-foreground
+                        placeholder:text-[#94a3b8]
+                        focus-visible:ring-2 focus-visible:ring-primary
+                        focus-visible:ring-offset-2
+                        focus-visible:ring-offset-background
                         focus-visible:outline-none
                       "
                       style={{ backgroundColor: 'rgba(6, 28, 55, 0.45)' }}
@@ -989,9 +991,8 @@ export function CourseForum({ courseId }: CourseForumProps) {
                         htmlFor={`reply-image-input-${post.id}`}
                         className="
                           inline-flex size-8 cursor-pointer items-center
-                          justify-center rounded-full text-[#94a3b8]
-                          transition hover:bg-[#22C4D3]
-                          hover:text-white
+                          justify-center rounded-full text-[#94a3b8] transition
+                          hover:bg-[#22C4D3] hover:text-white
                         "
                         aria-label="Adjuntar imagen"
                       >
@@ -1047,28 +1048,25 @@ export function CourseForum({ courseId }: CourseForumProps) {
                 )}
 
                 {postReplies.length > 0 && (
-                  <div className="relative mt-3 space-y-4 pl-10">
-                    <span
-                      className="
-                      pointer-events-none absolute top-0 left-4 h-full w-px
-                      bg-[#1f2a3d]
-                    "
-                    />
+                  <div className="relative mt-3 space-y-5 pl-12">
                     {postReplies.map((reply) => (
-                      <div key={reply.id} className="flex gap-3 pl-1">
+                      <div key={reply.id} className="relative flex gap-3">
                         <span
                           className="
-                          mt-1 flex size-9 items-center justify-center rounded-full
-                          bg-accent/20 text-xs font-semibold text-accent
-                        "
+                            pointer-events-none absolute -top-3 -left-8 size-8
+                            rounded-bl-[20px] border-b border-l border-[#1f2a3d]
+                          "
+                        />
+                        <span
+                          className="
+                            relative z-10 mt-1 flex size-9 shrink-0 items-center
+                            justify-center rounded-full bg-accent/20 text-xs
+                            font-semibold text-accent ring-4 ring-[#061c37]
+                          "
                         >
                           {initials(reply.userId?.name)}
                         </span>
-                        <div
-                          className="
-                          flex-1 space-y-1 border-l border-[#1f2a3d] pl-4
-                        "
-                        >
+                        <div className="flex-1 space-y-1 pt-1 pl-4">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-semibold text-foreground">
                               {reply.userId?.name}
@@ -1083,10 +1081,10 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               <div className="space-y-2">
                                 <textarea
                                   className="
-                                    w-full resize-none
-                                    rounded-md border border-[#1d283a80]
-                                    bg-[#01152D80] px-3 py-2
-                                    text-sm whitespace-pre-wrap text-foreground/90
+                                    w-full resize-none rounded-md border
+                                    border-[#1d283a80] bg-[#01152D80] px-3 py-2
+                                    text-sm whitespace-pre-wrap
+                                    text-foreground/90
                                     focus-visible:ring-2
                                     focus-visible:ring-primary
                                     focus-visible:outline-none
@@ -1119,8 +1117,8 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                     disabled={savingReplyId === reply.id}
                                     aria-busy={savingReplyId === reply.id}
                                     className="
-                                      rounded-md bg-[#22C4D3] px-3 py-1
-                                      text-xs text-[#080C16]
+                                      rounded-md bg-[#22C4D3] px-3 py-1 text-xs
+                                      text-[#080C16]
                                       hover:bg-[#22C4D3]/90
                                       disabled:cursor-wait disabled:opacity-70
                                     "
@@ -1137,9 +1135,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
                               <div className="space-y-2">
                                 <div
                                   className="
-                                  group text-sm whitespace-pre-wrap
-                                  text-foreground/90
-                                "
+                                    group text-sm whitespace-pre-wrap
+                                    text-foreground/90
+                                  "
                                 >
                                   {reply.content}
                                   {reply.userId?.id === user?.id && (
@@ -1155,11 +1153,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                         }
                                         className="
                                           rounded-full p-1 text-[#94a3b8]
-                                          opacity-0
-                                          transition-opacity
+                                          opacity-0 transition-opacity
                                           group-hover:opacity-100
-                                          hover:bg-[#1d283a80]
-                                          hover:text-white
+                                          hover:bg-[#1d283a80] hover:text-white
                                         "
                                         aria-label="Abrir menú"
                                       >
@@ -1169,9 +1165,9 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                         <div
                                           className="
                                             menu-reply absolute top-1/2
-                                            left-full z-10 ml-2
-                                            w-40 -translate-y-1/2 rounded-lg
-                                            border border-[#1d283a80] shadow-lg
+                                            left-full z-10 ml-2 w-40
+                                            -translate-y-1/2 rounded-lg border
+                                            border-[#1d283a80] shadow-lg
                                           "
                                           style={{
                                             backgroundColor: '#01152d',
@@ -1223,8 +1219,8 @@ export function CourseForum({ courseId }: CourseForumProps) {
                                     width={480}
                                     height={270}
                                     className="
-                                      mt-2 h-auto w-full max-w-sm
-                                      rounded-lg border border-[#1d283a80]
+                                      mt-2 h-auto w-full max-w-sm rounded-lg
+                                      border border-[#1d283a80]
                                     "
                                     sizes="(max-width: 768px) 100vw, 480px"
                                     unoptimized

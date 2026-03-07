@@ -163,10 +163,10 @@ const LessonCards = ({
       return (
         <div
           className="
-          size-4 rounded-full border-2 border-muted-foreground/30
-          transition-colors
-          group-hover/lesson:border-muted-foreground/50
-        "
+            size-4 rounded-full border-2 border-muted-foreground/30
+            transition-colors
+            group-hover/lesson:border-muted-foreground/50
+          "
         />
       );
     };
@@ -198,9 +198,9 @@ const LessonCards = ({
         {isCurrentLesson && (
           <div
             className="
-            absolute top-1/2 -left-[18px] h-6 w-0.5 -translate-y-1/2
-            rounded-full bg-accent
-          "
+              absolute top-1/2 -left-[18px] h-6 w-0.5 -translate-y-1/2
+              rounded-full bg-accent
+            "
           />
         )}
 
@@ -219,9 +219,9 @@ const LessonCards = ({
                     : isCompleted
                       ? 'text-muted-foreground'
                       : `
-                      text-foreground
-                      group-hover/lesson:text-foreground
-                    `
+                        text-foreground
+                        group-hover/lesson:text-foreground
+                      `
                 }
               `}
             >
@@ -230,9 +230,9 @@ const LessonCards = ({
             {shouldShowNew && (
               <span
                 className="
-                rounded-full bg-green-500 px-1.5 py-0.5 text-[9px] font-semibold
-                tracking-wide text-white uppercase
-              "
+                  rounded-full bg-green-500 px-1.5 py-0.5 text-[9px]
+                  font-semibold tracking-wide text-white uppercase
+                "
               >
                 Nueva
               </span>
@@ -331,8 +331,9 @@ const LessonCards = ({
                     {shouldShowNew && (
                       <span
                         className="
-                        ml-2 rounded bg-green-500 px-2 py-0.5 text-xs text-white
-                      "
+                          ml-2 rounded bg-green-500 px-2 py-0.5 text-xs
+                          text-white
+                        "
                       >
                         Nueva
                       </span>
@@ -363,9 +364,9 @@ const LessonCards = ({
       {/* Progress section at top */}
       <div
         className="
-        sticky top-0 z-10 border-b border-border bg-[#061c37cc] px-5 py-3
-        backdrop-blur-xl
-      "
+          sticky top-0 z-10 border-b border-border bg-[#061c37cc] px-5 py-3
+          backdrop-blur-xl
+        "
       >
         <div className="flex items-center gap-4">
           <div className="relative size-14">
@@ -410,25 +411,25 @@ const LessonCards = ({
         <div className="mb-2">
           <button
             className="
-            group flex w-full items-center gap-3 rounded-xl p-3 text-left
-            transition-all
-            hover:bg-secondary/50
-          "
+              group flex w-full items-center gap-3 rounded-xl p-3 text-left
+              transition-all
+              hover:bg-secondary/50
+            "
           >
             <div
               className="
-              flex size-8 shrink-0 items-center justify-center rounded-full
-              border border-green-600 bg-green-200 transition-colors
-              group-hover:bg-green-300
-            "
+                flex size-8 shrink-0 items-center justify-center rounded-full
+                border border-green-600 bg-green-200 transition-colors
+                group-hover:bg-green-300
+              "
             >
               <SiGoogleclassroom className="size-4 text-green-600" />
             </div>
             <div className="min-w-0 flex-1">
               <p
                 className="
-                truncate text-sm leading-tight font-medium text-foreground
-              "
+                  truncate text-sm leading-tight font-medium text-foreground
+                "
               >
                 Clases
               </p>
@@ -453,9 +454,9 @@ const LessonCards = ({
           </button>
           <div
             className="
-            max-h-[1000px] overflow-hidden opacity-100 transition-all
-            duration-300
-          "
+              max-h-none overflow-visible opacity-100 transition-all
+              duration-300
+            "
           >
             <div
               className="ml-5 space-y-1 border-l-2 py-2 pl-4"
@@ -491,9 +492,9 @@ export function LessonCardsRecorded({
               <Link href={`/estudiantes/clases/${meeting.id}`}>
                 <button
                   className="
-                  buttonclass text-background transition-none
-                  active:scale-95
-                "
+                    buttonclass text-background transition-none
+                    active:scale-95
+                  "
                 >
                   Ver Clase
                 </button>

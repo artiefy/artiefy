@@ -696,17 +696,37 @@ export function LessonActivityModal({
         {/* Add container for positioning */}
         <div className="absolute -top-2 right-0 translate-y-[-100%] transform">
           <LightBulbIcon
-            className={`size-8 transition-all duration-300 ${
-              isQuestionAnswered
-                ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]'
-                : 'text-gray-300'
-            }`}
+            className={`
+              size-8 transition-all duration-300
+              ${
+                isQuestionAnswered
+                  ? 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]'
+                  : 'text-gray-300'
+              }
+            `}
           />
         </div>
-        <div className="max-w-full min-w-0 rounded-lg border border-gray-200 bg-white p-4 break-words shadow-sm transition-all hover:shadow-md sm:p-6">
-          <h3 className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4 text-lg font-semibold text-gray-800">
+        <div
+          className="
+            max-w-full min-w-0 rounded-lg border border-gray-200 bg-white p-4
+            break-words shadow-sm transition-all
+            hover:shadow-md
+            sm:p-6
+          "
+        >
+          <h3
+            className="
+              mb-4 flex items-center justify-between border-b border-gray-100
+              pb-4 text-lg font-semibold text-gray-800
+            "
+          >
             <div className="flex items-center">
-              <span className="mr-2 flex size-8 items-center justify-center rounded-full bg-primary/20 font-bold text-background">
+              <span
+                className="
+                  mr-2 flex size-8 items-center justify-center rounded-full
+                  bg-primary/20 font-bold text-background
+                "
+              >
                 {currentQuestionIndex + 1}
               </span>
               {currentQuestion.text}
@@ -719,7 +739,13 @@ export function LessonActivityModal({
                 type="text"
                 value={userAnswers[currentQuestion.id]?.answer ?? ''} // Changed || to ??
                 onChange={(e) => handleAnswer(e.target.value)}
-                className="w-full rounded-md border border-gray-300 p-3 text-background shadow-sm transition-all duration-200 placeholder:text-gray-400 focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20 focus:outline-none"
+                className="
+                  w-full rounded-md border border-gray-300 p-3 text-background
+                  shadow-sm transition-all duration-200
+                  placeholder:text-gray-400
+                  focus:border-blue-800 focus:ring-2 focus:ring-blue-800/20
+                  focus:outline-none
+                "
                 placeholder="Escribe tu respuesta..."
               />
             ) : (
@@ -727,7 +753,12 @@ export function LessonActivityModal({
                 {currentQuestion.options?.map((option) => (
                   <label
                     key={option.id}
-                    className="flex min-w-0 cursor-pointer items-start rounded-lg border border-gray-200 p-3 transition-all hover:bg-gray-50 sm:p-4"
+                    className="
+                      flex min-w-0 cursor-pointer items-start rounded-lg border
+                      border-gray-200 p-3 transition-all
+                      hover:bg-gray-50
+                      sm:p-4
+                    "
                   >
                     <input
                       type="radio"
@@ -737,9 +768,16 @@ export function LessonActivityModal({
                         userAnswers[currentQuestion.id]?.answer === option.id
                       }
                       onChange={(e) => handleAnswer(e.target.value)}
-                      className="size-4 text-primary focus:ring-primary"
+                      className="
+                        size-4 text-primary
+                        focus:ring-primary
+                      "
                     />
-                    <span className="ml-3 break-words whitespace-normal text-gray-700">
+                    <span
+                      className="
+                        ml-3 break-words whitespace-normal text-gray-700
+                      "
+                    >
                       {option.text}
                     </span>
                   </label>
@@ -783,7 +821,10 @@ export function LessonActivityModal({
       return (
         <Button
           disabled
-          className="mt-4 w-full cursor-not-allowed bg-gradient-to-r from-blue-400/70 to-blue-600/70"
+          className="
+            mt-4 w-full cursor-not-allowed bg-gradient-to-r from-blue-400/70
+            to-blue-600/70
+          "
         >
           <Icons.spinner className="mr-2 size-5" />
           <span>Cargando resultados...</span>
@@ -797,7 +838,11 @@ export function LessonActivityModal({
         <div className="space-y-3">
           <Button
             onClick={onViewHistoryAction}
-            className="w-full bg-blue-500 text-white hover:bg-blue-600 active:scale-[0.98]"
+            className="
+              w-full bg-blue-500 text-white
+              hover:bg-blue-600
+              active:scale-[0.98]
+            "
           >
             <span className="flex items-center justify-center gap-2">
               <FaTrophy className="mr-1" />
@@ -810,7 +855,11 @@ export function LessonActivityModal({
               onActivityCompleteAction();
               onCloseAction();
             }}
-            className="w-full bg-[#00BDD8] text-white transition-all duration-200 hover:bg-[#00A5C0] active:scale-[0.98]"
+            className="
+              w-full bg-[#00BDD8] text-white transition-all duration-200
+              hover:bg-[#00A5C0]
+              active:scale-[0.98]
+            "
           >
             Cerrar
           </Button>
@@ -823,7 +872,12 @@ export function LessonActivityModal({
       return (
         <Button
           onClick={onCloseAction}
-          className="mt-3 w-full bg-blue-500 font-bold text-background transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+          className="
+            mt-3 w-full bg-blue-500 font-bold text-background transition-all
+            duration-200
+            hover:bg-blue-600
+            active:scale-[0.98]
+          "
         >
           CERRAR
         </Button>
@@ -848,7 +902,10 @@ export function LessonActivityModal({
                 setUserAnswers({});
                 setShowResults(false);
               }}
-              className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
+              className="
+                w-full bg-yellow-500 font-bold text-background
+                hover:bg-yellow-600
+              "
             >
               Intentar Nuevamente
             </Button>
@@ -861,7 +918,12 @@ export function LessonActivityModal({
         return (
           <Button
             onClick={handleFinishAndNavigate}
-            className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+            className="
+              mt-4 w-full bg-green-500 font-semibold text-green-900
+              transition-all duration-200
+              hover:scale-[1.02] hover:bg-green-600 hover:text-green-50
+              active:scale-95
+            "
           >
             <span className="flex items-center justify-center gap-2 py-4">
               Desbloquear Siguiente CLASE
@@ -873,7 +935,10 @@ export function LessonActivityModal({
       return (
         <Button
           onClick={onCloseAction}
-          className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+          className="
+            w-full bg-blue-500 font-bold text-blue-900
+            active:scale-[0.98]
+          "
         >
           CERRAR
         </Button>
@@ -893,7 +958,10 @@ export function LessonActivityModal({
               setUserAnswers({});
               setShowResults(false);
             }}
-            className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
+            className="
+              w-full bg-yellow-500 font-bold text-background
+              hover:bg-yellow-600
+            "
           >
             Intentar Nuevamente
           </Button>
@@ -901,7 +969,12 @@ export function LessonActivityModal({
           {isLastActivityInLesson && !isLastLesson ? (
             <Button
               onClick={handleFinishAndNavigate}
-              className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+              className="
+                mt-4 w-full bg-green-500 font-semibold text-green-900
+                transition-all duration-200
+                hover:scale-[1.02] hover:bg-green-600 hover:text-green-50
+                active:scale-95
+              "
             >
               <span className="flex items-center justify-center gap-2 py-4">
                 Desbloquear Siguiente CLASE
@@ -912,7 +985,10 @@ export function LessonActivityModal({
             !isLastActivityInLesson && (
               <Button
                 onClick={onCloseAction}
-                className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+                className="
+                  w-full bg-blue-500 font-bold text-blue-900
+                  active:scale-[0.98]
+                "
               >
                 CERRAR
               </Button>
@@ -928,7 +1004,12 @@ export function LessonActivityModal({
         return (
           <Button
             onClick={handleFinishAndNavigate}
-            className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+            className="
+              mt-4 w-full bg-green-500 font-semibold text-green-900
+              transition-all duration-200
+              hover:scale-[1.02] hover:bg-green-600 hover:text-green-50
+              active:scale-95
+            "
           >
             <span className="flex items-center justify-center gap-2 py-4">
               Desbloquear Siguiente CLASE
@@ -940,7 +1021,10 @@ export function LessonActivityModal({
       return (
         <Button
           onClick={onCloseAction}
-          className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+          className="
+            w-full bg-blue-500 font-bold text-blue-900
+            active:scale-[0.98]
+          "
         >
           CERRAR
         </Button>
@@ -964,7 +1048,11 @@ export function LessonActivityModal({
                 setUserAnswers({});
                 setShowResults(false);
               }}
-              className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600 active:scale-[0.98]"
+              className="
+                w-full bg-yellow-500 font-bold text-background
+                hover:bg-yellow-600
+                active:scale-[0.98]
+              "
             >
               Intentar Nuevamente
             </Button>
@@ -975,7 +1063,12 @@ export function LessonActivityModal({
         return (
           <Button
             onClick={handleFinishAndNavigate}
-            className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+            className="
+              mt-4 w-full bg-green-500 font-semibold text-green-900
+              transition-all duration-200
+              hover:scale-[1.02] hover:bg-green-600 hover:text-green-50
+              active:scale-95
+            "
           >
             <span className="flex items-center justify-center gap-2 py-4">
               Desbloquear Siguiente CLASE
@@ -987,7 +1080,10 @@ export function LessonActivityModal({
       return (
         <Button
           onClick={onCloseAction}
-          className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+          className="
+            w-full bg-blue-500 font-bold text-blue-900
+            active:scale-[0.98]
+          "
         >
           CERRAR
         </Button>
@@ -1007,7 +1103,10 @@ export function LessonActivityModal({
               setUserAnswers({});
               setShowResults(false);
             }}
-            className="w-full bg-yellow-500 font-bold text-background hover:bg-yellow-600"
+            className="
+              w-full bg-yellow-500 font-bold text-background
+              hover:bg-yellow-600
+            "
           >
             Intentar Nuevamente
           </Button>
@@ -1016,7 +1115,12 @@ export function LessonActivityModal({
           {isLastActivityInLesson && !isLastLesson && (
             <Button
               onClick={handleFinishAndNavigate}
-              className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+              className="
+                mt-4 w-full bg-green-500 font-semibold text-green-900
+                transition-all duration-200
+                hover:scale-[1.02] hover:bg-green-600 hover:text-green-50
+                active:scale-95
+              "
             >
               <span className="flex items-center justify-center gap-2 py-4">
                 Desbloquear Siguiente CLASE
@@ -1029,7 +1133,10 @@ export function LessonActivityModal({
           {!isLastActivityInLesson && (
             <Button
               onClick={onCloseAction}
-              className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+              className="
+                w-full bg-blue-500 font-bold text-blue-900
+                active:scale-[0.98]
+              "
             >
               CERRAR
             </Button>
@@ -1043,7 +1150,12 @@ export function LessonActivityModal({
         return (
           <Button
             onClick={handleFinishAndNavigate}
-            className="mt-4 w-full bg-green-500 font-semibold text-green-900 transition-all duration-200 hover:scale-[1.02] hover:bg-green-600 hover:text-green-50 active:scale-95"
+            className="
+              mt-4 w-full bg-green-500 font-semibold text-green-900
+              transition-all duration-200
+              hover:scale-[1.02] hover:bg-green-600 hover:text-green-50
+              active:scale-95
+            "
           >
             <span className="flex items-center justify-center gap-2 py-4">
               Desbloquear Siguiente CLASE
@@ -1055,7 +1167,10 @@ export function LessonActivityModal({
       return (
         <Button
           onClick={onCloseAction}
-          className="w-full bg-blue-500 font-bold text-blue-900 active:scale-[0.98]"
+          className="
+            w-full bg-blue-500 font-bold text-blue-900
+            active:scale-[0.98]
+          "
         >
           CERRAR
         </Button>
@@ -1065,7 +1180,11 @@ export function LessonActivityModal({
     return (
       <Button
         onClick={onCloseAction}
-        className="w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200 hover:bg-blue-600 active:scale-[0.98]"
+        className="
+          w-full bg-blue-500 font-bold text-blue-900 transition-all duration-200
+          hover:bg-blue-600
+          active:scale-[0.98]
+        "
       >
         CERRAR
       </Button>
@@ -1087,7 +1206,11 @@ export function LessonActivityModal({
             </h3>
             {/* Add loading state here */}
             {isLoadingDocument ? (
-              <div className="flex flex-col items-center justify-center space-y-3 p-8">
+              <div
+                className="
+                  flex flex-col items-center justify-center space-y-3 p-8
+                "
+              >
                 <Icons.spinner className="size-8 text-blue-500" />
                 <p className="text-base text-gray-600">Cargando documento...</p>
               </div>
@@ -1116,11 +1239,14 @@ export function LessonActivityModal({
               {/* Changed from mt-3 to mt-2 */}
               Calificación:{' '}
               <span
-                className={`text-2xl font-bold ${
-                  finalScore >= 3
-                    ? 'animate-pulse text-green-500 shadow-lg'
-                    : 'animate-pulse text-red-500 shadow-lg'
-                }`}
+                className={`
+                  text-2xl font-bold
+                  ${
+                    finalScore >= 3
+                      ? 'animate-pulse text-green-500 shadow-lg'
+                      : 'animate-pulse text-red-500 shadow-lg'
+                  }
+                `}
               >
                 {formatScore(finalScore)}
               </span>
@@ -1146,7 +1272,10 @@ export function LessonActivityModal({
                     return (
                       <div
                         key={question.id}
-                        className="space-y-3 p-4 transition-all hover:bg-gray-50"
+                        className="
+                          space-y-3 p-4 transition-all
+                          hover:bg-gray-50
+                        "
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -1166,11 +1295,14 @@ export function LessonActivityModal({
 
                         <div className="ml-6 space-y-2">
                           <div
-                            className={`rounded-md p-2 ${
-                              isCorrect
-                                ? 'bg-green-50 text-green-800'
-                                : 'bg-red-50 text-red-800'
-                            }`}
+                            className={`
+                              rounded-md p-2
+                              ${
+                                isCorrect
+                                  ? 'bg-green-50 text-green-800'
+                                  : 'bg-red-50 text-red-800'
+                              }
+                            `}
                           >
                             <p className="text-sm">
                               <span className="font-bold">Tu respuesta:</span>{' '}
@@ -1179,7 +1311,11 @@ export function LessonActivityModal({
                           </div>
                           {/* Solo mostrar la respuesta correcta si la calificación es >= 3 */}
                           {!isCorrect && finalScore >= 3 && (
-                            <div className="rounded-md bg-gray-50 p-2 text-sm text-gray-900">
+                            <div
+                              className="
+                                rounded-md bg-gray-50 p-2 text-sm text-gray-900
+                              "
+                            >
                               <span className="font-bold">
                                 Respuesta correcta:
                               </span>{' '}
@@ -1278,7 +1414,10 @@ export function LessonActivityModal({
                   setSelectedFile(null);
                   setFilePreview(null);
                 }}
-                className="p-1 text-slate-400 transition-colors hover:text-white"
+                className="
+                  p-1 text-slate-400 transition-colors
+                  hover:text-white
+                "
                 aria-label="Remove file"
               >
                 <svg
@@ -1300,10 +1439,18 @@ export function LessonActivityModal({
 
           <div className="mt-3 h-1 overflow-hidden rounded-full bg-slate-800">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-sky-500 transition-all duration-300"
+              className="
+                h-full rounded-full bg-gradient-to-r from-cyan-500 to-sky-500
+                transition-all duration-300
+              "
               style={{ width: `${uploadProgress}%` }}
             >
-              <div className="size-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+              <div
+                className="
+                  size-full animate-[shimmer_2s_infinite] bg-gradient-to-r
+                  from-transparent via-white/25 to-transparent
+                "
+              />
             </div>
           </div>
         </div>
@@ -1314,7 +1461,11 @@ export function LessonActivityModal({
   const renderSubmissionStatus = () => {
     if (isLoadingDocument) {
       return (
-        <div className="mt-4 flex flex-col items-center justify-center space-y-2 p-4">
+        <div
+          className="
+            mt-4 flex flex-col items-center justify-center space-y-2 p-4
+          "
+        >
           <Icons.spinner className="size-8 text-blue-500" />
           <p className="text-sm text-gray-400">Cargando documento subido...</p>
         </div>
@@ -1343,11 +1494,14 @@ export function LessonActivityModal({
                   <h3 className="text-lg font-semibold text-white">Subido</h3>
                 </div>
                 <span
-                  className={`rounded-full px-4 py-2 text-sm font-medium ${
-                    grade > 0
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}
+                  className={`
+                    rounded-full px-4 py-2 text-sm font-medium
+                    ${
+                      grade > 0
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }
+                  `}
                 >
                   {grade > 0 ? 'Revisado' : 'En Revisión'}
                 </span>
@@ -1395,9 +1549,10 @@ export function LessonActivityModal({
                     Calificación del Educador:
                   </span>
                   <span
-                    className={`text-lg font-bold ${
-                      grade >= 3 ? 'text-green-500' : 'text-red-500'
-                    }`}
+                    className={`
+                      text-lg font-bold
+                      ${grade >= 3 ? 'text-green-500' : 'text-red-500'}
+                    `}
                   >
                     {grade ? formatScore(grade) : '0.0'}
                   </span>
@@ -1432,7 +1587,11 @@ export function LessonActivityModal({
     const fileName = helpFileInfo.archivoKey.split('/').pop() ?? 'archivo';
     const fileExtension = fileName.split('.').pop()?.toLowerCase() ?? '';
     return (
-      <div className="mb-6 flex items-center justify-between rounded-lg bg-blue-50 p-4">
+      <div
+        className="
+          mb-6 flex items-center justify-between rounded-lg bg-blue-50 p-4
+        "
+      >
         <div className="flex items-center gap-3">
           {/* Ícono más grande */}
           <span className="flex items-center justify-center">
@@ -1452,7 +1611,11 @@ export function LessonActivityModal({
           download={fileName}
           target="_blank"
           rel="noopener noreferrer"
-          className="rounded bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700"
+          className="
+            rounded bg-blue-600 px-3 py-2 text-xs font-bold text-white
+            transition
+            hover:bg-blue-700
+          "
         >
           Descargar
         </a>
@@ -1468,10 +1631,28 @@ export function LessonActivityModal({
       return (
         <div className="max-h-[calc(90vh-10rem)] overflow-y-auto px-4">
           <div className="group relative w-full">
-            <div className="relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl">
+            <div
+              className="
+                relative overflow-hidden rounded-2xl bg-slate-950 shadow-2xl
+              "
+            >
               {/* Background gradients */}
-              <div className="absolute -top-16 -left-16 size-32 rounded-full bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
-              <div className="absolute -right-16 -bottom-16 size-32 rounded-full bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl transition-all duration-500 group-hover:scale-150 group-hover:opacity-70" />
+              <div
+                className="
+                  absolute -top-16 -left-16 size-32 rounded-full
+                  bg-gradient-to-br from-cyan-500/20 to-sky-500/0 blur-2xl
+                  transition-all duration-500
+                  group-hover:scale-150 group-hover:opacity-70
+                "
+              />
+              <div
+                className="
+                  absolute -right-16 -bottom-16 size-32 rounded-full
+                  bg-gradient-to-br from-sky-500/20 to-cyan-500/0 blur-2xl
+                  transition-all duration-500
+                  group-hover:scale-150 group-hover:opacity-70
+                "
+              />
 
               <div className="relative p-6">
                 {/* Botón de subir documento/URL nuevamente arriba del bloque de ayuda */}
@@ -1493,7 +1674,10 @@ export function LessonActivityModal({
                         setDriveUrl('');
                         setIsUrlValid(false);
                       }}
-                      className="w-full bg-yellow-500 text-white hover:bg-yellow-600"
+                      className="
+                        w-full bg-yellow-500 text-white
+                        hover:bg-yellow-600
+                      "
                     >
                       <span className="flex items-center justify-center gap-2">
                         {activeTab === 'local'
@@ -1530,7 +1714,11 @@ export function LessonActivityModal({
                 {/* Título y descripción */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between">
-                    <div className="flex w-full items-center justify-between space-x-4">
+                    <div
+                      className="
+                        flex w-full items-center justify-between space-x-4
+                      "
+                    >
                       <h3 className="text-lg font-semibold text-white">
                         {activity.name}
                       </h3>
@@ -1562,11 +1750,18 @@ export function LessonActivityModal({
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`flex items-center space-x-2 rounded-lg px-4 py-2 transition-all ${
-                        activeTab === tab.id
-                          ? 'bg-cyan-500/10 text-cyan-500'
-                          : 'text-gray-400 hover:bg-gray-800'
-                      }`}
+                      className={`
+                        flex items-center space-x-2 rounded-lg px-4 py-2
+                        transition-all
+                        ${
+                          activeTab === tab.id
+                            ? 'bg-cyan-500/10 text-cyan-500'
+                            : `
+                              text-gray-400
+                              hover:bg-gray-800
+                            `
+                        }
+                      `}
                     >
                       {tab.icon}
                       <span>{tab.label}</span>
@@ -1579,22 +1774,35 @@ export function LessonActivityModal({
                   <>
                     {/* Existing local file upload UI */}
                     <div
-                      className={`mt-6 ${
-                        uploadedFileInfo ? 'pointer-events-none opacity-50' : ''
-                      }`}
+                      className={`
+                        mt-6
+                        ${
+                          uploadedFileInfo
+                            ? 'pointer-events-none opacity-50'
+                            : ''
+                        }
+                      `}
                     >
                       <div className="group/dropzone">
                         <div
-                          className={`relative rounded-xl border-2 border-dashed border-slate-700 bg-slate-900/50 p-8 transition-colors ${
-                            uploadedFileInfo
-                              ? 'cursor-not-allowed'
-                              : 'group-hover/dropzone:border-cyan-500/50'
-                          }`}
+                          className={`
+                            relative rounded-xl border-2 border-dashed
+                            border-slate-700 bg-slate-900/50 p-8
+                            transition-colors
+                            ${
+                              uploadedFileInfo
+                                ? 'cursor-not-allowed'
+                                : 'group-hover/dropzone:border-cyan-500/50'
+                            }
+                          `}
                         >
                           <input
                             type="file"
                             aria-label="Seleccionar archivo para subir"
-                            className="absolute inset-0 z-50 size-full cursor-pointer opacity-0"
+                            className="
+                              absolute inset-0 z-50 size-full cursor-pointer
+                              opacity-0
+                            "
                             onChange={(e) => {
                               if (e.target.files?.[0]) {
                                 handleFileUpload(e.target.files[0]);
@@ -1604,13 +1812,21 @@ export function LessonActivityModal({
                             tabIndex={0}
                           />
                           <div className="space-y-6 text-center">
-                            <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-slate-900">
+                            <div
+                              className="
+                                mx-auto flex size-20 items-center justify-center
+                                rounded-full bg-slate-900
+                              "
+                            >
                               <svg
-                                className={`size-10 ${
-                                  uploadedFileInfo
-                                    ? 'text-gray-500'
-                                    : 'text-cyan-500'
-                                }`}
+                                className={`
+                                  size-10
+                                  ${
+                                    uploadedFileInfo
+                                      ? 'text-gray-500'
+                                      : 'text-cyan-500'
+                                  }
+                                `}
                                 fill="none"
                                 viewBox="0 0 24 24"
                                 stroke="currentColor"
@@ -1662,9 +1878,23 @@ export function LessonActivityModal({
                       disabled={
                         !selectedFile || isUploading || !!uploadedFileInfo
                       }
-                      className="group/btn relative mt-6 w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500 p-px font-medium text-white shadow-[0_1000px_0_0_hsl(0_0%_100%_/_0%)_inset] transition-colors hover:shadow-[0_1000px_0_0_hsl(0_0%_100%_/_2%)_inset] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="
+                        group/btn relative mt-6 w-full overflow-hidden
+                        rounded-xl bg-gradient-to-r from-cyan-500 to-sky-500
+                        p-px font-medium text-white
+                        shadow-[0_1000px_0_0_hsl(0_0%_100%_/_0%)_inset]
+                        transition-colors
+                        hover:shadow-[0_1000px_0_0_hsl(0_0%_100%_/_2%)_inset]
+                        disabled:cursor-not-allowed disabled:opacity-50
+                      "
                     >
-                      <span className="relative flex items-center justify-center gap-2 rounded-xl bg-slate-950/50 px-4 py-2 transition-colors group-hover/btn:bg-transparent">
+                      <span
+                        className="
+                          relative flex items-center justify-center gap-2
+                          rounded-xl bg-slate-950/50 px-4 py-2 transition-colors
+                          group-hover/btn:bg-transparent
+                        "
+                      >
                         {isUploading ? (
                           <>
                             <Icons.spinner className="mr-2 size-4" />
@@ -1680,7 +1910,12 @@ export function LessonActivityModal({
 
                     {/* Add loading indicator below upload button */}
                     {isLoadingDocument && (
-                      <div className="mt-4 flex items-center justify-center space-x-2 text-center">
+                      <div
+                        className="
+                          mt-4 flex items-center justify-center space-x-2
+                          text-center
+                        "
+                      >
                         <Icons.spinner className="size-5 text-cyan-500" />
                         <span className="text-sm text-gray-400">
                           Cargando documento...
@@ -1693,7 +1928,11 @@ export function LessonActivityModal({
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+                    <div
+                      className="
+                        rounded-lg border border-gray-700 bg-gray-800/50 p-4
+                      "
+                    >
                       <input
                         type="url"
                         placeholder="Pega cualquier URL aquí"
@@ -1704,11 +1943,16 @@ export function LessonActivityModal({
                           setIsUrlValid(validateUrl(url));
                         }}
                         disabled={!!uploadedFileInfo || isUploadingUrl}
-                        className={`w-full bg-transparent text-white placeholder:text-gray-400 focus:outline-none ${
-                          uploadedFileInfo || isUploadingUrl
-                            ? 'cursor-not-allowed opacity-50'
-                            : ''
-                        }`}
+                        className={`
+                          w-full bg-transparent text-white
+                          placeholder:text-gray-400
+                          focus:outline-none
+                          ${
+                            uploadedFileInfo || isUploadingUrl
+                              ? 'cursor-not-allowed opacity-50'
+                              : ''
+                          }
+                        `}
                       />
                     </div>
                     {driveUrl &&
@@ -1739,11 +1983,17 @@ export function LessonActivityModal({
                       disabled={
                         !isUrlValid || isUploadingUrl || !!uploadedFileInfo
                       }
-                      className={`w-full rounded-lg px-4 py-2 transition-all ${
-                        !uploadedFileInfo && isUrlValid && !isUploadingUrl
-                          ? 'bg-cyan-500 text-white hover:bg-cyan-600'
-                          : 'cursor-not-allowed bg-gray-700 text-gray-400'
-                      }`}
+                      className={`
+                        w-full rounded-lg px-4 py-2 transition-all
+                        ${
+                          !uploadedFileInfo && isUrlValid && !isUploadingUrl
+                            ? `
+                              bg-cyan-500 text-white
+                              hover:bg-cyan-600
+                            `
+                            : 'cursor-not-allowed bg-gray-700 text-gray-400'
+                        }
+                      `}
                     >
                       {isUploadingUrl ? (
                         <div className="flex items-center justify-center">
@@ -1776,7 +2026,11 @@ export function LessonActivityModal({
           <div className="">
             {' '}
             {/* Add right padding */}
-            <div className="mb-8 flex flex-col items-center justify-center text-center">
+            <div
+              className="
+                mb-8 flex flex-col items-center justify-center text-center
+              "
+            >
               <span className="text-2xl font-bold text-primary">
                 {getQuestionTypeLabel(currentQuestion?.type ?? '')}
               </span>
@@ -1798,9 +2052,10 @@ export function LessonActivityModal({
                 <span>Anterior</span>
               </button>
               <button
-                className={`btn-arrow ${
-                  isLastQuestion ? 'btn-arrow-success' : ''
-                }`}
+                className={`
+                  btn-arrow
+                  ${isLastQuestion ? 'btn-arrow-success' : ''}
+                `}
                 disabled={!canProceedToNext}
                 onClick={isLastQuestion ? handleFinish : handleNext}
               >
@@ -1924,11 +2179,28 @@ export function LessonActivityModal({
           aria-modal="true"
           aria-labelledby={modalTitleId}
           aria-describedby={modalDescId}
-          className={`data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-[100004] flex translate-[-50%] flex-col gap-4 overflow-hidden rounded-lg border bg-background shadow-lg duration-200 [&>button]:bg-background [&>button]:text-background [&>button]:hover:text-background ${
-            isMobile
-              ? 'max-h-[90vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-2xl p-4'
-              : 'max-h-[90vh] w-full overflow-y-auto rounded-2xl p-6 sm:max-w-[500px]'
-          }`}
+          className={`
+            data-[state=closed]:animate-out data-[state=closed]:fade-out-0
+            data-[state=closed]:zoom-out-95
+            data-[state=open]:animate-in data-[state=open]:fade-in-0
+            data-[state=open]:zoom-in-95
+            fixed top-[50%] left-[50%] z-[100004] flex translate-[-50%] flex-col
+            gap-4 overflow-hidden rounded-lg border bg-background shadow-lg
+            duration-200
+            [&>button]:bg-background [&>button]:text-background
+            [&>button]:hover:text-background
+            ${
+              isMobile
+                ? `
+                  max-h-[90vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)]
+                  overflow-y-auto rounded-2xl p-4
+                `
+                : `
+                  max-h-[90vh] w-full overflow-y-auto rounded-2xl p-6
+                  sm:max-w-[500px]
+                `
+            }
+          `}
         >
           {/* Hidden title for accessibility */}
           <DialogPrimitive.Title className="sr-only">
@@ -1939,7 +2211,10 @@ export function LessonActivityModal({
             type="button"
             aria-label="Cerrar modal"
             onClick={handleRequestClose}
-            className="absolute top-4 right-4 z-50 rounded-full p-2 transition-colors hover:bg-gray-800"
+            className="
+              absolute top-4 right-4 z-50 rounded-full p-2 transition-colors
+              hover:bg-gray-800
+            "
           >
             <div className="flex items-center justify-center">
               <XMarkIcon className="size-6 text-white" aria-hidden="true" />
@@ -1980,7 +2255,12 @@ export function LessonActivityModal({
                   renderResults()
                 ) : (
                   <div>
-                    <div className="mb-8 flex flex-col items-center justify-center text-center">
+                    <div
+                      className="
+                        mb-8 flex flex-col items-center justify-center
+                        text-center
+                      "
+                    >
                       <span className="text-2xl font-bold text-primary">
                         {getQuestionTypeLabel(currentQuestion?.type ?? '')}
                       </span>
@@ -2004,9 +2284,10 @@ export function LessonActivityModal({
                         <span>Anterior</span>
                       </button>
                       <button
-                        className={`btn-arrow ${
-                          isLastQuestion ? 'btn-arrow-success' : ''
-                        }`}
+                        className={`
+                          btn-arrow
+                          ${isLastQuestion ? 'btn-arrow-success' : ''}
+                        `}
                         disabled={!canProceedToNext}
                         onClick={isLastQuestion ? handleFinish : handleNext}
                       >
