@@ -264,6 +264,36 @@ export function LessonActivityModal({
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
+    if (!isOpen || !activity?.id) return;
+
+    const nextQuestions = activity?.content?.questions ?? [];
+
+    // Reinicia el estado para que cada actividad sea totalmente independiente.
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setShowResults(false);
+    setFinalScore(0);
+    setIsResultsLoaded(false);
+    setIsSavingResults(false);
+    setCanCloseModal(false);
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setIsUploading(false);
+    setUploadedFileInfo(null);
+    setFilePreview(null);
+    setIsLoadingDocument(false);
+    setIsNewUpload(false);
+    setActiveTab('local');
+    setDriveUrl('');
+    setIsUrlValid(false);
+    setIsUploadingUrl(false);
+    setHelpFileInfo(null);
+
+    setQuestions(nextQuestions);
+    setIsLoading(activity.typeid !== 1 && nextQuestions.length === 0);
+  }, [activity?.id, activity?.typeid, activity?.content?.questions, isOpen]);
+
+  useEffect(() => {
     if (activity?.content?.questions) {
       setQuestions(activity.content.questions);
       setIsLoading(false);

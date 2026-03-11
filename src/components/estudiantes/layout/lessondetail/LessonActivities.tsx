@@ -313,34 +313,32 @@ const LessonActivities = ({
 
       setIsButtonLoading(true);
       try {
-        const activityPromises = activities
-          .slice(0, 3)
-          .map(async (activity) => {
-            const response = await fetch(
-              `/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
-            );
+        const activityPromises = activities.map(async (activity) => {
+          const response = await fetch(
+            `/api/activities/getAnswers?activityId=${activity.id}&userId=${userId}`
+          );
 
-            if (!response.ok) {
-              return null;
-            }
-
-            const rawData: unknown = await response.json();
-            if (isActivityAnswersResponse(rawData)) {
-              return {
-                activityId: activity.id,
-                state: {
-                  savedResults: {
-                    score: rawData.score,
-                    answers: rawData.answers,
-                    isAlreadyCompleted: rawData.isAlreadyCompleted,
-                  },
-                  isLoading: false,
-                  isCompleted: rawData.isAlreadyCompleted,
-                },
-              };
-            }
+          if (!response.ok) {
             return null;
-          });
+          }
+
+          const rawData: unknown = await response.json();
+          if (isActivityAnswersResponse(rawData)) {
+            return {
+              activityId: activity.id,
+              state: {
+                savedResults: {
+                  score: rawData.score,
+                  answers: rawData.answers,
+                  isAlreadyCompleted: rawData.isAlreadyCompleted,
+                },
+                isLoading: false,
+                isCompleted: rawData.isAlreadyCompleted,
+              },
+            };
+          }
+          return null;
+        });
 
         const results = await Promise.all(activityPromises);
         const newActivitiesState: Record<number, ActivityState> = {};
@@ -576,33 +574,74 @@ const LessonActivities = ({
     return (
       <div
         key={activity.id}
-        className="flex w-full justify-center md:w-[70%] md:justify-start"
+        className="
+          flex w-full justify-center
+          md:w-[70%] md:justify-start
+        "
       >
         <div
-          className={`group mb-4 w-11/12 max-w-md rounded-2xl border px-5 py-4 transition-all md:w-full md:max-w-none ${activityType.bg} ${
-            isButtonLoading
-              ? 'border-border/40'
-              : status.isActive
-                ? 'border-border/50 hover:border-border'
-                : 'border-border/40 opacity-60'
-          }`}
+          className={`
+            group mb-4 w-11/12 max-w-md rounded-2xl border px-5 py-4
+            transition-all
+            md:w-full md:max-w-none
+            ${activityType.bg}
+            ${
+              isButtonLoading
+                ? 'border-border/40'
+                : status.isActive
+                  ? `
+                  border-border/50
+                  hover:border-border
+                `
+                  : 'border-border/40 opacity-60'
+            }
+          `}
         >
-          <div className="flex w-full flex-col items-center justify-between gap-4 text-center md:flex-row md:items-center md:text-left">
-            <div className="flex min-w-0 flex-1 flex-col items-center gap-2 md:flex-row md:gap-4">
+          <div
+            className="
+            flex w-full flex-col items-center justify-between gap-4 text-center
+            md:flex-row md:items-center md:text-left
+          "
+          >
+            <div
+              className="
+              flex min-w-0 flex-1 flex-col items-center gap-2
+              md:flex-row md:gap-4
+            "
+            >
               <div
-                className={`flex size-10 shrink-0 items-center justify-center rounded-lg transition-transform group-hover:scale-110 ${activityType.bg} ${activityType.color}`}
+                className={`
+                  flex size-10 shrink-0 items-center justify-center rounded-lg
+                  transition-transform
+                  group-hover:scale-110
+                  ${activityType.bg}
+                  ${activityType.color}
+                `}
               >
                 <ActivityIcon className="size-4" />
               </div>
-              <div className="flex flex-col items-center gap-1 md:items-start md:gap-0">
+              <div
+                className="
+                flex flex-col items-center gap-1
+                md:items-start md:gap-0
+              "
+              >
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase ${activityType.color} ${activityType.bg}`}
+                  className={`
+                    rounded-full px-2 py-0.5 text-[10px] font-semibold
+                    tracking-wider uppercase
+                    ${activityType.color}
+                    ${activityType.bg}
+                  `}
                 >
                   {activityType.label}
                 </span>
                 {deadlineText && activity.typeid !== 2 && (
                   <span
-                    className="flex items-center gap-1 truncate rounded-md border px-2 py-0.5 text-xs font-medium"
+                    className="
+                      flex items-center gap-1 truncate rounded-md border px-2
+                      py-0.5 text-xs font-medium
+                    "
                     style={{
                       borderColor: '#1d283a33',
                       background: '#1d283a0f',
@@ -617,19 +656,38 @@ const LessonActivities = ({
                 )}
                 {/* Mostrar duración de vídeo si está disponible en la lección */}
                 {currentLesson && (currentLesson as Lesson).videoDuration && (
-                  <span className="max-w-[140px] truncate text-xs text-muted-foreground">
+                  <span
+                    className="
+                    max-w-[140px] truncate text-xs text-muted-foreground
+                  "
+                  >
                     Duración: {(currentLesson as Lesson).videoDuration}
                   </span>
                 )}
-                <h4 className="text-center text-sm font-medium text-foreground md:text-left">
+                <h4
+                  className="
+                  text-center text-sm font-medium text-foreground
+                  md:text-left
+                "
+                >
                   {activity.name}
                 </h4>
-                <p className="line-clamp-1 text-center text-xs text-muted-foreground md:text-left">
+                <p
+                  className="
+                  line-clamp-1 text-center text-xs text-muted-foreground
+                  md:text-left
+                "
+                >
                   {truncateDescription(activity.description)}
                 </p>
               </div>
             </div>
-            <div className="flex justify-center md:self-center">
+            <div
+              className="
+              flex justify-center
+              md:self-center
+            "
+            >
               <button
                 onClick={
                   activityState?.isCompleted
@@ -637,11 +695,19 @@ const LessonActivities = ({
                     : () => handleOpenActivity(activity)
                 }
                 disabled={!activityState?.isCompleted && isButtonLoading}
-                className={`inline-flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm font-medium transition-all ${getButtonClasses(activity, isLocked)} ${
-                  !canAccess && !isButtonLoading && !activityState?.isCompleted
-                    ? 'cursor-not-allowed'
-                    : ''
-                } disabled:pointer-events-none disabled:opacity-50`}
+                className={`
+                  inline-flex items-center gap-2 rounded-xl border px-5 py-2.5
+                  text-sm font-medium transition-all
+                  ${getButtonClasses(activity, isLocked)}
+                  ${
+                    !canAccess &&
+                    !isButtonLoading &&
+                    !activityState?.isCompleted
+                      ? 'cursor-not-allowed'
+                      : ''
+                  }
+                  disabled:pointer-events-none disabled:opacity-50
+                `}
               >
                 {getButtonLabel(activity, isLocked)}
               </button>
@@ -697,17 +763,57 @@ const LessonActivities = ({
 
   // Handle activity completion event
   const handleActivityCompletion = async () => {
-    if (!activities.length) return;
+    if (!activities.length || !selectedActivity) return;
+
+    const completedActivityId = selectedActivity.id;
 
     try {
-      await completeActivity(activities[0].id, userId);
+      await completeActivity(completedActivityId, userId);
       setIsActivityCompleted(true);
+
+      let completedActivityState: ActivityState = {
+        ...(activitiesState[completedActivityId] ?? {
+          savedResults: null,
+          isLoading: false,
+          isCompleted: false,
+        }),
+        isCompleted: true,
+        isLoading: false,
+      };
+
+      try {
+        const response = await fetch(
+          `/api/activities/getAnswers?activityId=${completedActivityId}&userId=${userId}`
+        );
+
+        if (response.ok) {
+          const rawData: unknown = await response.json();
+          if (isActivityAnswersResponse(rawData)) {
+            completedActivityState = {
+              savedResults: {
+                score: rawData.score,
+                answers: rawData.answers,
+                isAlreadyCompleted: rawData.isAlreadyCompleted,
+              },
+              isLoading: false,
+              isCompleted: rawData.isAlreadyCompleted,
+            };
+          }
+        }
+      } catch (fetchError) {
+        console.error('Error refreshing completed activity state:', fetchError);
+      }
+
+      setActivitiesState((prev) => ({
+        ...prev,
+        [completedActivityId]: completedActivityState,
+      }));
 
       // Verificar si todas las actividades están completadas
       const allActivitiesCompleted = activities.every(
         (activity) =>
           activitiesState[activity.id]?.isCompleted ||
-          activity.id === activities[0].id
+          activity.id === completedActivityId
       );
 
       if (allActivitiesCompleted) {
@@ -756,7 +862,11 @@ const LessonActivities = ({
           ? 'w-full bg-transparent p-0'
           : isMobile
             ? 'm-0 w-full rounded-none bg-transparent p-0'
-            : 'max-h-[70vh] w-full overflow-y-auto p-2 md:max-h-none md:max-w-full md:min-w-[400px] md:overflow-visible md:p-4'
+            : `
+              max-h-[70vh] w-full overflow-y-auto p-2
+              md:max-h-none md:max-w-full md:min-w-[400px] md:overflow-visible
+              md:p-4
+            `
       }
       style={
         isMobile || inMainContent
@@ -823,16 +933,28 @@ const LessonActivities = ({
       )}
       <div className="flex items-center justify-between">
         <h2
-          className={`mb-4 font-bold text-primary ${
-            isMobile || inMainContent ? 'px-2 text-lg' : 'text-xl md:text-2xl'
-          }`}
+          className={`
+            mb-4 font-bold text-primary
+            ${
+              isMobile || inMainContent
+                ? 'px-2 text-lg'
+                : `
+              text-xl
+              md:text-2xl
+            `
+            }
+          `}
         >
           {inMainContent ? 'Contenido de la Clase' : ''}
         </h2>
         {/* Botón de retraer/expandir solo en móvil */}
         {isMobile && !inMainContent && (
           <button
-            className="-mt-5 mr-2 flex items-center rounded px-2 py-1 text-blue-600 hover:bg-blue-50 active:scale-95"
+            className="
+              -mt-5 mr-2 flex items-center rounded px-2 py-1 text-blue-600
+              hover:bg-blue-50
+              active:scale-95
+            "
             onClick={() => setCollapsed((prev) => !prev)}
             aria-label={
               collapsed ? 'Expandir actividades' : 'Ocultar actividades'
@@ -860,7 +982,12 @@ const LessonActivities = ({
       {!collapsed && activities.length > 3 && (
         <div className="mb-2 flex justify-end px-1">
           <button
-            className="flex items-center gap-1 rounded px-2 py-1 text-sm font-semibold text-blue-600 hover:bg-blue-50 active:scale-95"
+            className="
+              flex items-center gap-1 rounded px-2 py-1 text-sm font-semibold
+              text-blue-600
+              hover:bg-blue-50
+              active:scale-95
+            "
             onClick={() => setShowAll((prev) => !prev)}
             aria-expanded={showAll}
             aria-label={
@@ -882,7 +1009,12 @@ const LessonActivities = ({
       {/* Activities section */}
       {!collapsed ? (
         activities.length > 0 && !inMainContent ? (
-          <div className={`space-y-4 ${isMobile ? 'space-y-2' : ''}`}>
+          <div
+            className={`
+            space-y-4
+            ${isMobile ? 'space-y-2' : ''}
+          `}
+          >
             {(showAll ? activities : activities.slice(0, 3)).map(
               (activity, index) => renderActivityCard(activity, index)
             )}
@@ -901,6 +1033,7 @@ const LessonActivities = ({
       {/* Siempre renderizar el modal independientemente de inMainContent */}
       {selectedActivity && (
         <LessonActivityModal
+          key={selectedActivity.id}
           isOpen={isModalOpen}
           onCloseAction={handleModalClose}
           activity={selectedActivity}
