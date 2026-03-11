@@ -83,3 +83,5 @@ pnpm-lock.yaml
 
 # scripts output (add if you generate temp files)
 # scripts/output/
+# next-agents-md
+.next-docs/

@@ -4,7 +4,7 @@ import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
 import prettier from 'eslint-config-prettier/flat';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
-import { defineConfig } from 'eslint/config';
+import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 
 export default defineConfig([
@@ -15,7 +15,7 @@ export default defineConfig([
     languageOptions: {
       ecmaVersion: 'latest',
       parserOptions: {
-        project: './tsconfig.eslint.json',
+        project: true,
         tsconfigRootDir: import.meta.dirname,
         ecmaFeatures: {
           jsx: true,
@@ -29,6 +29,9 @@ export default defineConfig([
       'better-tailwindcss': betterTailwindCSS,
     },
     settings: {
+      react: {
+        version: '19.2',
+      },
       'better-tailwindcss': {
         entryPoint: 'src/styles/globals.css',
       },
@@ -103,8 +106,8 @@ export default defineConfig([
       'react/display-name': 'off',
     },
   },
-  {
-    ignores: [
+  globalIgnores(
+    [
       '**/node_modules/**',
       '.agents/**',
       '.github/**',
@@ -119,13 +122,15 @@ export default defineConfig([
       '.turbo/**',
       'videos/**',
       'drizzle/**',
-      'test/**',
       'scripts/**',
       '**/.git/**',
       '**/.husky/**',
       '**/.lintstagedrc*',
       '**/.eslintcache',
       '**/.prettierignore',
+      '**/eslint.config.*',
+      '**/eslint.cli.config.*',
+      '**/*.{config,conf}.{js,cjs,mjs,ts}',
       'next-env.d.ts',
       '**/*.d.ts',
       '.vscode/**',
@@ -142,7 +147,8 @@ export default defineConfig([
       'src/components/super-admin/ui/**',
       'src/components/reactbits/**',
     ],
-  },
-   // 4. Prettier (debe ir al final para desactivar conflictos)
+    'global-ignores'
+  ),
+  // 4. Prettier (debe ir al final para desactivar conflictos)
   prettier,
 ]);

@@ -487,3 +487,53 @@ git config credential.helper store
    ```
 
 6. ¡Listo! Al hacer `git commit`, se bloquea el commit si hay errores de formato, lint o tipos.
+
+---
+
+## Mini tutorial: Regenerar docs locales de Next para AGENTS.md
+
+Usa este flujo cuando cambies la version de `next` y quieras que los agentes
+(Codex/Copilot) lean documentacion local actualizada.
+
+### Comando base
+
+```bash
+npx @next/codemod@canary agents-md --output AGENTS.md
+```
+
+### Cuando ejecutarlo
+
+1. Despues de subir/bajar version de `next`.
+2. Al cambiar de rama si trae otra version de `next`.
+3. Si borraste o se desactualizo la carpeta `.next-docs`.
+
+### Paso a paso
+
+1. Verifica tu version de Next:
+
+```bash
+npm ls next
+```
+
+2. Regenera el bloque de agentes:
+
+```bash
+npx @next/codemod@canary agents-md --output AGENTS.md
+```
+
+3. Revisa que `AGENTS.md` tenga el bloque `NEXT-AGENTS-MD` con:
+   `root: ./.next-docs`
+
+4. Si todo esta correcto, guarda cambios:
+
+```bash
+git add AGENTS.md .gitignore
+git commit -m "docs(agents): refresh next local docs index"
+```
+
+### Nota
+
+- La guia oficial de Next tambien permite un `AGENTS.md` minimo apuntando a
+  `node_modules/next/dist/docs/`.
+- Este flujo con `.next-docs` es util si ya estandarizaste el bloque generado
+  por `agents-md` en tu proyecto.

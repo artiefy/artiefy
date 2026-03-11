@@ -107,7 +107,8 @@
   "js/ts.tsdk.promptToUseWorkspaceVersion": true,
   "js/ts.tsserver.maxMemory": 8192,
   // ESLint Configuration
-  "eslint.runtime": "C:/Users/Usuario/AppData/Local/fnm_multishells/42288_1771013362460/node",
+  "eslint.workingDirectories": [{ "mode": "auto" }],
+  "eslint.run": "onType",
   "eslint.validate": [
     "javascript",
     "javascriptreact",
