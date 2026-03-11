@@ -4,6 +4,7 @@ import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
+import { activities } from '~/server/db/schema';
 
 import type { ActivityResults } from '~/types';
 
@@ -27,9 +28,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // First check activity details to get revisada status
+    const dbActivity = await db.query.activities.findFirst({
+      where: eq(activities.id, parseInt(activityId)),
+      columns: { revisada: true },
+    });
+
     const activityKey = `activity:${activityId}`;
-    const activity = await redis.get<{ revisada: boolean }>(activityKey);
+    const activityFromCache = await redis.get<{ revisada?: boolean }>(
+      activityKey
+    );
+    const isRevisada =
+      dbActivity?.revisada ?? Boolean(activityFromCache?.revisada);
 
     // First check activity completion in database
     const progress = await db.query.userActivitiesProgress.findFirst({
@@ -48,8 +57,8 @@ export async function GET(request: NextRequest) {
         answers: savedResults?.answers ?? {},
         isAlreadyCompleted: progress.isCompleted,
         attemptCount: progress.attemptCount ?? 0,
-        isRevisada: activity?.revisada ?? false,
-        attemptsLimit: activity?.revisada ? 3 : null, // null indicates infinite attempts
+        isRevisada,
+        attemptsLimit: isRevisada ? 3 : null, // null indicates infinite attempts
       });
     }
 

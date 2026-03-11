@@ -266,8 +266,6 @@ export function LessonActivityModal({
   useEffect(() => {
     if (!isOpen || !activity?.id) return;
 
-    const nextQuestions = activity?.content?.questions ?? [];
-
     // Reinicia el estado para que cada actividad sea totalmente independiente.
     setCurrentQuestionIndex(0);
     setUserAnswers({});
@@ -289,16 +287,21 @@ export function LessonActivityModal({
     setIsUploadingUrl(false);
     setHelpFileInfo(null);
 
-    setQuestions(nextQuestions);
-    setIsLoading(activity.typeid !== 1 && nextQuestions.length === 0);
-  }, [activity?.id, activity?.typeid, activity?.content?.questions, isOpen]);
+    // Inicializa vacío; otro efecto sincroniza preguntas cuando lleguen.
+    setQuestions([]);
+    setIsLoading(activity.typeid !== 1);
+  }, [activity?.id, activity?.typeid, isOpen]);
 
   useEffect(() => {
-    if (activity?.content?.questions) {
-      setQuestions(activity.content.questions);
-      setIsLoading(false);
-    }
-  }, [activity]);
+    if (!isOpen || activity?.typeid === 1) return;
+
+    const latestQuestions = activity?.content?.questions;
+    if (!Array.isArray(latestQuestions)) return;
+
+    // Cuando las preguntas llegan de forma asíncrona, actualiza sin resetear el flujo.
+    setQuestions(latestQuestions);
+    setIsLoading(false);
+  }, [activity?.content?.questions, activity?.typeid, isOpen]);
 
   // Al abrir el modal, comprobar si el usuario ya tiene resultados guardados
   useEffect(() => {
@@ -316,8 +319,9 @@ export function LessonActivityModal({
 
         if (!mounted) return;
 
-        // Si la API indica que ya está completada, mostrar solo la pantalla de resultados
-        if (data?.isAlreadyCompleted) {
+        // Si existe al menos un intento previo, mostrar resultado inmediatamente.
+        const hasPreviousAttempt = Number(data?.attemptCount ?? 0) > 0;
+        if (hasPreviousAttempt || data?.isAlreadyCompleted) {
           setFinalScore(data.score ?? 0);
           setUserAnswers(data.answers ?? {});
           setShowResults(true);
@@ -340,6 +344,7 @@ export function LessonActivityModal({
       setFinalScore(savedResults.score ?? 0);
       setUserAnswers(savedResults.answers ?? {});
       setShowResults(true);
+      setIsResultsLoaded(true);
     }
   }, [savedResults]);
 
@@ -361,15 +366,6 @@ export function LessonActivityModal({
   }, [activity.id, activity.revisada, userId]);
 
   useEffect(() => {
-    if (savedResults?.isAlreadyCompleted) {
-      setShowResults(true);
-      setFinalScore(savedResults.score);
-      setUserAnswers(savedResults.answers);
-      setIsResultsLoaded(true);
-    }
-  }, [savedResults]);
-
-  useEffect(() => {
     const canClose = () => {
       // Para actividades tipo documento (typeid === 1), siempre permitir cerrar
       if (activity.typeid === 1) {
@@ -377,7 +373,7 @@ export function LessonActivityModal({
       }
 
       // Si la actividad ya está completada, siempre puede cerrar
-      if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
+      if (savedResults?.isAlreadyCompleted) {
         return true;
       }
 
@@ -408,7 +404,6 @@ export function LessonActivityModal({
     finalScore,
     attemptsLeft,
     activity.revisada,
-    activity.isCompleted,
     activity.typeid,
     savedResults?.isAlreadyCompleted,
     isLastActivity,
@@ -898,7 +893,7 @@ export function LessonActivityModal({
     }
 
     // Already completed activity
-    if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
+    if (savedResults?.isAlreadyCompleted) {
       return (
         <Button
           onClick={onCloseAction}
@@ -2178,15 +2173,6 @@ export function LessonActivityModal({
           </DialogHeader>
           <div className="flex flex-col items-center justify-center p-8">
             <Icons.blocks className="size-22 animate-pulse fill-primary" />
-            <p className="mt-6 text-center text-xl text-white">
-              No hay preguntas disponibles para esta actividad.
-            </p>
-            <Button
-              onClick={onCloseAction}
-              className="mt-6 bg-blue-500 text-white"
-            >
-              Cerrar
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
