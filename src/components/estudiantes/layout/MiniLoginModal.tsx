@@ -8,6 +8,7 @@ import { useAuth } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { useSignIn } from '@clerk/nextjs/legacy';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
+import { flushSync } from 'react-dom';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 
@@ -45,6 +46,9 @@ export default function MiniLoginModal({
     null
   );
   const [hasHandledAuth, setHasHandledAuth] = useState(false);
+  const [isSwitchingToSignUp, setIsSwitchingToSignUp] = useState(false);
+  const [isOAuthPopupOpen, setIsOAuthPopupOpen] = useState(false);
+  const [isFinalizingOAuth, setIsFinalizingOAuth] = useState(false);
   const oauthInFlightRef = useRef(false);
 
   // Manejar error inicial de OAuth
@@ -75,6 +79,7 @@ export default function MiniLoginModal({
       if (loadingProvider) {
         setLoadingProvider(null);
       }
+      setIsFinalizingOAuth(false);
       onLoginSuccess();
       onClose();
 
@@ -104,13 +109,38 @@ export default function MiniLoginModal({
   useEffect(() => {
     if (!isOpen) {
       setHasHandledAuth(false);
+      setIsSwitchingToSignUp(false);
+      setIsOAuthPopupOpen(false);
+      setIsFinalizingOAuth(false);
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  const switchToSignUp = () => {
+    if (!onSwitchToSignUp) return false;
+    setIsSwitchingToSignUp(true);
+    setLoadingProvider(null);
+    onSwitchToSignUp();
+    return true;
+  };
 
-  // OAuth login con transición automática a sign-up
+  useEffect(() => {
+    if (!isOpen || isOAuthPopupOpen || !isFinalizingOAuth || isSignedIn) return;
+
+    const timeout = window.setTimeout(() => {
+      setIsFinalizingOAuth(false);
+    }, 1500);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [isFinalizingOAuth, isOAuthPopupOpen, isOpen, isSignedIn]);
+
+  if (!isOpen || isSwitchingToSignUp) return null;
+
+  // OAuth login sin abrir automáticamente el modal de sign-up
   const signInWith = async (strategy: OAuthStrategy) => {
+    setIsSwitchingToSignUp(false);
+
     if (!signIn) {
       setErrors([
         {
@@ -135,6 +165,16 @@ export default function MiniLoginModal({
     }
     oauthInFlightRef.current = true;
 
+    // Ocultar el modal en el mismo tick del click para evitar que quede visible
+    // detrás de la ventana OAuth.
+    window.dispatchEvent(new CustomEvent('mini-auth:oauth-signin-start'));
+    flushSync(() => {
+      setErrors(undefined);
+      setLoadingProvider(strategy);
+      setIsOAuthPopupOpen(true);
+      setIsFinalizingOAuth(true);
+    });
+
     const baseUrl = window.location.origin;
     const absoluteRedirectUrl = `${baseUrl}/popup-callback?flow=modal`;
     const absoluteRedirectUrlComplete =
@@ -157,6 +197,9 @@ export default function MiniLoginModal({
 
     if (!popup || popup.closed || typeof popup.closed === 'undefined') {
       oauthInFlightRef.current = false;
+      setLoadingProvider(null);
+      setIsOAuthPopupOpen(false);
+      setIsFinalizingOAuth(false);
       setErrors([
         {
           code: 'popup_blocked',
@@ -172,6 +215,33 @@ export default function MiniLoginModal({
 
     let resolved = false;
     let popupWatcher: number | null = null;
+    let needsSignUpRequested = false;
+
+    const setNeedsSignUpError = () => {
+      setErrors([
+        {
+          code: 'oauth_needs_signup',
+          message:
+            'Esta cuenta de OAuth no tiene registro en Artiefy. Regístrate para continuar.',
+          longMessage:
+            'Esta cuenta de OAuth no tiene registro en Artiefy. Regístrate para continuar.',
+          meta: {},
+        },
+      ]);
+    };
+
+    const finalizeOAuthFlow = (showNeedsSignUpError = false) => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      oauthInFlightRef.current = false;
+      setLoadingProvider(null);
+      setIsOAuthPopupOpen(false);
+      if (showNeedsSignUpError) {
+        setNeedsSignUpError();
+        setIsFinalizingOAuth(false);
+      }
+    };
 
     const cleanup = () => {
       window.removeEventListener('message', handlePopupMessage);
@@ -181,27 +251,12 @@ export default function MiniLoginModal({
       }
     };
 
-    const openSignUpModal = () => {
-      if (resolved) return;
-      resolved = true;
-      cleanup();
-      oauthInFlightRef.current = false;
-      setLoadingProvider(null);
-      if (onSwitchToSignUp) {
-        // Evitamos pasar strategy para no auto-disparar un segundo OAuth
-        // en MiniSignUpModal; el estado transferido ya existe en Clerk.
-        onSwitchToSignUp();
-      } else {
-        onClose();
-      }
-    };
-
     const handlePopupMessage = async (event: MessageEvent) => {
       if (event.origin !== window.location.origin) return;
       const type = event.data?.type as string | undefined;
 
       if (type === 'clerk:oauth:needs_signup') {
-        openSignUpModal();
+        needsSignUpRequested = true;
         return;
       }
 
@@ -232,7 +287,7 @@ export default function MiniLoginModal({
           signIn.status === 'complete' || Boolean(signIn.createdSessionId);
 
         if (!signInCompleted) {
-          openSignUpModal();
+          finalizeOAuthFlow(true);
           return;
         }
       } catch (error) {
@@ -243,15 +298,10 @@ export default function MiniLoginModal({
       }
 
       if (resolved) return;
-      resolved = true;
-      cleanup();
-      oauthInFlightRef.current = false;
-      setLoadingProvider(null);
+      finalizeOAuthFlow(false);
     };
 
     try {
-      setLoadingProvider(strategy);
-      setErrors(undefined);
       window.addEventListener('message', handlePopupMessage);
 
       popupWatcher = window.setInterval(() => {
@@ -260,10 +310,7 @@ export default function MiniLoginModal({
           cleanup();
           return;
         }
-        resolved = true;
-        cleanup();
-        oauthInFlightRef.current = false;
-        setLoadingProvider(null);
+        finalizeOAuthFlow(needsSignUpRequested);
       }, 500);
 
       await signIn.authenticateWithPopup({
@@ -288,21 +335,20 @@ export default function MiniLoginModal({
         const signInCompleted =
           signIn.status === 'complete' || Boolean(signIn.createdSessionId);
         if (!signInCompleted) {
-          openSignUpModal();
+          finalizeOAuthFlow(true);
         } else {
-          resolved = true;
-          cleanup();
-          oauthInFlightRef.current = false;
-          setLoadingProvider(null);
+          finalizeOAuthFlow(false);
         }
       }
     } catch (err) {
       if (resolved) return;
-      resolved = true;
-      cleanup();
-      oauthInFlightRef.current = false;
-      setLoadingProvider(null);
+      finalizeOAuthFlow(needsSignUpRequested);
       console.error('❌ Error en OAuth popup:', err);
+
+      if (needsSignUpRequested) {
+        return;
+      }
+      setIsFinalizingOAuth(false);
 
       if (isClerkAPIResponseError(err)) {
         setErrors(err.errors);
@@ -324,6 +370,29 @@ export default function MiniLoginModal({
       }
     }
   };
+
+  if (isOAuthPopupOpen || isFinalizingOAuth) {
+    return (
+      <div
+        className="
+          fixed inset-0 z-[1300] flex items-center justify-center bg-black/70
+          backdrop-blur-sm
+        "
+      >
+        <div
+          className="
+            flex flex-col items-center gap-3 rounded-2xl bg-background/95 p-6
+            shadow-2xl
+          "
+        >
+          <Icons.spinner className="size-10 text-primary" />
+          <p className="text-sm font-medium text-foreground">
+            Validando inicio de sesión...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const validateSignInInputs = (
     identifier: string,
@@ -569,6 +638,9 @@ export default function MiniLoginModal({
     if (error.code === 'oauth_error') {
       return 'Hubo un problema al iniciar sesión con OAuth. Inténtalo de nuevo.';
     }
+    if (error.code === 'oauth_needs_signup') {
+      return 'Esta cuenta de OAuth no tiene registro en Artiefy. Regístrate para continuar.';
+    }
     if (error.code === 'oauth_in_progress') {
       return 'Ya hay un inicio de sesión OAuth en progreso. Completa esa ventana primero.';
     }
@@ -597,7 +669,7 @@ export default function MiniLoginModal({
   return (
     <div
       className="
-        pointer-events-auto fixed inset-0 z-[1100] flex items-center
+        pointer-events-auto fixed inset-0 z-[1200] flex items-center
         justify-center bg-black/50
       "
     >
@@ -605,7 +677,7 @@ export default function MiniLoginModal({
       {loadingProvider && (
         <div
           className="
-            absolute inset-0 z-[1150] flex items-center justify-center
+            absolute inset-0 z-[1250] flex items-center justify-center
             bg-black/70 backdrop-blur-sm
           "
         >
@@ -871,7 +943,7 @@ export default function MiniLoginModal({
               </p>
               <button
                 type="button"
-                onClick={() => onSwitchToSignUp?.()}
+                onClick={switchToSignUp}
                 className="
                   text-sm font-semibold text-primary
                   hover:underline
@@ -1108,7 +1180,7 @@ export default function MiniLoginModal({
                       font-medium text-primary transition-colors
                       hover:text-primary/80
                     "
-                    onClick={() => onSwitchToSignUp?.()}
+                    onClick={switchToSignUp}
                   >
                     Regístrate aquí
                   </button>

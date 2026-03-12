@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useAuth } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { useSignUp } from '@clerk/nextjs/legacy';
-import { type ClerkAPIError } from '@clerk/shared/types';
+import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 
@@ -45,6 +45,8 @@ interface MiniSignUpModalProps {
   onClose: () => void;
   onSignUpSuccess: () => void;
   redirectUrl?: string;
+  autoStartOAuthStrategy?: OAuthStrategy | null;
+  onAutoStartOAuthHandled?: () => void;
   onSwitchToLogin?: () => void;
 }
 
@@ -53,6 +55,8 @@ export default function MiniSignUpModal({
   onClose,
   onSignUpSuccess,
   redirectUrl = '/',
+  autoStartOAuthStrategy = null,
+  onAutoStartOAuthHandled,
   onSwitchToLogin,
 }: MiniSignUpModalProps) {
   const { signUp, setActive, isLoaded } = useSignUp();
@@ -74,6 +78,31 @@ export default function MiniSignUpModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasHandledAuth, setHasHandledAuth] = useState(false);
   void redirectUrl;
+
+  useEffect(() => {
+    if (!isOpen || !autoStartOAuthStrategy) return;
+    onAutoStartOAuthHandled?.();
+  }, [autoStartOAuthStrategy, isOpen, onAutoStartOAuthHandled]);
+
+  // Si inicia OAuth desde el mini-login, cerramos este modal de inmediato.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleOAuthSignInStart = () => {
+      onClose();
+    };
+
+    window.addEventListener(
+      'mini-auth:oauth-signin-start',
+      handleOAuthSignInStart
+    );
+    return () => {
+      window.removeEventListener(
+        'mini-auth:oauth-signin-start',
+        handleOAuthSignInStart
+      );
+    };
+  }, [isOpen, onClose]);
 
   // Sincronizar estado cuando el popup termina el OAuth
   useEffect(() => {
@@ -801,7 +830,7 @@ export default function MiniSignUpModal({
   return (
     <div
       className="
-        pointer-events-auto fixed inset-0 z-[1100] flex items-center
+        pointer-events-auto fixed inset-0 z-[1300] flex items-center
         justify-center bg-black/50
       "
     >
