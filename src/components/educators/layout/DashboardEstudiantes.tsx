@@ -565,7 +565,21 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         gradesMap[u.id] = g;
       });
 
-      // Build parameter map (for params without activities)
+      const allActivities: Activity[] = Array.from(activityMap.entries()).map(
+        ([id, data]) => ({ id, ...data })
+      );
+
+      // ✅ NUEVO: calcular porcentaje usado por parámetro
+      const porcentajeUsadoPorParametro = new Map<number, number>();
+      allActivities.forEach((act) => {
+        const prev = porcentajeUsadoPorParametro.get(act.parametroId) ?? 0;
+        porcentajeUsadoPorParametro.set(
+          act.parametroId,
+          prev + act.actividadPeso
+        );
+      });
+
+      // Parámetros sin ninguna actividad → placeholder "Sin actividad"
       const parametroMap = new Map<
         number,
         { parametroName: string; parametroPeso: number }
@@ -581,19 +595,29 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         });
       });
 
-      const allActivities: Activity[] = Array.from(activityMap.entries()).map(
-        ([id, data]) => ({ id, ...data })
-      );
-
-      // Add placeholder activities for parameters with no activities
       parametroMap.forEach((param, parametroId) => {
         const exists = allActivities.some(
-          (act) => act.parametro === param.parametroName
+          (act) => act.parametroId === parametroId
         );
         if (!exists) {
           allActivities.push({
             id: -parametroId,
             name: 'Sin actividad',
+            parametroId,
+            parametro: param.parametroName,
+            parametroPeso: param.parametroPeso,
+            actividadPeso: 0,
+          });
+        }
+      });
+
+      // ✅ NUEVO: agregar botón "Agregar más" para parámetros con porcentaje < 100
+      parametroMap.forEach((param, parametroId) => {
+        const totalUsado = porcentajeUsadoPorParametro.get(parametroId) ?? 0;
+        if (totalUsado < 100) {
+          allActivities.push({
+            id: -(parametroId + 10000), // ID único para no colisionar
+            name: 'Agregar actividad',
             parametroId,
             parametro: param.parametroName,
             parametroPeso: param.parametroPeso,
@@ -949,7 +973,8 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                               lg:table-cell
                             "
                           >
-                            {activity.name === 'Sin actividad' ? (
+                            {activity.name === 'Sin actividad' ||
+                            activity.name === 'Agregar actividad' ? (
                               <div
                                 className="
                                 flex items-center justify-center space-x-2

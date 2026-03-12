@@ -106,42 +106,38 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
     );
   };
 
-  // Función para obtener las lecciones
-  const fetchLessons = useCallback(
-    async (lessonsIdNumber: number) => {
-      if (!user) return;
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await fetch(
-          `/api/educadores/lessons/${lessonsIdNumber}`
-        );
-        if (response.ok) {
-          const data = (await response.json()) as Lessons;
-          setLessons(data);
-        } else {
-          const errorData = (await response.json()) as { error?: string };
-          const errorMessage = errorData.error ?? response.statusText;
-          setError(`Error al cargar la leccion: ${errorMessage}`);
-          toast.error('Error', {
-            description: `No se pudo cargar la leccion: ${errorMessage}`,
-          });
-        }
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Error desconocido';
+  // Función para obtener las lecciones - SIN depender de user para evitar ciclos infinitos
+  const fetchLessons = useCallback(async (lessonsIdNumber: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(
+        `/api/educadores/lessons/${lessonsIdNumber}`
+      );
+      if (response.ok) {
+        const data = (await response.json()) as Lessons;
+        setLessons(data);
+      } else {
+        const errorData = (await response.json()) as { error?: string };
+        const errorMessage = errorData.error ?? response.statusText;
         setError(`Error al cargar la leccion: ${errorMessage}`);
         toast.error('Error', {
           description: `No se pudo cargar la leccion: ${errorMessage}`,
         });
-      } finally {
-        setLoading(false);
       }
-    },
-    [user]
-  );
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error desconocido';
+      setError(`Error al cargar la leccion: ${errorMessage}`);
+      toast.error('Error', {
+        description: `No se pudo cargar la leccion: ${errorMessage}`,
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // Cargar las lecciones al cargar la
+  // Cargar las lecciones al cargar la - SOLO cuando lessonId cambia
   useEffect(() => {
     if (!lessonId) {
       setError('lessonId is null or invalid');
@@ -160,7 +156,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
     fetchLessons(lessonsIdNumber).catch((error) =>
       console.error('Error fetching lessons:', error)
     );
-  }, [lessonId, fetchLessons]);
+  }, [lessonId]);
 
   // Función para eliminar la lección
   const handleDelete = async (id: string) => {
@@ -267,7 +263,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -291,7 +287,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 );
               }
             }}
-            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -306,7 +302,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   // Renderizar la página
   return (
     <>
-      <div className="bg-background container mx-auto mt-2 h-auto w-full rounded-lg">
+      <div className="container mx-auto mt-2 h-auto w-full rounded-lg bg-background">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -347,7 +343,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="group relative h-auto w-full">
-          <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+          <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
           <Card
             className={`relative mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
             style={{
@@ -356,7 +352,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             }}
           >
             <CardHeader>
-              <CardTitle className={`text-primary text-2xl font-bold`}>
+              <CardTitle className={`text-2xl font-bold text-primary`}>
                 Clase: {lessons.title}
               </CardTitle>
               {/* Add color selection buttons */}
@@ -481,7 +477,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 <div className="grid grid-cols-2">
                   <div className="flex flex-col">
                     <h2 className="text-lg font-semibold">Clase:</h2>
-                    <h1 className="text-primary mb-4 text-2xl font-bold">
+                    <h1 className="mb-4 text-2xl font-bold text-primary">
                       {lessons.title}
                     </h1>
                   </div>
@@ -489,7 +485,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <h2 className="text-lg font-semibold">Categoría:</h2>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                      className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                     >
                       {lessons.course?.categoryId}
                     </Badge>
@@ -504,7 +500,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <h2 className="text-lg font-semibold">Educador:</h2>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                      className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                     >
                       {lessons.course?.instructor}
                     </Badge>
@@ -513,7 +509,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <h2 className="text-lg font-semibold">Modalidad:</h2>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                      className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
                     >
                       {lessons.course?.modalidadId}
                     </Badge>

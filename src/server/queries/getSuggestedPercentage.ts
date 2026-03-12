@@ -1,18 +1,11 @@
-import { eq } from 'drizzle-orm';
+import { eq, sum } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { activities, parametros } from '~/server/db/schema';
 
-/**
- * Calcula el porcentaje sugerido para una nueva actividad de un parámetro.
- * Si el parámetro ya tiene el máximo de actividades, retorna null.
- * @param parametroId ID del parámetro
- * @returns porcentaje sugerido (number) o null si está lleno
- */
 export async function getSuggestedPercentage(
   parametroId: number
 ): Promise<number | null> {
-  // Obtener info del parámetro
   const param = await db
     .select({
       id: parametros.id,
@@ -23,21 +16,46 @@ export async function getSuggestedPercentage(
     .where(eq(parametros.id, parametroId))
     .then((rows) => rows[0]);
 
-  if (!param || !param.numberOfActivities || param.numberOfActivities <= 0)
-    return null;
+  if (!param) return null;
 
-  // Contar actividades existentes para este parámetro
-  const actividades = await db
-    .select({ id: activities.id })
+  // Sumar porcentajes ya usados por actividades existentes
+  const [result] = await db
+    .select({ totalUsado: sum(activities.porcentaje) })
     .from(activities)
     .where(eq(activities.parametroId, parametroId));
 
-  if (actividades.length >= param.numberOfActivities) {
-    // Ya está lleno
-    return null;
+  const totalUsado = Number(result?.totalUsado ?? 0);
+
+  // ✅ Comparar contra numberOfActivities si existe,
+  // o contra 100 como tope interno del parámetro
+  const tope =
+    param.numberOfActivities && param.numberOfActivities > 0
+      ? (100 / param.numberOfActivities) *
+        (await db
+          .select({ id: activities.id })
+          .from(activities)
+          .where(eq(activities.parametroId, parametroId))
+          .then((r) => r.length))
+      : 100;
+
+  const porcentajeDisponible = 100 - totalUsado;
+
+  // ✅ Aún hay porcentaje disponible dentro del parámetro
+  if (porcentajeDisponible <= 0) return null;
+
+  // ✅ Verificar límite de actividades
+  if (param.numberOfActivities && param.numberOfActivities > 0) {
+    const countActividades = await db
+      .select({ id: activities.id })
+      .from(activities)
+      .where(eq(activities.parametroId, parametroId))
+      .then((r) => r.length);
+
+    if (countActividades >= param.numberOfActivities) return null;
+
+    const restantes = param.numberOfActivities - countActividades;
+    return Math.round((porcentajeDisponible / restantes) * 100) / 100;
   }
 
-  // Calcular sugerido
-  const sugerido = Math.round((100 / param.numberOfActivities) * 100) / 100;
-  return sugerido;
+  return porcentajeDisponible;
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -42,6 +42,19 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   // El estado inicial se calcula desde la prop `file` para evitar setState sincronas en useEffect
 
+  // Sincronizar estado local cuando cambia la prop file
+  useEffect(() => {
+    if (file) {
+      setFiles([file]);
+      setFileNames([file.name]);
+      setFileSizes([file.size]);
+    } else {
+      setFiles([]);
+      setFileNames([]);
+      setFileSizes([]);
+    }
+  }, [file]);
+
   // Función para manejar el cambio de archivo en el input y validar el archivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []);
@@ -77,11 +90,21 @@ const FileUpload: React.FC<FileUploadProps> = ({
       return;
     }
 
-    setFiles((prev) => [...prev, ...validFiles]);
-    setFileNames((prev) => [...prev, ...validFiles.map((file) => file.name)]);
-    setFileSizes((prev) => [...prev, ...validFiles.map((file) => file.size)]);
+    // Calcular el nuevo array ANTES de actualizar el estado
+    const newFiles = multiple ? [...files, ...validFiles] : validFiles;
+    const newFileNames = multiple
+      ? [...fileNames, ...validFiles.map((file) => file.name)]
+      : validFiles.map((file) => file.name);
+    const newFileSizes = multiple
+      ? [...fileSizes, ...validFiles.map((file) => file.size)]
+      : validFiles.map((file) => file.size);
+
+    setFiles(newFiles);
+    setFileNames(newFileNames);
+    setFileSizes(newFileSizes);
     setErrors('');
-    onFileChange(multiple ? [...files, ...validFiles] : validFiles[0]);
+    // Pasar el nuevo array, no el estado anterior
+    onFileChange(multiple ? newFiles : newFiles[0]);
   };
 
   // Función para manejar el arrastre de archivos
@@ -132,26 +155,42 @@ const FileUpload: React.FC<FileUploadProps> = ({
       return;
     }
 
-    setFiles((prev) => [...prev, ...validFiles]);
-    setFileNames((prev) => [...prev, ...validFiles.map((file) => file.name)]);
-    setFileSizes((prev) => [...prev, ...validFiles.map((file) => file.size)]);
+    // Calcular el nuevo array ANTES de actualizar el estado
+    const newFiles = multiple ? [...files, ...validFiles] : validFiles;
+    const newFileNames = multiple
+      ? [...fileNames, ...validFiles.map((file) => file.name)]
+      : validFiles.map((file) => file.name);
+    const newFileSizes = multiple
+      ? [...fileSizes, ...validFiles.map((file) => file.size)]
+      : validFiles.map((file) => file.size);
+
+    setFiles(newFiles);
+    setFileNames(newFileNames);
+    setFileSizes(newFileSizes);
     setErrors('');
-    onFileChange(multiple ? [...files, ...validFiles] : validFiles[0]);
+    // Pasar el nuevo array, no el estado anterior
+    onFileChange(multiple ? newFiles : newFiles[0]);
   };
 
   // Función para manejar la eliminación de archivos
   const handleRemoveFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-    setFileNames((prev) => prev.filter((_, i) => i !== index));
-    setFileSizes((prev) => prev.filter((_, i) => i !== index));
+    // Calcular el nuevo array ANTES de actualizar el estado
+    const newFiles = files.filter((_, i) => i !== index);
+    const newFileNames = fileNames.filter((_, i) => i !== index);
+    const newFileSizes = fileSizes.filter((_, i) => i !== index);
+
+    setFiles(newFiles);
+    setFileNames(newFileNames);
+    setFileSizes(newFileSizes);
     setErrors('');
-    onFileChange(files.length > 1 ? files.filter((_, i) => i !== index) : null);
+    // Pasar el nuevo array, no el estado anterior
+    onFileChange(newFiles.length > 0 ? newFiles : null);
   };
 
   // Retorno la vista del componente
   return (
     <div className="flex flex-col items-center">
-      <label className="text-primary text-center text-lg font-medium">
+      <label className="text-center text-lg font-medium text-primary">
         {label}
       </label>
       <div
@@ -168,7 +207,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       >
         {!files.length ? (
           <div className="text-center">
-            <div className="bg-primary mx-auto size-16 rounded-full pt-2">
+            <div className="mx-auto size-16 rounded-full bg-primary pt-2">
               {type === 'image' && (
                 <ImageIcon className="mx-auto size-12 text-white" />
               )}
@@ -199,7 +238,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             />
             <label
               htmlFor={`file-upload-${type}`}
-              className="bg-primary mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+              className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
             >
               Seleccionar {tipo}
             </label>
@@ -326,7 +365,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     />{' '}
                     <label
                       htmlFor={`additional-file-upload-${type}`}
-                      className="bg-primary inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                      className="inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
                     >
                       {' '}
                       Subir más archivos{' '}
