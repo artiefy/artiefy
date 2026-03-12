@@ -56,8 +56,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
         ? false
         : true
     );
-    const [useNativePlayer, setUseNativePlayer] = useState(false);
-    const [playerError, setPlayerError] = useState<string | null>(null);
+    const [failedVideoKeys, setFailedVideoKeys] = useState<
+      Record<string, true>
+    >({});
     const [isBuffering, setIsBuffering] = useState(false);
     // Usa el tipo correcto para el ref de Player
     const playerRef = useRef<HTMLVideoElement | null>(null);
@@ -65,6 +66,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     const hasAppliedResumeRef = useRef(false);
     const maxWatchedTimeRef = useRef(0);
     const lastProgressRef = useRef(0);
+    const hasLoadedOnceRef = useRef(false);
     const SEEK_TOLERANCE_SECONDS = 1;
 
     useImperativeHandle(ref, () => ({
@@ -85,6 +87,17 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
         return '';
       return `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${videoKey}`;
     }, [videoKey, isLocked]);
+
+    const forceNativePlayer = useMemo(
+      () =>
+        videoKey
+          ? FORCE_NATIVE_PLAYER_VIDEOS.some((v) => videoKey.endsWith(v))
+          : false,
+      [videoKey]
+    );
+
+    const hasPlayerFailed = !!(videoKey && failedVideoKeys[videoKey]);
+    const useNativePlayer = forceNativePlayer || hasPlayerFailed;
 
     const applyResumeTime = useCallback(
       (video: HTMLVideoElement | null) => {
@@ -133,24 +146,10 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     }, []);
 
     useEffect(() => {
-      const shouldUseNative = videoKey
-        ? FORCE_NATIVE_PLAYER_VIDEOS.some((v) => videoKey.endsWith(v))
-        : false;
-      const t = setTimeout(() => {
-        setUseNativePlayer(shouldUseNative);
-        setPlayerError(
-          shouldUseNative
-            ? 'Usando reproductor nativo para mejor compatibilidad'
-            : null
-        );
-      }, 0);
-      return () => clearTimeout(t);
-    }, [videoKey, isLocked]);
-
-    useEffect(() => {
       hasAppliedResumeRef.current = false;
       maxWatchedTimeRef.current = 0;
       lastProgressRef.current = 0;
+      hasLoadedOnceRef.current = false;
     }, [videoKey]);
 
     const playerStyle = useMemo(
@@ -228,37 +227,41 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
         'Next-video player failed, falling back to native player:',
         error
       );
-      setPlayerError('Error loading video player');
-      setUseNativePlayer(true);
+      if (videoKey) {
+        setFailedVideoKeys((prev) => {
+          if (prev[videoKey]) return prev;
+          return { ...prev, [videoKey]: true };
+        });
+      }
     };
 
     const renderLoadingState = () => (
       <div
         className="
-        absolute inset-0 z-50 flex aspect-video w-full items-center
-        justify-center overflow-hidden rounded-lg
-      "
+          absolute inset-0 z-50 flex aspect-video w-full items-center
+          justify-center overflow-hidden rounded-lg
+        "
       >
         <div className="absolute inset-0">
           <div
             className="
-            absolute inset-0 bg-gradient-to-r from-[#3498db] to-[#2ecc71]
-            shadow-lg
-          "
+              absolute inset-0 bg-gradient-to-r from-[#3498db] to-[#2ecc71]
+              shadow-lg
+            "
           />
           <div
             className="
-            absolute inset-0
-            bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)]
-            bg-[length:20px_20px] opacity-50
-          "
+              absolute inset-0
+              bg-[linear-gradient(90deg,rgba(255,255,255,0.1)1px,transparent_1px),linear-gradient(rgba(255,255,255,0.1)1px,transparent_1px)]
+              bg-[length:20px_20px] opacity-50
+            "
           />
         </div>
         <div
           className="
-          relative z-10 flex flex-col items-center justify-center space-y-6
-          text-center
-        "
+            relative z-10 flex flex-col items-center justify-center space-y-6
+            text-center
+          "
         >
           {!videoKey ||
           videoKey === 'null' ||
@@ -267,8 +270,8 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
             <>
               <h2
                 className="
-                animate-pulse text-4xl font-bold tracking-tight text-white
-              "
+                  animate-pulse text-4xl font-bold tracking-tight text-white
+                "
               >
                 Video no disponible
               </h2>
@@ -278,18 +281,18 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
               <div className="mt-4 flex items-center space-x-2">
                 <div
                   className="
-                  size-2 animate-bounce rounded-full bg-white delay-100
-                "
+                    size-2 animate-bounce rounded-full bg-white delay-100
+                  "
                 />
                 <div
                   className="
-                  size-2 animate-bounce rounded-full bg-white delay-200
-                "
+                    size-2 animate-bounce rounded-full bg-white delay-200
+                  "
                 />
                 <div
                   className="
-                  size-2 animate-bounce rounded-full bg-white delay-300
-                "
+                    size-2 animate-bounce rounded-full bg-white delay-300
+                  "
                 />
               </div>
             </>
@@ -324,12 +327,13 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
     );
 
     const handleLoadStart = useCallback(() => {
-      if (videoUrl) {
+      if (videoUrl && !hasLoadedOnceRef.current) {
         setIsLoading(true);
       }
     }, [videoUrl]);
 
     const handleCanPlay = useCallback(() => {
+      hasLoadedOnceRef.current = true;
       setIsLoading(false);
       setIsBuffering(false);
     }, []);
@@ -346,7 +350,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
 
     return (
       <div className="relative aspect-video w-full" ref={containerRef}>
-        {videoUrl && !useNativePlayer && !playerError && (
+        {videoUrl && !useNativePlayer && (
           <Player
             src={videoUrl}
             controls
@@ -369,10 +373,11 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
             style={playerStyle}
           />
         )}
-        {(videoUrl && useNativePlayer) || playerError ? (
+        {videoUrl && useNativePlayer ? (
           <video
             ref={playerRef}
             src={videoUrl}
+            preload="metadata"
             className="absolute inset-0 size-full bg-black object-contain"
             controls
             playsInline
@@ -401,10 +406,10 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
         {showCompletedIndicator && (
           <div
             className="
-            pointer-events-none absolute top-3 left-3 rounded-full
-            bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-emerald-950
-            shadow
-          "
+              pointer-events-none absolute top-3 left-3 rounded-full
+              bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-emerald-950
+              shadow
+            "
           >
             Completado
           </div>

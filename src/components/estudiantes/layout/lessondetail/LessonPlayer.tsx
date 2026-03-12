@@ -39,18 +39,18 @@ export default function LessonPlayer({
       <div className="w-full">
         <div
           className="
-          px-4 pt-12
-          lg:px-8
-        "
+            px-4 pt-12
+            lg:px-8
+          "
         >
           <div className="mx-auto max-w-6xl">
             {/* Video Player con overlay */}
             {hasVideo && (
               <div
                 className="
-                group relative aspect-video w-full overflow-hidden rounded-3xl
-                bg-black shadow-2xl
-              "
+                  group relative aspect-video w-full overflow-hidden rounded-3xl
+                  bg-black shadow-2xl
+                "
               >
                 <VideoPlayer
                   videoKey={lesson.coverVideoKey}
@@ -70,21 +70,21 @@ export default function LessonPlayer({
                 {/* Overlay gradients */}
                 <div
                   className="
-                  pointer-events-none absolute inset-0 opacity-100
-                  transition-opacity duration-500
-                "
+                    pointer-events-none absolute inset-0 opacity-100
+                    transition-opacity duration-500
+                  "
                 >
                   <div
                     className="
-                    absolute top-0 right-0 left-0 h-32 bg-gradient-to-b
-                    from-black/60 to-transparent
-                  "
+                      absolute top-0 right-0 left-0 h-32 bg-gradient-to-b
+                      from-black/60 to-transparent
+                    "
                   />
                   <div
                     className="
-                    absolute right-0 bottom-0 left-0 h-48 bg-gradient-to-t
-                    from-black/80 via-black/40 to-transparent
-                  "
+                      absolute right-0 bottom-0 left-0 h-48 bg-gradient-to-t
+                      from-black/80 via-black/40 to-transparent
+                    "
                   />
                 </div>
 
@@ -140,9 +140,9 @@ export default function LessonPlayer({
                 {lesson.courseTitle ? (
                   <span
                     className="
-                    rounded-full bg-accent/10 px-3 py-1 text-xs font-medium
-                    text-accent
-                  "
+                      rounded-full bg-accent/10 px-3 py-1 text-xs font-medium
+                      text-accent
+                    "
                   >
                     {lesson.courseTitle}
                   </span>
@@ -159,8 +159,8 @@ export default function LessonPlayer({
               {lesson.description ? (
                 <p
                   className="
-                  max-w-3xl text-base leading-relaxed text-muted-foreground
-                "
+                    max-w-3xl text-base leading-relaxed text-muted-foreground
+                  "
                 >
                   {lesson.description}
                 </p>

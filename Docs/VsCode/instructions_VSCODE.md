@@ -164,19 +164,15 @@ Type `/instructions` in the chat input to quickly open the **Configure Instructi
 Alternatively, use the **Chat: New Instructions File** command from the Command Palette (⇧⌘P).
 
 2.  Choose the location where to create the instructions file.
-
-
-    *   **Workspace**: create the instructions file in the `.github/instructions` folder of your workspace to only use it within that workspace. Add more instruction folders for your workspace with the
+    - **Workspace**: create the instructions file in the `.github/instructions` folder of your workspace to only use it within that workspace. Add more instruction folders for your workspace with the
 
 chat.instructionsFilesLocations setting. \* **User profile**: create the instructions files in the [current profile folder](https://code.visualstudio.com/docs/configure/profiles) to use it across all your workspaces.
 
 3.  Enter a file name for your instructions file. This is the default name that is used in the UI.
 
 4.  Author the custom instructions by using Markdown formatting.
-
-
-    *   Fill in the YAML frontmatter at the top of the file to configure the instructions' description, name, and when they apply.
-    *   Add instructions in the body of the file.
+    - Fill in the YAML frontmatter at the top of the file to configure the instructions' description, name, and when they apply.
+    - Add instructions in the body of the file.
 
 To modify an existing instructions file, in the Chat view, select **Configure Chat** (gear icon) >**Chat Instructions**, and then select an instructions file from the list. Alternatively, use the **Chat: Configure Instructions** command from the Command Palette (⇧⌘P) and select the instructions file from the Quick Pick.
 

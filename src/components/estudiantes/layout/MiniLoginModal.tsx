@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
 import { useAuth } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
-import { useSignIn, useSignUp } from '@clerk/nextjs/legacy';
+import { useSignIn } from '@clerk/nextjs/legacy';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
+import { flushSync } from 'react-dom';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 
@@ -31,7 +32,6 @@ export default function MiniLoginModal({
   initialError,
 }: MiniLoginModalProps) {
   const { signIn, setActive } = useSignIn();
-  const { signUp } = useSignUp();
   const { isSignedIn } = useAuth({
     treatPendingAsSignedOut: false,
   });
@@ -46,6 +46,10 @@ export default function MiniLoginModal({
     null
   );
   const [hasHandledAuth, setHasHandledAuth] = useState(false);
+  const [isSwitchingToSignUp, setIsSwitchingToSignUp] = useState(false);
+  const [isOAuthPopupOpen, setIsOAuthPopupOpen] = useState(false);
+  const [isFinalizingOAuth, setIsFinalizingOAuth] = useState(false);
+  const oauthInFlightRef = useRef(false);
 
   // Manejar error inicial de OAuth
   useEffect(() => {
@@ -75,6 +79,7 @@ export default function MiniLoginModal({
       if (loadingProvider) {
         setLoadingProvider(null);
       }
+      setIsFinalizingOAuth(false);
       onLoginSuccess();
       onClose();
 
@@ -104,164 +109,246 @@ export default function MiniLoginModal({
   useEffect(() => {
     if (!isOpen) {
       setHasHandledAuth(false);
+      setIsSwitchingToSignUp(false);
+      setIsOAuthPopupOpen(false);
+      setIsFinalizingOAuth(false);
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  const switchToSignUp = () => {
+    if (!onSwitchToSignUp) return false;
+    setIsSwitchingToSignUp(true);
+    setLoadingProvider(null);
+    onSwitchToSignUp();
+    return true;
+  };
 
-  // OAuth login con transición automática a sign-up
+  useEffect(() => {
+    if (!isOpen || isOAuthPopupOpen || !isFinalizingOAuth || isSignedIn) return;
+
+    const timeout = window.setTimeout(() => {
+      setIsFinalizingOAuth(false);
+    }, 1500);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [isFinalizingOAuth, isOAuthPopupOpen, isOpen, isSignedIn]);
+
+  if (!isOpen || isSwitchingToSignUp) return null;
+
+  // OAuth login sin abrir automáticamente el modal de sign-up
   const signInWith = async (strategy: OAuthStrategy) => {
+    setIsSwitchingToSignUp(false);
+
     if (!signIn) {
       setErrors([
         {
           code: 'sign_in_undefined',
-          message: 'SignIn o SignUp no está definido',
+          message: 'SignIn no está definido',
           meta: {},
         },
       ]);
       return;
     }
 
+    if (loadingProvider || oauthInFlightRef.current) {
+      setErrors([
+        {
+          code: 'oauth_in_progress',
+          message: 'Ya hay un inicio de sesión OAuth en progreso.',
+          longMessage: 'Ya hay un inicio de sesión OAuth en progreso.',
+          meta: {},
+        },
+      ]);
+      return;
+    }
+    oauthInFlightRef.current = true;
+
+    // Ocultar el modal en el mismo tick del click para evitar que quede visible
+    // detrás de la ventana OAuth.
+    window.dispatchEvent(new CustomEvent('mini-auth:oauth-signin-start'));
+    flushSync(() => {
+      setErrors(undefined);
+      setLoadingProvider(strategy);
+      setIsOAuthPopupOpen(true);
+      setIsFinalizingOAuth(true);
+    });
+
     const baseUrl = window.location.origin;
-    const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
+    const absoluteRedirectUrl = `${baseUrl}/popup-callback?flow=modal`;
     const absoluteRedirectUrlComplete =
       redirectUrl && redirectUrl.trim() !== ''
         ? redirectUrl.startsWith('http')
           ? redirectUrl
           : `${baseUrl}${redirectUrl}`
         : `${baseUrl}${window.location.pathname}${window.location.search}`;
-    try {
-      setLoadingProvider(strategy);
-      setErrors(undefined);
 
-      const width = 600;
-      const height = 650;
-      const left = (window.screen.width - width) / 2;
-      const top = (window.screen.height - height) / 2;
+    const width = 600;
+    const height = 700;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
 
-      const popup = window.open(
-        'about:blank',
-        '_blank',
-        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,popup=yes`
-      );
+    const popup = window.open(
+      'about:blank',
+      '_blank',
+      `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,popup=yes`
+    );
 
-      if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+    if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+      oauthInFlightRef.current = false;
+      setLoadingProvider(null);
+      setIsOAuthPopupOpen(false);
+      setIsFinalizingOAuth(false);
+      setErrors([
+        {
+          code: 'popup_blocked',
+          message:
+            'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
+          longMessage:
+            'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
+          meta: {},
+        },
+      ]);
+      return;
+    }
+
+    let resolved = false;
+    let popupWatcher: number | null = null;
+    let needsSignUpRequested = false;
+
+    const setNeedsSignUpError = () => {
+      setErrors([
+        {
+          code: 'oauth_needs_signup',
+          message:
+            'Esta cuenta de OAuth no tiene registro en Artiefy. Regístrate para continuar.',
+          longMessage:
+            'Esta cuenta de OAuth no tiene registro en Artiefy. Regístrate para continuar.',
+          meta: {},
+        },
+      ]);
+    };
+
+    const finalizeOAuthFlow = (showNeedsSignUpError = false) => {
+      if (resolved) return;
+      resolved = true;
+      cleanup();
+      oauthInFlightRef.current = false;
+      setLoadingProvider(null);
+      setIsOAuthPopupOpen(false);
+      if (showNeedsSignUpError) {
+        setNeedsSignUpError();
+        setIsFinalizingOAuth(false);
+      }
+    };
+
+    const cleanup = () => {
+      window.removeEventListener('message', handlePopupMessage);
+      if (popupWatcher) {
+        window.clearInterval(popupWatcher);
+        popupWatcher = null;
+      }
+    };
+
+    const handlePopupMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const type = event.data?.type as string | undefined;
+
+      if (type === 'clerk:oauth:needs_signup') {
+        needsSignUpRequested = true;
+        return;
+      }
+
+      if (type === 'clerk:oauth:error') {
+        if (resolved) return;
+        resolved = true;
+        cleanup();
+        oauthInFlightRef.current = false;
         setLoadingProvider(null);
         setErrors([
           {
-            code: 'popup_blocked',
-            message:
-              'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
-            longMessage:
-              'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
+            code: 'oauth_error',
+            message: 'No se pudo completar el inicio de sesión con OAuth.',
+            longMessage: 'No se pudo completar el inicio de sesión con OAuth.',
             meta: {},
           },
         ]);
         return;
       }
 
-      // Monitorear el popup para detectar si se cierra manualmente
-      const popupCheckInterval = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(popupCheckInterval);
-          // Si el popup se cerró pero no hay autenticación, resetear
-          if (!isSignedIn) {
-            setLoadingProvider(null);
-          }
-        }
-      }, 500);
+      if (type !== 'clerk:oauth:complete') return;
 
       try {
-        await signIn.authenticateWithPopup({
-          popup,
-          strategy,
-          redirectUrl: absoluteRedirectUrl,
-          redirectUrlComplete: absoluteRedirectUrlComplete,
-        });
-
-        if (typeof signUp?.reload === 'function') {
-          await signUp.reload();
+        if (typeof signIn.reload === 'function') {
+          await signIn.reload();
         }
+        const signInCompleted =
+          signIn.status === 'complete' || Boolean(signIn.createdSessionId);
 
-        if (signUp?.status === 'missing_requirements' && onSwitchToSignUp) {
-          setLoadingProvider(null);
-          onClose();
-          onSwitchToSignUp(strategy);
+        if (signInCompleted) {
+          finalizeOAuthFlow(false);
           return;
         }
-      } catch (err) {
-        setLoadingProvider(null);
-        console.error('❌ Error en OAuth:', err);
 
-        if (isClerkAPIResponseError(err)) {
-          const popupBlocked = err.errors.some(
-            (error) => error.code === 'popup_blocked'
-          );
-          if (popupBlocked) {
-            if (!popup.closed) {
-              popup.close();
+        // Evita falsos positivos de "needs signup" mientras Clerk sincroniza
+        // el estado después del callback OAuth.
+        window.setTimeout(async () => {
+          if (resolved) return;
+          try {
+            if (typeof signIn.reload === 'function') {
+              await signIn.reload();
             }
-            setErrors([
-              {
-                code: 'popup_blocked',
-                message:
-                  'Popup bloqueado por el navegador. Permite ventanas emergentes para continuar.',
-                longMessage:
-                  'Popup bloqueado por el navegador. Permite ventanas emergentes para continuar.',
-                meta: {},
-              },
-            ]);
-            return;
-          }
-          const customError = err.errors.find(
-            (e) =>
-              e.code === 'form_identifier_not_found' ||
-              e.code === 'identifier_not_found'
-          );
-
-          if (customError) {
-            if (onSwitchToSignUp) {
-              onClose();
-              onSwitchToSignUp(strategy);
-              return;
+          } catch (error) {
+            if (process.env.NODE_ENV !== 'production') {
+              console.error(
+                'No se pudo recargar SignIn tras mensaje complete:',
+                error
+              );
             }
-
-            // Fallback si no existe callback para abrir signup.
-            setErrors([
-              {
-                code: customError.code,
-                message:
-                  'No encontramos una cuenta con ese correo. ¿Quieres crear una cuenta nueva?',
-                longMessage:
-                  'No encontramos una cuenta con ese correo. Usa "Regístrate aquí" para crearla o intenta con otro proveedor.',
-                meta: {},
-              },
-            ]);
-          } else {
-            setErrors(err.errors);
           }
-        } else {
-          setErrors([
-            {
-              code: 'oauth_error',
-              message:
-                err instanceof Error
-                  ? err.message
-                  : 'Error en el inicio de sesión con OAuth',
-              longMessage:
-                err instanceof Error
-                  ? err.message
-                  : 'Error en el inicio de sesión con OAuth',
-              meta: {},
-            },
-          ]);
-        }
-      } finally {
-        clearInterval(popupCheckInterval);
+          if (resolved) return;
+          finalizeOAuthFlow(false);
+        }, 300);
+        return;
+      } catch (error) {
+        console.error(
+          'Error al recargar SignIn después de OAuth popup:',
+          error
+        );
       }
+
+      if (resolved) return;
+      finalizeOAuthFlow(false);
+    };
+
+    try {
+      window.addEventListener('message', handlePopupMessage);
+
+      popupWatcher = window.setInterval(() => {
+        if (!popup.closed) return;
+        if (resolved) {
+          cleanup();
+          return;
+        }
+        finalizeOAuthFlow(needsSignUpRequested);
+      }, 500);
+
+      await signIn.authenticateWithPopup({
+        popup,
+        strategy,
+        redirectUrl: absoluteRedirectUrl,
+        redirectUrlComplete: absoluteRedirectUrlComplete,
+      });
     } catch (err) {
-      setLoadingProvider(null);
-      console.error('❌ Error en OAuth:', err);
+      if (resolved) return;
+      finalizeOAuthFlow(needsSignUpRequested);
+      console.error('❌ Error en OAuth popup:', err);
+
+      if (needsSignUpRequested) {
+        return;
+      }
+      setIsFinalizingOAuth(false);
 
       if (isClerkAPIResponseError(err)) {
         setErrors(err.errors);
@@ -283,6 +370,11 @@ export default function MiniLoginModal({
       }
     }
   };
+
+  // Mientras el popup OAuth está activo, ocultamos totalmente el mini modal.
+  if (isOAuthPopupOpen || isFinalizingOAuth) {
+    return null;
+  }
 
   const validateSignInInputs = (
     identifier: string,
@@ -528,6 +620,12 @@ export default function MiniLoginModal({
     if (error.code === 'oauth_error') {
       return 'Hubo un problema al iniciar sesión con OAuth. Inténtalo de nuevo.';
     }
+    if (error.code === 'oauth_needs_signup') {
+      return 'Esta cuenta de OAuth no tiene registro en Artiefy. Regístrate para continuar.';
+    }
+    if (error.code === 'oauth_in_progress') {
+      return 'Ya hay un inicio de sesión OAuth en progreso. Completa esa ventana primero.';
+    }
     if (error.code === 'invalid_strategy') {
       return 'La contraseña es incorrecta. Inténtalo de nuevo.';
     }
@@ -553,7 +651,7 @@ export default function MiniLoginModal({
   return (
     <div
       className="
-        pointer-events-auto fixed inset-0 z-[1100] flex items-center
+        pointer-events-auto fixed inset-0 z-[1200] flex items-center
         justify-center bg-black/50
       "
     >
@@ -561,7 +659,7 @@ export default function MiniLoginModal({
       {loadingProvider && (
         <div
           className="
-            absolute inset-0 z-[1150] flex items-center justify-center
+            absolute inset-0 z-[1250] flex items-center justify-center
             bg-black/70 backdrop-blur-sm
           "
         >
@@ -827,7 +925,7 @@ export default function MiniLoginModal({
               </p>
               <button
                 type="button"
-                onClick={() => onSwitchToSignUp?.()}
+                onClick={switchToSignUp}
                 className="
                   text-sm font-semibold text-primary
                   hover:underline
@@ -1064,7 +1162,7 @@ export default function MiniLoginModal({
                       font-medium text-primary transition-colors
                       hover:text-primary/80
                     "
-                    onClick={() => onSwitchToSignUp?.()}
+                    onClick={switchToSignUp}
                   >
                     Regístrate aquí
                   </button>

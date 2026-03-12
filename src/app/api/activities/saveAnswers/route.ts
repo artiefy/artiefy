@@ -94,12 +94,17 @@ export async function POST(request: NextRequest) {
     const resultsKey = `activity:${activityId}:user:${userId}:results`;
     await redis.set(resultsKey, results);
 
+    const newAttemptCount = currentAttempts + 1;
+    const isCompleted = dbActivity.revisada
+      ? passed || newAttemptCount >= 3
+      : passed;
+
     // Common values for all database operations
     const baseValues = {
       userId,
       activityId,
       progress: 100,
-      isCompleted: true, // Always set to true when activity is completed
+      isCompleted,
       lastUpdated: new Date(),
       finalGrade: weightedScore,
       lastAttemptAt: new Date(),
@@ -108,7 +113,6 @@ export async function POST(request: NextRequest) {
 
     // For non-revisada activities
     if (!dbActivity.revisada) {
-      const newAttemptCount = currentAttempts + 1;
       await db
         .insert(userActivitiesProgress)
         .values({
@@ -127,18 +131,18 @@ export async function POST(request: NextRequest) {
         });
 
       return NextResponse.json({
-        success: true,
+        success: passed,
         canClose: true,
         message: passed
           ? 'Actividad completada correctamente'
-          : 'Actividad guardada',
+          : 'Actividad guardada. Puedes intentarlo nuevamente hasta aprobar.',
         score: weightedScore,
         attemptCount: newAttemptCount,
+        isCompleted,
       });
     }
 
     // For revisada activities (with attempt limit)
-    const newAttemptCount = currentAttempts + 1;
     await db
       .insert(userActivitiesProgress)
       .values({
@@ -165,6 +169,7 @@ export async function POST(request: NextRequest) {
       score: weightedScore,
       attemptsRemaining: Math.max(0, 3 - newAttemptCount),
       attemptCount: newAttemptCount,
+      isCompleted,
     });
   } catch (error) {
     console.error(

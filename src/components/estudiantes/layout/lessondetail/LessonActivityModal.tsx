@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
@@ -14,7 +15,6 @@ import {
   XMarkIcon, // <-- asegúrate de importar esto
 } from '@heroicons/react/24/solid';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
 import { BsFiletypeXls } from 'react-icons/bs';
 import {
@@ -64,6 +64,7 @@ interface ActivityModalProps {
   onViewHistoryAction: () => void; // Renamed
   onActivityCompleteAction: () => void; // Renamed
   isLastActivityInLesson: boolean;
+  nextLesson?: { id: number; title: string } | null;
 }
 
 interface UserAnswer {
@@ -226,7 +227,10 @@ export function LessonActivityModal({
   onViewHistoryAction,
   onActivityCompleteAction,
   isLastActivityInLesson,
+  nextLesson,
 }: ActivityModalProps) {
+  const router = useRouter();
+
   // Añade id para el título y descripción accesibles
   const modalTitleId = 'activity-modal-title';
   const modalDescId = 'activity-modal-description';
@@ -264,11 +268,44 @@ export function LessonActivityModal({
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   useEffect(() => {
-    if (activity?.content?.questions) {
-      setQuestions(activity.content.questions);
-      setIsLoading(false);
-    }
-  }, [activity]);
+    if (!isOpen || !activity?.id) return;
+
+    // Reinicia el estado para que cada actividad sea totalmente independiente.
+    setCurrentQuestionIndex(0);
+    setUserAnswers({});
+    setShowResults(false);
+    setFinalScore(0);
+    setIsResultsLoaded(false);
+    setIsSavingResults(false);
+    setCanCloseModal(false);
+    setSelectedFile(null);
+    setUploadProgress(0);
+    setIsUploading(false);
+    setUploadedFileInfo(null);
+    setFilePreview(null);
+    setIsLoadingDocument(false);
+    setIsNewUpload(false);
+    setActiveTab('local');
+    setDriveUrl('');
+    setIsUrlValid(false);
+    setIsUploadingUrl(false);
+    setHelpFileInfo(null);
+
+    // Inicializa vacío; otro efecto sincroniza preguntas cuando lleguen.
+    setQuestions([]);
+    setIsLoading(activity.typeid !== 1);
+  }, [activity?.id, activity?.typeid, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || activity?.typeid === 1) return;
+
+    const latestQuestions = activity?.content?.questions;
+    if (!Array.isArray(latestQuestions)) return;
+
+    // Cuando las preguntas llegan de forma asíncrona, actualiza sin resetear el flujo.
+    setQuestions(latestQuestions);
+    setIsLoading(false);
+  }, [activity?.content?.questions, activity?.typeid, isOpen]);
 
   // Al abrir el modal, comprobar si el usuario ya tiene resultados guardados
   useEffect(() => {
@@ -286,8 +323,9 @@ export function LessonActivityModal({
 
         if (!mounted) return;
 
-        // Si la API indica que ya está completada, mostrar solo la pantalla de resultados
-        if (data?.isAlreadyCompleted) {
+        // Si existe al menos un intento previo, mostrar resultado inmediatamente.
+        const hasPreviousAttempt = Number(data?.attemptCount ?? 0) > 0;
+        if (hasPreviousAttempt || data?.isAlreadyCompleted) {
           setFinalScore(data.score ?? 0);
           setUserAnswers(data.answers ?? {});
           setShowResults(true);
@@ -310,6 +348,7 @@ export function LessonActivityModal({
       setFinalScore(savedResults.score ?? 0);
       setUserAnswers(savedResults.answers ?? {});
       setShowResults(true);
+      setIsResultsLoaded(true);
     }
   }, [savedResults]);
 
@@ -331,15 +370,6 @@ export function LessonActivityModal({
   }, [activity.id, activity.revisada, userId]);
 
   useEffect(() => {
-    if (savedResults?.isAlreadyCompleted) {
-      setShowResults(true);
-      setFinalScore(savedResults.score);
-      setUserAnswers(savedResults.answers);
-      setIsResultsLoaded(true);
-    }
-  }, [savedResults]);
-
-  useEffect(() => {
     const canClose = () => {
       // Para actividades tipo documento (typeid === 1), siempre permitir cerrar
       if (activity.typeid === 1) {
@@ -347,7 +377,7 @@ export function LessonActivityModal({
       }
 
       // Si la actividad ya está completada, siempre puede cerrar
-      if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
+      if (savedResults?.isAlreadyCompleted) {
         return true;
       }
 
@@ -378,7 +408,6 @@ export function LessonActivityModal({
     finalScore,
     attemptsLeft,
     activity.revisada,
-    activity.isCompleted,
     activity.typeid,
     savedResults?.isAlreadyCompleted,
     isLastActivity,
@@ -617,6 +646,11 @@ export function LessonActivityModal({
 
       // Close the modal
       onCloseAction();
+
+      // Navigate to next lesson if available
+      if (nextLesson) {
+        router.push(`/estudiantes/clases/${nextLesson.id}`);
+      }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error al completar la actividad');
@@ -868,7 +902,7 @@ export function LessonActivityModal({
     }
 
     // Already completed activity
-    if (savedResults?.isAlreadyCompleted || activity.isCompleted) {
+    if (savedResults?.isAlreadyCompleted) {
       return (
         <Button
           onClick={onCloseAction}
@@ -926,8 +960,8 @@ export function LessonActivityModal({
             "
           >
             <span className="flex items-center justify-center gap-2 py-4">
-              Desbloquear Siguiente CLASE
-              <Unlock className="size-4" />
+              Ir a la Siguiente Clase
+              <ChevronRightIcon className="size-4" />
             </span>
           </Button>
         );
@@ -977,8 +1011,8 @@ export function LessonActivityModal({
               "
             >
               <span className="flex items-center justify-center gap-2 py-4">
-                Desbloquear Siguiente CLASE
-                <Unlock className="size-4" />
+                Ir a la Siguiente Clase
+                <ChevronRightIcon className="size-4" />
               </span>
             </Button>
           ) : (
@@ -1012,8 +1046,8 @@ export function LessonActivityModal({
             "
           >
             <span className="flex items-center justify-center gap-2 py-4">
-              Desbloquear Siguiente CLASE
-              <Unlock className="size-4" />
+              Ir a la Siguiente Clase
+              <ChevronRightIcon className="size-4" />
             </span>
           </Button>
         );
@@ -1071,8 +1105,8 @@ export function LessonActivityModal({
             "
           >
             <span className="flex items-center justify-center gap-2 py-4">
-              Desbloquear Siguiente CLASE
-              <Unlock className="size-4" />
+              Ir a la Siguiente Clase
+              <ChevronRightIcon className="size-4" />
             </span>
           </Button>
         );
@@ -1111,7 +1145,7 @@ export function LessonActivityModal({
             Intentar Nuevamente
           </Button>
 
-          {/* Show unlock button only for last activity */}
+          {/* Show next class button only for last activity */}
           {isLastActivityInLesson && !isLastLesson && (
             <Button
               onClick={handleFinishAndNavigate}
@@ -1123,8 +1157,8 @@ export function LessonActivityModal({
               "
             >
               <span className="flex items-center justify-center gap-2 py-4">
-                Desbloquear Siguiente CLASE
-                <Unlock className="size-4" />
+                Ir a la Siguiente Clase
+                <ChevronRightIcon className="size-4" />
               </span>
             </Button>
           )}
@@ -1158,8 +1192,8 @@ export function LessonActivityModal({
             "
           >
             <span className="flex items-center justify-center gap-2 py-4">
-              Desbloquear Siguiente CLASE
-              <Unlock className="size-4" />
+              Ir a la Siguiente Clase
+              <ChevronRightIcon className="size-4" />
             </span>
           </Button>
         );
@@ -2148,15 +2182,6 @@ export function LessonActivityModal({
           </DialogHeader>
           <div className="flex flex-col items-center justify-center p-8">
             <Icons.blocks className="size-22 animate-pulse fill-primary" />
-            <p className="mt-6 text-center text-xl text-white">
-              No hay preguntas disponibles para esta actividad.
-            </p>
-            <Button
-              onClick={onCloseAction}
-              className="mt-6 bg-blue-500 text-white"
-            >
-              Cerrar
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

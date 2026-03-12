@@ -4,7 +4,7 @@ import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { userActivitiesProgress } from '~/server/db/schema';
+import { activities, userActivitiesProgress } from '~/server/db/schema';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,14 +41,23 @@ export async function GET(request: NextRequest) {
     // Use the higher value between Redis and database
     const attempts = Math.max(progress?.attemptCount ?? 0, redisAttempts);
 
-    // Get activity details to check if it's revisada
+    // Prefer DB as source of truth for revisada; fallback to Redis cache.
+    const dbActivity = await db.query.activities.findFirst({
+      where: eq(activities.id, parseInt(activityId)),
+      columns: { revisada: true },
+    });
+
     const activityKey = `activity:${activityId}`;
-    const activity = await redis.get<{ revisada: boolean }>(activityKey);
+    const activityFromCache = await redis.get<{ revisada?: boolean }>(
+      activityKey
+    );
+    const isRevisada =
+      dbActivity?.revisada ?? Boolean(activityFromCache?.revisada);
 
     return NextResponse.json({
       attempts,
-      attemptsLeft: activity?.revisada ? Math.max(0, 3 - attempts) : null,
-      isRevisada: activity?.revisada ?? false,
+      attemptsLeft: isRevisada ? Math.max(0, 3 - attempts) : null,
+      isRevisada,
       lastGrade: progress?.finalGrade ?? null,
       lastAttemptAt: progress?.lastAttemptAt ?? null,
     });

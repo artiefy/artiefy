@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 import { useUser } from '@clerk/nextjs';
-import { type OAuthStrategy } from '@clerk/shared/types';
 
 import BuyerInfoForm from '~/components/estudiantes/layout/BuyerInfoForm';
 import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
@@ -35,8 +34,6 @@ const PaymentForm: React.FC<{
   // Estados para los modales de login y signup
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [oauthTransferStrategy, setOauthTransferStrategy] =
-    useState<OAuthStrategy | null>(null);
 
   // Si hay usuario, prefijar datos pero permitir editar para evitar bloqueo cuando faltan datos en el perfil
   const isLoggedIn = !!user;
@@ -232,26 +229,22 @@ const PaymentForm: React.FC<{
 
   const handleLoginSuccess = () => {
     setShowLoginModal(false);
-    setOauthTransferStrategy(null);
     // NO procesar el pago automáticamente
     // Dejar que el usuario revise y llene el formulario primero
   };
 
   const handleSignUpSuccess = () => {
     setShowSignUpModal(false);
-    setOauthTransferStrategy(null);
     // NO procesar el pago automáticamente
     // Dejar que el usuario revise y llene el formulario primero
   };
 
-  const handleSwitchToSignUp = (strategy?: OAuthStrategy) => {
-    setOauthTransferStrategy(strategy ?? null);
+  const handleSwitchToSignUp = () => {
     setShowLoginModal(false);
     setShowSignUpModal(true);
   };
 
   const handleSwitchToLogin = () => {
-    setOauthTransferStrategy(null);
     setShowSignUpModal(false);
     setShowLoginModal(true);
   };
@@ -316,7 +309,6 @@ const PaymentForm: React.FC<{
             isOpen={showLoginModal}
             onClose={() => {
               setShowLoginModal(false);
-              setOauthTransferStrategy(null);
             }}
             onLoginSuccess={handleLoginSuccess}
             redirectUrl={redirectUrlOnAuth}
@@ -328,12 +320,9 @@ const PaymentForm: React.FC<{
             isOpen={showSignUpModal}
             onClose={() => {
               setShowSignUpModal(false);
-              setOauthTransferStrategy(null);
             }}
             onSignUpSuccess={handleSignUpSuccess}
             redirectUrl={redirectUrlOnAuth}
-            autoStartOAuthStrategy={oauthTransferStrategy}
-            onAutoStartOAuthHandled={() => setOauthTransferStrategy(null)}
             onSwitchToLogin={handleSwitchToLogin}
           />
         </>
