@@ -24,11 +24,11 @@
     "setup:hooks": "node .husky/install.mjs"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1006.0",
-    "@aws-sdk/lib-storage": "^3.1006.0",
-    "@aws-sdk/s3-presigned-post": "^3.1006.0",
-    "@aws-sdk/s3-request-presigner": "^3.1006.0",
-    "@aws-sdk/signature-v4-crt": "^3.1006.0",
+    "@aws-sdk/client-s3": "^3.1007.0",
+    "@aws-sdk/lib-storage": "^3.1007.0",
+    "@aws-sdk/s3-presigned-post": "^3.1007.0",
+    "@aws-sdk/s3-request-presigner": "^3.1007.0",
+    "@aws-sdk/signature-v4-crt": "^3.1007.0",
     "@babylonjs/core": "^8.54.3",
     "@babylonjs/gui": "^8.54.3",
     "@babylonjs/loaders": "^8.54.3",
@@ -71,7 +71,7 @@
     "@types/jszip": "^3.4.1",
     "@types/pg": "^8.18.0",
     "@upstash/ratelimit": "^2.0.8",
-    "@upstash/redis": "^1.36.4",
+    "@upstash/redis": "^1.37.0",
     "@vercel/analytics": "^2.0.0",
     "@vercel/og": "^0.11.1",
     "@vercel/speed-insights": "^2.0.0",
@@ -169,7 +169,7 @@
     "@types/three": "^0.183.1",
     "@typescript-eslint/eslint-plugin": "^8.57.0",
     "@typescript-eslint/parser": "^8.57.0",
-    "baseline-browser-mapping": "^2.10.0",
+    "baseline-browser-mapping": "^2.10.7",
     "drizzle-kit": "^0.31.9",
     "drizzle-orm": "^0.45.1",
     "eslint": "^10.0.3",
@@ -192,7 +192,7 @@
     "lint-staged": "^16.3.3",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",
-    "shadcn": "^4.0.3",
+    "shadcn": "^4.0.5",
     "tailwindcss": "^4.2.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
@@ -215,5 +215,5 @@
     "node": "24.x",
     "npm": "11.x"
   },
-  "packageManager": "npm@11.11.0"
+  "packageManager": "npm@11.11.1"
 }
