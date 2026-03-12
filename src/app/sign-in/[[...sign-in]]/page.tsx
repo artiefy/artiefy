@@ -86,6 +86,30 @@ export default function SignInPage() {
     }
   }, [isSignedIn, router, redirectUrl]);
 
+  // Si /sign-in se abre dentro del popup OAuth, notificar al parent
+  // para continuar en sign-up y evitar quedarse atascado en esta página.
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.opener) return;
+
+    const notifyParent = () => {
+      window.opener?.postMessage(
+        { type: 'clerk:oauth:needs_signup' },
+        window.location.origin
+      );
+    };
+
+    notifyParent();
+    const retryTimer = window.setTimeout(notifyParent, 120);
+    const closeTimer = window.setTimeout(() => {
+      window.close();
+    }, 240);
+
+    return () => {
+      window.clearTimeout(retryTimer);
+      window.clearTimeout(closeTimer);
+    };
+  }, []);
+
   if (!isLoaded) {
     return <Loading />;
   }
@@ -113,8 +137,8 @@ export default function SignInPage() {
       setLoadingProvider(strategy);
       await signIn.authenticateWithRedirect({
         strategy,
-        redirectUrl: '/sign-up/sso-callback',
-        redirectUrlComplete: redirectUrl, // Asegurar redirección correcta
+        redirectUrl: '/sign-in/sso-callback',
+        redirectUrlComplete: redirectUrl,
       });
     } catch (err) {
       setLoadingProvider(null);

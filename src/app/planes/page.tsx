@@ -5,7 +5,6 @@ import { createElement, useEffect, useRef, useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 import { useAuth } from '@clerk/nextjs';
-import { type OAuthStrategy } from '@clerk/shared/types';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimes, FaTimesCircle } from 'react-icons/fa';
 
@@ -32,8 +31,6 @@ const PlansPage: React.FC = () => {
   const PENDING_PLAN_KEY = 'pendingPlanPurchaseId';
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [oauthTransferStrategy, setOauthTransferStrategy] =
-    useState<OAuthStrategy | null>(null);
   const [authDismissed, setAuthDismissed] = useState(false);
 
   const planIdParam = searchParams?.get('plan_id') ?? null;
@@ -163,20 +160,17 @@ const PlansPage: React.FC = () => {
 
   const handleLoginSuccess = () => {
     setShowLoginModal(false);
-    setOauthTransferStrategy(null);
     // No abrir manualmente aquí: el useEffect lo hace al detectar isSignedIn + pendingPlanPurchaseId
   };
 
   const handleSignUpSuccess = () => {
     setShowSignUpModal(false);
-    setOauthTransferStrategy(null);
     // No abrir manualmente aquí: el useEffect lo hace al detectar isSignedIn + pendingPlanPurchaseId
   };
 
   const handleAuthClose = () => {
     setShowLoginModal(false);
     setShowSignUpModal(false);
-    setOauthTransferStrategy(null);
     setAuthDismissed(true);
     clearShowSignupParam();
     if (typeof window !== 'undefined') {
@@ -184,14 +178,12 @@ const PlansPage: React.FC = () => {
     }
   };
 
-  const handleSwitchToSignUp = (strategy?: OAuthStrategy) => {
-    setOauthTransferStrategy(strategy ?? null);
+  const handleSwitchToSignUp = () => {
     setShowLoginModal(false);
     setShowSignUpModal(true);
   };
 
   const handleSwitchToLogin = () => {
-    setOauthTransferStrategy(null);
     setShowSignUpModal(false);
     setShowLoginModal(true);
     clearShowSignupParam();
@@ -433,8 +425,6 @@ const PlansPage: React.FC = () => {
         onClose={handleAuthClose}
         onSignUpSuccess={handleSignUpSuccess}
         redirectUrl={pathname}
-        autoStartOAuthStrategy={oauthTransferStrategy}
-        onAutoStartOAuthHandled={() => setOauthTransferStrategy(null)}
         onSwitchToLogin={handleSwitchToLogin}
       />
       <Footer />

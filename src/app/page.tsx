@@ -5,7 +5,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { type OAuthStrategy } from '@clerk/shared/types';
 import { FaArrowRight } from 'react-icons/fa';
 
 import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
@@ -58,8 +57,6 @@ export default function HomePage() {
   // Estados para los modales de autenticación
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [oauthTransferStrategy, setOauthTransferStrategy] =
-    useState<OAuthStrategy | null>(null);
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [postAuthAction, setPostAuthAction] = useState<'dashboard' | null>(
     null
@@ -247,20 +244,17 @@ export default function HomePage() {
         isOpen={showLoginModal}
         onClose={() => {
           setShowLoginModal(false);
-          setOauthTransferStrategy(null);
           setOauthError(null);
           setPostAuthAction(null);
           setLoading(false);
         }}
         onLoginSuccess={() => {
           setShowLoginModal(false);
-          setOauthTransferStrategy(null);
           setOauthError(null);
           handlePostAuthAction();
         }}
         redirectUrl="/"
-        onSwitchToSignUp={(strategy) => {
-          setOauthTransferStrategy(strategy ?? null);
+        onSwitchToSignUp={() => {
           setShowLoginModal(false);
           setShowSignUpModal(true);
         }}
@@ -270,20 +264,15 @@ export default function HomePage() {
         isOpen={showSignUpModal}
         onClose={() => {
           setShowSignUpModal(false);
-          setOauthTransferStrategy(null);
           setPostAuthAction(null);
           setLoading(false);
         }}
         onSignUpSuccess={() => {
           setShowSignUpModal(false);
-          setOauthTransferStrategy(null);
           handlePostAuthAction();
         }}
         redirectUrl="/"
-        autoStartOAuthStrategy={oauthTransferStrategy}
-        onAutoStartOAuthHandled={() => setOauthTransferStrategy(null)}
         onSwitchToLogin={() => {
-          setOauthTransferStrategy(null);
           setShowSignUpModal(false);
           setShowLoginModal(true);
         }}

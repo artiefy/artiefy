@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
 
 import { useAuth } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { useSignUp } from '@clerk/nextjs/legacy';
-import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
+import { type ClerkAPIError } from '@clerk/shared/types';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 
@@ -35,14 +35,17 @@ const formatFields = (fields?: string[]) => {
   return fields.map((field) => labels[field] ?? field).join(', ');
 };
 
+const isUnexpectedEndOfJsonError = (error: unknown) => {
+  if (!(error instanceof Error)) return false;
+  return error.message.includes('Unexpected end of JSON input');
+};
+
 interface MiniSignUpModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSignUpSuccess: () => void;
   redirectUrl?: string;
   onSwitchToLogin?: () => void;
-  autoStartOAuthStrategy?: OAuthStrategy | null;
-  onAutoStartOAuthHandled?: () => void;
 }
 
 export default function MiniSignUpModal({
@@ -51,8 +54,6 @@ export default function MiniSignUpModal({
   onSignUpSuccess,
   redirectUrl = '/',
   onSwitchToLogin,
-  autoStartOAuthStrategy = null,
-  onAutoStartOAuthHandled,
 }: MiniSignUpModalProps) {
   const { signUp, setActive, isLoaded } = useSignUp();
   const { isSignedIn } = useAuth({
@@ -71,12 +72,8 @@ export default function MiniSignUpModal({
   const [code, setCode] = useState('');
   const [errors, setErrors] = useState<ClerkAPIError[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
-    null
-  );
   const [hasHandledAuth, setHasHandledAuth] = useState(false);
-  const [consumedAutoOAuthStrategy, setConsumedAutoOAuthStrategy] =
-    useState<OAuthStrategy | null>(null);
+  void redirectUrl;
 
   // Sincronizar estado cuando el popup termina el OAuth
   useEffect(() => {
@@ -88,7 +85,16 @@ export default function MiniSignUpModal({
 
       try {
         if (typeof signUp.reload === 'function') {
-          await signUp.reload();
+          try {
+            await signUp.reload();
+          } catch (reloadError) {
+            if (!isUnexpectedEndOfJsonError(reloadError)) {
+              console.error(
+                '❌ Error al recargar SignUp tras popup:',
+                reloadError
+              );
+            }
+          }
         }
 
         if (signUp.status === 'complete') {
@@ -133,7 +139,19 @@ export default function MiniSignUpModal({
     const syncSignUpState = async () => {
       try {
         if (typeof signUp.reload === 'function') {
-          await signUp.reload();
+          try {
+            await signUp.reload();
+          } catch (reloadError) {
+            if (
+              !isUnexpectedEndOfJsonError(reloadError) &&
+              process.env.NODE_ENV !== 'production'
+            ) {
+              console.error(
+                'Error al recargar estado de SignUp en syncSignUpState:',
+                reloadError
+              );
+            }
+          }
         }
         if (cancelled) return;
 
@@ -179,26 +197,15 @@ export default function MiniSignUpModal({
 
     if (isSignedIn && !hasHandledAuth) {
       setHasHandledAuth(true);
-      if (loadingProvider) {
-        setLoadingProvider(null);
-      }
       onSignUpSuccess();
       onClose();
     }
-  }, [
-    isSignedIn,
-    hasHandledAuth,
-    loadingProvider,
-    onSignUpSuccess,
-    onClose,
-    isOpen,
-  ]);
+  }, [isSignedIn, hasHandledAuth, onSignUpSuccess, onClose, isOpen]);
 
   // Reset hasHandledAuth cuando se cierra el modal
   useEffect(() => {
     if (!isOpen) {
       setHasHandledAuth(false);
-      setConsumedAutoOAuthStrategy(null);
       // Reset form fields
       setFirstName('');
       setLastName('');
@@ -440,174 +447,6 @@ export default function MiniSignUpModal({
 
     return validationErrors;
   };
-
-  // OAuth signup
-  const signUpWith = useCallback(
-    async (strategy: OAuthStrategy) => {
-      if (!signUp) {
-        setErrors([
-          {
-            code: 'sign_up_undefined',
-            message: 'SignUp no está definido',
-            meta: {},
-          },
-        ]);
-        return;
-      }
-
-      const baseUrl = window.location.origin;
-      const absoluteRedirectUrl = `${baseUrl}/popup-callback`;
-      const absoluteRedirectUrlComplete =
-        redirectUrl && redirectUrl.trim() !== ''
-          ? redirectUrl.startsWith('http')
-            ? redirectUrl
-            : `${baseUrl}${redirectUrl}`
-          : `${baseUrl}${window.location.pathname}${window.location.search}`;
-      let popupCheckInterval: ReturnType<typeof setInterval> | null = null;
-      let popup: Window | null = null;
-      try {
-        setLoadingProvider(strategy);
-        setErrors(undefined);
-        setOauthMissingFields(null);
-
-        const width = 500;
-        const height = 650;
-        const left = (window.screen.width - width) / 2;
-        const top = (window.screen.height - height) / 2;
-
-        popup = window.open(
-          'about:blank',
-          '_blank',
-          `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,popup=yes`
-        );
-
-        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
-          setLoadingProvider(null);
-          setErrors([
-            {
-              code: 'popup_blocked',
-              message:
-                'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
-              longMessage:
-                'No se pudo abrir la ventana de OAuth. Habilita popups e inténtalo de nuevo.',
-              meta: {},
-            },
-          ]);
-          return;
-        }
-
-        popupCheckInterval = setInterval(() => {
-          if (popup?.closed) {
-            if (popupCheckInterval) {
-              clearInterval(popupCheckInterval);
-            }
-            setLoadingProvider(null);
-          }
-        }, 500);
-
-        await signUp.authenticateWithPopup({
-          popup,
-          strategy,
-          redirectUrl: absoluteRedirectUrl,
-          redirectUrlComplete: absoluteRedirectUrlComplete,
-          continueSignUp: true,
-        });
-
-        if (typeof signUp.reload === 'function') {
-          await signUp.reload();
-        }
-
-        if (signUp.status === 'complete') {
-          if (signUp.createdSessionId) {
-            await setActive({ session: signUp.createdSessionId });
-          }
-          return;
-        }
-
-        const missingFields = normalizeMissingFields(
-          signUp.missingFields ?? []
-        );
-        if (signUp.status === 'missing_requirements') {
-          if (missingFields.length > 0) {
-            setOauthMissingFields(missingFields);
-            setErrors([
-              {
-                code: 'missing_requirements',
-                message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-                longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-                meta: {},
-              },
-            ]);
-          }
-          return;
-        }
-      } catch (err) {
-        console.error('❌ Error en OAuth:', err);
-
-        if (isClerkAPIResponseError(err)) {
-          const popupBlocked = err.errors.some(
-            (error) => error.code === 'popup_blocked'
-          );
-          if (popupBlocked) {
-            if (popup && !popup.closed) {
-              popup.close();
-            }
-            setErrors([
-              {
-                code: 'popup_blocked',
-                message:
-                  'Popup bloqueado por el navegador. Permite ventanas emergentes para continuar.',
-                longMessage:
-                  'Popup bloqueado por el navegador. Permite ventanas emergentes para continuar.',
-                meta: {},
-              },
-            ]);
-            return;
-          }
-          setErrors(err.errors);
-        } else {
-          setErrors([
-            {
-              code: 'oauth_error',
-              message:
-                err instanceof Error
-                  ? err.message
-                  : 'Error en el registro con OAuth',
-              longMessage:
-                err instanceof Error
-                  ? err.message
-                  : 'Error en el registro con OAuth',
-              meta: {},
-            },
-          ]);
-        }
-      } finally {
-        if (popupCheckInterval) {
-          clearInterval(popupCheckInterval);
-        }
-        setLoadingProvider(null);
-      }
-    },
-    [redirectUrl, setActive, signUp]
-  );
-
-  useEffect(() => {
-    if (!isOpen || !autoStartOAuthStrategy) return;
-    if (loadingProvider || pendingVerification) return;
-    if (consumedAutoOAuthStrategy === autoStartOAuthStrategy) return;
-
-    setConsumedAutoOAuthStrategy(autoStartOAuthStrategy);
-    onAutoStartOAuthHandled?.();
-    void signUpWith(autoStartOAuthStrategy);
-  }, [
-    autoStartOAuthStrategy,
-    consumedAutoOAuthStrategy,
-    isOpen,
-    loadingProvider,
-    onAutoStartOAuthHandled,
-    pendingVerification,
-    signUpWith,
-  ]);
 
   const handleOAuthCompletion = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -936,7 +775,6 @@ export default function MiniSignUpModal({
       return 'Las contraseñas no coinciden';
     if (error.code === 'missing_requirements')
       return 'Completa los campos faltantes para terminar tu registro.';
-
     const msg = error.longMessage ?? error.message ?? '';
     // Mensaje específico de Clerk en inglés: "This verification has already been verified."
     if (/already been verified|already verified/i.test(msg))
@@ -967,23 +805,6 @@ export default function MiniSignUpModal({
         justify-center bg-black/50
       "
     >
-      {/* OAuth Loading Overlay */}
-      {loadingProvider && (
-        <div
-          className="
-            absolute inset-0 z-[1150] flex items-center justify-center
-            bg-black/70 backdrop-blur-sm
-          "
-        >
-          <div className="flex flex-col items-center gap-4">
-            <Icons.spinner className="size-12 text-primary" />
-            <p className="text-lg font-semibold text-white">
-              Redirigiendo a {loadingProvider.replace('oauth_', '')}...
-            </p>
-          </div>
-        </div>
-      )}
-
       <div
         role="dialog"
         className="
@@ -1521,71 +1342,6 @@ export default function MiniSignUpModal({
             </button>
           </form>
         )}
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-border" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
-              O continúa con
-            </span>
-          </div>
-        </div>
-
-        <div className="flex justify-center gap-3">
-          <button
-            type="button"
-            onClick={() => signUpWith('oauth_google')}
-            className="
-              flex size-10 items-center justify-center rounded-full border
-              border-border bg-background transition
-              hover:bg-accent
-              disabled:opacity-50
-            "
-            disabled={!!loadingProvider}
-          >
-            {loadingProvider === 'oauth_google' ? (
-              <Icons.spinner className="size-4" />
-            ) : (
-              <Icons.google className="size-5" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => signUpWith('oauth_github')}
-            className="
-              flex size-10 items-center justify-center rounded-full border
-              border-border bg-background transition
-              hover:bg-accent
-              disabled:opacity-50
-            "
-            disabled={!!loadingProvider}
-          >
-            {loadingProvider === 'oauth_github' ? (
-              <Icons.spinner className="size-4" />
-            ) : (
-              <Icons.gitHub className="size-5" />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => signUpWith('oauth_facebook')}
-            className="
-              flex size-10 items-center justify-center rounded-full border
-              border-border bg-background transition
-              hover:bg-accent
-              disabled:opacity-50
-            "
-            disabled={!!loadingProvider}
-          >
-            {loadingProvider === 'oauth_facebook' ? (
-              <Icons.spinner className="size-4" />
-            ) : (
-              <Icons.facebook className="size-5" />
-            )}
-          </button>
-        </div>
 
         {onSwitchToLogin && (
           <div className="text-center">

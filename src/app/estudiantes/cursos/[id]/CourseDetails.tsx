@@ -5,7 +5,6 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
-import { type OAuthStrategy } from '@clerk/shared/types';
 import { AiFillFire, AiOutlineCalendar } from 'react-icons/ai';
 import {
   FaCheck,
@@ -119,10 +118,9 @@ export default function CourseDetails({
   const [_isCheckingEnrollment, setIsCheckingEnrollment] = useState(true);
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [oauthTransferStrategy, setOauthTransferStrategy] =
-    useState<OAuthStrategy | null>(null);
+  const [activeAuthModal, setActiveAuthModal] = useState<
+    'login' | 'signup' | null
+  >(null);
   const [pendingOpenPayment, setPendingOpenPayment] = useState(false);
   const [seenSections, setSeenSections] = useState<Record<NavKey, boolean>>({
     curso: true,
@@ -179,12 +177,13 @@ export default function CourseDetails({
   const [activePill, setActivePill] = useState<NavKey>('curso');
   const [projectsCount, setProjectsCount] = useState<number>(0);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const showLoginModal = activeAuthModal === 'login';
+  const showSignUpModal = activeAuthModal === 'signup';
 
   useEffect(() => {
     if (searchParams?.get('show_signup') !== 'true') return;
 
-    setShowLoginModal(false);
-    setShowSignUpModal(true);
+    setActiveAuthModal('signup');
 
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
@@ -762,8 +761,7 @@ export default function CourseDetails({
   const loginRedirectUrl = '';
 
   const handleLoginSuccess = () => {
-    setShowLoginModal(false);
-    setOauthTransferStrategy(null);
+    setActiveAuthModal(null);
 
     // Detectar si el curso es purchasable individually
     const hasPurchasable = courseTypes.some((t) => t.isPurchasableIndividually);
@@ -796,23 +794,18 @@ export default function CourseDetails({
   };
 
   // Funciones para cambiar entre modales de login y signup
-  const handleSwitchToSignUp = (strategy?: OAuthStrategy) => {
-    setOauthTransferStrategy(strategy ?? null);
-    setShowLoginModal(false);
-    setShowSignUpModal(true);
+  const handleSwitchToSignUp = () => {
+    setActiveAuthModal('signup');
   };
 
   const handleSwitchToLogin = () => {
-    setOauthTransferStrategy(null);
-    setShowSignUpModal(false);
-    setShowLoginModal(true);
+    setActiveAuthModal('login');
   };
 
   // Handler para cuando se completa el signup
   const handleSignUpSuccess = () => {
     console.log('✅ Registro completado, continuando flujo...');
-    setShowSignUpModal(false);
-    setOauthTransferStrategy(null);
+    setActiveAuthModal(null);
 
     if (pendingOpenPayment) {
       setShowPaymentModal(true);
@@ -851,7 +844,7 @@ export default function CourseDetails({
     if (!isSignedIn) {
       // Establecer pendingOpenPayment basado en si el curso requiere pago individual
       setPendingOpenPayment(!!isIndividualPurchaseRequired);
-      setShowLoginModal(true);
+      setActiveAuthModal('login');
       return;
     }
 
@@ -1069,7 +1062,7 @@ export default function CourseDetails({
               type="button"
               onClick={() => {
                 setPendingOpenPayment(false);
-                setShowLoginModal(true);
+                setActiveAuthModal('login');
               }}
               className="
                 inline-flex h-11 items-center justify-center rounded-full
@@ -1636,9 +1629,6 @@ export default function CourseDetails({
                         {/* Rating y estudiantes */}
                         <div className="flex flex-wrap items-center gap-4 text-sm">
                           <div className="flex items-center gap-1.5">
-                            <span className="font-semibold text-amber-400">
-                              {course.rating ?? '4.8'}
-                            </span>
                             <div className="flex">
                               {/* Estrellas fijas para ejemplo visual */}
                               {[...Array(4)].map((_, i) => (
@@ -2963,8 +2953,7 @@ export default function CourseDetails({
         <MiniLoginModal
           isOpen={showLoginModal}
           onClose={() => {
-            setShowLoginModal(false);
-            setOauthTransferStrategy(null);
+            setActiveAuthModal(null);
           }}
           onLoginSuccess={handleLoginSuccess}
           redirectUrl={loginRedirectUrl}
@@ -2977,14 +2966,11 @@ export default function CourseDetails({
         <MiniSignUpModal
           isOpen={showSignUpModal}
           onClose={() => {
-            setShowSignUpModal(false);
-            setOauthTransferStrategy(null);
+            setActiveAuthModal(null);
             setPendingOpenPayment(false);
           }}
           onSignUpSuccess={handleSignUpSuccess}
           redirectUrl={`/estudiantes/cursos/${course.id}`}
-          autoStartOAuthStrategy={oauthTransferStrategy}
-          onAutoStartOAuthHandled={() => setOauthTransferStrategy(null)}
           onSwitchToLogin={handleSwitchToLogin}
         />
       )}

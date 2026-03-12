@@ -130,7 +130,11 @@ export default function RootLayout({
         className="bg-background font-sans text-primary"
         suppressHydrationWarning
       >
-        <ClerkProvider localization={esMX}>
+        <ClerkProvider
+          localization={esMX}
+          signInUrl="/sign-in"
+          signUpUrl="/sign-up"
+        >
           {/* Meta Pixel noscript fallback */}
           <noscript>
             <img

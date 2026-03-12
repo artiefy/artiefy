@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
@@ -14,7 +15,6 @@ import {
   XMarkIcon, // <-- asegúrate de importar esto
 } from '@heroicons/react/24/solid';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { Unlock } from 'lucide-react';
 import { BiSolidReport } from 'react-icons/bi';
 import { BsFiletypeXls } from 'react-icons/bs';
 import {
@@ -64,6 +64,7 @@ interface ActivityModalProps {
   onViewHistoryAction: () => void; // Renamed
   onActivityCompleteAction: () => void; // Renamed
   isLastActivityInLesson: boolean;
+  nextLesson?: { id: number; title: string } | null;
 }
 
 interface UserAnswer {
@@ -226,7 +227,10 @@ export function LessonActivityModal({
   onViewHistoryAction,
   onActivityCompleteAction,
   isLastActivityInLesson,
+  nextLesson,
 }: ActivityModalProps) {
+  const router = useRouter();
+
   // Añade id para el título y descripción accesibles
   const modalTitleId = 'activity-modal-title';
   const modalDescId = 'activity-modal-description';
@@ -642,6 +646,11 @@ export function LessonActivityModal({
 
       // Close the modal
       onCloseAction();
+
+      // Navigate to next lesson if available
+      if (nextLesson) {
+        router.push(`/estudiantes/clases/${nextLesson.id}`);
+      }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error al completar la actividad');
@@ -951,8 +960,8 @@ export function LessonActivityModal({
             "
           >
             <span className="flex items-center justify-center gap-2 py-4">
-              Desbloquear Siguiente CLASE
-              <Unlock className="size-4" />
+              Ir a la Siguiente Clase
+              <ChevronRightIcon className="size-4" />
             </span>
           </Button>
         );
@@ -1002,8 +1011,8 @@ export function LessonActivityModal({
               "
             >
               <span className="flex items-center justify-center gap-2 py-4">
-                Desbloquear Siguiente CLASE
-                <Unlock className="size-4" />
+                Ir a la Siguiente Clase
+                <ChevronRightIcon className="size-4" />
               </span>
             </Button>
           ) : (
@@ -1037,8 +1046,8 @@ export function LessonActivityModal({
             "
           >
             <span className="flex items-center justify-center gap-2 py-4">
-              Desbloquear Siguiente CLASE
-              <Unlock className="size-4" />
+              Ir a la Siguiente Clase
+              <ChevronRightIcon className="size-4" />
             </span>
           </Button>
         );
@@ -1096,8 +1105,8 @@ export function LessonActivityModal({
             "
           >
             <span className="flex items-center justify-center gap-2 py-4">
-              Desbloquear Siguiente CLASE
-              <Unlock className="size-4" />
+              Ir a la Siguiente Clase
+              <ChevronRightIcon className="size-4" />
             </span>
           </Button>
         );
@@ -1136,7 +1145,7 @@ export function LessonActivityModal({
             Intentar Nuevamente
           </Button>
 
-          {/* Show unlock button only for last activity */}
+          {/* Show next class button only for last activity */}
           {isLastActivityInLesson && !isLastLesson && (
             <Button
               onClick={handleFinishAndNavigate}
@@ -1148,8 +1157,8 @@ export function LessonActivityModal({
               "
             >
               <span className="flex items-center justify-center gap-2 py-4">
-                Desbloquear Siguiente CLASE
-                <Unlock className="size-4" />
+                Ir a la Siguiente Clase
+                <ChevronRightIcon className="size-4" />
               </span>
             </Button>
           )}
@@ -1183,8 +1192,8 @@ export function LessonActivityModal({
             "
           >
             <span className="flex items-center justify-center gap-2 py-4">
-              Desbloquear Siguiente CLASE
-              <Unlock className="size-4" />
+              Ir a la Siguiente Clase
+              <ChevronRightIcon className="size-4" />
             </span>
           </Button>
         );

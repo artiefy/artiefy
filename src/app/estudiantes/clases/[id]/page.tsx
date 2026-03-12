@@ -47,6 +47,9 @@ export default async function LessonPage({ params }: PageProps) {
 
   return (
     <>
+      {/* Preconnect al dominio S3 para reducir latencia en carga de videos */}
+      <link rel="preconnect" href="https://s3.us-east-2.amazonaws.com" />
+      <link rel="dns-prefetch" href="https://s3.us-east-2.amazonaws.com" />
       <Header />
       <main>
         <Suspense fallback={<LessonSkeleton />}>

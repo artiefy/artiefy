@@ -149,9 +149,9 @@ function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
       {/* En móviles: apilar fecha y hora verticalmente con tamaños más pequeños */}
       <div
         className="
-        block
-        sm:hidden
-      "
+          block
+          sm:hidden
+        "
       >
         <span className="block text-sm font-bold text-yellow-400">
           {weekdayCapitalized}, {String(day)} de {mesNombreCapitalized}, {year}
@@ -164,9 +164,9 @@ function _formatMeetingDateTimeModern(startDate: string, endDate: string) {
       {/* En desktop: mantener diseño inline original */}
       <div
         className="
-        hidden
-        sm:block
-      "
+          hidden
+          sm:block
+        "
       >
         <span className="text-base font-bold text-yellow-400">
           {weekdayCapitalized}, {String(day)} de {mesNombreCapitalized}, {year}
@@ -468,8 +468,8 @@ export function CourseContent({
                   lesson.porcentajecompletado === 0 && (
                     <span
                       className="
-                      ml-2 rounded bg-green-500 px-2 py-1 text-xs text-white
-                    "
+                        ml-2 rounded bg-green-500 px-2 py-1 text-xs text-white
+                      "
                     >
                       Nuevo
                     </span>
@@ -933,22 +933,22 @@ export function CourseContent({
                   <div className="flex items-center gap-2">
                     <span
                       className="
-                      flex items-center gap-1.5 rounded-full bg-red-500/20 px-2
-                      py-0.5 text-xs font-medium text-red-400
-                    "
+                        flex items-center gap-1.5 rounded-full bg-red-500/20
+                        px-2 py-0.5 text-xs font-medium text-red-400
+                      "
                     >
                       <span
                         className="
-                        size-1.5 animate-pulse rounded-full bg-red-500
-                      "
+                          size-1.5 animate-pulse rounded-full bg-red-500
+                        "
                       />
                       EN VIVO
                     </span>
                     <span
                       className="
-                      text-base font-semibold text-slate-100
-                      sm:text-lg
-                    "
+                        text-base font-semibold text-slate-100
+                        sm:text-lg
+                      "
                     >
                       Clase en vivo
                     </span>
@@ -956,9 +956,9 @@ export function CourseContent({
                   {featuredLiveDetails && (
                     <span
                       className="
-                      rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3
-                      py-1 text-xs font-semibold text-cyan-100
-                    "
+                        rounded-full border border-cyan-400/40 bg-cyan-500/10
+                        px-3 py-1 text-xs font-semibold text-cyan-100
+                      "
                     >
                       Próxima
                     </span>
@@ -969,9 +969,9 @@ export function CourseContent({
                   <>
                     <p
                       className="
-                      text-xs text-slate-300
-                      sm:text-sm
-                    "
+                        text-xs text-slate-300
+                        sm:text-sm
+                      "
                     >
                       La primera clase en vivo del curso es el{' '}
                       <span className="font-semibold text-white">
@@ -989,15 +989,15 @@ export function CourseContent({
                     </p>
                     <div
                       className="
-                      flex flex-col gap-2 text-xs text-slate-300
-                      sm:flex-row sm:items-center sm:text-sm
-                    "
+                        flex flex-col gap-2 text-xs text-slate-300
+                        sm:flex-row sm:items-center sm:text-sm
+                      "
                     >
                       <span
                         className="
-                        inline-flex items-center gap-1.5 rounded-md border
-                        border-white/10 px-2 py-1
-                      "
+                          inline-flex items-center gap-1.5 rounded-md border
+                          border-white/10 px-2 py-1
+                        "
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -1027,9 +1027,9 @@ export function CourseContent({
                       </span>
                       <span
                         className="
-                        inline-flex items-center gap-1.5 rounded-md border
-                        border-white/10 px-2 py-1
-                      "
+                          inline-flex items-center gap-1.5 rounded-md border
+                          border-white/10 px-2 py-1
+                        "
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -1061,9 +1061,9 @@ export function CourseContent({
 
                 <div
                   className="
-                  text-xs text-slate-300
-                  sm:text-sm
-                "
+                    text-xs text-slate-300
+                    sm:text-sm
+                  "
                 >
                   {!isSignedIn ? (
                     <>
@@ -1099,9 +1099,9 @@ export function CourseContent({
                 ) : (
                   <div
                     className="
-                    inline-flex items-center gap-1.5 text-xs font-semibold
-                    text-red-200
-                  "
+                      inline-flex items-center gap-1.5 text-xs font-semibold
+                      text-red-200
+                    "
                   >
                     <FaLock className="size-3.5" />
                     Acceso restringido para estudiantes inscritos
@@ -1127,9 +1127,9 @@ export function CourseContent({
                     <div className="flex items-center gap-3">
                       <div
                         className="
-                        flex items-center justify-center rounded-full
-                        bg-red-500/20 p-2
-                      "
+                          flex items-center justify-center rounded-full
+                          bg-red-500/20 p-2
+                        "
                       >
                         <LuVideo className="size-5 text-red-400" />
                       </div>
@@ -1142,16 +1142,16 @@ export function CourseContent({
                   {/* Desktop: icono videocam + texto alineados */}
                   <div
                     className="
-                    mb-2 hidden items-center
-                    sm:flex
-                  "
+                      mb-2 hidden items-center
+                      sm:flex
+                    "
                   >
                     <div className="flex items-center gap-3">
                       <div
                         className="
-                        flex items-center justify-center rounded-full
-                        bg-red-500/20 p-2
-                      "
+                          flex items-center justify-center rounded-full
+                          bg-red-500/20 p-2
+                        "
                       >
                         <LuVideo className="size-5 text-red-400" />
                       </div>
@@ -1309,20 +1309,20 @@ export function CourseContent({
                             {/* MOBILE: layout vertical y centrado */}
                             <div
                               className="
-                              block w-full
-                              sm:hidden
-                            "
+                                block w-full
+                                sm:hidden
+                              "
                             >
                               <div
                                 className="
-                                flex w-full flex-col items-stretch gap-3
-                              "
+                                  flex w-full flex-col items-stretch gap-3
+                                "
                               >
                                 {/* Header compacto sin fondo, solo texto y chips */}
                                 <div
                                   className="
-                                  flex items-start justify-between gap-2
-                                "
+                                    flex items-start justify-between gap-2
+                                  "
                                 >
                                   <div className="flex items-center gap-2">
                                     <span
@@ -1345,9 +1345,9 @@ export function CourseContent({
                                     </span>
                                     <h3
                                       className="
-                                      text-lg leading-snug font-semibold
-                                      text-slate-100
-                                    "
+                                        text-lg leading-snug font-semibold
+                                        text-slate-100
+                                      "
                                     >
                                       {meeting.title}
                                     </h3>
@@ -1538,9 +1538,9 @@ export function CourseContent({
                                       {!isSubscriptionActive && (
                                         <div
                                           className="
-                                          mt-2 w-full text-center text-xs
-                                          font-semibold text-red-600
-                                        "
+                                            mt-2 w-full text-center text-xs
+                                            font-semibold text-red-600
+                                          "
                                         >
                                           Debes tener una suscripción activa
                                           para acceder a las clases en vivo.
@@ -1554,31 +1554,31 @@ export function CourseContent({
                             {/* DESKTOP: badge + title on one line, date/time/duration below */}
                             <div
                               className="
-                              hidden min-w-0 flex-1 flex-col gap-2
-                              sm:flex
-                            "
+                                hidden min-w-0 flex-1 flex-col gap-2
+                                sm:flex
+                              "
                             >
                               <div className="flex items-center gap-3">
                                 <span
                                   className="
-                                  flex items-center gap-1.5 rounded-full
-                                  bg-red-500/20 px-2 py-0.5 text-xs font-medium
-                                  text-red-400
-                                "
+                                    flex items-center gap-1.5 rounded-full
+                                    bg-red-500/20 px-2 py-0.5 text-xs
+                                    font-medium text-red-400
+                                  "
                                 >
                                   <span
                                     className="
-                                    size-1.5 animate-pulse rounded-full
-                                    bg-red-500
-                                  "
+                                      size-1.5 animate-pulse rounded-full
+                                      bg-red-500
+                                    "
                                   />
                                   EN VIVO
                                 </span>
                                 <div
                                   className="
-                                  text-base leading-tight font-semibold
-                                  text-slate-100
-                                "
+                                    text-base leading-tight font-semibold
+                                    text-slate-100
+                                  "
                                 >
                                   {meeting.title}
                                 </div>
@@ -1647,9 +1647,9 @@ export function CourseContent({
                             {/* Botón desktop */}
                             <div
                               className="
-                              mt-3 hidden min-w-fit flex-col
-                              sm:mt-0 sm:ml-4 sm:flex
-                            "
+                                mt-3 hidden min-w-fit flex-col
+                                sm:mt-0 sm:ml-4 sm:flex
+                              "
                             >
                               {meeting.joinUrl && (
                                 <>
@@ -1755,8 +1755,8 @@ export function CourseContent({
                                   {!isSubscriptionActive && (
                                     <div
                                       className="
-                                      mt-2 text-xs font-semibold text-red-600
-                                    "
+                                        mt-2 text-xs font-semibold text-red-600
+                                      "
                                     >
                                       Debes tener una suscripción activa para
                                       acceder a las clases en vivo.
@@ -1787,9 +1787,9 @@ export function CourseContent({
                     <div className="flex items-center gap-3">
                       <div
                         className="
-                        flex items-center justify-center rounded-full
-                        bg-emerald-500/20 p-2
-                      "
+                          flex items-center justify-center rounded-full
+                          bg-emerald-500/20 p-2
+                        "
                       >
                         <IoIosSave className="size-5 text-emerald-400" />
                       </div>
@@ -1806,9 +1806,9 @@ export function CourseContent({
                     <div className="flex items-center gap-3">
                       <div
                         className="
-                        flex items-center justify-center rounded-full
-                        bg-emerald-500/20 p-2
-                      "
+                          flex items-center justify-center rounded-full
+                          bg-emerald-500/20 p-2
+                        "
                       >
                         <IoIosSave className="size-5 text-emerald-400" />
                       </div>
@@ -1833,14 +1833,14 @@ export function CourseContent({
                       {showRecordedClasses ? (
                         <FaChevronUp
                           className="
-                          text-white transition-transform duration-200
-                        "
+                            text-white transition-transform duration-200
+                          "
                         />
                       ) : (
                         <FaChevronDown
                           className="
-                          text-white transition-transform duration-200
-                        "
+                            text-white transition-transform duration-200
+                          "
                         />
                       )}
                     </button>
@@ -1898,40 +1898,41 @@ export function CourseContent({
                             >
                               <div
                                 className="
-                                relative flex h-10 w-16 shrink-0 items-center
-                                justify-center rounded-lg bg-accent/20
-                              "
+                                  relative flex h-10 w-16 shrink-0 items-center
+                                  justify-center rounded-lg bg-accent/20
+                                "
                               >
                                 <Play
                                   className="
-                                  size-4 text-accent transition-transform
-                                  group-hover:scale-110
-                                "
+                                    size-4 text-accent transition-transform
+                                    group-hover:scale-110
+                                  "
                                 />
                               </div>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center gap-2">
                                   <span
                                     className="
-                                    text-xs font-medium text-muted-foreground
-                                  "
+                                      text-xs font-medium text-muted-foreground
+                                    "
                                   >
                                     {indexLabel}
                                   </span>
                                   <h4
                                     className="
-                                    truncate text-sm font-medium text-foreground
-                                  "
+                                      truncate text-sm font-medium
+                                      text-foreground
+                                    "
                                   >
                                     {meeting.title ?? `Clase ${indexLabel}`}
                                   </h4>
                                 </div>
                                 <div
                                   className="
-                                  mt-2 flex flex-wrap items-center gap-3 text-xs
-                                  text-muted-foreground
-                                  sm:hidden
-                                "
+                                    mt-2 flex flex-wrap items-center gap-3
+                                    text-xs text-muted-foreground
+                                    sm:hidden
+                                  "
                                 >
                                   <div className="flex items-center gap-1">
                                     <FaCalendarAlt className="size-3.5" />
@@ -1948,8 +1949,8 @@ export function CourseContent({
                                   ) : (
                                     <span
                                       className="
-                                      text-xs font-semibold text-accent
-                                    "
+                                        text-xs font-semibold text-accent
+                                      "
                                     >
                                       {currentProgress}%
                                     </span>
@@ -1958,10 +1959,10 @@ export function CourseContent({
                               </div>
                               <div
                                 className="
-                                hidden shrink-0 items-center gap-3
-                                text-muted-foreground
-                                sm:flex
-                              "
+                                  hidden shrink-0 items-center gap-3
+                                  text-muted-foreground
+                                  sm:flex
+                                "
                               >
                                 <div className="flex items-center gap-1 text-xs">
                                   <FaCalendarAlt className="size-3.5" />
@@ -1978,8 +1979,8 @@ export function CourseContent({
                                 ) : (
                                   <span
                                     className="
-                                    text-xs font-semibold text-accent
-                                  "
+                                      text-xs font-semibold text-accent
+                                    "
                                   >
                                     {currentProgress}%
                                   </span>
@@ -2023,9 +2024,9 @@ export function CourseContent({
             <div className="flex items-center gap-3">
               <span
                 className="
-                inline-flex items-center justify-center rounded-full border
-                border-transparent bg-blue-500/20 p-2 text-blue-300
-              "
+                  inline-flex items-center justify-center rounded-full border
+                  border-transparent bg-blue-500/20 p-2 text-blue-300
+                "
               >
                 <MdVideoLibrary className="size-4" />
               </span>
@@ -2033,11 +2034,12 @@ export function CourseContent({
             </div>
             <div
               className="
-              inline-flex items-center rounded-full border border-primary/30
-              px-2.5 py-0.5 text-xs font-semibold text-primary transition-colors
-              focus:ring-2 focus:ring-ring focus:ring-offset-2
-              focus:outline-none
-            "
+                inline-flex items-center rounded-full border border-primary/30
+                px-2.5 py-0.5 text-xs font-semibold text-primary
+                transition-colors
+                focus:ring-2 focus:ring-ring focus:ring-offset-2
+                focus:outline-none
+              "
             >
               {course.lessons?.length || 0} clases
             </div>

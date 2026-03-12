@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { BookOpen, CircleHelp, Clock, FileUp, Rocket } from 'lucide-react';
 import {
@@ -557,6 +557,14 @@ const LessonActivities = ({
     return sorted[currentIndex + 1]?.id;
   }, [lessons, lessonId]);
 
+  const nextLesson = useMemo(() => {
+    if (!lessons || lessons.length === 0) return null;
+    const sorted = sortLessons(lessons);
+    const currentIndex = sorted.findIndex((l) => l.id === lessonId);
+    if (currentIndex === -1 || currentIndex === sorted.length - 1) return null;
+    return sorted[currentIndex + 1] ?? null;
+  }, [lessons, lessonId]);
+
   const renderActivityCard = (activity: Activity, index: number) => {
     const activityState = activitiesState[activity.id];
     const status = getActivityStatus(activity, index);
@@ -590,24 +598,25 @@ const LessonActivities = ({
                 ? 'border-border/40'
                 : status.isActive
                   ? `
-                  border-border/50
-                  hover:border-border
-                `
+                    border-border/50
+                    hover:border-border
+                  `
                   : 'border-border/40 opacity-60'
             }
           `}
         >
           <div
             className="
-            flex w-full flex-col items-center justify-between gap-4 text-center
-            md:flex-row md:items-center md:text-left
-          "
+              flex w-full flex-col items-center justify-between gap-4
+              text-center
+              md:flex-row md:items-center md:text-left
+            "
           >
             <div
               className="
-              flex min-w-0 flex-1 flex-col items-center gap-2
-              md:flex-row md:gap-4
-            "
+                flex min-w-0 flex-1 flex-col items-center gap-2
+                md:flex-row md:gap-4
+              "
             >
               <div
                 className={`
@@ -622,9 +631,9 @@ const LessonActivities = ({
               </div>
               <div
                 className="
-                flex flex-col items-center gap-1
-                md:items-start md:gap-0
-              "
+                  flex flex-col items-center gap-1
+                  md:items-start md:gap-0
+                "
               >
                 <span
                   className={`
@@ -658,25 +667,25 @@ const LessonActivities = ({
                 {currentLesson && (currentLesson as Lesson).videoDuration && (
                   <span
                     className="
-                    max-w-[140px] truncate text-xs text-muted-foreground
-                  "
+                      max-w-[140px] truncate text-xs text-muted-foreground
+                    "
                   >
                     Duración: {(currentLesson as Lesson).videoDuration}
                   </span>
                 )}
                 <h4
                   className="
-                  text-center text-sm font-medium text-foreground
-                  md:text-left
-                "
+                    text-center text-sm font-medium text-foreground
+                    md:text-left
+                  "
                 >
                   {activity.name}
                 </h4>
                 <p
                   className="
-                  line-clamp-1 text-center text-xs text-muted-foreground
-                  md:text-left
-                "
+                    line-clamp-1 text-center text-xs text-muted-foreground
+                    md:text-left
+                  "
                 >
                   {truncateDescription(activity.description)}
                 </p>
@@ -684,9 +693,9 @@ const LessonActivities = ({
             </div>
             <div
               className="
-              flex justify-center
-              md:self-center
-            "
+                flex justify-center
+                md:self-center
+              "
             >
               <button
                 onClick={
@@ -939,9 +948,9 @@ const LessonActivities = ({
               isMobile || inMainContent
                 ? 'px-2 text-lg'
                 : `
-              text-xl
-              md:text-2xl
-            `
+                  text-xl
+                  md:text-2xl
+                `
             }
           `}
         >
@@ -1011,9 +1020,9 @@ const LessonActivities = ({
         activities.length > 0 && !inMainContent ? (
           <div
             className={`
-            space-y-4
-            ${isMobile ? 'space-y-2' : ''}
-          `}
+              space-y-4
+              ${isMobile ? 'space-y-2' : ''}
+            `}
           >
             {(showAll ? activities : activities.slice(0, 3)).map(
               (activity, index) => renderActivityCard(activity, index)
@@ -1048,6 +1057,7 @@ const LessonActivities = ({
           onViewHistoryAction={() => setIsGradeHistoryOpen(true)}
           onActivityCompleteAction={handleActivityCompletion}
           isLastActivityInLesson={isLastActivityInLesson(selectedActivity)}
+          nextLesson={nextLesson}
         />
       )}
 
