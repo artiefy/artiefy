@@ -286,10 +286,31 @@ export default function MiniLoginModal({
         const signInCompleted =
           signIn.status === 'complete' || Boolean(signIn.createdSessionId);
 
-        if (!signInCompleted) {
-          finalizeOAuthFlow(true);
+        if (signInCompleted) {
+          finalizeOAuthFlow(false);
           return;
         }
+
+        // Evita falsos positivos de "needs signup" mientras Clerk sincroniza
+        // el estado después del callback OAuth.
+        window.setTimeout(async () => {
+          if (resolved) return;
+          try {
+            if (typeof signIn.reload === 'function') {
+              await signIn.reload();
+            }
+          } catch (error) {
+            if (process.env.NODE_ENV !== 'production') {
+              console.error(
+                'No se pudo recargar SignIn tras mensaje complete:',
+                error
+              );
+            }
+          }
+          if (resolved) return;
+          finalizeOAuthFlow(false);
+        }, 300);
+        return;
       } catch (error) {
         console.error(
           'Error al recargar SignIn después de OAuth popup:',
@@ -319,27 +340,6 @@ export default function MiniLoginModal({
         redirectUrl: absoluteRedirectUrl,
         redirectUrlComplete: absoluteRedirectUrlComplete,
       });
-
-      // Fallback por si el mensaje no llega por algún navegador.
-      if (!resolved && typeof signIn.reload === 'function') {
-        try {
-          await signIn.reload();
-        } catch (reloadError) {
-          if (process.env.NODE_ENV !== 'production') {
-            console.error(
-              'No se pudo recargar SignIn tras OAuth popup:',
-              reloadError
-            );
-          }
-        }
-        const signInCompleted =
-          signIn.status === 'complete' || Boolean(signIn.createdSessionId);
-        if (!signInCompleted) {
-          finalizeOAuthFlow(true);
-        } else {
-          finalizeOAuthFlow(false);
-        }
-      }
     } catch (err) {
       if (resolved) return;
       finalizeOAuthFlow(needsSignUpRequested);
@@ -371,27 +371,9 @@ export default function MiniLoginModal({
     }
   };
 
+  // Mientras el popup OAuth está activo, ocultamos totalmente el mini modal.
   if (isOAuthPopupOpen || isFinalizingOAuth) {
-    return (
-      <div
-        className="
-          fixed inset-0 z-[1300] flex items-center justify-center bg-black/70
-          backdrop-blur-sm
-        "
-      >
-        <div
-          className="
-            flex flex-col items-center gap-3 rounded-2xl bg-background/95 p-6
-            shadow-2xl
-          "
-        >
-          <Icons.spinner className="size-10 text-primary" />
-          <p className="text-sm font-medium text-foreground">
-            Validando inicio de sesión...
-          </p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const validateSignInInputs = (
