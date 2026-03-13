@@ -200,7 +200,7 @@ export const ModalScheduleMeeting = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-screen w-full max-w-screen-sm overflow-y-auto p-4">
+      <DialogContent className="z-[9999] max-h-screen w-full max-w-screen-sm overflow-y-auto p-4">
         <DialogHeader>
           <DialogTitle>Agendar clases en Teams</DialogTitle>
         </DialogHeader>
