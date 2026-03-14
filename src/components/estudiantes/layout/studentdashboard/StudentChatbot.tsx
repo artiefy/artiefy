@@ -2739,9 +2739,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
             <div className="max-w-[90%] rounded-2xl bg-background p-4 shadow">
               {title && (
                 <h3
-                  className="
+                  className={`
                     mb-2 text-xl leading-tight font-extrabold text-white
-                  "
+                  `}
                 >
                   {title}
                 </h3>
@@ -2986,29 +2986,29 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
               coursesData={message.coursesData}
             />
             <button
-              className="
+              className={`
                 group relative mt-3 w-full overflow-hidden rounded-lg border
                 border-cyan-500 bg-gradient-to-br from-cyan-600 via-cyan-500
                 to-cyan-400 py-2 text-sm font-semibold text-white shadow-md
                 transition-all duration-300 ease-in-out
                 hover:scale-105 hover:shadow-cyan-500/50
-              "
+              `}
               onClick={() => {
                 // lógica del proyecto
               }}
             >
               <span className="relative z-10">+ Agregar proyecto</span>
               <span
-                className="
+                className={`
                   absolute inset-0 bg-cyan-400/10 blur-md transition-all
                   duration-500 ease-in-out
                   group-hover:blur-lg
-                "
+                `}
               />
               <span
-                className="
+                className={`
                   absolute top-0 left-0 h-full w-1 animate-pulse bg-cyan-500
-                "
+                `}
               />
             </button>
           </div>
@@ -3261,18 +3261,18 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   onClick={handleClick}
                 >
                   <div
-                    className="
+                    className={`
                       absolute inset-0 rounded-full bg-gradient-to-br
                       from-cyan-400 to-teal-500 opacity-0 blur-md
                       transition-opacity duration-300
                       group-hover:opacity-20
-                    "
+                    `}
                   />
                   <div
-                    className="
+                    className={`
                       absolute inset-1 flex items-center justify-center
                       rounded-full bg-gradient-to-br from-slate-800 to-slate-900
-                    "
+                    `}
                   >
                     <div className="relative flex items-center justify-center">
                       <Image
@@ -3290,31 +3290,31 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                     </div>
                   </div>
                   <div
-                    className="
+                    className={`
                       absolute inset-0 rounded-full bg-gradient-to-r
                       from-transparent via-cyan-400 to-transparent opacity-0
                       transition-opacity duration-500
                       group-hover:opacity-100
-                    "
+                    `}
                     style={{
                       background:
                         'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
                     }}
                   />
                   <div
-                    className="
+                    className={`
                       absolute inset-0 rounded-full border-2 border-cyan-400
                       opacity-0 transition-opacity duration-300
-                    "
+                    `}
                   />
                 </button>
                 {/* Label debajo del botón: más grande, bold y pegada al botón */}
                 <div
-                  className="
+                  className={`
                     text-md absolute bottom-[-1.2rem] left-1/2 -translate-x-1/2
                     transform text-center font-bold whitespace-nowrap
                     text-primary
-                  "
+                  `}
                 >
                   Artie IA
                 </div>
@@ -3487,11 +3487,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                     }
                   >
                     <div
-                      className="
+                      className={`
                         grid grid-cols-3 items-center gap-1 border-b
                         border-gray-800 px-3 py-2
                         md:px-4 md:py-4
-                      "
+                      `}
                     >
                       <div className="flex items-center">
                         <HiMiniCpuChip className="text-3xl text-white md:text-4xl" />
@@ -3500,11 +3500,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                       <div className="flex items-center justify-center">
                         <div className="flex flex-col items-center">
                           <h2
-                            className="
+                            className={`
                               flex items-center gap-2 text-base font-semibold
                               text-white
                               md:text-lg
-                            "
+                            `}
                           >
                             Artie IA
                             <span
@@ -3524,10 +3524,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                           </h2>
 
                           <em
-                            className="
+                            className={`
                               mt-0.5 text-xs font-semibold text-white/70
                               md:text-sm
-                            "
+                            `}
                           >
                             {user?.fullName}
                           </em>
@@ -3536,20 +3536,20 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
 
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          className="
+                          className={`
                             rounded-full p-1.5 transition-all duration-200
                             hover:bg-white/6
                             active:scale-95
-                          "
+                          `}
                           aria-label="Minimizar chatbot"
                         >
                           {/* Mostrar flecha atrás solo cuando estamos dentro de un chat (idChat distinto de null) */}
                           {chatMode.idChat !== null ? (
                             <MdArrowBack
-                              className="
+                              className={`
                                 text-lg text-white/70
                                 md:text-xl
-                              "
+                              `}
                               onClick={() => {
                                 setChatMode({
                                   idChat: null,
@@ -3564,18 +3564,18 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
 
                         <button
                           onClick={handleDeleteHistory}
-                          className="
+                          className={`
                             rounded-full p-1.5 transition-colors
                             hover:bg-white/6
-                          "
+                          `}
                           aria-label="Borrar historial"
                           title="Borrar historial"
                         >
                           <TrashIcon
-                            className="
+                            className={`
                               text-lg text-red-400
                               md:text-xl
-                            "
+                            `}
                           />
                         </button>
 
@@ -3587,27 +3587,27 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                               new CustomEvent('close-chatbot')
                             );
                           }}
-                          className="
+                          className={`
                             rounded-full p-1.5 transition-all duration-200
                             hover:bg-white/6
                             active:scale-95
-                          "
+                          `}
                           aria-label="Cerrar chatbot"
                         >
                           <IoClose
-                            className="
+                            className={`
                               text-lg text-white/70
                               md:text-xl
-                            "
+                            `}
                           />
                         </button>
                       </div>
                     </div>
                     <div
-                      className="
+                      className={`
                         px-2 py-0
                         md:px-3
-                      "
+                      `}
                     >
                       <ChatNavigation
                         activeSection={activeSection}
@@ -3624,10 +3624,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         showLoginNotice &&
                         !isSignedIn && (
                           <div
-                            className="
+                            className={`
                               mx-3 mt-3 rounded-lg border border-foreground/10
                               bg-background/60 p-4 text-center
-                            "
+                            `}
                           >
                             <p className="text-sm text-white">
                               Debes iniciar sesión para seguir la conversación
@@ -3639,13 +3639,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                 );
                                 window.location.href = `/sign-in?redirect_url=${currentUrl}`;
                               }}
-                              className="
+                              className={`
                                 mt-3 rounded-lg bg-background px-4 py-2 text-sm
                                 font-medium text-white transition-colors
                                 hover:bg-background/90
                                 focus:ring-2 focus:ring-background
                                 focus:ring-offset-2 focus:outline-none
-                              "
+                              `}
                             >
                               Iniciar sesión
                             </button>
@@ -3664,18 +3664,18 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                               />
                             ) : !isSignedIn ? (
                               <div
-                                className="
+                                className={`
                                   flex size-full flex-col items-center
                                   justify-center p-8 text-center
-                                "
+                                `}
                               >
                                 <div className="mb-6">
                                   <div
-                                    className="
+                                    className={`
                                       mx-auto mb-4 flex size-16 items-center
                                       justify-center rounded-full
                                       bg-background/20
-                                    "
+                                    `}
                                   >
                                     <svg
                                       className="size-8 text-[#3AF4EF]"
@@ -3692,9 +3692,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                     </svg>
                                   </div>
                                   <h3
-                                    className="
+                                    className={`
                                       mb-2 text-xl font-bold text-white
-                                    "
+                                    `}
                                   >
                                     Acceso restringido
                                   </h3>
@@ -3710,7 +3710,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                     );
                                     window.location.href = `/sign-in?redirect_url=${currentUrl}`;
                                   }}
-                                  className="
+                                  className={`
                                     rounded-lg bg-gradient-to-r from-[#3AF4EF]
                                     to-[#00BDD8] px-6 py-3 font-semibold
                                     text-[#071024] shadow-lg transition-all
@@ -3719,7 +3719,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                     focus:ring-2 focus:ring-[#3AF4EF]
                                     focus:ring-offset-2 focus:outline-none
                                     active:scale-95
-                                  "
+                                  `}
                                 >
                                   Iniciar sesión
                                 </button>
@@ -3984,11 +3984,11 @@ const CoursesCardsWithModalidad = React.memo(
           return (
             <Card
               key={course.id}
-              className="
+              className={`
                 max-w-[260px] min-w-[300px] overflow-hidden rounded-lg
                 bg-[#0b2433] text-primary transition-all
                 hover:scale-[1.02]
-              "
+              `}
             >
               <div className="flex flex-col items-start px-4 py-3">
                 <h4 className="mb-1 font-bold text-white">{course.title}</h4>
@@ -3997,14 +3997,14 @@ const CoursesCardsWithModalidad = React.memo(
                 </span>
                 <Link
                   href={`/estudiantes/cursos/${course.id}`}
-                  className="
+                  className={`
                     group/button relative mt-auto inline-flex h-10 w-full
                     items-center justify-center overflow-hidden rounded-md
                     border border-white bg-[#01142B] p-2 text-sm font-semibold
                     text-[#3AF4EF] transition
                     hover:bg-gray-600
                     active:scale-95
-                  "
+                  `}
                 >
                   <span className="font-bold">Ir al Curso</span>
                   <svg

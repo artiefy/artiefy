@@ -309,10 +309,10 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="
+              className={`
                 text-white
                 hover:bg-white/10
-              "
+              `}
               onClick={fetchInvitaciones}
               aria-label="Recargar lista"
               title="Recargar lista"
@@ -366,10 +366,10 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                     className="relative border-slate-700 bg-slate-800/70"
                   >
                     <CardContent
-                      className="
+                      className={`
                         flex flex-col gap-3 p-4
                         sm:flex-row sm:items-center sm:gap-4
-                      "
+                      `}
                     >
                       {/* Avatar y datos */}
                       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -389,9 +389,9 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                           </div>
                           {inv.message && (
                             <div
-                              className="
+                              className={`
                                 mt-1 text-xs break-words text-slate-300
-                              "
+                              `}
                             >
                               Mensaje: {inv.message}
                             </div>
@@ -401,20 +401,20 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                       </div>
                       {/* Estado y acciones */}
                       <div
-                        className="
+                        className={`
                           flex flex-col items-end gap-2
                           sm:ml-4
-                        "
+                        `}
                       >
                         {inv.status === 'pending' && (
                           <div className="flex gap-2">
                             <Button
                               size="sm"
                               variant="outline"
-                              className="
+                              className={`
                                 border-green-400 text-green-400
                                 hover:bg-green-400/10
-                              "
+                              `}
                               disabled={actionLoading === inv.id}
                               onClick={() => handleAceptar(inv.id)}
                             >
@@ -425,10 +425,10 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                             <Button
                               size="sm"
                               variant="outline"
-                              className="
+                              className={`
                                 border-red-400 text-red-400
                                 hover:bg-red-400/10
-                              "
+                              `}
                               disabled={actionLoading === inv.id}
                               onClick={() => handleRechazar(inv.id)}
                             >
@@ -442,12 +442,12 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                       {/* Botón eliminar individual */}
                       <button
                         type="button"
-                        className="
+                        className={`
                           absolute top-0 right-0 flex size-8 items-center
                           justify-center rounded-tr-lg bg-slate-800 text-xl
                           text-cyan-400 transition-all
                           hover:bg-cyan-900/80 hover:text-cyan-300
-                        "
+                        `}
                         style={{ zIndex: 10 }}
                         title="Eliminar invitación"
                         disabled={actionLoading === inv.id}
