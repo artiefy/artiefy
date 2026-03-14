@@ -109,10 +109,14 @@ const ModalFormLessons = ({
 
   const videoRef = useRef<HTMLVideoElement | null>(null); // Referencia al video para capturar un frame
   const canvasRef = useRef<HTMLCanvasElement | null>(null); // Referencia al canvas para capturar un frame
+  const isFirstLoadRef = useRef(true); // Para cargar datos solo la primera vez
   void setErrors;
 
+  // SOLO cargar editingLesson cuando se abre el modal por primera vez
   useEffect(() => {
-    if (isEditing && editingLesson) {
+    if (isOpen && isEditing && editingLesson && isFirstLoadRef.current) {
+      isFirstLoadRef.current = false; // Marcar que ya se cargó
+
       const hasVideo =
         !!editingLesson.coverVideoKey && editingLesson.coverVideoKey !== 'none';
 
@@ -148,7 +152,12 @@ const ModalFormLessons = ({
         externalLinks: externalLinks,
       });
     }
-  }, [isEditing, editingLesson]);
+
+    // Cuando se cierra el modal, resetear la bandera
+    if (!isOpen) {
+      isFirstLoadRef.current = true;
+    }
+  }, [isOpen, isEditing, editingLesson]);
 
   // Manejador de cambio para inputs
   const handleInputChange = (
@@ -670,7 +679,7 @@ const ModalFormLessons = ({
               {isEditing ? 'Actualizar' : 'Crear'} clase
             </DialogTitle>
             <DialogDescription className="text-xl text-white">
-              Llena los detalles para crear la nuevo clase, la cual puede ser
+              Llena los detalles para crear la nueva clase, la cual puede ser
               solo lectura.
             </DialogDescription>
           </DialogHeader>

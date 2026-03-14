@@ -19,6 +19,17 @@ import baseConfig from './eslint.config.mjs';
 export default defineConfig([
   ...baseConfig,
   {
+    ignores: [
+      'eslint.cli.config.mjs', // Excluir este archivo de la linting
+      'eslint.config.mjs',
+      'next.config.mjs',
+      'prettier.config.mjs',
+      'lint-staged.config.mjs',
+      '.next/**',
+      'node_modules/**',
+    ],
+  },
+  {
     files: ['**/*.ts', '**/*.tsx'],
     ignores: ['run-migration.ts'],
     languageOptions: {

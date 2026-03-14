@@ -155,7 +155,7 @@ export async function POST(request: Request) {
           rating: data.rating,
           modalidadesid: modalidadId,
           nivelid: data.nivelid,
-          instructor: data.instructorId,
+          instructor: data.instructorId ?? userId,
           isActive: data.isActive,
           requiresProgram: false,
           individualPrice: null, // <--- siempre null al inicio

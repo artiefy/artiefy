@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
 
 import { clerkClient } from '@clerk/nextjs/server';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { db } from '~/server/db';
-import { enrollmentPrograms, enrollments, users } from '~/server/db/schema';
+import {
+  enrollmentPrograms,
+  enrollments,
+  pagos,
+  users,
+} from '~/server/db/schema';
 
 const updateSchema = z.object({
   userIds: z.array(z.string()),
@@ -67,6 +72,7 @@ export async function PATCH(req: Request) {
       'name',
       'permissions',
       'status', // la mapeamos a subscriptionStatus
+      'fechaRealPago', // se maneja en tabla pagos, no en users
     ]);
 
     // Columnas fecha conocidas (conversión a Date)
@@ -254,6 +260,48 @@ export async function PATCH(req: Request) {
         `   ├─ planType: ${userUpdateFields.planType ?? '(no cambiado)'}`
       );
       console.log(`   └─ nombre: ${userUpdateFields.name ?? '(no cambiado)'}`);
+
+      // === ACTUALIZACIÓN DE PAGOS (fechaRealPago) ===
+      if (fields.fechaRealPago !== undefined && fields.fechaRealPago !== null) {
+        const dateStr = String(fields.fechaRealPago);
+        const parsedDate = new Date(dateStr);
+
+        if (!isNaN(parsedDate.getTime())) {
+          console.log(
+            `\n💳 ACTUALIZANDO PAGO: fechaRealPago = ${dateStr}`
+          );
+
+          // Obtener el pago más reciente del usuario
+          const ultimoPago = await db
+            .select()
+            .from(pagos)
+            .where(eq(pagos.userId, userId))
+            .orderBy(desc(pagos.id))
+            .limit(1);
+
+          if (ultimoPago.length > 0) {
+            const pago = ultimoPago[0];
+            console.log(
+              `  📌 Pago encontrado: ID=${pago.id}, nroPago=${pago.nroPago}`
+            );
+            await db
+              .update(pagos)
+              .set({
+                fechaRealPago: parsedDate.toISOString().split('T')[0],
+              })
+              .where(eq(pagos.id, pago.id));
+            console.log(
+              `  ✅ Fecha real de pago actualizada en pago #${pago.nroPago}`
+            );
+          } else {
+            console.warn(`⚠️ No hay pagos para el usuario ${userId}`);
+          }
+        } else {
+          console.warn(
+            `⚠️ Fecha inválida para fechaRealPago: ${dateStr}`
+          );
+        }
+      }
 
       // === Matriculación opcional ===
       console.log('\n🎓 PROCESANDO MATRICULACIÓN:');

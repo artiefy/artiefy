@@ -826,7 +826,7 @@ export default function EnrolledUsersPage() {
           <tr>
             <th>PRODUCTO</th>
             <th class="text-center">N° PAGO</th>
-            <th>FECHA PROGRAMA</th>
+            <th>FECHA PROGRAMADA</th>
             <th>FECHA REAL DE PAGO</th>
             <th>MÉTODO DE PAGO</th>
             <th class="text-right">VALOR</th>
@@ -1159,6 +1159,12 @@ export default function EnrolledUsersPage() {
             }
           }
         }
+        return next;
+      }
+
+      if (field === 'fechaRealPago') {
+        current.fechaRealPago = value || null;
+        next[index] = current;
         return next;
       }
 
@@ -5631,7 +5637,7 @@ export default function EnrolledUsersPage() {
                           dark:border-gray-600
                         "
                         >
-                          FECHA PROGRAMA
+                          FECHA PROGRAMADA
                         </th>
                         <th
                           className="
@@ -5756,7 +5762,7 @@ export default function EnrolledUsersPage() {
                               />
                             </td>
 
-                            {/* FECHA PROGRAMA */}
+                            {/* FECHA PROGRAMADA */}
                             <td
                               className="
                               border-b border-gray-100 px-3 py-2
@@ -6375,7 +6381,7 @@ export default function EnrolledUsersPage() {
                               dark:border-gray-600
                             "
                             >
-                              FECHA PROGRAMA
+                              FECHA PROGRAMADA
                             </th>
                             <th
                               className="
@@ -6462,7 +6468,7 @@ export default function EnrolledUsersPage() {
                                   />
                                 </td>
 
-                                {/* FECHA PROGRAMA */}
+                                {/* FECHA PROGRAMADA */}
                                 <td
                                   className="
                                   border-b border-gray-100 px-3 py-2
@@ -6937,7 +6943,7 @@ export default function EnrolledUsersPage() {
                             text-black
                           "
                           >
-                            FECHA PROGRAMA
+                            FECHA PROGRAMADA
                           </th>
                           <th
                             className="
