@@ -325,7 +325,16 @@ export function ProjectsSection({
           {/* Botón volver */}
           <button
             onClick={handleBackToList}
-            className="-ml-2 inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground ring-offset-background transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:whitespace-nowrap"
+            className="
+              -ml-2 inline-flex h-10 w-full items-center justify-center gap-2
+              rounded-md px-4 py-2 text-sm font-medium text-muted-foreground
+              ring-offset-background transition-colors
+              hover:bg-accent hover:text-black
+              focus-visible:ring-2 focus-visible:ring-ring
+              focus-visible:ring-offset-2 focus-visible:outline-none
+              disabled:pointer-events-none disabled:opacity-50
+              sm:w-auto sm:whitespace-nowrap
+            "
           >
             <FaArrowLeft className="mr-2 size-4" />
             Volver a proyectos
@@ -401,7 +410,10 @@ export function ProjectsSection({
     <>
       <div className="space-y-6">
         {/* Header con título e icono */}
-        <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
+        <div className="
+          flex flex-col items-start justify-between gap-4
+          sm:flex-row
+        ">
           <div className="flex items-start gap-4">
             <div
               className="flex size-10 items-center justify-center rounded-xl"
@@ -424,7 +436,17 @@ export function ProjectsSection({
             onClick={handleCreateProject}
             disabled={!isEnrolled || _isCreating}
             style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+            className="
+              inline-flex h-10 w-full items-center justify-center gap-2
+              rounded-md px-4 py-2 text-sm font-medium ring-offset-background
+              transition-colors
+              hover:opacity-90
+              focus-visible:ring-2 focus-visible:ring-ring
+              focus-visible:ring-offset-2 focus-visible:outline-none
+              disabled:pointer-events-none disabled:opacity-50
+              sm:w-auto sm:whitespace-nowrap
+              [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+            "
           >
             <FaPlus className="size-4" />
             {_isCreating ? 'Creando...' : 'Crear Proyecto'}
@@ -433,7 +455,10 @@ export function ProjectsSection({
 
         {/* Lista de proyectos */}
         {projects.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="
+            grid gap-4
+            sm:grid-cols-2
+          ">
             {projects.map((project) => {
               // Calcula el estado del proyecto de forma más rigurosa
               const hasName = !!(project.name && project.name.trim());
@@ -508,16 +533,32 @@ export function ProjectsSection({
                 <div
                   key={project.id}
                   onClick={() => handleEnterProject(project)}
-                  className="group cursor-pointer rounded-xl border border-border/50 bg-card/50 p-4 transition-all duration-200 hover:border-border hover:bg-card/80 sm:p-5"
+                  className="
+                    group cursor-pointer rounded-xl border border-border/50
+                    bg-card/50 p-4 transition-all duration-200
+                    hover:border-border hover:bg-card/80
+                    sm:p-5
+                  "
                 >
                   {/* Header con título y estado */}
                   <div className="mb-3 flex items-start justify-between">
-                    <h3 className="flex-1 pr-3 font-semibold text-foreground transition-colors group-hover:text-[#22c4d3]">
+                    <h3 className="
+                      flex-1 pr-3 font-semibold text-foreground
+                      transition-colors
+                      group-hover:text-[#22c4d3]
+                    ">
                       {project.name}
                     </h3>
                     {/* Badge de estado: Completado o En progreso */}
                     {isProjectComplete ? (
-                      <div className="inline-flex items-center rounded-full border border-green-500/30 bg-green-500/20 px-2.5 py-0.5 text-xs font-semibold text-green-400 transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                      <div className="
+                        inline-flex items-center rounded-full border
+                        border-green-500/30 bg-green-500/20 px-2.5 py-0.5
+                        text-xs font-semibold text-green-400 transition-colors
+                        hover:bg-primary/80
+                        focus:ring-2 focus:ring-ring focus:ring-offset-2
+                        focus:outline-none
+                      ">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
@@ -536,7 +577,13 @@ export function ProjectsSection({
                         Completado
                       </div>
                     ) : (
-                      <div className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs font-semibold text-blue-400 transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                      <div className="
+                        inline-flex items-center rounded-full border
+                        border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs
+                        font-semibold text-blue-400 transition-colors
+                        focus:ring-2 focus:ring-ring focus:ring-offset-2
+                        focus:outline-none
+                      ">
                         <Clock className="mr-1 size-3" />
                         En progreso
                       </div>
@@ -564,7 +611,10 @@ export function ProjectsSection({
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-valuenow={progressPercentage}
-                      className="relative h-1.5 w-full overflow-hidden rounded-full bg-[#1A2333]"
+                      className="
+                        relative h-1.5 w-full overflow-hidden rounded-full
+                        bg-[#1A2333]
+                      "
                     >
                       <div
                         className="h-full flex-1 transition-all"
@@ -577,7 +627,10 @@ export function ProjectsSection({
                   </div>
 
                   {/* Footer con fecha y botón entrar */}
-                  <div className="flex items-center justify-between border-t border-border/50 pt-3 text-xs text-muted-foreground">
+                  <div className="
+                    flex items-center justify-between border-t border-border/50
+                    pt-3 text-xs text-muted-foreground
+                  ">
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-1.5">
                         <Users className="size-3.5" />
@@ -592,7 +645,10 @@ export function ProjectsSection({
                     </div>
 
                     <div
-                      className="flex items-center gap-1 transition-colors group-hover:text-black"
+                      className="
+                        flex items-center gap-1 transition-colors
+                        group-hover:text-black
+                      "
                       style={{ color: '#22c4d3' }}
                     >
                       <span>Entrar</span>
@@ -606,10 +662,16 @@ export function ProjectsSection({
         ) : (
           /* Mensaje cuando no hay proyectos */
           <div
-            className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
+            className="
+              flex flex-col items-center justify-center rounded-xl border
+              border-dashed border-border/50 py-12
+            "
             style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
           >
-            <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50">
+            <div className="
+              mb-4 flex size-16 items-center justify-center rounded-full
+              bg-muted/50
+            ">
               <FaFolderOpen className="size-8 text-black" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-100">
@@ -625,7 +687,16 @@ export function ProjectsSection({
                 onClick={handleCreateProject}
                 disabled={_isCreating}
                 style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
-                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium ring-offset-background transition-colors hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto sm:whitespace-nowrap"
+                className="
+                  inline-flex h-10 w-full items-center justify-center gap-2
+                  rounded-md px-4 py-2 text-sm font-medium
+                  ring-offset-background transition-colors
+                  hover:opacity-90
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:pointer-events-none disabled:opacity-50
+                  sm:w-auto sm:whitespace-nowrap
+                "
               >
                 <FaPlus className="size-4" />
                 {_isCreating ? 'Creando...' : 'Crear Primer Proyecto'}

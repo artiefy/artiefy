@@ -35,14 +35,14 @@ export default function ModalPublicarProyecto({
       {loading && (
         <div
           className="
-          fixed inset-0 z-[100] flex items-center justify-center bg-black/60
-        "
+            fixed inset-0 z-[100] flex items-center justify-center bg-black/60
+          "
         >
           <div
             className="
-            flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
-            p-6 shadow-lg
-          "
+              flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
+              p-6 shadow-lg
+            "
           >
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">

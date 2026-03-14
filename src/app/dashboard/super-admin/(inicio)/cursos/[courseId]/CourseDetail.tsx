@@ -734,13 +734,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
           const meetingId =
             getStr(r, 'meeting_id') ?? getStr(r, 'meetingId') ?? '';
-          const meetingIdAsNum = parseInt(meetingId, 10);
-          const numericId =
-            !isNaN(meetingIdAsNum) && meetingIdAsNum > 0 ? meetingIdAsNum : 0;
 
           return {
-            id: numericId,
+            id: Number(r.id) || 0, // ✅ Usar el id real de BD, no parseInt(meetingId)
             meetingId: meetingId,
+            joinUrl: getStr(r, 'join_url') ?? getStr(r, 'joinUrl'),
             recordingContentUrl: getStr(r, 'recordingContentUrl'),
             video_key: getStr(r, 'video_key') ?? getStr(r, 'videoKey'),
             video_key_2: getStr(r, 'video_key_2') ?? getStr(r, 'videoKey2'),
@@ -1675,7 +1673,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             type="button"
             onClick={() => setIsOpen(!isOpen)}
             className="
-              w-full rounded-md border border-cyan-500/50 bg-slate-900 p-3
+              w-full rounded-md border border-cyan-500/50 bg-slate-800 p-3
               text-left text-sm text-cyan-400 transition-colors
               hover:border-cyan-400
               focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20
@@ -1744,7 +1742,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div
                 className="
                   fixed z-[9999] overflow-hidden rounded-md border
-                  border-cyan-500/50 bg-slate-900 shadow-2xl
+                  border-cyan-500/50 bg-slate-800 shadow-2xl
                 "
                 style={{
                   top: '300px',
@@ -1762,7 +1760,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="
-                      w-full rounded border border-cyan-500/40 bg-slate-900 px-3
+                      w-full rounded border border-cyan-500/40 bg-slate-800 px-3
                       py-2 text-sm text-cyan-400
                       placeholder:text-cyan-400/50
                       focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20
@@ -2082,7 +2080,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         md:px-3 md:py-4
       "
       style={{
-        backgroundColor: 'rgb(1, 11, 23)',
+        backgroundColor: 'rgb(25, 45, 80)',
         backgroundSize: 'cover',
         backgroundPosition: 'center center',
       }}
@@ -2090,8 +2088,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       {/* Overlay oscuro para mejorar legibilidad */}
       <div
         className="
-          pointer-events-none absolute inset-0 bg-gradient-to-br from-black/70
-          via-[#010b17]/60 to-black/70
+          pointer-events-none absolute inset-0 bg-gradient-to-br from-black/50
+          via-[#1a2d4a]/30 to-black/50
         "
       />
 
@@ -2237,7 +2235,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         <Card
           className="
             zoom-in sticky top-0 z-30 mt-3 h-auto overflow-hidden border-2
-            border-cyan-500/30 bg-slate-950 p-4 shadow-2xl transition-all
+            border-cyan-500/30 bg-slate-800 p-4 shadow-2xl transition-all
             duration-500 ease-out
             hover:border-cyan-500/60 hover:shadow-cyan-500/30
             sm:p-8
@@ -2747,7 +2745,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     value={selectedInstructor}
                     onChange={(e) => setSelectedInstructor(e.target.value)}
                     className="
-                      flex-1 rounded-lg border border-cyan-500/30 bg-slate-900
+                      flex-1 rounded-lg border border-cyan-500/30 bg-slate-800
                       px-3 py-2 text-sm text-white
                       focus:border-cyan-500 focus:outline-none
                     "
@@ -2869,7 +2867,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         activeTab === 'en-vivo'
                           ? 'border-cyan-400 text-white'
                           : `
-                            border-transparent text-white/60
+                            border-transparent text-white
                             hover:text-white
                           `
                       }
@@ -3018,9 +3016,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
                         text-xs font-bold text-slate-950
                       "
-                    >
-                      5
-                    </span>
+                    ></span>
                   </button>
 
                   <button
@@ -3058,8 +3054,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <div
                         className="
                           group relative overflow-hidden rounded-2xl border-2
-                          border-cyan-500/30 bg-gradient-to-br from-slate-900
-                          via-slate-900 to-cyan-950/30 p-8 shadow-xl
+                          border-cyan-500/30 bg-gradient-to-br from-slate-800
+                          via-slate-800 to-cyan-950/30 p-8 shadow-xl
                           transition-all duration-300
                           hover:border-cyan-500/60 hover:shadow-2xl
                           hover:shadow-cyan-500/20
@@ -3217,8 +3213,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <div
                         className="
                           group relative overflow-hidden rounded-2xl border-2
-                          border-cyan-500/30 bg-gradient-to-br from-slate-900
-                          via-slate-900 to-cyan-950/30 p-8 shadow-xl
+                          border-cyan-500/30 bg-gradient-to-br from-slate-800
+                          via-slate-800 to-cyan-950/30 p-8 shadow-xl
                           transition-all duration-300
                           hover:border-cyan-500/60 hover:shadow-2xl
                           hover:shadow-cyan-500/20
@@ -3388,7 +3384,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     {/* Formulario de creación de foro siempre visible */}
                     <div
                       className="
-                        mb-6 rounded-2xl border border-cyan-700/30 bg-[#101c2b]
+                        mb-6 rounded-2xl border border-cyan-700/30 bg-[#1a2f3f]
                         p-6 shadow
                       "
                     >
@@ -3406,7 +3402,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           rows={2}
                           className="
                             w-full resize-none rounded-xl border
-                            border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-base
+                            border-cyan-700/20 bg-[#142030] px-4 py-3 text-base
                             text-white
                             placeholder:text-white/30
                             focus:border-cyan-500 focus:outline-none
@@ -3423,7 +3419,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           rows={2}
                           className="
                             w-full resize-none rounded-xl border
-                            border-cyan-700/20 bg-[#0d1726] px-4 py-3 text-sm
+                            border-cyan-700/20 bg-[#142030] px-4 py-3 text-sm
                             text-white
                             placeholder:text-white/30
                             focus:border-cyan-500 focus:outline-none
@@ -3445,9 +3441,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             <div
                               className="
                                 rounded-lg border border-dashed
-                                border-cyan-700/30 bg-slate-900/50 p-3
+                                border-cyan-700/30 bg-slate-800/50 p-3
                                 text-center transition
-                                hover:border-cyan-500 hover:bg-slate-900
+                                hover:border-cyan-500 hover:bg-slate-800
                               "
                             >
                               <div className="text-lg">□</div>
@@ -3471,9 +3467,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             <div
                               className="
                                 rounded-lg border border-dashed
-                                border-cyan-700/30 bg-slate-900/50 p-3
+                                border-cyan-700/30 bg-slate-800/50 p-3
                                 text-center transition
-                                hover:border-cyan-500 hover:bg-slate-900
+                                hover:border-cyan-500 hover:bg-slate-800
                               "
                             >
                               <div className="text-lg">📄</div>
@@ -3536,7 +3532,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             <div
                               className="
                                 rounded-xl border border-dashed border-white/20
-                                bg-slate-900/30 p-8 text-center
+                                bg-slate-800/30 p-8 text-center
                               "
                             >
                               <p className="text-sm text-white/60">
@@ -3550,13 +3546,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 onClick={() => handleSelectForum(forum.id)}
                                 className={`
                                   w-full rounded-2xl border border-cyan-700/30
-                                  bg-[#101c2b] p-5 text-left shadow
+                                  bg-[#1a2f3f] p-5 text-left shadow
                                   transition-all duration-200
-                                  hover:border-cyan-400/60 hover:bg-[#14243a]
+                                  hover:border-cyan-400/60 hover:bg-[#1d3449]
                                   ${
                                     selectedForum === forum.id
                                       ? `
-                                        border-cyan-400 bg-[#16263b]
+                                        border-cyan-400 bg-[#1d3449]
                                         shadow-cyan-500/10
                                       `
                                       : ''
@@ -3630,7 +3626,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       {/* Columna derecha - Contenido del foro */}
                       <div
                         className="
-                          rounded-xl border border-white/10 bg-slate-900/50 p-6
+                          rounded-xl border border-white/10 bg-slate-800/50 p-6
                         "
                       >
                         {!selectedForum ? (
@@ -3739,7 +3735,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             <div
                               className="
                                 rounded-lg border border-cyan-700/30
-                                bg-[#0d1726] p-4
+                                bg-[#142030] p-4
                               "
                             >
                               <textarea
@@ -3751,7 +3747,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 rows={3}
                                 className="
                                   mb-3 w-full resize-none rounded-lg border
-                                  border-cyan-700/20 bg-slate-900 px-3 py-2
+                                  border-cyan-700/20 bg-slate-800 px-3 py-2
                                   text-sm text-white
                                   placeholder:text-white/30
                                   focus:border-cyan-500 focus:outline-none
@@ -3775,9 +3771,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                   <div
                                     className="
                                       rounded-lg border border-dashed
-                                      border-cyan-700/30 bg-slate-900/50 p-3
+                                      border-cyan-700/30 bg-slate-800/50 p-3
                                       text-center transition
-                                      hover:border-cyan-500 hover:bg-slate-900
+                                      hover:border-cyan-500 hover:bg-slate-800
                                     "
                                   >
                                     <div className="text-lg">□</div>
@@ -3805,9 +3801,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     <div
                                       className="
                                         rounded-lg border border-dashed
-                                        border-cyan-700/30 bg-slate-900/50 p-3
+                                        border-cyan-700/30 bg-slate-800/50 p-3
                                         text-center transition
-                                        hover:border-cyan-500 hover:bg-slate-900
+                                        hover:border-cyan-500 hover:bg-slate-800
                                       "
                                     >
                                       <div className="text-lg">♪</div>
@@ -3842,7 +3838,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                       className="
                                         absolute right-0 bottom-full z-50 mb-2
                                         w-80 rounded-lg border
-                                        border-cyan-700/30 bg-slate-900 p-4
+                                        border-cyan-700/30 bg-slate-800 p-4
                                         shadow-lg
                                       "
                                     >
@@ -3911,9 +3907,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                   <div
                                     className="
                                       rounded-lg border border-dashed
-                                      border-cyan-700/30 bg-slate-900/50 p-3
+                                      border-cyan-700/30 bg-slate-800/50 p-3
                                       text-center transition
-                                      hover:border-cyan-500 hover:bg-slate-900
+                                      hover:border-cyan-500 hover:bg-slate-800
                                     "
                                   >
                                     <div className="text-lg">▶</div>
@@ -3998,7 +3994,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 <div
                                   className="
                                     rounded-2xl border border-dashed
-                                    border-white/10 bg-slate-900/30 p-8
+                                    border-white/10 bg-slate-800/30 p-8
                                     text-center
                                   "
                                 >
@@ -4210,15 +4206,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       rounded-lg border
                                                       border-cyan-700/35
                                                       bg-gradient-to-r
-                                                      from-slate-900/60
-                                                      via-slate-900/40
-                                                      to-slate-900/60 p-4
+                                                      from-slate-800/60
+                                                      via-slate-800/40
+                                                      to-slate-800/60 p-4
                                                       shadow-md shadow-black/30
                                                       transition-all
                                                       duration-300
                                                       hover:border-cyan-400/60
-                                                      hover:from-slate-900/80
-                                                      hover:to-slate-900/80
+                                                      hover:from-slate-800/80
+                                                      hover:to-slate-800/80
                                                     "
                                                   >
                                                     <Music
@@ -4623,7 +4619,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                       w-full resize-none
                                                       rounded-xl border
                                                       border-cyan-700/30
-                                                      bg-slate-900 p-3 text-sm
+                                                      bg-slate-800 p-3 text-sm
                                                       text-white
                                                       placeholder:text-gray-500
                                                       focus:border-primary
@@ -4841,9 +4837,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             rounded-lg border
                                                             border-cyan-700/40
                                                             bg-gradient-to-r
-                                                            from-slate-900/60
-                                                            via-slate-900/40
-                                                            to-slate-900/60 p-2
+                                                            from-slate-800/60
+                                                            via-slate-800/40
+                                                            to-slate-800/60 p-2
                                                           "
                                                         >
                                                           <Music
@@ -5164,7 +5160,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 key={project.id}
                                 className="
                                   group rounded-2xl border border-cyan-500/30
-                                  bg-gradient-to-br from-slate-900
+                                  bg-gradient-to-br from-slate-800
                                   via-cyan-900/30 to-cyan-950/30 p-6 shadow-xl
                                   transition-all duration-300
                                   hover:scale-[1.03] hover:border-cyan-400
@@ -5260,7 +5256,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               <div
                                 className="
                                   relative w-full max-w-2xl rounded-2xl border
-                                  border-cyan-500/40 bg-slate-900 p-4 shadow-2xl
+                                  border-cyan-500/40 bg-slate-800 p-4 shadow-2xl
                                   sm:p-8
                                 "
                                 style={{

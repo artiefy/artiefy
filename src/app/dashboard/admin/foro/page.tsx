@@ -15,7 +15,10 @@ export default function page() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/"
             >
               Inicio
@@ -24,7 +27,10 @@ export default function page() {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/dashboard/super-admin/foro"
             >
               Foros

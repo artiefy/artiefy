@@ -90,9 +90,9 @@ export const Zone = () => {
       <div className="flex items-center justify-center py-12">
         <div
           className="
-          size-10 animate-spin rounded-full border-4 border-primary
-          border-t-transparent
-        "
+            size-10 animate-spin rounded-full border-4 border-primary
+            border-t-transparent
+          "
         />
       </div>
     );
@@ -101,9 +101,9 @@ export const Zone = () => {
     return (
       <div
         className="
-        mt-10 flex flex-col items-center justify-center gap-4 rounded-2xl border
-        border-gray-800 bg-gray-900/50 py-16
-      "
+          mt-10 flex flex-col items-center justify-center gap-4 rounded-2xl
+          border border-gray-800 bg-gray-900/50 py-16
+        "
       >
         <MessageSquare className="size-16 text-gray-600" />
         <p className="text-xl text-gray-400">No hay foros disponibles.</p>
@@ -128,10 +128,10 @@ export const Zone = () => {
   return (
     <div
       className="
-      grid grid-cols-1 gap-6
-      sm:grid-cols-2
-      lg:grid-cols-3
-    "
+        grid grid-cols-1 gap-6
+        sm:grid-cols-2
+        lg:grid-cols-3
+      "
     >
       {forums.map((forum) => (
         <div
@@ -160,18 +160,18 @@ export const Zone = () => {
             />
             <div
               className="
-              absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60
-              to-transparent
-            "
+                absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/60
+                to-transparent
+              "
             />
 
             {/* Badge del curso */}
             <div className="absolute top-3 left-3">
               <span
                 className="
-                rounded-full bg-primary/20 px-3 py-1 text-xs font-medium
-                text-primary backdrop-blur-sm
-              "
+                  rounded-full bg-primary/20 px-3 py-1 text-xs font-medium
+                  text-primary backdrop-blur-sm
+                "
               >
                 {forum.course.title}
               </span>
@@ -195,8 +195,8 @@ export const Zone = () => {
             {/* Meta info */}
             <div
               className="
-              mb-4 flex flex-wrap items-center gap-4 text-xs text-gray-500
-            "
+                mb-4 flex flex-wrap items-center gap-4 text-xs text-gray-500
+              "
             >
               <div className="flex items-center gap-1.5">
                 <User className="size-3.5" />
@@ -234,10 +234,10 @@ export const Zone = () => {
                   <AlertDialogTrigger asChild>
                     <button
                       className="
-                      rounded-xl border border-red-500/30 bg-red-500/10 p-2.5
-                      text-red-400 transition-all
-                      hover:bg-red-500/20
-                    "
+                        rounded-xl border border-red-500/30 bg-red-500/10 p-2.5
+                        text-red-400 transition-all
+                        hover:bg-red-500/20
+                      "
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -256,9 +256,9 @@ export const Zone = () => {
                     <AlertDialogFooter>
                       <AlertDialogCancel
                         className="
-                        border-gray-700 bg-gray-800 text-white
-                        hover:bg-gray-700
-                      "
+                          border-gray-700 bg-gray-800 text-white
+                          hover:bg-gray-700
+                        "
                       >
                         Cancelar
                       </AlertDialogCancel>

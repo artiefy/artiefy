@@ -115,9 +115,9 @@ const LessonTranscription = ({
                 {isCurrent && (
                   <span
                     className="
-                    ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-xs
-                    font-medium text-foreground
-                  "
+                      ml-2 rounded-full bg-foreground/10 px-2 py-0.5 text-xs
+                      font-medium text-foreground
+                    "
                   >
                     {Math.floor(currentTime)}s
                   </span>

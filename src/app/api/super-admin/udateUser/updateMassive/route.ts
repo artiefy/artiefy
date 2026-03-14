@@ -267,9 +267,7 @@ export async function PATCH(req: Request) {
         const parsedDate = new Date(dateStr);
 
         if (!isNaN(parsedDate.getTime())) {
-          console.log(
-            `\n💳 ACTUALIZANDO PAGO: fechaRealPago = ${dateStr}`
-          );
+          console.log(`\n💳 ACTUALIZANDO PAGO: fechaRealPago = ${dateStr}`);
 
           // Obtener el pago más reciente del usuario
           const ultimoPago = await db
@@ -297,9 +295,7 @@ export async function PATCH(req: Request) {
             console.warn(`⚠️ No hay pagos para el usuario ${userId}`);
           }
         } else {
-          console.warn(
-            `⚠️ Fecha inválida para fechaRealPago: ${dateStr}`
-          );
+          console.warn(`⚠️ Fecha inválida para fechaRealPago: ${dateStr}`);
         }
       }
 

@@ -299,7 +299,10 @@ export default function ModalGenerarProyecto({
                 value={form.project_objectives}
                 onChange={handleTextAreaChange}
                 rows={1}
-                className="w-full resize-none overflow-hidden rounded border p-2 break-words"
+                className="
+                  w-full resize-none overflow-hidden rounded border p-2
+                  break-words
+                "
                 disabled={!!objetivoGen}
                 style={{ wordBreak: 'break-word' }}
               />
@@ -317,7 +320,10 @@ export default function ModalGenerarProyecto({
                 value={form.team_members}
                 onChange={handleTextAreaChange}
                 rows={1}
-                className="w-full resize-none overflow-hidden rounded border p-2 break-words"
+                className="
+                  w-full resize-none overflow-hidden rounded border p-2
+                  break-words
+                "
                 disabled={!!currentUser?.name}
                 style={{ wordBreak: 'break-word' }}
               />
@@ -335,7 +341,10 @@ export default function ModalGenerarProyecto({
                 value={form.project_requirements}
                 onChange={handleTextAreaChange}
                 rows={1}
-                className="w-full resize-none overflow-hidden rounded border p-2 break-words"
+                className="
+                  w-full resize-none overflow-hidden rounded border p-2
+                  break-words
+                "
                 style={{ wordBreak: 'break-word' }}
               />
             </div>

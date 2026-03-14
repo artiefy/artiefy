@@ -149,23 +149,53 @@ const ModalIntegrantesProyectoInfo: React.FC<
     <>
       <div
         onClick={handleOverlayClick}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 sm:p-4"
+        className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2
+          sm:p-4
+        "
       >
-        <div className="relative mx-auto max-h-[85vh] w-full max-w-4xl overflow-hidden rounded-lg bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800 shadow-2xl sm:rounded-xl">
+        <div className="
+          relative mx-auto max-h-[85vh] w-full max-w-4xl overflow-hidden
+          rounded-lg bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800
+          shadow-2xl
+          sm:rounded-xl
+        ">
           {/* Header del Modal */}
-          <div className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-slate-900/80 to-blue-900/80 p-3 sm:p-4">
-            <div className="flex min-w-0 flex-1 items-center gap-2 pr-2 sm:gap-3 sm:pr-4">
-              <div className="flex size-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-cyan-300 sm:size-12">
-                <Users className="size-5 text-slate-900 sm:size-6" />
+          <div className="
+            flex items-center justify-between border-b border-white/10
+            bg-gradient-to-r from-slate-900/80 to-blue-900/80 p-3
+            sm:p-4
+          ">
+            <div className="
+              flex min-w-0 flex-1 items-center gap-2 pr-2
+              sm:gap-3 sm:pr-4
+            ">
+              <div className="
+                flex size-10 flex-shrink-0 items-center justify-center
+                rounded-lg bg-gradient-to-br from-teal-400 to-cyan-300
+                sm:size-12
+              ">
+                <Users className="
+                  size-5 text-slate-900
+                  sm:size-6
+                " />
               </div>
               <div className="min-w-0 flex-1">
-                <h1 className="mb-0.5 text-base font-bold break-words text-white sm:text-lg md:text-xl">
+                <h1 className="
+                  mb-0.5 text-base font-bold break-words text-white
+                  sm:text-lg
+                  md:text-xl
+                ">
                   {safeProyecto.titulo}
                 </h1>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <Badge
                     variant="secondary"
-                    className="max-w-[150px] truncate border-teal-400/30 bg-teal-500/20 text-[10px] text-teal-300 sm:text-xs"
+                    className="
+                      max-w-[150px] truncate border-teal-400/30 bg-teal-500/20
+                      text-[10px] text-teal-300
+                      sm:text-xs
+                    "
                   >
                     {safeProyecto.rama}
                   </Badge>
@@ -175,61 +205,126 @@ const ModalIntegrantesProyectoInfo: React.FC<
             <Button
               variant="ghost"
               size="icon"
-              className="size-8 flex-shrink-0 text-white hover:bg-white/10 sm:size-10"
+              className="
+                size-8 flex-shrink-0 text-white
+                hover:bg-white/10
+                sm:size-10
+              "
               onClick={onClose}
               aria-label="Cerrar"
             >
-              <X className="size-4 sm:size-5" />
+              <X className="
+                size-4
+                sm:size-5
+              " />
             </Button>
           </div>
 
           {/* Contenido con scroll */}
-          <div className="max-h-[calc(85vh-120px)] overflow-y-auto p-3 sm:p-4">
+          <div className="
+            max-h-[calc(85vh-120px)] overflow-y-auto p-3
+            sm:p-4
+          ">
             {/* Sección de Integrantes */}
             <div className="mb-3">
-              <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-white sm:text-lg">
-                <Users className="size-4 flex-shrink-0 text-teal-400 sm:size-5" />
+              <h2 className="
+                mb-3 flex items-center gap-2 text-base font-semibold text-white
+                sm:text-lg
+              ">
+                <Users className="
+                  size-4 flex-shrink-0 text-teal-400
+                  sm:size-5
+                " />
                 Integrantes del Proyecto ({safeIntegrantes.length})
               </h2>
 
               {loading ? (
-                <div className="py-6 text-center sm:py-8">
-                  <Loader2 className="mx-auto mb-2 size-10 animate-spin text-teal-400 sm:mb-3 sm:size-12" />
-                  <p className="text-sm text-gray-400 sm:text-base">
+                <div className="
+                  py-6 text-center
+                  sm:py-8
+                ">
+                  <Loader2 className="
+                    mx-auto mb-2 size-10 animate-spin text-teal-400
+                    sm:mb-3 sm:size-12
+                  " />
+                  <p className="
+                    text-sm text-gray-400
+                    sm:text-base
+                  ">
                     Cargando integrantes...
                   </p>
                 </div>
               ) : error ? (
-                <div className="py-6 text-center sm:py-8">
-                  <Users className="mx-auto mb-2 size-10 text-red-500 sm:mb-3 sm:size-12" />
+                <div className="
+                  py-6 text-center
+                  sm:py-8
+                ">
+                  <Users className="
+                    mx-auto mb-2 size-10 text-red-500
+                    sm:mb-3 sm:size-12
+                  " />
                   <p className="mb-1.5 text-sm text-red-400 sm:mb-2 sm:text-base">
                     {error}
                   </p>
-                  <p className="text-xs text-gray-500 sm:text-sm">
+                  <p className="
+                    text-xs text-gray-500
+                    sm:text-sm
+                  ">
                     No se pudieron cargar los integrantes
                   </p>
                 </div>
               ) : safeIntegrantes.length === 0 ? (
-                <div className="py-6 text-center sm:py-8">
-                  <Users className="mx-auto mb-2 size-10 text-gray-500 sm:mb-3 sm:size-12" />
-                  <p className="mb-1.5 text-sm text-gray-400 sm:mb-2 sm:text-base">
+                <div className="
+                  py-6 text-center
+                  sm:py-8
+                ">
+                  <Users className="
+                    mx-auto mb-2 size-10 text-gray-500
+                    sm:mb-3 sm:size-12
+                  " />
+                  <p className="
+                    mb-1.5 text-sm text-gray-400
+                    sm:mb-2 sm:text-base
+                  ">
                     No hay integrantes inscritos
                   </p>
-                  <p className="text-xs text-gray-500 sm:text-sm">
+                  <p className="
+                    text-xs text-gray-500
+                    sm:text-sm
+                  ">
                     Este proyecto aún no tiene miembros del equipo
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <div className="
+                  grid grid-cols-1 gap-3
+                  sm:grid-cols-2
+                  lg:grid-cols-3
+                ">
                   {safeIntegrantes.map((integrante) => (
                     <Card
                       key={integrante.id}
-                      className="group border-white/20 bg-white/10 backdrop-blur-sm transition-all duration-300 hover:bg-white/15"
+                      className="
+                        group border-white/20 bg-white/10 backdrop-blur-sm
+                        transition-all duration-300
+                        hover:bg-white/15
+                      "
                     >
-                      <CardContent className="p-3 sm:p-4">
-                        <div className="flex flex-col items-center space-y-2 text-center">
+                      <CardContent className="
+                        p-3
+                        sm:p-4
+                      ">
+                        <div className="
+                          flex flex-col items-center space-y-2 text-center
+                        ">
                           {/* Avatar con iniciales del nombre */}
-                          <div className="flex size-14 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-sm font-semibold text-slate-900 sm:size-16 sm:text-base">
+                          <div className="
+                            flex size-14 flex-shrink-0 items-center
+                            justify-center rounded-full border-2
+                            border-teal-400/50 bg-gradient-to-br from-teal-400
+                            to-cyan-300 text-sm font-semibold text-slate-900
+                            sm:size-16 sm:text-base
+                          ">
                             {integrante.nombre?.trim()
                               ? integrante.nombre
                                   .trim()
@@ -242,41 +337,68 @@ const ModalIntegrantesProyectoInfo: React.FC<
 
                           {/* Información del integrante */}
                           <div className="w-full min-w-0 space-y-1.5">
-                            <h3 className="text-sm font-semibold break-words text-white transition-colors group-hover:text-teal-300 sm:text-base">
+                            <h3 className="
+                              text-sm font-semibold break-words text-white
+                              transition-colors
+                              group-hover:text-teal-300
+                              sm:text-base
+                            ">
                               {integrante.nombre || 'Sin nombre'}
                             </h3>
                             <div className="flex flex-wrap justify-center gap-1">
                               {integrante.esResponsable && (
-                                <Badge className="max-w-full truncate border-yellow-400/30 bg-yellow-500/20 text-[10px] text-yellow-300 sm:text-xs">
+                                <Badge className="
+                                  max-w-full truncate border-yellow-400/30
+                                  bg-yellow-500/20 text-[10px] text-yellow-300
+                                  sm:text-xs
+                                ">
                                   👑 Responsable
                                 </Badge>
                               )}
                               {integrante.isInvited &&
                                 !integrante.esResponsable && (
-                                  <Badge className="max-w-full truncate border-blue-400/30 bg-blue-500/20 text-[10px] text-blue-300 sm:text-xs">
+                                  <Badge className="
+                                    max-w-full truncate border-blue-400/30
+                                    bg-blue-500/20 text-[10px] text-blue-300
+                                    sm:text-xs
+                                  ">
                                     📨 Invitado
                                   </Badge>
                                 )}
                               {integrante.rol && !integrante.esResponsable && (
-                                <Badge className="max-w-full truncate border-teal-400/30 bg-teal-500/20 text-[10px] text-teal-300 sm:text-xs">
+                                <Badge className="
+                                  max-w-full truncate border-teal-400/30
+                                  bg-teal-500/20 text-[10px] text-teal-300
+                                  sm:text-xs
+                                ">
                                   {integrante.rol}
                                 </Badge>
                               )}
                             </div>
                             {integrante.especialidad && (
-                              <p className="text-[11px] break-words text-gray-300 sm:text-xs">
+                              <p className="
+                                text-[11px] break-words text-gray-300
+                                sm:text-xs
+                              ">
                                 {integrante.especialidad}
                               </p>
                             )}
                           </div>
 
                           {/* Enlaces de contacto */}
-                          <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
+                          <div className="
+                            flex flex-wrap items-center justify-center gap-1.5
+                            pt-0.5
+                          ">
                             {integrante.email && (
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-7 p-1.5 text-gray-300 hover:bg-teal-500/20 hover:text-teal-300 sm:h-8 sm:p-2"
+                                className="
+                                  h-7 p-1.5 text-gray-300
+                                  hover:bg-teal-500/20 hover:text-teal-300
+                                  sm:h-8 sm:p-2
+                                "
                                 title={`Enviar email a ${integrante.nombre}`}
                                 asChild
                               >
@@ -295,7 +417,11 @@ const ModalIntegrantesProyectoInfo: React.FC<
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-7 p-1.5 text-red-400 hover:bg-red-500/20 hover:text-red-300 sm:h-8 sm:p-2"
+                                  className="
+                                    h-7 p-1.5 text-red-400
+                                    hover:bg-red-500/20 hover:text-red-300
+                                    sm:h-8 sm:p-2
+                                  "
                                   title={`Quitar invitación a ${integrante.nombre}`}
                                   onClick={() =>
                                     handleRemoveInvitation(integrante)
@@ -317,21 +443,42 @@ const ModalIntegrantesProyectoInfo: React.FC<
                   {/* Botón para invitar nuevo integrante */}
                   {allowInvite && (
                     <Card
-                      className="group flex cursor-pointer flex-col items-center justify-center border-2 border-dashed border-teal-400/40 bg-white/5 backdrop-blur-sm transition-all duration-300 hover:bg-white/10"
+                      className="
+                        group flex cursor-pointer flex-col items-center
+                        justify-center border-2 border-dashed border-teal-400/40
+                        bg-white/5 backdrop-blur-sm transition-all duration-300
+                        hover:bg-white/10
+                      "
                       onClick={() => setShowInviteModal(true)}
                       tabIndex={0}
                       role="button"
                       aria-label="Invitar nuevo integrante"
                     >
-                      <CardContent className="flex h-full min-h-[150px] flex-col items-center justify-center p-3 sm:p-4">
-                        <div className="mb-2 flex size-14 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-2xl font-bold text-slate-900 sm:mb-3 sm:size-16 sm:text-3xl">
+                      <CardContent className="
+                        flex h-full min-h-[150px] flex-col items-center
+                        justify-center p-3
+                        sm:p-4
+                      ">
+                        <div className="
+                          mb-2 flex size-14 items-center justify-center
+                          rounded-full border-2 border-teal-400/50
+                          bg-gradient-to-br from-teal-400 to-cyan-300 text-2xl
+                          font-bold text-slate-900
+                          sm:mb-3 sm:size-16 sm:text-3xl
+                        ">
                           +
                         </div>
                         <div className="text-center">
-                          <span className="block text-sm font-semibold text-teal-300 sm:text-base">
+                          <span className="
+                            block text-sm font-semibold text-teal-300
+                            sm:text-base
+                          ">
                             Invitar Integrante
                           </span>
-                          <span className="mt-0.5 block text-[11px] text-gray-400 sm:mt-1 sm:text-xs">
+                          <span className="
+                            mt-0.5 block text-[11px] text-gray-400
+                            sm:mt-1 sm:text-xs
+                          ">
                             Añadir nuevo miembro al equipo
                           </span>
                         </div>
@@ -344,28 +491,53 @@ const ModalIntegrantesProyectoInfo: React.FC<
           </div>
 
           {/* Estadísticas del equipo */}
-          <div className="border-t border-white/10 bg-gradient-to-r from-slate-900/50 to-blue-900/50 p-2 sm:p-3">
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="
+            border-t border-white/10 bg-gradient-to-r from-slate-900/50
+            to-blue-900/50 p-2
+            sm:p-3
+          ">
+            <div className="
+              grid grid-cols-2 gap-2
+              sm:gap-3
+            ">
               <Card className="border-white/20 bg-white/10 backdrop-blur-sm">
-                <CardContent className="p-2 text-center sm:p-3">
-                  <div className="mb-0.5 text-lg font-bold text-teal-300 sm:mb-1 sm:text-xl">
+                <CardContent className="
+                  p-2 text-center
+                  sm:p-3
+                ">
+                  <div className="
+                    mb-0.5 text-lg font-bold text-teal-300
+                    sm:mb-1 sm:text-xl
+                  ">
                     {
                       safeIntegrantes.filter(
                         (integrante) => !integrante.esResponsable
                       ).length
                     }
                   </div>
-                  <div className="text-[10px] text-gray-300 sm:text-xs">
+                  <div className="
+                    text-[10px] text-gray-300
+                    sm:text-xs
+                  ">
                     Integrantes Inscritos
                   </div>
                 </CardContent>
               </Card>
               <Card className="border-white/20 bg-white/10 backdrop-blur-sm">
-                <CardContent className="p-2 text-center sm:p-3">
-                  <div className="mb-0.5 text-lg font-bold text-cyan-300 sm:mb-1 sm:text-xl">
+                <CardContent className="
+                  p-2 text-center
+                  sm:p-3
+                ">
+                  <div className="
+                    mb-0.5 text-lg font-bold text-cyan-300
+                    sm:mb-1 sm:text-xl
+                  ">
                     {safeProyecto.participacion}
                   </div>
-                  <div className="text-[10px] text-gray-300 sm:text-xs">
+                  <div className="
+                    text-[10px] text-gray-300
+                    sm:text-xs
+                  ">
                     Estado del Proyecto
                   </div>
                 </CardContent>

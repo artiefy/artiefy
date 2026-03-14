@@ -185,51 +185,52 @@ export function ProjectsSocialView({
   return (
     <div
       className={`
-      relative min-h-screen overflow-hidden bg-background pb-24
-      lg:pb-0
-    `}
+        relative min-h-screen overflow-hidden bg-background pb-24
+        lg:pb-0
+      `}
     >
       <div className="pointer-events-none fixed inset-0">
         <div
           className={`
-          absolute top-0 left-1/4 size-96 rounded-full bg-primary/5 blur-[120px]
-        `}
+            absolute top-0 left-1/4 size-96 rounded-full bg-primary/5
+            blur-[120px]
+          `}
         />
         <div
           className={`
-          absolute right-1/4 bottom-1/4 size-80 rounded-full bg-cyan-500/5
-          blur-[100px]
-        `}
+            absolute right-1/4 bottom-1/4 size-80 rounded-full bg-cyan-500/5
+            blur-[100px]
+          `}
         />
         <div
           className={`
-          absolute top-1/2 left-1/2 size-[600px] -translate-1/2 rounded-full
-          bg-primary/5 blur-[150px]
-        `}
+            absolute top-1/2 left-1/2 size-[600px] -translate-1/2 rounded-full
+            bg-primary/5 blur-[150px]
+          `}
         />
       </div>
 
       <main
         className={`
-        relative px-4 pt-10 pb-12
-        sm:px-6
-      `}
+          relative px-4 pt-10 pb-12
+          sm:px-6
+        `}
       >
         <div className="mx-auto max-w-7xl">
           <div className="mb-8 text-center">
             <h1
               className={`
-              text-3xl font-bold
-              sm:text-4xl
-            `}
+                text-3xl font-bold
+                sm:text-4xl
+              `}
             >
               <span className="text-foreground">Descubre </span>
               <span
                 className={`
-                animate-[shimmerGradient_3s_linear_infinite] bg-gradient-to-r
-                from-primary via-cyan-400 to-primary bg-[length:200%_100%]
-                bg-clip-text text-transparent
-              `}
+                  animate-[shimmerGradient_3s_linear_infinite] bg-gradient-to-r
+                  from-primary via-cyan-400 to-primary bg-[length:200%_100%]
+                  bg-clip-text text-transparent
+                `}
               >
                 Proyectos
               </span>
@@ -254,9 +255,9 @@ export function ProjectsSocialView({
                 <div className="relative">
                   <Search
                     className={`
-                    absolute top-1/2 left-4 size-5 -translate-y-1/2
-                    text-muted-foreground
-                  `}
+                      absolute top-1/2 left-4 size-5 -translate-y-1/2
+                      text-muted-foreground
+                    `}
                   />
                   <input
                     type="text"
@@ -274,9 +275,9 @@ export function ProjectsSocialView({
 
                 <div
                   className={`
-                  hidden flex-wrap items-center gap-2
-                  lg:flex
-                `}
+                    hidden flex-wrap items-center gap-2
+                    lg:flex
+                  `}
                 >
                   <button
                     type="button"
@@ -288,9 +289,9 @@ export function ProjectsSocialView({
                         activeStage === 'all'
                           ? 'bg-primary text-primary-foreground'
                           : `
-                          bg-[#1A2333] text-muted-foreground
-                          hover:text-foreground
-                        `
+                            bg-[#1A2333] text-muted-foreground
+                            hover:text-foreground
+                          `
                       }
                     `}
                   >
@@ -308,9 +309,9 @@ export function ProjectsSocialView({
                           activeStage === stage
                             ? 'bg-primary text-primary-foreground'
                             : `
-                            bg-[#1A2333] text-muted-foreground
-                            hover:text-foreground
-                          `
+                              bg-[#1A2333] text-muted-foreground
+                              hover:text-foreground
+                            `
                         }
                       `}
                     >
@@ -330,9 +331,9 @@ export function ProjectsSocialView({
                         needsCollaboratorsFilter
                           ? 'bg-primary text-primary-foreground'
                           : `
-                          bg-[#1A2333] text-muted-foreground
-                          hover:text-foreground
-                        `
+                            bg-[#1A2333] text-muted-foreground
+                            hover:text-foreground
+                          `
                       }
                     `}
                   >
@@ -380,9 +381,9 @@ export function ProjectsSocialView({
                 ) : (
                   <div
                     className={`
-                    rounded-2xl border border-border/50 bg-card/50 p-8
-                    text-center
-                  `}
+                      rounded-2xl border border-border/50 bg-card/50 p-8
+                      text-center
+                    `}
                   >
                     <p className="text-sm text-muted-foreground">
                       No encontramos proyectos con esos filtros.
@@ -402,9 +403,9 @@ export function ProjectsSocialView({
                   >
                     <span
                       className={`
-                      absolute inset-0 bg-gradient-to-r from-[#1A2333]
-                      via-primary/20 to-[#1A2333]
-                    `}
+                        absolute inset-0 bg-gradient-to-r from-[#1A2333]
+                        via-primary/20 to-[#1A2333]
+                      `}
                     />
                     <span className="relative text-foreground">
                       Cargar más proyectos <span>⚡</span>
@@ -424,15 +425,15 @@ export function ProjectsSocialView({
 
       <nav
         className={`
-        fixed right-0 bottom-0 left-0 z-50
-        lg:hidden
-      `}
+          fixed right-0 bottom-0 left-0 z-50
+          lg:hidden
+        `}
       >
         <div
           className={`
-          absolute inset-0 border-t border-border/50 bg-background/80
-          backdrop-blur-xl
-        `}
+            absolute inset-0 border-t border-border/50 bg-background/80
+            backdrop-blur-xl
+          `}
         />
         <div className="relative flex items-center justify-around p-2">
           <button
@@ -481,9 +482,9 @@ export function ProjectsSocialView({
           >
             <span
               className={`
-              rounded-2xl bg-gradient-to-r from-primary to-cyan-500 p-3
-              shadow-[0_0_25px_hsl(185_72%_48%/0.5)]
-            `}
+                rounded-2xl bg-gradient-to-r from-primary to-cyan-500 p-3
+                shadow-[0_0_25px_hsl(185_72%_48%/0.5)]
+              `}
             >
               ➕
             </span>

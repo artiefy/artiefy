@@ -180,7 +180,10 @@ export default function Home() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="../educadores"
             >
               Inicio
@@ -190,9 +193,22 @@ export default function Home() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative">
-        <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-        <div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 py-4 text-white transition-transform duration-300 ease-in-out">
-          <div className="flex w-full rounded-lg px-4 sm:px-6 lg:px-8">
+        <div className="
+          animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
+          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+          duration-500
+          group-hover:opacity-100
+        " />
+        <div className="
+          zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
+          border-0 bg-gray-800 py-4 text-white transition-transform duration-300
+          ease-in-out
+        ">
+          <div className="
+            flex w-full rounded-lg px-4
+            sm:px-6
+            lg:px-8
+          ">
             <GraduationCap className="text-primary h-14 w-12" />
             <div className="ml-4 flex flex-col">
               <h1 className="text-2xl font-bold text-gray-200">
@@ -205,12 +221,29 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div className="mx-auto mt-4 max-w-7xl p-4 sm:px-6 lg:px-0">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="
+        mx-auto mt-4 max-w-7xl p-4
+        sm:px-6
+        lg:px-0
+      ">
+        <div className="
+          grid grid-cols-1 gap-6
+          sm:grid-cols-2
+          lg:grid-cols-4
+        ">
           {/* Average Grade Card */}
           <div className="group relative">
-            <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-            <div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
+            <div className="
+              animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
+              transition duration-500
+              group-hover:opacity-100
+            " />
+            <div className="
+              zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
+              border-0 bg-gray-800 px-2 text-white transition-transform
+              duration-300 ease-in-out
+            ">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="shrink-0">
@@ -234,8 +267,17 @@ export default function Home() {
           </div>
 
           <div className="group relative">
-            <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-            <div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
+            <div className="
+              animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
+              transition duration-500
+              group-hover:opacity-100
+            " />
+            <div className="
+              zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
+              border-0 bg-gray-800 px-2 text-white transition-transform
+              duration-300 ease-in-out
+            ">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="shrink-0">
@@ -259,8 +301,17 @@ export default function Home() {
           </div>
 
           <div className="group relative">
-            <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-            <div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
+            <div className="
+              animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
+              transition duration-500
+              group-hover:opacity-100
+            " />
+            <div className="
+              zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
+              border-0 bg-gray-800 px-2 text-white transition-transform
+              duration-300 ease-in-out
+            ">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="shrink-0">
@@ -284,8 +335,17 @@ export default function Home() {
           </div>
 
           <div className="group relative">
-            <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-            <div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out">
+            <div className="
+              animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
+              transition duration-500
+              group-hover:opacity-100
+            " />
+            <div className="
+              zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
+              border-0 bg-gray-800 px-2 text-white transition-transform
+              duration-300 ease-in-out
+            ">
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="shrink-0">

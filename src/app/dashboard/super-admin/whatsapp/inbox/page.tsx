@@ -249,9 +249,9 @@ function MediaMessage({ item }: { item: InboxItem }) {
         <div className="space-y-2">
           <div
             className="
-            flex items-center gap-3 rounded-lg border border-gray-700 bg-[#1A2930]
-            p-3
-          "
+              flex items-center gap-3 rounded-lg border border-gray-700
+              bg-[#1A2930] p-3
+            "
           >
             <FileText className="size-8 flex-shrink-0 text-blue-400" />
             <div className="min-w-0 flex-1">
@@ -269,8 +269,7 @@ function MediaMessage({ item }: { item: InboxItem }) {
           <a
             href={downloadHref}
             className="
-              inline-flex items-center gap-1 text-xs text-emerald-400
-              underline
+              inline-flex items-center gap-1 text-xs text-emerald-400 underline
               hover:text-emerald-300
             "
           >
@@ -340,8 +339,8 @@ function CreateQuickTag({ onCreated }: { onCreated: (t: Tag) => void }) {
         }}
         placeholder="Nueva etiqueta"
         className="
-          flex-1 rounded border-0 bg-[#2A3942] px-3 py-2 text-sm
-          text-gray-100 placeholder-[#8696A0]
+          flex-1 rounded border-0 bg-[#2A3942] px-3 py-2 text-sm text-gray-100
+          placeholder-[#8696A0]
           focus:ring-1 focus:ring-emerald-600 focus:outline-none
         "
       />
@@ -1011,18 +1010,17 @@ export default function WhatsAppInboxPage({
       <aside
         className={`
           ${selected && !isDesktop && userSelectedChat ? 'hidden' : 'flex'}
-          z-50
-          w-full
-          flex-col border-r border-gray-800 bg-[#111B21] text-gray-200
-          transition-all duration-200 md:w-72
+          z-50 w-full flex-col border-r border-gray-800 bg-[#111B21]
+          text-gray-200 transition-all duration-200
+          md:w-72
         `}
       >
         {/* Header de sidebar */}
         <div
           className="
-          flex-shrink-0 border-b border-gray-800 bg-[#202C33] p-2
-          md:p-4
-        "
+            flex-shrink-0 border-b border-gray-800 bg-[#202C33] p-2
+            md:p-4
+          "
         >
           <div className="flex items-center justify-between gap-1">
             <a
@@ -1051,10 +1049,10 @@ export default function WhatsAppInboxPage({
             </a>
             <div
               className="
-              text-basrd/super-admin/cursos/e flex-1 text-center font-bold
-              text-gray-100
-              md:text-lg
-            "
+                text-basrd/super-admin/cursos/e flex-1 text-center font-bold
+                text-gray-100
+                md:text-lg
+              "
             >
               Chats
             </div>
@@ -1063,9 +1061,8 @@ export default function WhatsAppInboxPage({
                 <button
                   onClick={restoreAllConversations}
                   className="
-                    px-1.5 py-1
-                    text-xs
-                    font-medium text-emerald-400 hover:text-emerald-300
+                    px-1.5 py-1 text-xs font-medium text-emerald-400
+                    hover:text-emerald-300
                   "
                   title={`Restaurar ${hiddenWaids.size} conversación(es)`}
                 >
@@ -1079,10 +1076,9 @@ export default function WhatsAppInboxPage({
         {/* Buscador */}
         <div
           className="
-          flex-shrink-0
-          bg-[#0B141A]
-          px-3 py-2 md:px-4
-        "
+            flex-shrink-0 bg-[#0B141A] px-3 py-2
+            md:px-4
+          "
         >
           <input
             value={filterName}
@@ -1101,9 +1097,8 @@ export default function WhatsAppInboxPage({
           <button
             onClick={() => setShowFilters(!showFilters)}
             className="
-              w-full py-2 text-center text-xs
-              font-medium
-              text-emerald-400 hover:text-emerald-300
+              w-full py-2 text-center text-xs font-medium text-emerald-400
+              hover:text-emerald-300
             "
           >
             {showFilters ? '▼ Ocultar filtros' : '▶ Mostrar filtros'}
@@ -1114,13 +1109,10 @@ export default function WhatsAppInboxPage({
         {(showFilters || isDesktop) && (
           <div
             className="
-            max-h-fit
-            flex-shrink-0
-            space-y-2
-            overflow-auto border-b
-            border-gray-800 bg-[#0B141A] px-3 py-2 text-xs
-            text-[#8696A0] md:px-4 md:pt-1 md:pb-3
-          "
+              max-h-fit flex-shrink-0 space-y-2 overflow-auto border-b
+              border-gray-800 bg-[#0B141A] px-3 py-2 text-xs text-[#8696A0]
+              md:px-4 md:pt-1 md:pb-3
+            "
           >
             <div className="grid grid-cols-2 gap-2">
               <input
@@ -1221,24 +1213,21 @@ export default function WhatsAppInboxPage({
                 }
               }}
               className={`
-                flex w-full
-                items-center
-                gap-3
-                border-b
-                border-gray-800/50 px-3 py-2.5 text-left transition-colors hover:bg-[#202C33]
-                md:px-4
-                md:py-3
+                flex w-full items-center gap-3 border-b border-gray-800/50 px-3
+                py-2.5 text-left transition-colors
+                hover:bg-[#202C33]
+                md:px-4 md:py-3
                 ${selected === t.waid ? 'bg-[#2A3942]' : ''}
               `}
             >
               {/* Avatar */}
               <div
                 className="
-                flex
-                size-12
-                flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br
-                from-[#25D366] to-[#20BA5A] font-bold text-white md:size-11
-              "
+                  flex size-12 flex-shrink-0 items-center justify-center
+                  rounded-full bg-gradient-to-br from-[#25D366] to-[#20BA5A]
+                  font-bold text-white
+                  md:size-11
+                "
               >
                 {(t.name ?? t.waid).charAt(0).toUpperCase()}
               </div>
@@ -1248,18 +1237,17 @@ export default function WhatsAppInboxPage({
                 <div className="mb-0.5 flex items-baseline justify-between gap-2">
                   <div
                     className="
-                    truncate text-sm font-medium text-gray-100
-                    md:text-base
-                  "
+                      truncate text-sm font-medium text-gray-100
+                      md:text-base
+                    "
                   >
                     {t.name ?? t.waid}
                   </div>
                   <div
                     className="
-                    flex-shrink-0
-                    text-[11px]
-                    text-[#8696A0] md:text-xs
-                  "
+                      flex-shrink-0 text-[11px] text-[#8696A0]
+                      md:text-xs
+                    "
                   >
                     {t.lastTs ? fmtTime(t.lastTs) : ''}
                   </div>
@@ -1268,10 +1256,9 @@ export default function WhatsAppInboxPage({
                 {/* Mensaje preview */}
                 <div
                   className="
-                  truncate text-xs
-                  text-[#8696A0]
-                  md:text-sm
-                "
+                    truncate text-xs text-[#8696A0]
+                    md:text-sm
+                  "
                 >
                   {t.lastText ?? '(sin mensajes)'}
                 </div>
@@ -1313,8 +1300,8 @@ export default function WhatsAppInboxPage({
                 ) : (
                   <div
                     className="
-                    flex size-12 items-center justify-center text-red-500
-                  "
+                      flex size-12 items-center justify-center text-red-500
+                    "
                     title="Ventana expirada"
                   >
                     <svg
@@ -1339,20 +1326,16 @@ export default function WhatsAppInboxPage({
       {/* CHAT SECTION - Fullscreen en móvil cuando hay chat */}
       <section
         className="
-        relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#0B141A]
-      "
+          relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#0B141A]
+        "
       >
         {/* Header del chat - STICKY AL TOP */}
         <div
           className="
-          sticky top-0 z-40 flex flex-shrink-0
-          items-center
-          gap-2 border-b border-gray-800 bg-[#202C33]
-          px-3
-          py-2.5
-          text-gray-100
-          md:gap-3 md:px-4 md:py-3
-        "
+            sticky top-0 z-40 flex flex-shrink-0 items-center gap-2 border-b
+            border-gray-800 bg-[#202C33] px-3 py-2.5 text-gray-100
+            md:gap-3 md:px-4 md:py-3
+          "
         >
           {!isDesktop && selected && (
             <button
@@ -1361,11 +1344,8 @@ export default function WhatsAppInboxPage({
                 setUserSelectedChat(false);
               }}
               className="
-                -ml-2 rounded-full
-                p-2
-                text-[#8696A0] transition-colors
-                hover:bg-white/10
-                hover:text-gray-100
+                -ml-2 rounded-full p-2 text-[#8696A0] transition-colors
+                hover:bg-white/10 hover:text-gray-100
               "
               aria-label="Volver a chats"
               title="Volver"
@@ -1388,11 +1368,11 @@ export default function WhatsAppInboxPage({
 
           <div
             className="
-            flex
-            size-10
-            flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br
-            from-[#25D366] to-[#20BA5A] font-bold text-white md:size-9
-          "
+              flex size-10 flex-shrink-0 items-center justify-center
+              rounded-full bg-gradient-to-br from-[#25D366] to-[#20BA5A]
+              font-bold text-white
+              md:size-9
+            "
           >
             {selected
               ? (
@@ -1408,10 +1388,9 @@ export default function WhatsAppInboxPage({
           <div className="min-w-0 flex-1">
             <div
               className="
-              truncate text-sm font-semibold
-              text-gray-100
-              md:text-base
-            "
+                truncate text-sm font-semibold text-gray-100
+                md:text-base
+              "
             >
               {threads.find((t) => t.waid === selected)?.name ??
                 selected ??
@@ -1427,11 +1406,8 @@ export default function WhatsAppInboxPage({
               <button
                 onClick={() => setShowTagModal(true)}
                 className="
-                  rounded-full
-                  p-2
-                  text-[#8696A0]
-                  transition-colors hover:bg-white/10
-                  hover:text-gray-100
+                  rounded-full p-2 text-[#8696A0] transition-colors
+                  hover:bg-white/10 hover:text-gray-100
                   md:hidden
                 "
                 title="Etiquetas"
@@ -1456,11 +1432,9 @@ export default function WhatsAppInboxPage({
               <a
                 href="/dashboard/super-admin"
                 className="
-                  inline-flex
-                  items-center
-                  justify-center rounded-full
-                  p-2
-                  text-[#8696A0] transition-colors hover:bg-white/10 hover:text-gray-100
+                  inline-flex items-center justify-center rounded-full p-2
+                  text-[#8696A0] transition-colors
+                  hover:bg-white/10 hover:text-gray-100
                 "
                 title="Volver al inicio"
                 aria-label="Volver al inicio"
@@ -1489,10 +1463,7 @@ export default function WhatsAppInboxPage({
           <div
             ref={scrollRef}
             className="
-              flex flex-1
-              flex-col
-              space-y-1.5 overflow-y-auto
-              p-3
+              flex flex-1 flex-col space-y-1.5 overflow-y-auto p-3
               md:space-y-2 md:p-4
             "
             style={{
@@ -1506,9 +1477,9 @@ export default function WhatsAppInboxPage({
             {!selected && (
               <div
                 className="
-                flex h-full items-center justify-center text-center text-sm
-                text-[#8696A0]
-              "
+                  flex h-full items-center justify-center text-center text-sm
+                  text-[#8696A0]
+                "
               >
                 👈 Selecciona un chat
               </div>
@@ -1522,8 +1493,7 @@ export default function WhatsAppInboxPage({
                       key={m.id ?? String(m.timestamp)}
                       className="
                         mx-auto w-fit max-w-[85%] rounded-full bg-[#202C33]/70
-                        px-3 py-1 text-center text-[11px]
-                        text-gray-300
+                        px-3 py-1 text-center text-[11px] text-gray-300
                         md:text-xs
                       "
                       title={m.id ? `id: ${m.id}` : ''}
@@ -1544,13 +1514,8 @@ export default function WhatsAppInboxPage({
                   >
                     <div
                       className={`
-                        max-w-[80%]
-                        rounded-2xl
-                        px-3 py-2
-                        break-words
-                        md:max-w-[60%]
-                        md:px-3.5
-                        md:py-2.5
+                        max-w-[80%] rounded-2xl px-3 py-2 break-words
+                        md:max-w-[60%] md:px-3.5 md:py-2.5
                         ${
                           isOutbound
                             ? 'rounded-br-none bg-[#005C4B] text-white'
@@ -1599,10 +1564,10 @@ export default function WhatsAppInboxPage({
         {/* Área de composición - STICKY AL BOTTOM */}
         <div
           className="
-          sticky bottom-0 z-40 flex-shrink-0 space-y-2 border-t
-          border-gray-800
-          bg-[#202C33] p-2 md:p-3
-        "
+            sticky bottom-0 z-40 flex-shrink-0 space-y-2 border-t
+            border-gray-800 bg-[#202C33] p-2
+            md:p-3
+          "
         >
           {/* Preview de archivo */}
           {selectedFile && (
@@ -1612,10 +1577,9 @@ export default function WhatsAppInboxPage({
                   {getFileIcon(selectedFile)}
                   <span
                     className="
-                    truncate
-                    text-xs
-                    text-gray-200 md:text-sm
-                  "
+                      truncate text-xs text-gray-200
+                      md:text-sm
+                    "
                   >
                     {selectedFile.name}
                   </span>
@@ -1626,9 +1590,8 @@ export default function WhatsAppInboxPage({
                 <button
                   onClick={removeSelectedFile}
                   className="
-                    ml-2 flex-shrink-0
-                    text-lg
-                    leading-none text-red-400 hover:text-red-300
+                    ml-2 flex-shrink-0 text-lg leading-none text-red-400
+                    hover:text-red-300
                   "
                 >
                   ✕
@@ -1643,12 +1606,11 @@ export default function WhatsAppInboxPage({
                   value={fileCaption}
                   onChange={(e) => setFileCaption(e.target.value)}
                   className="
-                      w-full rounded border-0
-                      bg-[#3a4554]
-                      px-2 py-1.5 text-xs text-gray-100 placeholder-[#8696A0]
-                      focus:ring-1
-                      focus:ring-emerald-600 focus:outline-none md:text-sm
-                    "
+                    w-full rounded border-0 bg-[#3a4554] px-2 py-1.5 text-xs
+                    text-gray-100 placeholder-[#8696A0]
+                    focus:ring-1 focus:ring-emerald-600 focus:outline-none
+                    md:text-sm
+                  "
                 />
               )}
             </div>
@@ -1657,9 +1619,9 @@ export default function WhatsAppInboxPage({
           {/* Input de mensaje */}
           <div
             className="
-            flex items-end gap-2
-            md:gap-2.5
-          "
+              flex items-end gap-2
+              md:gap-2.5
+            "
           >
             {/* Botón de adjuntar */}
             <input
@@ -1674,10 +1636,10 @@ export default function WhatsAppInboxPage({
               onClick={() => fileInputRef.current?.click()}
               disabled={!!selectedFile}
               className="
-                flex-shrink-0 rounded-full bg-[#2A3942] p-2.5
-                text-[#8696A0]
+                flex-shrink-0 rounded-full bg-[#2A3942] p-2.5 text-[#8696A0]
                 transition-colors
-                hover:bg-[#374854] disabled:opacity-50
+                hover:bg-[#374854]
+                disabled:opacity-50
               "
               title="Adjuntar"
             >
@@ -1687,28 +1649,21 @@ export default function WhatsAppInboxPage({
             {/* Campo de texto */}
             <div
               className="
-              flex flex-1 items-end gap-1.5 rounded-full bg-[#2A3942] px-3.5
-              py-1.5
-              md:px-4
-              md:py-2
-            "
+                flex flex-1 items-end gap-1.5 rounded-full bg-[#2A3942] px-3.5
+                py-1.5
+                md:px-4 md:py-2
+              "
             >
               <textarea
                 disabled={!selected}
                 rows={1}
                 onKeyDown={(e) => selected && handleKey(e, selected)}
                 className="
-                  max-h-24
-                  flex-1
-                  resize-none bg-transparent py-1.5 text-sm
-                  leading-5
-                  text-gray-100 placeholder-[#8696A0]
+                  max-h-24 flex-1 resize-none bg-transparent py-1.5 text-sm
+                  leading-5 text-gray-100 placeholder-[#8696A0]
                   focus:outline-none
                   disabled:opacity-40
-                  md:max-h-32
-                  md:py-1.5
-                  md:text-base
-                  md:leading-6
+                  md:max-h-32 md:py-1.5 md:text-base md:leading-6
                 "
                 placeholder={
                   selected ? 'Escribe un mensaje' : 'Selecciona chat…'
@@ -1746,9 +1701,9 @@ export default function WhatsAppInboxPage({
                 }
               }}
               className="
-                flex-shrink-0 rounded-full bg-[#25D366] p-2.5
-                text-white
-                transition-colors hover:bg-[#20BA5A]
+                flex-shrink-0 rounded-full bg-[#25D366] p-2.5 text-white
+                transition-colors
+                hover:bg-[#20BA5A]
                 disabled:bg-[#2A3942] disabled:opacity-40
               "
               title="Enviar"
@@ -1779,43 +1734,36 @@ export default function WhatsAppInboxPage({
       {showTplModal && (
         <div
           className="
-          fixed inset-0 z-50 flex items-end
-          justify-center
-          bg-black/50 md:items-center
-        "
+            fixed inset-0 z-50 flex items-end justify-center bg-black/50
+            md:items-center
+          "
         >
           <div
             className="
-            w-full
-            rounded-t-2xl border-t
-            border-gray-800
-            bg-[#111B21]
-            text-gray-100 md:w-full md:max-w-lg
-            md:rounded-2xl
-            md:border
-          "
+              w-full rounded-t-2xl border-t border-gray-800 bg-[#111B21]
+              text-gray-100
+              md:w-full md:max-w-lg md:rounded-2xl md:border
+            "
           >
             <div
               className="
-              sticky top-0 flex items-center justify-between border-b
-              border-gray-800 bg-[#111B21] px-4 py-3
-            "
+                sticky top-0 flex items-center justify-between border-b
+                border-gray-800 bg-[#111B21] px-4 py-3
+              "
             >
               <h3
                 className="
-                text-sm
-                font-semibold
-                md:text-base
-              "
+                  text-sm font-semibold
+                  md:text-base
+                "
               >
                 Plantillas
               </h3>
               <button
                 onClick={() => setShowTplModal(false)}
                 className="
-                  text-xl
-                  leading-none
-                  text-[#8696A0] hover:text-gray-200
+                  text-xl leading-none text-[#8696A0]
+                  hover:text-gray-200
                 "
               >
                 ✕
@@ -1824,10 +1772,9 @@ export default function WhatsAppInboxPage({
 
             <div
               className="
-              max-h-[70vh]
-              space-y-2
-              overflow-y-auto p-3 md:p-4
-            "
+                max-h-[70vh] space-y-2 overflow-y-auto p-3
+                md:p-4
+              "
             >
               {tplLoading && (
                 <div className="text-sm text-[#8696A0]">Cargando…</div>
@@ -1844,10 +1791,10 @@ export default function WhatsAppInboxPage({
                   <label
                     key={tpl.name + tpl.langCode}
                     className="
-                    flex cursor-pointer items-start gap-3 rounded-lg bg-[#202C33]
-                    p-3
-                    transition-colors hover:bg-[#2A3942]
-                  "
+                      flex cursor-pointer items-start gap-3 rounded-lg
+                      bg-[#202C33] p-3 transition-colors
+                      hover:bg-[#2A3942]
+                    "
                   >
                     <input
                       type="radio"
@@ -1862,10 +1809,9 @@ export default function WhatsAppInboxPage({
                     <div className="min-w-0 flex-1">
                       <div
                         className="
-                      text-xs
-                      font-medium
-                      md:text-sm
-                    "
+                          text-xs font-medium
+                          md:text-sm
+                        "
                       >
                         {tpl.label}
                         <span className="ml-1 text-[10px] text-[#8696A0] md:text-xs">
@@ -1875,10 +1821,10 @@ export default function WhatsAppInboxPage({
                       {tpl.body && (
                         <div
                           className="
-                        mt-1 line-clamp-2
-                        text-[11px]
-                        whitespace-pre-wrap text-[#cbd5e1] md:text-xs
-                      "
+                            mt-1 line-clamp-2 text-[11px] whitespace-pre-wrap
+                            text-[#cbd5e1]
+                            md:text-xs
+                          "
                         >
                           {tpl.body}
                         </div>
@@ -1890,15 +1836,14 @@ export default function WhatsAppInboxPage({
 
             <div
               className="
-              sticky bottom-0 flex gap-2 border-t border-gray-800 bg-[#111B21] px-4
-              py-3
-            "
+                sticky bottom-0 flex gap-2 border-t border-gray-800 bg-[#111B21]
+                px-4 py-3
+              "
             >
               <button
                 className="
-                  flex-1 rounded bg-[#202C33] px-3 py-2
-                  text-sm
-                  text-[#e5e7eb] hover:bg-[#2A3942]
+                  flex-1 rounded bg-[#202C33] px-3 py-2 text-sm text-[#e5e7eb]
+                  hover:bg-[#2A3942]
                 "
                 onClick={() => setShowTplModal(false)}
               >
@@ -1906,9 +1851,8 @@ export default function WhatsAppInboxPage({
               </button>
               <button
                 className="
-                  flex-1 rounded bg-emerald-600 px-3 py-2
-                  text-sm
-                  text-white hover:bg-emerald-500
+                  flex-1 rounded bg-emerald-600 px-3 py-2 text-sm text-white
+                  hover:bg-emerald-500
                   disabled:opacity-50
                 "
                 disabled={!tplSelected || !selected || sending === selected}
@@ -1925,43 +1869,36 @@ export default function WhatsAppInboxPage({
       {showTagModal && selected && (
         <div
           className="
-          fixed inset-0 z-50 flex items-end
-          justify-center
-          bg-black/50 md:items-center
-        "
+            fixed inset-0 z-50 flex items-end justify-center bg-black/50
+            md:items-center
+          "
         >
           <div
             className="
-            w-full
-            rounded-t-2xl border-t
-            border-gray-800
-            bg-[#111B21]
-            text-gray-100 md:w-full md:max-w-md
-            md:rounded-2xl
-            md:border
-          "
+              w-full rounded-t-2xl border-t border-gray-800 bg-[#111B21]
+              text-gray-100
+              md:w-full md:max-w-md md:rounded-2xl md:border
+            "
           >
             <div
               className="
-              sticky top-0 flex items-center justify-between border-b
-              border-gray-800 bg-[#111B21] px-4 py-3
-            "
+                sticky top-0 flex items-center justify-between border-b
+                border-gray-800 bg-[#111B21] px-4 py-3
+              "
             >
               <h3
                 className="
-                text-sm
-                font-semibold
-                md:text-base
-              "
+                  text-sm font-semibold
+                  md:text-base
+                "
               >
                 Etiquetas
               </h3>
               <button
                 onClick={() => setShowTagModal(false)}
                 className="
-                  text-xl
-                  leading-none
-                  text-[#8696A0] hover:text-gray-200
+                  text-xl leading-none text-[#8696A0]
+                  hover:text-gray-200
                 "
               >
                 ✕
@@ -1970,17 +1907,15 @@ export default function WhatsAppInboxPage({
 
             <div
               className="
-              max-h-[70vh]
-              space-y-2
-              overflow-y-auto p-3 md:p-4
-            "
+                max-h-[70vh] space-y-2 overflow-y-auto p-3
+                md:p-4
+              "
             >
               <div
                 className="
-                text-[11px]
-                text-[#94a3b8]
-                md:text-xs
-              "
+                  text-[11px] text-[#94a3b8]
+                  md:text-xs
+                "
               >
                 Marca para asignar
               </div>
@@ -1995,9 +1930,9 @@ export default function WhatsAppInboxPage({
                   <label
                     key={t.id}
                     className="
-                      flex cursor-pointer items-center gap-3 rounded-lg bg-[#202C33]
-                      p-3
-                      transition-colors hover:bg-[#2A3942]
+                      flex cursor-pointer items-center gap-3 rounded-lg
+                      bg-[#202C33] p-3 transition-colors
+                      hover:bg-[#2A3942]
                     "
                   >
                     <input
@@ -2055,10 +1990,9 @@ export default function WhatsAppInboxPage({
                     <div className="min-w-0 flex-1">
                       <div
                         className="
-                        flex
-                        items-center
-                        gap-2 text-xs font-medium md:text-sm
-                      "
+                          flex items-center gap-2 text-xs font-medium
+                          md:text-sm
+                        "
                       >
                         <span
                           className="
@@ -2075,15 +2009,14 @@ export default function WhatsAppInboxPage({
 
               <div
                 className="
-                mt-3 rounded-lg border border-gray-700 bg-[#202C33] p-3
-              "
+                  mt-3 rounded-lg border border-gray-700 bg-[#202C33] p-3
+                "
               >
                 <div
                   className="
-                  mb-2
-                  text-[10px]
-                  font-medium text-[#94a3b8] md:text-xs
-                "
+                    mb-2 text-[10px] font-medium text-[#94a3b8]
+                    md:text-xs
+                  "
                 >
                   Nueva:
                 </div>
@@ -2097,15 +2030,14 @@ export default function WhatsAppInboxPage({
 
             <div
               className="
-              sticky bottom-0 flex gap-2 border-t border-gray-800 bg-[#111B21] px-4
-              py-3
-            "
+                sticky bottom-0 flex gap-2 border-t border-gray-800 bg-[#111B21]
+                px-4 py-3
+              "
             >
               <button
                 className="
-                  flex-1 rounded bg-emerald-600 px-3 py-2
-                  text-sm
-                  text-white hover:bg-emerald-500
+                  flex-1 rounded bg-emerald-600 px-3 py-2 text-sm text-white
+                  hover:bg-emerald-500
                 "
                 onClick={() => setShowTagModal(false)}
               >

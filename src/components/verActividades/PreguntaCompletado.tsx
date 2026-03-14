@@ -118,7 +118,10 @@ const VerListPreguntaAbierta: React.FC<QuestionListProps> = ({
               <p>Palabra para completar la frase:</p>
               <input
                 type="text"
-                className="w-2/4 rounded-lg border border-slate-200 p-4 shadow-lg outline-none"
+                className="
+                  w-2/4 rounded-lg border border-slate-200 p-4 shadow-lg
+                  outline-none
+                "
                 name="answer"
                 placeholder="Ingrese aqui el complemento"
                 value={answers[question.id.toString()] || ''}
@@ -132,7 +135,9 @@ const VerListPreguntaAbierta: React.FC<QuestionListProps> = ({
               />
               {feedback[question.id.toString()] && (
                 <p
-                  className={`mt-2 ${feedback[question.id.toString()].isCorrect ? 'text-green-600' : 'text-red-600'}`}
+                  className={`
+                    mt-2
+                    ${feedback[question.id.toString()].isCorrect ? 'text-green-600' : 'text-red-600'}`}
                 >
                   {feedback[question.id.toString()].message}
                 </p>

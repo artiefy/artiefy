@@ -141,7 +141,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   if (loading) {
     return (
       <main className="flex h-screen items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -202,7 +202,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href="/dashboard/super-admin"
               >
                 Inicio
@@ -211,7 +214,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href="/dashboard/super-admin/cursos"
               >
                 Lista de cursos
@@ -220,7 +226,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
               >
                 Detalles curso
@@ -231,14 +240,22 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               <BreadcrumbLink
                 href={`#`}
                 onClick={() => window.history.back()}
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
               >
                 Detallados de la clase
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink className="text-primary hover:text-gray-300">
+              <BreadcrumbLink
+                className="
+                text-primary
+                hover:text-gray-300
+              "
+              >
                 Vista de la clase: {lessons.title}
               </BreadcrumbLink>
             </BreadcrumbItem>
@@ -246,24 +263,50 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         </Breadcrumb>
         <div className="mt-4 flex items-center justify-between">
           <Button onClick={() => handleNavigation('prev', [lessons])}>
-            <ArrowLeftIcon className="animate-bounce-right size-5" />
-            <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+            <ArrowLeftIcon className="size-5 animate-bounce-right" />
+            <div
+              className="
+              absolute inset-0 flex w-full
+              [transform:skew(-13deg)_translateX(-100%)] justify-center
+              group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+              group-hover/button:duration-1000
+            "
+            >
               <div className="relative h-full w-10 bg-white/30" />
             </div>
             Clase Anterior
           </Button>
           <Button onClick={() => handleNavigation('next', [lessons])}>
             Siguiente Clase
-            <ArrowRightIcon className="animate-bounce-right size-5" />
-            <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+            <ArrowRightIcon className="size-5 animate-bounce-right" />
+            <div
+              className="
+              absolute inset-0 flex w-full
+              [transform:skew(-13deg)_translateX(-100%)] justify-center
+              group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+              group-hover/button:duration-1000
+            "
+            >
               <div className="relative h-full w-10 bg-white/30" />
             </div>
           </Button>
         </div>
         <div className="group relative h-auto w-full">
-          <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
           <div
-            className="relative z-20 container mt-4 grid grid-cols-1 gap-5 rounded-lg bg-black p-5 md:grid-cols-2 lg:grid-cols-2"
+            className="
+            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+            duration-500
+            group-hover:opacity-100
+          "
+          />
+          <div
+            className="
+              relative z-20 container mt-4 grid grid-cols-1 gap-5 rounded-lg
+              bg-black p-5
+              md:grid-cols-2
+              lg:grid-cols-2
+            "
             style={{ backgroundColor: color }}
           >
             {/* Columna derecha - Información */}
@@ -318,11 +361,24 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <Link
               href={'#'}
               onClick={() => window.history.back()}
-              className="group/button relative inline-flex w-1/2 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-blue-500 p-2 px-4 text-white hover:bg-blue-700 active:scale-95"
+              className="
+                group/button relative inline-flex w-1/2 items-center
+                justify-center overflow-hidden rounded-lg border border-white/20
+                bg-blue-500 p-2 px-4 text-white
+                hover:bg-blue-700
+                active:scale-95
+              "
             >
-              <ArrowLeftIcon className="animate-bounce-right size-5" />
+              <ArrowLeftIcon className="size-5 animate-bounce-right" />
               <p className="font-bold">Volver</p>
-              <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+              <div
+                className="
+                absolute inset-0 flex w-full
+                [transform:skew(-13deg)_translateX(-100%)] justify-center
+                group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                group-hover/button:duration-1000
+              "
+              >
                 <div className="relative h-full w-10 bg-white/30" />
               </div>
             </Link>

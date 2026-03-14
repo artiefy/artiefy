@@ -433,44 +433,44 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
     >
       <div
         className="
-        flex h-[95vh] w-full max-w-xs flex-col rounded-lg bg-[#0F2940]
-        text-white shadow-lg
-        sm:h-[85vh] sm:max-w-md
-        md:max-w-2xl
-        lg:max-w-3xl
-        xl:h-[80vh]
-      "
+          flex h-[95vh] w-full max-w-xs flex-col rounded-lg bg-[#0F2940]
+          text-white shadow-lg
+          sm:h-[85vh] sm:max-w-md
+          md:max-w-2xl
+          lg:max-w-3xl
+          xl:h-[80vh]
+        "
       >
         {/* Header fijo */}
         <div
           className="
-          flex-shrink-0 p-2 pb-0
-          sm:p-4
-          md:p-6
-        "
+            flex-shrink-0 p-2 pb-0
+            sm:p-4
+            md:p-6
+          "
         >
           <h2
             className="
-            mb-3 text-center text-lg font-bold text-cyan-400
-            sm:mb-4 sm:text-xl
-            md:text-2xl
-          "
+              mb-3 text-center text-lg font-bold text-cyan-400
+              sm:mb-4 sm:text-xl
+              md:text-2xl
+            "
           >
             Objetivos Específicos
           </h2>
           {/* Cambia aquí: flex justify-between para separar izquierda y derecha */}
           <div
             className="
-            mb-3 flex flex-col gap-2
-            sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4
-          "
+              mb-3 flex flex-col gap-2
+              sm:mb-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4
+            "
           >
             {/* Izquierda: Horas por día */}
             <div
               className="
-              flex flex-row items-center gap-2
-              sm:gap-4
-            "
+                flex flex-row items-center gap-2
+                sm:gap-4
+              "
             >
               <label
                 className="
@@ -521,9 +521,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           {/* Add new objective */}
           <div
             className="
-            flex flex-col gap-2
-            sm:mb-6 sm:flex-row
-          "
+              flex flex-col gap-2
+              sm:mb-6 sm:flex-row
+            "
           >
             <textarea
               placeholder="Nuevo objetivo..."
@@ -560,9 +560,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           {/* Izquierda: Horas totales del proyecto*/}
           <div
             className="
-            flex flex-row items-center gap-2
-            sm:gap-4
-          "
+              flex flex-row items-center gap-2
+              sm:gap-4
+            "
           >
             <label
               className="
@@ -595,17 +595,17 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
         {/* Contenido con scroll */}
         <div
           className="
-          flex-1 overflow-y-auto px-3
-          sm:px-4
-          md:px-6
-        "
+            flex-1 overflow-y-auto px-3
+            sm:px-4
+            md:px-6
+          "
         >
           {/* Objectives cards */}
           <div
             className="
-            mb-4 space-y-3
-            sm:mb-6 sm:space-y-4
-          "
+              mb-4 space-y-3
+              sm:mb-6 sm:space-y-4
+            "
           >
             {texto.map((objective) => (
               <Card
@@ -614,23 +614,23 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
               >
                 <CardContent
                   className="
-                  p-3
-                  sm:p-4
-                "
+                    p-3
+                    sm:p-4
+                  "
                 >
                   {/* Objective header */}
                   <div
                     className="
-                    mb-3 flex flex-col gap-2
-                    sm:mb-4 sm:flex-row sm:items-start sm:justify-between
-                  "
+                      mb-3 flex flex-col gap-2
+                      sm:mb-4 sm:flex-row sm:items-start sm:justify-between
+                    "
                   >
                     <h3
                       className="
-                      overflow-wrap-anywhere min-w-0 flex-1 pr-0 text-sm
-                      font-semibold break-words hyphens-auto text-cyan-300
-                      sm:pr-2 sm:text-lg
-                    "
+                        overflow-wrap-anywhere min-w-0 flex-1 pr-0 text-sm
+                        font-semibold break-words hyphens-auto text-cyan-300
+                        sm:pr-2 sm:text-lg
+                      "
                     >
                       {`OE ${texto.findIndex((obj) => obj.id === objective.id) + 1}. ${limpiarNumeracionObjetivo(objective.title)}`}
                     </h3>
@@ -645,9 +645,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                     >
                       <X
                         className="
-                        size-3
-                        sm:size-4
-                      "
+                          size-3
+                          sm:size-4
+                        "
                       />
                     </Button>
                   </div>
@@ -655,9 +655,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                   {/* Add activity to this objective */}
                   <div
                     className="
-                    mb-3 flex flex-col gap-2
-                    sm:flex-row
-                  "
+                      mb-3 flex flex-col gap-2
+                      sm:flex-row
+                    "
                   >
                     <textarea
                       placeholder="Nueva actividad para este objetivo..."
@@ -701,9 +701,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                     {objective.activities.length > 0 && (
                       <div
                         className="
-                        mb-2 text-xs text-gray-300
-                        sm:text-sm
-                      "
+                          mb-2 text-xs text-gray-300
+                          sm:text-sm
+                        "
                       >
                         Actividades ({objective.activities.length}):
                       </div>
@@ -724,20 +724,20 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                         >
                           <span
                             className="
-                            overflow-wrap-anywhere min-w-0 flex-1 pr-0
-                            break-words hyphens-auto text-gray-200
-                            sm:pr-2
-                          "
+                              overflow-wrap-anywhere min-w-0 flex-1 pr-0
+                              break-words hyphens-auto text-gray-200
+                              sm:pr-2
+                            "
                           >
                             {`OE ${texto.findIndex((obj) => obj.id === objective.id) + 1}. ACT ${activityIndex + 1}. ${limpiarNumeracionActividad(activity)}`}
                           </span>
                           {/* Responsable */}
                           <span
                             className="
-                            overflow-wrap-anywhere min-w-0 flex-1 pr-0
-                            break-words hyphens-auto text-gray-200
-                            sm:pr-2
-                          "
+                              overflow-wrap-anywhere min-w-0 flex-1 pr-0
+                              break-words hyphens-auto text-gray-200
+                              sm:pr-2
+                            "
                           >
                             {responsableName}
                           </span>
@@ -775,9 +775,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                           >
                             <X
                               className="
-                              size-2
-                              sm:size-3
-                            "
+                                size-2
+                                sm:size-3
+                              "
                             />
                           </Button>
                         </div>
@@ -786,9 +786,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
                     {objective.activities.length === 0 && (
                       <div
                         className="
-                        text-xs text-gray-400 italic
-                        sm:text-sm
-                      "
+                          text-xs text-gray-400 italic
+                          sm:text-sm
+                        "
                       >
                         No hay actividades agregadas para este objetivo
                       </div>
@@ -802,9 +802,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           {texto.length === 0 && (
             <div
               className="
-              py-6 text-center text-sm text-gray-400
-              sm:py-8 sm:text-base
-            "
+                py-6 text-center text-sm text-gray-400
+                sm:py-8 sm:text-base
+              "
             >
               No hay objetivos específicos agregados
             </div>
@@ -814,9 +814,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
         {/* Footer fijo */}
         <div
           className="
-          mt-4 flex flex-col justify-between gap-3 p-3
-          sm:mt-6 sm:flex-row sm:gap-4
-        "
+            mt-4 flex flex-col justify-between gap-3 p-3
+            sm:mt-6 sm:flex-row sm:gap-4
+          "
         >
           <Button
             onClick={onAnterior}
@@ -830,9 +830,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
           >
             <FaArrowLeft
               className="
-              transition-transform duration-300
-              group-hover:-translate-x-1
-            "
+                transition-transform duration-300
+                group-hover:-translate-x-1
+              "
             />
             <span className="sm:inline">Objetivo General</span>
           </Button>
@@ -891,9 +891,9 @@ const ModalObjetivosEsp: React.FC<ModalObjetivosEspProps> = ({
             Resumen
             <FaArrowRight
               className="
-              transition-transform duration-300
-              group-hover:translate-x-1
-            "
+                transition-transform duration-300
+                group-hover:translate-x-1
+              "
             />
           </Button>
         </div>

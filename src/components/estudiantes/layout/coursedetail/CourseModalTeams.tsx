@@ -132,9 +132,9 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
       <div className="flex size-full items-center justify-center p-4">
         <div
           className="
-          relative w-full max-w-3xl overflow-hidden rounded-2xl border
-          border-border bg-card shadow-2xl
-        "
+            relative w-full max-w-3xl overflow-hidden rounded-2xl border
+            border-border bg-card shadow-2xl
+          "
         >
           <button
             className="
@@ -153,9 +153,9 @@ const CourseModalTeams: React.FC<CourseModalTeamsProps> = ({
           </button>
           <div
             className="
-            flex flex-col space-y-1.5 p-4 pb-0 text-center
-            sm:text-left
-          "
+              flex flex-col space-y-1.5 p-4 pb-0 text-center
+              sm:text-left
+            "
           >
             <h2 className="text-base font-medium tracking-tight text-foreground">
               {title}

@@ -3991,8 +3991,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           return (
             <div
               className="
-              min-w-0 rounded-xl border border-border/50 bg-card/50 p-5
-            "
+                min-w-0 rounded-xl border border-border/50 bg-card/50 p-5
+              "
             >
               <div className="mb-4 flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-3">
@@ -4107,9 +4107,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
                     <div
                       className="
-                      min-w-0 flex-1 pl-1
-                      sm:pl-0
-                    "
+                        min-w-0 flex-1 pl-1
+                        sm:pl-0
+                      "
                     >
                       <div className="max-w-full min-w-0">
                         <div
@@ -4131,8 +4131,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           >
                             <div
                               className="
-                              mb-2 flex h-10 border-b border-border/50
-                            "
+                                mb-2 flex h-10 border-b border-border/50
+                              "
                             >
                               {columns.map((column, index) => (
                                 <div
@@ -4146,15 +4146,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                                 >
                                   <div
                                     className="
-                                    truncate text-xs text-muted-foreground
-                                  "
+                                      truncate text-xs text-muted-foreground
+                                    "
                                   >
                                     {column.label}
                                   </div>
                                   <div
                                     className="
-                                    truncate text-xs font-medium text-foreground
-                                  "
+                                      truncate text-xs font-medium
+                                      text-foreground
+                                    "
                                   >
                                     {column.sublabel}
                                   </div>

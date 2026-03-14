@@ -74,8 +74,8 @@ export function ProgramGradesModal({
           {/* Tabla de Calificaciones por Curso */}
           <div
             className="
-            mt-4 max-h-80 overflow-hidden overflow-y-auto rounded-lg border
-          "
+              mt-4 max-h-80 overflow-hidden overflow-y-auto rounded-lg border
+            "
           >
             <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4">
               <div className="font-semibold text-background">Curso</div>

@@ -71,8 +71,8 @@ export function GradeHistory({
                   <StarIcon className="size-5 text-yellow-500" />
                   <span
                     className="
-                    ml-1 flex flex-nowrap items-center gap-1 font-bold
-                  "
+                      ml-1 flex flex-nowrap items-center gap-1 font-bold
+                    "
                   >
                     {formatScore(param.grade)}
                     <span className="mx-1">→</span>

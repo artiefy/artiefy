@@ -678,5 +678,8 @@
   },
   "[sql]": {
     "editor.defaultFormatter": "cweijan.vscode-postgresql-client2"
+  },
+  "chat.tools.terminal.autoApprove": {
+    "true": true
   }
 }

@@ -173,9 +173,9 @@ const ParametrosPage = () => {
         <div className="text-center">
           <div
             className="
-            loader mb-4 size-12 rounded-full border-4 border-primary
-            border-t-transparent
-          "
+              loader mb-4 size-12 rounded-full border-4 border-primary
+              border-t-transparent
+            "
           ></div>
           <p className="text-gray-600">Cargando parámetros...</p>
         </div>
@@ -211,8 +211,8 @@ const ParametrosPage = () => {
         {error && (
           <div
             className="
-            mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
-          "
+              mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
+            "
           >
             {error}
           </div>
@@ -222,8 +222,8 @@ const ParametrosPage = () => {
         {parametros.length === 0 ? (
           <div
             className="
-            rounded-lg border border-gray-200 bg-white p-8 text-center
-          "
+              rounded-lg border border-gray-200 bg-white p-8 text-center
+            "
           >
             <p className="text-gray-500">
               No hay parámetros creados aún. ¡Crea uno para empezar!
@@ -232,44 +232,44 @@ const ParametrosPage = () => {
         ) : (
           <div
             className="
-            overflow-x-auto rounded-lg border border-gray-200 bg-white
-          "
+              overflow-x-auto rounded-lg border border-gray-200 bg-white
+            "
           >
             <table className="w-full">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Nombre
                   </th>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Descripción
                   </th>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Porcentaje
                   </th>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Número de Actividades
                   </th>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Acciones
                   </th>
@@ -326,8 +326,8 @@ const ParametrosPage = () => {
       {modal.isOpen && (
         <div
           className="
-          fixed inset-0 z-50 flex items-center justify-center bg-black/50
-        "
+            fixed inset-0 z-50 flex items-center justify-center bg-black/50
+          "
         >
           <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
             <h2 className="mb-4 text-lg font-bold text-gray-900">

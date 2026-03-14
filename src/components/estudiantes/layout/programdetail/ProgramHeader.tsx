@@ -641,9 +641,9 @@ export function ProgramHeader({
           >
             <FaTimes
               className="
-              size-4 text-emerald-400 transition-colors
-              group-hover:text-red-500
-            "
+                size-4 text-emerald-400 transition-colors
+                group-hover:text-red-500
+              "
             />
           </button>
         </div>
@@ -720,9 +720,10 @@ export function ProgramHeader({
       <div className="relative z-10 space-y-5 p-5">
         <div
           className="
-          inline-flex items-center gap-2 rounded-full border border-amber-500/20
-          bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-400
-        "
+            inline-flex items-center gap-2 rounded-full border
+            border-amber-500/20 bg-amber-500/10 px-3 py-1.5 text-sm font-medium
+            text-amber-400
+          "
         >
           <Crown className="size-4" />
           Programa Premium
@@ -751,17 +752,17 @@ export function ProgramHeader({
       >
         <div
           className="
-          absolute inset-0 rounded-2xl bg-gradient-to-r from-background
-          via-background/95 to-background/80
-        "
+            absolute inset-0 rounded-2xl bg-gradient-to-r from-background
+            via-background/95 to-background/80
+          "
         />
         {/* CTA móvil solo cuando no estás inscrito */}
         {!isEnrolled && (
           <div
             className="
-            relative z-10 mb-8
-            lg:hidden
-          "
+              relative z-10 mb-8
+              lg:hidden
+            "
           >
             {renderCtaCard()}
           </div>
@@ -781,47 +782,47 @@ export function ProgramHeader({
           <div className="space-y-8">
             <div
               className="
-              flex flex-col gap-6
-              lg:flex-row lg:items-start lg:gap-8
-            "
+                flex flex-col gap-6
+                lg:flex-row lg:items-start lg:gap-8
+              "
             >
               <div className="flex-1">
                 <div
                   className="
-                  max-w-2xl space-y-6
-                  lg:max-w-3xl
-                "
+                    max-w-2xl space-y-6
+                    lg:max-w-3xl
+                  "
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     {/* Badge de categoría */}
                     <div
                       className="
-                      inline-flex items-center rounded-full border
-                      border-primary/30 bg-primary/20 px-2.5 py-0.5 text-xs
-                      font-medium text-primary transition-colors
-                      hover:bg-primary/80
-                      focus:ring-2 focus:ring-ring focus:ring-offset-2
-                      focus:outline-none
-                    "
+                        inline-flex items-center rounded-full border
+                        border-primary/30 bg-primary/20 px-2.5 py-0.5 text-xs
+                        font-medium text-primary transition-colors
+                        hover:bg-primary/80
+                        focus:ring-2 focus:ring-ring focus:ring-offset-2
+                        focus:outline-none
+                      "
                     >
                       {program.category?.name ?? 'Sin categoría'}
                     </div>
                   </div>
                   <h1
                     className="
-                    font-display text-3xl leading-tight font-bold break-words
-                    text-foreground
-                    md:text-4xl
-                  "
+                      font-display text-3xl leading-tight font-bold break-words
+                      text-foreground
+                      md:text-4xl
+                    "
                   >
                     <span className="inline">
                       {program.title}{' '}
                       {isEnrolled && (
                         <CheckCircleIcon
                           className="
-                          mb-1 ml-1 inline-block size-6 flex-shrink-0
-                          align-middle text-green-500
-                        "
+                            mb-1 ml-1 inline-block size-6 flex-shrink-0
+                            align-middle text-green-500
+                          "
                         />
                       )}
                     </span>
@@ -909,9 +910,9 @@ export function ProgramHeader({
                   {program.certificationType && (
                     <div
                       className="
-                      flex w-fit items-center gap-2 rounded-full bg-muted/50
-                      px-3 py-1.5
-                    "
+                        flex w-fit items-center gap-2 rounded-full bg-muted/50
+                        px-3 py-1.5
+                      "
                     >
                       <LiaCertificateSolid className="size-4 text-muted-foreground" />
                       <span className="text-xs font-medium text-foreground">
@@ -922,9 +923,9 @@ export function ProgramHeader({
 
                   <p
                     className="
-                    text-base leading-relaxed break-words whitespace-pre-wrap
-                    text-muted-foreground
-                  "
+                      text-base leading-relaxed break-words whitespace-pre-wrap
+                      text-muted-foreground
+                    "
                   >
                     {program.description ?? 'No hay descripción disponible.'}
                   </p>
@@ -933,9 +934,9 @@ export function ProgramHeader({
               {isEnrolled && (
                 <div
                   className="
-                  hidden
-                  lg:block lg:w-[320px] lg:flex-shrink-0
-                "
+                    hidden
+                    lg:block lg:w-[320px] lg:flex-shrink-0
+                  "
                 >
                   {renderCtaCard()}
                 </div>
@@ -952,10 +953,10 @@ export function ProgramHeader({
               <div className="border-b border-border/50">
                 <Tabs.List
                   className="
-                  inline-flex h-auto w-full flex-nowrap items-center
-                  justify-start overflow-x-auto rounded-md bg-transparent p-0
-                  text-muted-foreground
-                "
+                    inline-flex h-auto w-full flex-nowrap items-center
+                    justify-start overflow-x-auto rounded-md bg-transparent p-0
+                    text-muted-foreground
+                  "
                 >
                   <Tabs.Trigger
                     value="cursos"
@@ -1029,25 +1030,25 @@ export function ProgramHeader({
               <Tabs.Content value="en-vivo" className="pt-6">
                 <section
                   className="
-                  rounded-2xl border border-border bg-card p-6
-                  md:p-8
-                "
+                    rounded-2xl border border-border bg-card p-6
+                    md:p-8
+                  "
                 >
                   <div className="mb-6 flex items-center gap-3">
                     <div
                       className="
-                      flex items-center justify-center rounded-full
-                      bg-red-500/20 p-2
-                    "
+                        flex items-center justify-center rounded-full
+                        bg-red-500/20 p-2
+                      "
                     >
                       <LuVideo className="size-5 text-red-400" />
                     </div>
                     <div>
                       <h2
                         className="
-                        font-display text-xl font-bold text-foreground
-                        md:text-2xl
-                      "
+                          font-display text-xl font-bold text-foreground
+                          md:text-2xl
+                        "
                       >
                         Clases en Vivo
                       </h2>
@@ -1148,8 +1149,9 @@ export function ProgramHeader({
                               ${
                                 isEnrolledInCourse
                                   ? `
-                                sm:flex-row sm:items-center sm:justify-between
-                              `
+                                    sm:flex-row sm:items-center
+                                    sm:justify-between
+                                  `
                                   : ''
                               }
                               sm:p-4
@@ -1162,30 +1164,30 @@ export function ProgramHeader({
                             {/* MOBILE: layout vertical y centrado */}
                             <div
                               className="
-                              block w-full
-                              sm:hidden
-                            "
+                                block w-full
+                                sm:hidden
+                              "
                             >
                               <div
                                 className="
-                                flex w-full flex-col items-stretch gap-3
-                              "
+                                  flex w-full flex-col items-stretch gap-3
+                                "
                               >
                                 {/* Badge del curso arriba del título */}
                                 <span
                                   className="
-                                  inline-flex w-fit rounded-full bg-primary/10
-                                  px-2 py-0.5 text-[11px] font-semibold
-                                  text-primary
-                                "
+                                    inline-flex w-fit rounded-full bg-primary/10
+                                    px-2 py-0.5 text-[11px] font-semibold
+                                    text-primary
+                                  "
                                 >
                                   {meeting.courseTitle}
                                 </span>
                                 {/* Header compacto */}
                                 <div
                                   className="
-                                  flex items-start justify-between gap-2
-                                "
+                                    flex items-start justify-between gap-2
+                                  "
                                 >
                                   <div className="flex items-center gap-2">
                                     <span
@@ -1208,9 +1210,9 @@ export function ProgramHeader({
                                     </span>
                                     <h3
                                       className="
-                                      text-lg leading-snug font-semibold
-                                      text-slate-100
-                                    "
+                                        text-lg leading-snug font-semibold
+                                        text-slate-100
+                                      "
                                     >
                                       {meeting.title}
                                     </h3>
@@ -1296,8 +1298,8 @@ export function ProgramHeader({
                                       {buttonIcon}
                                       <span
                                         className="
-                                        relative z-10 whitespace-nowrap
-                                      "
+                                          relative z-10 whitespace-nowrap
+                                        "
                                       >
                                         {buttonText}
                                       </span>
@@ -1321,8 +1323,8 @@ export function ProgramHeader({
                                       {buttonIcon}
                                       <span
                                         className="
-                                        relative z-10 whitespace-nowrap
-                                      "
+                                          relative z-10 whitespace-nowrap
+                                        "
                                       >
                                         {buttonText}
                                       </span>
@@ -1345,8 +1347,8 @@ export function ProgramHeader({
                                       {buttonIcon}
                                       <span
                                         className="
-                                        relative z-10 whitespace-nowrap
-                                      "
+                                          relative z-10 whitespace-nowrap
+                                        "
                                       >
                                         {buttonText}
                                       </span>
@@ -1358,16 +1360,16 @@ export function ProgramHeader({
                             {/* DESKTOP: badge + title en una línea, fecha/hora debajo */}
                             <div
                               className="
-                              hidden min-w-0 flex-1 flex-col gap-2
-                              sm:flex
-                            "
+                                hidden min-w-0 flex-1 flex-col gap-2
+                                sm:flex
+                              "
                             >
                               <div className="flex items-center gap-3">
                                 <span
                                   className="
-                                  rounded-full bg-primary/10 px-2 py-0.5
-                                  text-[11px] font-semibold text-primary
-                                "
+                                    rounded-full bg-primary/10 px-2 py-0.5
+                                    text-[11px] font-semibold text-primary
+                                  "
                                 >
                                   {meeting.courseTitle}
                                 </span>
@@ -1375,24 +1377,24 @@ export function ProgramHeader({
                               <div className="flex items-center gap-3">
                                 <span
                                   className="
-                                  flex items-center gap-1.5 rounded-full
-                                  bg-red-500/20 px-2 py-0.5 text-xs font-medium
-                                  text-red-400
-                                "
+                                    flex items-center gap-1.5 rounded-full
+                                    bg-red-500/20 px-2 py-0.5 text-xs
+                                    font-medium text-red-400
+                                  "
                                 >
                                   <span
                                     className="
-                                    size-1.5 animate-pulse rounded-full
-                                    bg-red-500
-                                  "
+                                      size-1.5 animate-pulse rounded-full
+                                      bg-red-500
+                                    "
                                   />
                                   VIVO
                                 </span>
                                 <div
                                   className="
-                                  text-base leading-tight font-semibold
-                                  text-slate-100
-                                "
+                                    text-base leading-tight font-semibold
+                                    text-slate-100
+                                  "
                                 >
                                   {meeting.title}
                                 </div>
@@ -1544,9 +1546,9 @@ export function ProgramHeader({
           {!isEnrolled && (
             <aside
               className="
-              sticky top-24 hidden max-h-[calc(100vh-8rem)] self-start
-              lg:block
-            "
+                sticky top-24 hidden max-h-[calc(100vh-8rem)] self-start
+                lg:block
+              "
             >
               {renderCtaCard()}
             </aside>
@@ -1566,14 +1568,14 @@ export function ProgramHeader({
       {isCertModalOpen && (
         <div
           className="
-          fixed inset-0 z-[99999] flex items-center justify-center bg-black/50
-        "
+            fixed inset-0 z-[99999] flex items-center justify-center bg-black/50
+          "
         >
           <div
             className="
-            relative w-full max-w-lg rounded-lg border border-gray-200
-            bg-[#01142B] p-6
-          "
+              relative w-full max-w-lg rounded-lg border border-gray-200
+              bg-[#01142B] p-6
+            "
           >
             <button
               onClick={() => setIsCertModalOpen(false)}
@@ -1617,9 +1619,9 @@ export function ProgramHeader({
         <DialogContent className="border border-[#1D283A] bg-[#061c37] sm:rounded-[16px]">
           <DialogHeader
             className="
-            space-y-2 text-center
-            sm:text-left
-          "
+              space-y-2 text-center
+              sm:text-left
+            "
           >
             <DialogTitle className="text-[#f8fafc]">¿Estás seguro?</DialogTitle>
             <DialogDescription className="text-[#94a3b8]">
@@ -1628,9 +1630,9 @@ export function ProgramHeader({
           </DialogHeader>
           <div
             className="
-            flex flex-col-reverse gap-2
-            sm:flex-row sm:justify-end sm:space-x-2
-          "
+              flex flex-col-reverse gap-2
+              sm:flex-row sm:justify-end sm:space-x-2
+            "
           >
             <button
               type="button"

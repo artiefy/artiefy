@@ -32,17 +32,17 @@ export default function CourseSearchPreview({
   return (
     <div
       className="
-      absolute inset-x-4 z-50 mt-2 max-h-96 overflow-y-auto rounded-lg
-      border border-[#1d283a] bg-background/95 text-white shadow-lg
-      sm:inset-x-0
-    "
+        absolute inset-x-4 z-50 mt-2 max-h-96 overflow-y-auto rounded-lg border
+        border-[#1d283a] bg-background/95 text-white shadow-lg
+        sm:inset-x-0
+      "
     >
       {hasCourses && (
         <div className="border-b border-[#1d283a] px-1 pt-3 pb-2 text-white">
           <p
             className="
-            mb-1 px-3 text-[11px] tracking-[0.3em] text-[#94a3b8] uppercase
-          "
+              mb-1 px-3 text-[11px] tracking-[0.3em] text-[#94a3b8] uppercase
+            "
           >
             Cursos
           </p>
@@ -57,8 +57,8 @@ export default function CourseSearchPreview({
             >
               <div
                 className="
-                size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800
-              "
+                  size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800
+                "
               >
                 {course.coverImageKey ? (
                   <Image
@@ -71,9 +71,9 @@ export default function CourseSearchPreview({
                 ) : (
                   <div
                     className="
-                    flex size-full items-center justify-center text-xs
-                    text-gray-400
-                  "
+                      flex size-full items-center justify-center text-xs
+                      text-gray-400
+                    "
                   >
                     Sin imagen
                   </div>
@@ -96,8 +96,8 @@ export default function CourseSearchPreview({
         <div className={`px-1 pt-3 pb-2`}>
           <p
             className="
-            mb-1 px-3 text-[11px] tracking-[0.3em] text-[#94a3b8] uppercase
-          "
+              mb-1 px-3 text-[11px] tracking-[0.3em] text-[#94a3b8] uppercase
+            "
           >
             Programas
           </p>
@@ -112,8 +112,8 @@ export default function CourseSearchPreview({
             >
               <div
                 className="
-                size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800
-              "
+                  size-14 flex-shrink-0 overflow-hidden rounded bg-gray-800
+                "
               >
                 {program.coverImageKey ? (
                   <Image
@@ -126,9 +126,9 @@ export default function CourseSearchPreview({
                 ) : (
                   <div
                     className="
-                    flex size-full items-center justify-center text-xs
-                    text-gray-400
-                  "
+                      flex size-full items-center justify-center text-xs
+                      text-gray-400
+                    "
                   >
                     Sin imagen
                   </div>

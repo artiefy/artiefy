@@ -236,7 +236,12 @@ export default function VerRespuestasArchivos({
       <h2 className="my-2 ml-4 text-xl font-semibold text-blue-600">
         Respuestas de los Estudiantes
       </h2>
-      <div className="grid gap-4 px-2 pb-4 md:grid-cols-2">
+      <div
+        className="
+        grid gap-4 px-2 pb-4
+        md:grid-cols-2
+      "
+      >
         {Object.entries(respuestas).length > 0 ? (
           Object.entries(respuestas).map(([key, respuesta]) => {
             console.log('🔍 Respuesta en frontend:', respuesta);
@@ -244,7 +249,10 @@ export default function VerRespuestasArchivos({
             return (
               <Card
                 key={key}
-                className="border-slate-200 transition-all hover:shadow-lg"
+                className="
+                  border-slate-200 transition-all
+                  hover:shadow-lg
+                "
               >
                 <CardContent className="space-y-6 p-6">
                   {/* Encabezado con datos del estudiante */}
@@ -263,11 +271,14 @@ export default function VerRespuestasArchivos({
                       {new Date(respuesta.submittedAt).toLocaleString()}
                     </p>
                     <span
-                      className={`inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                        respuesta.status === 'pendiente'
-                          ? 'bg-yellow-100 text-white'
-                          : 'bg-green-100 text-white'
-                      }`}
+                      className={`
+                        inline-block rounded-full px-3 py-1 text-xs font-medium
+                        ${
+                          respuesta.status === 'pendiente'
+                            ? 'bg-yellow-100 text-white'
+                            : 'bg-green-100 text-white'
+                        }
+                      `}
                     >
                       {respuesta.status === 'calificado'
                         ? '✅ Calificado'
@@ -282,7 +293,12 @@ export default function VerRespuestasArchivos({
                     </label>
                     <textarea
                       rows={3}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      className="
+                        w-full rounded-md border border-gray-300 px-3 py-2
+                        text-sm shadow-sm
+                        focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+                        focus:outline-none
+                      "
                       value={comments[key] ?? ''}
                       onChange={(e) =>
                         setComments((prev) => ({
@@ -300,9 +316,19 @@ export default function VerRespuestasArchivos({
                   )}
 
                   {/* Zona de calificación y acciones */}
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                  <div
+                    className="
+                    flex flex-col gap-4
+                    md:flex-row md:items-start md:justify-between
+                  "
+                  >
                     {/* Calificación */}
-                    <div className="space-y-2 md:w-1/3">
+                    <div
+                      className="
+                      space-y-2
+                      md:w-1/3
+                    "
+                    >
                       <label className="block text-sm font-medium text-white">
                         Calificación (0 - 5):
                       </label>
@@ -318,11 +344,20 @@ export default function VerRespuestasArchivos({
                       />
                       <Button
                         onClick={() => handleSubmitGrade(key)}
-                        className={`w-full transition-colors ${
-                          respuesta.status === 'calificado'
-                            ? 'bg-blue-500 text-white hover:bg-blue-600'
-                            : 'bg-green-500 text-white hover:bg-green-600'
-                        }`}
+                        className={`
+                          w-full transition-colors
+                          ${
+                            respuesta.status === 'calificado'
+                              ? `
+                              bg-blue-500 text-white
+                              hover:bg-blue-600
+                            `
+                              : `
+                              bg-green-500 text-white
+                              hover:bg-green-600
+                            `
+                          }
+                        `}
                       >
                         {respuesta.status === 'calificado'
                           ? 'Actualizar Nota'
@@ -334,7 +369,10 @@ export default function VerRespuestasArchivos({
                     <div className="md:w-1/3">
                       <Button
                         onClick={() => descargarArchivo(key)}
-                        className="w-full border-slate-300 bg-slate-600 text-white hover:bg-slate-700"
+                        className="
+                          w-full border-slate-300 bg-slate-600 text-white
+                          hover:bg-slate-700
+                        "
                       >
                         Descargar archivo
                       </Button>

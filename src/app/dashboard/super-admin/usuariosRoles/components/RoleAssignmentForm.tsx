@@ -71,15 +71,21 @@ export default function RoleAssignmentForm({ user, onClose, onSave }: Props) {
   const selectedRole = roles.find((r) => r.id === selectedRoleId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="w-full max-w-lg rounded-lg bg-gray-900 p-6 text-white shadow-lg">
+    <div className="
+      fixed inset-0 z-50 flex items-center justify-center bg-black/60
+    ">
+      <div className="
+        w-full max-w-lg rounded-lg bg-gray-900 p-6 text-white shadow-lg
+      ">
         <h2 className="mb-4 text-xl font-semibold">
           Asignar Rol Secundario a{' '}
           <span className="text-primary">{user.name}</span>
         </h2>
 
         <select
-          className="mb-4 w-full rounded-md border border-white/10 bg-gray-800 px-4 py-2"
+          className="
+            mb-4 w-full rounded-md border border-white/10 bg-gray-800 px-4 py-2
+          "
           value={selectedRoleId ?? ''}
           onChange={(e) => setSelectedRoleId(Number(e.target.value))}
         >
@@ -110,14 +116,22 @@ export default function RoleAssignmentForm({ user, onClose, onSave }: Props) {
         <div className="mt-4 flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-md border border-white/20 px-4 py-2 text-sm text-white hover:bg-white/10"
+            className="
+              rounded-md border border-white/20 px-4 py-2 text-sm text-white
+              hover:bg-white/10
+            "
           >
             Cancelar
           </button>
           <button
             onClick={handleSubmit}
             disabled={!selectedRoleId || loading}
-            className="bg-primary text-background hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-50"
+            className="
+              bg-primary text-background
+              hover:bg-primary/90
+              rounded-md px-4 py-2 text-sm font-medium transition
+              disabled:opacity-50
+            "
           >
             {loading ? 'Guardando...' : 'Guardar'}
           </button>

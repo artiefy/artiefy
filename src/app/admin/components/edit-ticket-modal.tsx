@@ -94,7 +94,10 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-white"
+                className="
+                  mt-1 block w-full rounded-md border border-gray-600
+                  bg-gray-800 text-white
+                "
               />
             </label>
           </div>
@@ -108,7 +111,10 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={3}
-                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-white"
+                className="
+                  mt-1 block w-full rounded-md border border-gray-600
+                  bg-gray-800 text-white
+                "
               />
             </label>
           </div>
@@ -121,7 +127,10 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
                 name="estado"
                 value={formData.estado}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-white"
+                className="
+                  mt-1 block w-full rounded-md border border-gray-600
+                  bg-gray-800 text-white
+                "
               >
                 <option value="pending">Pendiente</option>
                 <option value="in_progress">En Progreso</option>
@@ -140,7 +149,10 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
                 name="tipo"
                 value={formData.tipo}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-white"
+                className="
+                  mt-1 block w-full rounded-md border border-gray-600
+                  bg-gray-800 text-white
+                "
               >
                 <option value="bug">Bug</option>
                 <option value="feature">Feature</option>
@@ -158,7 +170,10 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
                 value={formData.comments}
                 onChange={handleInputChange}
                 rows={3}
-                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-white"
+                className="
+                  mt-1 block w-full rounded-md border border-gray-600
+                  bg-gray-800 text-white
+                "
               />
             </label>
           </div>
@@ -171,7 +186,10 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
                 name="assignedToId"
                 value={formData.assignedToId}
                 onChange={handleInputChange}
-                className="mt-1 block w-full rounded-md border border-gray-600 bg-gray-800 text-white"
+                className="
+                  mt-1 block w-full rounded-md border border-gray-600
+                  bg-gray-800 text-white
+                "
               >
                 <option value={ticket?.assignedToId}>
                   {ticket?.assignedToName ?? 'Select User'}
@@ -187,13 +205,18 @@ const EditTicketModal = ({ isOpen, onClose, ticket }: EditTicketModalProps) => {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-gray-600 px-4 py-2 text-sm font-medium text-gray-200"
+            className="
+              rounded-md border border-gray-600 px-4 py-2 text-sm font-medium
+              text-gray-200
+            "
           >
             Cancel
           </button>
           <button
             type="submit" // YA correcto
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white"
+            className="
+              rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white
+            "
           >
             Save Changes
           </button>

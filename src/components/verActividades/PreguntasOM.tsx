@@ -133,11 +133,14 @@ const VerQuestionList: React.FC<QuestionListProps> = ({
             </ul>
             {feedback[question.id] && (
               <p
-                className={`mt-2 ${
+                className={`
+                  mt-2
+                  ${
                   feedback[question.id].isCorrect
                     ? 'text-green-600'
                     : 'text-red-600'
-                }`}
+                }
+                `}
               >
                 {feedback[question.id].message}
               </p>

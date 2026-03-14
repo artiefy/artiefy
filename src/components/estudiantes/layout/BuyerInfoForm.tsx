@@ -43,11 +43,14 @@ export default function BuyerInfoForm({
           <span className="title">Correo Electrónico *</span>
           {readOnly ? (
             <div
-              className={`input-field flex items-center ${
+              className={`
+                input-field flex items-center
+                ${
                 !formData.buyerEmail && showErrors
                   ? 'border-2 border-red-400'
                   : ''
-              }`}
+              }
+              `}
               role="textbox"
               aria-readonly="true"
             >
@@ -60,11 +63,15 @@ export default function BuyerInfoForm({
               placeholder="ejemplo@correo.com"
               value={formData.buyerEmail}
               onChange={onChangeAction}
-              className={`input-field ${!formData.buyerEmail && showErrors ? 'border-2 border-red-400' : ''}`}
+              className={`
+                input-field
+                ${!formData.buyerEmail && showErrors ? 'border-2 border-red-400' : ''}`}
               required
             />
           )}
-          <FaEnvelope className="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400" />
+          <FaEnvelope className="
+            absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400
+          " />
         </label>
         {!formData.buyerEmail && showErrors && (
           <span className="error-message text-xs">El correo es requerido</span>
@@ -75,11 +82,14 @@ export default function BuyerInfoForm({
           <span className="title">Nombre Completo *</span>
           {readOnly ? (
             <div
-              className={`input-field flex items-center ${
+              className={`
+                input-field flex items-center
+                ${
                 !formData.buyerFullName && showErrors
                   ? 'border-2 border-red-400'
                   : ''
-              }`}
+              }
+              `}
               role="textbox"
               aria-readonly="true"
             >
@@ -92,11 +102,15 @@ export default function BuyerInfoForm({
               placeholder="Juan Pérez"
               value={formData.buyerFullName}
               onChange={onChangeAction}
-              className={`input-field ${!formData.buyerFullName && showErrors ? 'border-2 border-red-400' : ''}`}
+              className={`
+                input-field
+                ${!formData.buyerFullName && showErrors ? 'border-2 border-red-400' : ''}`}
               required
             />
           )}
-          <FaUser className="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400" />
+          <FaUser className="
+            absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400
+          " />
         </label>
         {!formData.buyerFullName && showErrors && (
           <span className="error-message text-xs">El nombre es requerido</span>
@@ -114,10 +128,14 @@ export default function BuyerInfoForm({
             maxLength={14}
             inputMode="numeric"
             pattern="\\+57\\d{10,11}"
-            className={`input-field ${showErrors && (errors.telephone || !formData.telephone) ? 'border-2 border-red-400' : ''}`}
+            className={`
+              input-field
+              ${showErrors && (errors.telephone || !formData.telephone) ? 'border-2 border-red-400' : ''}`}
             required
           />
-          <FaPhone className="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400" />
+          <FaPhone className="
+            absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-400
+          " />
         </label>
         {showErrors && errors.telephone && (
           <span className="error-message">{errors.telephone}</span>
@@ -165,7 +183,10 @@ export default function BuyerInfoForm({
       </div>
       <button
         type="button"
-        className={`checkout-btn ${!isFormValid && !loading ? 'cursor-not-allowed opacity-50' : ''}`}
+        className={`
+          checkout-btn
+          ${!isFormValid && !loading ? 'cursor-not-allowed opacity-50' : ''}
+        `}
         onClick={onSubmitAction}
         disabled={loading}
         title={

@@ -21,13 +21,13 @@ export function InfoDialog({
   return (
     <div
       className="
-      fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4
-    "
+        fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4
+      "
     >
       <div
         className="
-        w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-xl
-      "
+          w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-xl
+        "
       >
         <div className="mb-4 flex items-center space-x-2 text-blue-400">
           <AlertCircle className="size-6" />

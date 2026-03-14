@@ -215,9 +215,9 @@ export function ProgramContent({
   return (
     <section
       className="
-      rounded-2xl border border-border bg-card p-6
-      md:p-8
-    "
+        rounded-2xl border border-border bg-card p-6
+        md:p-8
+      "
     >
       {isEnrolled && !isSubscriptionActive && (
         <Alert
@@ -257,17 +257,17 @@ export function ProgramContent({
         <div className="flex items-center gap-3">
           <div
             className="
-            flex size-10 items-center justify-center rounded-xl bg-primary/10
-          "
+              flex size-10 items-center justify-center rounded-xl bg-primary/10
+            "
           >
             <BookOpen className="size-5 text-primary" />
           </div>
           <div>
             <h2
               className="
-              font-display text-xl font-bold text-foreground
-              md:text-2xl
-            "
+                font-display text-xl font-bold text-foreground
+                md:text-2xl
+              "
             >
               Cursos del programa
             </h2>
@@ -280,10 +280,10 @@ export function ProgramContent({
         </div>
         <div
           className="
-          inline-flex items-center rounded-full border border-primary/30 px-2.5
-          py-0.5 text-xs font-semibold text-primary transition-colors
-          focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none
-        "
+            inline-flex items-center rounded-full border border-primary/30
+            px-2.5 py-0.5 text-xs font-semibold text-primary transition-colors
+            focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none
+          "
         >
           {courses.length} cursos
         </div>
@@ -337,20 +337,20 @@ export function ProgramContent({
                     ${
                       isCompleted
                         ? `
-                        border-emerald-500/20 bg-emerald-500/5
-                        hover:border-emerald-500/40
-                      `
+                          border-emerald-500/20 bg-emerald-500/5
+                          hover:border-emerald-500/40
+                        `
                         : `
-                        border-border bg-[#01152d80]
-                        hover:border-primary/50
-                      `
+                          border-border bg-[#01152d80]
+                          hover:border-primary/50
+                        `
                     }
                   `}
                 >
                   <div
                     className="
-                    relative h-16 w-24 shrink-0 overflow-hidden rounded-lg
-                  "
+                      relative h-16 w-24 shrink-0 overflow-hidden rounded-lg
+                    "
                   >
                     <Image
                       src={coverImageUrl}
@@ -361,19 +361,19 @@ export function ProgramContent({
                     />
                     <div
                       className="
-                      absolute inset-0 flex items-center justify-center
-                      bg-black/30 opacity-0 transition-opacity
-                      group-hover:opacity-100
-                    "
+                        absolute inset-0 flex items-center justify-center
+                        bg-black/30 opacity-0 transition-opacity
+                        group-hover:opacity-100
+                      "
                     >
                       <Play className="size-6 text-white" />
                     </div>
                     {isEnrolled && (isLoadingProgress || isEnrolledCourse) && (
                       <div
                         className="
-                        absolute top-1 right-1 flex size-5 items-center
-                        justify-center rounded-full bg-emerald-500
-                      "
+                          absolute top-1 right-1 flex size-5 items-center
+                          justify-center rounded-full bg-emerald-500
+                        "
                       >
                         {isLoadingProgress ? (
                           <Icons.spinner className="size-3 text-white" />
@@ -395,38 +395,39 @@ export function ProgramContent({
                           {isLoadingProgress ? (
                             <div
                               className="
-                              inline-flex items-center gap-1 rounded-full border
-                              border-border/50 bg-[#0b2a4a] px-2.5 py-0.5
-                              text-xs font-semibold text-muted-foreground
-                            "
+                                inline-flex items-center gap-1 rounded-full
+                                border border-border/50 bg-[#0b2a4a] px-2.5
+                                py-0.5 text-xs font-semibold
+                                text-muted-foreground
+                              "
                             >
                               <Icons.spinner className="size-3" /> Cargando
                             </div>
                           ) : isCompleted ? (
                             <div
                               className="
-                              inline-flex items-center rounded-full border
-                              border-transparent bg-emerald-500/20 px-2.5 py-0.5
-                              text-xs font-semibold text-emerald-400
-                              transition-colors
-                              hover:bg-primary/80
-                              focus:ring-2 focus:ring-ring focus:ring-offset-2
-                              focus:outline-none
-                            "
+                                inline-flex items-center rounded-full border
+                                border-transparent bg-emerald-500/20 px-2.5
+                                py-0.5 text-xs font-semibold text-emerald-400
+                                transition-colors
+                                hover:bg-primary/80
+                                focus:ring-2 focus:ring-ring focus:ring-offset-2
+                                focus:outline-none
+                              "
                             >
                               Completado
                             </div>
                           ) : isEnrolledCourse ? (
                             <div
                               className="
-                              inline-flex items-center rounded-full border
-                              border-border/50 bg-[#0b2a4a] px-2.5 py-0.5
-                              text-xs font-semibold text-muted-foreground
-                              transition-colors
-                              hover:border-primary/50 hover:text-primary
-                              focus:ring-2 focus:ring-ring focus:ring-offset-2
-                              focus:outline-none
-                            "
+                                inline-flex items-center rounded-full border
+                                border-border/50 bg-[#0b2a4a] px-2.5 py-0.5
+                                text-xs font-semibold text-muted-foreground
+                                transition-colors
+                                hover:border-primary/50 hover:text-primary
+                                focus:ring-2 focus:ring-ring focus:ring-offset-2
+                                focus:outline-none
+                              "
                             >
                               <Clock className="mr-1 size-3" /> En progreso
                             </div>
@@ -436,9 +437,9 @@ export function ProgramContent({
                     </div>
                     <h3
                       className="
-                      truncate font-semibold text-foreground transition-colors
-                      group-hover:text-primary
-                    "
+                        truncate font-semibold text-foreground transition-colors
+                        group-hover:text-primary
+                      "
                     >
                       {course.title}
                     </h3>
@@ -448,10 +449,10 @@ export function ProgramContent({
                   </div>
                   <div
                     className="
-                    hidden shrink-0 items-center gap-4 text-sm
-                    text-muted-foreground
-                    sm:flex
-                  "
+                      hidden shrink-0 items-center gap-4 text-sm
+                      text-muted-foreground
+                      sm:flex
+                    "
                   >
                     <div className="flex items-center gap-1">
                       <Clock className="size-4" />
@@ -463,9 +464,9 @@ export function ProgramContent({
                     </div>
                     <ChevronRight
                       className="
-                      size-5 text-muted-foreground transition-colors
-                      group-hover:text-primary
-                    "
+                        size-5 text-muted-foreground transition-colors
+                        group-hover:text-primary
+                      "
                     />
                   </div>
                 </a>
@@ -585,25 +586,25 @@ export function ProgramCertificationPanel({
   return (
     <section
       className="
-      rounded-2xl border border-border bg-card p-6
-      md:p-8
-    "
+        rounded-2xl border border-border bg-card p-6
+        md:p-8
+      "
     >
       <div className="mb-6 flex items-center gap-3">
         <div
           className="
-          flex size-12 items-center justify-center rounded-xl bg-gradient-to-br
-          from-amber-400 to-orange-500
-        "
+            flex size-12 items-center justify-center rounded-xl
+            bg-gradient-to-br from-amber-400 to-orange-500
+          "
         >
           <Award className="size-6 text-white" />
         </div>
         <div>
           <h3
             className="
-            font-display text-xl font-bold text-foreground
-            md:text-2xl
-          "
+              font-display text-xl font-bold text-foreground
+              md:text-2xl
+            "
           >
             Certificación Del Programa
           </h3>
@@ -650,9 +651,9 @@ export function ProgramCertificationPanel({
             ${
               isProgramCertificateUnlocked
                 ? `
-                border-green-500/30 bg-green-500/20 text-green-200
-                hover:bg-green-500/30
-              `
+                  border-green-500/30 bg-green-500/20 text-green-200
+                  hover:bg-green-500/30
+                `
                 : 'cursor-not-allowed border-white/10 bg-white/5 text-white/60'
             }
           `}
@@ -671,14 +672,14 @@ export function ProgramCertificationPanel({
       {showProgramCertModal && (
         <div
           className="
-          fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4
-        "
+            fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4
+          "
         >
           <div
             className="
-            relative w-full max-w-lg rounded-2xl border border-border bg-card
-            p-6 shadow-2xl
-          "
+              relative w-full max-w-lg rounded-2xl border border-border bg-card
+              p-6 shadow-2xl
+            "
           >
             <button
               className="
@@ -694,9 +695,9 @@ export function ProgramCertificationPanel({
             <div className="flex flex-col items-center gap-4 text-center">
               <div
                 className="
-                flex size-14 items-center justify-center rounded-full
-                bg-gradient-to-br from-amber-400 to-orange-500
-              "
+                  flex size-14 items-center justify-center rounded-full
+                  bg-gradient-to-br from-amber-400 to-orange-500
+                "
               >
                 <Award className="size-7 text-white" />
               </div>
@@ -710,9 +711,9 @@ export function ProgramCertificationPanel({
               <Link href={`/estudiantes/certificados/programa/${program.id}`}>
                 <Button
                   className="
-                  w-full max-w-sm bg-amber-500 font-semibold text-white
-                  hover:bg-amber-600
-                "
+                    w-full max-w-sm bg-amber-500 font-semibold text-white
+                    hover:bg-amber-600
+                  "
                 >
                   Ver tu certificado del programa
                 </Button>

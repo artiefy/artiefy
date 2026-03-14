@@ -83,7 +83,9 @@ const StudentPagination = ({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="div-pagination flex flex-col items-center justify-between space-y-4 py-8">
+    <div className="
+      div-pagination flex flex-col items-center justify-between space-y-4 py-8
+    ">
       <p className="text-sm text-gray-600">
         Mostrando {startItem}-{endItem} de {totalCourses} cursos
       </p>
@@ -92,9 +94,13 @@ const StudentPagination = ({
           <PaginationItem>
             <PaginationPrevious
               onClick={() => handlePageChange(currentPage - 1)}
-              className={`cursor-pointer active:scale-95 ${
+              className={`
+                cursor-pointer
+                active:scale-95
+                ${
                 currentPage === 1 ? 'pointer-events-none opacity-50' : ''
-              }`}
+              }
+              `}
               aria-disabled={currentPage === 1}
             />
           </PaginationItem>
@@ -116,7 +122,10 @@ const StudentPagination = ({
                   <PaginationLink
                     onClick={() => handlePageChange(pageNumber)}
                     isActive={currentPage === pageNumber}
-                    className="cursor-pointer active:scale-95"
+                    className="
+                      cursor-pointer
+                      active:scale-95
+                    "
                   >
                     {pageNumber}
                   </PaginationLink>
@@ -134,11 +143,15 @@ const StudentPagination = ({
           <PaginationItem>
             <PaginationNext
               onClick={() => handlePageChange(currentPage + 1)}
-              className={`cursor-pointer active:scale-95 ${
+              className={`
+                cursor-pointer
+                active:scale-95
+                ${
                 currentPage === totalPages
                   ? 'pointer-events-none opacity-50'
                   : ''
-              }`}
+              }
+              `}
               aria-disabled={currentPage === totalPages}
             />
           </PaginationItem>

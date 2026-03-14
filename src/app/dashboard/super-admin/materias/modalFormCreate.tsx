@@ -154,7 +154,10 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
             placeholder="Título"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className={`mb-4 w-full rounded border p-2 text-white outline-none ${errors.title ? 'border-red-500' : 'border-primary'}`}
+            className={`
+              mb-4 w-full rounded border p-2 text-white outline-none
+              ${errors.title ? 'border-red-500' : 'border-primary'}
+            `}
           />
           {errors.title && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -169,7 +172,10 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
             placeholder="Descripción"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${errors.description ? 'border-red-500' : 'border-primary'}`}
+            className={`
+              mb-3 h-auto w-full rounded border p-2 text-white outline-none
+              ${errors.description ? 'border-red-500' : 'border-primary'}
+            `}
           />
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -178,13 +184,19 @@ const ModalFormMateria: React.FC<ModalFormMateriaProps> = ({
         <DialogFooter className="mt-4 grid grid-cols-2 gap-4">
           <Button
             onClick={onClose}
-            className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
+            className="
+              mr-2 w-full border-transparent bg-gray-600 p-3 text-white
+              hover:bg-gray-700
+            "
           >
             Cancelar
           </Button>
           <Button
             onClick={editingMateria ? handleUpdate : handleCreate}
-            className="bg-green-400 text-white hover:bg-green-400/70"
+            className="
+              bg-green-400 text-white
+              hover:bg-green-400/70
+            "
           >
             {editingMateria ? 'Actualizar' : 'Crear'}
           </Button>

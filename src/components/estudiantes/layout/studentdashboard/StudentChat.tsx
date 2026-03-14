@@ -631,15 +631,15 @@ export const ChatMessages: React.FC<ChatProps> = ({
                               ${
                                 isWhatsAppButton
                                   ? `
-                                  border-2 border-[#128C7E] bg-white
-                                  text-[#128C7E]
-                                  hover:bg-[#f0fdf4]
-                                `
+                                    border-2 border-[#128C7E] bg-white
+                                    text-[#128C7E]
+                                    hover:bg-[#f0fdf4]
+                                  `
                                   : `
-                                  border border-[#00bdd8] bg-[#eaf7fa]
-                                  text-[#00a5c0]
-                                  hover:bg-[#00bdd8] hover:text-white
-                                `
+                                    border border-[#00bdd8] bg-[#eaf7fa]
+                                    text-[#00a5c0]
+                                    hover:bg-[#00bdd8] hover:text-white
+                                  `
                               }
                             `}
                             style={

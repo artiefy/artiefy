@@ -339,12 +339,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   // Renderizar la página
   return (
     <>
-      <div className="bg-background container mx-auto mt-2 h-auto w-full rounded-lg">
+      <div className="
+        bg-background container mx-auto mt-2 h-auto w-full rounded-lg
+      ">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href="/dashboard/super-admin"
               >
                 Cursos
@@ -353,7 +358,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href="/dashboard/super-admin/cursos"
               >
                 Lista de cursos
@@ -362,7 +370,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
               >
                 Detalles curso
@@ -372,7 +383,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 href={``}
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
               >
                 Detalles de la clase: {lessons.title}
               </BreadcrumbLink>
@@ -380,22 +394,43 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="group relative h-auto w-full">
-          <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+          <div className="
+            animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
+            transition duration-500
+            group-hover:opacity-100
+          " />
           <Card
-            className={`relative mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+            className={`
+              relative mt-5 border-transparent bg-black p-5
+              ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+            `}
             style={{
               backgroundColor: color,
               color: getContrastYIQ(color),
             }}
           >
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className={`text-primary text-xl sm:text-2xl md:text-3xl font-bold`}>
+            <CardHeader className="
+              p-4
+              sm:p-6
+            ">
+              <CardTitle className={`
+                text-primary text-xl
+                sm:text-2xl
+                md:text-3xl
+                font-bold
+              `}>
                 Clase: {lessons.title}
               </CardTitle>
               {/* Add color selection buttons */}
               <div className="flex flex-col gap-3 mt-4">
                 <Label
-                  className={`text-sm sm:text-base font-semibold ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                  className={`
+                    text-sm
+                    sm:text-base
+                    font-semibold
+                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 >
                   🎨 Seleccione el color deseado
                 </Label>
@@ -404,8 +439,14 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <Button
                       key={predefinedColor}
                       style={{ backgroundColor: predefinedColor }}
-                      className={`size-10 sm:size-12 rounded-lg border-2 transition-all duration-300 hover:scale-110 ${color === predefinedColor ? 'ring-2 ring-offset-2 ring-primary' : ''
-                        }`}
+                      className={`
+                        size-10
+                        sm:size-12
+                        rounded-lg border-2 transition-all duration-300
+                        hover:scale-110
+                        ${color === predefinedColor ? 'ring-2 ring-offset-2 ring-primary' : ''
+                        }
+                      `}
                       onClick={() =>
                         handlePredefinedColorChange(predefinedColor)
                       }
@@ -415,9 +456,18 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 </div>
               </div>
             </CardHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+            <div className="
+              grid grid-cols-1
+              md:grid-cols-2
+              gap-4
+              md:gap-6
+              lg:gap-8
+            ">
               {/* Columna izquierda - Imagen */}
-              <div className="relative flex w-full items-center justify-center order-2 md:order-1">
+              <div className="
+                relative flex w-full items-center justify-center order-2
+                md:order-1
+              ">
                 <Image
                   src={
                     lessons.coverImageKey
@@ -427,17 +477,25 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                   alt={lessons.title}
                   width={300}
                   height={300}
-                  className="mx-auto rounded-lg object-contain w-full max-w-sm h-auto"
+                  className="
+                    mx-auto rounded-lg object-contain w-full max-w-sm h-auto
+                  "
                   priority
                   quality={75}
                 />
               </div>
               {/* Columna derecha - Video y botón */}
-              <div className="relative w-full order-1 md:order-2 flex flex-col gap-4">
+              <div className="
+                relative w-full order-1
+                md:order-2
+                flex flex-col gap-4
+              ">
                 <div>
                   {lessons.coverVideoKey ? (
                     <video
-                      className="w-full h-auto rounded-lg object-cover aspect-video"
+                      className="
+                        w-full h-auto rounded-lg object-cover aspect-video
+                      "
                       controls
                       aria-label={`Video de ${lessons.title}`}
                     >
@@ -452,7 +510,9 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                       <h4 className="hidden">No hay videos por el momento!.</h4>
                       <Image
                         src={'/NoHayVideos.jpg'}
-                        className="mx-auto rounded-lg object-cover w-full h-auto"
+                        className="
+                          mx-auto rounded-lg object-cover w-full h-auto
+                        "
                         alt="No hay imagen o video disponible actualmente"
                         width={400}
                         height={300}
@@ -465,19 +525,53 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 <a
                   href={`/api/super-admin/transcriptionMasive?lessonId=${lessons.id}`}
                   download
-                  className="inline-block bg-primary hover:bg-[#00A5C0] text-black text-sm sm:text-base font-medium px-4 sm:px-6 py-2 sm:py-3 rounded-lg transition duration-300 text-center"
+                  className="
+                    inline-block bg-primary
+                    hover:bg-[#00A5C0]
+                    text-black text-sm
+                    sm:text-base
+                    font-medium px-4
+                    sm:px-6
+                    py-2
+                    sm:py-3
+                    rounded-lg transition duration-300 text-center
+                  "
                 >
                   📄 Descargar transcripción (.txt)
                 </a>
               </div>
             </div>
             {/* Zona de los files */}
-            <div className="mt-6 sm:mt-8">
+            <div className="
+              mt-6
+              sm:mt-8
+            ">
               <ViewFiles lessonId={lessons.id} selectedColor={color} />
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center sm:justify-evenly px-2 sm:px-3 py-4 sm:py-6 mt-4">
+            <div className="
+              flex flex-col
+              sm:flex-row
+              gap-3 justify-center
+              sm:justify-evenly
+              px-2
+              sm:px-3
+              py-4
+              sm:py-6
+              mt-4
+            ">
               <Button
-                className={`border-transparent bg-green-400 text-white hover:bg-green-500 w-full sm:w-auto text-sm sm:text-base px-3 sm:px-6 py-2 sm:py-2.5`}
+                className={`
+                  border-transparent bg-green-400 text-white
+                  hover:bg-green-500
+                  w-full
+                  sm:w-auto
+                  text-sm
+                  sm:text-base
+                  px-3
+                  sm:px-6
+                  py-2
+                  sm:py-2.5
+                `}
               >
                 <Link href={`./${lessons.id}/verClase/${lessons.id}`} className="w-full">
                   👁️ Ver clase
@@ -485,14 +579,36 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               </Button>
               <Button
                 onClick={() => setIsEditModalOpen(true)}
-                className="border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600 w-full sm:w-auto text-sm sm:text-base px-3 sm:px-6 py-2 sm:py-2.5"
+                className="
+                  border-yellow-500 bg-yellow-500 text-white
+                  hover:bg-yellow-600
+                  w-full
+                  sm:w-auto
+                  text-sm
+                  sm:text-base
+                  px-3
+                  sm:px-6
+                  py-2
+                  sm:py-2.5
+                "
               >
                 ✏️ Editar clase
               </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600 w-full sm:w-auto text-sm sm:text-base px-3 sm:px-6 py-2 sm:py-2.5">
+                  <Button className="
+                    border-red-600 bg-red-600 text-white
+                    hover:border-red-600 hover:bg-white hover:text-red-600
+                    w-full
+                    sm:w-auto
+                    text-sm
+                    sm:text-base
+                    px-3
+                    sm:px-6
+                    py-2
+                    sm:py-2.5
+                  ">
                     🗑️ Eliminar
                   </Button>
                 </AlertDialogTrigger>
@@ -510,7 +626,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => handleDelete(lessons.id.toString())}
-                      className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                      className="
+                        border-red-600 bg-red-600 text-white
+                        hover:border-red-700 hover:bg-transparent
+                        hover:text-red-700
+                      "
                     >
                       Eliminar
                     </AlertDialogAction>
@@ -518,54 +638,105 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
-            <div className="mt-6 sm:mt-8">
+            <div className="
+              mt-6
+              sm:mt-8
+            ">
               <div
-                className={`pb-4 sm:pb-6 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                className={`
+                  pb-4
+                  sm:pb-6
+                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                `}
               >
-                <h2 className="text-xl sm:text-2xl font-bold mb-6">📋 Información de la clase</h2>
+                <h2 className="
+                  text-xl
+                  sm:text-2xl
+                  font-bold mb-6
+                ">📋 Información de la clase</h2>
 
                 {/* Grid de información principal */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div className="
+                  grid grid-cols-1
+                  md:grid-cols-2
+                  lg:grid-cols-4
+                  gap-6 mb-6
+                ">
                   <div className="space-y-2">
-                    <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                    <h3 className={`
+                      text-xs font-semibold uppercase tracking-wide
+                      md:text-sm
+                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                    `}>
                       📚 Clase
                     </h3>
-                    <h1 className="text-primary text-lg sm:text-xl font-bold">
+                    <h1 className="
+                      text-primary text-lg
+                      sm:text-xl
+                      font-bold
+                    ">
                       {lessons.title}
                     </h1>
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                    <h3 className={`
+                      text-xs font-semibold uppercase tracking-wide
+                      md:text-sm
+                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                    `}>
                       📂 Categoría
                     </h3>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary w-fit hover:bg-black/70 text-xs sm:text-sm"
+                      className="
+                        border-primary bg-background text-primary w-fit
+                        hover:bg-black/70
+                        text-xs
+                        sm:text-sm
+                      "
                     >
                       {lessons.course?.categoryName ?? lessons.course?.categoryId ?? 'N/A'}
                     </Badge>
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                    <h3 className={`
+                      text-xs font-semibold uppercase tracking-wide
+                      md:text-sm
+                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                    `}>
                       👨‍🏫 Educador
                     </h3>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary w-fit hover:bg-black/70 text-xs sm:text-sm"
+                      className="
+                        border-primary bg-background text-primary w-fit
+                        hover:bg-black/70
+                        text-xs
+                        sm:text-sm
+                      "
                     >
                       {lessons.course?.instructorName ?? lessons.course?.instructor ?? 'N/A'}
                     </Badge>
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                    <h3 className={`
+                      text-xs font-semibold uppercase tracking-wide
+                      md:text-sm
+                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                    `}>
                       🎓 Modalidad
                     </h3>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary w-fit hover:bg-black/70 text-xs sm:text-sm"
+                      className="
+                        border-primary bg-background text-primary w-fit
+                        hover:bg-black/70
+                        text-xs
+                        sm:text-sm
+                      "
                     >
                       {lessons.course?.modalidadName ?? lessons.course?.modalidadId ?? 'N/A'}
                     </Badge>
@@ -574,7 +745,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
                 {/* Descripción */}
                 <div className="space-y-3">
-                  <h3 className={`text-xs font-semibold uppercase tracking-wide md:text-sm ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}`}>
+                  <h3 className={`
+                    text-xs font-semibold uppercase tracking-wide
+                    md:text-sm
+                    ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                  `}>
                     📝 Descripción
                   </h3>
                   <p className={`text-justify text-sm sm:text-base leading-relaxed ${color === '#FFFFFF' ? 'text-black/90' : 'text-white/90'}`}>
@@ -584,10 +759,27 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               </div>
             </div>
 
-            <div className="flex w-full justify-center mt-6 sm:mt-8 px-2">
+            <div className="
+              flex w-full justify-center mt-6
+              sm:mt-8
+              px-2
+            ">
               <Link
                 href={`./${lessons.id}/actividades?lessonId=${lessons.id}`}
-                className="cursor-pointer justify-center rounded-lg border-transparent bg-green-400 px-4 sm:px-6 py-2 sm:py-3 text-white hover:bg-green-500 transition duration-300 text-sm sm:text-base w-full sm:w-auto text-center"
+                className="
+                  cursor-pointer justify-center rounded-lg border-transparent
+                  bg-green-400 px-4
+                  sm:px-6
+                  py-2
+                  sm:py-3
+                  text-white
+                  hover:bg-green-500
+                  transition duration-300 text-sm
+                  sm:text-base
+                  w-full
+                  sm:w-auto
+                  text-center
+                "
               >
                 ➕ Crear actividad
               </Link>

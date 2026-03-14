@@ -98,7 +98,9 @@ const MateriasPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="mb-6 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700">
+      <div className="
+        mb-6 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700
+      ">
         <p>Error: {error}</p>
       </div>
     );
@@ -106,11 +108,17 @@ const MateriasPage: React.FC = () => {
 
   return (
     <>
-      <header className="bg-secondary flex items-center justify-between rounded-lg p-6 text-3xl font-bold text-[#01142B] shadow-md">
+      <header className="
+        bg-secondary flex items-center justify-between rounded-lg p-6 text-3xl
+        font-bold text-[#01142B] shadow-md
+      ">
         <h1>Materias</h1>
       </header>
       <div className="p-6">
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="
+          mb-6 flex flex-col gap-4
+          sm:flex-row sm:items-center sm:justify-between
+        ">
           <input
             type="text"
             placeholder="Buscar materias..."
@@ -119,11 +127,23 @@ const MateriasPage: React.FC = () => {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            className="focus:border-primary w-full rounded-md border border-gray-300 bg-gray-700 p-2 text-white focus:outline-none sm:w-64"
+            className="
+              focus:border-primary
+              w-full rounded-md border border-gray-300 bg-gray-700 p-2
+              text-white
+              focus:outline-none
+              sm:w-64
+            "
           />
           <button
             onClick={() => handleOpenModal()}
-            className="bg-secondary hover:bg-primary flex items-center rounded-md px-4 py-2 font-semibold text-white shadow-md transition hover:scale-105"
+            className="
+              bg-secondary
+              hover:bg-primary
+              flex items-center rounded-md px-4 py-2 font-semibold text-white
+              shadow-md transition
+              hover:scale-105
+            "
           >
             Crear Materia
           </button>
@@ -133,14 +153,20 @@ const MateriasPage: React.FC = () => {
           {currentMaterias.map((materia) => (
             <li
               key={materia.id}
-              className="border-primary rounded-lg border bg-gray-800 p-4 shadow-md"
+              className="
+                border-primary rounded-lg border bg-gray-800 p-4 shadow-md
+              "
             >
               <h2 className="text-xl font-bold">{materia.title}</h2>
               <p>{materia.description}</p>
               <div className="mt-4 flex space-x-2">
                 <button
                   onClick={() => handleOpenModal(materia)}
-                  className="flex items-center rounded-md bg-blue-500 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-blue-600"
+                  className="
+                    flex items-center rounded-md bg-blue-500 px-2 py-1 text-xs
+                    font-medium shadow-md transition duration-300
+                    hover:bg-blue-600
+                  "
                 >
                   Editar
                 </button>
@@ -182,7 +208,11 @@ const MateriasPage: React.FC = () => {
                       );
                     }
                   }}
-                  className="flex items-center rounded-md bg-red-700 px-2 py-1 text-xs font-medium shadow-md transition duration-300 hover:bg-red-800"
+                  className="
+                    flex items-center rounded-md bg-red-700 px-2 py-1 text-xs
+                    font-medium shadow-md transition duration-300
+                    hover:bg-red-800
+                  "
                 >
                   Eliminar
                 </button>
@@ -196,7 +226,10 @@ const MateriasPage: React.FC = () => {
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className="rounded-md bg-gray-700 px-3 py-1 text-white transition disabled:opacity-50"
+              className="
+                rounded-md bg-gray-700 px-3 py-1 text-white transition
+                disabled:opacity-50
+              "
             >
               ←
             </button>
@@ -204,11 +237,14 @@ const MateriasPage: React.FC = () => {
               <button
                 key={pageNum}
                 onClick={() => handlePageChange(pageNum)}
-                className={`rounded-md px-3 py-1 ${
+                className={`
+                  rounded-md px-3 py-1
+                  ${
                   currentPage === pageNum
                     ? 'bg-primary text-white'
                     : 'bg-gray-700 text-white'
-                }`}
+                }
+                `}
               >
                 {pageNum}
               </button>
@@ -216,7 +252,10 @@ const MateriasPage: React.FC = () => {
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="rounded-md bg-gray-700 px-3 py-1 text-white transition disabled:opacity-50"
+              className="
+                rounded-md bg-gray-700 px-3 py-1 text-white transition
+                disabled:opacity-50
+              "
             >
               →
             </button>
@@ -224,11 +263,18 @@ const MateriasPage: React.FC = () => {
         )}
 
         {isModalOpen && (
-          <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center">
-            <div className="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
+          <div className="
+            bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center
+          ">
+            <div className="
+              relative w-full max-w-lg rounded-lg bg-white p-6 shadow-lg
+            ">
               <button
                 onClick={handleCloseModal}
-                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                className="
+                  absolute top-2 right-2 text-gray-500
+                  hover:text-gray-700
+                "
               >
                 &times;
               </button>

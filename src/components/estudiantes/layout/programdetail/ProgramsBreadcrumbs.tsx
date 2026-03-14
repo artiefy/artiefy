@@ -17,7 +17,10 @@ interface ProgramsBreadcrumbsProps {
 
 export function ProgramsBreadcrumbs({ title }: ProgramsBreadcrumbsProps) {
   return (
-    <Breadcrumb className="w-full overflow-x-auto pb-2 sm:mt-0">
+    <Breadcrumb className="
+      w-full overflow-x-auto pb-2
+      sm:mt-0
+    ">
       <BreadcrumbList className="flex w-full flex-nowrap items-center gap-1 whitespace-nowrap">
         <BreadcrumbItem>
           <BreadcrumbLink href="/">
@@ -34,7 +37,11 @@ export function ProgramsBreadcrumbs({ title }: ProgramsBreadcrumbsProps) {
         <BreadcrumbItem>
           <BreadcrumbPage>
             <span
-              className="sm:truncate-none inline-block max-w-none truncate align-middle sm:max-w-none"
+              className="
+                sm:truncate-none
+                inline-block max-w-none truncate align-middle
+                sm:max-w-none
+              "
               title={title}
             >
               {title}

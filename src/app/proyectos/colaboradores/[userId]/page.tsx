@@ -27,9 +27,9 @@ export default async function ColaboradorDetallePage({
       <Header />
       <main
         className="
-        min-h-screen bg-background px-4 pt-10 pb-20
-        sm:px-6
-      "
+          min-h-screen bg-background px-4 pt-10 pb-20
+          sm:px-6
+        "
       >
         <div className="mx-auto max-w-5xl">
           <Link
@@ -82,9 +82,9 @@ export default async function ColaboradorDetallePage({
                   <div className="flex gap-4">
                     <div
                       className="
-                      size-20 shrink-0 overflow-hidden rounded-xl
-                      sm:size-24
-                    "
+                        size-20 shrink-0 overflow-hidden rounded-xl
+                        sm:size-24
+                      "
                     >
                       {project.coverImageUrl ? (
                         <Image
@@ -97,9 +97,9 @@ export default async function ColaboradorDetallePage({
                       ) : (
                         <div
                           className="
-                          flex size-full items-center justify-center
-                          bg-[#1A2333] text-xs text-muted-foreground
-                        "
+                            flex size-full items-center justify-center
+                            bg-[#1A2333] text-xs text-muted-foreground
+                          "
                         >
                           Sin portada
                         </div>
@@ -113,8 +113,8 @@ export default async function ColaboradorDetallePage({
                           </h2>
                           <p
                             className="
-                            line-clamp-2 text-sm text-muted-foreground
-                          "
+                              line-clamp-2 text-sm text-muted-foreground
+                            "
                           >
                             {project.description}
                           </p>
@@ -152,9 +152,9 @@ export default async function ColaboradorDetallePage({
             ) : (
               <div
                 className="
-                rounded-2xl border border-border/50 bg-card/60 p-8 text-center
-                text-sm text-muted-foreground
-              "
+                  rounded-2xl border border-border/50 bg-card/60 p-8 text-center
+                  text-sm text-muted-foreground
+                "
               >
                 Este colaborador todavía no tiene proyectos públicos.
               </div>

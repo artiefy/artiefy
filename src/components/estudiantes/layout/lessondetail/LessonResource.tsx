@@ -294,9 +294,9 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
   return (
     <div
       className="
-      mx-auto my-4 w-full
-      md:mx-0 md:w-[70%]
-    "
+        mx-auto my-4 w-full
+        md:mx-0 md:w-[70%]
+      "
     >
       <div>
         {loading ? (
@@ -389,9 +389,9 @@ const LessonResource = ({ lessonId, onCountChange }: LessonResourceProps) => {
           >
             <div
               className="
-              mb-4 flex size-16 items-center justify-center rounded-full
-              bg-muted/50
-            "
+                mb-4 flex size-16 items-center justify-center rounded-full
+                bg-muted/50
+              "
             >
               <FaFilePdf className="size-8 text-black" />
             </div>

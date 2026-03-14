@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import Image from 'next/image';
+
 import { FilePlus2, FileVideo, Image as ImageIcon } from 'lucide-react';
 import { MdClose } from 'react-icons/md';
 
@@ -28,31 +29,35 @@ const FileUpload: React.FC<FileUploadProps> = ({
   onFileChange,
   tipo,
   file,
+  files,
 }) => {
-  const [files, setFiles] = useState<File[]>(() => (file ? [file] : [])); // Cambiar el estado de files a un array de archivos
-  const [fileNames, setFileNames] = useState<string[]>(() =>
-    file ? [file.name] : []
-  ); // Cambiar el estado de fileNames a un array de strings
-  const [fileSizes, setFileSizes] = useState<number[]>(() =>
-    file ? [file.size] : []
-  ); // Cambiar el estado de fileSizes a un array de números
+  const externalFiles = Array.isArray(files)
+    ? files
+    : file instanceof File
+      ? [file]
+      : undefined;
+  const [internalFiles, setInternalFiles] = useState<File[]>(
+    () => externalFiles ?? []
+  );
+  const isControlled = externalFiles !== undefined;
+  const currentFiles = externalFiles ?? internalFiles;
+  const fileNames = currentFiles.map((currentFile) => currentFile.name);
+  const fileSizes = currentFiles.map((currentFile) => currentFile.size);
   const [isDragging, setIsDragging] = useState(false); // Cambiar el estado de isDragging a un booleano
   const [errors, setErrors] = useState(''); // Cambiar el estado de errors a un string
 
-  // El estado inicial se calcula desde la prop `file` para evitar setState sincronas en useEffect
-
-  // Sincronizar estado local cuando cambia la prop file
-  useEffect(() => {
-    if (file) {
-      setFiles([file]);
-      setFileNames([file.name]);
-      setFileSizes([file.size]);
-    } else {
-      setFiles([]);
-      setFileNames([]);
-      setFileSizes([]);
+  const commitFilesChange = (nextFiles: File[]) => {
+    if (!isControlled) {
+      setInternalFiles(nextFiles);
     }
-  }, [file]);
+
+    if (multiple) {
+      onFileChange(nextFiles);
+      return;
+    }
+
+    onFileChange(nextFiles[0] ?? null);
+  };
 
   // Función para manejar el cambio de archivo en el input y validar el archivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -69,7 +74,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
     if (
       multiple &&
-      selectedFiles.length + files.length > 5 &&
+      selectedFiles.length + currentFiles.length > 5 &&
       type === 'file'
     ) {
       setErrors('No puedes subir más de 5 archivos.');
@@ -90,20 +95,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
 
     // Calcular el nuevo array ANTES de actualizar el estado
-    const newFiles = multiple ? [...files, ...validFiles] : validFiles;
-    const newFileNames = multiple
-      ? [...fileNames, ...validFiles.map((file) => file.name)]
-      : validFiles.map((file) => file.name);
-    const newFileSizes = multiple
-      ? [...fileSizes, ...validFiles.map((file) => file.size)]
-      : validFiles.map((file) => file.size);
-
-    setFiles(newFiles);
-    setFileNames(newFileNames);
-    setFileSizes(newFileSizes);
+    const newFiles = multiple ? [...currentFiles, ...validFiles] : validFiles;
     setErrors('');
-    // Pasar el nuevo array, no el estado anterior
-    onFileChange(multiple ? newFiles : newFiles[0]);
+    commitFilesChange(newFiles);
   };
 
   // Función para manejar el arrastre de archivos
@@ -134,7 +128,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
     if (
       multiple &&
-      selectedFiles.length + files.length > 5 &&
+      selectedFiles.length + currentFiles.length > 5 &&
       type === 'file'
     ) {
       setErrors('No puedes subir más de 5 archivos.');
@@ -155,35 +149,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
 
     // Calcular el nuevo array ANTES de actualizar el estado
-    const newFiles = multiple ? [...files, ...validFiles] : validFiles;
-    const newFileNames = multiple
-      ? [...fileNames, ...validFiles.map((file) => file.name)]
-      : validFiles.map((file) => file.name);
-    const newFileSizes = multiple
-      ? [...fileSizes, ...validFiles.map((file) => file.size)]
-      : validFiles.map((file) => file.size);
-
-    setFiles(newFiles);
-    setFileNames(newFileNames);
-    setFileSizes(newFileSizes);
+    const newFiles = multiple ? [...currentFiles, ...validFiles] : validFiles;
     setErrors('');
-    // Pasar el nuevo array, no el estado anterior
-    onFileChange(multiple ? newFiles : newFiles[0]);
+    commitFilesChange(newFiles);
   };
 
   // Función para manejar la eliminación de archivos
   const handleRemoveFile = (index: number) => {
     // Calcular el nuevo array ANTES de actualizar el estado
-    const newFiles = files.filter((_, i) => i !== index);
-    const newFileNames = fileNames.filter((_, i) => i !== index);
-    const newFileSizes = fileSizes.filter((_, i) => i !== index);
-
-    setFiles(newFiles);
-    setFileNames(newFileNames);
-    setFileSizes(newFileSizes);
+    const newFiles = currentFiles.filter((_, i) => i !== index);
     setErrors('');
-    // Pasar el nuevo array, no el estado anterior
-    onFileChange(newFiles.length > 0 ? newFiles : null);
+    commitFilesChange(newFiles);
   };
 
   // Retorno la vista del componente
@@ -193,18 +169,22 @@ const FileUpload: React.FC<FileUploadProps> = ({
         {label}
       </label>
       <div
-        className={`mt-2 w-4/5 rounded-lg border-2 border-dashed p-8 ${
-          isDragging
-            ? 'border-blue-500 bg-blue-50'
-            : errors
-              ? 'border-red-500 bg-red-50'
-              : 'border-gray-300 bg-gray-50'
-        } transition-all duration-300 ease-in-out`}
+        className={`
+          mt-2 w-4/5 rounded-lg border-2 border-dashed p-8
+          ${
+            isDragging
+              ? 'border-blue-500 bg-blue-50'
+              : errors
+                ? 'border-red-500 bg-red-50'
+                : 'border-gray-300 bg-gray-50'
+          }
+          transition-all duration-300 ease-in-out
+        `}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        {!files.length ? (
+        {!currentFiles.length ? (
           <div className="text-center">
             <div className="mx-auto size-16 rounded-full bg-primary pt-2">
               {type === 'image' && (
@@ -237,16 +217,23 @@ const FileUpload: React.FC<FileUploadProps> = ({
             />
             <label
               htmlFor={`file-upload-${type}`}
-              className="mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+              className="
+                mt-4 inline-flex cursor-pointer items-center rounded-md border
+                border-transparent bg-primary px-4 py-2 text-sm font-medium
+                text-white shadow-sm
+                hover:opacity-80
+                focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                focus:outline-none
+              "
             >
               Seleccionar {tipo}
             </label>
           </div>
         ) : (
           <>
-            {type === 'image' && multiple && files.length > 0 && (
+            {type === 'image' && multiple && currentFiles.length > 0 && (
               <div className="grid grid-cols-2 gap-4">
-                {files.map((file, index) => (
+                {currentFiles.map((file, index) => (
                   <div
                     key={index}
                     className="relative overflow-hidden rounded-lg bg-gray-100"
@@ -260,7 +247,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     />
                     <button
                       onClick={() => handleRemoveFile(index)}
-                      className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                      className="
+                        absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                        text-white
+                        hover:opacity-70
+                      "
                     >
                       <MdClose className="size-5" />
                     </button>
@@ -280,10 +271,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </div>
             )}
 
-            {type === 'image' && !multiple && files.length === 1 && (
+            {type === 'image' && !multiple && currentFiles.length === 1 && (
               <div className="relative overflow-hidden rounded-lg bg-gray-100">
                 <Image
-                  src={URL.createObjectURL(files[0])}
+                  src={URL.createObjectURL(currentFiles[0])}
                   alt="preview"
                   width={500}
                   height={200}
@@ -291,7 +282,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 />
                 <button
                   onClick={() => handleRemoveFile(0)}
-                  className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                  className="
+                    absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                    text-white
+                    hover:opacity-70
+                  "
                 >
                   <MdClose className="size-5" />
                 </button>
@@ -306,14 +301,24 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </div>
             )}
 
-            {type === 'video' && files.length === 1 && (
+            {type === 'video' && currentFiles.length === 1 && (
               <div className="relative overflow-hidden rounded-lg bg-gray-100">
                 <video className="h-48 w-full object-cover" controls>
-                  <source src={files[0] ? URL.createObjectURL(files[0]) : ''} />
+                  <source
+                    src={
+                      currentFiles[0]
+                        ? URL.createObjectURL(currentFiles[0])
+                        : ''
+                    }
+                  />
                 </video>
                 <button
                   onClick={() => handleRemoveFile(0)}
-                  className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                  className="
+                    absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                    text-white
+                    hover:opacity-70
+                  "
                 >
                   <MdClose className="size-5" />
                 </button>
@@ -329,10 +334,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
             )}
             {type === 'file' && (
               <div className="space-y-2">
-                {files.map((_, index) => (
+                {currentFiles.map((_, index) => (
                   <div
                     key={index}
-                    className="relative flex items-center justify-between rounded-lg bg-gray-100 p-2"
+                    className="
+                      relative flex items-center justify-between rounded-lg
+                      bg-gray-100 p-2
+                    "
                   >
                     <p className="truncate text-sm text-gray-500">
                       {fileNames[index]}
@@ -345,13 +353,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     </p>
                     <button
                       onClick={() => handleRemoveFile(index)}
-                      className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                      className="
+                        absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                        text-white
+                        hover:opacity-70
+                      "
                     >
                       <MdClose className="size-5" />
                     </button>
                   </div>
                 ))}
-                {files.length < 5 && (
+                {currentFiles.length < 5 && (
                   <div className="mt-4 text-center">
                     {' '}
                     <input
@@ -364,7 +376,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     />{' '}
                     <label
                       htmlFor={`additional-file-upload-${type}`}
-                      className="inline-flex cursor-pointer items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                      className="
+                        inline-flex cursor-pointer items-center rounded-md
+                        border border-transparent bg-primary px-4 py-2 text-sm
+                        font-medium text-white shadow-sm
+                        hover:opacity-80
+                        focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                        focus:outline-none
+                      "
                     >
                       {' '}
                       Subir más archivos{' '}

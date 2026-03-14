@@ -230,35 +230,35 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
   return (
     <article
       className="
-      feed-card group relative overflow-hidden rounded-2xl border
-      border-border/50 bg-card/70 p-5 backdrop-blur-sm transition-all
-      duration-300
-      hover:border-primary/40 hover:shadow-[0_0_30px_hsl(185_72%_48%/0.22)]
-    "
+        feed-card group relative overflow-hidden rounded-2xl border
+        border-border/50 bg-card/70 p-5 backdrop-blur-sm transition-all
+        duration-300
+        hover:border-primary/40 hover:shadow-[0_0_30px_hsl(185_72%_48%/0.22)]
+      "
     >
       <div
         className="
-        absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5
-        to-cyan-500/5 opacity-0 transition-opacity duration-500
-        group-hover:opacity-100
-      "
+          absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5
+          to-cyan-500/5 opacity-0 transition-opacity duration-500
+          group-hover:opacity-100
+        "
       />
 
       <div className="relative mb-4 flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           <div
             className="
-            relative flex size-11 items-center justify-center rounded-full
-            bg-gradient-to-br from-primary/25 to-cyan-500/30 font-semibold
-            text-primary
-          "
+              relative flex size-11 items-center justify-center rounded-full
+              bg-gradient-to-br from-primary/25 to-cyan-500/30 font-semibold
+              text-primary
+            "
           >
             {authorInitial}
             <span
               className="
-              absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border
-              border-card bg-emerald-500
-            "
+                absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border
+                border-card bg-emerald-500
+              "
             />
           </div>
           <div>
@@ -274,10 +274,10 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
             <div className="mt-1 flex items-center gap-2">
               <span
                 className="
-                inline-flex items-center gap-1 rounded-full border
-                border-primary/30 bg-primary/15 px-2 py-0.5 text-[10px]
-                font-semibold text-primary
-              "
+                  inline-flex items-center gap-1 rounded-full border
+                  border-primary/30 bg-primary/15 px-2 py-0.5 text-[10px]
+                  font-semibold text-primary
+                "
               >
                 <Sparkles className="size-3" />
                 {item.stage}
@@ -309,8 +309,8 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
       {item.coverImageUrl ? (
         <div
           className="
-          relative mb-4 overflow-hidden rounded-xl border border-border/50
-        "
+            relative mb-4 overflow-hidden rounded-xl border border-border/50
+          "
         >
           <Image
             src={item.coverImageUrl}
@@ -328,9 +328,9 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
       <div className="mb-4 flex flex-wrap gap-2">
         <span
           className="
-          rounded-full border border-blue-500/30 bg-blue-500/15 px-2.5 py-1
-          text-[11px] font-semibold text-blue-300
-        "
+            rounded-full border border-blue-500/30 bg-blue-500/15 px-2.5 py-1
+            text-[11px] font-semibold text-blue-300
+          "
         >
           {item.stage}
         </span>
@@ -346,10 +346,10 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
         {item.needsCollaborators ? (
           <span
             className="
-            inline-flex items-center gap-1 rounded-full border
-            border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-[11px]
-            font-semibold text-emerald-300
-          "
+              inline-flex items-center gap-1 rounded-full border
+              border-emerald-500/30 bg-emerald-500/15 px-2.5 py-1 text-[11px]
+              font-semibold text-emerald-300
+            "
           >
             <Users className="size-3" />
             Busca colaboradores
@@ -359,9 +359,9 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
 
       <div
         className="
-        relative flex items-center justify-between border-t border-border/50
-        pt-2
-      "
+          relative flex items-center justify-between border-t border-border/50
+          pt-2
+        "
       >
         <div className="flex items-center gap-1">
           <button
@@ -374,9 +374,9 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
                 interactions.liked
                   ? 'bg-rose-500/10 text-rose-400'
                   : `
-                  text-muted-foreground
-                  hover:bg-rose-500/10 hover:text-rose-400
-                `
+                    text-muted-foreground
+                    hover:bg-rose-500/10 hover:text-rose-400
+                  `
               }
             `}
           >
@@ -392,9 +392,9 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
                 showComments
                   ? 'bg-primary/10 text-primary'
                   : `
-                  text-muted-foreground
-                  hover:bg-primary/10 hover:text-primary
-                `
+                    text-muted-foreground
+                    hover:bg-primary/10 hover:text-primary
+                  `
               }
             `}
           >
@@ -411,9 +411,9 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
                 interactions.saved
                   ? 'bg-primary/10 text-primary'
                   : `
-                  text-muted-foreground
-                  hover:bg-primary/10 hover:text-primary
-                `
+                    text-muted-foreground
+                    hover:bg-primary/10 hover:text-primary
+                  `
               }
             `}
           >
@@ -423,9 +423,9 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
         </div>
         <button
           className="
-          rounded-xl p-2 text-muted-foreground transition-colors
-          hover:bg-[#1A2333] hover:text-foreground
-        "
+            rounded-xl p-2 text-muted-foreground transition-colors
+            hover:bg-[#1A2333] hover:text-foreground
+          "
         >
           <Share2 className="size-4" />
         </button>
@@ -494,9 +494,9 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
                     ) : (
                       <div
                         className="
-                        flex size-6 items-center justify-center rounded-full
-                        bg-primary/20 text-[10px] font-semibold text-primary
-                      "
+                          flex size-6 items-center justify-center rounded-full
+                          bg-primary/20 text-[10px] font-semibold text-primary
+                        "
                       >
                         {comment.user.name.charAt(0).toUpperCase()}
                       </div>

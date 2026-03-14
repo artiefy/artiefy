@@ -91,14 +91,15 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       {/* Barra superior */}
       <nav
         className="
-        fixed top-0 z-40 w-full border-b border-gray-200 bg-background shadow-sm
-      "
+          fixed top-0 z-40 w-full border-b border-gray-200 bg-background
+          shadow-sm
+        "
       >
         <div
           className="
-          flex justify-between p-3
-          lg:px-5 lg:pl-3
-        "
+            flex justify-between p-3
+            lg:px-5 lg:pl-3
+          "
         >
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -144,10 +145,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   pathname === '/dashboard/super-admin/admin2'
                     ? 'bg-primary text-[#01142B]'
                     : `
-                    text-gray-600
-                    hover:bg-secondary
-                    hover:text-white
-                  `
+                      text-gray-600
+                      hover:bg-secondary hover:text-white
+                    `
                 }
               `}
             >
@@ -161,10 +161,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             <button
               onClick={() => setIsCoursesOpen(!isCoursesOpen)}
               className="
-                flex
-                w-full items-center justify-between rounded-lg p-2 text-gray-600
-                transition-all duration-300 hover:bg-secondary
-                hover:text-white
+                flex w-full items-center justify-between rounded-lg p-2
+                text-gray-600 transition-all duration-300
+                hover:bg-secondary hover:text-white
               "
             >
               <div className="flex items-center space-x-2">
@@ -185,10 +184,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   <Link
                     href="/dashboard/super-admin/cursos"
                     className={`
-                      block
-                      rounded-lg p-2 text-gray-600 transition-all duration-300
-                      hover:bg-secondary
-                      hover:text-white
+                      block rounded-lg p-2 text-gray-600 transition-all
+                      duration-300
+                      hover:bg-secondary hover:text-white
                       ${pathname === '/dashboard/super-admin/cursos' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Todos los Cursos
@@ -198,10 +196,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   <Link
                     href="/dashboard/super-admin/categories"
                     className={`
-                      block
-                      rounded-lg p-2 text-gray-600 transition-all duration-300
-                      hover:bg-secondary
-                      hover:text-white
+                      block rounded-lg p-2 text-gray-600 transition-all
+                      duration-300
+                      hover:bg-secondary hover:text-white
                       ${pathname === '/dashboard/super-admin/categories' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Categorías
@@ -211,10 +208,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   <Link
                     href="/dashboard/super-admin/modalities"
                     className={`
-                      block
-                      rounded-lg p-2 text-gray-600 transition-all duration-300
-                      hover:bg-secondary
-                      hover:text-white
+                      block rounded-lg p-2 text-gray-600 transition-all
+                      duration-300
+                      hover:bg-secondary hover:text-white
                       ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Modalidades
@@ -224,10 +220,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   <Link
                     href="/dashboard/super-admin/difficulties"
                     className={`
-                      block
-                      rounded-lg p-2 text-gray-600 transition-all duration-300
-                      hover:bg-secondary
-                      hover:text-white
+                      block rounded-lg p-2 text-gray-600 transition-all
+                      duration-300
+                      hover:bg-secondary hover:text-white
                       ${pathname === '/dashboard/super-admin/difficulties' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Niveles
@@ -240,10 +235,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             <button
               onClick={() => setIsProgramsOpen(!isProgramsOpen)}
               className="
-                flex
-                w-full items-center justify-between rounded-lg p-2 text-gray-600
-                transition-all duration-300 hover:bg-secondary
-                hover:text-white
+                flex w-full items-center justify-between rounded-lg p-2
+                text-gray-600 transition-all duration-300
+                hover:bg-secondary hover:text-white
               "
             >
               <div className="flex items-center space-x-2">
@@ -264,10 +258,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   <Link
                     href="/dashboard/super-admin/programs"
                     className={`
-                      block
-                      rounded-lg p-2 text-gray-600 transition-all duration-300
-                      hover:bg-secondary
-                      hover:text-white
+                      block rounded-lg p-2 text-gray-600 transition-all
+                      duration-300
+                      hover:bg-secondary hover:text-white
                       ${pathname === '/dashboard/super-admin/programs' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Todos los programas
@@ -277,10 +270,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                   <Link
                     href="/dashboard/super-admin/modalities"
                     className={`
-                      block
-                      rounded-lg p-2 text-gray-600 transition-all duration-300
-                      hover:bg-secondary
-                      hover:text-white
+                      block rounded-lg p-2 text-gray-600 transition-all
+                      duration-300
+                      hover:bg-secondary hover:text-white
                       ${pathname === '/dashboard/super-admin/modalities' ? 'bg-primary text-[#01142B]' : ''}`}
                   >
                     Materias
@@ -304,10 +296,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                       isActive
                         ? 'bg-primary text-[#01142B]'
                         : `
-                      text-gray-600
-                      hover:bg-secondary
-                      hover:text-white
-                    `
+                          text-gray-600
+                          hover:bg-secondary hover:text-white
+                        `
                     }
                   `}
                 >
@@ -323,9 +314,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       {/* Contenido Principal */}
       <main
         className="
-        p-4 pt-20
-        md:ml-64
-      "
+          p-4 pt-20
+          md:ml-64
+        "
       >
         {children}
       </main>

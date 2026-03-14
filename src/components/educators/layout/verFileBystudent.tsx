@@ -151,7 +151,10 @@ const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
   return (
     <div className="mt-6">
       <h1
-        className={`mb-4 text-2xl font-bold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+        className={`
+          mb-4 text-2xl font-bold
+          ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+        `}
       >
         Archivos de la clase
       </h1>
@@ -169,12 +172,21 @@ const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
                 href={fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative mb-3 flex h-11 w-full space-x-2 rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40 lg:w-3/5"
+                className="
+                  relative mb-3 flex h-11 w-full space-x-2 rounded-lg border
+                  border-gray-600/10 bg-slate-200/20 p-2
+                  hover:bg-slate-200/40
+                  lg:w-3/5
+                "
               >
                 {icon}
 
                 <p
-                  className={`no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                  className={`
+                    no-underline
+                    hover:underline
+                    ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 >
                   {resourceNames[index] ?? file.fileName}
                   {/* Nombre del archivo */}
@@ -188,12 +200,21 @@ const VerFileByStudent = ({ lessonId, selectedColor }: ViewFilesProps) => {
                 href={fileUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="relative mb-3 flex h-11 w-full space-x-2 rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40 lg:w-3/5"
+                className="
+                  relative mb-3 flex h-11 w-full space-x-2 rounded-lg border
+                  border-gray-600/10 bg-slate-200/20 p-2
+                  hover:bg-slate-200/40
+                  lg:w-3/5
+                "
               >
                 {icon}
 
                 <p
-                  className={`no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                  className={`
+                    no-underline
+                    hover:underline
+                    ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 >
                   {file.fileName}
                   {/* Nombre del archivo */}

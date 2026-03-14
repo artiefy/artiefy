@@ -215,8 +215,18 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
       }}
       className="space-y-6 rounded-lg bg-white p-6 shadow-md"
     >
-      <div className="flex-col space-y-4 md:flex md:flex-row md:space-x-4">
-        <div className="w-full md:w-3/4">
+      <div
+        className="
+        flex-col space-y-4
+        md:flex md:flex-row md:space-x-4
+      "
+      >
+        <div
+          className="
+          w-full
+          md:w-3/4
+        "
+        >
           <Label
             htmlFor="questions"
             className="block text-lg font-medium text-gray-700"
@@ -229,10 +239,18 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             onChange={(e) => setQuestionText(e.target.value)}
             placeholder="Escribe tu pregunta aquí"
             required
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none"
+            className="
+              mt-1 block w-full rounded-md border border-gray-300 p-2 text-black
+              shadow-sm outline-none
+            "
           />
         </div>
-        <div className="w-11/12 md:w-1/4">
+        <div
+          className="
+          w-11/12
+          md:w-1/4
+        "
+        >
           <Label
             htmlFor="pesoPregunta"
             className="block text-lg font-medium text-gray-700"
@@ -247,7 +265,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             min={1}
             max={100}
             required
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none"
+            className="
+              mt-1 block w-full rounded-md border border-gray-300 p-2 text-black
+              shadow-sm outline-none
+            "
           />
         </div>
       </div>
@@ -263,7 +284,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
               checked={correctOptionId === option.id}
               onChange={() => setCorrectOptionId(option.id)}
               required
-              className="size-4 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              className="
+                size-4 border-gray-300 text-indigo-600
+                focus:ring-indigo-500
+              "
             />
             <Input
               type="text"
@@ -271,14 +295,20 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
               onChange={(e) => handleOptionChange(option.id, e.target.value)}
               placeholder={`Opción ${index + 1}`}
               required
-              className="flex-1 rounded-md border border-gray-300 p-2 text-black shadow-sm"
+              className="
+                flex-1 rounded-md border border-gray-300 p-2 text-black
+                shadow-sm
+              "
             />
             <Button
               type="button"
               onClick={() => handleRemoveOption(option.id)}
               variant="outline"
               size="icon"
-              className="text-white hover:text-red-500"
+              className="
+                text-white
+                hover:text-red-500
+              "
             >
               <X className="size-5" />
             </Button>
@@ -289,7 +319,11 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             type="button"
             onClick={handleAddOption}
             variant="outline"
-            className="mx-auto flex w-2/5 items-center justify-center rounded-md border border-gray-300 bg-slate-100 p-2 text-black shadow-sm hover:bg-indigo-50"
+            className="
+              mx-auto flex w-2/5 items-center justify-center rounded-md border
+              border-gray-300 bg-slate-100 p-2 text-black shadow-sm
+              hover:bg-indigo-50
+            "
           >
             <Plus className="mr-2 size-5" /> Agregar opción
           </Button>
@@ -308,14 +342,20 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
           type="button"
           onClick={handleCancel}
           variant="outline"
-          className="text-gray-100 hover:text-gray-800"
+          className="
+            text-gray-100
+            hover:text-gray-800
+          "
         >
           Cancelar
         </Button>
 
         <Button
           type="submit"
-          className="border-none bg-green-400 text-white hover:bg-green-500"
+          className="
+            border-none bg-green-400 text-white
+            hover:bg-green-500
+          "
         >
           {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta
         </Button>

@@ -107,7 +107,13 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
           >
             {/* <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100"></div> */}
             <Card
-              className="relative z-20 flex flex-wrap space-y-2 border-transparent bg-black p-2 py-1 hover:scale-100 md:grid-cols-2 lg:flex lg:grid-cols-2"
+              className="
+                relative z-20 flex flex-wrap space-y-2 border-transparent
+                bg-black p-2 py-1
+                hover:scale-100
+                md:grid-cols-2
+                lg:flex lg:grid-cols-2
+              "
               style={{
                 backgroundColor: selectedColor,
                 color: getContrastYIQ(selectedColor),
@@ -117,16 +123,20 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
                 <Image
                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${coverImageKey}`}
                   alt="Actividad"
-                  className="mx-auto mt-8 h-20 w-full items-center justify-center rounded-lg object-contain"
+                  className="
+                    mx-auto mt-8 h-20 w-full items-center justify-center
+                    rounded-lg object-contain
+                  "
                   width={300}
                   height={200}
                   quality={100}
                 />
               </div>
               <CardContent
-                className={`p-2 ${
-                  selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                }`}
+                className={`
+                  p-2
+                  ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+                `}
               >
                 <CardTitle className="text-lg">
                   <div className="font-bold">Actividad: {actividad.name}</div>
@@ -145,11 +155,23 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
                 <Button className="mt-2 border-none p-0">
                   <Link
                     href={`/dashboard/educadores/cursos/${courseId}/${lessonIdString}/actividades/${actividad.id}`}
-                    className="group/button relative inline-flex w-full items-center justify-center overflow-hidden rounded-md border border-white/20 bg-orange-400 p-2 text-black active:scale-95"
+                    className="
+                      group/button relative inline-flex w-full items-center
+                      justify-center overflow-hidden rounded-md border
+                      border-white/20 bg-orange-400 p-2 text-black
+                      active:scale-95
+                    "
                   >
                     <p className="font-bold">Ver actividad</p>
-                    <ArrowRightIcon className="animate-bounce-right size-5" />
-                    <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+                    <ArrowRightIcon className="size-5 animate-bounce-right" />
+                    <div
+                      className="
+                      absolute inset-0 flex w-full
+                      [transform:skew(-13deg)_translateX(-100%)] justify-center
+                      group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                      group-hover/button:duration-1000
+                    "
+                    >
                       <div className="relative h-full w-10 bg-white/30" />
                     </div>
                   </Link>

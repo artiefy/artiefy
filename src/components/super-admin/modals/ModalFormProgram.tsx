@@ -534,9 +534,12 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             placeholder="Título"
             value={title}
             onChange={(e) => handleFieldChange('title', e.target.value)}
-            className={`mb-4 w-full rounded border p-2 text-white outline-none ${
+            className={`
+              mb-4 w-full rounded border p-2 text-white outline-none
+              ${
               errors.title ? 'border-red-500' : 'border-primary'
-            }`}
+            }
+            `}
           />
           {errors.title && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -553,16 +556,22 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             placeholder="Descripción"
             value={description}
             onChange={(e) => handleFieldChange('description', e.target.value)}
-            className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${
+            className={`
+              mb-3 h-auto w-full rounded border p-2 text-white outline-none
+              ${
               errors.description ? 'border-red-500' : 'border-primary'
-            }`}
+            }
+            `}
           />
           {errors.description && (
             <p className="text-sm text-red-500">Este campo es obligatorio.</p>
           )}
 
           {/* Categoría */}
-          <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="
+            mb-4 grid grid-cols-1 gap-4
+            md:grid-cols-2
+          ">
             <div className="flex w-full flex-col gap-2">
               <label
                 htmlFor="categoryid"
@@ -594,7 +603,9 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                     e.target.value ? Number(e.target.value) : null
                   )
                 }
-                className="rounded border border-primary p-2 text-white outline-none"
+                className="
+                  rounded border border-primary p-2 text-white outline-none
+                "
               >
                 <option value="" className="text-black">
                   Seleccionar tipo de certificación
@@ -656,7 +667,11 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
               max="5"
               step="0.1"
               placeholder="0-5"
-              className="mt-1 w-full rounded border border-primary p-2 text-white outline-none focus:no-underline"
+              className="
+                mt-1 w-full rounded border border-primary p-2 text-white
+                outline-none
+                focus:no-underline
+              "
               value={rating}
               onChange={(e) => setRating(Number(e.target.value))}
             />
@@ -667,13 +682,19 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             Imagen de portada
           </label>
           <div
-            className={`mx-auto mt-5 w-80 rounded-lg border-2 border-dashed border-primary p-8 lg:w-1/2 ${
+            className={`
+              mx-auto mt-5 w-80 rounded-lg border-2 border-dashed border-primary
+              p-8
+              lg:w-1/2
+              ${
               isDragging
                 ? 'border-blue-500 bg-blue-50'
                 : errors.file
                   ? 'border-red-500 bg-red-50'
                   : 'border-gray-300 bg-gray-50'
-            } transition-all duration-300 ease-in-out`}
+            }
+              transition-all duration-300 ease-in-out
+            `}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -694,7 +715,11 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                       setCoverImageKey('');
                       setErrors((prev) => ({ ...prev, file: true }));
                     }}
-                    className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                    className="
+                      absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                      text-white
+                      hover:opacity-70
+                    "
                   >
                     <MdClose className="z-20 size-5" />
                   </button>
@@ -703,9 +728,12 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                 // Mostrar el área de drop cuando no hay imagen
                 <>
                   <FiUploadCloud
-                    className={`mx-auto size-12 ${
+                    className={`
+                      mx-auto size-12
+                      ${
                       errors.file ? 'text-red-500' : 'text-primary'
-                    }`}
+                    }
+                    `}
                   />
                   <h2 className="mt-4 text-xl font-medium text-gray-700">
                     Arrastra y suelta tu imagen aquí
@@ -719,17 +747,28 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                   <input
                     type="file"
                     accept="image/*"
-                    className={`hidden ${
+                    className={`
+                      hidden
+                      ${
                       errors.file ? 'bg-red-500' : 'bg-primary'
-                    }`}
+                    }
+                    `}
                     onChange={handleFileChange}
                     id="file-upload"
                   />
                   <label
                     htmlFor="file-upload"
-                    className={`mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-sm hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none ${
+                    className={`
+                      mt-4 inline-flex cursor-pointer items-center rounded-md
+                      border border-transparent px-4 py-2 text-sm font-medium
+                      text-white shadow-sm
+                      hover:opacity-80
+                      focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                      focus:outline-none
+                      ${
                       errors.file ? 'bg-red-500' : 'bg-primary'
-                    }`}
+                    }
+                    `}
                   >
                     Seleccionar Archivo
                   </label>
@@ -751,7 +790,11 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                       setFileSize(null);
                       setErrors((prev) => ({ ...prev, file: true }));
                     }}
-                    className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                    className="
+                      absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                      text-white
+                      hover:opacity-70
+                    "
                   >
                     <MdClose className="z-20 size-5" />
                   </button>
@@ -787,13 +830,19 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
           <DialogFooter className="mt-4 grid grid-cols-2 gap-4">
             <Button
               onClick={handleCancel}
-              className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
+              className="
+                mr-2 w-full border-transparent bg-gray-600 p-3 text-white
+                hover:bg-gray-700
+              "
             >
               Cancelar
             </Button>
             <Button
               onClick={handleSubmit}
-              className="bg-green-400 text-white hover:bg-green-400/70"
+              className="
+                bg-green-400 text-white
+                hover:bg-green-400/70
+              "
               disabled={uploading}
             >
               {uploading

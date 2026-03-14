@@ -51,9 +51,9 @@ export function StudentProgram({ program }: StudenProgramProps) {
         {/* Gradient Overlay */}
         <div
           className="
-          absolute inset-0 bg-gradient-to-t from-black/80 via-black/20
-          to-transparent
-        "
+            absolute inset-0 bg-gradient-to-t from-black/80 via-black/20
+            to-transparent
+          "
         />
 
         {/* Top Left Badges */}
@@ -61,11 +61,11 @@ export function StudentProgram({ program }: StudenProgramProps) {
           {!hasCourses && (
             <div
               className="
-              inline-flex items-center rounded-full border border-transparent
-              bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
-              px-2.5 py-0.5 text-xs font-semibold tracking-wide text-slate-900
-              uppercase shadow-lg shadow-amber-400/40
-            "
+                inline-flex items-center rounded-full border border-transparent
+                bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
+                px-2.5 py-0.5 text-xs font-semibold tracking-wide text-slate-900
+                uppercase shadow-lg shadow-amber-400/40
+              "
             >
               Muy pronto
             </div>
@@ -73,13 +73,13 @@ export function StudentProgram({ program }: StudenProgramProps) {
           {program.certificationType && (
             <div
               className="
-              inline-flex items-center rounded-full border border-transparent
-              bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-0.5
-              text-xs font-medium text-white transition-colors
-              hover:bg-primary/80
-              focus:ring-2 focus:ring-ring focus:ring-offset-2
-              focus:outline-none
-            "
+                inline-flex items-center rounded-full border border-transparent
+                bg-gradient-to-r from-amber-500 to-orange-500 px-2.5 py-0.5
+                text-xs font-medium text-white transition-colors
+                hover:bg-primary/80
+                focus:ring-2 focus:ring-ring focus:ring-offset-2
+                focus:outline-none
+              "
             >
               {program.certificationType.name}
             </div>
@@ -89,9 +89,9 @@ export function StudentProgram({ program }: StudenProgramProps) {
         {/* Top Right Award Icon */}
         <div
           className="
-          absolute top-3 right-3 flex size-10 items-center justify-center
-          rounded-full bg-primary/90
-        "
+            absolute top-3 right-3 flex size-10 items-center justify-center
+            rounded-full bg-primary/90
+          "
         >
           <Award className="size-5 text-white" />
         </div>
@@ -99,9 +99,9 @@ export function StudentProgram({ program }: StudenProgramProps) {
         {/* Bottom Info on Image */}
         <div
           className="
-          absolute right-3 bottom-3 left-3 flex items-center justify-between
-          text-xs text-white
-        "
+            absolute right-3 bottom-3 left-3 flex items-center justify-between
+            text-xs text-white
+          "
         >
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">

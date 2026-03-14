@@ -401,8 +401,8 @@ const ForumPage = () => {
           <div className="flex items-center gap-2">
             <div
               className="
-              size-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800
-            "
+                size-9 rounded-full bg-gradient-to-br from-gray-700 to-gray-800
+              "
             />
             <span className="text-sm font-medium text-white">
               {reply.userId.name}
@@ -484,9 +484,9 @@ const ForumPage = () => {
             </CollapsibleTrigger>
             <CollapsibleContent
               className="
-              absolute right-0 mt-1 flex flex-col rounded border border-gray-700
-              bg-gray-800 shadow-lg
-            "
+                absolute right-0 mt-1 flex flex-col rounded border
+                border-gray-700 bg-gray-800 shadow-lg
+              "
             >
               <button
                 className="
@@ -522,8 +522,8 @@ const ForumPage = () => {
       <main className="flex h-screen flex-col items-center justify-center">
         <div
           className="
-          size-32 animate-spin rounded-full border-y-2 border-primary
-        "
+            size-32 animate-spin rounded-full border-y-2 border-primary
+          "
         >
           <span className="sr-only" />
         </div>
@@ -578,30 +578,31 @@ const ForumPage = () => {
         <div className="glow-pulse mt-5 mb-10 w-full rounded-lg">
           <div
             className="
-            mx-auto w-full max-w-7xl rounded-xl border border-gray-700
-            bg-[#111827] p-6 shadow-md
-          "
+              mx-auto w-full max-w-7xl rounded-xl border border-gray-700
+              bg-[#111827] p-6 shadow-md
+            "
           >
             {/* Header */}
             <div
               className="
-              flex flex-col gap-4 border-b border-secondary pb-6
-              sm:flex-row sm:items-start sm:justify-between sm:gap-8 sm:pb-4
-            "
+                flex flex-col gap-4 border-b border-secondary pb-6
+                sm:flex-row sm:items-start sm:justify-between sm:gap-8 sm:pb-4
+              "
             >
               <div className="min-w-0 flex-1">
                 <h1
                   className="
-                  text-2xl font-bold break-words text-primary
-                  sm:text-3xl
-                "
+                    text-2xl font-bold break-words text-primary
+                    sm:text-3xl
+                  "
                 >
                   {forumData?.title}
                 </h1>
                 <p
                   className="
-                  mt-2 text-base leading-relaxed whitespace-pre-wrap text-white
-                "
+                    mt-2 text-base leading-relaxed whitespace-pre-wrap
+                    text-white
+                  "
                 >
                   {forumData?.description}
                 </p>
@@ -609,9 +610,9 @@ const ForumPage = () => {
 
               <div
                 className="
-                mt-2 flex-shrink-0
-                sm:mt-0
-              "
+                  mt-2 flex-shrink-0
+                  sm:mt-0
+                "
               >
                 <div className="flex max-w-xs items-center gap-2 overflow-hidden">
                   <span className="text-sm whitespace-nowrap text-secondary">
@@ -620,8 +621,8 @@ const ForumPage = () => {
                   <span
                     title={forumData?.userId.name}
                     className="
-                      w-full truncate rounded-full bg-primary px-3
-                      py-1 text-sm font-semibold text-background shadow-sm
+                      w-full truncate rounded-full bg-primary px-3 py-1 text-sm
+                      font-semibold text-background shadow-sm
                     "
                   >
                     {forumData?.userId.name}
@@ -633,27 +634,27 @@ const ForumPage = () => {
             {(forumData?.coverImageKey ?? forumData?.documentKey) && (
               <div
                 className="
-                mt-6 flex flex-col gap-4
-                sm:flex-row
-              "
+                  mt-6 flex flex-col gap-4
+                  sm:flex-row
+                "
               >
                 {/* Imagen */}
                 {forumData?.coverImageKey && (
                   <div
                     className="
-                    w-full
-                    sm:w-1/2
-                  "
+                      w-full
+                      sm:w-1/2
+                    "
                   >
                     <p className="text-sm font-medium text-gray-300">
                       Imagen adjunta
                     </p>
                     <div
                       className="
-                      mt-2 max-w-md overflow-hidden rounded-lg border
-                      border-white/10 shadow-md transition
-                      hover:shadow-xl
-                    "
+                        mt-2 max-w-md overflow-hidden rounded-lg border
+                        border-white/10 shadow-md transition
+                        hover:shadow-xl
+                      "
                     >
                       <Image
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${forumData.coverImageKey}`}
@@ -670,18 +671,18 @@ const ForumPage = () => {
                 {forumData?.documentKey && (
                   <div
                     className="
-                    w-full
-                    sm:w-1/2
-                  "
+                      w-full
+                      sm:w-1/2
+                    "
                   >
                     <p className="text-sm font-medium text-gray-300">
                       Documento adjunto
                     </p>
                     <div
                       className="
-                      mt-2 flex items-center gap-3 rounded-lg bg-white/5 p-4
-                      text-sm text-green-300 shadow-inner
-                    "
+                        mt-2 flex items-center gap-3 rounded-lg bg-white/5 p-4
+                        text-sm text-green-300 shadow-inner
+                      "
                     >
                       <span className="text-xl">📄</span>
                       <a
@@ -720,9 +721,9 @@ const ForumPage = () => {
               >
                 <div
                   className="
-                  mb-3 flex flex-col
-                  sm:flex-row sm:items-center sm:justify-between
-                "
+                    mb-3 flex flex-col
+                    sm:flex-row sm:items-center sm:justify-between
+                  "
                 >
                   <h2 className="text-lg font-bold text-white">
                     {post.content}
@@ -802,16 +803,16 @@ const ForumPage = () => {
                     <CollapsibleTrigger>
                       <EllipsisVertical
                         className="
-                        cursor-pointer text-gray-400
-                        hover:text-white
-                      "
+                          cursor-pointer text-gray-400
+                          hover:text-white
+                        "
                       />
                     </CollapsibleTrigger>
                     <CollapsibleContent
                       className="
-                      absolute right-0 mt-1 flex flex-col rounded border
-                      border-gray-700 bg-gray-900 shadow-lg
-                    "
+                        absolute right-0 mt-1 flex flex-col rounded border
+                        border-gray-700 bg-gray-900 shadow-lg
+                      "
                     >
                       <button
                         className="
@@ -873,11 +874,10 @@ const ForumPage = () => {
                         />
                         <div
                           className="
-                          rounded border border-dashed border-gray-600
-                          bg-gray-800 p-2 text-center
-                          text-xs
-                          text-white hover:bg-gray-700
-                        "
+                            rounded border border-dashed border-gray-600
+                            bg-gray-800 p-2 text-center text-xs text-white
+                            hover:bg-gray-700
+                          "
                         >
                           {replyImage
                             ? '✓ ' + replyImage.name.slice(0, 12)
@@ -895,11 +895,10 @@ const ForumPage = () => {
                         />
                         <div
                           className="
-                          rounded border border-dashed border-gray-600
-                          bg-gray-800 p-2 text-center
-                          text-xs
-                          text-white hover:bg-gray-700
-                        "
+                            rounded border border-dashed border-gray-600
+                            bg-gray-800 p-2 text-center text-xs text-white
+                            hover:bg-gray-700
+                          "
                         >
                           {replyAudio
                             ? '✓ ' + replyAudio.name.slice(0, 12)
@@ -917,11 +916,10 @@ const ForumPage = () => {
                         />
                         <div
                           className="
-                          rounded border border-dashed border-gray-600
-                          bg-gray-800 p-2 text-center
-                          text-xs
-                          text-white hover:bg-gray-700
-                        "
+                            rounded border border-dashed border-gray-600
+                            bg-gray-800 p-2 text-center text-xs text-white
+                            hover:bg-gray-700
+                          "
                         >
                           {replyVideo
                             ? '✓ ' + replyVideo.name.slice(0, 12)
@@ -967,8 +965,8 @@ const ForumPage = () => {
             className="
               mb-3 min-h-[120px] w-full resize-none rounded-lg border
               border-gray-600 bg-white/10 p-4 text-white placeholder-gray-400
-              outline-none focus:border-blue-500 focus:ring-2
-              focus:ring-blue-300
+              outline-none
+              focus:border-blue-500 focus:ring-2 focus:ring-blue-300
             "
             placeholder="Escribe un nuevo mensaje..."
             value={message}
@@ -984,11 +982,10 @@ const ForumPage = () => {
               />
               <div
                 className="
-                rounded border border-dashed border-gray-600 bg-gray-800 p-3
-                text-center
-                text-sm
-                text-white hover:bg-gray-700
-              "
+                  rounded border border-dashed border-gray-600 bg-gray-800 p-3
+                  text-center text-sm text-white
+                  hover:bg-gray-700
+                "
               >
                 {postImage ? '✓ ' + postImage.name.slice(0, 15) : '□ Imagen'}
               </div>
@@ -1002,11 +999,10 @@ const ForumPage = () => {
               />
               <div
                 className="
-                rounded border border-dashed border-gray-600 bg-gray-800 p-3
-                text-center
-                text-sm
-                text-white hover:bg-gray-700
-              "
+                  rounded border border-dashed border-gray-600 bg-gray-800 p-3
+                  text-center text-sm text-white
+                  hover:bg-gray-700
+                "
               >
                 {postAudio ? '✓ ' + postAudio.name.slice(0, 15) : '♪ Audio'}
               </div>
@@ -1020,11 +1016,10 @@ const ForumPage = () => {
               />
               <div
                 className="
-                rounded border border-dashed border-gray-600 bg-gray-800 p-3
-                text-center
-                text-sm
-                text-white hover:bg-gray-700
-              "
+                  rounded border border-dashed border-gray-600 bg-gray-800 p-3
+                  text-center text-sm text-white
+                  hover:bg-gray-700
+                "
               >
                 {postVideo ? '✓ ' + postVideo.name.slice(0, 15) : '▶ Video'}
               </div>

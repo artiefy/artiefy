@@ -52,10 +52,10 @@ const LessonTopNavBar = ({
     <div className="fixed top-16 right-0 left-0 z-[60] w-full px-4 py-2">
       <div
         className="
-        mx-auto grid max-w-[1800px] grid-cols-[minmax(0,1fr)_auto] items-center
-        gap-3
-        md:grid-cols-[auto_1fr_auto] md:gap-4
-      "
+          mx-auto grid max-w-[1800px] grid-cols-[minmax(0,1fr)_auto]
+          items-center gap-3
+          md:grid-cols-[auto_1fr_auto] md:gap-4
+        "
       >
         {/* Left: Close button */}
         <div className="flex min-w-0 items-center gap-2">
@@ -207,9 +207,9 @@ const LessonTopNavBar = ({
         {/* Center: Progress indicator */}
         <div
           className="
-          hidden min-w-0 items-center gap-3
-          md:flex md:justify-center
-        "
+            hidden min-w-0 items-center gap-3
+            md:flex md:justify-center
+          "
         >
           {/* Progress bars */}
           <div
@@ -261,9 +261,9 @@ const LessonTopNavBar = ({
                 isCompleted
                   ? 'border-emerald-400/50 bg-emerald-500/20 text-emerald-300'
                   : `
-                  border-border/50 bg-card/80 text-foreground
-                  hover:scale-105
-                `
+                    border-border/50 bg-card/80 text-foreground
+                    hover:scale-105
+                  `
               }
             `}
           >
@@ -284,9 +284,9 @@ const LessonTopNavBar = ({
             </svg>
             <span
               className="
-              hidden text-sm font-medium
-              sm:inline
-            "
+                hidden text-sm font-medium
+                sm:inline
+              "
             >
               {isCompleted ? 'Completada' : 'Completar'}
             </span>

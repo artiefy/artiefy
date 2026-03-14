@@ -123,6 +123,7 @@ export async function GET(req: Request) {
 
       return {
         ...mt,
+        joinUrl: mt.joinUrl ?? null, // ✅ Asegurar que joinUrl está mapeado
         video_key: chosen?.videoKey ?? mt.video_key ?? null,
         videoUrl: chosen?.videoUrl ?? null,
       };

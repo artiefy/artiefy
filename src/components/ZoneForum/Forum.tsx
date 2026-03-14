@@ -145,23 +145,23 @@ const ForumHome = () => {
   return (
     <div
       className="
-      min-h-screen bg-background px-4 py-8
-      sm:px-6
-      lg:px-10
-    "
+        min-h-screen bg-background px-4 py-8
+        sm:px-6
+        lg:px-10
+      "
     >
       <div className="mx-auto max-w-7xl space-y-8">
         <header
           className="
-          mb-10 flex flex-col items-center justify-center gap-6
-          sm:flex-row sm:items-center sm:justify-between
-        "
+            mb-10 flex flex-col items-center justify-center gap-6
+            sm:flex-row sm:items-center sm:justify-between
+          "
         >
           <h1
             className="
-            text-center text-3xl font-extrabold tracking-tight text-primary
-            sm:text-left sm:text-4xl
-          "
+              text-center text-3xl font-extrabold tracking-tight text-primary
+              sm:text-left sm:text-4xl
+            "
           >
             Zona de Foros Artiefy
           </h1>
@@ -170,13 +170,12 @@ const ForumHome = () => {
             <DialogTrigger asChild>
               <Button
                 className="
-                flex
-                w-full
-                max-w-xs items-center justify-center gap-2 rounded-md bg-primary
-                px-5 py-2.5 text-sm font-semibold text-black shadow-md
-                transition-all duration-200 hover:bg-primary/90
-                sm:w-auto sm:max-w-none sm:text-base
-              "
+                  flex w-full max-w-xs items-center justify-center gap-2
+                  rounded-md bg-primary px-5 py-2.5 text-sm font-semibold
+                  text-black shadow-md transition-all duration-200
+                  hover:bg-primary/90
+                  sm:w-auto sm:max-w-none sm:text-base
+                "
               >
                 + Nuevo Foro
               </Button>
@@ -218,10 +217,10 @@ const ForumHome = () => {
                           />
                           <div
                             className="
-                            absolute z-20 mt-1 max-h-60 w-full overflow-auto
-                            rounded-md border border-white/20 bg-[#111]
-                            shadow-lg
-                          "
+                              absolute z-20 mt-1 max-h-60 w-full overflow-auto
+                              rounded-md border border-white/20 bg-[#111]
+                              shadow-lg
+                            "
                           >
                             {courses
                               .filter((c) =>
@@ -287,9 +286,9 @@ const ForumHome = () => {
                 {/* Instructor info */}
                 <div
                   className="
-                  rounded-md border border-primary bg-black/10 p-2 text-sm
-                  text-primary
-                "
+                    rounded-md border border-primary bg-black/10 p-2 text-sm
+                    text-primary
+                  "
                 >
                   Instructor: {user?.fullName}
                 </div>
@@ -302,10 +301,10 @@ const ForumHome = () => {
                     <div className="mt-2 flex items-center gap-4">
                       <label
                         className="
-                        cursor-pointer rounded-md bg-white/10 px-4 py-2 text-sm
-                        transition
-                        hover:bg-white/20
-                      "
+                          cursor-pointer rounded-md bg-white/10 px-4 py-2
+                          text-sm transition
+                          hover:bg-white/20
+                        "
                       >
                         Seleccionar imagen
                         <input
@@ -353,10 +352,10 @@ const ForumHome = () => {
                     <div className="mt-2 flex items-center gap-4">
                       <label
                         className="
-                        cursor-pointer rounded-md bg-white/10 px-4 py-2 text-sm
-                        transition
-                        hover:bg-white/20
-                      "
+                          cursor-pointer rounded-md bg-white/10 px-4 py-2
+                          text-sm transition
+                          hover:bg-white/20
+                        "
                       >
                         Seleccionar documento
                         <input
@@ -372,10 +371,10 @@ const ForumHome = () => {
                       {documentFile && (
                         <div
                           className="
-                          flex items-center gap-2 rounded-md border
-                          border-white/20 bg-black/10 px-3 py-1 text-sm
-                          text-white
-                        "
+                            flex items-center gap-2 rounded-md border
+                            border-white/20 bg-black/10 px-3 py-1 text-sm
+                            text-white
+                          "
                         >
                           📄 {documentFile.name}
                           <button
@@ -406,9 +405,9 @@ const ForumHome = () => {
 
               <DialogFooter
                 className="
-                mt-6 flex flex-col-reverse gap-3
-                sm:flex-row sm:justify-end
-              "
+                  mt-6 flex flex-col-reverse gap-3
+                  sm:flex-row sm:justify-end
+                "
               >
                 <Button
                   variant="outline"
@@ -447,11 +446,10 @@ const ForumHome = () => {
             type="text"
             placeholder="Buscar foros o temas..."
             className="
-              w-full rounded-md
-              border border-gray-700 bg-[#111827] px-4 py-2 pl-10 text-base
-              text-gray-100 shadow-sm transition placeholder:text-gray-400 focus:border-primary
-              focus:ring-1
-              focus:ring-primary
+              w-full rounded-md border border-gray-700 bg-[#111827] px-4 py-2
+              pl-10 text-base text-gray-100 shadow-sm transition
+              placeholder:text-gray-400
+              focus:border-primary focus:ring-1 focus:ring-primary
             "
           />
           <FaSearch className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-500" />

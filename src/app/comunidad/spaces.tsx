@@ -136,17 +136,17 @@ export default function Component() {
         <div className="mb-8 space-y-4">
           <div
             className="
-            flex flex-col gap-4
-            md:flex-row
-          "
+              flex flex-col gap-4
+              md:flex-row
+            "
           >
             <div className="flex-1">
               <div className="relative">
                 <Search
                   className="
-                  absolute top-1/2 left-3 size-5 -translate-y-1/2 transform
-                  text-gray-400
-                "
+                    absolute top-1/2 left-3 size-5 -translate-y-1/2 transform
+                    text-gray-400
+                  "
                 />
                 <input
                   type="text"
@@ -164,9 +164,9 @@ export default function Component() {
             </div>
             <div
               className="
-              relative w-full
-              md:w-64
-            "
+                relative w-full
+                md:w-64
+              "
             >
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -192,9 +192,9 @@ export default function Component() {
               {isDropdownOpen && (
                 <div
                   className="
-                  absolute top-full right-0 left-0 z-10 mt-1 rounded-lg border
-                  border-teal-700/50 bg-slate-800 shadow-lg
-                "
+                    absolute top-full right-0 left-0 z-10 mt-1 rounded-lg border
+                    border-teal-700/50 bg-slate-800 shadow-lg
+                  "
                 >
                   {categories.map((category) => (
                     <button
@@ -223,9 +223,9 @@ export default function Component() {
         <div className="mb-12 text-center">
           <h1
             className="
-            mb-4 text-4xl font-bold text-white
-            md:text-5xl
-          "
+              mb-4 text-4xl font-bold text-white
+              md:text-5xl
+            "
           >
             Espacios <span className="text-cyan-400">Artie</span>
           </h1>
@@ -238,10 +238,10 @@ export default function Component() {
         {/* spaces Grid */}
         <div
           className="
-          grid grid-cols-1 gap-6
-          md:grid-cols-2
-          lg:grid-cols-3
-        "
+            grid grid-cols-1 gap-6
+            md:grid-cols-2
+            lg:grid-cols-3
+          "
         >
           {filteredspaces.map((space) => (
             <div
@@ -281,8 +281,8 @@ export default function Component() {
                   <div>
                     <h3
                       className="
-                      mb-2 line-clamp-1 text-xl font-semibold text-white
-                    "
+                        mb-2 line-clamp-1 text-xl font-semibold text-white
+                      "
                     >
                       {space.title}
                     </h3>
@@ -306,9 +306,9 @@ export default function Component() {
                     {space.tags.length > 3 && (
                       <span
                         className="
-                        rounded-full border border-gray-600 px-2 py-1 text-xs
-                        text-gray-400
-                      "
+                          rounded-full border border-gray-600 px-2 py-1 text-xs
+                          text-gray-400
+                        "
                       >
                         +{space.tags.length - 3}
                       </span>
@@ -317,8 +317,8 @@ export default function Component() {
 
                   <div
                     className="
-                    flex items-center justify-between text-sm text-gray-400
-                  "
+                      flex items-center justify-between text-sm text-gray-400
+                    "
                   >
                     <div className="flex items-center space-x-1">
                       <User className="size-4" />
@@ -332,8 +332,8 @@ export default function Component() {
 
                   <div
                     className="
-                    flex items-center justify-between text-sm text-gray-400
-                  "
+                      flex items-center justify-between text-sm text-gray-400
+                    "
                   >
                     <div className="flex items-center space-x-1">
                       <Calendar className="size-4" />
@@ -350,20 +350,20 @@ export default function Component() {
                   <div className="flex space-x-2 pt-2">
                     <button
                       className="
-                      flex flex-1 items-center justify-center rounded-lg
-                      bg-cyan-600 px-4 py-2 text-white transition-colors
-                      hover:bg-cyan-700
-                    "
+                        flex flex-1 items-center justify-center rounded-lg
+                        bg-cyan-600 px-4 py-2 text-white transition-colors
+                        hover:bg-cyan-700
+                      "
                     >
                       <Eye className="mr-2 size-4" />
                       Ver Espacio
                     </button>
                     <button
                       className="
-                      rounded-lg border border-teal-600 px-3 py-2 text-teal-300
-                      transition-colors
-                      hover:bg-teal-600/20
-                    "
+                        rounded-lg border border-teal-600 px-3 py-2
+                        text-teal-300 transition-colors
+                        hover:bg-teal-600/20
+                      "
                     >
                       <ExternalLink className="size-4" />
                     </button>
@@ -378,9 +378,9 @@ export default function Component() {
         <div className="mt-12 text-center">
           <button
             className="
-            rounded-lg bg-cyan-600 px-8 py-3 text-white transition-colors
-            hover:bg-cyan-700
-          "
+              rounded-lg bg-cyan-600 px-8 py-3 text-white transition-colors
+              hover:bg-cyan-700
+            "
           >
             Cargar más Espacios
           </button>

@@ -142,11 +142,19 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
             onChange={handleChange}
             placeholder="Escribe la pregunta aquí..."
             required
-            className="mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm outline-none"
+            className="
+              mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm
+              outline-none
+            "
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div
+          className="
+          grid grid-cols-1 gap-4
+          md:grid-cols-2
+        "
+        >
           <div>
             <Label htmlFor="correctAnswer">Palabra que completa</Label>
             <Input
@@ -189,14 +197,20 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
           <Button
             type="button"
             variant="outline"
-            className="border-gray-400 text-gray-700 hover:bg-gray-100"
+            className="
+              border-gray-400 text-gray-700
+              hover:bg-gray-100
+            "
             onClick={handleCancel}
           >
             Cancelar
           </Button>
           <Button
             type="submit"
-            className="bg-green-600 text-white hover:bg-green-700"
+            className="
+              bg-green-600 text-white
+              hover:bg-green-700
+            "
           >
             {editingQuestion ? 'Actualizar' : 'Guardar'}
           </Button>

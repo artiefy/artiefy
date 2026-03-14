@@ -257,9 +257,9 @@ const PlantillasPage = () => {
         <div className="text-center">
           <div
             className="
-            loader mb-4 size-12 rounded-full border-4 border-primary
-            border-t-transparent
-          "
+              loader mb-4 size-12 rounded-full border-4 border-primary
+              border-t-transparent
+            "
           ></div>
           <p className="text-gray-600">Cargando plantillas...</p>
         </div>
@@ -293,8 +293,8 @@ const PlantillasPage = () => {
         {error && (
           <div
             className="
-            mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
-          "
+              mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
+            "
           >
             {error}
           </div>
@@ -304,8 +304,8 @@ const PlantillasPage = () => {
         {templates.length === 0 ? (
           <div
             className="
-            rounded-lg border border-gray-200 bg-white p-8 text-center
-          "
+              rounded-lg border border-gray-200 bg-white p-8 text-center
+            "
           >
             <p className="text-gray-500">
               No hay plantillas creadas. ¡Crea una para empezar!
@@ -314,10 +314,10 @@ const PlantillasPage = () => {
         ) : (
           <div
             className="
-            grid grid-cols-1 gap-6
-            md:grid-cols-2
-            lg:grid-cols-3
-          "
+              grid grid-cols-1 gap-6
+              md:grid-cols-2
+              lg:grid-cols-3
+            "
           >
             {templates.map((template) => (
               <div
@@ -421,14 +421,14 @@ const PlantillasPage = () => {
       {modal.isOpen && (
         <div
           className="
-          fixed inset-0 z-50 flex items-center justify-center bg-black/50
-        "
+            fixed inset-0 z-50 flex items-center justify-center bg-black/50
+          "
         >
           <div
             className="
-            max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white
-            p-6 shadow-lg
-          "
+              max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white
+              p-6 shadow-lg
+            "
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-gray-900">
@@ -506,9 +506,9 @@ const PlantillasPage = () => {
               {/* Lista de parámetros disponibles */}
               <div
                 className="
-                max-h-64 space-y-2 overflow-y-auto rounded-lg border
-                border-gray-200 bg-gray-50 p-4
-              "
+                  max-h-64 space-y-2 overflow-y-auto rounded-lg border
+                  border-gray-200 bg-gray-50 p-4
+                "
               >
                 {filteredParametros.length === 0 ? (
                   <p className="text-center text-sm text-gray-500">

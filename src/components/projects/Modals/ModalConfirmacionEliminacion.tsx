@@ -67,19 +67,28 @@ const ModalConfirmacionEliminacion: React.FC<
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="
+        fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4
+      "
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       {/* Barra de progreso de eliminación */}
       {isDeleting && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
-          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
+        <div className="
+          fixed inset-0 z-[100] flex items-center justify-center bg-black/60
+        ">
+          <div className="
+            flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
+            p-6 shadow-lg
+          ">
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">
                 <div
-                  className="h-6 rounded-full bg-red-500 transition-all duration-300"
+                  className="
+                    h-6 rounded-full bg-red-500 transition-all duration-300
+                  "
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -98,23 +107,44 @@ const ModalConfirmacionEliminacion: React.FC<
         </div>
       )}
       <div
-        className={`w-full max-w-md rounded-lg bg-[#0F2940] p-4 text-cyan-400 shadow-lg sm:p-6 ${isDeleting ? 'pointer-events-none opacity-60 select-none' : ''}`}
+        className={`
+          w-full max-w-md rounded-lg bg-[#0F2940] p-4 text-cyan-400 shadow-lg
+          sm:p-6
+          ${isDeleting ? 'pointer-events-none opacity-60 select-none' : ''}
+        `}
       >
-        <h2 className="mb-4 text-xl font-semibold sm:text-2xl">Confirmación</h2>
-        <p className="text-sm sm:text-base">
+        <h2 className="
+          mb-4 text-xl font-semibold
+          sm:text-2xl
+        ">Confirmación</h2>
+        <p className="
+          text-sm
+          sm:text-base
+        ">
           ¿Estás seguro de que deseas eliminar este proyecto?
         </p>
-        <div className="mt-4 flex flex-col justify-end gap-3 sm:mt-6 sm:flex-row sm:gap-4">
+        <div className="
+          mt-4 flex flex-col justify-end gap-3
+          sm:mt-6 sm:flex-row sm:gap-4
+        ">
           <button
             onClick={onClose}
-            className="w-full rounded bg-gray-300 px-4 py-2 text-black hover:bg-gray-400 sm:w-auto"
+            className="
+              w-full rounded bg-gray-300 px-4 py-2 text-black
+              hover:bg-gray-400
+              sm:w-auto
+            "
             disabled={isDeleting}
           >
             Cancelar
           </button>
           <button
             onClick={handleEliminarProyecto}
-            className="w-full rounded bg-cyan-600 px-4 py-2 text-white hover:bg-cyan-700 sm:w-auto"
+            className="
+              w-full rounded bg-cyan-600 px-4 py-2 text-white
+              hover:bg-cyan-700
+              sm:w-auto
+            "
             disabled={isDeleting}
           >
             Confirmar

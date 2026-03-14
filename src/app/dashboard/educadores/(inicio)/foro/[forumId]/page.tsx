@@ -371,7 +371,10 @@ const ForumPage = () => {
             <div>
               {/* Editar respuesta */}
               <textarea
-                className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
+                className="
+                  mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2
+                  text-white outline-none
+                "
                 value={editReplyContent}
                 onChange={(e) => setEditReplyContent(e.target.value)}
               />
@@ -382,7 +385,9 @@ const ForumPage = () => {
                 Actualizar Respuesta
               </button>
               <button
-                className="mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white"
+                className="
+                  mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white
+                "
                 onClick={() => setEditingReplyId(null)}
               >
                 Cancelar
@@ -459,7 +464,11 @@ const ForumPage = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 animate-spin rounded-full border-y-2">
+        <div
+          className="
+          size-32 animate-spin rounded-full border-y-2 border-primary
+        "
+        >
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -473,7 +482,10 @@ const ForumPage = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/"
             >
               Inicio
@@ -482,7 +494,10 @@ const ForumPage = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href={`/dashboard/educadores/foro`}
             >
               Foros
@@ -491,7 +506,10 @@ const ForumPage = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href={`/dashboard/educadores/foro/${forumData?.id}`}
             >
               Foro: {forumData?.title}
@@ -501,7 +519,13 @@ const ForumPage = () => {
       </Breadcrumb>
 
       <div className="container mx-auto mt-5 rounded-lg bg-black/25 p-5 shadow-lg">
-        <div className="mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg md:w-11/12 lg:w-full">
+        <div
+          className="
+          mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg
+          md:w-11/12
+          lg:w-full
+        "
+        >
           <div className="flex justify-between">
             <h1 className="mb-4 text-2xl font-bold text-white">
               {forumData?.title}
@@ -529,18 +553,24 @@ const ForumPage = () => {
                 {editingPostId === post.id ? (
                   <div>
                     <textarea
-                      className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
+                      className="
+                        mt-4 w-full rounded border border-gray-200
+                        bg-gray-500/10 p-2 text-white outline-none
+                      "
                       value={editPostContent}
                       onChange={(e) => setEditPostContent(e.target.value)}
                     />
                     <button
                       onClick={() => handlePostUpdate(post.id)}
-                      className="bg-primary mt-2 rounded px-4 py-2 text-white"
+                      className="mt-2 rounded bg-primary px-4 py-2 text-white"
                     >
                       Actualizar Post
                     </button>
                     <button
-                      className="mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white"
+                      className="
+                        mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm
+                        text-white
+                      "
                       onClick={() => setEditingPostId(null)}
                     >
                       Cancelar
@@ -560,13 +590,21 @@ const ForumPage = () => {
                 {post.userId.id === user?.id && (
                   <div className="mt-4 space-x-2">
                     {editingPostId === post.id ? (
-                      <Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
+                      <Collapsible
+                        className="
+                        absolute top-4 right-3 flex w-[100px] flex-col
+                      "
+                      >
                         {/* Cancelar edición menu collapsible*/}
                         <CollapsibleTrigger
                           asChild
                           className="absolute cursor-pointer"
                         >
-                          <EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
+                          <EllipsisVertical
+                            className="
+                            absolute top-0 right-0 justify-end text-white
+                          "
+                          />
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <button
@@ -578,13 +616,21 @@ const ForumPage = () => {
                         </CollapsibleContent>
                       </Collapsible>
                     ) : (
-                      <Collapsible className="absolute top-4 right-3 flex w-[100px] flex-col">
+                      <Collapsible
+                        className="
+                        absolute top-4 right-3 flex w-[100px] flex-col
+                      "
+                      >
                         {/* Editar y eliminar post menu collapsible*/}
                         <CollapsibleTrigger
                           asChild
                           className="absolute cursor-pointer"
                         >
-                          <EllipsisVertical className="absolute top-0 right-0 justify-end text-white" />
+                          <EllipsisVertical
+                            className="
+                            absolute top-0 right-0 justify-end text-white
+                          "
+                          />
                         </CollapsibleTrigger>
                         <CollapsibleContent className="justify-start text-left">
                           <button
@@ -613,19 +659,27 @@ const ForumPage = () => {
                   {replyingToPostId === post.id ? (
                     <div className="my-3">
                       <textarea
-                        className="mt-4 w-full rounded border border-gray-200 bg-gray-500/10 p-2 text-white outline-none"
+                        className="
+                          mt-4 w-full rounded border border-gray-200
+                          bg-gray-500/10 p-2 text-white outline-none
+                        "
                         placeholder="Escribe tu respuesta..."
                         value={replyMessage}
                         onChange={(e) => setReplyMessage(e.target.value)}
                       />
                       <button
-                        className="bg-primary mt-2 mr-2 rounded px-4 py-2 text-white"
+                        className="
+                          mt-2 mr-2 rounded bg-primary px-4 py-2 text-white
+                        "
                         onClick={handleReplySubmit}
                       >
                         Enviar Respuesta
                       </button>
                       <button
-                        className="mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm text-white"
+                        className="
+                          mt-2 ml-4 rounded bg-red-500 px-4 py-2 text-sm
+                          text-white
+                        "
                         onClick={() => setReplyingToPostId(null)}
                       >
                         Cancelar
@@ -653,13 +707,16 @@ const ForumPage = () => {
         {/* Crear nuevo Post */}
         <div className="mt-4">
           <textarea
-            className="w-full rounded-lg border-2 border-gray-700 bg-white p-2 text-black outline-none"
+            className="
+              w-full rounded-lg border-2 border-gray-700 bg-white p-2 text-black
+              outline-none
+            "
             placeholder="Escribe un nuevo mensaje..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
           />
           <button
-            className="bg-primary mt-2 rounded px-4 py-2 font-light text-black"
+            className="mt-2 rounded bg-primary px-4 py-2 font-light text-black"
             onClick={handlePostSubmit}
           >
             Enviar

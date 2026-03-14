@@ -146,7 +146,10 @@ export default function CategoriesPage() {
   return (
     <>
       <div className="p-6">
-        <header className="flex items-center justify-between rounded-lg bg-[#00BDD8] p-6 text-3xl font-bold text-[#01142B] shadow-md">
+        <header className="
+          flex items-center justify-between rounded-lg bg-[#00BDD8] p-6 text-3xl
+          font-bold text-[#01142B] shadow-md
+        ">
           <h1>Gestión de Categorías</h1>
           <button
             onClick={() => {
@@ -155,7 +158,11 @@ export default function CategoriesPage() {
               setDescription('');
               setIsFeatured(false);
             }}
-            className="hover:bg-opacity-90 flex items-center rounded-md bg-[#01142B] px-4 py-2 font-semibold text-white shadow-md"
+            className="
+              hover:bg-opacity-90
+              flex items-center rounded-md bg-[#01142B] px-4 py-2 font-semibold
+              text-white shadow-md
+            "
           >
             <Plus className="mr-2 size-5" /> Crear
           </button>
@@ -165,21 +172,27 @@ export default function CategoriesPage() {
         <div className="mt-6 flex space-x-4">
           <button
             onClick={() => setActiveView('featured')}
-            className={`rounded-md px-4 py-2 font-semibold ${
+            className={`
+              rounded-md px-4 py-2 font-semibold
+              ${
               activeView === 'featured'
                 ? 'bg-[#3AF4EF] text-[#01142B]'
                 : 'bg-gray-700 text-white'
-            }`}
+            }
+            `}
           >
             Categorías Destacadas
           </button>
           <button
             onClick={() => setActiveView('other')}
-            className={`rounded-md px-4 py-2 font-semibold ${
+            className={`
+              rounded-md px-4 py-2 font-semibold
+              ${
               activeView === 'other'
                 ? 'bg-[#3AF4EF] text-[#01142B]'
                 : 'bg-gray-700 text-white'
-            }`}
+            }
+            `}
           >
             Otras Categorías
           </button>
@@ -291,12 +304,19 @@ const ModalForm = ({
   setIsFeatured: (featured: boolean) => void;
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center">
-    <div className="absolute inset-0 bg-gradient-to-b from-[#01142B] to-[#01142B] opacity-80" />
-    <div className="relative z-10 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-lg">
+    <div className="
+      absolute inset-0 bg-gradient-to-b from-[#01142B] to-[#01142B] opacity-80
+    " />
+    <div className="
+      relative z-10 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-lg
+    ">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-bold text-white">{title}</h2>
         <button onClick={onClose}>
-          <X className="size-6 text-gray-300 hover:text-white" />
+          <X className="
+            size-6 text-gray-300
+            hover:text-white
+          " />
         </button>
       </div>
       <input
@@ -327,7 +347,10 @@ const ModalForm = ({
       </div>
       <button
         onClick={onSubmit}
-        className="mt-4 w-full rounded-md bg-[#3AF4EF] px-4 py-2 font-bold text-white hover:bg-[#00BDD8]"
+        className="
+          mt-4 w-full rounded-md bg-[#3AF4EF] px-4 py-2 font-bold text-white
+          hover:bg-[#00BDD8]
+        "
       >
         Guardar
       </button>
@@ -348,7 +371,10 @@ const PaginationControls = ({
     <button
       disabled={currentPage === 1}
       onClick={() => onPageChange(currentPage - 1)}
-      className="rounded-md bg-gray-700 px-4 py-2 text-white disabled:opacity-50"
+      className="
+        rounded-md bg-gray-700 px-4 py-2 text-white
+        disabled:opacity-50
+      "
     >
       <ChevronLeft size={20} />
     </button>
@@ -358,7 +384,10 @@ const PaginationControls = ({
     <button
       disabled={currentPage === totalPages}
       onClick={() => onPageChange(currentPage + 1)}
-      className="rounded-md bg-gray-700 px-4 py-2 text-white disabled:opacity-50"
+      className="
+        rounded-md bg-gray-700 px-4 py-2 text-white
+        disabled:opacity-50
+      "
     >
       <ChevronRight size={20} />
     </button>
@@ -384,7 +413,9 @@ const TableComponent = ({
   onEdit: (item: Category) => void;
   onDelete: (item: Category) => void;
 }) => (
-  <table className="mt-6 w-full border-collapse rounded-lg bg-gray-800 text-white shadow-lg">
+  <table className="
+    mt-6 w-full border-collapse rounded-lg bg-gray-800 text-white shadow-lg
+  ">
     <thead className="bg-[#00BDD8] text-[#01142B]">
       <tr>
         <th className="px-4 py-3 text-left text-xs font-semibold">Nombre</th>
@@ -425,7 +456,9 @@ const ConfirmDeleteModal = ({
 }) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center">
     <div className="absolute inset-0 bg-black opacity-80" />
-    <div className="relative z-10 w-full max-w-sm rounded-lg bg-gray-800 p-6 shadow-lg">
+    <div className="
+      relative z-10 w-full max-w-sm rounded-lg bg-gray-800 p-6 shadow-lg
+    ">
       <h2 className="text-lg font-bold text-white">
         ¿Eliminar &quot;{item.name}&quot;?
       </h2>
@@ -433,13 +466,19 @@ const ConfirmDeleteModal = ({
       <div className="mt-4 flex justify-end space-x-2">
         <button
           onClick={onClose}
-          className="rounded-md bg-gray-600 px-4 py-2 text-white hover:bg-gray-500"
+          className="
+            rounded-md bg-gray-600 px-4 py-2 text-white
+            hover:bg-gray-500
+          "
         >
           Cancelar
         </button>
         <button
           onClick={onConfirm}
-          className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-500"
+          className="
+            rounded-md bg-red-600 px-4 py-2 text-white
+            hover:bg-red-500
+          "
         >
           Eliminar
         </button>

@@ -332,7 +332,10 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-background p-6">
       {/* Encabezado */}
       <div className="mb-8">
-        <header className="flex items-center justify-between rounded-lg bg-[#00BDD8] p-6 shadow-md">
+        <header className="
+          flex items-center justify-between rounded-lg bg-[#00BDD8] p-6
+          shadow-md
+        ">
           <h1 className="text-3xl font-bold text-[#01142B]">
             Gestión de Proyectos
           </h1>
@@ -346,11 +349,17 @@ export default function ProjectsPage() {
             setActiveTab('types');
             setTypesError(null);
           }}
-          className={`px-4 py-3 font-semibold transition-all ${
+          className={`
+            px-4 py-3 font-semibold transition-all
+            ${
             activeTab === 'types'
               ? 'border-b-2 border-[#00BDD8] text-[#00BDD8]'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
+              : `
+                text-gray-500
+                hover:text-gray-700
+              `
+          }
+          `}
         >
           Tipos de Proyecto
         </button>
@@ -359,11 +368,17 @@ export default function ProjectsPage() {
             setActiveTab('phases');
             setPhasesError(null);
           }}
-          className={`px-4 py-3 font-semibold transition-all ${
+          className={`
+            px-4 py-3 font-semibold transition-all
+            ${
             activeTab === 'phases'
               ? 'border-b-2 border-[#00BDD8] text-[#00BDD8]'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
+              : `
+                text-gray-500
+                hover:text-gray-700
+              `
+          }
+          `}
         >
           Fases
         </button>
@@ -372,11 +387,17 @@ export default function ProjectsPage() {
             setActiveTab('mapping');
             setMappingError(null);
           }}
-          className={`px-4 py-3 font-semibold transition-all ${
+          className={`
+            px-4 py-3 font-semibold transition-all
+            ${
             activeTab === 'mapping'
               ? 'border-b-2 border-[#00BDD8] text-[#00BDD8]'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
+              : `
+                text-gray-500
+                hover:text-gray-700
+              `
+          }
+          `}
         >
           Asignación de Fases
         </button>
@@ -522,7 +543,11 @@ function TabTypes({
             setTypeFormData({ name: '', description: '' });
             setEditingType(null);
           }}
-          className="flex items-center gap-2 rounded-lg bg-[#00BDD8] px-4 py-2 font-semibold text-[#01142B] hover:bg-[#00A5C0]"
+          className="
+            flex items-center gap-2 rounded-lg bg-[#00BDD8] px-4 py-2
+            font-semibold text-[#01142B]
+            hover:bg-[#00A5C0]
+          "
         >
           <Plus size={18} /> Crear Tipo
         </button>
@@ -537,7 +562,10 @@ function TabTypes({
           {projectTypes.map((type) => (
             <div
               key={type.id}
-              className="flex items-center justify-between rounded-lg border border-gray-300 bg-white p-4 shadow-sm"
+              className="
+                flex items-center justify-between rounded-lg border
+                border-gray-300 bg-white p-4 shadow-sm
+              "
             >
               <div className="flex-1">
                 <h3 className="font-semibold text-[#01142B]">{type.name}</h3>
@@ -547,11 +575,14 @@ function TabTypes({
               </div>
               <div className="flex items-center gap-3">
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  className={`
+                    rounded-full px-3 py-1 text-xs font-semibold
+                    ${
                     type.isActive
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-100 text-gray-700'
-                  }`}
+                  }
+                  `}
                 >
                   {type.isActive ? 'Activo' : 'Inactivo'}
                 </span>
@@ -564,7 +595,10 @@ function TabTypes({
                     });
                     setShowEditForm(true);
                   }}
-                  className="rounded-lg p-2 text-blue-600 hover:bg-blue-50"
+                  className="
+                    rounded-lg p-2 text-blue-600
+                    hover:bg-blue-50
+                  "
                   title="Editar"
                 >
                   <Edit size={18} />
@@ -577,7 +611,10 @@ function TabTypes({
                       name: type.name,
                     })
                   }
-                  className="rounded-lg p-2 text-red-600 hover:bg-red-50"
+                  className="
+                    rounded-lg p-2 text-red-600
+                    hover:bg-red-50
+                  "
                   title="Eliminar"
                 >
                   <Trash2 size={18} />
@@ -617,7 +654,11 @@ function TabTypes({
                   setTypeFormData({ ...typeFormData, name: e.target.value })
                 }
                 placeholder="Ej: Capstone"
-                className="mt-2 w-full text-black rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00BDD8]"
+                className="
+                  mt-2 w-full text-black rounded-lg border border-gray-300 px-3
+                  py-2
+                  focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+                "
               />
             </div>
             <div>
@@ -633,7 +674,10 @@ function TabTypes({
                   })
                 }
                 placeholder="Opcional"
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00BDD8]"
+                className="
+                  mt-2 w-full rounded-lg border border-gray-300 px-3 py-2
+                  focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+                "
                 rows={3}
               />
             </div>
@@ -698,7 +742,11 @@ function TabPhases({
             setPhaseFormData({ name: '', description: '' });
             setEditingPhase(null);
           }}
-          className="flex items-center gap-2 rounded-lg bg-[#00BDD8] px-4 py-2 font-semibold text-[#01142B] hover:bg-[#00A5C0]"
+          className="
+            flex items-center gap-2 rounded-lg bg-[#00BDD8] px-4 py-2
+            font-semibold text-[#01142B]
+            hover:bg-[#00A5C0]
+          "
         >
           <Plus size={18} /> Crear Fase
         </button>
@@ -713,7 +761,10 @@ function TabPhases({
           {projectPhases.map((phase) => (
             <div
               key={phase.id}
-              className="flex items-center justify-between rounded-lg border border-gray-300 bg-white p-4 shadow-sm"
+              className="
+                flex items-center justify-between rounded-lg border
+                border-gray-300 bg-white p-4 shadow-sm
+              "
             >
               <div className="flex-1">
                 <h3 className="font-semibold text-[#01142B]">{phase.name}</h3>
@@ -723,11 +774,14 @@ function TabPhases({
               </div>
               <div className="flex items-center gap-3">
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  className={`
+                    rounded-full px-3 py-1 text-xs font-semibold
+                    ${
                     phase.isActive
                       ? 'bg-green-100 text-green-700'
                       : 'bg-gray-100 text-gray-700'
-                  }`}
+                  }
+                  `}
                 >
                   {phase.isActive ? 'Activo' : 'Inactivo'}
                 </span>
@@ -740,7 +794,10 @@ function TabPhases({
                     });
                     setShowEditForm(true);
                   }}
-                  className="rounded-lg p-2 text-blue-600 hover:bg-blue-50"
+                  className="
+                    rounded-lg p-2 text-blue-600
+                    hover:bg-blue-50
+                  "
                   title="Editar"
                 >
                   <Edit size={18} />
@@ -753,7 +810,10 @@ function TabPhases({
                       name: phase.name,
                     })
                   }
-                  className="rounded-lg p-2 text-red-600 hover:bg-red-50"
+                  className="
+                    rounded-lg p-2 text-red-600
+                    hover:bg-red-50
+                  "
                   title="Eliminar"
                 >
                   <Trash2 size={18} />
@@ -791,7 +851,10 @@ function TabPhases({
                   setPhaseFormData({ ...phaseFormData, name: e.target.value })
                 }
                 placeholder="Ej: Planificación"
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00BDD8]"
+                className="
+                  mt-2 w-full rounded-lg border border-gray-300 px-3 py-2
+                  focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+                "
               />
             </div>
             <div>
@@ -807,7 +870,10 @@ function TabPhases({
                   })
                 }
                 placeholder="Opcional"
-                className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00BDD8]"
+                className="
+                  mt-2 w-full rounded-lg border border-gray-300 px-3 py-2
+                  focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+                "
                 rows={3}
               />
             </div>
@@ -883,7 +949,10 @@ function TabMapping({
               setSelectedTypeForMapping(typeId);
               onLoadTypePhases(typeId);
             }}
-            className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#00BDD8]"
+            className="
+              mt-2 w-full rounded-lg border border-gray-300 px-3 py-2
+              focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+            "
           >
             <option value="">-- Selecciona --</option>
             {projectTypes.map((type) => (
@@ -919,7 +988,11 @@ function TabMapping({
                         <button
                           key={phase.id}
                           onClick={() => onAddPhase(phase.id)}
-                          className="rounded-lg bg-[#00BDD8] px-3 py-2 text-sm font-semibold text-[#01142B] hover:bg-[#00A5C0]"
+                          className="
+                            rounded-lg bg-[#00BDD8] px-3 py-2 text-sm
+                            font-semibold text-[#01142B]
+                            hover:bg-[#00A5C0]
+                          "
                         >
                           + {phase.name}
                         </button>
@@ -943,7 +1016,10 @@ function TabMapping({
                     return (
                       <div
                         key={item.phaseId}
-                        className="flex items-center justify-between rounded-lg border border-gray-300 bg-white p-4"
+                        className="
+                          flex items-center justify-between rounded-lg border
+                          border-gray-300 bg-white p-4
+                        "
                       >
                         <div className="flex-1">
                           <div className="font-semibold text-[#01142B]">
@@ -972,7 +1048,11 @@ function TabMapping({
                           <button
                             onClick={() => onMoveUp(index)}
                             disabled={index === 0}
-                            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                            className="
+                              rounded-lg p-2 text-gray-600
+                              hover:bg-gray-100
+                              disabled:opacity-50
+                            "
                             title="Subir"
                           >
                             ↑
@@ -980,14 +1060,21 @@ function TabMapping({
                           <button
                             onClick={() => onMoveDown(index)}
                             disabled={index === mappingFormData.length - 1}
-                            className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                            className="
+                              rounded-lg p-2 text-gray-600
+                              hover:bg-gray-100
+                              disabled:opacity-50
+                            "
                             title="Bajar"
                           >
                             ↓
                           </button>
                           <button
                             onClick={() => onRemovePhase(item.phaseId)}
-                            className="rounded-lg p-2 text-red-600 hover:bg-red-50"
+                            className="
+                              rounded-lg p-2 text-red-600
+                              hover:bg-red-50
+                            "
                             title="Eliminar"
                           >
                             <Trash2 size={18} />
@@ -1003,7 +1090,10 @@ function TabMapping({
               {mappingFormData.length > 0 && (
                 <button
                   onClick={() => setShowMappingConfirm(true)}
-                  className="rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700"
+                  className="
+                    rounded-lg bg-green-600 px-4 py-2 font-semibold text-white
+                    hover:bg-green-700
+                  "
                 >
                   Guardar Asignación
                 </button>
@@ -1040,13 +1130,19 @@ interface ModalProps {
 
 function Modal({ title, onClose, onSubmit, children }: ModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="
+      fixed inset-0 z-50 flex items-center justify-center bg-black/50
+      backdrop-blur-sm
+    ">
       <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-[#01142B]">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            className="
+              text-gray-500
+              hover:text-gray-700
+            "
           >
             <X size={20} />
           </button>
@@ -1055,13 +1151,19 @@ function Modal({ title, onClose, onSubmit, children }: ModalProps) {
         <div className="flex justify-end gap-3">
           <button
             onClick={onClose}
-            className="rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100"
+            className="
+              rounded-lg px-4 py-2 text-gray-700
+              hover:bg-gray-100
+            "
           >
             Cancelar
           </button>
           <button
             onClick={onSubmit}
-            className="rounded-lg bg-[#00BDD8] px-4 py-2 font-semibold text-[#01142B] hover:bg-[#00A5C0]"
+            className="
+              rounded-lg bg-[#00BDD8] px-4 py-2 font-semibold text-[#01142B]
+              hover:bg-[#00A5C0]
+            "
           >
             Guardar
           </button>
@@ -1086,7 +1188,10 @@ function ConfirmDeleteModal({
 }: ConfirmDeleteModalProps) {
   const typeLabel = type === 'type' ? 'tipo de proyecto' : 'fase';
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="
+      fixed inset-0 z-50 flex items-center justify-center bg-black/50
+      backdrop-blur-sm
+    ">
       <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
         <h2 className="mb-4 text-xl font-bold text-[#01142B]">
           Confirmar Eliminación
@@ -1098,13 +1203,19 @@ function ConfirmDeleteModal({
         <div className="flex justify-end gap-3">
           <button
             onClick={onCancel}
-            className="rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-100"
+            className="
+              rounded-lg px-4 py-2 text-gray-700
+              hover:bg-gray-100
+            "
           >
             Cancelar
           </button>
           <button
             onClick={onConfirm}
-            className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700"
+            className="
+              rounded-lg bg-red-600 px-4 py-2 font-semibold text-white
+              hover:bg-red-700
+            "
           >
             Eliminar
           </button>

@@ -86,7 +86,10 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex max-h-screen max-w-5xl flex-col rounded-lg bg-gray-900 p-6 text-white">
+      <DialogContent className="
+        flex max-h-screen max-w-5xl flex-col rounded-lg bg-gray-900 p-6
+        text-white
+      ">
         <DialogHeader className="mb-4">
           <DialogTitle className="text-center text-xl font-extrabold">
             📚 Estudiantes Inscritos
@@ -172,12 +175,20 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
                           : '⏳ En progreso'}
                       </td>
                       <td className="border border-gray-700 px-4 py-3">
-                        <div className="relative h-6 w-full rounded-full bg-gray-700">
+                        <div className="
+                          relative h-6 w-full rounded-full bg-gray-700
+                        ">
                           <div
-                            className="absolute top-0 left-0 h-6 rounded-full bg-green-500"
+                            className="
+                              absolute top-0 left-0 h-6 rounded-full
+                              bg-green-500
+                            "
                             style={{ width: `${student.progress}%` }}
                           />
-                          <p className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
+                          <p className="
+                            absolute inset-0 flex items-center justify-center
+                            text-xs font-bold text-white
+                          ">
                             {student.progress}%
                           </p>
                         </div>
@@ -193,7 +204,10 @@ const ModalFormCourse: React.FC<ModalFormCourseProps> = ({
         <DialogFooter className="mt-4">
           <Button
             onClick={onClose}
-            className="w-full rounded-lg bg-red-600 py-3 font-bold text-white hover:bg-red-700"
+            className="
+              w-full rounded-lg bg-red-600 py-3 font-bold text-white
+              hover:bg-red-700
+            "
           >
             Cerrar
           </Button>

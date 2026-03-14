@@ -83,23 +83,23 @@ export default function MyCoursesPreview() {
     return (
       <section
         className="
-        mb-8 overflow-visible px-4
-        sm:px-24
-      "
+          mb-8 overflow-visible px-4
+          sm:px-24
+        "
       >
         <div
           className="
-          mb-4 flex items-center justify-between pr-4
-          sm:pr-0
-        "
+            mb-4 flex items-center justify-between pr-4
+            sm:pr-0
+          "
         >
           <div className="flex items-center gap-2">
             <GrOverview className="text-xl text-white" />
             <StudentGradientText
               className="
-              text-2xl
-              sm:text-3xl
-            "
+                text-2xl
+                sm:text-3xl
+              "
             >
               Seguir viendo
             </StudentGradientText>
@@ -119,9 +119,9 @@ export default function MyCoursesPreview() {
                 >
                   <div
                     className="
-                    flex h-full flex-col overflow-hidden rounded-2xl border
-                    border-border bg-[#061C37]
-                  "
+                      flex h-full flex-col overflow-hidden rounded-2xl border
+                      border-border bg-[#061C37]
+                    "
                   >
                     <Skeleton className="h-40 w-full rounded-none" />
                     <div className="flex-1 space-y-3 p-4">
@@ -145,23 +145,23 @@ export default function MyCoursesPreview() {
     return (
       <section
         className="
-        mb-8 overflow-visible px-4
-        sm:px-24
-      "
+          mb-8 overflow-visible px-4
+          sm:px-24
+        "
       >
         <div
           className="
-          mb-4 flex items-center justify-between pr-4
-          sm:pr-0
-        "
+            mb-4 flex items-center justify-between pr-4
+            sm:pr-0
+          "
         >
           <div className="flex items-center gap-2">
             <GrOverview className="text-xl text-white" />
             <StudentGradientText
               className="
-              text-2xl
-              sm:text-3xl
-            "
+                text-2xl
+                sm:text-3xl
+              "
             >
               Seguir viendo
             </StudentGradientText>
@@ -180,23 +180,23 @@ export default function MyCoursesPreview() {
   return (
     <section
       className="
-      -mt-12 mb-8 overflow-visible px-4
-      sm:px-24
-    "
+        -mt-12 mb-8 overflow-visible px-4
+        sm:px-24
+      "
     >
       <div
         className="
-        flex items-center justify-between pr-4
-        sm:pr-0
-      "
+          flex items-center justify-between pr-4
+          sm:pr-0
+        "
       >
         <div className="flex items-center gap-2">
           <GrOverview className="text-xl text-white" />
           <StudentGradientText
             className="
-            text-2xl
-            sm:text-3xl
-          "
+              text-2xl
+              sm:text-3xl
+            "
           >
             Seguir viendo
           </StudentGradientText>
@@ -263,9 +263,10 @@ export default function MyCoursesPreview() {
                   >
                     <div
                       className="
-                      relative h-40 w-full overflow-hidden border-t border-r
-                      border-l border-border bg-[#061C37] will-change-transform
-                    "
+                        relative h-40 w-full overflow-hidden border-t border-r
+                        border-l border-border bg-[#061C37]
+                        will-change-transform
+                      "
                     >
                       <Image
                         src={getImageUrl(course.coverImageKey)}
@@ -276,22 +277,22 @@ export default function MyCoursesPreview() {
                       />
                       <div
                         className="
-                        absolute inset-0 bg-gradient-to-t from-[#061C37]
-                        via-[#061C37]/60 to-transparent
-                      "
+                          absolute inset-0 bg-gradient-to-t from-[#061C37]
+                          via-[#061C37]/60 to-transparent
+                        "
                       />
 
                       <div
                         className="
-                        absolute top-3 right-3 rounded-2xl bg-primary px-3
-                        py-1.5 text-[#0b1220] shadow-lg
-                      "
+                          absolute top-3 right-3 rounded-2xl bg-primary px-3
+                          py-1.5 text-[#0b1220] shadow-lg
+                        "
                       >
                         <p
                           className="
-                          mb-1 text-xs leading-tight font-semibold
-                          text-[#0b1220]
-                        "
+                            mb-1 text-xs leading-tight font-semibold
+                            text-[#0b1220]
+                          "
                         >
                           {badgeHeading}
                         </p>
@@ -309,9 +310,9 @@ export default function MyCoursesPreview() {
 
                     <div
                       className="
-                      flex flex-1 flex-col border-r border-b border-l
-                      border-border bg-[#061C37] p-4
-                    "
+                        flex flex-1 flex-col border-r border-b border-l
+                        border-border bg-[#061C37] p-4
+                      "
                     >
                       <h4
                         className="
@@ -340,8 +341,8 @@ export default function MyCoursesPreview() {
                       >
                         <div
                           className="
-                          h-1 flex-1 overflow-hidden rounded-full bg-[#0f2744]
-                        "
+                            h-1 flex-1 overflow-hidden rounded-full bg-[#0f2744]
+                          "
                         >
                           <div
                             className="
@@ -376,9 +377,9 @@ export default function MyCoursesPreview() {
           >
             <div
               className="
-              carousel-mobile-arrow flex size-10 items-center justify-center
-              rounded-full bg-black/40 backdrop-blur-sm
-            "
+                carousel-mobile-arrow flex size-10 items-center justify-center
+                rounded-full bg-black/40 backdrop-blur-sm
+              "
             >
               <IoIosArrowBack className="text-2xl text-white" />
             </div>
@@ -394,9 +395,9 @@ export default function MyCoursesPreview() {
         >
           <div
             className="
-            carousel-mobile-arrow flex size-10 items-center justify-center
-            rounded-full bg-black/40 backdrop-blur-sm
-          "
+              carousel-mobile-arrow flex size-10 items-center justify-center
+              rounded-full bg-black/40 backdrop-blur-sm
+            "
           >
             <IoIosArrowForward className="text-2xl text-white" />
           </div>

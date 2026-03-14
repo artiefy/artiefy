@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef,useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { toast } from 'sonner';
 
@@ -100,7 +100,7 @@ export function CreatePostWithMedia({
       className="space-y-4 rounded-lg border border-gray-700 bg-black/20 p-4"
     >
       <div>
-        <label className="text-primary text-sm font-medium mb-2 block">
+        <label className="mb-2 block text-sm font-medium text-primary">
           ¿Qué tienes en mente?
         </label>
         <Textarea
@@ -108,19 +108,34 @@ export function CreatePostWithMedia({
           placeholder="Escribe tu mensaje aquí..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="min-h-24 resize-none border-gray-600 bg-black/40 text-white placeholder:text-gray-500"
+          className="
+            min-h-24 resize-none border-gray-600 bg-black/40 text-white
+            placeholder:text-gray-500
+          "
           disabled={isLoading}
         />
       </div>
 
       {/* Inputs para media */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div
+        className="
+        grid grid-cols-1 gap-4
+        sm:grid-cols-3
+      "
+      >
         {/* Imagen */}
         <div>
-          <label className="text-primary text-xs font-medium mb-1 block">
+          <label className="mb-1 block text-xs font-medium text-primary">
             Imagen (máx 5MB)
           </label>
-          <label className="flex items-center justify-center rounded-md border border-dashed border-gray-600 bg-black/20 p-3 cursor-pointer hover:bg-black/30 transition">
+          <label
+            className="
+            flex cursor-pointer items-center justify-center rounded-md border
+            border-dashed border-gray-600 bg-black/20 p-3
+            transition
+            hover:bg-black/30
+          "
+          >
             <input
               type="file"
               accept="image/*"
@@ -136,10 +151,17 @@ export function CreatePostWithMedia({
 
         {/* Audio */}
         <div>
-          <label className="text-primary text-xs font-medium mb-1 block">
+          <label className="mb-1 block text-xs font-medium text-primary">
             Audio (máx 50MB)
           </label>
-          <label className="flex items-center justify-center rounded-md border border-dashed border-gray-600 bg-black/20 p-3 cursor-pointer hover:bg-black/30 transition">
+          <label
+            className="
+            flex cursor-pointer items-center justify-center rounded-md border
+            border-dashed border-gray-600 bg-black/20 p-3
+            transition
+            hover:bg-black/30
+          "
+          >
             <input
               type="file"
               accept="audio/*"
@@ -155,10 +177,17 @@ export function CreatePostWithMedia({
 
         {/* Video */}
         <div>
-          <label className="text-primary text-xs font-medium mb-1 block">
+          <label className="mb-1 block text-xs font-medium text-primary">
             Video (máx 200MB)
           </label>
-          <label className="flex items-center justify-center rounded-md border border-dashed border-gray-600 bg-black/20 p-3 cursor-pointer hover:bg-black/30 transition">
+          <label
+            className="
+            flex cursor-pointer items-center justify-center rounded-md border
+            border-dashed border-gray-600 bg-black/20 p-3
+            transition
+            hover:bg-black/30
+          "
+          >
             <input
               type="file"
               accept="video/*"
@@ -176,7 +205,7 @@ export function CreatePostWithMedia({
       {/* Progress bar */}
       {isLoading && uploadProgress > 0 && (
         <div className="space-y-1">
-          <div className="h-2 w-full rounded-full bg-gray-700 overflow-hidden">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-gray-700">
             <div
               className="h-full bg-primary transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}
@@ -189,7 +218,11 @@ export function CreatePostWithMedia({
       <Button
         type="submit"
         disabled={isLoading || isSubmitting || !content.trim()}
-        className="w-full bg-primary hover:bg-primary/90 text-black font-semibold"
+        className="
+          w-full bg-primary
+          font-semibold
+          text-black hover:bg-primary/90
+        "
       >
         {isLoading ? `Enviando... ${uploadProgress}%` : 'Publicar Post'}
       </Button>

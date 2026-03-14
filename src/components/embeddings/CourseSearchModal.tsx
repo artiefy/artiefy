@@ -211,9 +211,9 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
         {/* Header */}
         <div
           className="
-          flex items-center justify-between border-b border-cyan-500/20
-          bg-slate-900/50 px-6 py-4
-        "
+            flex items-center justify-between border-b border-cyan-500/20
+            bg-slate-900/50 px-6 py-4
+          "
         >
           <div>
             <h2 className="text-xl font-bold text-white">
@@ -277,8 +277,8 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
           {error && (
             <div
               className="
-              flex gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4
-            "
+                flex gap-3 rounded-lg border border-red-500/30 bg-red-500/10 p-4
+              "
             >
               <AlertCircle className="mt-0.5 size-5 flex-shrink-0 text-red-400" />
               <div>
@@ -307,9 +307,9 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
               {/* Respuesta principal */}
               <div
                 className="
-                rounded-lg border border-cyan-500/30 bg-gradient-to-br
-                from-cyan-500/10 to-blue-500/10 p-6
-              "
+                  rounded-lg border border-cyan-500/30 bg-gradient-to-br
+                  from-cyan-500/10 to-blue-500/10 p-6
+                "
               >
                 <div className="mb-3 flex items-center gap-2">
                   <span className="text-xl">💬</span>
@@ -319,8 +319,9 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
                 </div>
                 <p
                   className="
-                  mb-4 text-base leading-relaxed whitespace-pre-wrap text-white
-                "
+                    mb-4 text-base leading-relaxed whitespace-pre-wrap
+                    text-white
+                  "
                 >
                   {aiResponse}
                 </p>
@@ -355,9 +356,9 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
                       <div className="mb-3 flex items-center gap-3">
                         <span
                           className="
-                          rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs
-                          font-bold text-cyan-400
-                        "
+                            rounded-full bg-cyan-500/20 px-2 py-0.5 text-xs
+                            font-bold text-cyan-400
+                          "
                         >
                           Fuente {idx + 1}
                         </span>
@@ -405,8 +406,9 @@ export const CourseSearchModal: React.FC<CourseSearchModalProps> = ({
         {/* Footer */}
         <div
           className="
-          flex justify-end border-t border-cyan-500/20 bg-slate-900/50 px-6 py-4
-        "
+            flex justify-end border-t border-cyan-500/20 bg-slate-900/50 px-6
+            py-4
+          "
         >
           <Button
             onClick={onClose}

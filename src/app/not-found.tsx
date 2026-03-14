@@ -3,7 +3,10 @@ import Link from 'next/link';
 
 export default function NotFound() {
   return (
-    <div className="bg-background flex h-screen flex-col items-center justify-center p-5 text-center text-gray-800">
+    <div className="
+      bg-background flex h-screen flex-col items-center justify-center p-5
+      text-center text-gray-800
+    ">
       <Image
         src="/error-404.png"
         alt="Not Found"

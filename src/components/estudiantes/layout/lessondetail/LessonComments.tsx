@@ -651,14 +651,14 @@ export default function LessonComments({
                 {/* Avatar */}
                 <div
                   className="
-                  relative flex size-10 shrink-0 overflow-hidden rounded-full
-                "
+                    relative flex size-10 shrink-0 overflow-hidden rounded-full
+                  "
                 >
                   <span
                     className="
-                    flex size-full items-center justify-center rounded-full
-                    bg-accent/20 text-sm font-semibold text-accent
-                  "
+                      flex size-full items-center justify-center rounded-full
+                      bg-accent/20 text-sm font-semibold text-accent
+                    "
                   >
                     {comment.userName
                       .split(' ')
@@ -699,8 +699,8 @@ export default function LessonComments({
                   <div className="group flex items-start gap-2">
                     <div
                       className="
-                      flex-1 text-sm whitespace-pre-wrap text-slate-300
-                    "
+                        flex-1 text-sm whitespace-pre-wrap text-slate-300
+                      "
                     >
                       {comment.content}
                     </div>
@@ -792,9 +792,9 @@ export default function LessonComments({
                           comment.hasLiked
                             ? 'text-cyan-400'
                             : `
-                            text-slate-400
-                            hover:text-slate-100
-                          `
+                              text-slate-400
+                              hover:text-slate-100
+                            `
                         }
                       `}
                     >
@@ -917,16 +917,16 @@ export default function LessonComments({
                             <div key={reply.id} className="flex gap-2">
                               <div
                                 className="
-                                relative flex size-8 shrink-0 overflow-hidden
-                                rounded-full
-                              "
+                                  relative flex size-8 shrink-0 overflow-hidden
+                                  rounded-full
+                                "
                               >
                                 <span
                                   className="
-                                  flex size-full items-center justify-center
-                                  rounded-full bg-accent/20 text-xs
-                                  font-semibold text-accent
-                                "
+                                    flex size-full items-center justify-center
+                                    rounded-full bg-accent/20 text-xs
+                                    font-semibold text-accent
+                                  "
                                 >
                                   {reply.userName
                                     .split(' ')
@@ -940,8 +940,8 @@ export default function LessonComments({
                                 <div className="flex items-center gap-2">
                                   <span
                                     className="
-                                    text-sm font-medium text-slate-100
-                                  "
+                                      text-sm font-medium text-slate-100
+                                    "
                                   >
                                     {reply.userName}
                                   </span>

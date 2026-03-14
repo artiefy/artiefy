@@ -302,6 +302,7 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
     return {
       ...meeting,
+      joinUrl: meeting.joinUrl ?? null, // ✅ Asegurar que joinUrl está mapeado
       startDateTime: startOutIso,
       endDateTime: endOutIso,
       videoUrl: finalVideoUrl,

@@ -24,28 +24,29 @@ export function ProjectsRightRail({
   return (
     <aside
       className="
-      hidden w-80 shrink-0
-      xl:block
-    "
+        hidden w-80 shrink-0
+        xl:block
+      "
     >
       <div className="sticky top-24 space-y-4">
         <div
           className="
-          glass-panel relative overflow-hidden rounded-2xl border
-          border-border/50 bg-card/60 p-4
-        "
+            glass-panel relative overflow-hidden rounded-2xl border
+            border-border/50 bg-card/60 p-4
+          "
         >
           <div
             className="
-            absolute top-0 right-0 size-32 bg-gradient-to-br from-orange-500/10
-            to-rose-500/10 blur-3xl
-          "
+              absolute top-0 right-0 size-32 bg-gradient-to-br
+              from-orange-500/10 to-rose-500/10 blur-3xl
+            "
           />
           <div className="relative mb-4 flex items-center gap-2">
             <span
               className="
-              rounded-xl bg-gradient-to-r from-orange-500/20 to-rose-500/20 p-2
-            "
+                rounded-xl bg-gradient-to-r from-orange-500/20 to-rose-500/20
+                p-2
+              "
             >
               <Flame className="size-5 text-orange-400" />
             </span>
@@ -64,19 +65,19 @@ export function ProjectsRightRail({
               >
                 <div
                   className="
-                  flex size-7 shrink-0 items-center justify-center rounded-lg
-                  bg-gradient-to-br from-amber-400 to-yellow-500 text-xs
-                  font-bold text-black
-                "
+                    flex size-7 shrink-0 items-center justify-center rounded-lg
+                    bg-gradient-to-br from-amber-400 to-yellow-500 text-xs
+                    font-bold text-black
+                  "
                 >
                   {index + 1}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p
                     className="
-                    truncate text-sm font-semibold text-foreground
-                    group-hover:text-primary
-                  "
+                      truncate text-sm font-semibold text-foreground
+                      group-hover:text-primary
+                    "
                   >
                     {project.title}
                   </p>
@@ -91,21 +92,22 @@ export function ProjectsRightRail({
 
         <div
           className="
-          glass-panel relative overflow-hidden rounded-2xl border
-          border-border/50 bg-card/60 p-4
-        "
+            glass-panel relative overflow-hidden rounded-2xl border
+            border-border/50 bg-card/60 p-4
+          "
         >
           <div
             className="
-            absolute top-0 right-0 size-32 bg-gradient-to-br from-emerald-500/10
-            to-teal-500/10 blur-3xl
-          "
+              absolute top-0 right-0 size-32 bg-gradient-to-br
+              from-emerald-500/10 to-teal-500/10 blur-3xl
+            "
           />
           <div className="relative mb-4 flex items-center gap-2">
             <span
               className="
-              rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 p-2
-            "
+                rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20
+                p-2
+              "
             >
               <Users className="size-5 text-emerald-400" />
             </span>
@@ -149,8 +151,8 @@ export function ProjectsRightRail({
             ) : (
               <p
                 className="
-                rounded-xl bg-[#1A2333]/30 p-3 text-xs text-muted-foreground
-              "
+                  rounded-xl bg-[#1A2333]/30 p-3 text-xs text-muted-foreground
+                "
               >
                 No hay colaboradores visibles por ahora.
               </p>
@@ -160,21 +162,21 @@ export function ProjectsRightRail({
 
         <div
           className="
-          glass-panel relative overflow-hidden rounded-2xl border
-          border-border/50 bg-card/60 p-4
-        "
+            glass-panel relative overflow-hidden rounded-2xl border
+            border-border/50 bg-card/60 p-4
+          "
         >
           <div
             className="
-            absolute top-0 right-0 size-32 bg-gradient-to-br from-primary/10
-            to-cyan-500/10 blur-3xl
-          "
+              absolute top-0 right-0 size-32 bg-gradient-to-br from-primary/10
+              to-cyan-500/10 blur-3xl
+            "
           />
           <div className="relative mb-4 flex items-center gap-2">
             <span
               className="
-              rounded-xl bg-gradient-to-r from-primary/20 to-cyan-500/20 p-2
-            "
+                rounded-xl bg-gradient-to-r from-primary/20 to-cyan-500/20 p-2
+              "
             >
               <Zap className="size-5 text-primary" />
             </span>

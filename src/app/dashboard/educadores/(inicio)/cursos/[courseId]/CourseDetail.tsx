@@ -1996,7 +1996,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     <div
       className="relative min-h-screen w-full overflow-hidden"
       style={{
-        backgroundColor: 'rgb(1, 11, 23)',
+        backgroundColor: 'rgb(25, 45, 80)',
         backgroundSize: 'cover',
         backgroundPosition: 'center center',
       }}
@@ -2004,8 +2004,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       {/* Overlay oscuro para mejorar legibilidad */}
       <div
         className="
-          pointer-events-none absolute inset-0 bg-gradient-to-br from-black/70
-          via-[#010b17]/60 to-black/70
+          pointer-events-none absolute inset-0 bg-gradient-to-br from-black/50
+          via-[#1a2d4a]/30 to-black/50
         "
       />
 
@@ -2163,7 +2163,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             <Card
               className="
                 zoom-in sticky top-0 z-30 mt-3 h-auto overflow-hidden border-2
-                border-cyan-500/30 bg-slate-950 p-4 shadow-2xl transition-all
+                border-cyan-500/30 bg-slate-800 p-4 shadow-2xl transition-all
                 duration-500 ease-out
                 hover:border-cyan-500/60 hover:shadow-cyan-500/30
                 sm:p-8
@@ -3074,7 +3074,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         <div
                           className="
                             mb-6 rounded-2xl border border-cyan-700/30
-                            bg-[#101c2b] p-6 shadow
+                            bg-[#1a2f3f] p-6 shadow
                           "
                         >
                           <h2 className="mb-1 text-xl font-bold text-cyan-300">
@@ -3091,7 +3091,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               rows={2}
                               className="
                                 w-full resize-none rounded-xl border
-                                border-cyan-700/20 bg-[#0d1726] px-4 py-3
+                                border-cyan-700/20 bg-[#142030] px-4 py-3
                                 text-base text-white
                                 placeholder:text-white/30
                                 focus:border-cyan-500 focus:outline-none
@@ -3108,7 +3108,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               rows={2}
                               className="
                                 w-full resize-none rounded-xl border
-                                border-cyan-700/20 bg-[#0d1726] px-4 py-3
+                                border-cyan-700/20 bg-[#142030] px-4 py-3
                                 text-sm text-white
                                 placeholder:text-white/30
                                 focus:border-cyan-500 focus:outline-none

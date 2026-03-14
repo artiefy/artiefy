@@ -139,9 +139,9 @@ export default function EditUserModal({
         {/* Header fijo */}
         <div
           className="
-          absolute top-0 right-0 left-0 z-10 border-b border-white/10
-          bg-[#01142B] p-6
-        "
+            absolute top-0 right-0 left-0 z-10 border-b border-white/10
+            bg-[#01142B] p-6
+          "
         >
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-[#3AF4EF]">
@@ -163,17 +163,17 @@ export default function EditUserModal({
         <div className="h-full overflow-y-auto px-6 py-24">
           <div
             className="
-            grid gap-8
-            md:grid-cols-[250px_1fr]
-          "
+              grid gap-8
+              md:grid-cols-[250px_1fr]
+            "
           >
             {/* Sidebar - Profile Image & Quick Info */}
             <div className="space-y-6">
               <div
                 className="
-                relative mx-auto size-48 overflow-hidden rounded-xl border-2
-                border-[#3AF4EF] shadow-lg
-              "
+                  relative mx-auto size-48 overflow-hidden rounded-xl border-2
+                  border-[#3AF4EF] shadow-lg
+                "
               >
                 {/* Priorizar profileImageKey de la BD si existe y el usuario es educador */}
                 {editedUser.role === 'educador' &&
@@ -202,9 +202,10 @@ export default function EditUserModal({
                 ) : (
                   <div
                     className="
-                    flex size-full items-center justify-center bg-gradient-to-br
-                    from-[#012A5C] to-[#01142B] text-4xl font-bold text-white
-                  "
+                      flex size-full items-center justify-center
+                      bg-gradient-to-br from-[#012A5C] to-[#01142B] text-4xl
+                      font-bold text-white
+                    "
                   >
                     {editedUser.firstName[0]}
                   </div>
@@ -282,9 +283,9 @@ export default function EditUserModal({
                 </h3>
                 <div
                   className="
-                  grid gap-4
-                  md:grid-cols-2
-                "
+                    grid gap-4
+                    md:grid-cols-2
+                  "
                 >
                   <div>
                     <label className="mb-2 block text-sm text-gray-400">
@@ -343,9 +344,9 @@ export default function EditUserModal({
                 </h3>
                 <div
                   className="
-                  grid gap-4
-                  md:grid-cols-2
-                "
+                    grid gap-4
+                    md:grid-cols-2
+                  "
                 >
                   <div>
                     <label className="mb-2 block text-sm text-gray-400">
@@ -469,9 +470,9 @@ export default function EditUserModal({
                       {editedUser.profileImageKey && (
                         <div
                           className="
-                          mb-3 overflow-hidden rounded-lg border
-                          border-[#3AF4EF]/30
-                        "
+                            mb-3 overflow-hidden rounded-lg border
+                            border-[#3AF4EF]/30
+                          "
                         >
                           <Image
                             src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${editedUser.profileImageKey}`}
@@ -513,9 +514,9 @@ export default function EditUserModal({
                             <>
                               <span
                                 className="
-                                size-4 animate-spin rounded-full border-2
-                                border-[#3AF4EF] border-t-transparent
-                              "
+                                  size-4 animate-spin rounded-full border-2
+                                  border-[#3AF4EF] border-t-transparent
+                                "
                               />
                               Subiendo...
                             </>
@@ -572,9 +573,9 @@ export default function EditUserModal({
                 </h3>
                 <div
                   className="
-                  grid gap-3
-                  sm:grid-cols-2
-                "
+                    grid gap-3
+                    sm:grid-cols-2
+                  "
                 >
                   {availablePermissions.map((permission) => (
                     <label
@@ -613,9 +614,9 @@ export default function EditUserModal({
         {/* Footer fijo */}
         <div
           className="
-          absolute right-0 bottom-0 left-0 border-t border-white/10 bg-[#01142B]
-          p-6
-        "
+            absolute right-0 bottom-0 left-0 border-t border-white/10
+            bg-[#01142B] p-6
+          "
         >
           <div className="flex justify-end gap-4">
             <button

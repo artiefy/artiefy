@@ -116,9 +116,9 @@ export const ChatList = ({
       <div className="border-b border-gray-200 p-4">
         <h2
           className="
-          flex items-center justify-center gap-2 text-center text-lg
-          font-semibold text-gray-800
-        "
+            flex items-center justify-center gap-2 text-center text-lg
+            font-semibold text-gray-800
+          "
         >
           {activeType === 'tickets' ? (
             'Tickets de Soporte'
@@ -161,8 +161,9 @@ export const ChatList = ({
       {chats.length === 0 ? (
         <div
           className="
-          flex flex-1 items-center justify-center p-8 text-center text-gray-500
-        "
+            flex flex-1 items-center justify-center p-8 text-center
+            text-gray-500
+          "
         >
           {activeType === 'tickets'
             ? 'No tienes tickets de soporte. Crea uno nuevo para obtener ayuda.'
@@ -221,19 +222,19 @@ export const ChatList = ({
                     ${
                       chat.type && chatTypeConfig[chat.type]?.color === 'purple'
                         ? `
-                        bg-purple-500
-                        hover:bg-purple-600
-                      `
+                          bg-purple-500
+                          hover:bg-purple-600
+                        `
                         : chat.type &&
                             chatTypeConfig[chat.type]?.color === 'green'
                           ? `
-                          bg-green-500
-                          hover:bg-green-600
-                        `
+                            bg-green-500
+                            hover:bg-green-600
+                          `
                           : `
-                          bg-blue-500
-                          hover:bg-blue-600
-                        `
+                            bg-blue-500
+                            hover:bg-blue-600
+                          `
                     }
                   `}
                 >

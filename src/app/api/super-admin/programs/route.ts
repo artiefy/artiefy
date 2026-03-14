@@ -243,7 +243,7 @@ export async function PUT(req: NextRequest) {
       coverImageKey: z.string().optional(),
       categoryid: z.number(),
       rating: z.number().optional(),
-      certificationTypeId: z.number().optional(),
+      certificationTypeId: z.number().nullable().optional(),
       subjectIds: z.array(z.number()).optional(),
     });
 

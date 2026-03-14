@@ -34,32 +34,32 @@ export function NextLessonModal({
         >
           <div
             className="
-            flex size-12 items-center justify-center rounded-xl border-2
-            border-green-500 bg-green-600/30 transition-transform duration-200
-            hover:scale-110
-          "
+              flex size-12 items-center justify-center rounded-xl border-2
+              border-green-500 bg-green-600/30 transition-transform duration-200
+              hover:scale-110
+            "
           >
             <ChevronRight
               className="
-              size-6 text-green-400 transition-transform duration-200
-              hover:scale-110
-            "
+                size-6 text-green-400 transition-transform duration-200
+                hover:scale-110
+              "
             />
           </div>
         </Link>
         <div className="min-w-0">
           <p
             className="
-            mb-0.5 text-[10px] font-semibold tracking-wider
-            text-muted-foreground uppercase
-          "
+              mb-0.5 text-[10px] font-semibold tracking-wider
+              text-muted-foreground uppercase
+            "
           >
             Disponible
           </p>
           <p
             className="
-            max-w-[200px] truncate text-sm font-medium text-foreground
-          "
+              max-w-[200px] truncate text-sm font-medium text-foreground
+            "
           >
             {nextLesson.title}
           </p>
@@ -77,9 +77,9 @@ export function NextLessonModal({
       >
         <ChevronRight
           className="
-          size-6 text-green-400 transition-transform duration-200
-          hover:scale-110
-        "
+            size-6 text-green-400 transition-transform duration-200
+            hover:scale-110
+          "
         />
       </Link>
     </div>

@@ -218,9 +218,9 @@ export default function FloatingChat({
         {hasNotification && (
           <span
             className="
-            absolute -top-1 -right-1 size-3 rounded-full border-2 border-white
-            bg-red-500
-          "
+              absolute -top-1 -right-1 size-3 rounded-full border-2 border-white
+              bg-red-500
+            "
           />
         )}
       </button>
@@ -228,14 +228,14 @@ export default function FloatingChat({
       {isExpanded && (
         <div
           className="
-          fixed right-4 bottom-20 z-50 flex h-[500px] w-[350px] flex-col
-          rounded-lg border border-gray-700 bg-gray-800 shadow-xl
-        "
+            fixed right-4 bottom-20 z-50 flex h-[500px] w-[350px] flex-col
+            rounded-lg border border-gray-700 bg-gray-800 shadow-xl
+          "
         >
           <div
             className="
-            flex items-center justify-between border-b border-gray-700 p-4
-          "
+              flex items-center justify-between border-b border-gray-700 p-4
+            "
           >
             <h3 className="text-lg font-semibold text-white">
               {userName ? `Chat con ${userName}` : 'Nuevo Chat'}

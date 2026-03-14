@@ -151,12 +151,21 @@ export default function RolesTab() {
   };
 
   return (
-    <div className="rounded-lg border border-white/10 bg-gray-800/60 p-4 text-white shadow-md">
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="
+      rounded-lg border border-white/10 bg-gray-800/60 p-4 text-white shadow-md
+    ">
+      <div className="
+        mb-4 flex flex-col gap-2
+        sm:flex-row sm:items-center sm:justify-between
+      ">
         <h2 className="text-lg font-bold">Roles Secundarios</h2>
         <button
           onClick={openCreateModal}
-          className="w-full rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 sm:w-auto"
+          className="
+            w-full rounded bg-blue-600 px-4 py-2 text-white transition
+            hover:bg-blue-700
+            sm:w-auto
+          "
         >
           + Nuevo Rol
         </button>
@@ -178,7 +187,10 @@ export default function RolesTab() {
               {roles.map((role) => (
                 <tr
                   key={role.id}
-                  className="border-t border-white/10 hover:bg-gray-700/30"
+                  className="
+                    border-t border-white/10
+                    hover:bg-gray-700/30
+                  "
                 >
                   <td className="px-4 py-2">{role.name}</td>
                   <td className="px-4 py-2 text-sm text-gray-300">
@@ -187,16 +199,25 @@ export default function RolesTab() {
                       .map((p) => p.name)
                       .join(', ') || '—'}
                   </td>
-                  <td className="flex flex-col gap-2 px-4 py-2 sm:flex-row">
+                  <td className="
+                    flex flex-col gap-2 px-4 py-2
+                    sm:flex-row
+                  ">
                     <button
                       onClick={() => openEditModal(role)}
-                      className="rounded bg-yellow-600 px-3 py-1 text-white transition hover:bg-yellow-700"
+                      className="
+                        rounded bg-yellow-600 px-3 py-1 text-white transition
+                        hover:bg-yellow-700
+                      "
                     >
                       Editar
                     </button>
                     <button
                       onClick={() => handleDelete(role.id)}
-                      className="rounded bg-red-600 px-3 py-1 text-white transition hover:bg-red-700"
+                      className="
+                        rounded bg-red-600 px-3 py-1 text-white transition
+                        hover:bg-red-700
+                      "
                     >
                       Eliminar
                     </button>
@@ -210,15 +231,23 @@ export default function RolesTab() {
 
       {/* MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+        <div className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4
+        ">
           <div className="w-full max-w-lg rounded-lg bg-gray-900 p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between border-b border-gray-700 pb-2">
+            <div className="
+              mb-4 flex items-center justify-between border-b border-gray-700
+              pb-2
+            ">
               <h2 className="text-lg font-semibold">
                 {editingRole ? 'Editar Rol' : 'Crear Nuevo Rol'}
               </h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-xl text-red-400 hover:text-red-600"
+                className="
+                  text-xl text-red-400
+                  hover:text-red-600
+                "
               >
                 ×
               </button>
@@ -232,10 +261,17 @@ export default function RolesTab() {
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="rounded border border-gray-600 bg-gray-800 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="
+                  rounded border border-gray-600 bg-gray-800 px-3 py-2
+                  text-white
+                  focus:ring-2 focus:ring-blue-500 focus:outline-none
+                "
               />
 
-              <div className="flex max-h-48 flex-wrap gap-3 overflow-y-auto rounded border border-gray-700 bg-gray-800 p-1">
+              <div className="
+                flex max-h-48 flex-wrap gap-3 overflow-y-auto rounded border
+                border-gray-700 bg-gray-800 p-1
+              ">
                 {permisos.map((permiso) => (
                   <label
                     key={permiso.id}
@@ -255,7 +291,10 @@ export default function RolesTab() {
               <div className="flex justify-end">
                 <button
                   onClick={handleSave}
-                  className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+                  className="
+                    rounded bg-blue-600 px-4 py-2 text-white transition
+                    hover:bg-blue-700
+                  "
                 >
                   {editingRole ? 'Actualizar Rol' : 'Crear Rol'}
                 </button>

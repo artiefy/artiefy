@@ -139,13 +139,17 @@ const FileUpload: React.FC<FileUploadProps> = ({
         {label}
       </label>
       <div
-        className={`mt-2 w-4/5 rounded-lg border-2 border-dashed p-8 ${
+        className={`
+          mt-2 w-4/5 rounded-lg border-2 border-dashed p-8
+          ${
           isDragging
             ? 'border-blue-500 bg-blue-50'
             : errors
               ? 'border-red-500 bg-red-50'
               : 'border-gray-300 bg-gray-50'
-        } transition-all duration-300 ease-in-out`}
+        }
+          transition-all duration-300 ease-in-out
+        `}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -183,7 +187,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
             />
             <label
               htmlFor={`file-upload-${type}`}
-              className="bg-primary mt-4 inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
+              className="
+                bg-primary mt-4 inline-flex cursor-pointer items-center
+                rounded-md border border-transparent px-4 py-2 text-sm
+                font-medium text-white shadow-xs
+                hover:opacity-80
+                focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                focus:outline-hidden
+              "
             >
               Seleccionar {tipo}
             </label>
@@ -201,7 +212,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 />
                 <button
                   onClick={() => handleRemoveFile(0)}
-                  className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                  className="
+                    absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                    text-white
+                    hover:opacity-70
+                  "
                 >
                   <MdClose className="size-5" />
                 </button>
@@ -222,7 +237,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 </video>
                 <button
                   onClick={() => handleRemoveFile(0)}
-                  className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                  className="
+                    absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                    text-white
+                    hover:opacity-70
+                  "
                 >
                   <MdClose className="size-5" />
                 </button>
@@ -241,7 +260,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 {files.map((_, index) => (
                   <div
                     key={index}
-                    className="relative flex items-center justify-between rounded-lg bg-gray-100 p-2"
+                    className="
+                      relative flex items-center justify-between rounded-lg
+                      bg-gray-100 p-2
+                    "
                   >
                     <p className="truncate text-sm text-gray-500">
                       {fileNames[index]}
@@ -254,7 +276,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     </p>
                     <button
                       onClick={() => handleRemoveFile(index)}
-                      className="absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1 text-white hover:opacity-70"
+                      className="
+                        absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
+                        text-white
+                        hover:opacity-70
+                      "
                     >
                       <MdClose className="size-5" />
                     </button>
@@ -273,7 +299,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     />{' '}
                     <label
                       htmlFor={`additional-file-upload-${type}`}
-                      className="bg-primary inline-flex cursor-pointer items-center rounded-md border border-transparent px-4 py-2 text-sm font-medium text-white shadow-xs hover:opacity-80 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-hidden"
+                      className="
+                        bg-primary inline-flex cursor-pointer items-center
+                        rounded-md border border-transparent px-4 py-2 text-sm
+                        font-medium text-white shadow-xs
+                        hover:opacity-80
+                        focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                        focus:outline-hidden
+                      "
                     >
                       {' '}
                       Subir más archivos{' '}

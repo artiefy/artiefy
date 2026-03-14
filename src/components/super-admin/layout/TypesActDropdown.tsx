@@ -70,9 +70,12 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
             const selectedId = Number(e.target.value);
             setTypeActividad(selectedId);
           }}
-          className={`mb-5 w-80 rounded border p-2 text-black outline-hidden ${
+          className={`
+            mb-5 w-80 rounded border p-2 text-black outline-hidden
+            ${
             errors.type ? 'border-red-500' : 'border-slate-200'
-          }`}
+          }
+          `}
         >
           <option value="">Selecciona un tipo de actividad</option>
           {allTypeAct.map((type) => (

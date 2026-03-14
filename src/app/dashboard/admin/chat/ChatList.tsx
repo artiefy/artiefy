@@ -95,9 +95,9 @@ export default function ChatList({
               {unreadConversationIds?.includes(conv.id) && (
                 <span
                   className="
-                  absolute -top-1 -right-1 size-3 rounded-full border-2
-                  border-white bg-red-500
-                "
+                    absolute -top-1 -right-1 size-3 rounded-full border-2
+                    border-white bg-red-500
+                  "
                 />
               )}
             </div>

@@ -294,13 +294,13 @@ export default function SpaceOptionsPage() {
                 <TableCell>
                   <span
                     className={`
-                                          rounded px-2 py-1 text-sm
-                                          ${
+                      rounded px-2 py-1 text-sm
+                      ${
                                             space.isActive
                                               ? 'bg-green-100 text-green-800'
                                               : 'bg-gray-100 text-gray-800'
                                           }
-                                        `}
+                    `}
                   >
                     {space.isActive ? 'Activo' : 'Inactivo'}
                   </span>

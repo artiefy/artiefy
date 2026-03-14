@@ -193,7 +193,7 @@ function App() {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -209,7 +209,7 @@ function App() {
           <p className="text-lg font-semibold text-red-500">{error}</p>
           <button
             onClick={fetchCourses}
-            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -225,7 +225,10 @@ function App() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/dashboard/super-admin"
             >
               Inicio
@@ -234,7 +237,10 @@ function App() {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/"
             >
               Dashboard curso: {courses?.title}
@@ -245,20 +251,42 @@ function App() {
       </Breadcrumb>
       <Button
         onClick={() => window.history.back()}
-        className="mt-4 bg-gray-800 text-center hover:bg-gray-800/80"
+        className="
+          mt-4 bg-gray-800 text-center
+          hover:bg-gray-800/80
+        "
       >
-        <ArrowLeftIcon className="animate-bounce-right size-5" />
+        <ArrowLeftIcon className="size-5 animate-bounce-right" />
         Volver
       </Button>
       <div className="mt-2 min-h-screen rounded-lg border-0 text-white shadow-lg">
         {/* Header */}
         <div className="group relative">
-          <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-          <div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-2 text-white transition-transform duration-300 ease-in-out" />
-          <div className="zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
+          <div
+            className="
+            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+            duration-500
+            group-hover:opacity-100
+          "
+          />
+          <div
+            className="
+            zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
+            border-0 bg-gray-800 px-2 text-white transition-transform
+            duration-300 ease-in-out
+          "
+          />
+          <div
+            className="
+            zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg
+            border-0 bg-gray-800 px-6 py-8 text-white transition-transform
+            duration-300 ease-in-out
+          "
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center">
-                <GraduationCap className="text-primary size-8" />
+                <GraduationCap className="size-8 text-primary" />
                 <h1 className="ml-2 text-2xl font-bold text-white">
                   <span className="text-primary">
                     Panel de control del curso:
@@ -272,8 +300,21 @@ function App() {
         {/* Main Content */}
         <main className="mx-auto max-w-7xl px-2 py-8">
           <div className="group relative mb-4">
-            <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-            <div className="zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
+            <div
+              className="
+              absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
+              transition duration-500
+              group-hover:opacity-100
+            "
+            />
+            <div
+              className="
+              zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg
+              border-0 bg-gray-800 px-6 py-8 text-white transition-transform
+              duration-300 ease-in-out
+            "
+            >
               <div>
                 <h2 className="justify-start text-2xl font-bold text-white">
                   Curso: {courses?.title ?? 'Selecciona un curso'}
@@ -287,7 +328,13 @@ function App() {
 
           {/* Stats Grid */}
           {courses && (
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div
+              className="
+              mb-8 grid grid-cols-1 gap-6
+              md:grid-cols-2
+              lg:grid-cols-4
+            "
+            >
               <StatCard
                 icon={<Users className="size-6" />}
                 title="Total estudiantes registrados"
@@ -314,11 +361,29 @@ function App() {
 
           {/* Course Details */}
           {courses && (
-            <div className="flex flex-col justify-between gap-6 lg:flex-row">
+            <div
+              className="
+              flex flex-col justify-between gap-6
+              lg:flex-row
+            "
+            >
               {/* Lessons List */}
               <div className="group relative h-fit w-full">
-                <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-                <div className="zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
+                <div
+                  className="
+                  absolute -inset-0.5 animate-gradient rounded-xl
+                  bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B]
+                  opacity-0 blur transition duration-500
+                  group-hover:opacity-100
+                "
+                />
+                <div
+                  className="
+                  zoom-in relative flex h-auto flex-col overflow-hidden
+                  rounded-lg border-0 bg-gray-800 px-6 py-8 text-white
+                  transition-transform duration-300 ease-in-out
+                "
+                >
                   <h3 className="my-2 ml-4 text-xl font-semibold text-white">
                     Progreso de las Lecciones
                   </h3>
@@ -346,7 +411,11 @@ function App() {
                               </p>
                             </div>
                           </div>
-                          <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-200">
+                          <div
+                            className="
+                            mt-2 h-2 overflow-hidden rounded-full bg-gray-200
+                          "
+                          >
                             <div
                               className="h-full rounded-full bg-green-500"
                               style={{ width: `${lesson.progress ?? 0}%` }}
@@ -365,8 +434,21 @@ function App() {
               {/* Course Details */}
               {courses.modalidadesid && (
                 <div className="group relative h-fit w-1/3">
-                  <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-                  <div className="zoom-in relative flex h-auto flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-gray-400 transition-transform duration-300 ease-in-out">
+                  <div
+                    className="
+                    absolute -inset-0.5 animate-gradient rounded-xl
+                    bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B]
+                    opacity-0 blur transition duration-500
+                    group-hover:opacity-100
+                  "
+                  />
+                  <div
+                    className="
+                    zoom-in relative flex h-auto flex-col overflow-hidden
+                    rounded-lg border-0 bg-gray-800 px-6 py-8 text-gray-400
+                    transition-transform duration-300 ease-in-out
+                  "
+                  >
                     <div className="space-y-6">
                       <h3 className="mb-4 text-lg font-semibold text-white">
                         Sesiones del curso
@@ -403,10 +485,23 @@ interface StatCardProps {
 function StatCard({ icon, title, value, trend }: StatCardProps) {
   return (
     <div className="group relative">
-      <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-      <div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out">
+      <div
+        className="
+        absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+        from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+        duration-500
+        group-hover:opacity-100
+      "
+      />
+      <div
+        className="
+        zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
+        border-0 bg-gray-800 px-6 py-8 text-white transition-transform
+        duration-300 ease-in-out
+      "
+      >
         <div className="flex items-center">
-          <div className="bg-primary/10 rounded-lg p-2">
+          <div className="rounded-lg bg-primary/10 p-2">
             {React.cloneElement(icon, { className: 'h-6 w-6 text-primary' })}
           </div>
           <div className="ml-4">
@@ -429,10 +524,23 @@ interface UpcomingSessionProps {
 function UpcomingSession({ title, date, duration }: UpcomingSessionProps) {
   return (
     <div className="group relative">
-      <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-      <div className="zoom-in relative flex h-full flex-col overflow-hidden rounded-lg border-0 bg-gray-800 px-6 py-8 text-white transition-transform duration-300 ease-in-out" />
+      <div
+        className="
+        absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+        from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+        duration-500
+        group-hover:opacity-100
+      "
+      />
+      <div
+        className="
+        zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
+        border-0 bg-gray-800 px-6 py-8 text-white transition-transform
+        duration-300 ease-in-out
+      "
+      />
       <div className="flex items-start space-x-4">
-        <Calendar className="text-primary size-5 shrink-0" />
+        <Calendar className="size-5 shrink-0 text-primary" />
         <div>
           <p className="text-sm font-medium text-gray-900">{title}</p>
           <p className="text-sm text-gray-500">{date}</p>

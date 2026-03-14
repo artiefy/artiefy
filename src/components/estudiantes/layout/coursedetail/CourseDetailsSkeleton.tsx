@@ -6,11 +6,11 @@ export function CourseDetailsSkeleton() {
     <div className="min-h-screen bg-background">
       <main
         className="
-        mx-auto -mt-6 max-w-7xl px-4 py-2
-        sm:-mt-0
-        md:px-6 md:py-8
-        lg:px-8
-      "
+          mx-auto -mt-6 max-w-7xl px-4 py-2
+          sm:-mt-0
+          md:px-6 md:py-8
+          lg:px-8
+        "
       >
         {/* Breadcrumb Skeleton */}
         <div className="mb-4 flex items-center gap-2">
@@ -35,18 +35,18 @@ export function CourseDetailsSkeleton() {
         >
           <div
             className="
-            absolute inset-0 rounded-2xl bg-gradient-to-r from-background
-            via-background/95 to-background/80
-          "
+              absolute inset-0 rounded-2xl bg-gradient-to-r from-background
+              via-background/95 to-background/80
+            "
           ></div>
 
           <div className="relative z-10 space-y-6">
             {/* Layout Grid - Desktop: 3 cols, Mobile: 1 col */}
             <div
               className="
-              grid grid-cols-1 gap-8
-              lg:grid-cols-3
-            "
+                grid grid-cols-1 gap-8
+                lg:grid-cols-3
+              "
             >
               {/* Mini Card - Mobile Version (Top) */}
               <div className="lg:hidden">
@@ -150,9 +150,9 @@ export function CourseDetailsSkeleton() {
               {/* Side Card - Desktop Only */}
               <div
                 className="
-                hidden
-                lg:block
-              "
+                  hidden
+                  lg:block
+                "
               >
                 <div
                   className="

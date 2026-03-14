@@ -511,9 +511,9 @@ export function CourseHeader({
                   {/* Desktop view as badge */}
                   <div
                     className="
-                    hidden
-                    sm:block
-                  "
+                      hidden
+                      sm:block
+                    "
                   >
                     <Badge
                       className="
@@ -581,9 +581,9 @@ export function CourseHeader({
                   {/* Desktop view as badge */}
                   <div
                     className="
-                    hidden
-                    sm:block
-                  "
+                      hidden
+                      sm:block
+                    "
                   >
                     <Badge
                       className="
@@ -639,9 +639,9 @@ export function CourseHeader({
                   {/* Desktop view as badge */}
                   <div
                     className="
-                    hidden
-                    sm:block
-                  "
+                      hidden
+                      sm:block
+                    "
                   >
                     <Badge
                       className="
@@ -695,9 +695,9 @@ export function CourseHeader({
                   {/* Desktop view as badge */}
                   <div
                     className="
-                    hidden
-                    sm:block
-                  "
+                      hidden
+                      sm:block
+                    "
                   >
                     <Badge
                       className="
@@ -753,9 +753,9 @@ export function CourseHeader({
                   {/* Desktop view as badge */}
                   <div
                     className="
-                    hidden
-                    sm:block
-                  "
+                      hidden
+                      sm:block
+                    "
                   >
                     <Badge
                       className="
@@ -822,9 +822,9 @@ export function CourseHeader({
     return (
       <div
         className={`
-        flex items-center gap-1
-        ${color}
-      `}
+          flex items-center gap-1
+          ${color}
+        `}
       >
         <FaCrown className="text-lg" />
         <span className="text-base font-bold">
@@ -1395,22 +1395,22 @@ export function CourseHeader({
     <>
       <Card
         className="
-        overflow-hidden bg-gray-800 p-0 px-4 text-white
-        sm:px-0
-      "
+          overflow-hidden bg-gray-800 p-0 px-4 text-white
+          sm:px-0
+        "
       >
         {/* Cambia el CardHeader para reducir el espacio en móviles */}
         <CardHeader
           className="
-          mt-0 px-0 py-2 pt-0
-          sm:mt-0 sm:py-6 sm:pt-0
-        "
+            mt-0 px-0 py-2 pt-0
+            sm:mt-0 sm:py-6 sm:pt-0
+          "
         >
           <div
             className="
-            relative mt-0 mb-4 w-full pt-0 transition-all duration-200
-            sm:mt-0 sm:pt-0
-          "
+              relative mt-0 mb-4 w-full pt-0 transition-all duration-200
+              sm:mt-0 sm:pt-0
+            "
           >
             <AspectRatio
               ratio={16 / 9}
@@ -1482,9 +1482,10 @@ export function CourseHeader({
                         {/* Botón de volumen y pantalla completa */}
                         <div
                           className="
-                          absolute right-4 bottom-4 z-10 flex items-center gap-2
-                          sm:right-4 sm:bottom-4
-                        "
+                            absolute right-4 bottom-4 z-10 flex items-center
+                            gap-2
+                            sm:right-4 sm:bottom-4
+                          "
                         >
                           {/* Botón mute/unmute */}
                           <button
@@ -1503,16 +1504,16 @@ export function CourseHeader({
                             {isMuted ? (
                               <FaVolumeMute
                                 className="
-                                size-2.5
-                                sm:size-5
-                              "
+                                  size-2.5
+                                  sm:size-5
+                                "
                               />
                             ) : (
                               <FaVolumeUp
                                 className="
-                                size-2.5
-                                sm:size-5
-                              "
+                                  size-2.5
+                                  sm:size-5
+                                "
                               />
                             )}
                           </button>
@@ -1544,9 +1545,9 @@ export function CourseHeader({
                           >
                             <FaExpand
                               className="
-                              size-2.5
-                              sm:size-5
-                            "
+                                size-2.5
+                                sm:size-5
+                              "
                             />
                           </button>
                         </div>
@@ -1615,9 +1616,9 @@ export function CourseHeader({
         </CardHeader>
         <CardContent
           className="
-          mx-auto mt-0 w-full max-w-7xl space-y-4 px-4 pt-0
-          sm:mt-0 sm:px-6 sm:pt-0
-        "
+            mx-auto mt-0 w-full max-w-7xl space-y-4 px-4 pt-0
+            sm:mt-0 sm:px-6 sm:pt-0
+          "
         >
           {' '}
           {/* <-- Ensure no top margin/padding */}
@@ -1626,18 +1627,18 @@ export function CourseHeader({
             {/* Título en móviles - con chulito alineado a última palabra */}
             <h1
               className="
-              -mt-10 mb-2 line-clamp-2 text-lg font-bold text-cyan-300
-              sm:hidden
-            "
+                -mt-10 mb-2 line-clamp-2 text-lg font-bold text-cyan-300
+                sm:hidden
+              "
             >
               <span className="inline">
                 {course.title}{' '}
                 {isEnrolled && (
                   <CheckCircleIcon
                     className="
-                    mb-1 ml-1 inline-block size-5 flex-shrink-0 align-middle
-                    text-green-500
-                  "
+                      mb-1 ml-1 inline-block size-5 flex-shrink-0 align-middle
+                      text-green-500
+                    "
                   />
                 )}
               </span>
@@ -1646,11 +1647,11 @@ export function CourseHeader({
             {/* Título en desktop - adjusted top margin */}
             <h1
               className="
-              mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300
-              sm:-mt-12 sm:flex sm:items-center
-              md:text-2xl
-              lg:text-3xl
-            "
+                mb-2 line-clamp-2 hidden text-xl font-bold text-cyan-300
+                sm:-mt-12 sm:flex sm:items-center
+                md:text-2xl
+                lg:text-3xl
+              "
             >
               {course.title}
               {isEnrolled && (
@@ -1661,9 +1662,9 @@ export function CourseHeader({
           {/* MOVED: Mobile metadata section - now below title in mobile view */}
           <div
             className="
-            relative z-10 -my-2 block w-full
-            sm:mb-2 sm:hidden
-          "
+              relative z-10 -my-2 block w-full
+              sm:mb-2 sm:hidden
+            "
           >
             <div className="flex items-center justify-between gap-2">
               {/* Categoría alineada a la izquierda */}
@@ -1783,8 +1784,8 @@ export function CourseHeader({
                     return (
                       <div
                         className="
-                        flex items-center gap-0.5 font-bold text-blue-500
-                      "
+                          flex items-center gap-0.5 font-bold text-blue-500
+                        "
                       >
                         <FaStar className="text-xs" />
                         <span className="text-xs">
@@ -1802,28 +1803,28 @@ export function CourseHeader({
           {/* Course metadata */}
           <div
             className="
-            flex flex-col gap-4
-            sm:flex-row sm:items-center sm:justify-between
-          "
+              flex flex-col gap-4
+              sm:flex-row sm:items-center sm:justify-between
+            "
           >
             {/* EN MOBILE: Ocultar badges aquí, ya están debajo de la portada */}
             <div
               className="
-              flex w-full flex-col gap-2
-              sm:w-auto sm:flex-row sm:items-center sm:gap-4
-            "
+                flex w-full flex-col gap-2
+                sm:w-auto sm:flex-row sm:items-center sm:gap-4
+              "
             >
               <div
                 className="
-                flex flex-wrap items-center gap-2
-                sm:gap-2
-              "
+                  flex flex-wrap items-center gap-2
+                  sm:gap-2
+                "
               >
                 <div
                   className="
-                  hidden flex-wrap items-center gap-2
-                  sm:flex
-                "
+                    hidden flex-wrap items-center gap-2
+                    sm:flex
+                  "
                 >
                   <Badge
                     variant="outline"
@@ -1844,9 +1845,9 @@ export function CourseHeader({
                     isEnrolled
                       ? 'flex'
                       : `
-                    hidden
-                    sm:flex
-                  `
+                        hidden
+                        sm:flex
+                      `
                   }
                   flex-col gap-2
                   sm:flex-row sm:items-center
@@ -1854,16 +1855,16 @@ export function CourseHeader({
               >
                 <div
                   className="
-                  mt-3 flex items-center
-                  sm:mt-0
-                "
+                    mt-3 flex items-center
+                    sm:mt-0
+                  "
                 >
                   <FaCalendar className="mr-2 text-white" />
                   <span
                     className="
-                    text-xs text-white
-                    sm:text-sm
-                  "
+                      text-xs text-white
+                      sm:text-sm
+                    "
                   >
                     Creado: {formatDateString(course.createdAt)}
                   </span>
@@ -1872,9 +1873,9 @@ export function CourseHeader({
                   <FaClock className="mr-2 text-white" />
                   <span
                     className="
-                    text-xs text-white
-                    sm:text-sm
-                  "
+                      text-xs text-white
+                      sm:text-sm
+                    "
                   >
                     Actualizado: {formatDateString(course.updatedAt)}
                   </span>
@@ -1885,9 +1886,9 @@ export function CourseHeader({
             <div className="-mt-1 flex items-center justify-between gap-4 sm:gap-6">
               <div
                 className="
-                flex items-center
-                sm:-mt-1
-              "
+                  flex items-center
+                  sm:-mt-1
+                "
               >
                 <FaUserGraduate className="mr-2 text-blue-600" />
                 <span className="text-sm font-semibold text-blue-600 sm:text-base">
@@ -1897,9 +1898,9 @@ export function CourseHeader({
               </div>
               <div
                 className="
-                flex items-center
-                sm:-mt-1
-              "
+                  flex items-center
+                  sm:-mt-1
+                "
               >
                 {Array.from({ length: 5 }).map((_, index) => (
                   <StarIcon
@@ -1917,9 +1918,9 @@ export function CourseHeader({
                 ))}
                 <span
                   className="
-                  ml-2 text-base font-semibold text-yellow-400
-                  sm:text-lg
-                "
+                    ml-2 text-base font-semibold text-yellow-400
+                    sm:text-lg
+                  "
                 >
                   {course.rating?.toFixed(1)}
                 </span>
@@ -1929,16 +1930,16 @@ export function CourseHeader({
           {/* Course type and instructor info */}
           <div
             className="
-            mb-6 flex flex-col gap-4
-            sm:-mb-1 sm:flex-row sm:items-start sm:justify-between
-          "
+              mb-6 flex flex-col gap-4
+              sm:-mb-1 sm:flex-row sm:items-start sm:justify-between
+            "
           >
             <div className="w-full space-y-4">
               <div
                 className="
-                -mt-3 -mb-9 flex w-full items-center justify-between
-                sm:-mt-1 sm:-mb-2
-              "
+                  -mt-3 -mb-9 flex w-full items-center justify-between
+                  sm:-mt-1 sm:-mb-2
+                "
               >
                 <div className="flex w-full items-center justify-between">
                   <div>
@@ -1947,9 +1948,9 @@ export function CourseHeader({
                     </h3>
                     <em
                       className="
-                      mb-4 block text-sm font-bold text-cyan-300
-                      sm:text-base
-                    "
+                        mb-4 block text-sm font-bold text-cyan-300
+                        sm:text-base
+                      "
                     >
                       Educador
                     </em>
@@ -1957,9 +1958,9 @@ export function CourseHeader({
                   {/* Modalidad badge in mobile, right side, same line as educator */}
                   <span
                     className="
-                    ml-2
-                    sm:hidden
-                  "
+                      ml-2
+                      sm:hidden
+                    "
                   >
                     <Badge className="bg-red-500 text-sm text-white hover:bg-red-700">
                       {course.modalidad?.name}
@@ -1972,9 +1973,9 @@ export function CourseHeader({
               {isEnrolled && (forumId ?? course.forumId) && (
                 <div
                   className="
-                  mt-8 -mb-6 flex w-full justify-center
-                  sm:hidden
-                "
+                    mt-8 -mb-6 flex w-full justify-center
+                    sm:hidden
+                  "
                 >
                   <Link href={`/estudiantes/foro/${forumId ?? course.forumId}`}>
                     <button
@@ -1997,9 +1998,9 @@ export function CourseHeader({
             {/* Modalidad badge y Ver Certificado en desktop (right arrow, right of button) */}
             <div
               className="
-              hidden flex-col items-end gap-4
-              sm:flex
-            "
+                hidden flex-col items-end gap-4
+                sm:flex
+              "
             >
               <div className="flex items-center gap-2">
                 {canAccessCertificate && (
@@ -2098,22 +2099,22 @@ export function CourseHeader({
           >
             <div
               className="
-              relative h-auto origin-center scale-90 transform-gpu
-              sm:scale-100
-            "
+                relative h-auto origin-center scale-90 transform-gpu
+                sm:scale-100
+              "
             >
               {/* On mobile, Ver Certificado above enrollment buttons with arrows on both sides */}
               {localIsEnrolled && canAccessCertificate && (
                 <div
                   className="
-                  mb-2 flex w-full items-center justify-center gap-2
-                  sm:hidden
-                "
+                    mb-2 flex w-full items-center justify-center gap-2
+                    sm:hidden
+                  "
                 >
                   <MdKeyboardDoubleArrowRight
                     className="
-                    animate-arrow-slide size-7 -scale-x-100 text-primary
-                  "
+                      animate-arrow-slide size-7 -scale-x-100 text-primary
+                    "
                   />
                   <Button
                     onClick={() => setIsCertModalOpen(true)}
@@ -2132,9 +2133,9 @@ export function CourseHeader({
               {localIsEnrolled && (
                 <div
                   className="
-                  mb-2 flex w-full justify-center
-                  sm:hidden
-                "
+                    mb-2 flex w-full justify-center
+                    sm:hidden
+                  "
                 >
                   <button
                     onClick={async () => {
@@ -2180,16 +2181,15 @@ export function CourseHeader({
                   {/* Botones de inscripción en la fila inferior */}
                   <div
                     className="
-                    flex flex-col items-center space-y-2
-                    sm:flex-row sm:space-y-0 sm:space-x-4
-                  "
+                      flex flex-col items-center space-y-2
+                      sm:flex-row sm:space-y-0 sm:space-x-4
+                    "
                   >
                     <Button
                       className="
-                        h-10 w-56
-                        justify-center
-                        border-white/20 bg-primary text-sm font-semibold text-background
-                        transition-colors hover:bg-primary/90
+                        h-10 w-56 justify-center border-white/20 bg-primary
+                        text-sm font-semibold text-background transition-colors
+                        hover:bg-primary/90
                         active:scale-95
                         sm:h-12 sm:w-64 sm:text-lg
                       "
@@ -2278,9 +2278,9 @@ export function CourseHeader({
                       >
                         <strong
                           className="
-                          text-sm
-                          sm:text-lg
-                        "
+                            text-sm
+                            sm:text-lg
+                          "
                         >
                           {getButtonPrice() && <span>{getButtonPrice()}</span>}
                           <span>{getEnrollButtonText()}</span>
@@ -2305,9 +2305,9 @@ export function CourseHeader({
                     >
                       <strong
                         className="
-                        text-sm
-                        sm:text-lg
-                      "
+                          text-sm
+                          sm:text-lg
+                        "
                       >
                         {isEnrolling || isEnrollClicked ? (
                           <Icons.spinner className="size-5" />
@@ -2336,17 +2336,17 @@ export function CourseHeader({
           {/* Course description y botones responsivos */}
           <div
             className="
-            flex flex-col gap-4
-            sm:flex-row sm:items-start sm:justify-between
-          "
+              flex flex-col gap-4
+              sm:flex-row sm:items-start sm:justify-between
+            "
           >
             <div className="prose flex-1">
               <p
                 className="
-                text-justify text-sm leading-relaxed whitespace-pre-wrap
-                text-white
-                sm:text-base
-              "
+                  text-justify text-sm leading-relaxed whitespace-pre-wrap
+                  text-white
+                  sm:text-base
+                "
               >
                 {/* Cambiado a blanco */}
                 {course.description ?? 'No hay descripción disponible.'}
@@ -2358,22 +2358,21 @@ export function CourseHeader({
           {isCertModalOpen && (
             <div
               className="
-              fixed inset-0 z-[99999] flex items-center justify-center
-              bg-black/50
-            "
+                fixed inset-0 z-[99999] flex items-center justify-center
+                bg-black/50
+              "
             >
               <div
                 className="
-                relative w-full max-w-lg rounded-lg border border-gray-200
-                bg-[#01142B] p-6
-              "
+                  relative w-full max-w-lg rounded-lg border border-gray-200
+                  bg-[#01142B] p-6
+                "
               >
                 <button
                   onClick={() => setIsCertModalOpen(false)}
                   className="
-                    absolute
-                    top-2
-                    right-2 text-primary transition-colors hover:text-secondary
+                    absolute top-2 right-2 text-primary transition-colors
+                    hover:text-secondary
                   "
                   type="button"
                   aria-label="Cerrar"
@@ -2390,8 +2389,8 @@ export function CourseHeader({
                   />
                   <p
                     className="
-                    text-center font-serif text-lg text-primary italic
-                  "
+                      text-center font-serif text-lg text-primary italic
+                    "
                   >
                     ¡Felicitaciones! Has completado exitosamente el curso con
                     una calificación sobresaliente. Tu certificado está listo
@@ -2462,10 +2461,9 @@ export function CourseHeader({
                 <div className="flex flex-col space-y-4">
                   <Button
                     className="
-                      h-12 w-64
-                      justify-center
-                      border-white/20 bg-primary text-lg font-semibold text-background
-                      transition-colors hover:bg-primary/90
+                      h-12 w-64 justify-center border-white/20 bg-primary
+                      text-lg font-semibold text-background transition-colors
+                      hover:bg-primary/90
                       active:scale-95
                     "
                     disabled
@@ -2596,16 +2594,16 @@ export function CourseHeader({
       {showPaymentModal && courseProduct && (
         <div
           className="
-          pointer-events-auto fixed inset-0 z-[1000] flex items-center
-          justify-center bg-black/50
-        "
+            pointer-events-auto fixed inset-0 z-[1000] flex items-center
+            justify-center bg-black/50
+          "
         >
           <div className="relative w-full max-w-lg rounded-lg bg-white p-4">
             <div className="relative mb-4 flex items-center justify-between">
               <h3
                 className="
-                w-full text-center text-xl font-semibold text-gray-900
-              "
+                  w-full text-center text-xl font-semibold text-gray-900
+                "
               >
                 Llena este formulario
                 <br />

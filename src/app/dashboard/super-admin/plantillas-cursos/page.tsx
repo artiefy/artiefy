@@ -42,9 +42,9 @@ const SeleccionarCursoPlantillasPage = () => {
         <div className="text-center">
           <div
             className="
-            loader mx-auto mb-4 size-12 rounded-full border-4 border-primary
-            border-t-transparent
-          "
+              loader mx-auto mb-4 size-12 rounded-full border-4 border-primary
+              border-t-transparent
+            "
           ></div>
           <p className="text-gray-600">Cargando cursos...</p>
         </div>
@@ -67,8 +67,8 @@ const SeleccionarCursoPlantillasPage = () => {
         {error && (
           <div
             className="
-            mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
-          "
+              mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
+            "
           >
             {error}
           </div>
@@ -77,18 +77,18 @@ const SeleccionarCursoPlantillasPage = () => {
         {cursos.length === 0 ? (
           <div
             className="
-            rounded-lg border border-gray-200 bg-white p-8 text-center
-          "
+              rounded-lg border border-gray-200 bg-white p-8 text-center
+            "
           >
             <p className="text-gray-500">No hay cursos disponibles</p>
           </div>
         ) : (
           <div
             className="
-            grid gap-4
-            md:grid-cols-2
-            lg:grid-cols-3
-          "
+              grid gap-4
+              md:grid-cols-2
+              lg:grid-cols-3
+            "
           >
             {cursos.map((curso) => (
               <div
@@ -104,9 +104,9 @@ const SeleccionarCursoPlantillasPage = () => {
                   {curso.rating && (
                     <span
                       className="
-                      rounded-full bg-yellow-50 px-2 py-1 text-xs font-semibold
-                      text-yellow-700
-                    "
+                        rounded-full bg-yellow-50 px-2 py-1 text-xs
+                        font-semibold text-yellow-700
+                      "
                     >
                       ⭐ {curso.rating.toFixed(1)}
                     </span>
