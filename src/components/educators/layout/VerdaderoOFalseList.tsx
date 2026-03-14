@@ -136,22 +136,37 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
       ) : (
         questions.length > 0 &&
         questions.map((question) => (
-          <Card key={question.id} className="border-none shadow-lg">
+          <Card
+            key={question.id}
+            className="
+              rounded-2xl border border-cyan-500/20 bg-slate-800
+              shadow-[0_0_15px_rgba(34,211,238,0.06)]
+            "
+          >
             <CardContent className="pt-6">
-              <h2 className="text-center text-2xl font-bold">
+              <h2
+                className="
+                  bg-gradient-to-r from-cyan-300 to-white bg-clip-text
+                  text-center text-2xl font-bold text-transparent
+                "
+              >
                 Preguntas de tipo: Verdadero o Falso.
               </h2>
-              <h3 className="text-lg font-semibold">Pregunta:</h3>
-              <p className="ml-2">{question.text}</p>
-              <h4 className="text-sm font-semibold">Peso de la pregunta</h4>
-              <p>{question.pesoPregunta}%</p>
-              <ul className="list-inside list-disc space-y-1">
-                <span className="font-bold">Respuesta:</span>
+              <h3 className="text-lg font-semibold text-cyan-300">Pregunta:</h3>
+              <p className="ml-2 text-white/90">{question.text}</p>
+              <h4 className="text-sm font-semibold text-cyan-300/80">
+                Peso de la pregunta
+              </h4>
+              <p className="text-white/80">{question.pesoPregunta}%</p>
+              <ul className="list-inside list-disc space-y-1 text-white/90">
+                <span className="font-bold text-cyan-300">Respuesta:</span>
                 {question.options?.map((option) => (
                   <li
                     key={option.id}
                     className={
-                      option.id === question.correctOptionId ? 'font-bold' : ''
+                      option.id === question.correctOptionId
+                        ? 'font-bold text-emerald-400'
+                        : ''
                     }
                   >
                     {option.text}{' '}
@@ -166,8 +181,8 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
                 onClick={() => handleEdit(question)}
                 variant="outline"
                 className="
-                  text-white
-                  hover:text-blue-800
+                  border-cyan-500/30 text-cyan-300
+                  hover:bg-cyan-950/40 hover:text-white
                 "
                 size="sm"
               >
@@ -177,8 +192,8 @@ const QuestionVOFList: React.FC<QuestionListProps> = ({
                 onClick={() => handleDelete(question.id)}
                 variant="outline"
                 className="
-                  text-red-600
-                  hover:text-red-800
+                  border-red-500/30 text-red-400
+                  hover:bg-red-950/30 hover:text-red-300
                 "
                 size="sm"
               >

@@ -139,25 +139,38 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
         />
       ) : questions.length > 0 ? (
         questions.map((question) => (
-          <Card key={question.id} className="border-none shadow-lg">
+          <Card
+            key={question.id}
+            className="
+              rounded-2xl border border-cyan-500/20 bg-slate-800
+              shadow-[0_0_15px_rgba(34,211,238,0.06)]
+            "
+          >
             <CardContent className="pt-6">
-              <h2 className="text-center text-2xl font-bold">
+              <h2
+                className="
+                  bg-gradient-to-r from-cyan-300 to-white bg-clip-text
+                  text-center text-2xl font-bold text-transparent
+                "
+              >
                 Preguntas de tipo: Completar.
               </h2>
-              <h3 className="text-lg font-semibold">Pregunta:</h3>
-              <p className="text-sm font-semibold">{question.text}</p>
-              <p>Pregunta abierta</p>
-              <p>{question.pesoPregunta}%</p>
-              <p className="my-2 font-bold">Respuesta:</p>
-              <p className="font-bold">{question.correctAnswer}</p>
+              <h3 className="text-lg font-semibold text-cyan-300">Pregunta:</h3>
+              <p className="text-sm font-semibold text-white/90">
+                {question.text}
+              </p>
+              <p className="text-white/60">Pregunta abierta</p>
+              <p className="text-white/80">{question.pesoPregunta}%</p>
+              <p className="my-2 font-bold text-cyan-300">Respuesta:</p>
+              <p className="font-bold text-white">{question.correctAnswer}</p>
             </CardContent>
             <CardFooter className="flex justify-end space-x-2">
               <Button
                 onClick={() => handleEdit(question)}
                 variant="outline"
                 className="
-                  text-white
-                  hover:text-blue-800
+                  border-cyan-500/30 text-cyan-300
+                  hover:bg-cyan-950/40 hover:text-white
                 "
                 size="sm"
               >
@@ -167,8 +180,8 @@ const ListPreguntaAbierta: React.FC<QuestionListProps> = ({
                 onClick={() => handleDelete(question.id)}
                 variant="outline"
                 className="
-                  text-red-600
-                  hover:text-red-800
+                  border-red-500/30 text-red-400
+                  hover:bg-red-950/30 hover:text-red-300
                 "
                 size="sm"
               >
