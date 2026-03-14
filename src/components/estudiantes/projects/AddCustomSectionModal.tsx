@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { FaWandMagicSparkles } from 'react-icons/fa6';
 
 import '~/styles/ai-generate-loader.css';
@@ -31,6 +32,7 @@ export default function AddCustomSectionModal({
   nameLocked = false,
   onGenerateDescription,
 }: AddCustomSectionModalProps) {
+  const [isMounted, setIsMounted] = useState(false);
   const [sectionName, setSectionName] = useState('');
   const [sectionDescription, setSectionDescription] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -89,27 +91,19 @@ export default function AddCustomSectionModal({
   }, [isOpen, initialName, initialDescription]);
 
   useEffect(() => {
+    setIsMounted(true);
+    return () => {
+      setIsMounted(false);
+    };
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (typingTimerRef.current !== null) {
         window.clearTimeout(typingTimerRef.current);
       }
     };
   }, []);
-
-  const modalMetrics = useMemo(() => {
-    if (!isOpen || typeof window === 'undefined') {
-      return { overlayHeight: 0, modalTop: 0 };
-    }
-    const doc = document.documentElement;
-    const scrollTop = window.scrollY || doc.scrollTop || 0;
-    const height = Math.max(doc.scrollHeight, doc.clientHeight);
-    const desiredTop = scrollTop + 80;
-    const maxTop = Math.max(24, height - 560);
-    return {
-      overlayHeight: height,
-      modalTop: Math.min(desiredTop, maxTop),
-    };
-  }, [isOpen]);
 
   const handleSubmit = () => {
     const finalName = nameLocked ? initialName.trim() : sectionName.trim();
@@ -137,34 +131,23 @@ export default function AddCustomSectionModal({
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !isMounted) return null;
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className="absolute right-0 left-0 z-40 bg-black/50"
-        style={{ top: 0, height: modalMetrics.overlayHeight || '100%' }}
-        onClick={onClose}
-      />
-
+  return createPortal(
+    <div
+      className="
+        fixed inset-0 z-[80] flex items-center justify-center bg-black/60 p-4
+      "
+      onClick={onClose}
+    >
       {/* Modal */}
       <div
         className="
-          data-[state=open]:animate-in
-          data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-          data-[state=open]:fade-in-0
-          data-[state=closed]:zoom-out-95
-          data-[state=open]:zoom-in-95
-          data-[state=closed]:slide-out-to-left-1/2
-          data-[state=closed]:slide-out-to-top-[48%]
-          data-[state=open]:slide-in-from-left-1/2
-          data-[state=open]:slide-in-from-top-[48%]
-          animate-in absolute left-1/2 z-50 grid w-full max-w-md
-          translate-x-[-50%] gap-4 rounded-[16px] border border-border/50
+          animate-in fade-in-0 zoom-in-95 relative grid max-h-[90vh] w-full
+          max-w-md gap-4 overflow-y-auto rounded-[16px] border border-border/50
           bg-card p-6 shadow-lg duration-200
         "
-        style={{ top: modalMetrics.modalTop }}
+        onClick={(event) => event.stopPropagation()}
       >
         {/* Header */}
         <div
@@ -338,9 +321,10 @@ export default function AddCustomSectionModal({
           "
         >
           <X className="size-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">Cerrar</span>
         </button>
       </div>
-    </>
+    </div>,
+    document.body
   );
 }

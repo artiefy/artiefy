@@ -849,10 +849,13 @@ export default function ProjectDetailView({
     return (
       <div className="space-y-3">
         {visibleParagraphs.map((paragraph, index) => (
-          <p key={`${key}-${index}`} className={`
-            leading-relaxed
-            ${className}
-          `}>
+          <p
+            key={`${key}-${index}`}
+            className={`
+              leading-relaxed
+              ${className}
+            `}
+          >
             {paragraph}
           </p>
         ))}
@@ -1041,27 +1044,33 @@ export default function ProjectDetailView({
   return (
     <section className="space-y-6">
       {/* Header del proyecto */}
-      <div className="
-        rounded-xl border border-border/50 bg-card/50 p-4
-        sm:p-6
-      ">
-        <div className="
-          mb-6 flex flex-col gap-4
-          md:flex-row md:items-start md:justify-between
-        ">
+      <div
+        className="
+          rounded-xl border border-border/50 bg-card/50 p-4
+          sm:p-6
+        "
+      >
+        <div
+          className="
+            mb-6 flex flex-col gap-4
+            md:flex-row md:items-start md:justify-between
+          "
+        >
           <div className="flex-1">
             {/* Badges de Estado, Tipo y Categoría */}
             <div className="mb-4 flex flex-wrap items-center gap-2">
               {/* Badge de Estado */}
               {isProjectComplete ? (
-                <div className="
-                  inline-flex items-center rounded-full border
-                  border-green-500/30 bg-green-500/20 px-2.5 py-0.5 text-xs
-                  font-semibold text-green-400 transition-colors
-                  hover:bg-primary/80
-                  focus:ring-2 focus:ring-ring focus:ring-offset-2
-                  focus:outline-none
-                ">
+                <div
+                  className="
+                    inline-flex items-center rounded-full border
+                    border-green-500/30 bg-green-500/20 px-2.5 py-0.5 text-xs
+                    font-semibold text-green-400 transition-colors
+                    hover:bg-primary/80
+                    focus:ring-2 focus:ring-ring focus:ring-offset-2
+                    focus:outline-none
+                  "
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -1080,43 +1089,51 @@ export default function ProjectDetailView({
                   Completado
                 </div>
               ) : (
-                <div className="
-                  inline-flex items-center rounded-full border
-                  border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs
-                  font-semibold text-blue-400 transition-colors
-                  focus:ring-2 focus:ring-ring focus:ring-offset-2
-                  focus:outline-none
-                ">
+                <div
+                  className="
+                    inline-flex items-center rounded-full border
+                    border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs
+                    font-semibold text-blue-400 transition-colors
+                    focus:ring-2 focus:ring-ring focus:ring-offset-2
+                    focus:outline-none
+                  "
+                >
                   <Clock className="mr-1 size-3" />
                   En progreso
                 </div>
               )}
               {/* Badge de Tipo de Proyecto */}
-              <div className="
-                inline-flex items-center rounded-full border px-2.5 py-0.5
-                text-xs font-semibold text-foreground transition-colors
-                focus:ring-2 focus:ring-ring focus:ring-offset-2
-                focus:outline-none
-              ">
-                {project.type_project}
-              </div>
-              {/* Badge de Categoría */}
-              {project.categoryName && (
-                <div className="
+              <div
+                className="
                   inline-flex items-center rounded-full border px-2.5 py-0.5
                   text-xs font-semibold text-foreground transition-colors
                   focus:ring-2 focus:ring-ring focus:ring-offset-2
                   focus:outline-none
-                ">
+                "
+              >
+                {project.type_project}
+              </div>
+              {/* Badge de Categoría */}
+              {project.categoryName && (
+                <div
+                  className="
+                    inline-flex items-center rounded-full border px-2.5 py-0.5
+                    text-xs font-semibold text-foreground transition-colors
+                    focus:ring-2 focus:ring-ring focus:ring-offset-2
+                    focus:outline-none
+                  "
+                >
                   {project.categoryName}
                 </div>
               )}
             </div>
 
             {/* Colaboradores */}
-            <div className="
-              mb-2 flex items-center gap-1.5 text-sm text-muted-foreground
-            ">
+            <div
+              className="
+                mb-2 flex items-center gap-1.5 text-sm text-muted-foreground
+              "
+            >
               <Users className="size-4" />
               <span>
                 {collaboratorsLoading
@@ -1155,17 +1172,21 @@ export default function ProjectDetailView({
                 </button>
               )}
             </div>
-            <div className="
-              mb-3 flex items-center gap-2 text-sm text-muted-foreground
-            ">
+            <div
+              className="
+                mb-3 flex items-center gap-2 text-sm text-muted-foreground
+              "
+            >
               <Calendar className="size-4" />
               <span>Entrega: {formatDate(project.createdAt)}</span>
             </div>
 
-            <h2 className="
-              mb-3 text-xl font-bold text-foreground
-              md:text-2xl
-            ">
+            <h2
+              className="
+                mb-3 text-xl font-bold text-foreground
+                md:text-2xl
+              "
+            >
               {project.name}
             </h2>
             {project.description?.trim() ? (
@@ -1180,10 +1201,12 @@ export default function ProjectDetailView({
               </p>
             )}
           </div>
-          <div className="
-            flex w-full shrink-0 flex-col items-start gap-2
-            sm:w-auto sm:items-end
-          ">
+          <div
+            className="
+              flex w-full shrink-0 flex-col items-start gap-2
+              sm:w-auto sm:items-end
+            "
+          >
             {showEditControls && (
               <button
                 type="button"
@@ -1232,12 +1255,14 @@ export default function ProjectDetailView({
       </div>
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="
-          flex h-auto w-full flex-wrap items-center justify-start gap-1
-          rounded-md border border-border/50 bg-card/50 p-1
-          text-muted-foreground
-          sm:w-auto sm:flex-nowrap sm:justify-center
-        ">
+        <TabsList
+          className="
+            flex h-auto w-full flex-wrap items-center justify-start gap-1
+            rounded-md border border-border/50 bg-card/50 p-1
+            text-muted-foreground
+            sm:w-auto sm:flex-nowrap sm:justify-center
+          "
+        >
           <TabsTrigger
             value="overview"
             className="
@@ -1303,10 +1328,12 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="
-                  flex size-8 items-center justify-center rounded-lg
-                  bg-red-500/20
-                ">
+                <div
+                  className="
+                    flex size-8 items-center justify-center rounded-lg
+                    bg-red-500/20
+                  "
+                >
                   <TriangleAlert className="size-4 text-red-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
@@ -1347,16 +1374,20 @@ export default function ProjectDetailView({
 
           {/* Justificación - Solo si existe */}
           {(project.justificacion || addedSections['justificacion']) && (
-            <div className="
-              rounded-xl border border-border/50 bg-card/50 p-4
-              sm:p-5
-            ">
+            <div
+              className="
+                rounded-xl border border-border/50 bg-card/50 p-4
+                sm:p-5
+              "
+            >
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="
-                    flex size-8 items-center justify-center rounded-lg
-                    bg-yellow-500/20
-                  ">
+                  <div
+                    className="
+                      flex size-8 items-center justify-center rounded-lg
+                      bg-yellow-500/20
+                    "
+                  >
                     <Lightbulb className="size-4 text-yellow-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground">
@@ -1431,10 +1462,12 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="
-                  flex size-8 items-center justify-center rounded-lg
-                  bg-amber-500/20
-                ">
+                <div
+                  className="
+                    flex size-8 items-center justify-center rounded-lg
+                    bg-amber-500/20
+                  "
+                >
                   <ClipboardList className="size-4 text-amber-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
@@ -1495,11 +1528,13 @@ export default function ProjectDetailView({
                             flex items-start gap-3 text-sm text-muted-foreground
                           "
                         >
-                          <div className="
-                            mt-0.5 flex size-5 shrink-0 items-center
-                            justify-center rounded-full bg-accent/10 text-xs
-                            font-medium text-accent
-                          ">
+                          <div
+                            className="
+                              mt-0.5 flex size-5 shrink-0 items-center
+                              justify-center rounded-full bg-accent/10 text-xs
+                              font-medium text-accent
+                            "
+                          >
                             {idx + 1}
                           </div>
                           {req}
@@ -1538,28 +1573,36 @@ export default function ProjectDetailView({
 
           {/* Objetivos Específicos */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="
-              relative mb-4
-              sm:flex sm:items-start sm:justify-between sm:gap-3
-            ">
-              <div className="
-                flex items-start gap-3 pr-10
-                sm:pr-0
-              ">
-                <div className="
-                  flex size-8 items-center justify-center rounded-lg
-                  bg-blue-500/20
-                ">
+            <div
+              className="
+                relative mb-4
+                sm:flex sm:items-start sm:justify-between sm:gap-3
+              "
+            >
+              <div
+                className="
+                  flex items-start gap-3 pr-10
+                  sm:pr-0
+                "
+              >
+                <div
+                  className="
+                    flex size-8 items-center justify-center rounded-lg
+                    bg-blue-500/20
+                  "
+                >
                   <ListChecks className="size-4 text-blue-400" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-foreground">
                     Objetivos Específicos
                   </h3>
-                  <span className="
-                    mt-1 block text-sm text-muted-foreground
-                    sm:mt-0 sm:inline
-                  ">
+                  <span
+                    className="
+                      mt-1 block text-sm text-muted-foreground
+                      sm:mt-0 sm:inline
+                    "
+                  >
                     {(() => {
                       const objetivos = project.objetivos_especificos ?? [];
                       const completados = objetivos.filter((obj) => {
@@ -1632,10 +1675,10 @@ export default function ProjectDetailView({
                               flex size-6 shrink-0 items-center justify-center
                               rounded-full text-xs font-medium
                               ${
-                              objetivoCompletado
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-muted text-muted-foreground'
-                            }
+                                objetivoCompletado
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : 'bg-muted text-muted-foreground'
+                              }
                             `}
                           >
                             {objetivoCompletado ? (
@@ -1644,19 +1687,21 @@ export default function ProjectDetailView({
                               idx + 1
                             )}
                           </div>
-                          <div className="
-                            min-w-0 flex-1 pr-8
-                            sm:pr-0
-                          ">
+                          <div
+                            className="
+                              min-w-0 flex-1 pr-8
+                              sm:pr-0
+                            "
+                          >
                             <span
                               className={`
                                 block text-sm
                                 sm:hidden
                                 ${
-                                objetivoCompletado
-                                  ? 'text-foreground'
-                                  : 'text-muted-foreground'
-                              }
+                                  objetivoCompletado
+                                    ? 'text-foreground'
+                                    : 'text-muted-foreground'
+                                }
                               `}
                             >
                               {objetivo.description}
@@ -1666,18 +1711,20 @@ export default function ProjectDetailView({
                                 hidden text-sm
                                 sm:inline
                                 ${
-                                objetivoCompletado
-                                  ? 'text-foreground'
-                                  : 'text-muted-foreground'
-                              }
+                                  objetivoCompletado
+                                    ? 'text-foreground'
+                                    : 'text-muted-foreground'
+                                }
                               `}
                             >
                               {objetivo.description}
                             </span>
-                            <div className="
-                              mt-2 flex flex-col gap-1
-                              sm:hidden
-                            ">
+                            <div
+                              className="
+                                mt-2 flex flex-col gap-1
+                                sm:hidden
+                              "
+                            >
                               <span className="text-xs text-muted-foreground">
                                 {actividadesCompletadas}/{actividades.length}{' '}
                                 actividades
@@ -1687,26 +1734,28 @@ export default function ProjectDetailView({
                                   inline-flex items-center rounded-full border
                                   px-2.5 py-0.5 text-xs font-semibold
                                   ${
-                                  objetivoCompletado
-                                    ? `
-                                      border-transparent bg-green-500/20
-                                      text-green-400
-                                    `
-                                    : `
-                                      border-transparent bg-blue-500/20
-                                      text-blue-400
-                                    `
-                                }
+                                    objetivoCompletado
+                                      ? `
+                                        border-transparent bg-green-500/20
+                                        text-green-400
+                                      `
+                                      : `
+                                        border-transparent bg-blue-500/20
+                                        text-blue-400
+                                      `
+                                  }
                                 `}
                               >
                                 {estadoObjetivo}
                               </span>
                             </div>
                           </div>
-                          <span className="
-                            mr-2 hidden text-xs text-muted-foreground
-                            sm:inline
-                          ">
+                          <span
+                            className="
+                              mr-2 hidden text-xs text-muted-foreground
+                              sm:inline
+                            "
+                          >
                             {actividadesCompletadas}/{actividades.length}{' '}
                             actividades
                           </span>
@@ -1716,16 +1765,16 @@ export default function ProjectDetailView({
                               py-0.5 text-xs font-semibold
                               sm:inline-flex
                               ${
-                              objetivoCompletado
-                                ? `
-                                  border-transparent bg-green-500/20
-                                  text-green-400
-                                `
-                                : `
-                                  border-transparent bg-blue-500/20
-                                  text-blue-400
-                                `
-                            }
+                                objetivoCompletado
+                                  ? `
+                                    border-transparent bg-green-500/20
+                                    text-green-400
+                                  `
+                                  : `
+                                    border-transparent bg-blue-500/20
+                                    text-blue-400
+                                  `
+                              }
                             `}
                           >
                             {estadoObjetivo}
@@ -1736,10 +1785,10 @@ export default function ProjectDetailView({
                               transition-transform
                               sm:block
                               ${
-                              expandedObjectives[objetivo.id]
-                                ? 'rotate-180'
-                                : 'rotate-0'
-                            }
+                                expandedObjectives[objetivo.id]
+                                  ? 'rotate-180'
+                                  : 'rotate-0'
+                              }
                             `}
                           />
                         </div>
@@ -1749,10 +1798,10 @@ export default function ProjectDetailView({
                             transition-transform
                             sm:hidden
                             ${
-                            expandedObjectives[objetivo.id]
-                              ? 'rotate-180'
-                              : 'rotate-0'
-                          }
+                              expandedObjectives[objetivo.id]
+                                ? 'rotate-180'
+                                : 'rotate-0'
+                            }
                           `}
                         />
                       </button>
@@ -1852,12 +1901,17 @@ export default function ProjectDetailView({
                                     "
                                   >
                                     <div className="sm:hidden">
-                                      <div className="
-                                        flex items-center justify-between gap-2
-                                      ">
-                                        <span className="
-                                          text-xs text-muted-foreground
-                                        ">
+                                      <div
+                                        className="
+                                          flex items-center justify-between
+                                          gap-2
+                                        "
+                                      >
+                                        <span
+                                          className="
+                                            text-xs text-muted-foreground
+                                          "
+                                        >
                                           Actividad {actIdx + 1}
                                         </span>
                                         <ChevronDown
@@ -1866,28 +1920,35 @@ export default function ProjectDetailView({
                                             text-muted-foreground
                                             transition-transform
                                             ${
-                                            expandedActivities[activityKey]
-                                              ? 'rotate-180'
-                                              : 'rotate-0'
-                                          }
+                                              expandedActivities[activityKey]
+                                                ? 'rotate-180'
+                                                : 'rotate-0'
+                                            }
                                           `}
                                         />
                                       </div>
-                                      <h4 className="
-                                        mt-1 text-sm font-medium text-foreground
-                                      ">
+                                      <h4
+                                        className="
+                                          mt-1 text-sm font-medium
+                                          text-foreground
+                                        "
+                                      >
                                         {actividad.descripcion}
                                       </h4>
                                       {(actividad.startDate ||
                                         actividad.endDate) && (
-                                        <div className="
-                                          mt-1 flex items-center gap-3 text-xs
-                                          text-muted-foreground
-                                        ">
+                                        <div
+                                          className="
+                                            mt-1 flex items-center gap-3 text-xs
+                                            text-muted-foreground
+                                          "
+                                        >
                                           {actividad.startDate && (
-                                            <span className="
-                                              flex items-center gap-1
-                                            ">
+                                            <span
+                                              className="
+                                                flex items-center gap-1
+                                              "
+                                            >
                                               <Calendar className="size-3" />
                                               {formatActivityDate(
                                                 actividad.startDate
@@ -1897,9 +1958,11 @@ export default function ProjectDetailView({
                                           {actividad.startDate &&
                                             actividad.endDate && <span>-</span>}
                                           {actividad.endDate && (
-                                            <span className="
-                                              flex items-center gap-1
-                                            ">
+                                            <span
+                                              className="
+                                                flex items-center gap-1
+                                              "
+                                            >
                                               <Clock className="size-3" />
                                               {formatActivityDate(
                                                 actividad.endDate
@@ -1915,39 +1978,6 @@ export default function ProjectDetailView({
                                             rounded-full border px-2.5 py-0.5
                                             text-xs font-semibold
                                             ${
-                                            actividadCompletada
-                                              ? `
-                                                border-transparent
-                                                bg-green-500/20 text-green-400
-                                              `
-                                              : `
-                                                border-transparent
-                                                bg-blue-500/20 text-blue-400
-                                              `
-                                          }
-                                          `}
-                                        >
-                                          {estadoActividad}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="
-                                      hidden
-                                      sm:flex sm:items-center sm:justify-between
-                                    ">
-                                      <div className="flex flex-col gap-1">
-                                        <div className="flex items-center gap-2">
-                                          <span className="
-                                            text-xs text-muted-foreground
-                                          ">
-                                            Actividad {actIdx + 1}
-                                          </span>
-                                          <span
-                                            className={`
-                                              inline-flex items-center
-                                              rounded-full border px-2.5 py-0.5
-                                              text-xs font-semibold
-                                              ${
                                               actividadCompletada
                                                 ? `
                                                   border-transparent
@@ -1958,30 +1988,78 @@ export default function ProjectDetailView({
                                                   bg-blue-500/20 text-blue-400
                                                 `
                                             }
+                                          `}
+                                        >
+                                          {estadoActividad}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div
+                                      className="
+                                        hidden
+                                        sm:flex sm:items-center
+                                        sm:justify-between
+                                      "
+                                    >
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                          <span
+                                            className="
+                                              text-xs text-muted-foreground
+                                            "
+                                          >
+                                            Actividad {actIdx + 1}
+                                          </span>
+                                          <span
+                                            className={`
+                                              inline-flex items-center
+                                              rounded-full border px-2.5 py-0.5
+                                              text-xs font-semibold
+                                              ${
+                                                actividadCompletada
+                                                  ? `
+                                                    border-transparent
+                                                    bg-green-500/20
+                                                    text-green-400
+                                                  `
+                                                  : `
+                                                    border-transparent
+                                                    bg-blue-500/20 text-blue-400
+                                                  `
+                                              }
                                             `}
                                           >
                                             {estadoActividad}
                                           </span>
                                         </div>
-                                        <div className="
-                                          flex flex-wrap items-center gap-x-3
-                                          gap-y-1
-                                        ">
-                                          <h4 className="
-                                            text-sm font-medium text-foreground
-                                          ">
+                                        <div
+                                          className="
+                                            flex flex-wrap items-center gap-x-3
+                                            gap-y-1
+                                          "
+                                        >
+                                          <h4
+                                            className="
+                                              text-sm font-medium
+                                              text-foreground
+                                            "
+                                          >
                                             {actividad.descripcion}
                                           </h4>
                                           {(actividad.startDate ||
                                             actividad.endDate) && (
-                                            <div className="
-                                              flex items-center gap-3 text-xs
-                                              text-muted-foreground
-                                            ">
+                                            <div
+                                              className="
+                                                flex items-center gap-3 text-xs
+                                                text-muted-foreground
+                                              "
+                                            >
                                               {actividad.startDate && (
-                                                <span className="
-                                                  flex items-center gap-1
-                                                ">
+                                                <span
+                                                  className="
+                                                    flex items-center gap-1
+                                                  "
+                                                >
                                                   <Calendar className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.startDate
@@ -1993,9 +2071,11 @@ export default function ProjectDetailView({
                                                   <span>-</span>
                                                 )}
                                               {actividad.endDate && (
-                                                <span className="
-                                                  flex items-center gap-1
-                                                ">
+                                                <span
+                                                  className="
+                                                    flex items-center gap-1
+                                                  "
+                                                >
                                                   <Clock className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.endDate
@@ -2013,10 +2093,10 @@ export default function ProjectDetailView({
                                             text-muted-foreground
                                             transition-transform
                                             ${
-                                            expandedActivities[activityKey]
-                                              ? 'rotate-180'
-                                              : 'rotate-0'
-                                          }
+                                              expandedActivities[activityKey]
+                                                ? 'rotate-180'
+                                                : 'rotate-0'
+                                            }
                                           `}
                                         />
                                       </div>
@@ -2025,13 +2105,17 @@ export default function ProjectDetailView({
 
                                   {expandedActivities[activityKey] && (
                                     <div className="space-y-3 px-4 pb-4">
-                                      <div className="
-                                        mt-2 rounded-lg bg-muted/30 p-3
-                                      ">
-                                        <span className="
-                                          mb-1 block text-xs font-medium
-                                          text-muted-foreground
-                                        ">
+                                      <div
+                                        className="
+                                          mt-2 rounded-lg bg-muted/30 p-3
+                                        "
+                                      >
+                                        <span
+                                          className="
+                                            mb-1 block text-xs font-medium
+                                            text-muted-foreground
+                                          "
+                                        >
                                           Descripción
                                         </span>
                                         <textarea
@@ -2051,10 +2135,12 @@ export default function ProjectDetailView({
                                             focus-visible:ring-ring
                                             focus-visible:outline-none
                                             ${
-                                            isEditingDescription
-                                              ? ''
-                                              : 'cursor-not-allowed opacity-70'
-                                          }
+                                              isEditingDescription
+                                                ? ''
+                                                : `
+                                                  cursor-not-allowed opacity-70
+                                                `
+                                            }
                                           `}
                                           rows={3}
                                           placeholder="Describe el entregable..."
@@ -2115,19 +2201,24 @@ export default function ProjectDetailView({
                                         </div>
                                       </div>
                                       <div className="rounded-lg bg-muted/30 p-3">
-                                        <span className="
-                                          mb-2 block text-xs font-medium
-                                          text-muted-foreground
-                                        ">
+                                        <span
+                                          className="
+                                            mb-2 block text-xs font-medium
+                                            text-muted-foreground
+                                          "
+                                        >
                                           Entrega
                                         </span>
-                                        <label className="
-                                          inline-flex h-9 cursor-pointer
-                                          items-center gap-2 rounded-[13px]
-                                          bg-[#22c4d3] px-3 text-sm font-medium
-                                          text-[#01152d] transition-colors
-                                          hover:bg-[#1fb4c2]
-                                        ">
+                                        <label
+                                          className="
+                                            inline-flex h-9 cursor-pointer
+                                            items-center gap-2 rounded-[13px]
+                                            bg-[#22c4d3] px-3 text-sm
+                                            font-medium text-[#01152d]
+                                            transition-colors
+                                            hover:bg-[#1fb4c2]
+                                          "
+                                        >
                                           <Upload className="size-4" />
                                           {isUploading
                                             ? 'Subiendo...'
@@ -2154,19 +2245,25 @@ export default function ProjectDetailView({
                                           />
                                         </label>
                                         {isUploading && (
-                                          <div className="
-                                            mt-3 rounded-lg border
-                                            border-border/40 bg-background/60
-                                            p-3
-                                          ">
-                                            <div className="
-                                              mb-2 flex items-center gap-2
-                                              text-sm text-muted-foreground
-                                            ">
-                                              <span className="
-                                                size-2 animate-pulse
-                                                rounded-full bg-[#22c4d3]
-                                              " />
+                                          <div
+                                            className="
+                                              mt-3 rounded-lg border
+                                              border-border/40 bg-background/60
+                                              p-3
+                                            "
+                                          >
+                                            <div
+                                              className="
+                                                mb-2 flex items-center gap-2
+                                                text-sm text-muted-foreground
+                                              "
+                                            >
+                                              <span
+                                                className="
+                                                  size-2 animate-pulse
+                                                  rounded-full bg-[#22c4d3]
+                                                "
+                                              />
                                               Subiendo archivo...{' '}
                                               {uploadProgressValue}%
                                             </div>
@@ -2177,30 +2274,41 @@ export default function ProjectDetailView({
                                           </div>
                                         )}
                                         {deliverableUrl && (
-                                          <div className="
-                                            mt-3 rounded-lg border
-                                            border-green-500/20 bg-green-500/10
-                                            p-3
-                                          ">
-                                            <div className="
-                                              mb-2 flex items-center
-                                              justify-between
-                                            ">
-                                              <span className="
-                                                flex items-center gap-2 text-sm
-                                                font-medium text-green-400
-                                              ">
+                                          <div
+                                            className="
+                                              mt-3 rounded-lg border
+                                              border-green-500/20
+                                              bg-green-500/10 p-3
+                                            "
+                                          >
+                                            <div
+                                              className="
+                                                mb-2 flex items-center
+                                                justify-between
+                                              "
+                                            >
+                                              <span
+                                                className="
+                                                  flex items-center gap-2
+                                                  text-sm font-medium
+                                                  text-green-400
+                                                "
+                                              >
                                                 <CircleCheckBig className="size-4" />
                                                 Entregado
                                               </span>
-                                              <div className="
-                                                flex items-center gap-2
-                                              ">
+                                              <div
+                                                className="
+                                                  flex items-center gap-2
+                                                "
+                                              >
                                                 {deliverableSubmittedAt && (
-                                                  <span className="
-                                                    text-xs
-                                                    text-muted-foreground
-                                                  ">
+                                                  <span
+                                                    className="
+                                                      text-xs
+                                                      text-muted-foreground
+                                                    "
+                                                  >
                                                     {formatDateTime(
                                                       deliverableSubmittedAt
                                                     )}
@@ -2237,10 +2345,12 @@ export default function ProjectDetailView({
                                                 </button>
                                               </div>
                                             </div>
-                                            <div className="
-                                              mb-2 flex items-center gap-2
-                                              text-sm text-muted-foreground
-                                            ">
+                                            <div
+                                              className="
+                                                mb-2 flex items-center gap-2
+                                                text-sm text-muted-foreground
+                                              "
+                                            >
                                               <FileText className="size-4" />
                                               {(activityId
                                                 ? deliverableOverrides[
@@ -2250,13 +2360,18 @@ export default function ProjectDetailView({
                                                 actividad.deliverableName}
                                             </div>
                                             {activityDescription && (
-                                              <div className="
-                                                mt-2 border-t
-                                                border-green-500/20 pt-2
-                                              ">
-                                                <span className="
-                                                  text-xs text-muted-foreground
-                                                ">
+                                              <div
+                                                className="
+                                                  mt-2 border-t
+                                                  border-green-500/20 pt-2
+                                                "
+                                              >
+                                                <span
+                                                  className="
+                                                    text-xs
+                                                    text-muted-foreground
+                                                  "
+                                                >
                                                   Retroalimentación:
                                                 </span>
                                                 <div className="mt-1">
@@ -2273,10 +2388,12 @@ export default function ProjectDetailView({
                                       </div>
                                       {/* Link/URL Section */}
                                       <div className="rounded-lg bg-muted/30 p-3">
-                                        <span className="
-                                          mb-2 block text-xs font-medium
-                                          text-muted-foreground
-                                        ">
+                                        <span
+                                          className="
+                                            mb-2 block text-xs font-medium
+                                            text-muted-foreground
+                                          "
+                                        >
                                           Link / URL del Entregable
                                         </span>
                                         {editingActivityLinks[activityKey] ? (
@@ -2374,10 +2491,12 @@ export default function ProjectDetailView({
                                             </div>
                                           </div>
                                         ) : (
-                                          <div className="
-                                            flex max-w-3xl items-center
-                                            justify-between
-                                          ">
+                                          <div
+                                            className="
+                                              flex max-w-3xl items-center
+                                              justify-between
+                                            "
+                                          >
                                             {resolvedActivityLinkUrl ? (
                                               <a
                                                 href={resolvedActivityLinkUrl}
@@ -2392,9 +2511,11 @@ export default function ProjectDetailView({
                                                 {resolvedActivityLinkUrl}
                                               </a>
                                             ) : (
-                                              <span className="
-                                                text-sm text-muted-foreground
-                                              ">
+                                              <span
+                                                className="
+                                                  text-sm text-muted-foreground
+                                                "
+                                              >
                                                 No hay link asignado
                                               </span>
                                             )}
@@ -2455,25 +2576,31 @@ export default function ProjectDetailView({
 
           {/* Cronograma */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="
-              mb-4 grid gap-3
-              sm:grid-cols-[1fr_auto] sm:items-center
-            ">
+            <div
+              className="
+                mb-4 grid gap-3
+                sm:grid-cols-[1fr_auto] sm:items-center
+              "
+            >
               <div className="flex items-center gap-3">
-                <div className="
-                  flex size-8 items-center justify-center rounded-lg
-                  bg-purple-500/20
-                ">
+                <div
+                  className="
+                    flex size-8 items-center justify-center rounded-lg
+                    bg-purple-500/20
+                  "
+                >
                   <Calendar className="size-4 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Cronograma
                 </h3>
               </div>
-              <div className="
-                flex items-center gap-2
-                sm:justify-end
-              ">
+              <div
+                className="
+                  flex items-center gap-2
+                  sm:justify-end
+                "
+              >
                 <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-1">
                   {(['dias', 'semanas', 'meses'] as const).map((view) => (
                     <button
@@ -2488,16 +2615,16 @@ export default function ProjectDetailView({
                         focus-visible:ring-offset-2 focus-visible:outline-none
                         disabled:pointer-events-none disabled:opacity-50
                         ${
-                        timelineView === view
-                          ? `
-                            bg-accent text-background
-                            hover:bg-accent/90
-                          `
-                          : `
-                            text-muted-foreground
-                            hover:bg-accent hover:text-foreground
-                          `
-                      }
+                          timelineView === view
+                            ? `
+                              bg-accent text-background
+                              hover:bg-accent/90
+                            `
+                            : `
+                              text-muted-foreground
+                              hover:bg-accent hover:text-foreground
+                            `
+                        }
                       `}
                     >
                       {view === 'dias'
@@ -2606,23 +2733,29 @@ export default function ProjectDetailView({
 
               return (
                 <>
-                  <div className="
-                    scrollbar-thin w-full max-w-full overflow-x-auto
-                    [&::-webkit-scrollbar]:h-1.5
-                    [&::-webkit-scrollbar-thumb]:rounded-full
-                    [&::-webkit-scrollbar-thumb]:bg-border/50
-                    hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30
-                    [&::-webkit-scrollbar-track]:bg-transparent
-                  ">
+                  <div
+                    className="
+                      scrollbar-thin w-full max-w-full overflow-x-auto
+                      [&::-webkit-scrollbar]:h-1.5
+                      [&::-webkit-scrollbar-thumb]:rounded-full
+                      [&::-webkit-scrollbar-thumb]:bg-border/50
+                      hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30
+                      [&::-webkit-scrollbar-track]:bg-transparent
+                    "
+                  >
                     <div className="flex min-w-[720px]">
                       <div className="w-52 shrink-0 border-r border-border/30">
-                        <div className="
-                          mb-2 flex h-10 items-end border-b border-border/50
-                          pr-3 pb-2
-                        ">
-                          <span className="
-                            text-xs font-medium text-muted-foreground
-                          ">
+                        <div
+                          className="
+                            mb-2 flex h-10 items-end border-b border-border/50
+                            pr-3 pb-2
+                          "
+                        >
+                          <span
+                            className="
+                              text-xs font-medium text-muted-foreground
+                            "
+                          >
                             Actividad
                           </span>
                         </div>
@@ -2663,14 +2796,18 @@ export default function ProjectDetailView({
                                 "
                                 style={{ width: columnWidth }}
                               >
-                                <div className="
-                                  truncate text-xs text-muted-foreground
-                                ">
+                                <div
+                                  className="
+                                    truncate text-xs text-muted-foreground
+                                  "
+                                >
                                   {column.label}
                                 </div>
-                                <div className="
-                                  truncate text-xs font-medium text-foreground
-                                ">
+                                <div
+                                  className="
+                                    truncate text-xs font-medium text-foreground
+                                  "
+                                >
                                   {column.sublabel}
                                 </div>
                               </div>
@@ -2760,9 +2897,7 @@ export default function ProjectDetailView({
                                       absolute top-1 h-4 rounded-full
                                       transition-all
                                       group-hover:opacity-80
-                                      ${getStatusClass(
-                                      row
-                                    )}
+                                      ${getStatusClass(row)}
                                     `}
                                     title={`${row.title}: ${formatShortDate(
                                       startDate
@@ -2781,10 +2916,12 @@ export default function ProjectDetailView({
                     </div>
                   </div>
 
-                  <div className="
-                    mt-4 flex flex-wrap items-center gap-4 border-t
-                    border-border/50 pt-4
-                  ">
+                  <div
+                    className="
+                      mt-4 flex flex-wrap items-center gap-4 border-t
+                      border-border/50 pt-4
+                    "
+                  >
                     <span className="text-xs text-muted-foreground">
                       Estado:
                     </span>
@@ -2821,28 +2958,36 @@ export default function ProjectDetailView({
         <TabsContent value="submissions">
           {/* Entregas por Objetivo */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="
-              relative mb-4
-              sm:flex sm:items-start sm:justify-between sm:gap-3
-            ">
-              <div className="
-                flex items-start gap-3 pr-10
-                sm:pr-0
-              ">
-                <div className="
-                  flex size-8 items-center justify-center rounded-lg
-                  bg-blue-500/20
-                ">
+            <div
+              className="
+                relative mb-4
+                sm:flex sm:items-start sm:justify-between sm:gap-3
+              "
+            >
+              <div
+                className="
+                  flex items-start gap-3 pr-10
+                  sm:pr-0
+                "
+              >
+                <div
+                  className="
+                    flex size-8 items-center justify-center rounded-lg
+                    bg-blue-500/20
+                  "
+                >
                   <ListChecks className="size-4 text-blue-400" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-foreground">
                     Entregas por Objetivo
                   </h3>
-                  <span className="
-                    mt-1 block text-sm text-muted-foreground
-                    sm:mt-0 sm:inline
-                  ">
+                  <span
+                    className="
+                      mt-1 block text-sm text-muted-foreground
+                      sm:mt-0 sm:inline
+                    "
+                  >
                     {(() => {
                       const objetivos = project.objetivos_especificos ?? [];
                       const completados = objetivos.filter(
@@ -2915,10 +3060,10 @@ export default function ProjectDetailView({
                               flex size-6 shrink-0 items-center justify-center
                               rounded-full text-xs font-medium
                               ${
-                              objetivoCompletado
-                                ? 'bg-green-500/20 text-green-400'
-                                : 'bg-muted text-muted-foreground'
-                            }
+                                objetivoCompletado
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : 'bg-muted text-muted-foreground'
+                              }
                             `}
                           >
                             {objetivoCompletado ? (
@@ -2927,19 +3072,21 @@ export default function ProjectDetailView({
                               idx + 1
                             )}
                           </div>
-                          <div className="
-                            min-w-0 flex-1 pr-8
-                            sm:pr-0
-                          ">
+                          <div
+                            className="
+                              min-w-0 flex-1 pr-8
+                              sm:pr-0
+                            "
+                          >
                             <span
                               className={`
                                 block text-sm
                                 sm:hidden
                                 ${
-                                objetivoCompletado
-                                  ? 'text-foreground'
-                                  : 'text-muted-foreground'
-                              }
+                                  objetivoCompletado
+                                    ? 'text-foreground'
+                                    : 'text-muted-foreground'
+                                }
                               `}
                             >
                               {objetivo.description}
@@ -2949,18 +3096,20 @@ export default function ProjectDetailView({
                                 hidden text-sm
                                 sm:inline
                                 ${
-                                objetivoCompletado
-                                  ? 'text-foreground'
-                                  : 'text-muted-foreground'
-                              }
+                                  objetivoCompletado
+                                    ? 'text-foreground'
+                                    : 'text-muted-foreground'
+                                }
                               `}
                             >
                               {objetivo.description}
                             </span>
-                            <div className="
-                              mt-2 flex flex-col gap-1
-                              sm:hidden
-                            ">
+                            <div
+                              className="
+                                mt-2 flex flex-col gap-1
+                                sm:hidden
+                              "
+                            >
                               <span className="text-xs text-muted-foreground">
                                 {actividadesCompletadas}/{actividades.length}{' '}
                                 actividades
@@ -2970,26 +3119,28 @@ export default function ProjectDetailView({
                                   inline-flex items-center rounded-full border
                                   px-2.5 py-0.5 text-xs font-semibold
                                   ${
-                                  objetivoCompletado
-                                    ? `
-                                      border-transparent bg-green-500/20
-                                      text-green-400
-                                    `
-                                    : `
-                                      border-transparent bg-blue-500/20
-                                      text-blue-400
-                                    `
-                                }
+                                    objetivoCompletado
+                                      ? `
+                                        border-transparent bg-green-500/20
+                                        text-green-400
+                                      `
+                                      : `
+                                        border-transparent bg-blue-500/20
+                                        text-blue-400
+                                      `
+                                  }
                                 `}
                               >
                                 {estadoObjetivo}
                               </span>
                             </div>
                           </div>
-                          <span className="
-                            mr-2 hidden text-xs text-muted-foreground
-                            sm:inline
-                          ">
+                          <span
+                            className="
+                              mr-2 hidden text-xs text-muted-foreground
+                              sm:inline
+                            "
+                          >
                             {actividadesCompletadas}/{actividades.length}{' '}
                             actividades
                           </span>
@@ -2999,16 +3150,16 @@ export default function ProjectDetailView({
                               py-0.5 text-xs font-semibold
                               sm:inline-flex
                               ${
-                              objetivoCompletado
-                                ? `
-                                  border-transparent bg-green-500/20
-                                  text-green-400
-                                `
-                                : `
-                                  border-transparent bg-blue-500/20
-                                  text-blue-400
-                                `
-                            }
+                                objetivoCompletado
+                                  ? `
+                                    border-transparent bg-green-500/20
+                                    text-green-400
+                                  `
+                                  : `
+                                    border-transparent bg-blue-500/20
+                                    text-blue-400
+                                  `
+                              }
                             `}
                           >
                             {estadoObjetivo}
@@ -3019,10 +3170,10 @@ export default function ProjectDetailView({
                               transition-transform
                               sm:block
                               ${
-                              expandedObjectives[objetivo.id]
-                                ? 'rotate-180'
-                                : 'rotate-0'
-                            }
+                                expandedObjectives[objetivo.id]
+                                  ? 'rotate-180'
+                                  : 'rotate-0'
+                              }
                             `}
                           />
                         </div>
@@ -3032,10 +3183,10 @@ export default function ProjectDetailView({
                             transition-transform
                             sm:hidden
                             ${
-                            expandedObjectives[objetivo.id]
-                              ? 'rotate-180'
-                              : 'rotate-0'
-                          }
+                              expandedObjectives[objetivo.id]
+                                ? 'rotate-180'
+                                : 'rotate-0'
+                            }
                           `}
                         />
                       </button>
@@ -3135,12 +3286,17 @@ export default function ProjectDetailView({
                                     "
                                   >
                                     <div className="sm:hidden">
-                                      <div className="
-                                        flex items-center justify-between gap-2
-                                      ">
-                                        <span className="
-                                          text-xs text-muted-foreground
-                                        ">
+                                      <div
+                                        className="
+                                          flex items-center justify-between
+                                          gap-2
+                                        "
+                                      >
+                                        <span
+                                          className="
+                                            text-xs text-muted-foreground
+                                          "
+                                        >
                                           Actividad {actIdx + 1}
                                         </span>
                                         <ChevronDown
@@ -3149,28 +3305,35 @@ export default function ProjectDetailView({
                                             text-muted-foreground
                                             transition-transform
                                             ${
-                                            expandedActivities[activityKey]
-                                              ? 'rotate-180'
-                                              : 'rotate-0'
-                                          }
+                                              expandedActivities[activityKey]
+                                                ? 'rotate-180'
+                                                : 'rotate-0'
+                                            }
                                           `}
                                         />
                                       </div>
-                                      <h4 className="
-                                        mt-1 text-sm font-medium text-foreground
-                                      ">
+                                      <h4
+                                        className="
+                                          mt-1 text-sm font-medium
+                                          text-foreground
+                                        "
+                                      >
                                         {actividad.descripcion}
                                       </h4>
                                       {(actividad.startDate ||
                                         actividad.endDate) && (
-                                        <div className="
-                                          mt-1 flex items-center gap-3 text-xs
-                                          text-muted-foreground
-                                        ">
+                                        <div
+                                          className="
+                                            mt-1 flex items-center gap-3 text-xs
+                                            text-muted-foreground
+                                          "
+                                        >
                                           {actividad.startDate && (
-                                            <span className="
-                                              flex items-center gap-1
-                                            ">
+                                            <span
+                                              className="
+                                                flex items-center gap-1
+                                              "
+                                            >
                                               <Calendar className="size-3" />
                                               {formatActivityDate(
                                                 actividad.startDate
@@ -3180,9 +3343,11 @@ export default function ProjectDetailView({
                                           {actividad.startDate &&
                                             actividad.endDate && <span>-</span>}
                                           {actividad.endDate && (
-                                            <span className="
-                                              flex items-center gap-1
-                                            ">
+                                            <span
+                                              className="
+                                                flex items-center gap-1
+                                              "
+                                            >
                                               <Clock className="size-3" />
                                               {formatActivityDate(
                                                 actividad.endDate
@@ -3198,39 +3363,6 @@ export default function ProjectDetailView({
                                             rounded-full border px-2.5 py-0.5
                                             text-xs font-semibold
                                             ${
-                                            actividadCompletada
-                                              ? `
-                                                border-transparent
-                                                bg-green-500/20 text-green-400
-                                              `
-                                              : `
-                                                border-transparent
-                                                bg-blue-500/20 text-blue-400
-                                              `
-                                          }
-                                          `}
-                                        >
-                                          {estadoActividad}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="
-                                      hidden
-                                      sm:flex sm:items-center sm:justify-between
-                                    ">
-                                      <div className="flex flex-col gap-1">
-                                        <div className="flex items-center gap-2">
-                                          <span className="
-                                            text-xs text-muted-foreground
-                                          ">
-                                            Actividad {actIdx + 1}
-                                          </span>
-                                          <span
-                                            className={`
-                                              inline-flex items-center
-                                              rounded-full border px-2.5 py-0.5
-                                              text-xs font-semibold
-                                              ${
                                               actividadCompletada
                                                 ? `
                                                   border-transparent
@@ -3241,30 +3373,78 @@ export default function ProjectDetailView({
                                                   bg-blue-500/20 text-blue-400
                                                 `
                                             }
+                                          `}
+                                        >
+                                          {estadoActividad}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div
+                                      className="
+                                        hidden
+                                        sm:flex sm:items-center
+                                        sm:justify-between
+                                      "
+                                    >
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                          <span
+                                            className="
+                                              text-xs text-muted-foreground
+                                            "
+                                          >
+                                            Actividad {actIdx + 1}
+                                          </span>
+                                          <span
+                                            className={`
+                                              inline-flex items-center
+                                              rounded-full border px-2.5 py-0.5
+                                              text-xs font-semibold
+                                              ${
+                                                actividadCompletada
+                                                  ? `
+                                                    border-transparent
+                                                    bg-green-500/20
+                                                    text-green-400
+                                                  `
+                                                  : `
+                                                    border-transparent
+                                                    bg-blue-500/20 text-blue-400
+                                                  `
+                                              }
                                             `}
                                           >
                                             {estadoActividad}
                                           </span>
                                         </div>
-                                        <div className="
-                                          flex flex-wrap items-center gap-x-3
-                                          gap-y-1
-                                        ">
-                                          <h4 className="
-                                            text-sm font-medium text-foreground
-                                          ">
+                                        <div
+                                          className="
+                                            flex flex-wrap items-center gap-x-3
+                                            gap-y-1
+                                          "
+                                        >
+                                          <h4
+                                            className="
+                                              text-sm font-medium
+                                              text-foreground
+                                            "
+                                          >
                                             {actividad.descripcion}
                                           </h4>
                                           {(actividad.startDate ||
                                             actividad.endDate) && (
-                                            <div className="
-                                              flex items-center gap-3 text-xs
-                                              text-muted-foreground
-                                            ">
+                                            <div
+                                              className="
+                                                flex items-center gap-3 text-xs
+                                                text-muted-foreground
+                                              "
+                                            >
                                               {actividad.startDate && (
-                                                <span className="
-                                                  flex items-center gap-1
-                                                ">
+                                                <span
+                                                  className="
+                                                    flex items-center gap-1
+                                                  "
+                                                >
                                                   <Calendar className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.startDate
@@ -3276,9 +3456,11 @@ export default function ProjectDetailView({
                                                   <span>-</span>
                                                 )}
                                               {actividad.endDate && (
-                                                <span className="
-                                                  flex items-center gap-1
-                                                ">
+                                                <span
+                                                  className="
+                                                    flex items-center gap-1
+                                                  "
+                                                >
                                                   <Clock className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.endDate
@@ -3296,10 +3478,10 @@ export default function ProjectDetailView({
                                             text-muted-foreground
                                             transition-transform
                                             ${
-                                            expandedActivities[activityKey]
-                                              ? 'rotate-180'
-                                              : 'rotate-0'
-                                          }
+                                              expandedActivities[activityKey]
+                                                ? 'rotate-180'
+                                                : 'rotate-0'
+                                            }
                                           `}
                                         />
                                       </div>
@@ -3309,10 +3491,12 @@ export default function ProjectDetailView({
                                   {expandedActivities[activityKey] && (
                                     <div className="space-y-3 px-4 pb-4">
                                       <div className="rounded-lg bg-muted/30 p-3">
-                                        <span className="
-                                          mb-1 block text-xs font-medium
-                                          text-muted-foreground
-                                        ">
+                                        <span
+                                          className="
+                                            mb-1 block text-xs font-medium
+                                            text-muted-foreground
+                                          "
+                                        >
                                           Descripción
                                         </span>
                                         <textarea
@@ -3332,10 +3516,12 @@ export default function ProjectDetailView({
                                             focus-visible:ring-ring
                                             focus-visible:outline-none
                                             ${
-                                            isEditingDescription
-                                              ? ''
-                                              : 'cursor-not-allowed opacity-70'
-                                          }
+                                              isEditingDescription
+                                                ? ''
+                                                : `
+                                                  cursor-not-allowed opacity-70
+                                                `
+                                            }
                                           `}
                                           rows={3}
                                           placeholder="Describe el entregable..."
@@ -3396,19 +3582,24 @@ export default function ProjectDetailView({
                                         </div>
                                       </div>
                                       <div className="rounded-lg bg-muted/30 p-3">
-                                        <span className="
-                                          mb-2 block text-xs font-medium
-                                          text-muted-foreground
-                                        ">
+                                        <span
+                                          className="
+                                            mb-2 block text-xs font-medium
+                                            text-muted-foreground
+                                          "
+                                        >
                                           Entrega
                                         </span>
-                                        <label className="
-                                          inline-flex h-9 cursor-pointer
-                                          items-center gap-2 rounded-[13px]
-                                          bg-[#22c4d3] px-3 text-sm font-medium
-                                          text-[#01152d] transition-colors
-                                          hover:bg-[#1fb4c2]
-                                        ">
+                                        <label
+                                          className="
+                                            inline-flex h-9 cursor-pointer
+                                            items-center gap-2 rounded-[13px]
+                                            bg-[#22c4d3] px-3 text-sm
+                                            font-medium text-[#01152d]
+                                            transition-colors
+                                            hover:bg-[#1fb4c2]
+                                          "
+                                        >
                                           <Upload className="size-4" />
                                           {isUploading
                                             ? 'Subiendo...'
@@ -3435,19 +3626,25 @@ export default function ProjectDetailView({
                                           />
                                         </label>
                                         {isUploading && (
-                                          <div className="
-                                            mt-3 rounded-lg border
-                                            border-border/40 bg-background/60
-                                            p-3
-                                          ">
-                                            <div className="
-                                              mb-2 flex items-center gap-2
-                                              text-sm text-muted-foreground
-                                            ">
-                                              <span className="
-                                                size-2 animate-pulse
-                                                rounded-full bg-[#22c4d3]
-                                              " />
+                                          <div
+                                            className="
+                                              mt-3 rounded-lg border
+                                              border-border/40 bg-background/60
+                                              p-3
+                                            "
+                                          >
+                                            <div
+                                              className="
+                                                mb-2 flex items-center gap-2
+                                                text-sm text-muted-foreground
+                                              "
+                                            >
+                                              <span
+                                                className="
+                                                  size-2 animate-pulse
+                                                  rounded-full bg-[#22c4d3]
+                                                "
+                                              />
                                               Subiendo archivo...{' '}
                                               {uploadProgressValue}%
                                             </div>
@@ -3458,30 +3655,41 @@ export default function ProjectDetailView({
                                           </div>
                                         )}
                                         {deliverableUrl && (
-                                          <div className="
-                                            mt-3 rounded-lg border
-                                            border-green-500/20 bg-green-500/10
-                                            p-3
-                                          ">
-                                            <div className="
-                                              mb-2 flex items-center
-                                              justify-between
-                                            ">
-                                              <span className="
-                                                flex items-center gap-2 text-sm
-                                                font-medium text-green-400
-                                              ">
+                                          <div
+                                            className="
+                                              mt-3 rounded-lg border
+                                              border-green-500/20
+                                              bg-green-500/10 p-3
+                                            "
+                                          >
+                                            <div
+                                              className="
+                                                mb-2 flex items-center
+                                                justify-between
+                                              "
+                                            >
+                                              <span
+                                                className="
+                                                  flex items-center gap-2
+                                                  text-sm font-medium
+                                                  text-green-400
+                                                "
+                                              >
                                                 <CircleCheckBig className="size-4" />
                                                 Entregado
                                               </span>
-                                              <div className="
-                                                flex items-center gap-2
-                                              ">
+                                              <div
+                                                className="
+                                                  flex items-center gap-2
+                                                "
+                                              >
                                                 {deliverableSubmittedAt && (
-                                                  <span className="
-                                                    text-xs
-                                                    text-muted-foreground
-                                                  ">
+                                                  <span
+                                                    className="
+                                                      text-xs
+                                                      text-muted-foreground
+                                                    "
+                                                  >
                                                     {formatDateTime(
                                                       deliverableSubmittedAt
                                                     )}
@@ -3518,10 +3726,12 @@ export default function ProjectDetailView({
                                                 </button>
                                               </div>
                                             </div>
-                                            <div className="
-                                              mb-2 flex items-center gap-2
-                                              text-sm text-muted-foreground
-                                            ">
+                                            <div
+                                              className="
+                                                mb-2 flex items-center gap-2
+                                                text-sm text-muted-foreground
+                                              "
+                                            >
                                               <FileText className="size-4" />
                                               {(activityId
                                                 ? deliverableOverrides[
@@ -3531,13 +3741,18 @@ export default function ProjectDetailView({
                                                 actividad.deliverableName}
                                             </div>
                                             {activityDescription && (
-                                              <div className="
-                                                mt-2 border-t
-                                                border-green-500/20 pt-2
-                                              ">
-                                                <span className="
-                                                  text-xs text-muted-foreground
-                                                ">
+                                              <div
+                                                className="
+                                                  mt-2 border-t
+                                                  border-green-500/20 pt-2
+                                                "
+                                              >
+                                                <span
+                                                  className="
+                                                    text-xs
+                                                    text-muted-foreground
+                                                  "
+                                                >
                                                   Retroalimentación:
                                                 </span>
                                                 <div className="mt-1">
@@ -3572,10 +3787,12 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="feedback">
-          <div className="
-            rounded-xl border border-border/50 bg-card/50 p-4 text-center
-            sm:p-6
-          ">
+          <div
+            className="
+              rounded-xl border border-border/50 bg-card/50 p-4 text-center
+              sm:p-6
+            "
+          >
             <p className="text-muted-foreground">
               No hay retroalimentación disponible aún.
             </p>
@@ -3584,25 +3801,31 @@ export default function ProjectDetailView({
 
         <TabsContent value="timeline" className="space-y-4">
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="
-              mb-4 grid gap-3
-              sm:grid-cols-[1fr_auto] sm:items-center
-            ">
+            <div
+              className="
+                mb-4 grid gap-3
+                sm:grid-cols-[1fr_auto] sm:items-center
+              "
+            >
               <div className="flex items-center gap-3">
-                <div className="
-                  flex size-8 items-center justify-center rounded-lg
-                  bg-purple-500/20
-                ">
+                <div
+                  className="
+                    flex size-8 items-center justify-center rounded-lg
+                    bg-purple-500/20
+                  "
+                >
                   <Calendar className="size-4 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Cronograma
                 </h3>
               </div>
-              <div className="
-                flex items-center gap-2
-                sm:justify-end
-              ">
+              <div
+                className="
+                  flex items-center gap-2
+                  sm:justify-end
+                "
+              >
                 <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-1">
                   {(['dias', 'semanas', 'meses'] as const).map((view) => (
                     <button
@@ -3617,16 +3840,16 @@ export default function ProjectDetailView({
                         focus-visible:ring-offset-2 focus-visible:outline-none
                         disabled:pointer-events-none disabled:opacity-50
                         ${
-                        timelineView === view
-                          ? `
-                            bg-accent text-background
-                            hover:bg-accent/90
-                          `
-                          : `
-                            text-muted-foreground
-                            hover:bg-accent hover:text-foreground
-                          `
-                      }
+                          timelineView === view
+                            ? `
+                              bg-accent text-background
+                              hover:bg-accent/90
+                            `
+                            : `
+                              text-muted-foreground
+                              hover:bg-accent hover:text-foreground
+                            `
+                        }
                       `}
                     >
                       {view === 'dias'
@@ -3735,23 +3958,29 @@ export default function ProjectDetailView({
 
               return (
                 <>
-                  <div className="
-                    scrollbar-thin w-full max-w-full overflow-x-auto
-                    [&::-webkit-scrollbar]:h-1.5
-                    [&::-webkit-scrollbar-thumb]:rounded-full
-                    [&::-webkit-scrollbar-thumb]:bg-border/50
-                    hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30
-                    [&::-webkit-scrollbar-track]:bg-transparent
-                  ">
+                  <div
+                    className="
+                      scrollbar-thin w-full max-w-full overflow-x-auto
+                      [&::-webkit-scrollbar]:h-1.5
+                      [&::-webkit-scrollbar-thumb]:rounded-full
+                      [&::-webkit-scrollbar-thumb]:bg-border/50
+                      hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30
+                      [&::-webkit-scrollbar-track]:bg-transparent
+                    "
+                  >
                     <div className="flex min-w-[720px]">
                       <div className="w-52 shrink-0 border-r border-border/30">
-                        <div className="
-                          mb-2 flex h-10 items-end border-b border-border/50
-                          pr-3 pb-2
-                        ">
-                          <span className="
-                            text-xs font-medium text-muted-foreground
-                          ">
+                        <div
+                          className="
+                            mb-2 flex h-10 items-end border-b border-border/50
+                            pr-3 pb-2
+                          "
+                        >
+                          <span
+                            className="
+                              text-xs font-medium text-muted-foreground
+                            "
+                          >
                             Actividad
                           </span>
                         </div>
@@ -3792,14 +4021,18 @@ export default function ProjectDetailView({
                                 "
                                 style={{ width: columnWidth }}
                               >
-                                <div className="
-                                  truncate text-xs text-muted-foreground
-                                ">
+                                <div
+                                  className="
+                                    truncate text-xs text-muted-foreground
+                                  "
+                                >
                                   {column.label}
                                 </div>
-                                <div className="
-                                  truncate text-xs font-medium text-foreground
-                                ">
+                                <div
+                                  className="
+                                    truncate text-xs font-medium text-foreground
+                                  "
+                                >
                                   {column.sublabel}
                                 </div>
                               </div>
@@ -3889,9 +4122,7 @@ export default function ProjectDetailView({
                                       absolute top-1 h-4 rounded-full
                                       transition-all
                                       group-hover:opacity-80
-                                      ${getStatusClass(
-                                      row
-                                    )}
+                                      ${getStatusClass(row)}
                                     `}
                                     title={`${row.title}: ${formatShortDate(
                                       startDate
@@ -3910,10 +4141,12 @@ export default function ProjectDetailView({
                     </div>
                   </div>
 
-                  <div className="
-                    mt-4 flex flex-wrap items-center gap-4 border-t
-                    border-border/50 pt-4
-                  ">
+                  <div
+                    className="
+                      mt-4 flex flex-wrap items-center gap-4 border-t
+                      border-border/50 pt-4
+                    "
+                  >
                     <span className="text-xs text-muted-foreground">
                       Estado:
                     </span>

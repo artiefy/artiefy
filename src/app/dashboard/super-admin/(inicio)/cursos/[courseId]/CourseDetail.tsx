@@ -741,6 +741,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           return {
             id: numericId,
             meetingId: meetingId,
+            joinUrl: getStr(r, 'join_url') ?? getStr(r, 'joinUrl'), // ✅ AGREGADO: mapear joinUrl
             recordingContentUrl: getStr(r, 'recordingContentUrl'),
             video_key: getStr(r, 'video_key') ?? getStr(r, 'videoKey'),
             video_key_2: getStr(r, 'video_key_2') ?? getStr(r, 'videoKey2'),
