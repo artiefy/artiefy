@@ -537,3 +537,5 @@ git commit -m "docs(agents): refresh next local docs index"
   `node_modules/next/dist/docs/`.
 - Este flujo con `.next-docs` es util si ya estandarizaste el bloque generado
   por `agents-md` en tu proyecto.
+
+- which node

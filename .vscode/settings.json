@@ -108,6 +108,7 @@
   "js/ts.tsserver.maxMemory": 8192,
   // ESLint Configuration
   "eslint.workingDirectories": [{ "mode": "auto" }],
+  "eslint.runtime": "C:\\Users\\Usuario\\AppData\\Roaming\\fnm\\aliases\\default\\node.exe",
   "eslint.run": "onType",
   "eslint.validate": [
     "javascript",
