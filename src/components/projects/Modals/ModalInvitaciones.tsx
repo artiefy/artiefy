@@ -365,10 +365,12 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                     key={inv.id}
                     className="relative border-slate-700 bg-slate-800/70"
                   >
-                    <CardContent className="
-                      flex flex-col gap-3 p-4
-                      sm:flex-row sm:items-center sm:gap-4
-                    ">
+                    <CardContent
+                      className="
+                        flex flex-col gap-3 p-4
+                        sm:flex-row sm:items-center sm:gap-4
+                      "
+                    >
                       {/* Avatar y datos */}
                       <div className="flex min-w-0 flex-1 items-center gap-3">
                         <Avatar className="size-10 flex-shrink-0">
@@ -386,9 +388,11 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                             <span className="text-white">{fromUserLabel}</span>
                           </div>
                           {inv.message && (
-                            <div className="
-                              mt-1 text-xs break-words text-slate-300
-                            ">
+                            <div
+                              className="
+                                mt-1 text-xs break-words text-slate-300
+                              "
+                            >
                               Mensaje: {inv.message}
                             </div>
                           )}
@@ -396,10 +400,12 @@ const ModalInvitaciones: React.FC<ModalInvitacionesProps> = ({
                         </div>
                       </div>
                       {/* Estado y acciones */}
-                      <div className="
-                        flex flex-col items-end gap-2
-                        sm:ml-4
-                      ">
+                      <div
+                        className="
+                          flex flex-col items-end gap-2
+                          sm:ml-4
+                        "
+                      >
                         {inv.status === 'pending' && (
                           <div className="flex gap-2">
                             <Button

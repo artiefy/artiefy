@@ -359,41 +359,47 @@ export function NotificationHeader() {
           transition-colors
           hover:bg-gray-800
           md:hover:bg-primary
-          ${
-          isAnimating ? 'active' : ''
-        }
+          ${isAnimating ? 'active' : ''}
         `}
         type="button"
         aria-label="Notificaciones"
         onClick={handleClick}
       >
-        <span className="
-          absolute top-1/2 left-full hidden translate-x-2 -translate-y-1/2
-          rounded bg-white px-2 py-1 text-[10px] whitespace-nowrap text-black
-          opacity-0 transition-opacity
-          group-hover:opacity-100
-          md:block
-        ">
+        <span
+          className="
+            absolute top-1/2 left-full hidden translate-x-2 -translate-y-1/2
+            rounded bg-white px-2 py-1 text-[10px] whitespace-nowrap text-black
+            opacity-0 transition-opacity
+            group-hover:opacity-100
+            md:block
+          "
+        >
           Notificaciones
         </span>
         {unreadCount > 0 ? (
           <>
-            <BellRing className="
-              size-6 text-primary transition-colors
-              group-hover:text-background
-            " />
-            <span className="
-              absolute top-0 right-0 flex size-5 items-center justify-center
-              rounded-full bg-red-500 text-xs text-white
-            ">
+            <BellRing
+              className="
+                size-6 text-primary transition-colors
+                group-hover:text-background
+              "
+            />
+            <span
+              className="
+                absolute top-0 right-0 flex size-5 items-center justify-center
+                rounded-full bg-red-500 text-xs text-white
+              "
+            >
               {unreadCount}
             </span>
           </>
         ) : (
-          <Bell className="
-            size-6 text-primary transition-colors
-            group-hover:text-background
-          " />
+          <Bell
+            className="
+              size-6 text-primary transition-colors
+              group-hover:text-background
+            "
+          />
         )}
       </button>
 
@@ -413,9 +419,7 @@ export function NotificationHeader() {
               key={notification.id}
               className={`
                 notification-item group
-                ${
-                !notification.isRead ? 'notification-unread' : ''
-              }
+                ${!notification.isRead ? 'notification-unread' : ''}
               `}
               onClick={() => handleNotificationClick(notification)}
               role="button"
@@ -483,10 +487,13 @@ export function NotificationHeader() {
       {/* Modal de confirmación para eliminar notificación */}
       {deleteId !== null && (
         <Dialog open={true} onOpenChange={(open) => !open && setDeleteId(null)}>
-          <div className="
-            fixed inset-0 z-50 flex items-start justify-center bg-black/40 pt-24
-            sm:pt-32
-          ">
+          <div
+            className="
+              fixed inset-0 z-50 flex items-start justify-center bg-black/40
+              pt-24
+              sm:pt-32
+            "
+          >
             <div className="w-full max-w-xs rounded-lg bg-white p-6 shadow-lg">
               <h2 className="mb-4 text-lg font-bold text-gray-900">
                 Eliminar notificación
