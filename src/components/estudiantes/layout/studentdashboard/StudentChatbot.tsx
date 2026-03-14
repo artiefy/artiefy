@@ -2740,8 +2740,8 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
               {title && (
                 <h3
                   className="
-                    mb-2 text-xl leading-tight font-extrabold text-white
-                  "
+                  mb-2 text-xl leading-tight font-extrabold text-white
+                "
                 >
                   {title}
                 </h3>
@@ -3000,15 +3000,15 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
               <span className="relative z-10">+ Agregar proyecto</span>
               <span
                 className="
-                  absolute inset-0 bg-cyan-400/10 blur-md transition-all
-                  duration-500 ease-in-out
-                  group-hover:blur-lg
-                "
+                absolute inset-0 bg-cyan-400/10 blur-md transition-all
+                duration-500 ease-in-out
+                group-hover:blur-lg
+              "
               />
               <span
                 className="
-                  absolute top-0 left-0 h-full w-1 animate-pulse bg-cyan-500
-                "
+                absolute top-0 left-0 h-full w-1 animate-pulse bg-cyan-500
+              "
               />
             </button>
           </div>
@@ -3039,17 +3039,16 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                       ${
                         isWhatsAppButton
                           ? `
-                            flex items-center gap-2 rounded border
-                            border-[#128C7E] bg-[#25D366] px-4 py-2
-                            font-semibold text-white shadow-md
-                            shadow-[#128C7E]/40 transition
-                            hover:bg-[#1ebe5d]
-                          `
+                          flex items-center gap-2 rounded border
+                          border-[#128C7E] bg-[#25D366] px-4 py-2 font-semibold
+                          text-white shadow-md shadow-[#128C7E]/40 transition
+                          hover:bg-[#1ebe5d]
+                        `
                           : `
-                            rounded bg-cyan-600 px-3 py-1 font-semibold
-                            text-white transition
-                            hover:bg-cyan-700
-                          `
+                          rounded bg-cyan-600 px-3 py-1 font-semibold text-white
+                          transition
+                          hover:bg-cyan-700
+                        `
                       }
                     `}
                     onClick={() => handleBotButtonClick(btn.action)}
@@ -3262,17 +3261,17 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                 >
                   <div
                     className="
-                      absolute inset-0 rounded-full bg-gradient-to-br
-                      from-cyan-400 to-teal-500 opacity-0 blur-md
-                      transition-opacity duration-300
-                      group-hover:opacity-20
-                    "
+                    absolute inset-0 rounded-full bg-gradient-to-br
+                    from-cyan-400 to-teal-500 opacity-0 blur-md
+                    transition-opacity duration-300
+                    group-hover:opacity-20
+                  "
                   />
                   <div
                     className="
-                      absolute inset-1 flex items-center justify-center
-                      rounded-full bg-gradient-to-br from-slate-800 to-slate-900
-                    "
+                    absolute inset-1 flex items-center justify-center
+                    rounded-full bg-gradient-to-br from-slate-800 to-slate-900
+                  "
                   >
                     <div className="relative flex items-center justify-center">
                       <Image
@@ -3303,18 +3302,17 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   />
                   <div
                     className="
-                      absolute inset-0 rounded-full border-2 border-cyan-400
-                      opacity-0 transition-opacity duration-300
-                    "
+                    absolute inset-0 rounded-full border-2 border-cyan-400
+                    opacity-0 transition-opacity duration-300
+                  "
                   />
                 </button>
                 {/* Label debajo del botón: más grande, bold y pegada al botón */}
                 <div
                   className="
-                    text-md absolute bottom-[-1.2rem] left-1/2 -translate-x-1/2
-                    transform text-center font-bold whitespace-nowrap
-                    text-primary
-                  "
+                  text-md absolute bottom-[-1.2rem] left-1/2 -translate-x-1/2
+                  transform text-center font-bold whitespace-nowrap text-primary
+                "
                 >
                   Artie IA
                 </div>
@@ -3380,15 +3378,15 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                       ${
                         isDesktop
                           ? `
-                            gap-2 bg-gradient-to-r from-blue-500 to-cyan-600
-                            px-5 py-2
-                            hover:scale-105
-                          `
+                          gap-2 bg-gradient-to-r from-blue-500 to-cyan-600 px-5
+                          py-2
+                          hover:scale-105
+                        `
                           : `
-                            size-12 justify-center bg-gradient-to-br
-                            from-blue-500 to-cyan-600
-                            hover:scale-110
-                          `
+                          size-12 justify-center bg-gradient-to-br from-blue-500
+                          to-cyan-600
+                          hover:scale-110
+                        `
                       }
                     `}
                     aria-label="Soporte técnico"
@@ -3488,10 +3486,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   >
                     <div
                       className="
-                        grid grid-cols-3 items-center gap-1 border-b
-                        border-gray-800 px-3 py-2
-                        md:px-4 md:py-4
-                      "
+                      grid grid-cols-3 items-center gap-1 border-b
+                      border-gray-800 px-3 py-2
+                      md:px-4 md:py-4
+                    "
                     >
                       <div className="flex items-center">
                         <HiMiniCpuChip className="text-3xl text-white md:text-4xl" />
@@ -3501,10 +3499,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         <div className="flex flex-col items-center">
                           <h2
                             className="
-                              flex items-center gap-2 text-base font-semibold
-                              text-white
-                              md:text-lg
-                            "
+                            flex items-center gap-2 text-base font-semibold
+                            text-white
+                            md:text-lg
+                          "
                           >
                             Artie IA
                             <span
@@ -3525,9 +3523,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
 
                           <em
                             className="
-                              mt-0.5 text-xs font-semibold text-white/70
-                              md:text-sm
-                            "
+                            mt-0.5 text-xs font-semibold text-white/70
+                            md:text-sm
+                          "
                           >
                             {user?.fullName}
                           </em>
@@ -3573,9 +3571,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         >
                           <TrashIcon
                             className="
-                              text-lg text-red-400
-                              md:text-xl
-                            "
+                            text-lg text-red-400
+                            md:text-xl
+                          "
                           />
                         </button>
 
@@ -3596,18 +3594,18 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         >
                           <IoClose
                             className="
-                              text-lg text-white/70
-                              md:text-xl
-                            "
+                            text-lg text-white/70
+                            md:text-xl
+                          "
                           />
                         </button>
                       </div>
                     </div>
                     <div
                       className="
-                        px-2 py-0
-                        md:px-3
-                      "
+                      px-2 py-0
+                      md:px-3
+                    "
                     >
                       <ChatNavigation
                         activeSection={activeSection}
@@ -3625,9 +3623,9 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         !isSignedIn && (
                           <div
                             className="
-                              mx-3 mt-3 rounded-lg border border-foreground/10
-                              bg-background/60 p-4 text-center
-                            "
+                            mx-3 mt-3 rounded-lg border border-foreground/10
+                            bg-background/60 p-4 text-center
+                          "
                           >
                             <p className="text-sm text-white">
                               Debes iniciar sesión para seguir la conversación
@@ -3665,17 +3663,16 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                             ) : !isSignedIn ? (
                               <div
                                 className="
-                                  flex size-full flex-col items-center
-                                  justify-center p-8 text-center
-                                "
+                                flex size-full flex-col items-center
+                                justify-center p-8 text-center
+                              "
                               >
                                 <div className="mb-6">
                                   <div
                                     className="
-                                      mx-auto mb-4 flex size-16 items-center
-                                      justify-center rounded-full
-                                      bg-background/20
-                                    "
+                                    mx-auto mb-4 flex size-16 items-center
+                                    justify-center rounded-full bg-background/20
+                                  "
                                   >
                                     <svg
                                       className="size-8 text-[#3AF4EF]"
@@ -3693,8 +3690,8 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                   </div>
                                   <h3
                                     className="
-                                      mb-2 text-xl font-bold text-white
-                                    "
+                                    mb-2 text-xl font-bold text-white
+                                  "
                                   >
                                     Acceso restringido
                                   </h3>
