@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "eslint . --config eslint.cli.config.mjs && npm run typecheck",
+    "check": "eslint . --config eslint.cli.config.mjs && tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
