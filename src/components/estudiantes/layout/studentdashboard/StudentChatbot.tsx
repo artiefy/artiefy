@@ -2738,9 +2738,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           return (
             <div className="max-w-[90%] rounded-2xl bg-background p-4 shadow">
               {title && (
-                <h3 className="
-                  mb-2 text-xl leading-tight font-extrabold text-white
-                ">
+                <h3
+                  className="
+                    mb-2 text-xl leading-tight font-extrabold text-white
+                  "
+                >
                   {title}
                 </h3>
               )}
@@ -2996,14 +2998,18 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
               }}
             >
               <span className="relative z-10">+ Agregar proyecto</span>
-              <span className="
-                absolute inset-0 bg-cyan-400/10 blur-md transition-all
-                duration-500 ease-in-out
-                group-hover:blur-lg
-              " />
-              <span className="
-                absolute top-0 left-0 h-full w-1 animate-pulse bg-cyan-500
-              " />
+              <span
+                className="
+                  absolute inset-0 bg-cyan-400/10 blur-md transition-all
+                  duration-500 ease-in-out
+                  group-hover:blur-lg
+                "
+              />
+              <span
+                className="
+                  absolute top-0 left-0 h-full w-1 animate-pulse bg-cyan-500
+                "
+              />
             </button>
           </div>
         </div>
@@ -3031,19 +3037,20 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                     key={btn.action}
                     className={`
                       ${
-                      isWhatsAppButton
-                        ? `
-                          flex items-center gap-2 rounded border
-                          border-[#128C7E] bg-[#25D366] px-4 py-2 font-semibold
-                          text-white shadow-md shadow-[#128C7E]/40 transition
-                          hover:bg-[#1ebe5d]
-                        `
-                        : `
-                          rounded bg-cyan-600 px-3 py-1 font-semibold text-white
-                          transition
-                          hover:bg-cyan-700
-                        `
-                    }
+                        isWhatsAppButton
+                          ? `
+                            flex items-center gap-2 rounded border
+                            border-[#128C7E] bg-[#25D366] px-4 py-2
+                            font-semibold text-white shadow-md
+                            shadow-[#128C7E]/40 transition
+                            hover:bg-[#1ebe5d]
+                          `
+                          : `
+                            rounded bg-cyan-600 px-3 py-1 font-semibold
+                            text-white transition
+                            hover:bg-cyan-700
+                          `
+                      }
                     `}
                     onClick={() => handleBotButtonClick(btn.action)}
                     type="button"
@@ -3253,16 +3260,20 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                   }}
                   onClick={handleClick}
                 >
-                  <div className="
-                    absolute inset-0 rounded-full bg-gradient-to-br
-                    from-cyan-400 to-teal-500 opacity-0 blur-md
-                    transition-opacity duration-300
-                    group-hover:opacity-20
-                  " />
-                  <div className="
-                    absolute inset-1 flex items-center justify-center
-                    rounded-full bg-gradient-to-br from-slate-800 to-slate-900
-                  ">
+                  <div
+                    className="
+                      absolute inset-0 rounded-full bg-gradient-to-br
+                      from-cyan-400 to-teal-500 opacity-0 blur-md
+                      transition-opacity duration-300
+                      group-hover:opacity-20
+                    "
+                  />
+                  <div
+                    className="
+                      absolute inset-1 flex items-center justify-center
+                      rounded-full bg-gradient-to-br from-slate-800 to-slate-900
+                    "
+                  >
                     <div className="relative flex items-center justify-center">
                       <Image
                         src="/robot-svgrepo-com.svg"
@@ -3290,16 +3301,21 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
                     }}
                   />
-                  <div className="
-                    absolute inset-0 rounded-full border-2 border-cyan-400
-                    opacity-0 transition-opacity duration-300
-                  " />
+                  <div
+                    className="
+                      absolute inset-0 rounded-full border-2 border-cyan-400
+                      opacity-0 transition-opacity duration-300
+                    "
+                  />
                 </button>
                 {/* Label debajo del botón: más grande, bold y pegada al botón */}
-                <div className="
-                  text-md absolute bottom-[-1.2rem] left-1/2 -translate-x-1/2
-                  transform text-center font-bold whitespace-nowrap text-primary
-                ">
+                <div
+                  className="
+                    text-md absolute bottom-[-1.2rem] left-1/2 -translate-x-1/2
+                    transform text-center font-bold whitespace-nowrap
+                    text-primary
+                  "
+                >
                   Artie IA
                 </div>
               </div>
@@ -3362,18 +3378,18 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                       hover:from-cyan-500 hover:to-blue-600
                       hover:shadow-[0_0_20px_#38bdf8]
                       ${
-                      isDesktop
-                        ? `
-                          gap-2 bg-gradient-to-r from-blue-500 to-cyan-600 px-5
-                          py-2
-                          hover:scale-105
-                        `
-                        : `
-                          size-12 justify-center bg-gradient-to-br from-blue-500
-                          to-cyan-600
-                          hover:scale-110
-                        `
-                    }
+                        isDesktop
+                          ? `
+                            gap-2 bg-gradient-to-r from-blue-500 to-cyan-600
+                            px-5 py-2
+                            hover:scale-105
+                          `
+                          : `
+                            size-12 justify-center bg-gradient-to-br
+                            from-blue-500 to-cyan-600
+                            hover:scale-110
+                          `
+                      }
                     `}
                     aria-label="Soporte técnico"
                   >
@@ -3470,22 +3486,26 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                         : { top: 'env(safe-area-inset-top, 0px)' }
                     }
                   >
-                    <div className="
-                      grid grid-cols-3 items-center gap-1 border-b
-                      border-gray-800 px-3 py-2
-                      md:px-4 md:py-4
-                    ">
+                    <div
+                      className="
+                        grid grid-cols-3 items-center gap-1 border-b
+                        border-gray-800 px-3 py-2
+                        md:px-4 md:py-4
+                      "
+                    >
                       <div className="flex items-center">
                         <HiMiniCpuChip className="text-3xl text-white md:text-4xl" />
                       </div>
 
                       <div className="flex items-center justify-center">
                         <div className="flex flex-col items-center">
-                          <h2 className="
-                            flex items-center gap-2 text-base font-semibold
-                            text-white
-                            md:text-lg
-                          ">
+                          <h2
+                            className="
+                              flex items-center gap-2 text-base font-semibold
+                              text-white
+                              md:text-lg
+                            "
+                          >
                             Artie IA
                             <span
                               className={`
@@ -3503,10 +3523,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                             </span>
                           </h2>
 
-                          <em className="
-                            mt-0.5 text-xs font-semibold text-white/70
-                            md:text-sm
-                          ">
+                          <em
+                            className="
+                              mt-0.5 text-xs font-semibold text-white/70
+                              md:text-sm
+                            "
+                          >
                             {user?.fullName}
                           </em>
                         </div>
@@ -3549,10 +3571,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                           aria-label="Borrar historial"
                           title="Borrar historial"
                         >
-                          <TrashIcon className="
-                            text-lg text-red-400
-                            md:text-xl
-                          " />
+                          <TrashIcon
+                            className="
+                              text-lg text-red-400
+                              md:text-xl
+                            "
+                          />
                         </button>
 
                         <button
@@ -3570,17 +3594,21 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                           "
                           aria-label="Cerrar chatbot"
                         >
-                          <IoClose className="
-                            text-lg text-white/70
-                            md:text-xl
-                          " />
+                          <IoClose
+                            className="
+                              text-lg text-white/70
+                              md:text-xl
+                            "
+                          />
                         </button>
                       </div>
                     </div>
-                    <div className="
-                      px-2 py-0
-                      md:px-3
-                    ">
+                    <div
+                      className="
+                        px-2 py-0
+                        md:px-3
+                      "
+                    >
                       <ChatNavigation
                         activeSection={activeSection}
                         onSectionChange={setActiveSection}
@@ -3595,10 +3623,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                       {activeSection === 'chatia' &&
                         showLoginNotice &&
                         !isSignedIn && (
-                          <div className="
-                            mx-3 mt-3 rounded-lg border border-foreground/10
-                            bg-background/60 p-4 text-center
-                          ">
+                          <div
+                            className="
+                              mx-3 mt-3 rounded-lg border border-foreground/10
+                              bg-background/60 p-4 text-center
+                            "
+                          >
                             <p className="text-sm text-white">
                               Debes iniciar sesión para seguir la conversación
                             </p>
@@ -3633,15 +3663,20 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                 activeType="tickets"
                               />
                             ) : !isSignedIn ? (
-                              <div className="
-                                flex size-full flex-col items-center
-                                justify-center p-8 text-center
-                              ">
+                              <div
+                                className="
+                                  flex size-full flex-col items-center
+                                  justify-center p-8 text-center
+                                "
+                              >
                                 <div className="mb-6">
-                                  <div className="
-                                    mx-auto mb-4 flex size-16 items-center
-                                    justify-center rounded-full bg-background/20
-                                  ">
+                                  <div
+                                    className="
+                                      mx-auto mb-4 flex size-16 items-center
+                                      justify-center rounded-full
+                                      bg-background/20
+                                    "
+                                  >
                                     <svg
                                       className="size-8 text-[#3AF4EF]"
                                       fill="none"
@@ -3656,9 +3691,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                                       />
                                     </svg>
                                   </div>
-                                  <h3 className="
-                                    mb-2 text-xl font-bold text-white
-                                  ">
+                                  <h3
+                                    className="
+                                      mb-2 text-xl font-bold text-white
+                                    "
+                                  >
                                     Acceso restringido
                                   </h3>
                                   <p className="mb-6 text-gray-300">
