@@ -194,6 +194,36 @@ body.no-chrome {
       transform: scale(1);
     }
   }
+
+  @keyframes pulse-arrow {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes bounce-left {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(-4px);
+    }
+  }
+
+  @keyframes bounce-right {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(4px);
+    }
+  }
 }
 
 /* Base Styles */

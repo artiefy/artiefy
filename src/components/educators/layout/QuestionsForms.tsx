@@ -213,7 +213,10 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
           pesoPregunta: pesoPregunta,
         });
       }}
-      className="space-y-6 rounded-lg bg-white p-6 shadow-md"
+      className="
+        space-y-6 rounded-2xl border border-cyan-500/20 bg-slate-800 p-6
+        shadow-[0_0_15px_rgba(34,211,238,0.06)]
+      "
     >
       <div
         className="
@@ -229,7 +232,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         >
           <Label
             htmlFor="questions"
-            className="block text-lg font-medium text-gray-700"
+            className="block text-lg font-medium text-cyan-300"
           >
             Pregunta
           </Label>
@@ -240,8 +243,9 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             placeholder="Escribe tu pregunta aquí"
             required
             className="
-              mt-1 block w-full rounded-md border border-gray-300 p-2 text-black
-              shadow-sm outline-none
+              mt-1 block w-full rounded-md border border-cyan-500/20
+              bg-slate-900 p-2 text-white shadow-sm outline-none
+              placeholder:text-white/40
             "
           />
         </div>
@@ -253,7 +257,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         >
           <Label
             htmlFor="pesoPregunta"
-            className="block text-lg font-medium text-gray-700"
+            className="block text-lg font-medium text-cyan-300"
           >
             Porcentaje de la pregunta
           </Label>
@@ -266,14 +270,14 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             max={100}
             required
             className="
-              mt-1 block w-full rounded-md border border-gray-300 p-2 text-black
-              shadow-sm outline-none
+              mt-1 block w-full rounded-md border border-cyan-500/20
+              bg-slate-900 p-2 text-white shadow-sm outline-none
             "
           />
         </div>
       </div>
       <div className="space-y-4">
-        <Label className="block text-lg font-medium text-gray-700">
+        <Label className="block text-lg font-medium text-cyan-300">
           Opciones
         </Label>
         {options.map((option, index) => (
@@ -285,8 +289,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
               onChange={() => setCorrectOptionId(option.id)}
               required
               className="
-                size-4 border-gray-300 text-indigo-600
-                focus:ring-indigo-500
+                size-4 border-cyan-500/30 text-cyan-500 accent-cyan-500
+                focus:ring-cyan-500
               "
             />
             <Input
@@ -296,8 +300,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
               placeholder={`Opción ${index + 1}`}
               required
               className="
-                flex-1 rounded-md border border-gray-300 p-2 text-black
-                shadow-sm
+                flex-1 rounded-md border border-cyan-500/20 bg-slate-900 p-2
+                text-white shadow-sm
               "
             />
             <Button
@@ -321,8 +325,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
             variant="outline"
             className="
               mx-auto flex w-2/5 items-center justify-center rounded-md border
-              border-gray-300 bg-slate-100 p-2 text-black shadow-sm
-              hover:bg-indigo-50
+              border-cyan-500/30 bg-slate-700 p-2 text-cyan-300 shadow-sm
+              hover:bg-slate-600
             "
           >
             <Plus className="mr-2 size-5" /> Agregar opción
@@ -332,7 +336,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
       {isUploading && (
         <div className="my-1">
           <Progress value={uploadProgress} className="w-full" />
-          <p className="mt-2 text-center text-sm text-gray-500">
+          <p className="mt-2 text-center text-sm text-white/60">
             {uploadProgress}% Completado
           </p>
         </div>
@@ -343,8 +347,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
           onClick={handleCancel}
           variant="outline"
           className="
-            text-gray-100
-            hover:text-gray-800
+            border-cyan-500/30 text-cyan-300
+            hover:bg-cyan-950/40 hover:text-white
           "
         >
           Cancelar
@@ -353,8 +357,8 @@ const QuestionForm: React.FC<QuestionFormProps> = ({
         <Button
           type="submit"
           className="
-            border-none bg-green-400 text-white
-            hover:bg-green-500
+            border-none bg-cyan-600 text-white
+            hover:bg-cyan-700
           "
         >
           {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta

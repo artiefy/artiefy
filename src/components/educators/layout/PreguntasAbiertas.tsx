@@ -127,9 +127,19 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
   if (!isVisible) return null;
 
   return (
-    <div className="container my-4 max-w-4xl rounded-lg bg-white p-6 shadow-md">
+    <div
+      className="
+        container my-4 max-w-4xl rounded-2xl border border-cyan-500/20
+        bg-slate-800 p-6 shadow-[0_0_15px_rgba(34,211,238,0.06)]
+      "
+    >
       <form onSubmit={handleSubmit} className="space-y-6">
-        <h2 className="text-xl font-bold text-gray-700">
+        <h2
+          className="
+            bg-gradient-to-r from-cyan-300 to-white bg-clip-text text-xl
+            font-bold text-transparent
+          "
+        >
           {editingQuestion ? 'Editar Pregunta' : 'Nueva Pregunta de Completado'}
         </h2>
 
@@ -143,8 +153,9 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
             placeholder="Escribe la pregunta aquí..."
             required
             className="
-              mt-1 w-full rounded-md border border-gray-300 p-2 shadow-sm
-              outline-none
+              mt-1 w-full rounded-md border border-cyan-500/20 bg-slate-900 p-2
+              text-white shadow-sm outline-none
+              placeholder:text-white/40
             "
           />
         </div>
@@ -187,7 +198,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
         {isUploading && (
           <div>
             <Progress value={uploadProgress} className="w-full" />
-            <p className="mt-2 text-center text-sm text-gray-500">
+            <p className="mt-2 text-center text-sm text-white/60">
               {uploadProgress}% subido
             </p>
           </div>
@@ -198,8 +209,8 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
             type="button"
             variant="outline"
             className="
-              border-gray-400 text-gray-700
-              hover:bg-gray-100
+              border-cyan-500/30 text-cyan-300
+              hover:bg-cyan-950/40 hover:text-white
             "
             onClick={handleCancel}
           >
@@ -208,8 +219,8 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
           <Button
             type="submit"
             className="
-              bg-green-600 text-white
-              hover:bg-green-700
+              bg-cyan-600 text-white
+              hover:bg-cyan-700
             "
           >
             {editingQuestion ? 'Actualizar' : 'Guardar'}
