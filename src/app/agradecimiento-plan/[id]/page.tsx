@@ -88,9 +88,9 @@ export default function AgradecimientoPlanPage({
         </div>
         <div
           className="
-          relative z-[20] flex w-full max-w-md flex-col items-center rounded-2xl
-          bg-white/95 p-10 shadow-2xl backdrop-blur-md
-        "
+            relative z-[20] flex w-full max-w-md flex-col items-center
+            rounded-2xl bg-white/95 p-10 shadow-2xl backdrop-blur-md
+          "
         >
           <Image
             src="/artiefy-logo2.png"
@@ -103,16 +103,17 @@ export default function AgradecimientoPlanPage({
           />
           <h2
             className="
-            mb-4 text-center text-3xl font-extrabold tracking-tight
-            text-[#0A2540] drop-shadow-sm
-          "
+              mb-4 text-center text-3xl font-extrabold tracking-tight
+              text-[#0A2540] drop-shadow-sm
+            "
           >
             ¡Muchas gracias por tu compra!
           </h2>
           <p
             className="
-            mb-2 text-center text-xl font-semibold tracking-wide text-[#00A5C0]
-          "
+              mb-2 text-center text-xl font-semibold tracking-wide
+              text-[#00A5C0]
+            "
           >
             Bienvenido al plan{' '}
             <span className="font-bold text-[#0A2540]">#{planId}</span>

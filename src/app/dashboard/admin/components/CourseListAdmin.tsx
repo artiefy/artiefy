@@ -46,10 +46,10 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
   return (
     <div
       className="
-      grid grid-cols-1 gap-4 px-8
-      sm:grid-cols-2
-      lg:grid-cols-3 lg:px-5
-    "
+        grid grid-cols-1 gap-4 px-8
+        sm:grid-cols-2
+        lg:grid-cols-3 lg:px-5
+      "
     >
       {courses.map((course) => {
         console.log('Rendering course:', course);
@@ -57,19 +57,19 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
           <div key={course.id} className="group relative">
             <div
               className="
-              absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
-              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
-              transition duration-500
-              group-hover:opacity-100
-            "
+                absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+                from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
+                transition duration-500
+                group-hover:opacity-100
+              "
             />
             <Card
               className="
-              zoom-in relative flex h-full flex-col justify-between
-              overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white
-              transition-transform duration-300 ease-in-out
-              hover:scale-[1.02]
-            "
+                zoom-in relative flex h-full flex-col justify-between
+                overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white
+                transition-transform duration-300 ease-in-out
+                hover:scale-[1.02]
+              "
             >
               <CardHeader>
                 <AspectRatio ratio={16 / 9}>
@@ -128,8 +128,8 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
               </CardContent>
               <CardFooter
                 className="
-                flex flex-col items-start justify-between space-y-2 px-2
-              "
+                  flex flex-col items-start justify-between space-y-2 px-2
+                "
               >
                 <div className="flex w-full justify-between">
                   <p className="text-sm font-bold text-gray-300 italic">
@@ -157,12 +157,12 @@ export default function CourseListAdmin({ courses }: CourseListAdminProps) {
                       <ArrowRightIcon className="size-5 animate-bounce-right" />
                       <div
                         className="
-                        absolute inset-0 flex w-full
-                        [transform:skew(-13deg)_translateX(-100%)]
-                        justify-center
-                        group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-                        group-hover/button:duration-1000
-                      "
+                          absolute inset-0 flex w-full
+                          [transform:skew(-13deg)_translateX(-100%)]
+                          justify-center
+                          group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                          group-hover/button:duration-1000
+                        "
                       >
                         <div className="relative h-full w-10 bg-white/30" />
                       </div>
