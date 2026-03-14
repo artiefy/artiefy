@@ -110,6 +110,14 @@ export default defineConfig([
       'react/display-name': 'off',
     },
   },
+  {
+    files: ['server.js', 'server.cjs'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      'no-unused-vars': 'off',
+    },
+  },
   globalIgnores(
     [
       '**/node_modules/**',

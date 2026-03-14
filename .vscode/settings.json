@@ -136,7 +136,7 @@
   "tailwindCSS.validate": true,
   "tailwindCSS.showPixelEquivalents": true,
   "tailwindCSS.colorDecorators": true,
-  "tailwindCSS.lint.cssConflict": "warning",
+  "tailwindCSS.lint.cssConflict": "ignore",
   "tailwindCSS.lint.invalidApply": "error",
   "tailwindCSS.lint.invalidScreen": "error",
   "tailwindCSS.lint.recommendedVariantOrder": "warning",
