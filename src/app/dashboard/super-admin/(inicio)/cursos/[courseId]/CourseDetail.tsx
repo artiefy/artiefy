@@ -734,14 +734,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
           const meetingId =
             getStr(r, 'meeting_id') ?? getStr(r, 'meetingId') ?? '';
-          const meetingIdAsNum = parseInt(meetingId, 10);
-          const numericId =
-            !isNaN(meetingIdAsNum) && meetingIdAsNum > 0 ? meetingIdAsNum : 0;
 
           return {
-            id: numericId,
+            id: Number(r.id) || 0, // ✅ Usar el id real de BD, no parseInt(meetingId)
             meetingId: meetingId,
-            joinUrl: getStr(r, 'join_url') ?? getStr(r, 'joinUrl'), // ✅ AGREGADO: mapear joinUrl
+            joinUrl: getStr(r, 'join_url') ?? getStr(r, 'joinUrl'),
             recordingContentUrl: getStr(r, 'recordingContentUrl'),
             video_key: getStr(r, 'video_key') ?? getStr(r, 'videoKey'),
             video_key_2: getStr(r, 'video_key_2') ?? getStr(r, 'videoKey2'),
