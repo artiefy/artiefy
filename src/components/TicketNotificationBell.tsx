@@ -36,9 +36,8 @@ export function TicketNotificationBell() {
     <button
       onClick={handleClick}
       className={`
-        group
-        relative
-        ml-2 rounded-full p-2 transition-all hover:bg-gray-800
+        group relative ml-2 rounded-full p-2 transition-all
+        hover:bg-gray-800
         md:hover:bg-primary
         ${isAnimating ? 'animate-bounce' : ''}
       `}
@@ -47,12 +46,12 @@ export function TicketNotificationBell() {
     >
       <span
         className="
-        absolute top-full left-1/2 z-50 mt-2 hidden -translate-x-1/2 rounded
-        bg-white px-2 py-1 text-xs whitespace-nowrap text-black opacity-0
-        shadow-lg transition-opacity
-        group-hover:opacity-100
-        md:block
-      "
+          absolute top-full left-1/2 z-50 mt-2 hidden -translate-x-1/2 rounded
+          bg-white px-2 py-1 text-xs whitespace-nowrap text-black opacity-0
+          shadow-lg transition-opacity
+          group-hover:opacity-100
+          md:block
+        "
       >
         Tickets de Soporte
       </span>
@@ -60,26 +59,26 @@ export function TicketNotificationBell() {
       {totalUnread > 0 ? (
         <BellRing
           className="
-          size-6
-          text-white transition-colors group-hover:text-background
-        "
+            size-6 text-white transition-colors
+            group-hover:text-background
+          "
         />
       ) : (
         <Bell
           className="
-          size-6
-          text-white transition-colors group-hover:text-background
-        "
+            size-6 text-white transition-colors
+            group-hover:text-background
+          "
         />
       )}
 
       {totalUnread > 0 && (
         <span
           className="
-          absolute -top-1 -right-1 flex h-5 min-w-[20px] animate-pulse
-          items-center justify-center rounded-full bg-red-600 px-1.5
-          text-[10px] font-bold text-white shadow-lg ring-2 ring-background
-        "
+            absolute -top-1 -right-1 flex h-5 min-w-[20px] animate-pulse
+            items-center justify-center rounded-full bg-red-600 px-1.5
+            text-[10px] font-bold text-white shadow-lg ring-2 ring-background
+          "
         >
           {totalUnread > 99 ? '99+' : totalUnread}
         </span>

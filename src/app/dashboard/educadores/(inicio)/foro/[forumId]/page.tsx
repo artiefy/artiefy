@@ -466,8 +466,8 @@ const ForumPage = () => {
       <main className="flex h-screen flex-col items-center justify-center">
         <div
           className="
-          size-32 animate-spin rounded-full border-y-2 border-primary
-        "
+            size-32 animate-spin rounded-full border-y-2 border-primary
+          "
         >
           <span className="sr-only" />
         </div>
@@ -521,10 +521,10 @@ const ForumPage = () => {
       <div className="container mx-auto mt-5 rounded-lg bg-black/25 p-5 shadow-lg">
         <div
           className="
-          mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg
-          md:w-11/12
-          lg:w-full
-        "
+            mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg
+            md:w-11/12
+            lg:w-full
+          "
         >
           <div className="flex justify-between">
             <h1 className="mb-4 text-2xl font-bold text-white">
@@ -592,8 +592,8 @@ const ForumPage = () => {
                     {editingPostId === post.id ? (
                       <Collapsible
                         className="
-                        absolute top-4 right-3 flex w-[100px] flex-col
-                      "
+                          absolute top-4 right-3 flex w-[100px] flex-col
+                        "
                       >
                         {/* Cancelar edición menu collapsible*/}
                         <CollapsibleTrigger
@@ -602,8 +602,8 @@ const ForumPage = () => {
                         >
                           <EllipsisVertical
                             className="
-                            absolute top-0 right-0 justify-end text-white
-                          "
+                              absolute top-0 right-0 justify-end text-white
+                            "
                           />
                         </CollapsibleTrigger>
                         <CollapsibleContent>
@@ -618,8 +618,8 @@ const ForumPage = () => {
                     ) : (
                       <Collapsible
                         className="
-                        absolute top-4 right-3 flex w-[100px] flex-col
-                      "
+                          absolute top-4 right-3 flex w-[100px] flex-col
+                        "
                       >
                         {/* Editar y eliminar post menu collapsible*/}
                         <CollapsibleTrigger
@@ -628,8 +628,8 @@ const ForumPage = () => {
                         >
                           <EllipsisVertical
                             className="
-                            absolute top-0 right-0 justify-end text-white
-                          "
+                              absolute top-0 right-0 justify-end text-white
+                            "
                           />
                         </CollapsibleTrigger>
                         <CollapsibleContent className="justify-start text-left">

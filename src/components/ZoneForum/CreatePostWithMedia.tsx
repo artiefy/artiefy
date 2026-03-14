@@ -119,9 +119,9 @@ export function CreatePostWithMedia({
       {/* Inputs para media */}
       <div
         className="
-        grid grid-cols-1 gap-4
-        sm:grid-cols-3
-      "
+          grid grid-cols-1 gap-4
+          sm:grid-cols-3
+        "
       >
         {/* Imagen */}
         <div>
@@ -130,11 +130,10 @@ export function CreatePostWithMedia({
           </label>
           <label
             className="
-            flex cursor-pointer items-center justify-center rounded-md border
-            border-dashed border-gray-600 bg-black/20 p-3
-            transition
-            hover:bg-black/30
-          "
+              flex cursor-pointer items-center justify-center rounded-md border
+              border-dashed border-gray-600 bg-black/20 p-3 transition
+              hover:bg-black/30
+            "
           >
             <input
               type="file"
@@ -156,11 +155,10 @@ export function CreatePostWithMedia({
           </label>
           <label
             className="
-            flex cursor-pointer items-center justify-center rounded-md border
-            border-dashed border-gray-600 bg-black/20 p-3
-            transition
-            hover:bg-black/30
-          "
+              flex cursor-pointer items-center justify-center rounded-md border
+              border-dashed border-gray-600 bg-black/20 p-3 transition
+              hover:bg-black/30
+            "
           >
             <input
               type="file"
@@ -182,11 +180,10 @@ export function CreatePostWithMedia({
           </label>
           <label
             className="
-            flex cursor-pointer items-center justify-center rounded-md border
-            border-dashed border-gray-600 bg-black/20 p-3
-            transition
-            hover:bg-black/30
-          "
+              flex cursor-pointer items-center justify-center rounded-md border
+              border-dashed border-gray-600 bg-black/20 p-3 transition
+              hover:bg-black/30
+            "
           >
             <input
               type="file"
@@ -219,9 +216,8 @@ export function CreatePostWithMedia({
         type="submit"
         disabled={isLoading || isSubmitting || !content.trim()}
         className="
-          w-full bg-primary
-          font-semibold
-          text-black hover:bg-primary/90
+          w-full bg-primary font-semibold text-black
+          hover:bg-primary/90
         "
       >
         {isLoading ? `Enviando... ${uploadProgress}%` : 'Publicar Post'}
