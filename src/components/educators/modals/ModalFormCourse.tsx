@@ -53,7 +53,8 @@ interface CourseFormProps {
     }[],
     horario: number | null,
     espacios: number | null,
-    certificationTypeId: number | null
+    certificationTypeId: number | null,
+    instructor: string
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -777,7 +778,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         parametros, // 👈 AÑADIDO AQUÍ
         horario,
         espacios,
-        certificationTypeId
+        certificationTypeId,
+        instructor
       );
 
       if (controller.signal.aborted) {

@@ -146,7 +146,6 @@ export default function ProgramListAdmin({
                       text-center text-sm font-bold text-gray-300 italic
                     "
                   >
-                    Educador:{' '}
                     <span className="font-bold italic">
                       {program.instructor}
                     </span>

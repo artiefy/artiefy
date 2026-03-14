@@ -80,6 +80,10 @@ export default function Page() {
   const [certificationTypes, setCertificationTypes] = useState<
     { id: number; name: string; description: string | null }[]
   >([]);
+  const [educators, setEducators] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [instructor, setInstructorState] = useState<string>('');
 
   // Función para cargar los cursos by userId
   const fetchCourses = useCallback(async () => {
@@ -177,6 +181,11 @@ export default function Page() {
         .catch((error) =>
           console.error('Error loading certification types:', error)
         );
+      // Cargar educadores
+      fetch('/api/super-admin/changeEducators')
+        .then((res) => res.json() as Promise<{ id: string; name: string }[]>)
+        .then((data) => setEducators(data))
+        .catch((error) => console.error('Error loading educators:', error));
     }
   }, [user, fetchCourses, fetchSubjects]);
 
@@ -206,14 +215,12 @@ export default function Page() {
     }[],
     horario: number | null,
     espacios: number | null,
-    certificationTypeId: number | null
+    certificationTypeId: number | null,
+    instructor: string
   ) => {
     if (!user) return;
     void subjects;
-    void horario;
     void coverVideoCourseKey;
-    void espacios;
-    void certificationTypeId;
     // Validar que haya al menos un parámetro si addParametros es true
     if (addParametros && parametros.length === 0) {
       toast.error('Error', {
@@ -282,13 +289,16 @@ export default function Page() {
         fileName,
         categoryid,
         modalidadesid,
-        instructor: user.fullName,
         creatorId: user.id,
         nivelid,
         rating,
         courseTypeId: courseTypeId ?? [],
         individualPrice,
         isActive,
+        instructorId: instructor || user.id,
+        horario,
+        espacios,
+        certificationTypeId,
       }),
     });
 
@@ -356,6 +366,10 @@ export default function Page() {
     setCourseTypeId([]);
     setIndividualPrice(null);
     setIsActive(true);
+    setInstructorState('');
+    setHorario(null);
+    setEspacios(null);
+    setCertificationTypeId(null);
   };
 
   // Manejo del título del curso en el modal si no es null
@@ -525,13 +539,14 @@ export default function Page() {
               setIndividualPrice={setIndividualPrice}
               isActive={isActive}
               setIsActive={setIsActive}
-              instructor={editingCourse?.instructor ?? ''}
-              setInstructor={(instructor: string) =>
+              instructor={editingCourse?.instructor ?? instructor}
+              setInstructor={(value: string) => {
+                setInstructorState(value);
                 setEditingCourse((prev) =>
-                  prev ? { ...prev, instructor } : prev
-                )
-              }
-              educators={[]}
+                  prev ? { ...prev, instructor: value } : prev
+                );
+              }}
+              educators={educators}
               horario={horario}
               setHorario={setHorario}
               espacios={espacios}

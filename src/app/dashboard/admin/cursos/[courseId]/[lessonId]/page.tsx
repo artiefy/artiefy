@@ -118,6 +118,26 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         );
         if (response.ok) {
           const data = (await response.json()) as Lessons;
+
+          // Enriquecer con el nombre del instructor
+          if (data.course?.id) {
+            try {
+              const courseResponse = await fetch(
+                `/api/educadores/courses/${data.course.id}`
+              );
+              if (courseResponse.ok) {
+                const courseData = (await courseResponse.json()) as {
+                  instructorName?: string;
+                };
+                if (courseData.instructorName) {
+                  data.course.instructor = courseData.instructorName;
+                }
+              }
+            } catch (err) {
+              console.error('Error fetching course details:', err);
+            }
+          }
+
           setLessons(data);
         } else {
           const errorData = (await response.json()) as { error?: string };

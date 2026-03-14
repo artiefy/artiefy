@@ -105,7 +105,8 @@ export async function POST(request: Request) {
       modalidadesid: number[];
       nivelid: number;
       rating: number;
-      instructorId: string;
+      instructorId?: string;
+      instructorIds?: string[];
       subjects?: { id: number }[];
       courseTypeId: number[]; // 👉 ahora puede ser múltiple
       isActive: boolean;
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
       videoKey?: string; // ✅ igual que el frontend
       scheduleOptionId?: number | null;
       spaceOptionId?: number | null;
+      certificationTypeId?: number | null;
     };
     console.log('📽️ Video key recibida:', data.videoKey);
 
@@ -155,16 +157,29 @@ export async function POST(request: Request) {
           rating: data.rating,
           modalidadesid: modalidadId,
           nivelid: data.nivelid,
-          instructor: data.instructorId ?? userId,
+          instructor: data.instructorIds?.[0] ?? data.instructorId ?? userId,
           isActive: data.isActive,
           requiresProgram: false,
           individualPrice: null, // <--- siempre null al inicio
           scheduleOptionId: data.scheduleOptionId ?? null,
           spaceOptionId: data.spaceOptionId ?? null,
+          certificationTypeId: data.certificationTypeId ?? null,
         })
         .returning();
 
-      // 🔄 Insertar tipos de curso en tabla intermedia
+      // � Insertar relaciones de instructores en courseInstructors
+      if (data.instructorIds && data.instructorIds.length > 0) {
+        const { courseInstructors } = await import('~/server/db/schema');
+        await db.insert(courseInstructors).values(
+          data.instructorIds.map((instrId) => ({
+            courseId: newCourse.id,
+            instructorId: instrId,
+            createdAt: new Date(),
+          }))
+        );
+      }
+
+      // �🔄 Insertar tipos de curso en tabla intermedia
       if (Array.isArray(data.courseTypeId)) {
         await db.insert(courseCourseTypes).values(
           data.courseTypeId.map((typeId) => ({

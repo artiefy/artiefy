@@ -48,7 +48,14 @@ interface CourseFormProps {
     videoKey: string, // ✅ <-- aquí lo agregas
     horario: number | null,
     espacios: number | null,
-    certificationTypeId: number | null
+    certificationTypeId: number | null,
+    parametros: {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+      numberOfActivities: number;
+    }[]
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -70,6 +77,7 @@ interface CourseFormProps {
     name: string;
     description: string;
     porcentaje: number;
+    numberOfActivities: number;
   }[];
   setParametrosAction: (
     parametros: {
@@ -77,6 +85,7 @@ interface CourseFormProps {
       name: string;
       description: string;
       porcentaje: number;
+      numberOfActivities: number;
     }[]
   ) => void;
   isOpen: boolean;
@@ -104,6 +113,7 @@ interface CourseFormProps {
     name: string;
     description: string | null;
   }[];
+  defaultAddParametros?: boolean;
 }
 
 // Componente ModalFormCourse
@@ -143,6 +153,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   certificationTypeId,
   setCertificationTypeId,
   certificationTypes = [],
+  defaultAddParametros = false,
 }) => {
   const [file, setFile] = useState<File | null>(null); // Estado para el archivo
   const [frameImageFile, setFrameImageFile] = useState<File | null>(null); // frame capturado
@@ -174,7 +185,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   const [uploadController, setUploadController] =
     useState<AbortController | null>(null); // Estado para el controlador de subida
   const [coverImage, setCoverImage] = useState<string | null>(null); // Estado para la imagen de portada
-  const [addParametros, setAddParametros] = useState(false); // Estado para los parámetros
+  const [addParametros, setAddParametros] = useState(defaultAddParametros); // Estado para los parámetros
   const [modalidadesid, setModalidadesid] = useState<number[]>([]); // ✅ Ensure it's an array
   const [_localCertificationTypes, setLocalCertificationTypes] =
     useState<{ id: number; name: string; description: string | null }[]>(
@@ -197,6 +208,34 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   >([]);
   const [_isLoadingSchedules, setIsLoadingSchedules] = useState(false);
   const [_isLoadingSpaces, setIsLoadingSpaces] = useState(false);
+
+  // 🆕 Estados para parámetros existentes y plantillas
+  const [parametroSearch, setParametroSearch] = useState<string>('');
+  const [showParametroList, setShowParametroList] = useState(false);
+  const [existingParametros, setExistingParametros] = useState<
+    {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+      numberOfActivities?: number;
+    }[]
+  >([]);
+  const [existingTemplates, setExistingTemplates] = useState<
+    {
+      id: number;
+      name: string;
+      description: string | null;
+      numberOfActivities?: number;
+    }[]
+  >([]);
+  const [_selectedParametroId, setSelectedParametroId] = useState<
+    number | null
+  >(null);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
+    null
+  );
+  const [showTemplateWarning, setShowTemplateWarning] = useState(false);
 
   // Interfaces para los datos dinámicos
   interface Nivel {
@@ -274,6 +313,18 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // Función para manejar la adición o creacion de parámetros
   const handleAddParametro = () => {
     if (parametros.length < 10) {
+      // Pedir al usuario el número de actividades (por defecto 1 si cancela o valor inválido)
+      let actividades = 1;
+      const input = window.prompt(
+        '¿Cuántas actividades tendrá este parámetro?',
+        '1'
+      );
+      if (input !== null) {
+        const parsed = parseInt(input);
+        if (!isNaN(parsed) && parsed > 0) {
+          actividades = parsed;
+        }
+      }
       setParametrosAction([
         ...parametros,
         {
@@ -281,6 +332,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
           name: '',
           description: '',
           porcentaje: 0,
+          numberOfActivities: actividades,
         },
       ]);
     }
@@ -480,6 +532,32 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     void fetchModalidades();
   }, []);
 
+  // 🆕 Cargar parámetros y plantillas existentes
+  useEffect(() => {
+    const fetchParametrosAndTemplates = async () => {
+      try {
+        const [parametrosRes, templatesRes] = await Promise.all([
+          fetch('/api/educadores/parametros'),
+          fetch('/api/educadores/templates'),
+        ]);
+
+        if (parametrosRes.ok) {
+          const parametrosData = await parametrosRes.json();
+          setExistingParametros(parametrosData);
+        }
+
+        if (templatesRes.ok) {
+          const templatesData = await templatesRes.json();
+          setExistingTemplates(templatesData);
+        }
+      } catch (error) {
+        console.error('Error al cargar parámetros y plantillas:', error);
+      }
+    };
+
+    void fetchParametrosAndTemplates();
+  }, []);
+
   // Función para manejar el cambio de parámetros
   const handleParametroChange = (
     index: number,
@@ -537,6 +615,45 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     setParametrosAction(updatedParametros);
   };
 
+  // 🆕 Agregar parámetro existente
+  const handleAddExistingParametro = (parametroId: number) => {
+    const selectedParametro = existingParametros.find(
+      (p) => p.id === parametroId
+    );
+    if (selectedParametro) {
+      setParametrosAction([
+        ...parametros,
+        {
+          ...selectedParametro,
+          numberOfActivities: selectedParametro.numberOfActivities ?? 1,
+        },
+      ]);
+      setSelectedParametroId(null);
+    }
+  };
+
+  // 🆕 Agregar plantilla
+  const handleAddTemplate = (templateId: number) => {
+    if (parametros.length > 0) {
+      setShowTemplateWarning(true);
+      return;
+    }
+    const selectedTemplate = existingTemplates.find((t) => t.id === templateId);
+    if (selectedTemplate) {
+      setParametrosAction([
+        {
+          id: 0,
+          name: selectedTemplate.name,
+          description: selectedTemplate.description ?? '',
+          porcentaje: 100,
+          numberOfActivities: selectedTemplate.numberOfActivities ?? 1,
+        },
+      ]);
+      toast.success(`Plantilla "${selectedTemplate.name}" seleccionada`);
+      setSelectedTemplateId(null);
+    }
+  };
+
   // Función para obtener los archivos de subida y enviarselo al componente padre donde se hace el metodo POST
   const handleSubmit = async () => {
     const controller = new AbortController();
@@ -547,24 +664,33 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       title: !editingCourseId && !title,
       description: !editingCourseId && !description,
       categoryid: !editingCourseId && !categoryid,
+      category: false,
       modalidadesid: !editingCourseId && !modalidadesid,
       nivelid: !editingCourseId && !nivelid,
+      nivel: false,
       rating: !editingCourseId && !rating,
       file: !editingCourseId && !file && !currentCoverImageKey,
+      modalidad: false,
       courseTypeId:
         !editingCourseId &&
         (!selectedCourseType || selectedCourseType.length === 0),
     };
 
-    if (Object.values(newErrors).some((value) => value)) {
-      console.log('Validation errors:', newErrors);
+    const sumaPorcentajes = parametros.reduce(
+      (acc, parametro) => acc + parametro.porcentaje,
+      0
+    );
+    if (addParametros && sumaPorcentajes !== 100) {
+      toast('Error', {
+        description: 'La suma de los porcentajes debe ser igual a 100%',
+      });
       return;
     }
 
-    if (Object.values(newErrors).some((value) => value)) {
+    setErrors(newErrors);
+    if (Object.values(newErrors).some(Boolean)) {
       console.log('Validation errors:', newErrors);
 
-      // Crear mensaje de errores
       const missingFields: string[] = [];
       if (newErrors.title) missingFields.push('Título');
       if (newErrors.description) missingFields.push('Descripción');
@@ -573,7 +699,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       if (newErrors.nivelid) missingFields.push('Nivel');
       if (newErrors.rating) missingFields.push('Rating');
       if (newErrors.file) missingFields.push('Archivo de portada');
-      if (newErrors.courseTypeId) missingFields.push('Tipo de Curso'); // 👈 NUEVO
+      if (newErrors.courseTypeId) missingFields.push('Tipo de Curso');
 
       const message = `Por favor completa: ${missingFields.join(', ')}.`;
       toast.error('Faltan campos obligatorios', { description: message });
@@ -731,7 +857,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         videoKey,
         horario,
         espacios,
-        certificationTypeId
+        certificationTypeId,
+        parametros
       );
 
       if (controller.signal.aborted) {
@@ -1739,7 +1866,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 </div>
               </div>
               {addParametros && (
-                <div className="my-4 flex flex-col">
+                <div
+                  className="
+                    space-y-3
+                    md:space-y-4
+                  "
+                >
                   <label
                     className="
                       text-sm font-medium text-primary
@@ -1748,19 +1880,145 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                   >
                     Parámetros de evaluación
                   </label>
-                  <Button
-                    onClick={handleAddParametro}
-                    disabled={parametros.length >= 10}
-                    className="
-                      mt-2 w-full bg-primary text-white
-                      hover:opacity-90
-                      md:w-auto
-                    "
-                  >
-                    {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
-                    parámetro
-                    <Plus className="ml-2 size-4" />
-                  </Button>
+
+                  {/* Opciones para agregar parámetros */}
+                  <div className="space-y-3 rounded-lg border border-primary p-4">
+                    <h4 className="font-medium text-white">
+                      Agregar parámetros
+                    </h4>
+
+                    {/* Botón para crear nuevo parámetro */}
+                    <Button
+                      onClick={handleAddParametro}
+                      disabled={parametros.length >= 10}
+                      className="w-full bg-primary text-white"
+                    >
+                      {editingCourseId ? 'Editar o agregar' : 'Agregar'} nuevo
+                      parámetro
+                      <Plus />
+                    </Button>
+
+                    <div className="relative">
+                      <label className="text-sm text-gray-300">
+                        O selecciona un parámetro existente:
+                      </label>
+
+                      <input
+                        type="text"
+                        placeholder="Buscar parámetro..."
+                        value={parametroSearch}
+                        onChange={(e) => setParametroSearch(e.target.value)}
+                        onFocus={() => setShowParametroList(true)}
+                        onBlur={() =>
+                          setTimeout(() => setShowParametroList(false), 150)
+                        }
+                        className="
+                          mt-2 w-full rounded border bg-background p-2 text-sm
+                          text-white
+                        "
+                      />
+
+                      {showParametroList && (
+                        <div
+                          className="
+                            absolute z-10 mt-1 max-h-48 w-full overflow-y-auto
+                            rounded border border-gray-600 bg-background
+                            shadow-lg
+                          "
+                        >
+                          {existingParametros
+                            .filter((p) =>
+                              p.name
+                                .toLowerCase()
+                                .includes(parametroSearch.toLowerCase())
+                            )
+                            .map((param) => (
+                              <button
+                                key={param.id}
+                                type="button"
+                                onMouseDown={() => {
+                                  handleAddExistingParametro(param.id);
+                                  setParametroSearch('');
+                                  setShowParametroList(false);
+                                }}
+                                className="
+                                  w-full px-3 py-2 text-left text-sm text-white
+                                  hover:bg-gray-700
+                                "
+                              >
+                                {param.name} ({param.porcentaje}%)
+                              </button>
+                            ))}
+                          {existingParametros.filter((p) =>
+                            p.name
+                              .toLowerCase()
+                              .includes(parametroSearch.toLowerCase())
+                          ).length === 0 && (
+                            <p className="px-3 py-2 text-sm text-gray-400">
+                              No se encontraron parámetros
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Selector para plantilla */}
+                    <div>
+                      <label className="text-sm text-gray-300">
+                        O carga una plantilla:
+                      </label>
+                      <select
+                        value={selectedTemplateId ?? ''}
+                        onChange={(e) => {
+                          const id = e.target.value
+                            ? Number(e.target.value)
+                            : null;
+                          if (id) {
+                            handleAddTemplate(id);
+                          }
+                        }}
+                        className="
+                          mt-2 w-full rounded border bg-background p-2 text-sm
+                          text-white
+                        "
+                      >
+                        <option value="">
+                          {existingTemplates.length === 0
+                            ? 'No hay plantillas disponibles'
+                            : 'Seleccionar plantilla...'}
+                        </option>
+                        {existingTemplates.map((template) => (
+                          <option key={template.id} value={template.id}>
+                            {template.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Advertencia si se intenta agregar plantilla con parámetros existentes */}
+                  {showTemplateWarning && (
+                    <div
+                      className="
+                        rounded-lg border border-yellow-500 bg-yellow-50 p-4
+                      "
+                    >
+                      <p className="text-sm font-medium text-yellow-800">
+                        ⚠️ Para agregar una plantilla, debes eliminar todos los
+                        parámetros existentes primero.
+                      </p>
+                      <Button
+                        onClick={() => setShowTemplateWarning(false)}
+                        className="
+                          mt-2 bg-yellow-600 text-white
+                          hover:bg-yellow-700
+                        "
+                      >
+                        Entendido
+                      </Button>
+                    </div>
+                  )}
+
                   {parametros.map((parametro, index) => (
                     <div
                       key={index}
@@ -1852,6 +2110,36 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                             )
                           )
                         }
+                        className="
+                          mt-1 w-full rounded border border-primary/30
+                          bg-background p-2 text-xs text-white outline-none
+                          md:text-sm
+                        "
+                      />
+                      <label
+                        className="
+                          mt-3 block text-xs font-medium text-primary
+                          md:text-sm
+                        "
+                      >
+                        Número de actividades
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        value={parametro.numberOfActivities}
+                        onChange={(e) => {
+                          const value = Math.max(
+                            1,
+                            parseInt(e.target.value) || 1
+                          );
+                          const nuevos = [...parametros];
+                          nuevos[index] = {
+                            ...nuevos[index],
+                            numberOfActivities: value,
+                          };
+                          setParametrosAction(nuevos);
+                        }}
                         className="
                           mt-1 w-full rounded border border-primary/30
                           bg-background p-2 text-xs text-white outline-none

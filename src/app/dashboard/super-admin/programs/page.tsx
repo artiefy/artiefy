@@ -70,11 +70,13 @@ interface Category {
 // Define el modelo de datos de los parámetros de evaluación
 export function LoadingPrograms() {
   return (
-    <div className="
-      mt-6 grid grid-cols-1 gap-4
-      sm:mt-8 sm:grid-cols-2
-      lg:grid-cols-3
-    ">
+    <div
+      className="
+        mt-6 grid grid-cols-1 gap-4
+        sm:mt-8 sm:grid-cols-2
+        lg:grid-cols-3
+      "
+    >
       {Array.from({ length: 9 }).map((_, index) => (
         <SkeletonCard key={index} />
       ))}
@@ -438,27 +440,36 @@ export default function Page() {
   // Renderizado de la vista
   return (
     <>
-      <div className="
-        p-4
-        sm:p-6
-      ">
+      <div
+        className="
+          p-4
+          sm:p-6
+        "
+      >
         <header className="group relative overflow-hidden rounded-lg p-[1px]">
-          <div className="
-            absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF]
-            via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500
-          " />
-          <div className="
-            relative flex flex-col items-start justify-between rounded-lg
-            bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
-            group-hover:bg-gray-800/95
-            sm:flex-row sm:items-center sm:p-6
-          ">
-            <h1 className="
-              flex items-center gap-3 text-xl font-extrabold tracking-tight
-              text-primary
-              sm:text-2xl
-              lg:text-3xl
-            ">
+          <div
+            className="
+              absolute -inset-0.5 animate-gradient bg-gradient-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur
+              transition duration-500
+            "
+          />
+          <div
+            className="
+              relative flex flex-col items-start justify-between rounded-lg
+              bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
+              group-hover:bg-gray-800/95
+              sm:flex-row sm:items-center sm:p-6
+            "
+          >
+            <h1
+              className="
+                flex items-center gap-3 text-xl font-extrabold tracking-tight
+                text-primary
+                sm:text-2xl
+                lg:text-3xl
+              "
+            >
               Gestión de Programas
             </h1>
           </div>
@@ -466,46 +477,72 @@ export default function Page() {
 
         {/* Totales y Filtros */}
         <div className="my-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="
-            rounded-lg bg-white p-4 text-center text-black shadow-md
-            sm:p-6
-          ">
-            <h2 className="
-              text-base font-bold
-              sm:text-lg
-            ">Total de</h2>
-            <h2 className="
-              text-base font-bold
-              sm:text-lg
-            ">Programas</h2>
-            <p className="
-              text-2xl
-              sm:text-3xl
-            ">{totalPrograms}</p>
+          <div
+            className="
+              rounded-lg bg-white p-4 text-center text-black shadow-md
+              sm:p-6
+            "
+          >
+            <h2
+              className="
+                text-base font-bold
+                sm:text-lg
+              "
+            >
+              Total de
+            </h2>
+            <h2
+              className="
+                text-base font-bold
+                sm:text-lg
+              "
+            >
+              Programas
+            </h2>
+            <p
+              className="
+                text-2xl
+                sm:text-3xl
+              "
+            >
+              {totalPrograms}
+            </p>
           </div>
-          <div className="
-            rounded-lg bg-white p-4 text-center text-black shadow-md
-            sm:p-6
-          ">
-            <h2 className="
-              text-base font-bold
-              sm:text-lg
-            ">
+          <div
+            className="
+              rounded-lg bg-white p-4 text-center text-black shadow-md
+              sm:p-6
+            "
+          >
+            <h2
+              className="
+                text-base font-bold
+                sm:text-lg
+              "
+            >
               Estudiantes Inscritos
             </h2>
-            <p className="
-              text-2xl
-              sm:text-3xl
-            ">{totalStudents}</p>
+            <p
+              className="
+                text-2xl
+                sm:text-3xl
+              "
+            >
+              {totalStudents}
+            </p>
           </div>
-          <div className="
-            rounded-lg bg-white p-4 text-center text-black shadow-md
-            sm:p-6
-          ">
-            <h2 className="
-              text-base font-bold
-              sm:text-lg
-            ">
+          <div
+            className="
+              rounded-lg bg-white p-4 text-center text-black shadow-md
+              sm:p-6
+            "
+          >
+            <h2
+              className="
+                text-base font-bold
+                sm:text-lg
+              "
+            >
               Filtrar por Categoría
             </h2>
             <select
@@ -527,10 +564,12 @@ export default function Page() {
         </div>
 
         {/* Buscador y botón */}
-        <div className="
-          my-4 flex flex-col gap-4 rounded-lg p-4 text-black shadow-md
-          sm:flex-row sm:items-center sm:justify-between sm:p-6
-        ">
+        <div
+          className="
+            my-4 flex flex-col gap-4 rounded-lg p-4 text-black shadow-md
+            sm:flex-row sm:items-center sm:justify-between sm:p-6
+          "
+        >
           <input
             type="text"
             placeholder="Buscar programas..."
@@ -542,10 +581,12 @@ export default function Page() {
             "
           />
 
-          <div className="
-            flex flex-col gap-2
-            sm:flex-row
-          ">
+          <div
+            className="
+              flex flex-col gap-2
+              sm:flex-row
+            "
+          >
             {selectedPrograms.length > 0 && (
               <Button
                 onClick={() => setShowDeleteConfirm(true)}
@@ -572,17 +613,21 @@ export default function Page() {
               <span className="relative z-10 font-medium">
                 Agregar Programa
               </span>
-              <FiPlus className="
-                relative z-10 size-3.5
-                sm:size-4
-              " />
-              <div className="
-                absolute inset-0 z-0 bg-gradient-to-r from-transparent
-                via-white/10 to-transparent opacity-0 transition-all
-                duration-500
-                group-hover/button:[transform:translateX(100%)]
-                group-hover/button:opacity-100
-              " />
+              <FiPlus
+                className="
+                  relative z-10 size-3.5
+                  sm:size-4
+                "
+              />
+              <div
+                className="
+                  absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                  via-white/10 to-transparent opacity-0 transition-all
+                  duration-500
+                  group-hover/button:[transform:translateX(100%)]
+                  group-hover/button:opacity-100
+                "
+              />
             </button>
           </div>
         </div>
@@ -597,13 +642,13 @@ export default function Page() {
                 flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm
                 transition-all
                 ${
-                !categoryFilter
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : `
-                    border-gray-200
-                    hover:border-gray-300
-                  `
-              }
+                  !categoryFilter
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : `
+                      border-gray-200
+                      hover:border-gray-300
+                    `
+                }
               `}
             >
               <PiGraduationCapBold className="size-4" />
@@ -628,20 +673,22 @@ export default function Page() {
                       flex items-center gap-1.5 rounded-full border px-3 py-1.5
                       text-sm transition-all
                       ${
-                      isSelected
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : `
-                          border-gray-200
-                          hover:border-gray-300
-                        `
-                    }
+                        isSelected
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : `
+                            border-gray-200
+                            hover:border-gray-300
+                          `
+                      }
                     `}
                   >
                     {getCategoryIcon(category.name)}
-                    <span className="
-                      max-w-[80px] truncate
-                      sm:max-w-[120px]
-                    ">
+                    <span
+                      className="
+                        max-w-[80px] truncate
+                        sm:max-w-[120px]
+                      "
+                    >
                       {category.name}
                     </span>
                     {programCount > 0 && (
@@ -714,10 +761,12 @@ export default function Page() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <div className="
-          mt-4
-          sm:mt-6
-        ">
+        <div
+          className="
+            mt-4
+            sm:mt-6
+          "
+        >
           <ProgramListAdmin
             programs={filteredPrograms}
             selectedPrograms={selectedPrograms}

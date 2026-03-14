@@ -108,7 +108,7 @@ export async function GET(
     );
 
     // Traer datos del curso incluyendo la foto
-    const courseInfo = await db
+    const courseInfoRaw = await db
       .select({
         title: courses.title,
         instructor: courses.instructor,
@@ -120,6 +120,23 @@ export async function GET(
       .where(eq(courses.id, Number(courseId)))
       .leftJoin(nivel, eq(courses.nivelid, nivel.id))
       .limit(1);
+
+    // Resolver el nombre del instructor a partir del ID
+    let instructorName: string | undefined;
+    const instructorId = courseInfoRaw[0]?.instructor;
+    if (instructorId) {
+      const instructorUser = await db
+        .select({ name: users.name })
+        .from(users)
+        .where(eq(users.id, instructorId))
+        .limit(1);
+      instructorName = instructorUser[0]?.name ?? undefined;
+    }
+
+    const courseInfo = courseInfoRaw.map((c) => ({
+      ...c,
+      instructor: instructorName ?? c.instructor,
+    }));
     console.log('📚 courseInfo:', courseInfo);
 
     // 🔹 Obtener todas las lecciones del curso
