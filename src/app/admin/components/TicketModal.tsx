@@ -101,9 +101,9 @@ const TicketModal = ({
       >
         <div
           className="
-          grid grid-cols-1 gap-x-6 gap-y-4 p-1
-          md:grid-cols-2
-        "
+            grid grid-cols-1 gap-x-6 gap-y-4 p-1
+            md:grid-cols-2
+          "
         >
           {/* Columna izquierda */}
           <div>
@@ -230,8 +230,8 @@ const TicketModal = ({
         {/* Botones de acción */}
         <div
           className="
-          mt-4 flex justify-end space-x-3 border-t border-gray-700 pt-4
-        "
+            mt-4 flex justify-end space-x-3 border-t border-gray-700 pt-4
+          "
         >
           <button
             type="button"
