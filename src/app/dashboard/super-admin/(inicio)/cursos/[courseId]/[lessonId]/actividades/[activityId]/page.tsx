@@ -91,6 +91,7 @@ interface PorcentajeResponse {
 
 const getContrastYIQ = (hexcolor: string) => {
   if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
+  if (!hexcolor.startsWith('#')) return 'white'; // Colores no-hex (oklch, rgb, etc.) asumen fondo oscuro
   hexcolor = hexcolor.replace('#', '');
   const r = parseInt(hexcolor.substr(0, 2), 16);
   const g = parseInt(hexcolor.substr(2, 2), 16);
@@ -109,7 +110,7 @@ const Page: React.FC = () => {
   const [actividad, setActividad] = useState<ActivityDetails | null>(null); // Estado de la actividad
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
-  const [color, setColor] = useState<string>('#FFFFFF'); // Estado del color
+  const [color, setColor] = useState<string>('oklch(19% 0.0542 252.35)'); // Estado del color
   const [selectedActivityType, setSelectedActivityType] = useState<string>(''); // Estado del tipo de actividad seleccionado
   const [questions, setQuestions] = useState<string[]>([]); // Estado de las preguntas
 
@@ -320,9 +321,11 @@ const Page: React.FC = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="
-          border-primary size-32 animate-spin rounded-full border-y-2
-        ">
+        <div
+          className="
+            size-32 animate-spin rounded-full border-y-2 border-primary
+          "
+        >
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -340,7 +343,7 @@ const Page: React.FC = () => {
           </p>
           <button
             onClick={fetchActividad}
-            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -422,80 +425,97 @@ const Page: React.FC = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative h-auto w-full">
-        <div className="
-          animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
-          duration-500
-          group-hover:opacity-100
-        " />
+        <div
+          className="
+            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+            duration-500
+            group-hover:opacity-100
+          "
+        />
 
         <div
           className="
             relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg
-            border border-gray-200 p-4
+            border border-gray-200 p-4 shadow-lg
             sm:p-6
             lg:p-8
-            shadow-lg
           "
           style={{ backgroundColor: color, color: getContrastYIQ(color) }}
         >
           <div className="mb-6 space-y-3">
-            <h2 className="
-              text-primary text-2xl
-              sm:text-3xl
-              lg:text-4xl
-              font-bold
-            ">
+            <h2
+              className="
+                text-2xl font-bold text-primary
+                sm:text-3xl
+                lg:text-4xl
+              "
+            >
               {actividad.name}
             </h2>
-            <p className="
-              text-primary text-sm
-              sm:text-base
-              lg:text-lg
-              font-medium opacity-90
-            ">
+            <p
+              className="
+                text-sm font-medium text-primary opacity-90
+                sm:text-base
+                lg:text-lg
+              "
+            >
               Lección: {actividad.lesson?.title}
             </p>
           </div>
 
-          <div className="
-            my-6 grid grid-cols-1 gap-6
-            lg:grid-cols-2
-          ">
-            <div className="
-              space-y-4 text-sm
-              sm:text-base
-            ">
+          <div
+            className="
+              my-6 grid grid-cols-1 gap-6
+              lg:grid-cols-2
+            "
+          >
+            <div
+              className="
+                space-y-4 text-sm
+                sm:text-base
+              "
+            >
               <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide opacity-70">Docente</span>
+                <span className="text-xs tracking-wide uppercase opacity-70">
+                  Docente
+                </span>
                 <Badge
                   variant="outline"
                   className="
-                    border-primary bg-background text-primary w-fit
+                    w-fit border-primary bg-background font-medium text-primary
                     hover:bg-black/70
-                    font-medium
                   "
                 >
-                  {actividad.lesson?.courseInstructorName ?? actividad.lesson.courseInstructor}
+                  {actividad.lesson?.courseInstructorName ??
+                    actividad.lesson.courseInstructor}
                 </Badge>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide opacity-70">Tipo de actividad</span>
-                <p className="text-primary font-medium">{actividad.type?.name}</p>
+                <span className="text-xs tracking-wide uppercase opacity-70">
+                  Tipo de actividad
+                </span>
+                <p className="font-medium text-primary">
+                  {actividad.type?.name}
+                </p>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide opacity-70">Descripción</span>
+                <span className="text-xs tracking-wide uppercase opacity-70">
+                  Descripción
+                </span>
                 <p className="font-normal">{actividad.description}</p>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide opacity-70">Calificable</span>
+                <span className="text-xs tracking-wide uppercase opacity-70">
+                  Calificable
+                </span>
                 <Badge
                   variant="outline"
                   className="
-                    border-primary bg-background text-primary w-fit
+                    w-fit border-primary bg-background text-primary
                     hover:bg-black/70
                   "
                 >
@@ -505,28 +525,37 @@ const Page: React.FC = () => {
 
               {actividad.fechaMaximaEntrega && (
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs uppercase tracking-wide opacity-70">Fecha de entrega</span>
+                  <span className="text-xs tracking-wide uppercase opacity-70">
+                    Fecha de entrega
+                  </span>
                   <p className="font-medium">
-                    {new Date(actividad.fechaMaximaEntrega).toLocaleString('es-ES', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                    {new Date(actividad.fechaMaximaEntrega).toLocaleString(
+                      'es-ES',
+                      {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      }
+                    )}
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="
-              flex items-center justify-center
-              lg:col-span-1
-            ">
-              <div className="
-                w-full max-w-xs
-                sm:max-w-sm
-              ">
+            <div
+              className="
+                flex items-center justify-center
+                lg:col-span-1
+              "
+            >
+              <div
+                className="
+                  w-full max-w-xs
+                  sm:max-w-sm
+                "
+              >
                 <Image
                   src={
                     actividad.lesson.coverImageKey
@@ -536,25 +565,25 @@ const Page: React.FC = () => {
                   alt="Imagen de la lección"
                   width={400}
                   height={400}
-                  className="rounded-lg shadow-lg w-full h-auto object-cover"
+                  className="h-auto w-full rounded-lg object-cover shadow-lg"
                 />
               </div>
             </div>
           </div>
 
-          <div className="
-            my-6 flex flex-col
-            sm:flex-row
-            gap-3 flex-wrap justify-center
-            lg:justify-start
-          ">
+          <div
+            className="
+              my-6 flex flex-col flex-wrap justify-center gap-3
+              sm:flex-row
+              lg:justify-start
+            "
+          >
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
               className="
-                px-6 py-2 rounded-lg bg-blue-500
+                rounded-lg bg-blue-500 px-6 py-2 text-center text-sm font-medium
+                text-white transition-colors duration-200
                 hover:bg-blue-600
-                text-white font-medium transition-colors duration-200
-                text-center text-sm
                 sm:text-base
               "
             >
@@ -564,10 +593,9 @@ const Page: React.FC = () => {
             <Link
               href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
               className="
-                px-6 py-2 rounded-lg bg-blue-500
+                rounded-lg bg-blue-500 px-6 py-2 text-center text-sm font-medium
+                text-white transition-colors duration-200
                 hover:bg-blue-600
-                text-white font-medium transition-colors duration-200
-                text-center text-sm
                 sm:text-base
               "
             >
@@ -576,12 +604,15 @@ const Page: React.FC = () => {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button className="
-                  px-6 py-2 rounded-lg border border-red-600 bg-red-600
-                  hover:bg-white hover:text-red-600
-                  text-white font-medium transition-colors duration-200 text-sm
-                  sm:text-base
-                ">
+                <Button
+                  className="
+                    rounded-lg border border-red-600 bg-red-600 px-6 py-2
+                    text-sm font-medium text-white transition-colors
+                    duration-200
+                    hover:bg-white hover:text-red-600
+                    sm:text-base
+                  "
+                >
                   Eliminar
                 </Button>
               </AlertDialogTrigger>
@@ -589,8 +620,10 @@ const Page: React.FC = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminará permanentemente la actividad
-                    <span className="font-bold"> {actividad?.name}</span> y todos los datos asociados.
+                    Esta acción no se puede deshacer. Se eliminará
+                    permanentemente la actividad
+                    <span className="font-bold"> {actividad?.name}</span> y
+                    todos los datos asociados.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -598,10 +631,10 @@ const Page: React.FC = () => {
                   <AlertDialogAction
                     onClick={handleDeleteAct}
                     className="
-                      rounded-lg border border-red-600 bg-red-600
+                      rounded-lg border border-red-600 bg-red-600 font-medium
+                      text-white transition-colors duration-200
                       hover:border-red-700 hover:bg-transparent
                       hover:text-red-700
-                      text-white font-medium transition-colors duration-200
                     "
                   >
                     Eliminar
@@ -614,31 +647,38 @@ const Page: React.FC = () => {
           {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
           {actividad?.type.id === 1 ? (
             <div className="mt-8 space-y-6">
-              <div className="rounded-lg bg-white shadow-md">
+              <div className="rounded-lg bg-background shadow-md">
                 <div className="space-y-4">
                   {actividadIdNumber !== null && (
                     <>
-                      <div className="
-                        rounded-lg border border-gray-200 overflow-hidden
-                      ">
-                        <div className="
-                          rounded-t-lg bg-gradient-to-r from-blue-50 to-blue-100
-                          p-4
-                          sm:p-6
-                        ">
-                          <h2 className="
-                            text-lg
-                            sm:text-xl
-                            font-semibold text-gray-800
-                          ">
+                      <div
+                        className="
+                          overflow-hidden rounded-lg border border-gray-200
+                        "
+                      >
+                        <div
+                          className="
+                            rounded-t-lg bg-gradient-to-r from-blue-50
+                            to-blue-100 p-4
+                            sm:p-6
+                          "
+                        >
+                          <h2
+                            className="
+                              text-lg font-semibold text-gray-800
+                              sm:text-xl
+                            "
+                          >
                             Gestión de Archivos y Calificaciones
                           </h2>
-                          <p className="
-                            text-xs
-                            sm:text-sm
-                            text-gray-600 mt-1
-                          ">
-                            Administra los archivos subidos y asigna calificaciones
+                          <p
+                            className="
+                              mt-1 text-xs text-gray-600
+                              sm:text-sm
+                            "
+                          >
+                            Administra los archivos subidos y asigna
+                            calificaciones
                           </p>
                         </div>
                         <VerRespuestasArchivos
@@ -663,9 +703,11 @@ const Page: React.FC = () => {
                           />
                         )}
 
-                      <div className="
-                        rounded-lg border border-gray-200 bg-white p-6
-                      ">
+                      <div
+                        className="
+                          rounded-lg border border-gray-200 bg-white p-6
+                        "
+                      >
                         <QuestionSubidaList
                           key={`subida-${shouldRefresh}`}
                           activityId={actividadIdNumber}
@@ -698,46 +740,57 @@ const Page: React.FC = () => {
               />
               <div
                 className={`
-                  mt-4 p-4
+                  mt-4 rounded-lg border p-4
                   sm:p-6
-                  rounded-lg border
-                  ${color === '#FFFFFF'
-                    ? 'bg-gray-50 border-gray-200 text-gray-800'
-                    : 'bg-black/10 border-white/20'
+                  ${
+                    color === '#FFFFFF'
+                      ? 'border-gray-200 bg-gray-50 text-gray-800'
+                      : 'border-white/20 bg-black/10'
                   }
                   text-sm
                   sm:text-base
                 `}
               >
-                <p className="font-semibold mb-3">Distribución de preguntas:</p>
-                <div className="
-                  space-y-2 text-xs
-                  sm:text-sm
-                ">
-                  <div className="flex justify-between items-center">
+                <p className="mb-3 font-semibold">Distribución de preguntas:</p>
+                <div
+                  className="
+                    space-y-2 text-xs
+                    sm:text-sm
+                  "
+                >
+                  <div className="flex items-center justify-between">
                     <span>Opción Múltiple</span>
-                    <span className="font-medium">{resumenPorTipo.opcionMultiple}%</span>
+                    <span className="font-medium">
+                      {resumenPorTipo.opcionMultiple}%
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <span>Verdadero/Falso</span>
-                    <span className="font-medium">{resumenPorTipo.verdaderoFalso}%</span>
+                    <span className="font-medium">
+                      {resumenPorTipo.verdaderoFalso}%
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <span>Completar</span>
-                    <span className="font-medium">{resumenPorTipo.completar}%</span>
+                    <span className="font-medium">
+                      {resumenPorTipo.completar}%
+                    </span>
                   </div>
-                  <div className="
-                    border-t border-current/20 pt-2 mt-2 flex justify-between
-                    items-center font-semibold
-                  ">
+                  <div
+                    className="
+                      mt-2 flex items-center justify-between border-t
+                      border-current/20 pt-2 font-semibold
+                    "
+                  >
                     <span>Total usado</span>
                     <span>{porcentajeUsado}%</span>
                   </div>
-                  <div className="
-                    flex justify-between items-center text-xs
-                    sm:text-sm
-                    opacity-80
-                  ">
+                  <div
+                    className="
+                      flex items-center justify-between text-xs opacity-80
+                      sm:text-sm
+                    "
+                  >
                     <span>Disponible</span>
                     <span>{porcentajeDisponible}%</span>
                   </div>
@@ -747,13 +800,11 @@ const Page: React.FC = () => {
               {selectedActivityType && (
                 <Button
                   className={`
-                    mx-auto block mt-4 px-6 py-2 border border-slate-300
-                    bg-transparent
+                    mx-auto mt-4 block border border-slate-300 bg-transparent
+                    px-6 py-2 text-sm font-medium
                     hover:bg-gray-300/20
-                    font-medium text-sm
                     sm:text-base
-                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }
+                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                   `}
                   onClick={handleAddQuestion}
                 >
