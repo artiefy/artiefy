@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -264,6 +264,7 @@ export function LessonActivityModal({
   // Nuevo estado para el archivo de ayuda del educador
   const [helpFileInfo, setHelpFileInfo] = useState<HelpFileInfo | null>(null);
   const [isLoadingHelpFile, setIsLoadingHelpFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -290,6 +291,9 @@ export function LessonActivityModal({
     setIsUrlValid(false);
     setIsUploadingUrl(false);
     setHelpFileInfo(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
 
     // Inicializa vacío; otro efecto sincroniza preguntas cuando lleguen.
     setQuestions([]);
@@ -1406,6 +1410,11 @@ export function LessonActivityModal({
     setIsUploading(false);
   };
 
+  const openFilePicker = () => {
+    if (uploadedFileInfo) return;
+    fileInputRef.current?.click();
+  };
+
   const renderFilePreview = () => {
     if (!filePreview) return null;
 
@@ -1707,6 +1716,9 @@ export function LessonActivityModal({
                         setShowResults(false);
                         setDriveUrl('');
                         setIsUrlValid(false);
+                        if (fileInputRef.current) {
+                          fileInputRef.current.value = '';
+                        }
                       }}
                       className="
                         w-full bg-yellow-500 text-white
@@ -1818,6 +1830,19 @@ export function LessonActivityModal({
                       `}
                     >
                       <div className="group/dropzone">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.ppt,.pptx,.xls,.xlsx,.webp"
+                          aria-label="Seleccionar archivo para subir"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleFileUpload(e.target.files[0]);
+                            }
+                          }}
+                          disabled={!!uploadedFileInfo}
+                        />
                         <div
                           className={`
                             relative rounded-xl border-2 border-dashed
@@ -1829,22 +1854,19 @@ export function LessonActivityModal({
                                 : 'group-hover/dropzone:border-cyan-500/50'
                             }
                           `}
+                          role="button"
+                          tabIndex={uploadedFileInfo ? -1 : 0}
+                          onClick={openFilePicker}
+                          onKeyDown={(event) => {
+                            if (
+                              !uploadedFileInfo &&
+                              (event.key === 'Enter' || event.key === ' ')
+                            ) {
+                              event.preventDefault();
+                              openFilePicker();
+                            }
+                          }}
                         >
-                          <input
-                            type="file"
-                            aria-label="Seleccionar archivo para subir"
-                            className="
-                              absolute inset-0 z-50 size-full cursor-pointer
-                              opacity-0
-                            "
-                            onChange={(e) => {
-                              if (e.target.files?.[0]) {
-                                handleFileUpload(e.target.files[0]);
-                              }
-                            }}
-                            disabled={!!uploadedFileInfo}
-                            tabIndex={0}
-                          />
                           <div className="space-y-6 text-center">
                             <div
                               className="
@@ -1886,6 +1908,23 @@ export function LessonActivityModal({
                               <p className="text-xs text-slate-400">
                                 Tamaño máximo: 10MB
                               </p>
+                              {!uploadedFileInfo && (
+                                <button
+                                  type="button"
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    openFilePicker();
+                                  }}
+                                  className="
+                                    mt-4 rounded-lg border border-cyan-500/40
+                                    bg-cyan-500/10 px-4 py-2 text-sm font-medium
+                                    text-cyan-300 transition-colors
+                                    hover:bg-cyan-500/20
+                                  "
+                                >
+                                  Seleccionar archivo
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1896,6 +1935,7 @@ export function LessonActivityModal({
                     {renderFilePreview()}
 
                     <button
+                      type="button"
                       onClick={() =>
                         handleUpload({
                           selectedFile,
@@ -1998,6 +2038,7 @@ export function LessonActivityModal({
                         </p>
                       )}
                     <button
+                      type="button"
                       onClick={
                         !uploadedFileInfo
                           ? handleDriveSubmit(

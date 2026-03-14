@@ -838,28 +838,27 @@ export function Header({
 
         <div
           className="
-            relative flex w-full items-center justify-between
+            relative flex h-16 w-full items-center justify-between
             md:hidden
           "
         >
-          <Link href="/">
-            <div
-              className="
-                relative size-[110px]
-                md:size-[150px]
-              "
-            >
+          <Link
+            href="/"
+            aria-label="Ir al inicio"
+            className="flex shrink-0 items-center"
+          >
+            <div className="relative h-10 w-28">
               <Image
                 src="/artiefy-logo.png"
                 alt="Logo Artiefy"
                 fill
                 priority
                 className="object-contain"
-                sizes="(max-width: 768px) 110px, 150px"
+                sizes="112px"
               />
             </div>
           </Link>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               aria-label="Buscar"
@@ -880,7 +879,7 @@ export function Header({
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-menu"
               className="
-                hamburger flex size-8 items-center justify-center
+                hamburger flex items-center justify-center
                 md:size-12
               "
               data-open={mobileMenuOpen ? 'true' : 'false'}
