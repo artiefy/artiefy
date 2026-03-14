@@ -265,6 +265,7 @@ export function LessonActivityModal({
   const [helpFileInfo, setHelpFileInfo] = useState<HelpFileInfo | null>(null);
   const [isLoadingHelpFile, setIsLoadingHelpFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const fileInputId = `lesson-activity-file-${activity.id}`;
 
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -1832,10 +1833,14 @@ export function LessonActivityModal({
                       <div className="group/dropzone">
                         <input
                           ref={fileInputRef}
+                          id={fileInputId}
                           type="file"
-                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.ppt,.pptx,.xls,.xlsx,.webp"
+                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.ppt,.pptx,.xls,.xlsx,.webp,.heic,.heif,.zip,.rar,.7z"
                           aria-label="Seleccionar archivo para subir"
-                          className="hidden"
+                          className="
+                            sr-only absolute size-px overflow-hidden border-0
+                            p-0
+                          "
                           onChange={(e) => {
                             if (e.target.files?.[0]) {
                               handleFileUpload(e.target.files[0]);
@@ -1909,21 +1914,21 @@ export function LessonActivityModal({
                                 Tamaño máximo: 10MB
                               </p>
                               {!uploadedFileInfo && (
-                                <button
-                                  type="button"
+                                <label
+                                  htmlFor={fileInputId}
                                   onClick={(event) => {
                                     event.stopPropagation();
-                                    openFilePicker();
                                   }}
                                   className="
-                                    mt-4 rounded-lg border border-cyan-500/40
-                                    bg-cyan-500/10 px-4 py-2 text-sm font-medium
-                                    text-cyan-300 transition-colors
+                                    mt-4 inline-flex cursor-pointer rounded-lg
+                                    border border-cyan-500/40 bg-cyan-500/10
+                                    px-4 py-2 text-sm font-medium text-cyan-300
+                                    transition-colors
                                     hover:bg-cyan-500/20
                                   "
                                 >
                                   Seleccionar archivo
-                                </button>
+                                </label>
                               )}
                             </div>
                           </div>

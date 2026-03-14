@@ -75,6 +75,14 @@ export async function POST(request: Request) {
     const { filename, contentType, activityId, userId } = body;
     const resolvedContentType = resolveContentType(filename, contentType);
 
+    console.info('[documentupload] Request received', {
+      activityId,
+      userId,
+      filename,
+      contentType,
+      resolvedContentType,
+    });
+
     if (!filename || !activityId || !userId) {
       return Response.json(
         { error: 'Missing required fields' },
@@ -94,6 +102,11 @@ export async function POST(request: Request) {
     // Generate unique key for the file (sanitize filename for S3 URL safety)
     const safeFilename = sanitizeFilename(filename);
     const key = `documents/${activityId}/${userId}/${uuidv4()}-${safeFilename}`;
+    console.info('[documentupload] Creating presigned post', {
+      activityId,
+      userId,
+      key,
+    });
 
     // Create presigned post data
     const { url, fields } = await createPresignedPost(client, {
@@ -121,6 +134,12 @@ export async function POST(request: Request) {
 
     // Always update the metadata for the document, allowing resubmissions
     await redis.set(documentKey, metadata);
+    console.info('[documentupload] Metadata stored in Redis', {
+      activityId,
+      userId,
+      documentKey,
+      key,
+    });
 
     // Return presigned URL and fields
     return Response.json({
@@ -130,7 +149,7 @@ export async function POST(request: Request) {
       fileUrl: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`,
     });
   } catch (error) {
-    console.error('Document upload error:', error);
+    console.error('[documentupload] Document upload error:', error);
     return Response.json({ error: (error as Error).message }, { status: 500 });
   }
 }
