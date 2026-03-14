@@ -1,9 +1,9 @@
 #!/usr/bin/env sh
-# Run TypeScript typecheck before allowing a push. This may take longer,
-# so we run it on pre-push instead of pre-commit to keep commits fast.
+# Run full quality gate before allowing a push.
+# This enforces ESLint + TypeScript checks to prevent broken lint from reaching main.
 
-npm run typecheck
+npm run check
 if [ $? -ne 0 ]; then
-  echo "Error: Push aborted because TypeScript typecheck failed."
+  echo "Error: Push aborted because quality checks failed (eslint and/or typecheck)."
   exit 1
 fi

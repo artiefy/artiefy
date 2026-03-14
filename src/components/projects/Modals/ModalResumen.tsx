@@ -4054,8 +4054,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   cronograma.
                 </p>
               ) : (
-                <div className="max-w-full min-w-0">
-                  <div className="flex max-w-full min-w-0">
+                <div className="max-w-full min-w-0 overflow-hidden">
+                  <div className="flex max-w-full min-w-0 overflow-hidden">
                     <div
                       className="
                         shrink-0 border-r border-border/30 bg-[#061c37] px-3
@@ -4107,7 +4107,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
                     <div
                       className="
-                        min-w-0 flex-1 pl-1
+                        w-0 min-w-0 flex-1 pl-1
                         sm:pl-0
                       "
                     >
@@ -4116,7 +4116,7 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           className="
                             scrollbar-thin relative w-full max-w-full
                             touch-pan-x overflow-x-scroll overflow-y-hidden
-                            overscroll-x-contain pb-2
+                            overscroll-x-contain pb-2 [scrollbar-gutter:stable]
                             [&::-webkit-scrollbar]:h-2
                             [&::-webkit-scrollbar-thumb]:rounded-full
                             [&::-webkit-scrollbar-thumb]:bg-border/60
