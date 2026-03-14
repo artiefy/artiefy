@@ -15,7 +15,7 @@
     "start": "next start",
     "lint": "eslint . --config eslint.cli.config.mjs",
     "lint:fix": "eslint . --config eslint.cli.config.mjs --fix",
-    "typecheck": "next typegen && tsc --noEmit -p tsconfig.typecheck.json",
+    "typecheck": "tsc --noEmit",
     "format:write": "prettier --write \"**/*.{ts,js,jsx,mdx}\" --cache",
     "format:check": "prettier --check \"**/*.{ts,js,jsx,mdx}\" --cache",
     "preview": "next build && next start",
