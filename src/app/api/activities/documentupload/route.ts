@@ -42,13 +42,48 @@ const sanitizeFilename = (value: string): string => {
   return `${base}${ext}`;
 };
 
+const resolveContentType = (
+  filename: string,
+  providedContentType?: string
+): string => {
+  const trimmed = providedContentType?.trim();
+  if (trimmed) return trimmed;
+
+  const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+  const map: Record<string, string> = {
+    pdf: 'application/pdf',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ppt: 'application/vnd.ms-powerpoint',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    webp: 'image/webp',
+  };
+
+  return map[ext] ?? 'application/octet-stream';
+};
+
 export async function POST(request: Request) {
   try {
     // Parse and validate request body
     const body = (await request.json()) as RequestBody;
     const { filename, contentType, activityId, userId } = body;
+    const resolvedContentType = resolveContentType(filename, contentType);
 
-    if (!filename || !contentType || !activityId || !userId) {
+    console.info('[documentupload] Request received', {
+      activityId,
+      userId,
+      filename,
+      contentType,
+      resolvedContentType,
+    });
+
+    if (!filename || !activityId || !userId) {
       return Response.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -67,6 +102,11 @@ export async function POST(request: Request) {
     // Generate unique key for the file (sanitize filename for S3 URL safety)
     const safeFilename = sanitizeFilename(filename);
     const key = `documents/${activityId}/${userId}/${uuidv4()}-${safeFilename}`;
+    console.info('[documentupload] Creating presigned post', {
+      activityId,
+      userId,
+      key,
+    });
 
     // Create presigned post data
     const { url, fields } = await createPresignedPost(client, {
@@ -74,11 +114,11 @@ export async function POST(request: Request) {
       Key: key,
       Conditions: [
         ['content-length-range', 0, 10485760], // 10 MB limit
-        ['starts-with', '$Content-Type', contentType],
+        ['starts-with', '$Content-Type', resolvedContentType],
       ],
       Fields: {
         acl: 'public-read',
-        'Content-Type': contentType,
+        'Content-Type': resolvedContentType,
       },
       Expires: 600, // 10 minutes
     });
@@ -94,6 +134,12 @@ export async function POST(request: Request) {
 
     // Always update the metadata for the document, allowing resubmissions
     await redis.set(documentKey, metadata);
+    console.info('[documentupload] Metadata stored in Redis', {
+      activityId,
+      userId,
+      documentKey,
+      key,
+    });
 
     // Return presigned URL and fields
     return Response.json({
@@ -103,7 +149,7 @@ export async function POST(request: Request) {
       fileUrl: `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`,
     });
   } catch (error) {
-    console.error('Document upload error:', error);
+    console.error('[documentupload] Document upload error:', error);
     return Response.json({ error: (error as Error).message }, { status: 500 });
   }
 }
