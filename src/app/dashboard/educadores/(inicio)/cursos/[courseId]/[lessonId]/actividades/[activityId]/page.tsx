@@ -336,9 +336,11 @@ const Page: React.FC = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="
-          border-primary size-32 animate-spin rounded-full border-y-2
-        ">
+        <div
+          className="
+            size-32 animate-spin rounded-full border-y-2 border-primary
+          "
+        >
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -356,7 +358,7 @@ const Page: React.FC = () => {
           </p>
           <button
             onClick={fetchActividad}
-            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -438,43 +440,48 @@ const Page: React.FC = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative h-auto w-full">
-        <div className="
-          animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
-          duration-500
-          group-hover:opacity-100
-        " />
+        <div
+          className="
+            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+            duration-500
+            group-hover:opacity-100
+          "
+        />
         <div
           className="
             relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg
-            border border-gray-200 p-4
+            border border-gray-200 p-4 shadow-lg
             sm:p-6
             lg:p-8
-            shadow-lg
           "
           style={{ backgroundColor: color, color: getContrastYIQ(color) }}
         >
-          <div className="
-            mb-3 grid grid-cols-1 items-center justify-between gap-2 text-2xl
-            sm:text-3xl
-            md:text-3xl
-            font-semibold
-            md:grid-cols-2
-          ">
-            <h2 className="
-              text-primary flex flex-col text-2xl
+          <div
+            className="
+              mb-3 grid grid-cols-1 items-center justify-between gap-2 text-2xl
+              font-semibold
               sm:text-3xl
-              md:text-4xl
-              font-extrabold
-            ">
+              md:grid-cols-2 md:text-3xl
+            "
+          >
+            <h2
+              className="
+                flex flex-col text-2xl font-extrabold text-primary
+                sm:text-3xl
+                md:text-4xl
+              "
+            >
               Actividad: <b>{actividad.name}</b>
             </h2>
-            <h3 className="
-              text-primary text-base
-              sm:text-lg
-              md:text-xl md:mr-8
-              lg:mr-24
-            ">
+            <h3
+              className="
+                text-base text-primary
+                sm:text-lg
+                md:mr-8 md:text-xl
+                lg:mr-24
+              "
+            >
               Perteneciente a la clase: {actividad.lesson?.title}
             </h3>
           </div>
@@ -506,25 +513,30 @@ const Page: React.FC = () => {
             </div>
           </div>
 
-          <div className="
-            my-4 grid grid-cols-1 gap-6
-            md:grid-cols-2
-            lg:grid-cols-2
-          ">
-            <div className="
-              space-y-5 text-base
-              sm:text-lg
-            ">
+          <div
+            className="
+              my-4 grid grid-cols-1 gap-6
+              md:grid-cols-2
+              lg:grid-cols-2
+            "
+          >
+            <div
+              className="
+                space-y-5 text-base
+                sm:text-lg
+              "
+            >
               <p className="font-semibold">
                 Del docente:{' '}
                 <Badge
                   variant="outline"
                   className="
-                    border-primary bg-background text-primary ml-1 w-fit
+                    ml-1 w-fit border-primary bg-background text-primary
                     hover:bg-black/70
                   "
                 >
-                  {actividad.lesson?.courseInstructorName ?? actividad.lesson.courseInstructor}
+                  {actividad.lesson?.courseInstructorName ??
+                    actividad.lesson.courseInstructor}
                 </Badge>
               </p>
               <p className="font-semibold">
@@ -534,11 +546,12 @@ const Page: React.FC = () => {
               <p className="font-semibold">
                 Permite: <b>{actividad.type?.description}</b>
               </p>
-              <p className="
-                w-full
-                sm:w-11/12
-                font-semibold
-              ">
+              <p
+                className="
+                  w-full font-semibold
+                  sm:w-11/12
+                "
+              >
                 Descripción de la actividad:{' '}
                 <b className="block">{actividad.description}.</b>
               </p>
@@ -547,7 +560,7 @@ const Page: React.FC = () => {
                 <Badge
                   variant="outline"
                   className="
-                    border-primary bg-background text-primary ml-1 w-fit
+                    ml-1 w-fit border-primary bg-background text-primary
                     hover:bg-black/70
                   "
                 >
@@ -559,7 +572,7 @@ const Page: React.FC = () => {
                 <Badge
                   variant="outline"
                   className="
-                    border-primary bg-background text-primary ml-1 w-fit
+                    ml-1 w-fit border-primary bg-background text-primary
                     hover:bg-black/70
                   "
                 >
@@ -582,30 +595,28 @@ const Page: React.FC = () => {
                   width={400}
                   height={400}
                   className="
-                    rounded-lg shadow-md w-full max-w-xs
+                    h-auto w-full max-w-xs rounded-lg object-cover shadow-md
                     sm:max-w-sm
                     md:max-w-md
-                    h-auto object-cover
                   "
                 />
               </div>
             </div>
           </div>
-          <div className="
-            mx-auto flex w-full flex-col
-            sm:flex-row
-            flex-wrap justify-center gap-3
-            sm:justify-evenly
-            md:gap-6
-          ">
+          <div
+            className="
+              mx-auto flex w-full flex-col flex-wrap justify-center gap-3
+              sm:flex-row sm:justify-evenly
+              md:gap-6
+            "
+          >
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
               className="
-                w-full
-                sm:w-auto
-                rounded-lg bg-blue-500 px-4 py-2 text-white text-center
+                w-full rounded-lg bg-blue-500 px-4 py-2 text-center text-white
                 transition-colors duration-200
                 hover:bg-blue-600
+                sm:w-auto
               "
             >
               Realizar Actividad
@@ -614,11 +625,10 @@ const Page: React.FC = () => {
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
               className="
-                w-full
-                sm:w-auto
-                rounded-lg bg-blue-500 px-4 py-2 text-white text-center
+                w-full rounded-lg bg-blue-500 px-4 py-2 text-center text-white
                 transition-colors duration-200
                 hover:bg-blue-600
+                sm:w-auto
               "
             >
               Editar Actividad
@@ -626,11 +636,13 @@ const Page: React.FC = () => {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button className="
-                  rounded-lg border border-red-600 bg-red-600 px-4 py-2
-                  text-white transition-colors duration-200
-                  hover:bg-white hover:text-red-600
-                ">
+                <Button
+                  className="
+                    rounded-lg border border-red-600 bg-red-600 px-4 py-2
+                    text-white transition-colors duration-200
+                    hover:bg-white hover:text-red-600
+                  "
+                >
                   Eliminar
                 </Button>
               </AlertDialogTrigger>
@@ -674,9 +686,11 @@ const Page: React.FC = () => {
                     <>
                       <div className="rounded-lg border border-gray-200 bg-white">
                         <div className="rounded-lg bg-blue-50 p-4">
-                          <h2 className="
-                            text-center text-2xl font-bold text-gray-800
-                          ">
+                          <h2
+                            className="
+                              text-center text-2xl font-bold text-gray-800
+                            "
+                          >
                             Gestión de Archivos y Calificaciones
                           </h2>
                           <p className="text-center text-sm text-black">
@@ -707,9 +721,11 @@ const Page: React.FC = () => {
                           />
                         )}
 
-                      <div className="
-                        rounded-lg border border-gray-200 bg-white p-6
-                      ">
+                      <div
+                        className="
+                          rounded-lg border border-gray-200 bg-white p-6
+                        "
+                      >
                         <QuestionSubidaList
                           key={`subida-${shouldRefresh}`}
                           activityId={actividadIdNumber}
@@ -767,11 +783,10 @@ const Page: React.FC = () => {
               {selectedActivityType && (
                 <Button
                   className={`
-                    mx-auto mb-4 w-full
+                    mx-auto mb-4 w-full border border-slate-300 bg-transparent
+                    hover:bg-gray-300/20
                     sm:w-2/4
                     md:w-1/4
-                    border border-slate-300 bg-transparent
-                    hover:bg-gray-300/20
                     ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                   `}
                   onClick={handleAddQuestion}

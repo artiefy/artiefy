@@ -464,9 +464,11 @@ const ForumPage = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="
-          border-primary size-32 animate-spin rounded-full border-y-2
-        ">
+        <div
+          className="
+            size-32 animate-spin rounded-full border-y-2 border-primary
+          "
+        >
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -517,11 +519,13 @@ const ForumPage = () => {
       </Breadcrumb>
 
       <div className="container mx-auto mt-5 rounded-lg bg-black/25 p-5 shadow-lg">
-        <div className="
-          mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg
-          md:w-11/12
-          lg:w-full
-        ">
+        <div
+          className="
+            mx-auto w-full rounded-lg bg-slate-500/20 p-5 shadow-lg
+            md:w-11/12
+            lg:w-full
+          "
+        >
           <div className="flex justify-between">
             <h1 className="mb-4 text-2xl font-bold text-white">
               {forumData?.title}
@@ -558,7 +562,7 @@ const ForumPage = () => {
                     />
                     <button
                       onClick={() => handlePostUpdate(post.id)}
-                      className="bg-primary mt-2 rounded px-4 py-2 text-white"
+                      className="mt-2 rounded bg-primary px-4 py-2 text-white"
                     >
                       Actualizar Post
                     </button>
@@ -586,17 +590,21 @@ const ForumPage = () => {
                 {post.userId.id === user?.id && (
                   <div className="mt-4 space-x-2">
                     {editingPostId === post.id ? (
-                      <Collapsible className="
-                        absolute top-4 right-3 flex w-[100px] flex-col
-                      ">
+                      <Collapsible
+                        className="
+                          absolute top-4 right-3 flex w-[100px] flex-col
+                        "
+                      >
                         {/* Cancelar edición menu collapsible*/}
                         <CollapsibleTrigger
                           asChild
                           className="absolute cursor-pointer"
                         >
-                          <EllipsisVertical className="
-                            absolute top-0 right-0 justify-end text-white
-                          " />
+                          <EllipsisVertical
+                            className="
+                              absolute top-0 right-0 justify-end text-white
+                            "
+                          />
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <button
@@ -608,17 +616,21 @@ const ForumPage = () => {
                         </CollapsibleContent>
                       </Collapsible>
                     ) : (
-                      <Collapsible className="
-                        absolute top-4 right-3 flex w-[100px] flex-col
-                      ">
+                      <Collapsible
+                        className="
+                          absolute top-4 right-3 flex w-[100px] flex-col
+                        "
+                      >
                         {/* Editar y eliminar post menu collapsible*/}
                         <CollapsibleTrigger
                           asChild
                           className="absolute cursor-pointer"
                         >
-                          <EllipsisVertical className="
-                            absolute top-0 right-0 justify-end text-white
-                          " />
+                          <EllipsisVertical
+                            className="
+                              absolute top-0 right-0 justify-end text-white
+                            "
+                          />
                         </CollapsibleTrigger>
                         <CollapsibleContent className="justify-start text-left">
                           <button
@@ -657,7 +669,7 @@ const ForumPage = () => {
                       />
                       <button
                         className="
-                          bg-primary mt-2 mr-2 rounded px-4 py-2 text-white
+                          mt-2 mr-2 rounded bg-primary px-4 py-2 text-white
                         "
                         onClick={handleReplySubmit}
                       >
@@ -704,7 +716,7 @@ const ForumPage = () => {
             onChange={(e) => setMessage(e.target.value)}
           />
           <button
-            className="bg-primary mt-2 rounded px-4 py-2 font-light text-black"
+            className="mt-2 rounded bg-primary px-4 py-2 font-light text-black"
             onClick={handlePostSubmit}
           >
             Enviar

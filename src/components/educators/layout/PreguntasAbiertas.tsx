@@ -149,10 +149,12 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
           />
         </div>
 
-        <div className="
-          grid grid-cols-1 gap-4
-          md:grid-cols-2
-        ">
+        <div
+          className="
+            grid grid-cols-1 gap-4
+            md:grid-cols-2
+          "
+        >
           <div>
             <Label htmlFor="correctAnswer">Palabra que completa</Label>
             <Input

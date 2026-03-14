@@ -119,12 +119,12 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 
   if (loading) {
     return (
-      <div className="text-primary font-semibold">Cargando archivos...</div>
+      <div className="font-semibold text-primary">Cargando archivos...</div>
     );
   }
   if (loadingNames) {
     return (
-      <div className="text-primary font-semibold">
+      <div className="font-semibold text-primary">
         Cargando nombre de archivos...
       </div>
     );
@@ -132,7 +132,7 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
 
   if (files.length === 0) {
     return (
-      <div className="text-primary font-semibold">
+      <div className="font-semibold text-primary">
         No hay archivos subidos actualmente!.
       </div>
     );
@@ -155,11 +155,13 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
       >
         Archivos de la clase
       </h1>
-      <ul className="
-        grid grid-cols-1 gap-5
-        md:grid-cols-2
-        lg:grid-cols-3
-      ">
+      <ul
+        className="
+          grid grid-cols-1 gap-5
+          md:grid-cols-2
+          lg:grid-cols-3
+        "
+      >
         {files.map((file, index) => {
           if (!file) return null; // Manejar caso de clave vacía
           const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`; // URL de S3

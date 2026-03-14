@@ -198,7 +198,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -213,7 +213,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Render del componente
   return (
-    <div className="bg-background h-auto w-full rounded-lg">
+    <div className="h-auto w-full rounded-lg bg-background">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -259,12 +259,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative h-auto w-full">
-        <div className="
-          animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
-          duration-500
-          group-hover:opacity-100
-        " />
+        <div
+          className="
+            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+            duration-500
+            group-hover:opacity-100
+          "
+        />
         <Card
           className={`
             zoom-in relative z-20 mt-3 h-auto overflow-hidden border-none
@@ -276,18 +278,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             color: getContrastYIQ(selectedColor),
           }}
         >
-          <CardHeader className="
-            grid w-full grid-cols-2 justify-evenly
-            md:gap-32
-            lg:gap-60
-          ">
+          <CardHeader
+            className="
+              grid w-full grid-cols-2 justify-evenly
+              md:gap-32
+              lg:gap-60
+            "
+          >
             <CardTitle
               className={`
                 text-2xl font-bold
                 hover:underline
-                ${
-                selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-              }
+                ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
               `}
             >
               Curso: {course.title}
@@ -315,10 +317,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       className={`
                         font-semibold
                         ${
-                        selectedColor === '#FFFFFF'
-                          ? 'text-black'
-                          : 'text-white'
-                      }
+                          selectedColor === '#FFFFFF'
+                            ? 'text-black'
+                            : 'text-white'
+                        }
                       `}
                     >
                       Educador:
@@ -338,10 +340,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       className={`
                         flex
                         ${
-                        selectedColor === '#FFFFFF'
-                          ? 'text-black'
-                          : 'text-white'
-                      }
+                          selectedColor === '#FFFFFF'
+                            ? 'text-black'
+                            : 'text-white'
+                        }
                       `}
                     >
                       <FaUserGraduate className="mr-2 text-blue-600" />
@@ -388,9 +390,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <h2
                   className={`
                     text-lg font-semibold
-                    ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }
+                    ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
                   `}
                 >
                   Descripción:
@@ -410,8 +410,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     className={`
                       text-lg font-semibold
                       ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
                     `}
                   >
                     Nivel:
@@ -429,8 +431,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     className={`
                       text-lg font-semibold
                       ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
                     `}
                   >
                     Modalidad:
@@ -463,9 +467,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                             "
                             onClick={() => toggleLesson(lesson.id)}
                           >
-                            <div className="
-                              flex w-full items-center justify-between
-                            ">
+                            <div
+                              className="
+                                flex w-full items-center justify-between
+                              "
+                            >
                               <div
                                 className={`
                                   flex items-center space-x-2
@@ -526,14 +532,16 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               active:scale-95
             "
           >
-            <ArrowLeftIcon className="animate-bounce-right size-5" />
+            <ArrowLeftIcon className="size-5 animate-bounce-right" />
             <p className="font-bold">Volver</p>
-            <div className="
-              absolute inset-0 flex w-full
-              [transform:skew(-13deg)_translateX(-100%)] justify-center
-              group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-              group-hover/button:duration-1000
-            ">
+            <div
+              className="
+                absolute inset-0 flex w-full
+                [transform:skew(-13deg)_translateX(-100%)] justify-center
+                group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                group-hover/button:duration-1000
+              "
+            >
               <div className="relative h-full w-10 bg-white/30" />
             </div>
           </Link>

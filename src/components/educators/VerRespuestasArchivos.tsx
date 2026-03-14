@@ -236,10 +236,12 @@ export default function VerRespuestasArchivos({
       <h2 className="my-2 ml-4 text-xl font-semibold text-blue-600">
         Respuestas de los Estudiantes
       </h2>
-      <div className="
-        grid gap-4 px-2 pb-4
-        md:grid-cols-2
-      ">
+      <div
+        className="
+          grid gap-4 px-2 pb-4
+          md:grid-cols-2
+        "
+      >
         {Object.entries(respuestas).length > 0 ? (
           Object.entries(respuestas).map(([key, respuesta]) => {
             console.log('🔍 Respuesta en frontend:', respuesta);
@@ -272,10 +274,10 @@ export default function VerRespuestasArchivos({
                       className={`
                         inline-block rounded-full px-3 py-1 text-xs font-medium
                         ${
-                        respuesta.status === 'pendiente'
-                          ? 'bg-yellow-100 text-white'
-                          : 'bg-green-100 text-white'
-                      }
+                          respuesta.status === 'pendiente'
+                            ? 'bg-yellow-100 text-white'
+                            : 'bg-green-100 text-white'
+                        }
                       `}
                     >
                       {respuesta.status === 'calificado'
@@ -314,15 +316,19 @@ export default function VerRespuestasArchivos({
                   )}
 
                   {/* Zona de calificación y acciones */}
-                  <div className="
-                    flex flex-col gap-4
-                    md:flex-row md:items-start md:justify-between
-                  ">
+                  <div
+                    className="
+                      flex flex-col gap-4
+                      md:flex-row md:items-start md:justify-between
+                    "
+                  >
                     {/* Calificación */}
-                    <div className="
-                      space-y-2
-                      md:w-1/3
-                    ">
+                    <div
+                      className="
+                        space-y-2
+                        md:w-1/3
+                      "
+                    >
                       <label className="block text-sm font-medium text-white">
                         Calificación (0 - 5):
                       </label>
@@ -341,16 +347,16 @@ export default function VerRespuestasArchivos({
                         className={`
                           w-full transition-colors
                           ${
-                          respuesta.status === 'calificado'
-                            ? `
-                              bg-blue-500 text-white
-                              hover:bg-blue-600
-                            `
-                            : `
-                              bg-green-500 text-white
-                              hover:bg-green-600
-                            `
-                        }
+                            respuesta.status === 'calificado'
+                              ? `
+                                bg-blue-500 text-white
+                                hover:bg-blue-600
+                              `
+                              : `
+                                bg-green-500 text-white
+                                hover:bg-green-600
+                              `
+                          }
                         `}
                       >
                         {respuesta.status === 'calificado'

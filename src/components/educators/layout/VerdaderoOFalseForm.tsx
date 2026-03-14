@@ -198,14 +198,18 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
       }}
       className="space-y-6 rounded-lg bg-white p-6 shadow-md"
     >
-      <div className="
-        flex-col space-y-4
-        md:flex md:flex-row md:space-x-4
-      ">
-        <div className="
-          w-full
-          md:w-3/4
-        ">
+      <div
+        className="
+          flex-col space-y-4
+          md:flex md:flex-row md:space-x-4
+        "
+      >
+        <div
+          className="
+            w-full
+            md:w-3/4
+          "
+        >
           <Label
             htmlFor="questions"
             className="block text-lg font-medium text-gray-700"
@@ -224,10 +228,12 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
             "
           />
         </div>
-        <div className="
-          w-11/12
-          md:w-1/4
-        ">
+        <div
+          className="
+            w-11/12
+            md:w-1/4
+          "
+        >
           <Label
             htmlFor="pesoPregunta"
             className="block text-lg font-medium text-gray-700"

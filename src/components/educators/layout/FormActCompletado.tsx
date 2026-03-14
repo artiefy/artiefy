@@ -189,18 +189,23 @@ const FormActCompletado: React.FC<formSubida> = ({
           <label className="mb-2 block font-semibold text-gray-700">
             Archivo de ayuda
           </label>
-          <div className="
-            relative flex items-center justify-between rounded-lg border
-            border-gray-300 bg-white px-4 py-2 shadow-sm
-          ">
+          <div
+            className="
+              relative flex items-center justify-between rounded-lg border
+              border-gray-300 bg-white px-4 py-2 shadow-sm
+            "
+          >
             <span className="truncate text-sm text-gray-500">
               {file1?.name ??
                 'Selecciona un archivo de ayuda (PDF, Word, video...)'}
             </span>
-            <label className="
-              cursor-pointer rounded-md bg-blue-500 px-3 py-1 text-sm text-white
-              hover:bg-blue-600
-            ">
+            <label
+              className="
+                cursor-pointer rounded-md bg-blue-500 px-3 py-1 text-sm
+                text-white
+                hover:bg-blue-600
+              "
+            >
               Seleccionar
               <input
                 type="file"
@@ -218,18 +223,22 @@ const FormActCompletado: React.FC<formSubida> = ({
           <label className="mb-2 block font-semibold text-gray-700">
             Recurso complementario (imagen)
           </label>
-          <div className="
-            relative flex items-center justify-between rounded-lg border
-            border-gray-300 bg-white px-4 py-2 shadow-sm
-          ">
+          <div
+            className="
+              relative flex items-center justify-between rounded-lg border
+              border-gray-300 bg-white px-4 py-2 shadow-sm
+            "
+          >
             <span className="truncate text-sm text-gray-500">
               {file2?.name ?? 'Selecciona una imagen complementaria'}
             </span>
-            <label className="
-              cursor-pointer rounded-md bg-purple-500 px-3 py-1 text-sm
-              text-white
-              hover:bg-purple-600
-            ">
+            <label
+              className="
+                cursor-pointer rounded-md bg-purple-500 px-3 py-1 text-sm
+                text-white
+                hover:bg-purple-600
+              "
+            >
               Seleccionar
               <input
                 type="file"

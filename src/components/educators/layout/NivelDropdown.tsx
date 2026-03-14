@@ -54,7 +54,7 @@ const NivelDropdown: React.FC<NivelDropdownProps> = ({
     <div className="flex flex-col gap-2">
       <label
         htmlFor="nivel-select"
-        className="text-primary text-lg font-medium"
+        className="text-lg font-medium text-primary"
       >
         Selecciona un Nivel:
       </label>
@@ -69,10 +69,8 @@ const NivelDropdown: React.FC<NivelDropdownProps> = ({
             setNivel(selectedId);
           }}
           className={`
-            bg-background mb-5 w-60 rounded border p-2 text-white outline-hidden
-            ${
-            errors.nivel ? 'border-red-500' : 'border-primary'
-          }
+            mb-5 w-60 rounded border bg-background p-2 text-white outline-hidden
+            ${errors.nivel ? 'border-red-500' : 'border-primary'}
           `}
         >
           <option value="">Selecciona un nivel</option>

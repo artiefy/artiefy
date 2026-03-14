@@ -628,33 +628,41 @@ const Page: React.FC = () => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink className="
-              text-primary
-              hover:text-gray-300
-            ">
+            <BreadcrumbLink
+              className="
+                text-primary
+                hover:text-gray-300
+              "
+            >
               Creación de actividad:
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="
-        group relative mx-auto h-auto w-full
-        md:w-3/5
-        lg:w-3/5
-      ">
-        <div className="
-          animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
-          duration-500
-          group-hover:opacity-100
-        " />
+      <div
+        className="
+          group relative mx-auto h-auto w-full
+          md:w-3/5
+          lg:w-3/5
+        "
+      >
+        <div
+          className="
+            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+            duration-500
+            group-hover:opacity-100
+          "
+        />
         <div className="relative mt-5 h-auto w-full justify-center">
           {loadingActivity ? (
             <main className="flex h-64 items-center justify-center">
-              <div className="
-                border-primary size-32 animate-spin rounded-full border-y-2
-              ">
+              <div
+                className="
+                  size-32 animate-spin rounded-full border-y-2 border-primary
+                "
+              >
                 <span className="sr-only">Cargando actividad…</span>
               </div>
             </main>
@@ -671,17 +679,21 @@ const Page: React.FC = () => {
                   width={70}
                   height={70}
                 />
-                <h2 className="
-                  mt-5 flex flex-col text-start text-3xl font-semibold
-                ">
+                <h2
+                  className="
+                    mt-5 flex flex-col text-start text-3xl font-semibold
+                  "
+                >
                   {isEditing ? 'Editar actividad' : 'Creación de actividad'}
                   <p className="text-sm">Del curso: {course?.title}</p>
                 </h2>
               </div>
-              <div className="
-                grid grid-cols-1
-                lg:grid-cols-2
-              ">
+              <div
+                className="
+                  grid grid-cols-1
+                  lg:grid-cols-2
+                "
+              >
                 {/* ───── Columna «Calificable» ───── */}
                 <div className="flex flex-col">
                   <div className="flex flex-col">
@@ -702,18 +714,14 @@ const Page: React.FC = () => {
                           className={`
                             size-1/2 cursor-pointer rounded-full transition-all
                             duration-300
-                            ${
-                            isActive ? 'bg-gray-300' : 'bg-red-500'
-                          }
+                            ${isActive ? 'bg-gray-300' : 'bg-red-500'}
                           `}
                         >
                           <span
                             className={`
-                              bg-primary absolute top-1 left-1 size-6
-                              rounded-full transition-all duration-300
-                              ${
-                              isActive ? 'translate-x-8' : 'translate-x-0'
-                            }
+                              absolute top-1 left-1 size-6 rounded-full
+                              bg-primary transition-all duration-300
+                              ${isActive ? 'translate-x-8' : 'translate-x-0'}
                             `}
                           />
                         </span>
@@ -757,8 +765,10 @@ const Page: React.FC = () => {
                             className={`
                               mb-2
                               ${
-                              color === '#FFFFFF' ? 'text-black' : 'text-white'
-                            }
+                                color === '#FFFFFF'
+                                  ? 'text-black'
+                                  : 'text-white'
+                              }
                             `}
                           >
                             Peso actividad en el parámetro (0-100 %):
@@ -770,8 +780,10 @@ const Page: React.FC = () => {
                               rounded-lg border border-slate-200 bg-transparent
                               p-2 outline-none
                               ${
-                              color === '#FFFFFF' ? 'text-black' : 'text-white'
-                            }
+                                color === '#FFFFFF'
+                                  ? 'text-black'
+                                  : 'text-white'
+                              }
                             `}
                             type="number"
                             id="percentage"
@@ -788,10 +800,10 @@ const Page: React.FC = () => {
                               className={`
                                 mt-1 text-sm
                                 ${
-                                color === '#FFFFFF'
-                                  ? 'text-black'
-                                  : 'text-white'
-                              }
+                                  color === '#FFFFFF'
+                                    ? 'text-black'
+                                    : 'text-white'
+                                }
                               `}
                             >
                               Porcentaje disponible:{' '}
@@ -824,18 +836,14 @@ const Page: React.FC = () => {
                           className={`
                             size-1/2 cursor-pointer rounded-full transition-all
                             duration-300
-                            ${
-                            fechaMaxima ? 'bg-gray-300' : 'bg-red-500'
-                          }
+                            ${fechaMaxima ? 'bg-gray-300' : 'bg-red-500'}
                           `}
                         >
                           <span
                             className={`
-                              bg-primary absolute top-1 left-1 size-6
-                              rounded-full transition-all duration-300
-                              ${
-                              fechaMaxima ? 'translate-x-8' : 'translate-x-0'
-                            }
+                              absolute top-1 left-1 size-6 rounded-full
+                              bg-primary transition-all duration-300
+                              ${fechaMaxima ? 'translate-x-8' : 'translate-x-0'}
                             `}
                           />
                         </span>
@@ -851,9 +859,7 @@ const Page: React.FC = () => {
                       <span
                         className={`
                           text-xl font-medium
-                          ${
-                          color === '#FFFFFF' ? 'text-black' : 'text-white'
-                        }
+                          ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                         `}
                       >
                         Fecha máxima de entrega:
@@ -887,9 +893,7 @@ const Page: React.FC = () => {
               <Label
                 className={`
                   mt-6 mb-2 text-xl
-                  ${
-                  color === '#FFFFFF' ? 'text-black' : 'text-white'
-                }
+                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                 `}
               >
                 Título
@@ -902,9 +906,7 @@ const Page: React.FC = () => {
                 placeholder="Nombre de la actividad"
                 className={`
                   border-slate-200
-                  ${
-                  color === '#FFFFFF' ? 'text-black' : 'text-white'
-                }
+                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                 `}
               />
 
@@ -912,9 +914,7 @@ const Page: React.FC = () => {
                 <Label
                   className={`
                     mb-2 text-xl
-                    ${
-                    color === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }
+                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                   `}
                 >
                   Descripción actividad:
@@ -927,9 +927,7 @@ const Page: React.FC = () => {
                   className={`
                     rounded-lg border border-slate-200 bg-transparent p-2
                     outline-none
-                    ${
-                    color === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }
+                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                   `}
                 />
               </div>
@@ -937,9 +935,7 @@ const Page: React.FC = () => {
               <Label
                 className={`
                   mb-2 text-xl
-                  ${
-                  color === '#FFFFFF' ? 'text-black' : 'text-white'
-                }
+                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                 `}
               >
                 Tipo de actividad
@@ -965,10 +961,12 @@ const Page: React.FC = () => {
               <div className="mt-4 flex justify-evenly">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button className="
-                      mx-auto w-1/6 border-red-600 bg-red-600 text-white
-                      hover:border-red-600 hover:bg-white hover:text-red-600
-                    ">
+                    <Button
+                      className="
+                        mx-auto w-1/6 border-red-600 bg-red-600 text-white
+                        hover:border-red-600 hover:bg-white hover:text-red-600
+                      "
+                    >
                       Cancelar
                     </Button>
                   </AlertDialogTrigger>

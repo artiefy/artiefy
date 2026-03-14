@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
-import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
 import ListActividadesEducator from '~/components/educators/layout/ListActividades';
@@ -71,7 +70,6 @@ const getContrastYIQ = (hexcolor: string) => {
 };
 
 const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
-  const { user } = useUser(); // obtener el usuario logeado para verificar permisos
   const router = useRouter(); // Hook para manejar la navegación
   const params = useParams(); // Hook para obtener los parámetros de la URL
   const courseId = params?.courseId ?? null; // Obtener el id del curso
@@ -156,7 +154,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
     fetchLessons(lessonsIdNumber).catch((error) =>
       console.error('Error fetching lessons:', error)
     );
-  }, [lessonId]);
+  }, [lessonId, fetchLessons]);
 
   // Función para eliminar la lección
   const handleDelete = async (id: string) => {
@@ -302,9 +300,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   // Renderizar la página
   return (
     <>
-      <div className="
-        container mx-auto mt-2 h-auto w-full rounded-lg bg-background
-      ">
+      <div
+        className="
+          container mx-auto mt-2 h-auto w-full rounded-lg bg-background
+        "
+      >
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -357,12 +357,14 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="group relative h-auto w-full">
-          <div className="
-            absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
-            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
-            transition duration-500
-            group-hover:opacity-100
-          " />
+          <div
+            className="
+              absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
+              transition duration-500
+              group-hover:opacity-100
+            "
+          />
           <Card
             className={`
               relative mt-5 border-transparent bg-black p-5
@@ -391,9 +393,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                       style={{ backgroundColor: predefinedColor }}
                       className={`
                         size-8 border
-                        ${
-                        color === '#FFFFFF' ? 'border-black' : 'border-white'
-                      }
+                        ${color === '#FFFFFF' ? 'border-black' : 'border-white'}
                       `}
                       onClick={() =>
                         handlePredefinedColorChange(predefinedColor)
@@ -403,11 +403,13 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 </div>
               </div>
             </CardHeader>
-            <div className="
-              grid grid-cols-1
-              md:grid-cols-2
-              lg:grid-cols-2 lg:gap-6
-            ">
+            <div
+              className="
+                grid grid-cols-1
+                md:grid-cols-2
+                lg:grid-cols-2 lg:gap-6
+              "
+            >
               {/* Columna izquierda - Imagen */}
               <div className="relative flex w-full">
                 <Image
@@ -458,10 +460,12 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <div>
               <ViewFiles lessonId={lessons.id} selectedColor={color} />
             </div>
-            <div className="
-              flex justify-evenly
-              lg:px-3 lg:py-6
-            ">
+            <div
+              className="
+                flex justify-evenly
+                lg:px-3 lg:py-6
+              "
+            >
               <Button
                 className={`
                   border-transparent bg-green-400 text-white
@@ -484,10 +488,12 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="
-                    border-red-600 bg-red-600 text-white
-                    hover:border-red-600 hover:bg-white hover:text-red-600
-                  ">
+                  <Button
+                    className="
+                      border-red-600 bg-red-600 text-white
+                      hover:border-red-600 hover:bg-white hover:text-red-600
+                    "
+                  >
                     Eliminar
                   </Button>
                 </AlertDialogTrigger>

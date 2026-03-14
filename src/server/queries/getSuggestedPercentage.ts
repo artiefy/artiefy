@@ -26,18 +26,6 @@ export async function getSuggestedPercentage(
 
   const totalUsado = Number(result?.totalUsado ?? 0);
 
-  // ✅ Comparar contra numberOfActivities si existe,
-  // o contra 100 como tope interno del parámetro
-  const tope =
-    param.numberOfActivities && param.numberOfActivities > 0
-      ? (100 / param.numberOfActivities) *
-        (await db
-          .select({ id: activities.id })
-          .from(activities)
-          .where(eq(activities.parametroId, parametroId))
-          .then((r) => r.length))
-      : 100;
-
   const porcentajeDisponible = 100 - totalUsado;
 
   // ✅ Aún hay porcentaje disponible dentro del parámetro

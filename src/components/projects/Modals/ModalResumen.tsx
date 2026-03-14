@@ -747,10 +747,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
   const [collaboratorsLoading, setCollaboratorsLoading] = useState(false);
 
   const handleTimelineWheel = (event: React.WheelEvent<HTMLDivElement>) => {
-    if (typeof window === 'undefined') return;
-    if (window.innerWidth < 640) {
-      event.preventDefault();
-    }
+    const container = event.currentTarget;
+    const hasHorizontalOverflow = container.scrollWidth > container.clientWidth;
+    if (!hasHorizontalOverflow) return;
+
+    const isVerticalIntent = Math.abs(event.deltaY) > Math.abs(event.deltaX);
+    if (!isVerticalIntent) return;
+
+    event.preventDefault();
+    container.scrollLeft += event.deltaY;
   };
 
   useEffect(() => {
@@ -2114,6 +2119,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         return {
           id: activityId,
           key: `${objIndex + 1}.${actIndex + 1}`,
+          objectiveOrder: objIndex + 1,
+          activityOrder: actIndex + 1,
           title: activity.title || 'Actividad sin título',
           startDate,
           endDate,
@@ -2122,15 +2129,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
       });
     });
 
-    return rows
-      .map((row, index) => ({ ...row, orderIndex: index }))
-      .sort((a, b) => {
-        if (a.id == null && b.id == null) return a.orderIndex - b.orderIndex;
-        if (a.id == null) return 1;
-        if (b.id == null) return -1;
-        return b.id - a.id;
-      })
-      .map(({ orderIndex, ...row }) => row);
+    return rows.sort((a, b) => {
+      if (a.objectiveOrder !== b.objectiveOrder) {
+        return a.objectiveOrder - b.objectiveOrder;
+      }
+      return a.activityOrder - b.activityOrder;
+    });
   };
 
   // Handler unificado para el botón principal
@@ -3953,7 +3957,6 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           const columnWidth = isSmallScreen ? 68 : 80;
           const labelColumnWidth = isSmallScreen ? 160 : 208;
           const gridWidth = Math.max(columns.length * columnWidth, 1);
-          const totalWidth = labelColumnWidth + gridWidth;
           const msPerDay = 1000 * 60 * 60 * 24;
           const toUTCStart = (date: Date) =>
             Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
@@ -3986,7 +3989,11 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           };
 
           return (
-            <div className="rounded-xl border border-border/50 bg-card/50 p-5">
+            <div
+              className="
+                min-w-0 rounded-xl border border-border/50 bg-card/50 p-5
+              "
+            >
               <div className="mb-4 flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-3">
                   <div
@@ -4047,23 +4054,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   cronograma.
                 </p>
               ) : (
-                <div
-                  className="
-                    scrollbar-thin relative w-full touch-pan-x overflow-x-auto
-                    [&::-webkit-scrollbar]:h-1.5
-                    [&::-webkit-scrollbar-thumb]:rounded-full
-                    [&::-webkit-scrollbar-thumb]:bg-border/50
-                    hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30
-                    [&::-webkit-scrollbar-track]:bg-transparent
-                  "
-                  onWheel={handleTimelineWheel}
-                >
-                  <div className="flex" style={{ minWidth: totalWidth }}>
+                <div className="max-w-full min-w-0 overflow-hidden">
+                  <div className="flex max-w-full min-w-0 overflow-hidden">
                     <div
                       className="
-                        sticky left-0 z-10 shrink-0 border-r border-border/30
-                        bg-[#061c37] px-3
-                        sm:bg-transparent sm:px-0 sm:backdrop-blur-none
+                        shrink-0 border-r border-border/30 bg-[#061c37] px-3
+                        sm:bg-transparent sm:px-0
                       "
                       style={{ width: labelColumnWidth }}
                     >
@@ -4108,131 +4104,164 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         ))}
                       </div>
                     </div>
+
                     <div
                       className="
-                        flex-1 pl-1
+                        w-0 min-w-0 flex-1 pl-1
                         sm:pl-0
                       "
                     >
-                      <div style={{ minWidth: gridWidth }}>
-                        <div className="mb-2 flex h-10 border-b border-border/50">
-                          {columns.map((column, index) => (
+                      <div className="max-w-full min-w-0">
+                        <div
+                          className="
+                            scrollbar-thin relative w-full max-w-full
+                            touch-pan-x overflow-x-scroll overflow-y-hidden
+                            overscroll-x-contain pb-2 [scrollbar-gutter:stable]
+                            [&::-webkit-scrollbar]:h-2
+                            [&::-webkit-scrollbar-thumb]:rounded-full
+                            [&::-webkit-scrollbar-thumb]:bg-border/60
+                            hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/40
+                            [&::-webkit-scrollbar-track]:bg-transparent
+                          "
+                          onWheel={handleTimelineWheel}
+                        >
+                          <div
+                            className="min-w-max"
+                            style={{ minWidth: gridWidth }}
+                          >
                             <div
-                              key={`${column.label}-${index}`}
                               className="
-                                flex flex-col justify-end border-l
-                                border-border/30 px-1 pb-2 text-center
-                                first:border-l-0
+                                mb-2 flex h-10 border-b border-border/50
                               "
-                              style={{ width: columnWidth }}
                             >
-                              <div
-                                className="
-                                  truncate text-xs text-muted-foreground
-                                "
-                              >
-                                {column.label}
-                              </div>
-                              <div
-                                className="
-                                  truncate text-xs font-medium text-foreground
-                                "
-                              >
-                                {column.sublabel}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="space-y-2">
-                          {timelineRows.map((row) => {
-                            if (!row.startDate || !row.endDate || !rangeStart) {
-                              return null;
-                            }
-                            const startDate = row.startDate;
-                            const endDate = row.endDate;
-                            const getUnitRange = () => {
-                              if (timelineView === 'dias') {
-                                const offsetUnits = diffDays(
-                                  rangeStart,
-                                  startDate
-                                );
-                                const durationUnits =
-                                  diffDays(startDate, endDate) + 1;
-                                return { offsetUnits, durationUnits };
-                              }
-
-                              if (timelineView === 'semanas') {
-                                const offsetDays = diffDays(
-                                  rangeStart,
-                                  startDate
-                                );
-                                const endOffsetDays = diffDays(
-                                  rangeStart,
-                                  endDate
-                                );
-                                const offsetUnits = Math.floor(offsetDays / 7);
-                                const durationUnits =
-                                  Math.floor(endOffsetDays / 7) -
-                                  offsetUnits +
-                                  1;
-                                return { offsetUnits, durationUnits };
-                              }
-
-                              const rangeMonthIndex =
-                                rangeStart.getUTCFullYear() * 12 +
-                                rangeStart.getUTCMonth();
-                              const startIndex =
-                                startDate.getUTCFullYear() * 12 +
-                                startDate.getUTCMonth();
-                              const endIndex =
-                                endDate.getUTCFullYear() * 12 +
-                                endDate.getUTCMonth();
-                              const offsetUnits = startIndex - rangeMonthIndex;
-                              const durationUnits = endIndex - startIndex + 1;
-                              return { offsetUnits, durationUnits };
-                            };
-
-                            const { offsetUnits, durationUnits } =
-                              getUnitRange();
-                            const leftPx = offsetUnits * columnWidth;
-                            const widthPx = durationUnits * columnWidth;
-                            return (
-                              <div
-                                key={`row-${row.key}`}
-                                className="
-                                  group relative h-6 rounded bg-muted/20
-                                "
-                              >
-                                <div className="absolute inset-0 flex">
-                                  {columns.map((_, index) => (
-                                    <div
-                                      key={`grid-${row.key}-${index}`}
-                                      className="
-                                        border-l border-border/20
-                                        first:border-l-0
-                                      "
-                                      style={{ width: columnWidth }}
-                                    />
-                                  ))}
-                                </div>
+                              {columns.map((column, index) => (
                                 <div
-                                  className={`
-                                    absolute top-1 h-4 rounded-full
-                                    transition-all
-                                    group-hover:opacity-80
-                                    ${getStatusClass(row)}
-                                  `}
-                                  title={`${row.title}: ${formatShortDate(
-                                    startDate
-                                  )} - ${formatShortDate(endDate)}`}
-                                  style={{
-                                    left: leftPx,
-                                    width: widthPx,
-                                  }}
-                                />
-                              </div>
-                            );
-                          })}
+                                  key={`${column.label}-${index}`}
+                                  className="
+                                    flex flex-col justify-end border-l
+                                    border-border/30 px-1 pb-2 text-center
+                                    first:border-l-0
+                                  "
+                                  style={{ width: columnWidth }}
+                                >
+                                  <div
+                                    className="
+                                      truncate text-xs text-muted-foreground
+                                    "
+                                  >
+                                    {column.label}
+                                  </div>
+                                  <div
+                                    className="
+                                      truncate text-xs font-medium
+                                      text-foreground
+                                    "
+                                  >
+                                    {column.sublabel}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="space-y-2">
+                              {timelineRows.map((row) => {
+                                if (
+                                  !row.startDate ||
+                                  !row.endDate ||
+                                  !rangeStart
+                                ) {
+                                  return null;
+                                }
+                                const startDate = row.startDate;
+                                const endDate = row.endDate;
+                                const getUnitRange = () => {
+                                  if (timelineView === 'dias') {
+                                    const offsetUnits = diffDays(
+                                      rangeStart,
+                                      startDate
+                                    );
+                                    const durationUnits =
+                                      diffDays(startDate, endDate) + 1;
+                                    return { offsetUnits, durationUnits };
+                                  }
+
+                                  if (timelineView === 'semanas') {
+                                    const offsetDays = diffDays(
+                                      rangeStart,
+                                      startDate
+                                    );
+                                    const endOffsetDays = diffDays(
+                                      rangeStart,
+                                      endDate
+                                    );
+                                    const offsetUnits = Math.floor(
+                                      offsetDays / 7
+                                    );
+                                    const durationUnits =
+                                      Math.floor(endOffsetDays / 7) -
+                                      offsetUnits +
+                                      1;
+                                    return { offsetUnits, durationUnits };
+                                  }
+
+                                  const rangeMonthIndex =
+                                    rangeStart.getUTCFullYear() * 12 +
+                                    rangeStart.getUTCMonth();
+                                  const startIndex =
+                                    startDate.getUTCFullYear() * 12 +
+                                    startDate.getUTCMonth();
+                                  const endIndex =
+                                    endDate.getUTCFullYear() * 12 +
+                                    endDate.getUTCMonth();
+                                  const offsetUnits =
+                                    startIndex - rangeMonthIndex;
+                                  const durationUnits =
+                                    endIndex - startIndex + 1;
+                                  return { offsetUnits, durationUnits };
+                                };
+
+                                const { offsetUnits, durationUnits } =
+                                  getUnitRange();
+                                const leftPx = offsetUnits * columnWidth;
+                                const widthPx = durationUnits * columnWidth;
+                                return (
+                                  <div
+                                    key={`row-${row.key}`}
+                                    className="
+                                      group relative h-6 rounded bg-muted/20
+                                    "
+                                  >
+                                    <div className="absolute inset-0 flex">
+                                      {columns.map((_, index) => (
+                                        <div
+                                          key={`grid-${row.key}-${index}`}
+                                          className="
+                                            border-l border-border/20
+                                            first:border-l-0
+                                          "
+                                          style={{ width: columnWidth }}
+                                        />
+                                      ))}
+                                    </div>
+                                    <div
+                                      className={`
+                                        absolute top-1 h-4 rounded-full
+                                        transition-all
+                                        group-hover:opacity-80
+                                        ${getStatusClass(row)}
+                                      `}
+                                      title={`${row.title}: ${formatShortDate(
+                                        startDate
+                                      )} - ${formatShortDate(endDate)}`}
+                                      style={{
+                                        left: leftPx,
+                                        width: widthPx,
+                                      }}
+                                    />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>

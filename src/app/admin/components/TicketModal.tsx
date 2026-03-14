@@ -99,10 +99,12 @@ const TicketModal = ({
         onSubmit={handleSubmit}
         className="max-h-[calc(100vh-200px)] overflow-y-auto"
       >
-        <div className="
-          grid grid-cols-1 gap-x-6 gap-y-4 p-1
-          md:grid-cols-2
-        ">
+        <div
+          className="
+            grid grid-cols-1 gap-x-6 gap-y-4 p-1
+            md:grid-cols-2
+          "
+        >
           {/* Columna izquierda */}
           <div>
             <div className="mb-4">
@@ -226,9 +228,11 @@ const TicketModal = ({
         </div>
 
         {/* Botones de acción */}
-        <div className="
-          mt-4 flex justify-end space-x-3 border-t border-gray-700 pt-4
-        ">
+        <div
+          className="
+            mt-4 flex justify-end space-x-3 border-t border-gray-700 pt-4
+          "
+        >
           <button
             type="button"
             onClick={onClose}
