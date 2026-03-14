@@ -2391,7 +2391,7 @@ async function handleUpload({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         filename: selectedFile.name,
-        contentType: selectedFile.type,
+        contentType: selectedFile.type || 'application/octet-stream',
         activityId: activity.id,
         userId,
       }),

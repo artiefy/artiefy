@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { asc, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { activities } from '~/server/db/schema';
@@ -8,5 +8,6 @@ export async function getRelatedActivities(lessonId: number) {
   return await db
     .select()
     .from(activities)
-    .where(eq(activities.lessonsId, lessonId));
+    .where(eq(activities.lessonsId, lessonId))
+    .orderBy(asc(activities.lastUpdated), asc(activities.id));
 }

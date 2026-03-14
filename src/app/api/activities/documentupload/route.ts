@@ -42,13 +42,40 @@ const sanitizeFilename = (value: string): string => {
   return `${base}${ext}`;
 };
 
+const resolveContentType = (
+  filename: string,
+  providedContentType?: string
+): string => {
+  const trimmed = providedContentType?.trim();
+  if (trimmed) return trimmed;
+
+  const ext = filename.split('.').pop()?.toLowerCase() ?? '';
+  const map: Record<string, string> = {
+    pdf: 'application/pdf',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ppt: 'application/vnd.ms-powerpoint',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    webp: 'image/webp',
+  };
+
+  return map[ext] ?? 'application/octet-stream';
+};
+
 export async function POST(request: Request) {
   try {
     // Parse and validate request body
     const body = (await request.json()) as RequestBody;
     const { filename, contentType, activityId, userId } = body;
+    const resolvedContentType = resolveContentType(filename, contentType);
 
-    if (!filename || !contentType || !activityId || !userId) {
+    if (!filename || !activityId || !userId) {
       return Response.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -74,11 +101,11 @@ export async function POST(request: Request) {
       Key: key,
       Conditions: [
         ['content-length-range', 0, 10485760], // 10 MB limit
-        ['starts-with', '$Content-Type', contentType],
+        ['starts-with', '$Content-Type', resolvedContentType],
       ],
       Fields: {
         acl: 'public-read',
-        'Content-Type': contentType,
+        'Content-Type': resolvedContentType,
       },
       Expires: 600, // 10 minutes
     });
