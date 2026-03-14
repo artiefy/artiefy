@@ -141,11 +141,18 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
   return (
     <div className="mt-6">
       <h1
-        className={`mb-4 text-2xl font-bold ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+        className={`
+          mb-4 text-2xl font-bold
+          ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+        `}
       >
         Archivos de la clase
       </h1>
-      <ul className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+      <ul className="
+        grid grid-cols-1 gap-5
+        md:grid-cols-2
+        lg:grid-cols-3
+      ">
         {files.map((file, index) => {
           if (!file) return null; // Manejar caso de clave vacía
           const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`; // URL de S3
@@ -159,12 +166,20 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
               href={fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="relative mb-3 grid h-24 w-full grid-cols-2 items-center rounded-lg border border-gray-600/10 bg-slate-200/20 p-2 hover:bg-slate-200/40"
+              className="
+                relative mb-3 grid h-24 w-full grid-cols-2 items-center
+                rounded-lg border border-gray-600/10 bg-slate-200/20 p-2
+                hover:bg-slate-200/40
+              "
             >
               {icon}
 
               <p
-                className={`absolute right-4 no-underline hover:underline ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                className={`
+                  absolute right-4 no-underline
+                  hover:underline
+                  ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+                `}
               >
                 {resourceNames[index] ?? file.fileName}
                 {/* Nombre del archivo */}

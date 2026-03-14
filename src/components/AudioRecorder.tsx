@@ -91,8 +91,8 @@ export function AudioRecorder({ onAudioSelect, onClose }: AudioRecorderProps) {
   return (
     <div
       className="
-      space-y-4 rounded-lg border border-cyan-700/30 bg-slate-900/50 p-6
-    "
+        space-y-4 rounded-lg border border-cyan-700/30 bg-slate-900/50 p-6
+      "
     >
       <div className="flex flex-col gap-4">
         {/* Controles de grabación */}
@@ -107,13 +107,13 @@ export function AudioRecorder({ onAudioSelect, onClose }: AudioRecorderProps) {
                   ${
                     isRecording
                       ? `
-                      bg-red-600 text-white
-                      hover:bg-red-700
-                    `
+                        bg-red-600 text-white
+                        hover:bg-red-700
+                      `
                       : `
-                      bg-cyan-700 text-white
-                      hover:bg-cyan-600
-                    `
+                        bg-cyan-700 text-white
+                        hover:bg-cyan-600
+                      `
                   }
                 `}
               >
@@ -132,8 +132,8 @@ export function AudioRecorder({ onAudioSelect, onClose }: AudioRecorderProps) {
               {isRecording && (
                 <div
                   className="
-                  flex items-center gap-2 text-sm font-medium text-red-500
-                "
+                    flex items-center gap-2 text-sm font-medium text-red-500
+                  "
                 >
                   <div className="size-2 animate-pulse rounded-full bg-red-500"></div>
                   Grabando...

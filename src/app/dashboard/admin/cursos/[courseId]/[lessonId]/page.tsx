@@ -307,12 +307,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   // Renderizar la página
   return (
     <>
-      <div className="bg-background container mx-auto mt-2 h-auto w-full rounded-lg">
+      <div className="
+        bg-background container mx-auto mt-2 h-auto w-full rounded-lg
+      ">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href="/dashboard/super-admin"
               >
                 Cursos
@@ -321,7 +326,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href="/dashboard/super-admin/cursos"
               >
                 Lista de cursos
@@ -330,7 +338,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
               >
                 Detalles curso
@@ -340,7 +351,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 href={``}
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
               >
                 Detalles de la clase: {lessons.title}
               </BreadcrumbLink>
@@ -348,9 +362,17 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="group relative h-auto w-full">
-          <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+          <div className="
+            animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
+            transition duration-500
+            group-hover:opacity-100
+          " />
           <Card
-            className={`relative mt-5 border-transparent bg-black p-5 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+            className={`
+              relative mt-5 border-transparent bg-black p-5
+              ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+            `}
             style={{
               backgroundColor: color,
               color: getContrastYIQ(color),
@@ -372,9 +394,12 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <Button
                       key={predefinedColor}
                       style={{ backgroundColor: predefinedColor }}
-                      className={`size-8 border ${
+                      className={`
+                        size-8 border
+                        ${
                         color === '#FFFFFF' ? 'border-black' : 'border-white'
-                      }`}
+                      }
+                      `}
                       onClick={() =>
                         handlePredefinedColorChange(predefinedColor)
                       }
@@ -383,7 +408,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 </div>
               </div>
             </CardHeader>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 lg:gap-6">
+            <div className="
+              grid grid-cols-1
+              md:grid-cols-2
+              lg:grid-cols-2 lg:gap-6
+            ">
               {/* Columna izquierda - Imagen */}
               <div className="relative flex w-full">
                 <Image
@@ -395,7 +424,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                   alt={lessons.title}
                   width={300}
                   height={100}
-                  className="mx-auto hidden justify-center rounded-lg object-contain md:block lg:block"
+                  className="
+                    mx-auto hidden justify-center rounded-lg object-contain
+                    md:block
+                    lg:block
+                  "
                   priority
                   quality={75}
                 />
@@ -430,9 +463,15 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <div>
               <ViewFiles lessonId={lessons.id} selectedColor={color} />
             </div>
-            <div className="flex justify-evenly lg:px-3 lg:py-6">
+            <div className="
+              flex justify-evenly
+              lg:px-3 lg:py-6
+            ">
               <Button
-                className={`border-transparent bg-green-400 text-white hover:bg-green-500`}
+                className={`
+                  border-transparent bg-green-400 text-white
+                  hover:bg-green-500
+                `}
               >
                 <Link href={`./${lessons.id}/verClase/${lessons.id}`}>
                   Ver clase
@@ -440,14 +479,20 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               </Button>
               <Button
                 onClick={() => setIsEditModalOpen(true)}
-                className="border-yellow-500 bg-yellow-500 text-white hover:bg-yellow-600"
+                className="
+                  border-yellow-500 bg-yellow-500 text-white
+                  hover:bg-yellow-600
+                "
               >
                 Editar clase
               </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="border-red-600 bg-red-600 text-white hover:border-red-600 hover:bg-white hover:text-red-600">
+                  <Button className="
+                    border-red-600 bg-red-600 text-white
+                    hover:border-red-600 hover:bg-white hover:text-red-600
+                  ">
                     Eliminar
                   </Button>
                 </AlertDialogTrigger>
@@ -465,7 +510,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => handleDelete(lessons.id.toString())}
-                      className="border-red-600 bg-red-600 text-white hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                      className="
+                        border-red-600 bg-red-600 text-white
+                        hover:border-red-700 hover:bg-transparent
+                        hover:text-red-700
+                      "
                     >
                       Eliminar
                     </AlertDialogAction>
@@ -475,7 +524,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             </div>
             <div>
               <div
-                className={`pb-6 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                className={`
+                  pb-6
+                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                `}
               >
                 <h2 className="text-2xl font-bold">Información de la clase</h2>
                 <br />
@@ -490,7 +542,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <h2 className="text-lg font-semibold">Categoría:</h2>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                      className="
+                        border-primary bg-background text-primary ml-1 w-fit
+                        hover:bg-black/70
+                      "
                     >
                       {lessons.course?.categoryId}
                     </Badge>
@@ -505,7 +560,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <h2 className="text-lg font-semibold">Educador:</h2>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                      className="
+                        border-primary bg-background text-primary ml-1 w-fit
+                        hover:bg-black/70
+                      "
                     >
                       {lessons.course?.instructor}
                     </Badge>
@@ -514,7 +572,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                     <h2 className="text-lg font-semibold">Modalidad:</h2>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                      className="
+                        border-primary bg-background text-primary ml-1 w-fit
+                        hover:bg-black/70
+                      "
                     >
                       {lessons.course?.modalidadId}
                     </Badge>
@@ -526,7 +587,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <div className="flex w-full justify-center">
               <Link
                 href={`./${lessons.id}/actividades?lessonId=${lessons.id}`}
-                className="cursor-pointer justify-center rounded-lg border-transparent bg-green-400 p-2 text-white hover:bg-green-500"
+                className="
+                  cursor-pointer justify-center rounded-lg border-transparent
+                  bg-green-400 p-2 text-white
+                  hover:bg-green-500
+                "
               >
                 Crear actividad
               </Link>

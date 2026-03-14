@@ -26,9 +26,9 @@ export function NotificationToast({
   return (
     <div
       className="
-      pointer-events-none fixed top-4 right-4 z-50 space-y-2
-      sm:top-6 sm:right-6
-    "
+        pointer-events-none fixed top-4 right-4 z-50 space-y-2
+        sm:top-6 sm:right-6
+      "
     >
       {toasts.map((t) => (
         <Toast key={t.id} toast={t} onRemove={onRemove} />
@@ -96,9 +96,9 @@ function Toast({ toast, onRemove }: ToastProps) {
       <div className="flex-shrink-0">{icons[toast.type]}</div>
       <div
         className="
-        flex-1 text-sm
-        sm:text-base
-      "
+          flex-1 text-sm
+          sm:text-base
+        "
       >
         {toast.message}
         {toast.subtitle && (

@@ -81,9 +81,9 @@ export function ProgramHeader({
           />
           <div
             className="
-            absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70
-            to-transparent p-6
-          "
+              absolute inset-x-0 bottom-0 bg-linear-to-t from-black/70
+              to-transparent p-6
+            "
           >
             <h1 className="text-3xl font-bold text-white">{program.title}</h1>
           </div>
@@ -149,10 +149,9 @@ export function ProgramHeader({
               <div className="flex w-full flex-col space-y-4">
                 <Button
                   className="
-                    h-12 w-64
-                    justify-center
-                    border-white/20 bg-primary text-lg font-semibold text-background
-                    transition-colors hover:bg-primary/90
+                    h-12 w-64 justify-center border-white/20 bg-primary text-lg
+                    font-semibold text-background transition-colors
+                    hover:bg-primary/90
                     active:scale-95
                   "
                   disabled={true}
@@ -190,21 +189,21 @@ export function ProgramHeader({
               >
                 <span
                   className="
-                  absolute inset-0 rounded-xl bg-linear-to-r from-teal-400
-                  via-blue-500 to-purple-500 p-[2px] opacity-0
-                  transition-opacity duration-500
-                  group-hover:opacity-100
-                "
+                    absolute inset-0 rounded-xl bg-linear-to-r from-teal-400
+                    via-blue-500 to-purple-500 p-[2px] opacity-0
+                    transition-opacity duration-500
+                    group-hover:opacity-100
+                  "
                 />
                 <span
                   className="
-                  relative z-10 block rounded-xl bg-gray-950 px-6 py-3
-                "
+                    relative z-10 block rounded-xl bg-gray-950 px-6 py-3
+                  "
                 >
                   <div
                     className="
-                    relative z-10 flex items-center justify-center space-x-2
-                  "
+                      relative z-10 flex items-center justify-center space-x-2
+                    "
                   >
                     {isEnrolling ? (
                       <Icons.spinner
@@ -215,9 +214,9 @@ export function ProgramHeader({
                       <>
                         <span
                           className="
-                          transition-all duration-500
-                          group-hover:translate-x-1
-                        "
+                            transition-all duration-500
+                            group-hover:translate-x-1
+                          "
                         >
                           {!canEnroll
                             ? 'Requiere Plan Premium'

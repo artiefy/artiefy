@@ -107,9 +107,9 @@ export default function AddSectionDropdown({
       {isOpen && (
         <div
           className="
-          absolute top-full right-0 z-50 mt-2 min-w-[12rem] overflow-hidden
-          rounded-md border border-border/50 bg-card p-1 shadow-md
-        "
+            absolute top-full right-0 z-50 mt-2 min-w-[12rem] overflow-hidden
+            rounded-md border border-border/50 bg-card p-1 shadow-md
+          "
         >
           {availableToAdd.length > 0 ? (
             <>

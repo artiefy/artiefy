@@ -129,10 +129,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
     return (
       <div
         className="
-        grid grid-cols-1 gap-4 px-8
-        sm:grid-cols-2
-        lg:grid-cols-2 lg:px-5
-      "
+          grid grid-cols-1 gap-4 px-8
+          sm:grid-cols-2
+          lg:grid-cols-2 lg:px-5
+        "
       >
         <h2 className="mb-4 text-2xl font-bold">Lista de clases creadas</h2>
         <p className="text-xl text-gray-600">
@@ -287,9 +287,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       {/* Sección de reordenar - Nueva */}
       <div
         className="
-        mb-8 flex flex-col gap-4 rounded-lg border border-gray-300 bg-gray-50
-        p-4
-      "
+          mb-8 flex flex-col gap-4 rounded-lg border border-gray-300 bg-gray-50
+          p-4
+        "
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -362,9 +362,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
                             <div
                               className="
-                              flex size-8 items-center justify-center
-                              rounded-full bg-blue-100 font-bold text-blue-800
-                            "
+                                flex size-8 items-center justify-center
+                                rounded-full bg-blue-100 font-bold text-blue-800
+                              "
                             >
                               {lesson.orderIndex || index + 1}
                             </div>
@@ -394,10 +394,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       <div className="flex w-full flex-col">
         <div
           className="
-          grid grid-cols-1 gap-4 px-3
-          sm:grid-cols-2
-          lg:grid-cols-2 lg:px-1
-        "
+            grid grid-cols-1 gap-4 px-3
+            sm:grid-cols-2
+            lg:grid-cols-2 lg:px-1
+          "
         >
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="lessons">
@@ -425,12 +425,12 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                           <div key={lesson.id} className="group relative">
                             <div
                               className="
-                              absolute -inset-0.5 animate-gradient rounded-xl
-                              bg-linear-to-r from-[#3AF4EF] via-[#00BDD8]
-                              to-[#01142B] opacity-0 blur-sm transition
-                              duration-500
-                              group-hover:opacity-100
-                            "
+                                absolute -inset-0.5 animate-gradient rounded-xl
+                                bg-linear-to-r from-[#3AF4EF] via-[#00BDD8]
+                                to-[#01142B] opacity-0 blur-sm transition
+                                duration-500
+                                group-hover:opacity-100
+                              "
                             />
                             <Card
                               key={lesson.id}
@@ -448,9 +448,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                             >
                               <div
                                 className="
-                                relative grid grid-cols-1 p-5
-                                lg:grid-cols-2
-                              "
+                                  relative grid grid-cols-1 p-5
+                                  lg:grid-cols-2
+                                "
                               >
                                 <CardHeader>
                                   <div className="relative size-full">
@@ -560,8 +560,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
                               <CardFooter
                                 className="
-                                -mt-6 flex flex-col items-start justify-between
-                              "
+                                  -mt-6 flex flex-col items-start
+                                  justify-between
+                                "
                               >
                                 <Button asChild className="mx-auto">
                                   <Link
@@ -581,17 +582,17 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                     <ArrowRightIcon className="size-5 animate-bounce-right" />
                                     <div
                                       className="
-                                      absolute inset-0 flex w-full
-                                      [transform:skew(-13deg)_translateX(-100%)]
-                                      justify-center
-                                      group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-                                      group-hover/button:duration-1000
-                                    "
+                                        absolute inset-0 flex w-full
+                                        [transform:skew(-13deg)_translateX(-100%)]
+                                        justify-center
+                                        group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                                        group-hover/button:duration-1000
+                                      "
                                     >
                                       <div
                                         className="
-                                        relative h-full w-10 bg-white/30
-                                      "
+                                          relative h-full w-10 bg-white/30
+                                        "
                                       />
                                     </div>
                                   </Link>
@@ -642,13 +643,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       {isReordering && (
         <div
           className="
-          fixed inset-0 z-50 flex items-center justify-center bg-black/30
-        "
+            fixed inset-0 z-50 flex items-center justify-center bg-black/30
+          "
         >
           <div
             className="
-            rounded-md bg-white/90 px-6 py-4 text-sm font-medium text-black
-          "
+              rounded-md bg-white/90 px-6 py-4 text-sm font-medium text-black
+            "
           >
             Guardando nuevo orden...
           </div>

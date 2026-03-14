@@ -169,14 +169,14 @@ export default function AddCustomSectionModal({
         {/* Header */}
         <div
           className="
-          flex flex-col space-y-1.5 text-center
-          sm:text-left
-        "
+            flex flex-col space-y-1.5 text-center
+            sm:text-left
+          "
         >
           <h2
             className="
-            text-lg leading-none font-semibold tracking-tight text-foreground
-          "
+              text-lg leading-none font-semibold tracking-tight text-foreground
+            "
           >
             Nueva sección personalizada
           </h2>

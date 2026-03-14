@@ -49,7 +49,10 @@ const LessonChatBot: React.FC = () => {
       {/* Chat Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`button ${isOpen ? 'bg-gray-200' : ''}`}
+        className={`
+          button
+          ${isOpen ? 'bg-gray-200' : ''}
+        `}
       >
         <div className="button__text">
           {Array.from('-ARTI-IA-ARTI-IA').map((char, i) => (
@@ -71,7 +74,10 @@ const LessonChatBot: React.FC = () => {
             <h3 className="font-bold text-gray-800">Artie IA</h3>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-gray-500 hover:text-gray-700"
+              className="
+                text-gray-500
+                hover:text-gray-700
+              "
             >
               <FaTimes />
             </button>
@@ -80,16 +86,22 @@ const LessonChatBot: React.FC = () => {
             {chatMessages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${
+                className={`
+                  flex
+                  ${
                   message.sender === 'user' ? 'justify-end' : 'justify-start'
-                }`}
+                }
+                `}
               >
                 <div
-                  className={`max-w-[80%] rounded-lg p-3 ${
+                  className={`
+                    max-w-[80%] rounded-lg p-3
+                    ${
                     message.sender === 'user'
                       ? 'bg-secondary text-white'
                       : 'bg-gray-100 text-gray-800'
-                  }`}
+                  }
+                  `}
                 >
                   {message.text}
                 </div>
@@ -115,12 +127,19 @@ const LessonChatBot: React.FC = () => {
                 value={messageInput}
                 onChange={(e) => setMessageInput(e.target.value)}
                 placeholder="Escribe tu mensaje..."
-                className="flex-1 rounded-lg border p-2 text-white focus:ring-2 focus:ring-secondary focus:outline-hidden"
+                className="
+                  flex-1 rounded-lg border p-2 text-white
+                  focus:ring-2 focus:ring-secondary focus:outline-hidden
+                "
               />
               <button
                 type="submit"
                 disabled={isLoading}
-                className="rounded-lg bg-secondary px-4 py-2 text-white transition-all hover:bg-[#00A5C0] disabled:bg-gray-300"
+                className="
+                  rounded-lg bg-secondary px-4 py-2 text-white transition-all
+                  hover:bg-[#00A5C0]
+                  disabled:bg-gray-300
+                "
               >
                 Enviar
               </button>

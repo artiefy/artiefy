@@ -338,9 +338,9 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
         className="
-        max-h-[80vh] max-w-2xl overflow-y-auto rounded-lg border
-        border-slate-700 bg-slate-800 shadow-xl
-      "
+          max-h-[80vh] max-w-2xl overflow-y-auto rounded-lg border
+          border-slate-700 bg-slate-800 shadow-xl
+        "
       >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-teal-400">
@@ -355,8 +355,8 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
           {isEditing && (
             <div
               className="
-              mb-2 rounded-md border border-blue-700 bg-blue-900/30 p-3
-            "
+                mb-2 rounded-md border border-blue-700 bg-blue-900/30 p-3
+              "
             >
               <p className="text-sm text-blue-200">
                 <strong>Modo edición:</strong> Los archivos que subas
@@ -384,13 +384,13 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
                       ? 'scale-105 border-teal-400 bg-teal-900/30'
                       : isEditing
                         ? `
-                        border-blue-500 bg-blue-900/20
-                        hover:bg-blue-800/30
-                      `
+                          border-blue-500 bg-blue-900/20
+                          hover:bg-blue-800/30
+                        `
                         : `
-                        border-slate-600 bg-slate-700
-                        hover:bg-slate-600
-                      `
+                          border-slate-600 bg-slate-700
+                          hover:bg-slate-600
+                        `
                   }
                   ${loading ? 'cursor-not-allowed opacity-50' : ''}
                 `}
@@ -400,8 +400,8 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
               >
                 <div
                   className="
-                  flex flex-col items-center justify-center pt-5 pb-6
-                "
+                    flex flex-col items-center justify-center pt-5 pb-6
+                  "
                 >
                   <UploadCloud
                     className={`
@@ -499,13 +499,13 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
                 ${
                   isEditing
                     ? `
-                    border-blue-600 bg-blue-900/20
-                    focus:border-blue-400 focus:ring-blue-500
-                  `
+                      border-blue-600 bg-blue-900/20
+                      focus:border-blue-400 focus:ring-blue-500
+                    `
                     : `
-                    border-slate-600 bg-slate-700
-                    focus:border-teal-400 focus:ring-teal-500
-                  `
+                      border-slate-600 bg-slate-700
+                      focus:border-teal-400 focus:ring-teal-500
+                    `
                 }
               `}
               rows={3}
@@ -532,13 +532,13 @@ export const ModalEntregaActividad: React.FC<ModalEntregaActividadProps> = ({
                 ${
                   isEditing
                     ? `
-                    bg-gradient-to-r from-blue-600 to-blue-400
-                    hover:from-blue-700 hover:to-blue-500
-                  `
+                      bg-gradient-to-r from-blue-600 to-blue-400
+                      hover:from-blue-700 hover:to-blue-500
+                    `
                     : `
-                    bg-gradient-to-r from-teal-600 to-teal-400
-                    hover:from-teal-700 hover:to-teal-500
-                  `
+                      bg-gradient-to-r from-teal-600 to-teal-400
+                      hover:from-teal-700 hover:to-teal-500
+                    `
                 }
               `}
               disabled={loading || selectedFiles.length === 0}

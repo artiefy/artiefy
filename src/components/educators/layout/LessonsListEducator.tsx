@@ -122,10 +122,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
     return (
       <div
         className="
-        grid grid-cols-1 gap-4 px-8
-        sm:grid-cols-2
-        lg:grid-cols-2 lg:px-5
-      "
+          grid grid-cols-1 gap-4 px-8
+          sm:grid-cols-2
+          lg:grid-cols-2 lg:px-5
+        "
       >
         <h2 className="mb-4 text-2xl font-bold">Lista de clases creadas</h2>
         <p className="text-xl text-gray-600">
@@ -297,9 +297,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       {/* Sección de reordenar - Nueva */}
       <div
         className="
-        mb-8 flex flex-col gap-4 rounded-lg border border-gray-300 bg-gray-50
-        p-4
-      "
+          mb-8 flex flex-col gap-4 rounded-lg border border-gray-300 bg-gray-50
+          p-4
+        "
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -371,9 +371,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                             </div>
                             <div
                               className="
-                              flex size-8 items-center justify-center
-                              rounded-full bg-blue-100 font-bold text-blue-800
-                            "
+                                flex size-8 items-center justify-center
+                                rounded-full bg-blue-100 font-bold text-blue-800
+                              "
                             >
                               {lesson.orderIndex || index + 1}
                             </div>
@@ -425,9 +425,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
           // En modo ordenar, usar el DragDropContext como antes
           <div
             className="
-            px-3
-            lg:px-1
-          "
+              px-3
+              lg:px-1
+            "
           >
             <DragDropContext onDragEnd={handleDragEnd}>
               <Droppable droppableId="lessons">
@@ -457,12 +457,12 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                             <div className="group relative">
                               <div
                                 className="
-                                absolute -inset-0.5 animate-gradient rounded-xl
-                                bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8]
-                                to-[#01142B] opacity-0 blur transition
-                                duration-500
-                                group-hover:opacity-100
-                              "
+                                  absolute -inset-0.5 animate-gradient
+                                  rounded-xl bg-gradient-to-r from-[#3AF4EF]
+                                  via-[#00BDD8] to-[#01142B] opacity-0 blur
+                                  transition duration-500
+                                  group-hover:opacity-100
+                                "
                               />
                               <Card
                                 className="
@@ -497,13 +497,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                       <div className="absolute top-2 left-2">
                                         <div
                                           className="
-                                          flex size-8 items-center
-                                          justify-center rounded-full
-                                          bg-gradient-to-br from-yellow-400
-                                          to-orange-500 text-xs font-bold
-                                          text-white shadow-xl ring-2
-                                          ring-white/50
-                                        "
+                                            flex size-8 items-center
+                                            justify-center rounded-full
+                                            bg-gradient-to-br from-yellow-400
+                                            to-orange-500 text-xs font-bold
+                                            text-white shadow-xl ring-2
+                                            ring-white/50
+                                          "
                                         >
                                           {lesson.orderIndex}
                                         </div>
@@ -514,21 +514,21 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                   {/* Contenido a la derecha */}
                                   <div
                                     className="
-                                    flex flex-1 flex-col justify-center gap-2
-                                    p-4
-                                    lg:w-5/6
-                                  "
+                                      flex flex-1 flex-col justify-center gap-2
+                                      p-4
+                                      lg:w-5/6
+                                    "
                                   >
                                     <div
                                       className="
-                                      flex flex-wrap items-center
-                                      justify-between gap-3
-                                    "
+                                        flex flex-wrap items-center
+                                        justify-between gap-3
+                                      "
                                     >
                                       <CardTitle
                                         className="
-                                        text-base leading-tight font-bold
-                                      "
+                                          text-base leading-tight font-bold
+                                        "
                                       >
                                         {lesson.title}
                                       </CardTitle>
@@ -552,9 +552,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                           <span>Ver clase</span>
                                           <ArrowRightIcon
                                             className="
-                                            size-4 transition-transform
-                                            group-hover/button:translate-x-1
-                                          "
+                                              size-4 transition-transform
+                                              group-hover/button:translate-x-1
+                                            "
                                           />
                                         </Link>
                                       </Button>
@@ -562,16 +562,17 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
                                     <div
                                       className="
-                                      flex flex-wrap items-center gap-2 text-sm
-                                    "
+                                        flex flex-wrap items-center gap-2
+                                        text-sm
+                                      "
                                     >
                                       <div
                                         className="
-                                        flex items-center gap-1.5 rounded-full
-                                        bg-gradient-to-r from-blue-500/20
-                                        to-cyan-500/20 px-3 py-1
-                                        backdrop-blur-sm
-                                      "
+                                          flex items-center gap-1.5 rounded-full
+                                          bg-gradient-to-r from-blue-500/20
+                                          to-cyan-500/20 px-3 py-1
+                                          backdrop-blur-sm
+                                        "
                                       >
                                         <span>📚</span>
                                         <span className="font-medium">
@@ -580,11 +581,11 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                       </div>
                                       <div
                                         className="
-                                        flex items-center gap-1.5 rounded-full
-                                        bg-gradient-to-r from-purple-500/20
-                                        to-pink-500/20 px-3 py-1
-                                        backdrop-blur-sm
-                                      "
+                                          flex items-center gap-1.5 rounded-full
+                                          bg-gradient-to-r from-purple-500/20
+                                          to-pink-500/20 px-3 py-1
+                                          backdrop-blur-sm
+                                        "
                                       >
                                         <span>⏱️</span>
                                         <span className="font-medium">
@@ -593,11 +594,11 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                                       </div>
                                       <div
                                         className="
-                                        flex items-center gap-1.5 rounded-full
-                                        bg-gradient-to-r from-green-500/20
-                                        to-emerald-500/20 px-3 py-1
-                                        backdrop-blur-sm
-                                      "
+                                          flex items-center gap-1.5 rounded-full
+                                          bg-gradient-to-r from-green-500/20
+                                          to-emerald-500/20 px-3 py-1
+                                          backdrop-blur-sm
+                                        "
                                       >
                                         <span>👨‍🏫</span>
                                         <span className="font-medium">
@@ -623,19 +624,19 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
           // Fuera del modo ordenar, una sola card por fila con diseño mejorado
           <div
             className="
-            space-y-4 px-3
-            lg:px-1
-          "
+              space-y-4 px-3
+              lg:px-1
+            "
           >
             {ordered.map((lesson) => (
               <div key={lesson.id} className="group relative">
                 <div
                   className="
-                  absolute -inset-0.5 animate-gradient rounded-xl
-                  bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B]
-                  opacity-0 blur transition duration-500
-                  group-hover:opacity-100
-                "
+                    absolute -inset-0.5 animate-gradient rounded-xl
+                    bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B]
+                    opacity-0 blur transition duration-500
+                    group-hover:opacity-100
+                  "
                 />
                 <Card
                   className="
@@ -652,17 +653,17 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                   {/* Card content en horizontal */}
                   <div
                     className="
-                    relative flex flex-col
-                    lg:flex-row
-                  "
+                      relative flex flex-col
+                      lg:flex-row
+                    "
                   >
                     {/* Imagen a la izquierda */}
                     <div className="lg:w-1/6">
                       <div
                         className="
-                        relative h-20 w-full
-                        lg:h-full
-                      "
+                          relative h-20 w-full
+                          lg:h-full
+                        "
                       >
                         <Image
                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${lesson.coverImageKey}`}
@@ -682,14 +683,14 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                     {/* Contenido a la derecha */}
                     <div
                       className="
-                      flex flex-1 flex-col justify-center gap-2 p-4
-                      lg:w-5/6
-                    "
+                        flex flex-1 flex-col justify-center gap-2 p-4
+                        lg:w-5/6
+                      "
                     >
                       <div
                         className="
-                        flex flex-wrap items-center justify-between gap-3
-                      "
+                          flex flex-wrap items-center justify-between gap-3
+                        "
                       >
                         <CardTitle className="text-base leading-tight font-bold">
                           {lesson.title}
@@ -712,9 +713,9 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                             <span>Ver clase</span>
                             <ArrowRightIcon
                               className="
-                              size-4 transition-transform
-                              group-hover/button:translate-x-1
-                            "
+                                size-4 transition-transform
+                                group-hover/button:translate-x-1
+                              "
                             />
                           </Link>
                         </Button>
@@ -723,10 +724,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                       <div className="flex flex-wrap items-center gap-2 text-sm">
                         <div
                           className="
-                          flex items-center gap-1.5 rounded-full
-                          bg-gradient-to-r from-blue-500/20 to-cyan-500/20 px-3
-                          py-1 backdrop-blur-sm
-                        "
+                            flex items-center gap-1.5 rounded-full
+                            bg-gradient-to-r from-blue-500/20 to-cyan-500/20
+                            px-3 py-1 backdrop-blur-sm
+                          "
                         >
                           <span className="font-medium">
                             {lesson.course.title}
@@ -734,10 +735,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                         </div>
                         <div
                           className="
-                          flex items-center gap-1.5 rounded-full
-                          bg-gradient-to-r from-purple-500/20 to-pink-500/20
-                          px-3 py-1 backdrop-blur-sm
-                        "
+                            flex items-center gap-1.5 rounded-full
+                            bg-gradient-to-r from-purple-500/20 to-pink-500/20
+                            px-3 py-1 backdrop-blur-sm
+                          "
                         >
                           <span className="font-medium">
                             {lesson.duration} min
@@ -745,10 +746,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                         </div>
                         <div
                           className="
-                          flex items-center gap-1.5 rounded-full
-                          bg-gradient-to-r from-green-500/20 to-emerald-500/20
-                          px-3 py-1 backdrop-blur-sm
-                        "
+                            flex items-center gap-1.5 rounded-full
+                            bg-gradient-to-r from-green-500/20 to-emerald-500/20
+                            px-3 py-1 backdrop-blur-sm
+                          "
                         >
                           <span className="font-medium">
                             {lesson.course.instructor}
@@ -779,13 +780,13 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
       {isReordering && (
         <div
           className="
-          fixed inset-0 z-50 flex items-center justify-center bg-black/30
-        "
+            fixed inset-0 z-50 flex items-center justify-center bg-black/30
+          "
         >
           <div
             className="
-            rounded-md bg-white/90 px-6 py-4 text-sm font-medium text-black
-          "
+              rounded-md bg-white/90 px-6 py-4 text-sm font-medium text-black
+            "
           >
             Guardando nuevo orden...
           </div>

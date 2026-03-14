@@ -52,7 +52,10 @@ function ArtiefyRocketIcon({ className = '' }: { className?: string }) {
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 128 128"
-      className={`overflow-visible ${className}`}
+      className={`
+        overflow-visible
+        ${className}
+      `}
       aria-hidden="true"
     >
       <defs>
@@ -329,7 +332,10 @@ export default function Loading() {
     <div className="relative h-screen w-full overflow-hidden bg-[#01142B]">
       {/* Fondo Gradiente (como el ejemplo viejo) */}
       <div
-        className="absolute inset-0 z-0 bg-gradient-to-br from-[#00BDD8] via-[#01142B] to-[#2ecc71]"
+        className="
+          absolute inset-0 z-0 bg-gradient-to-br from-[#00BDD8] via-[#01142B]
+          to-[#2ecc71]
+        "
         style={{
           backgroundSize: '400% 400%',
           animation: 'gradientBG 15s ease infinite',
@@ -381,13 +387,18 @@ export default function Loading() {
       </div>
 
       {/* Ícono centrado */}
-      <div className="absolute inset-0 z-20 flex flex-col items-center justify-center">
+      <div className="
+        absolute inset-0 z-20 flex flex-col items-center justify-center
+      ">
         <div className="rocketWrap mt-40 -mb-15">
           {/* Apunta a la esquina superior derecha */}
           <ArtiefyRocketIcon className="size-28" />
         </div>
 
-        <div className="mt-48 flex items-center gap-3 font-mono text-lg tracking-widest text-white/90 uppercase">
+        <div className="
+          mt-48 flex items-center gap-3 font-mono text-lg tracking-widest
+          text-white/90 uppercase
+        ">
           <span className="pulseText">Cargando tus ideas</span>
           <SafeImg
             src="/artiefy-icon.png"
@@ -399,7 +410,10 @@ export default function Loading() {
         </div>
 
         <div className="mt-12 w-[min(520px,78vw)]">
-          <div className="h-3 rounded-full border border-cyan-200/30 bg-white/5 p-[2px] shadow-[0_0_24px_rgba(0,189,216,0.20)]">
+          <div className="
+            h-3 rounded-full border border-cyan-200/30 bg-white/5 p-[2px]
+            shadow-[0_0_24px_rgba(0,189,216,0.20)]
+          ">
             <div
               className="h-full rounded-full bg-cyan-300/80"
               style={{ width: `${progress}%` }}

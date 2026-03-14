@@ -44,7 +44,11 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, children }) => {
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <div className="my-8 inline-block w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+            <div className="
+              my-8 inline-block w-full max-w-md transform overflow-hidden
+              rounded-2xl bg-white p-6 text-left align-middle shadow-xl
+              transition-all
+            ">
               {children}
             </div>
           </Transition.Child>

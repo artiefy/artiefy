@@ -52,9 +52,9 @@ export default function MyCoursesStudentClient({
   return (
     <div
       className="
-      mx-auto max-w-6xl px-4 pt-24 pb-8
-      sm:px-6
-    "
+        mx-auto max-w-6xl px-4 pt-24 pb-8
+        sm:px-6
+      "
     >
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold text-foreground">
@@ -66,9 +66,9 @@ export default function MyCoursesStudentClient({
       <Tabs.Root defaultValue="cursos" className="mb-8">
         <Tabs.List
           className="
-          inline-flex h-10 items-center justify-center rounded-[13px] border
-          border-border/40 bg-secondary/40 p-1 text-muted-foreground
-        "
+            inline-flex h-10 items-center justify-center rounded-[13px] border
+            border-border/40 bg-secondary/40 p-1 text-muted-foreground
+          "
         >
           <Tabs.Trigger
             value="cursos"
@@ -118,8 +118,8 @@ export default function MyCoursesStudentClient({
           {courses.length === 0 ? (
             <div
               className="
-              rounded-2xl border border-border/50 bg-card/50 p-8 text-center
-            "
+                rounded-2xl border border-border/50 bg-card/50 p-8 text-center
+              "
             >
               <p className="text-sm text-muted-foreground">
                 Aún no tienes cursos inscritos.
@@ -178,30 +178,31 @@ export default function MyCoursesStudentClient({
                       />
                       <div
                         className="
-                        absolute inset-0 bg-gradient-to-t from-card
-                        via-transparent to-transparent
-                      "
+                          absolute inset-0 bg-gradient-to-t from-card
+                          via-transparent to-transparent
+                        "
                       />
                       <div
                         className="
-                        absolute inset-0 flex items-center justify-center
-                        opacity-0 transition-opacity duration-300
-                        group-hover:opacity-100
-                      "
+                          absolute inset-0 flex items-center justify-center
+                          opacity-0 transition-opacity duration-300
+                          group-hover:opacity-100
+                        "
                       >
                         <div
                           className="
-                          flex size-12 items-center justify-center rounded-full
-                          bg-primary/90 shadow-[0_0_20px_hsl(185_72%_48%/0.5)]
-                        "
+                            flex size-12 items-center justify-center
+                            rounded-full bg-primary/90
+                            shadow-[0_0_20px_hsl(185_72%_48%/0.5)]
+                          "
                         >
                           <Play className="ml-0.5 size-5 text-primary-foreground" />
                         </div>
                       </div>
                       <div
                         className="
-                        absolute right-0 bottom-0 left-0 h-1 bg-muted/30
-                      "
+                          absolute right-0 bottom-0 left-0 h-1 bg-muted/30
+                        "
                       >
                         <div
                           className="
@@ -222,18 +223,18 @@ export default function MyCoursesStudentClient({
                       )}
                       <h3
                         className="
-                        line-clamp-2 text-sm leading-tight font-semibold
-                        text-foreground transition-colors
-                        group-hover:text-primary
-                      "
+                          line-clamp-2 text-sm leading-tight font-semibold
+                          text-foreground transition-colors
+                          group-hover:text-primary
+                        "
                       >
                         {course.title}
                       </h3>
                       <div
                         className="
-                        flex items-center justify-between text-xs
-                        text-muted-foreground
-                      "
+                          flex items-center justify-between text-xs
+                          text-muted-foreground
+                        "
                       >
                         <span className="flex items-center gap-1">
                           <Clock className="size-3" />
@@ -262,11 +263,12 @@ export default function MyCoursesStudentClient({
                       </div>
                       <div
                         className="
-                        inline-flex h-9 w-full items-center justify-center gap-2
-                        rounded-md border border-primary/20 bg-primary/10
-                        text-sm font-medium text-primary transition-all
-                        hover:bg-primary hover:text-primary-foreground
-                      "
+                          inline-flex h-9 w-full items-center justify-center
+                          gap-2 rounded-md border border-primary/20
+                          bg-primary/10 text-sm font-medium text-primary
+                          transition-all
+                          hover:bg-primary hover:text-primary-foreground
+                        "
                       >
                         <Play className="size-3.5" />
                         Continuar
@@ -284,8 +286,8 @@ export default function MyCoursesStudentClient({
           {programs.length === 0 ? (
             <div
               className="
-              rounded-2xl border border-border/50 bg-card/50 p-8 text-center
-            "
+                rounded-2xl border border-border/50 bg-card/50 p-8 text-center
+              "
             >
               <p className="text-sm text-muted-foreground">
                 Aún no tienes programas inscritos.
@@ -329,22 +331,22 @@ export default function MyCoursesStudentClient({
                     />
                     <div
                       className="
-                      absolute inset-0 bg-gradient-to-t from-card
-                      via-transparent to-transparent
-                    "
+                        absolute inset-0 bg-gradient-to-t from-card
+                        via-transparent to-transparent
+                      "
                     />
                     <div
                       className="
-                      absolute inset-0 flex items-center justify-center
-                      opacity-0 transition-opacity duration-300
-                      group-hover:opacity-100
-                    "
+                        absolute inset-0 flex items-center justify-center
+                        opacity-0 transition-opacity duration-300
+                        group-hover:opacity-100
+                      "
                     >
                       <div
                         className="
-                        flex size-12 items-center justify-center rounded-full
-                        bg-primary/90 shadow-[0_0_20px_hsl(185_72%_48%/0.5)]
-                      "
+                          flex size-12 items-center justify-center rounded-full
+                          bg-primary/90 shadow-[0_0_20px_hsl(185_72%_48%/0.5)]
+                        "
                       >
                         <Play className="ml-0.5 size-5 text-primary-foreground" />
                       </div>
@@ -361,20 +363,20 @@ export default function MyCoursesStudentClient({
                     )}
                     <h3
                       className="
-                      line-clamp-2 text-sm leading-tight font-semibold
-                      text-foreground transition-colors
-                      group-hover:text-primary
-                    "
+                        line-clamp-2 text-sm leading-tight font-semibold
+                        text-foreground transition-colors
+                        group-hover:text-primary
+                      "
                     >
                       {program.title}
                     </h3>
                     <div
                       className="
-                      inline-flex h-9 w-full items-center justify-center gap-2
-                      rounded-md border border-primary/20 bg-primary/10 text-sm
-                      font-medium text-primary transition-all
-                      hover:bg-primary hover:text-primary-foreground
-                    "
+                        inline-flex h-9 w-full items-center justify-center gap-2
+                        rounded-md border border-primary/20 bg-primary/10
+                        text-sm font-medium text-primary transition-all
+                        hover:bg-primary hover:text-primary-foreground
+                      "
                     >
                       Ver programa
                       <ArrowRight className="size-3.5" />

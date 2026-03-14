@@ -33,7 +33,10 @@ export const ChangeRole: React.FC<UserCardProps> = ({ user }) => {
           <Button
             type="submit"
             variant="default"
-            className="bg-green-600 text-white hover:bg-green-600/90"
+            className="
+              bg-green-600 text-white
+              hover:bg-green-600/90
+            "
           >
             Cambiar a Admin
           </Button>
@@ -45,7 +48,10 @@ export const ChangeRole: React.FC<UserCardProps> = ({ user }) => {
           <Button
             type="submit"
             variant="secondary"
-            className="border border-white bg-yellow-600 text-white hover:bg-yellow-600/90"
+            className="
+              border border-white bg-yellow-600 text-white
+              hover:bg-yellow-600/90
+            "
           >
             Cambiar a Educador
           </Button>

@@ -646,14 +646,14 @@ export default function ModalSolicitudesParticipacion({
       {isProcessing && (
         <div
           className="
-          fixed inset-0 z-[100] flex items-center justify-center bg-black/60
-        "
+            fixed inset-0 z-[100] flex items-center justify-center bg-black/60
+          "
         >
           <div
             className="
-            flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
-            p-6 shadow-lg
-          "
+              flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
+              p-6 shadow-lg
+            "
           >
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">
@@ -700,14 +700,14 @@ export default function ModalSolicitudesParticipacion({
       {eliminandoTodas && (
         <div
           className="
-          fixed inset-0 z-[100] flex items-center justify-center bg-black/60
-        "
+            fixed inset-0 z-[100] flex items-center justify-center bg-black/60
+          "
         >
           <div
             className="
-            flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
-            p-6 shadow-lg
-          "
+              flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
+              p-6 shadow-lg
+            "
           >
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">
@@ -753,8 +753,8 @@ export default function ModalSolicitudesParticipacion({
           {/* Botón de cerrar */}
           <div
             className="
-            sticky top-0 z-50 flex w-full justify-end bg-slate-800/95 pb-2
-          "
+              sticky top-0 z-50 flex w-full justify-end bg-slate-800/95 pb-2
+            "
           >
             <Button
               variant="ghost"
@@ -788,15 +788,15 @@ export default function ModalSolicitudesParticipacion({
 
           <div
             className="
-            space-y-4
-            sm:space-y-6
-          "
+              space-y-4
+              sm:space-y-6
+            "
           >
             <div
               className="
-              flex flex-col gap-3
-              sm:flex-row sm:items-center sm:justify-between
-            "
+                flex flex-col gap-3
+                sm:flex-row sm:items-center sm:justify-between
+              "
             >
               <h2 className="text-xl font-bold break-words text-white sm:text-2xl">
                 Gestión de Solicitudes
@@ -819,9 +819,9 @@ export default function ModalSolicitudesParticipacion({
                 >
                   <Trash2
                     className="
-                    mr-1 size-3 shrink-0
-                    sm:mr-2 sm:size-4
-                  "
+                      mr-1 size-3 shrink-0
+                      sm:mr-2 sm:size-4
+                    "
                   />
                   <span className="break-words">
                     {eliminandoTodas
@@ -836,9 +836,9 @@ export default function ModalSolicitudesParticipacion({
             {projectTitle && (
               <div
                 className="
-                mt-1 pl-9 text-base font-semibold break-words text-cyan-300
-                sm:text-lg
-              "
+                  mt-1 pl-9 text-base font-semibold break-words text-cyan-300
+                  sm:text-lg
+                "
               >
                 {projectTitle}
               </div>
@@ -847,37 +847,37 @@ export default function ModalSolicitudesParticipacion({
             {loading ? (
               <div
                 className="
-                flex justify-center py-6
-                sm:py-8
-              "
+                  flex justify-center py-6
+                  sm:py-8
+                "
               >
                 <div
                   className="
-                  size-6 animate-spin rounded-full border-b-2 border-cyan-400
-                  sm:size-8
-                "
+                    size-6 animate-spin rounded-full border-b-2 border-cyan-400
+                    sm:size-8
+                  "
                 />
               </div>
             ) : (
               <div
                 className="
-                space-y-4
-                sm:space-y-6
-              "
+                  space-y-4
+                  sm:space-y-6
+                "
               >
                 {/* Solicitudes de Participación Pendientes */}
                 <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
                   <CardHeader
                     className="
-                    pb-3
-                    sm:pb-4
-                  "
+                      pb-3
+                      sm:pb-4
+                    "
                   >
                     <CardTitle
                       className="
-                      flex items-center gap-2 text-base text-white
-                      sm:text-lg
-                    "
+                        flex items-center gap-2 text-base text-white
+                        sm:text-lg
+                      "
                     >
                       <Clock className="size-4 shrink-0 text-yellow-400 sm:size-5" />
                       <span className="min-w-0 break-words">
@@ -885,9 +885,9 @@ export default function ModalSolicitudesParticipacion({
                       </span>
                       <span
                         className="
-                        shrink-0 text-sm
-                        sm:text-base
-                      "
+                          shrink-0 text-sm
+                          sm:text-base
+                        "
                       >
                         ({solicitudesParticipacionPendientes.length})
                       </span>
@@ -897,18 +897,18 @@ export default function ModalSolicitudesParticipacion({
                     {solicitudesParticipacionPendientes.length === 0 ? (
                       <p
                         className="
-                        text-sm text-slate-400 italic
-                        sm:text-base
-                      "
+                          text-sm text-slate-400 italic
+                          sm:text-base
+                        "
                       >
                         No hay solicitudes de participación pendientes
                       </p>
                     ) : (
                       <div
                         className="
-                        space-y-3
-                        sm:space-y-4
-                      "
+                          space-y-3
+                          sm:space-y-4
+                        "
                       >
                         {solicitudesParticipacionPendientes.map((solicitud) => (
                           <div
@@ -922,16 +922,16 @@ export default function ModalSolicitudesParticipacion({
                           >
                             <div
                               className="
-                              flex min-w-0 flex-1 items-start gap-2
-                              sm:gap-3
-                            "
+                                flex min-w-0 flex-1 items-start gap-2
+                                sm:gap-3
+                              "
                             >
                               <Avatar className="size-8 flex-shrink-0 sm:size-10">
                                 <AvatarFallback
                                   className="
-                                  bg-green-600 text-xs text-white
-                                  sm:text-sm
-                                "
+                                    bg-green-600 text-xs text-white
+                                    sm:text-sm
+                                  "
                                 >
                                   {(solicitud.userName ?? 'AN')
                                     .split(' ')
@@ -943,17 +943,17 @@ export default function ModalSolicitudesParticipacion({
                               <div className="min-w-0 flex-1">
                                 <h4
                                   className="
-                                  text-sm font-semibold break-words text-white
-                                  sm:text-base
-                                "
+                                    text-sm font-semibold break-words text-white
+                                    sm:text-base
+                                  "
                                 >
                                   {solicitud.userName ?? 'Usuario desconocido'}
                                 </h4>
                                 <p
                                   className="
-                                  text-xs break-all text-slate-400
-                                  sm:text-sm
-                                "
+                                    text-xs break-all text-slate-400
+                                    sm:text-sm
+                                  "
                                 >
                                   {solicitud.userEmail}
                                 </p>
@@ -965,8 +965,8 @@ export default function ModalSolicitudesParticipacion({
                                 </p>
                                 <Badge
                                   className="
-                                  mt-1 bg-green-600 text-xs text-white
-                                "
+                                    mt-1 bg-green-600 text-xs text-white
+                                  "
                                 >
                                   Participación
                                 </Badge>
@@ -974,19 +974,19 @@ export default function ModalSolicitudesParticipacion({
                                   <div className="mt-2 rounded bg-slate-600/50 p-2">
                                     <div
                                       className="
-                                      mb-1 flex items-center gap-1 text-xs
-                                      text-slate-400
-                                    "
+                                        mb-1 flex items-center gap-1 text-xs
+                                        text-slate-400
+                                      "
                                     >
                                       <MessageSquare className="size-3 flex-shrink-0" />
                                       <span className="shrink-0">Mensaje:</span>
                                     </div>
                                     <p
                                       className="
-                                      text-xs break-words whitespace-pre-wrap
-                                      text-slate-300
-                                      sm:text-sm
-                                    "
+                                        text-xs break-words whitespace-pre-wrap
+                                        text-slate-300
+                                        sm:text-sm
+                                      "
                                     >
                                       {solicitud.requestMessage}
                                     </p>
@@ -996,9 +996,9 @@ export default function ModalSolicitudesParticipacion({
                             </div>
                             <div
                               className="
-                              flex w-full gap-2
-                              sm:w-auto sm:flex-shrink-0
-                            "
+                                flex w-full gap-2
+                                sm:w-auto sm:flex-shrink-0
+                              "
                             >
                               <Button
                                 size="sm"
@@ -1046,15 +1046,15 @@ export default function ModalSolicitudesParticipacion({
                 <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
                   <CardHeader
                     className="
-                    pb-3
-                    sm:pb-4
-                  "
+                      pb-3
+                      sm:pb-4
+                    "
                   >
                     <CardTitle
                       className="
-                      flex items-center gap-2 text-base text-white
-                      sm:text-lg
-                    "
+                        flex items-center gap-2 text-base text-white
+                        sm:text-lg
+                      "
                     >
                       <Clock className="size-4 shrink-0 text-orange-400 sm:size-5" />
                       <span className="min-w-0 break-words">
@@ -1062,9 +1062,9 @@ export default function ModalSolicitudesParticipacion({
                       </span>
                       <span
                         className="
-                        shrink-0 text-sm
-                        sm:text-base
-                      "
+                          shrink-0 text-sm
+                          sm:text-base
+                        "
                       >
                         ({solicitudesRenunciaPendientes.length})
                       </span>
@@ -1074,18 +1074,18 @@ export default function ModalSolicitudesParticipacion({
                     {solicitudesRenunciaPendientes.length === 0 ? (
                       <p
                         className="
-                        text-sm text-slate-400 italic
-                        sm:text-base
-                      "
+                          text-sm text-slate-400 italic
+                          sm:text-base
+                        "
                       >
                         No hay solicitudes de renuncia pendientes
                       </p>
                     ) : (
                       <div
                         className="
-                        space-y-3
-                        sm:space-y-4
-                      "
+                          space-y-3
+                          sm:space-y-4
+                        "
                       >
                         {solicitudesRenunciaPendientes.map((solicitud) => (
                           <div
@@ -1099,16 +1099,16 @@ export default function ModalSolicitudesParticipacion({
                           >
                             <div
                               className="
-                              flex min-w-0 flex-1 items-start gap-2
-                              sm:gap-3
-                            "
+                                flex min-w-0 flex-1 items-start gap-2
+                                sm:gap-3
+                              "
                             >
                               <Avatar className="size-8 flex-shrink-0 sm:size-10">
                                 <AvatarFallback
                                   className="
-                                  bg-orange-600 text-xs text-white
-                                  sm:text-sm
-                                "
+                                    bg-orange-600 text-xs text-white
+                                    sm:text-sm
+                                  "
                                 >
                                   {(solicitud.userName ?? 'AN')
                                     .split(' ')
@@ -1120,17 +1120,17 @@ export default function ModalSolicitudesParticipacion({
                               <div className="min-w-0 flex-1">
                                 <h4
                                   className="
-                                  text-sm font-semibold break-words text-white
-                                  sm:text-base
-                                "
+                                    text-sm font-semibold break-words text-white
+                                    sm:text-base
+                                  "
                                 >
                                   {solicitud.userName ?? 'Usuario desconocido'}
                                 </h4>
                                 <p
                                   className="
-                                  text-xs break-all text-slate-400
-                                  sm:text-sm
-                                "
+                                    text-xs break-all text-slate-400
+                                    sm:text-sm
+                                  "
                                 >
                                   {solicitud.userEmail}
                                 </p>
@@ -1142,32 +1142,32 @@ export default function ModalSolicitudesParticipacion({
                                 </p>
                                 <Badge
                                   className="
-                                  mt-1 bg-orange-600 text-xs text-white
-                                "
+                                    mt-1 bg-orange-600 text-xs text-white
+                                  "
                                 >
                                   Renuncia
                                 </Badge>
                                 {solicitud.requestMessage && (
                                   <div
                                     className="
-                                    mt-2 rounded bg-orange-600/20 p-2
-                                  "
+                                      mt-2 rounded bg-orange-600/20 p-2
+                                    "
                                   >
                                     <div
                                       className="
-                                      mb-1 flex items-center gap-1 text-xs
-                                      text-orange-300
-                                    "
+                                        mb-1 flex items-center gap-1 text-xs
+                                        text-orange-300
+                                      "
                                     >
                                       <MessageSquare className="size-3 flex-shrink-0" />
                                       <span className="shrink-0">Motivo:</span>
                                     </div>
                                     <p
                                       className="
-                                      text-xs break-words whitespace-pre-wrap
-                                      text-orange-200
-                                      sm:text-sm
-                                    "
+                                        text-xs break-words whitespace-pre-wrap
+                                        text-orange-200
+                                        sm:text-sm
+                                      "
                                     >
                                       {solicitud.requestMessage}
                                     </p>
@@ -1177,9 +1177,9 @@ export default function ModalSolicitudesParticipacion({
                             </div>
                             <div
                               className="
-                              flex w-full gap-2
-                              sm:w-auto sm:flex-shrink-0
-                            "
+                                flex w-full gap-2
+                                sm:w-auto sm:flex-shrink-0
+                              "
                             >
                               <Button
                                 size="sm"
@@ -1230,9 +1230,9 @@ export default function ModalSolicitudesParticipacion({
                   <Card className="overflow-hidden border-slate-700 bg-slate-800/50">
                     <CardHeader
                       className="
-                      pb-3
-                      sm:pb-4
-                    "
+                        pb-3
+                        sm:pb-4
+                      "
                     >
                       <CardTitle className="text-base break-words text-white sm:text-lg">
                         Historial de Solicitudes ({solicitudesProcesadas.length}
@@ -1242,9 +1242,9 @@ export default function ModalSolicitudesParticipacion({
                     <CardContent className="pt-0">
                       <div
                         className="
-                        space-y-2
-                        sm:space-y-3
-                      "
+                          space-y-2
+                          sm:space-y-3
+                        "
                       >
                         {solicitudesProcesadas.map((solicitud) => (
                           <div
@@ -1258,15 +1258,15 @@ export default function ModalSolicitudesParticipacion({
                           >
                             <div
                               className="
-                              flex min-w-0 flex-1 items-start gap-2
-                              sm:gap-3
-                            "
+                                flex min-w-0 flex-1 items-start gap-2
+                                sm:gap-3
+                              "
                             >
                               <Avatar
                                 className="
-                                size-6 flex-shrink-0
-                                sm:size-8
-                              "
+                                  size-6 flex-shrink-0
+                                  sm:size-8
+                                "
                               >
                                 <AvatarFallback
                                   className={`
@@ -1288,9 +1288,9 @@ export default function ModalSolicitudesParticipacion({
                               <div className="min-w-0 flex-1">
                                 <h5
                                   className="
-                                  text-xs font-medium break-words text-white
-                                  sm:text-sm
-                                "
+                                    text-xs font-medium break-words text-white
+                                    sm:text-sm
+                                  "
                                 >
                                   {solicitud.userName ?? 'Usuario desconocido'}
                                 </h5>
@@ -1322,9 +1322,9 @@ export default function ModalSolicitudesParticipacion({
                                 {solicitud.responseMessage && (
                                   <p
                                     className="
-                                    mt-1 text-xs break-words whitespace-pre-wrap
-                                    text-slate-300
-                                  "
+                                      mt-1 text-xs break-words
+                                      whitespace-pre-wrap text-slate-300
+                                    "
                                   >
                                     &quot;{solicitud.responseMessage}&quot;
                                   </p>
@@ -1333,9 +1333,9 @@ export default function ModalSolicitudesParticipacion({
                             </div>
                             <div
                               className="
-                              flex justify-end
-                              sm:flex-shrink-0
-                            "
+                                flex justify-end
+                                sm:flex-shrink-0
+                              "
                             >
                               <Badge
                                 className={`

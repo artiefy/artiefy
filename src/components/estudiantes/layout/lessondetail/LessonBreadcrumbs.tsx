@@ -20,24 +20,23 @@ const LessonBreadcrumbs = ({
   return (
     <nav
       className="
-      w-full max-w-full overflow-x-auto px-2
-      sm:mt-12
-      md:px-8
-    "
+        w-full max-w-full overflow-x-auto px-2
+        sm:mt-12
+        md:px-8
+      "
     >
       <ol
         className="
-        flex flex-nowrap items-center space-x-2 pr-2 text-sm whitespace-nowrap
-        text-gray-400
-      "
+          flex flex-nowrap items-center space-x-2 pr-2 text-sm whitespace-nowrap
+          text-gray-400
+        "
       >
         <li>
           <Link
             href="/"
             className="
-              flex
-              items-center hover:text-primary
-              hover:underline
+              flex items-center
+              hover:text-primary hover:underline
               focus:ring-0 focus:outline-none
             "
           >
@@ -51,9 +50,8 @@ const LessonBreadcrumbs = ({
           <Link
             href="/estudiantes"
             className="
-              flex
-              items-center hover:text-primary
-              hover:underline
+              flex items-center
+              hover:text-primary hover:underline
               focus:ring-0 focus:outline-none
             "
           >
@@ -67,9 +65,8 @@ const LessonBreadcrumbs = ({
           <Link
             href={`/estudiantes/cursos/${courseId}`}
             className="
-              flex
-              items-center break-words whitespace-normal hover:text-primary
-              hover:underline
+              flex items-center break-words whitespace-normal
+              hover:text-primary hover:underline
               focus:ring-0 focus:outline-none
             "
             title={courseTitle}

@@ -404,11 +404,11 @@ export default function TransactionHistoryPage() {
   return (
     <div
       className="
-      min-h-screen bg-gradient-to-br from-[#01142B] via-[#0a2548] to-[#051f42]
-      p-4
-      sm:p-6
-      lg:p-8
-    "
+        min-h-screen bg-gradient-to-br from-[#01142B] via-[#0a2548] to-[#051f42]
+        p-4
+        sm:p-6
+        lg:p-8
+      "
     >
       <div className="mx-auto max-w-7xl">
         {/* Header */}
@@ -416,19 +416,19 @@ export default function TransactionHistoryPage() {
           <div className="mb-4 flex items-center gap-3">
             <div
               className="
-              rounded-xl border border-[#00BDD8]/30 bg-gradient-to-br
-              from-[#00BDD8]/30 to-[#00BDD8]/10 p-3
-            "
+                rounded-xl border border-[#00BDD8]/30 bg-gradient-to-br
+                from-[#00BDD8]/30 to-[#00BDD8]/10 p-3
+              "
             >
               <TrendingUp className="size-6 text-[#00BDD8]" />
             </div>
             <div>
               <h1
                 className="
-                bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] bg-clip-text
-                text-2xl font-bold text-transparent
-                sm:text-3xl
-              "
+                  bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] bg-clip-text
+                  text-2xl font-bold text-transparent
+                  sm:text-3xl
+                "
               >
                 Historial de Transacciones
               </h1>
@@ -443,16 +443,16 @@ export default function TransactionHistoryPage() {
         {/* Resumen de Finanzas */}
         <div
           className="
-          mb-6 grid grid-cols-1 gap-4
-          sm:grid-cols-3
-        "
+            mb-6 grid grid-cols-1 gap-4
+            sm:grid-cols-3
+          "
         >
           {/* Total Recaudado */}
           <div
             className="
-            rounded-2xl border border-green-500/20 bg-gradient-to-br
-            from-green-500/10 to-green-500/5 p-6 backdrop-blur-md
-          "
+              rounded-2xl border border-green-500/20 bg-gradient-to-br
+              from-green-500/10 to-green-500/5 p-6 backdrop-blur-md
+            "
           >
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-semibold text-green-400 uppercase">
@@ -487,9 +487,9 @@ export default function TransactionHistoryPage() {
           {/* Total Transacciones */}
           <div
             className="
-            rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-br
-            from-[#00BDD8]/10 to-[#00BDD8]/5 p-6 backdrop-blur-md
-          "
+              rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-br
+              from-[#00BDD8]/10 to-[#00BDD8]/5 p-6 backdrop-blur-md
+            "
           >
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-semibold text-[#00BDD8] uppercase">
@@ -524,9 +524,9 @@ export default function TransactionHistoryPage() {
           {/* Resumen */}
           <div
             className="
-            rounded-2xl border border-yellow-500/20 bg-gradient-to-br
-            from-yellow-500/10 to-yellow-500/5 p-6 backdrop-blur-md
-          "
+              rounded-2xl border border-yellow-500/20 bg-gradient-to-br
+              from-yellow-500/10 to-yellow-500/5 p-6 backdrop-blur-md
+            "
           >
             <div className="mb-4 flex items-center justify-between">
               <span className="text-xs font-semibold text-yellow-400 uppercase">
@@ -562,9 +562,9 @@ export default function TransactionHistoryPage() {
         {/* Filtros */}
         <div
           className="
-          mb-6 rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-br
-          from-[#00BDD8]/5 to-[#00BDD8]/[0.02] p-6 shadow-xl backdrop-blur-md
-        "
+            mb-6 rounded-2xl border border-[#00BDD8]/20 bg-gradient-to-br
+            from-[#00BDD8]/5 to-[#00BDD8]/[0.02] p-6 shadow-xl backdrop-blur-md
+          "
         >
           <div className="mb-6 flex items-center gap-2">
             <Filter className="size-5 text-[#00BDD8]" />
@@ -572,10 +572,10 @@ export default function TransactionHistoryPage() {
           </div>
           <div
             className="
-            mb-4 grid grid-cols-1 gap-4
-            sm:grid-cols-2
-            lg:grid-cols-3
-          "
+              mb-4 grid grid-cols-1 gap-4
+              sm:grid-cols-2
+              lg:grid-cols-3
+            "
           >
             {/* Búsqueda */}
             <div className="relative">
@@ -585,9 +585,9 @@ export default function TransactionHistoryPage() {
               <div className="relative">
                 <Search
                   className="
-                  absolute top-1/2 left-3 size-4 -translate-y-1/2
-                  text-[#00BDD8]/50
-                "
+                    absolute top-1/2 left-3 size-4 -translate-y-1/2
+                    text-[#00BDD8]/50
+                  "
                 />
                 <input
                   type="text"
@@ -734,9 +734,9 @@ export default function TransactionHistoryPage() {
         {error && (
           <div
             className="
-            mb-6 flex items-center gap-3 rounded-xl border border-red-500/30
-            bg-red-500/10 p-4 text-red-300 backdrop-blur-sm
-          "
+              mb-6 flex items-center gap-3 rounded-xl border border-red-500/30
+              bg-red-500/10 p-4 text-red-300 backdrop-blur-sm
+            "
           >
             <AlertCircle className="size-5 flex-shrink-0" />
             <p className="text-sm">{error}</p>
@@ -746,10 +746,10 @@ export default function TransactionHistoryPage() {
         {/* Tabla */}
         <div
           className="
-          overflow-hidden rounded-2xl border border-[#00BDD8]/20
-          bg-gradient-to-b from-[#00BDD8]/5 to-[#00BDD8]/[0.02] shadow-2xl
-          backdrop-blur-md
-        "
+            overflow-hidden rounded-2xl border border-[#00BDD8]/20
+            bg-gradient-to-b from-[#00BDD8]/5 to-[#00BDD8]/[0.02] shadow-2xl
+            backdrop-blur-md
+          "
         >
           {loading ? (
             <div className="flex items-center justify-center py-16">
@@ -772,64 +772,64 @@ export default function TransactionHistoryPage() {
               <table className="w-full text-sm">
                 <thead
                   className="
-                  border-b border-[#00BDD8]/10 bg-gradient-to-r
-                  from-[#00BDD8]/10 to-[#00BDD8]/5
-                "
+                    border-b border-[#00BDD8]/10 bg-gradient-to-r
+                    from-[#00BDD8]/10 to-[#00BDD8]/5
+                  "
                 >
                   <tr>
                     <th
                       className="
-                      px-6 py-4 text-left font-semibold text-[#00BDD8]
-                    "
+                        px-6 py-4 text-left font-semibold text-[#00BDD8]
+                      "
                     >
                       Nro. Pago
                     </th>
                     <th
                       className="
-                      px-6 py-4 text-left font-semibold text-[#00BDD8]
-                    "
+                        px-6 py-4 text-left font-semibold text-[#00BDD8]
+                      "
                     >
                       Usuario
                     </th>
                     <th
                       className="
-                      px-6 py-4 text-left font-semibold text-[#00BDD8]
-                    "
+                        px-6 py-4 text-left font-semibold text-[#00BDD8]
+                      "
                     >
                       Concepto
                     </th>
                     <th
                       className="
-                      px-6 py-4 text-left font-semibold text-[#00BDD8]
-                    "
+                        px-6 py-4 text-left font-semibold text-[#00BDD8]
+                      "
                     >
                       Método
                     </th>
                     <th
                       className="
-                      px-6 py-4 text-right font-semibold text-[#00BDD8]
-                    "
+                        px-6 py-4 text-right font-semibold text-[#00BDD8]
+                      "
                     >
                       Valor
                     </th>
                     <th
                       className="
-                      px-6 py-4 text-left font-semibold text-[#00BDD8]
-                    "
+                        px-6 py-4 text-left font-semibold text-[#00BDD8]
+                      "
                     >
                       Fecha
                     </th>
                     <th
                       className="
-                      px-6 py-4 text-center font-semibold text-[#00BDD8]
-                    "
+                        px-6 py-4 text-center font-semibold text-[#00BDD8]
+                      "
                     >
                       Verificación
                     </th>
                     <th
                       className="
-                      px-6 py-4 text-center font-semibold text-[#00BDD8]
-                    "
+                        px-6 py-4 text-center font-semibold text-[#00BDD8]
+                      "
                     >
                       Acciones
                     </th>
@@ -865,8 +865,8 @@ export default function TransactionHistoryPage() {
                       <td className="px-6 py-4 text-gray-300">{item.metodo}</td>
                       <td
                         className="
-                        px-6 py-4 text-right font-semibold text-[#00BDD8]
-                      "
+                          px-6 py-4 text-right font-semibold text-[#00BDD8]
+                        "
                       >
                         {formatCurrency(item.valor)}
                       </td>
@@ -877,10 +877,10 @@ export default function TransactionHistoryPage() {
                         {item.receiptVerified ? (
                           <span
                             className="
-                            inline-flex items-center gap-1 rounded-full border
-                            border-green-500/30 bg-green-500/20 px-3 py-1
-                            text-xs font-medium text-green-300
-                          "
+                              inline-flex items-center gap-1 rounded-full border
+                              border-green-500/30 bg-green-500/20 px-3 py-1
+                              text-xs font-medium text-green-300
+                            "
                           >
                             <CheckCircle2 className="size-3" />
                             Verificado
@@ -888,10 +888,10 @@ export default function TransactionHistoryPage() {
                         ) : (
                           <span
                             className="
-                            inline-flex items-center gap-1 rounded-full border
-                            border-yellow-500/30 bg-yellow-500/20 px-3 py-1
-                            text-xs font-medium text-yellow-300
-                          "
+                              inline-flex items-center gap-1 rounded-full border
+                              border-yellow-500/30 bg-yellow-500/20 px-3 py-1
+                              text-xs font-medium text-yellow-300
+                            "
                           >
                             <AlertCircle className="size-3" />
                             Pendiente
@@ -924,17 +924,17 @@ export default function TransactionHistoryPage() {
         {pagination && pagination.totalPages > 1 && (
           <div
             className="
-            mt-6 flex flex-col items-center justify-between gap-4 rounded-2xl
-            border border-[#00BDD8]/20 bg-gradient-to-r from-[#00BDD8]/5
-            to-[#00BDD8]/[0.02] p-4 backdrop-blur-md
-            sm:flex-row
-          "
+              mt-6 flex flex-col items-center justify-between gap-4 rounded-2xl
+              border border-[#00BDD8]/20 bg-gradient-to-r from-[#00BDD8]/5
+              to-[#00BDD8]/[0.02] p-4 backdrop-blur-md
+              sm:flex-row
+            "
           >
             <div
               className="
-              text-xs text-gray-400
-              sm:text-sm
-            "
+                text-xs text-gray-400
+                sm:text-sm
+              "
             >
               Página{' '}
               <span className="font-semibold text-[#00BDD8]">
@@ -989,28 +989,28 @@ export default function TransactionHistoryPage() {
         {selectedPago && (
           <div
             className="
-            fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4
-            backdrop-blur-md
-          "
+              fixed inset-0 z-50 flex items-center justify-center bg-black/70
+              p-4 backdrop-blur-md
+            "
           >
             <div
               className="
-              w-full max-w-3xl overflow-hidden rounded-2xl border
-              border-[#00BDD8]/30 bg-gradient-to-b from-[#01142B] to-[#0a2548]
-              shadow-2xl
-            "
+                w-full max-w-3xl overflow-hidden rounded-2xl border
+                border-[#00BDD8]/30 bg-gradient-to-b from-[#01142B] to-[#0a2548]
+                shadow-2xl
+              "
             >
               <div
                 className="
-                flex items-center justify-between border-b border-[#00BDD8]/20
-                bg-gradient-to-r from-[#00BDD8]/10 to-transparent px-6 py-4
-              "
+                  flex items-center justify-between border-b border-[#00BDD8]/20
+                  bg-gradient-to-r from-[#00BDD8]/10 to-transparent px-6 py-4
+                "
               >
                 <h2
                   className="
-                  bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] bg-clip-text
-                  text-lg font-bold text-transparent
-                "
+                    bg-gradient-to-r from-[#00BDD8] to-[#00d9ff] bg-clip-text
+                    text-lg font-bold text-transparent
+                  "
                 >
                   Detalles de Transacción #{detailData?.pago.nroPago}
                 </h2>
@@ -1033,10 +1033,10 @@ export default function TransactionHistoryPage() {
                 ) : detailError ? (
                   <div
                     className="
-                    m-6 flex items-center gap-3 rounded-lg border
-                    border-red-500/30 bg-red-500/10 p-4 text-red-300
-                    backdrop-blur-sm
-                  "
+                      m-6 flex items-center gap-3 rounded-lg border
+                      border-red-500/30 bg-red-500/10 p-4 text-red-300
+                      backdrop-blur-sm
+                    "
                   >
                     <AlertCircle className="size-5 flex-shrink-0" />
                     <p className="text-sm">{detailError}</p>
@@ -1050,30 +1050,30 @@ export default function TransactionHistoryPage() {
                       </h3>
                       <div
                         className="
-                        grid grid-cols-2 gap-4
-                        sm:grid-cols-3
-                      "
+                          grid grid-cols-2 gap-4
+                          sm:grid-cols-3
+                        "
                       >
                         <div
                           className="
-                          rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
-                          p-4 backdrop-blur-sm
-                        "
+                            rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
+                            p-4 backdrop-blur-sm
+                          "
                         >
                           <p className="text-xs text-gray-400">Concepto</p>
                           <p
                             className="
-                            mt-2 font-semibold break-words text-white
-                          "
+                              mt-2 font-semibold break-words text-white
+                            "
                           >
                             {detailData.pago.concepto}
                           </p>
                         </div>
                         <div
                           className="
-                          rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
-                          p-4 backdrop-blur-sm
-                        "
+                            rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
+                            p-4 backdrop-blur-sm
+                          "
                         >
                           <p className="text-xs text-gray-400">Método</p>
                           <p className="mt-2 font-semibold text-white">
@@ -1082,9 +1082,9 @@ export default function TransactionHistoryPage() {
                         </div>
                         <div
                           className="
-                          rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
-                          p-4 backdrop-blur-sm
-                        "
+                            rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
+                            p-4 backdrop-blur-sm
+                          "
                         >
                           <p className="text-xs text-gray-400">Valor</p>
                           <p className="mt-2 font-semibold text-[#00BDD8]">
@@ -1093,9 +1093,9 @@ export default function TransactionHistoryPage() {
                         </div>
                         <div
                           className="
-                          rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
-                          p-4 backdrop-blur-sm
-                        "
+                            rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
+                            p-4 backdrop-blur-sm
+                          "
                         >
                           <p className="text-xs text-gray-400">Fecha Pago</p>
                           <p className="mt-2 font-semibold text-white">
@@ -1104,9 +1104,9 @@ export default function TransactionHistoryPage() {
                         </div>
                         <div
                           className="
-                          rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
-                          p-4 backdrop-blur-sm
-                        "
+                            rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
+                            p-4 backdrop-blur-sm
+                          "
                         >
                           <p className="text-xs text-gray-400">Usuario</p>
                           <p className="mt-2 font-semibold text-white">
@@ -1115,15 +1115,15 @@ export default function TransactionHistoryPage() {
                         </div>
                         <div
                           className="
-                          rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
-                          p-4 backdrop-blur-sm
-                        "
+                            rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
+                            p-4 backdrop-blur-sm
+                          "
                         >
                           <p className="text-xs text-gray-400">Email</p>
                           <p
                             className="
-                            mt-2 text-xs font-semibold break-all text-white
-                          "
+                              mt-2 text-xs font-semibold break-all text-white
+                            "
                           >
                             {detailData.pago.user.email}
                           </p>
@@ -1138,19 +1138,19 @@ export default function TransactionHistoryPage() {
                       </h3>
                       <div
                         className="
-                        space-y-4 rounded-lg border border-[#00BDD8]/20
-                        bg-[#00BDD8]/5 p-5 backdrop-blur-sm
-                      "
+                          space-y-4 rounded-lg border border-[#00BDD8]/20
+                          bg-[#00BDD8]/5 p-5 backdrop-blur-sm
+                        "
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-300">Estado:</span>
                           {detailData.pago.receiptVerified ? (
                             <span
                               className="
-                              inline-flex items-center gap-1 rounded-full border
-                              border-green-500/30 bg-green-500/20 px-3 py-1
-                              text-xs font-medium text-green-300
-                            "
+                                inline-flex items-center gap-1 rounded-full
+                                border border-green-500/30 bg-green-500/20 px-3
+                                py-1 text-xs font-medium text-green-300
+                              "
                             >
                               <CheckCircle2 className="size-3" />
                               Verificado
@@ -1158,10 +1158,10 @@ export default function TransactionHistoryPage() {
                           ) : (
                             <span
                               className="
-                              inline-flex items-center gap-1 rounded-full border
-                              border-yellow-500/30 bg-yellow-500/20 px-3 py-1
-                              text-xs font-medium text-yellow-300
-                            "
+                                inline-flex items-center gap-1 rounded-full
+                                border border-yellow-500/30 bg-yellow-500/20
+                                px-3 py-1 text-xs font-medium text-yellow-300
+                              "
                             >
                               <AlertCircle className="size-3" />
                               Pendiente
@@ -1304,55 +1304,56 @@ export default function TransactionHistoryPage() {
                       {detailData.verificaciones.length === 0 ? (
                         <div
                           className="
-                          rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
-                          p-6 text-center text-sm text-gray-400 backdrop-blur-sm
-                        "
+                            rounded-lg border border-[#00BDD8]/20 bg-[#00BDD8]/5
+                            p-6 text-center text-sm text-gray-400
+                            backdrop-blur-sm
+                          "
                         >
                           Sin verificaciones registradas
                         </div>
                       ) : (
                         <div
                           className="
-                          overflow-x-auto rounded-lg border border-[#00BDD8]/20
-                          backdrop-blur-sm
-                        "
+                            overflow-x-auto rounded-lg border
+                            border-[#00BDD8]/20 backdrop-blur-sm
+                          "
                         >
                           <table className="w-full text-xs">
                             <thead
                               className="
-                              border-b border-[#00BDD8]/10 bg-[#00BDD8]/5
-                            "
+                                border-b border-[#00BDD8]/10 bg-[#00BDD8]/5
+                              "
                             >
                               <tr>
                                 <th
                                   className="
-                                  px-4 py-3 text-left font-semibold
-                                  text-[#00BDD8]
-                                "
+                                    px-4 py-3 text-left font-semibold
+                                    text-[#00BDD8]
+                                  "
                                 >
                                   Fecha
                                 </th>
                                 <th
                                   className="
-                                  px-4 py-3 text-left font-semibold
-                                  text-[#00BDD8]
-                                "
+                                    px-4 py-3 text-left font-semibold
+                                    text-[#00BDD8]
+                                  "
                                 >
                                   Verificado por
                                 </th>
                                 <th
                                   className="
-                                  px-4 py-3 text-left font-semibold
-                                  text-[#00BDD8]
-                                "
+                                    px-4 py-3 text-left font-semibold
+                                    text-[#00BDD8]
+                                  "
                                 >
                                   Notas
                                 </th>
                                 <th
                                   className="
-                                  px-4 py-3 text-left font-semibold
-                                  text-[#00BDD8]
-                                "
+                                    px-4 py-3 text-left font-semibold
+                                    text-[#00BDD8]
+                                  "
                                 >
                                   Archivo
                                 </th>
@@ -1408,9 +1409,9 @@ export default function TransactionHistoryPage() {
 
               <div
                 className="
-                flex justify-end border-t border-[#00BDD8]/20 bg-gradient-to-r
-                from-[#00BDD8]/5 to-transparent px-6 py-4
-              "
+                  flex justify-end border-t border-[#00BDD8]/20 bg-gradient-to-r
+                  from-[#00BDD8]/5 to-transparent px-6 py-4
+                "
               >
                 <button
                   onClick={handleCloseDetail}

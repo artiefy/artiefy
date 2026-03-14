@@ -250,13 +250,19 @@ export default function StudentForumPage() {
                     />
                     <div className="flex gap-2">
                       <button
-                        className="rounded bg-green-600 px-4 py-2 font-bold text-white hover:bg-green-700"
+                        className="
+                          rounded bg-green-600 px-4 py-2 font-bold text-white
+                          hover:bg-green-700
+                        "
                         onClick={() => handleReplySend(post.id)}
                       >
                         Responder
                       </button>
                       <button
-                        className="rounded bg-gray-600 px-4 py-2 font-bold text-white hover:bg-gray-700"
+                        className="
+                          rounded bg-gray-600 px-4 py-2 font-bold text-white
+                          hover:bg-gray-700
+                        "
                         onClick={() => setReplyingToPostId(null)}
                       >
                         Cancelar
@@ -265,7 +271,10 @@ export default function StudentForumPage() {
                   </div>
                 ) : (
                   <button
-                    className="text-secondary mt-2 text-sm hover:underline"
+                    className="
+                      text-secondary mt-2 text-sm
+                      hover:underline
+                    "
                     onClick={() => setReplyingToPostId(post.id)}
                   >
                     Responder a este post
@@ -284,7 +293,10 @@ export default function StudentForumPage() {
             onChange={(e) => setMessage(e.target.value)}
           />
           <button
-            className="rounded bg-green-600 px-4 py-2 font-bold text-white hover:bg-green-700"
+            className="
+              rounded bg-green-600 px-4 py-2 font-bold text-white
+              hover:bg-green-700
+            "
             onClick={handleSend}
           >
             Responder

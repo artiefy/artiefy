@@ -38,9 +38,9 @@ const LessonNavigation = ({
   return (
     <div
       className="
-      flex items-center gap-1 rounded-full border border-border bg-[#061c37cc]
-      p-1 backdrop-blur-xl
-    "
+        flex items-center gap-1 rounded-full border border-border bg-[#061c37cc]
+        p-1 backdrop-blur-xl
+      "
     >
       <button
         type="button"

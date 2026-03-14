@@ -174,7 +174,11 @@ export const ScheduledMeetingsList = ({
         return (
           <div
             key={mainTitle}
-            className="rounded-2xl border border-gray-800 bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-6 shadow-2xl transition-all duration-500"
+            className="
+              rounded-2xl border border-gray-800 bg-gradient-to-br
+              from-[#0f172a] to-[#1e293b] p-6 shadow-2xl transition-all
+              duration-500
+            "
           >
             <div className="flex items-center justify-between">
               <div>
@@ -189,7 +193,11 @@ export const ScheduledMeetingsList = ({
                   onClick={() =>
                     setOpenGroup(openGroup === mainTitle ? null : mainTitle)
                   }
-                  className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-semibold text-white shadow-md transition hover:bg-blue-500"
+                  className="
+                    rounded-md bg-blue-600 px-4 py-1.5 text-sm font-semibold
+                    text-white shadow-md transition
+                    hover:bg-blue-500
+                  "
                 >
                   {openGroup === mainTitle ? 'Ocultar' : 'Ver más'}
                 </button>
@@ -197,7 +205,10 @@ export const ScheduledMeetingsList = ({
                 <button
                   type="button"
                   onClick={() => void handleDeleteGroup(groupMeetings)}
-                  className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-500"
+                  className="
+                    rounded bg-red-600 px-3 py-1 text-sm text-white
+                    hover:bg-red-500
+                  "
                 >
                   🗑 Eliminar todas las clases
                 </button>
@@ -209,7 +220,10 @@ export const ScheduledMeetingsList = ({
                 {Object.entries(subGroups).map(([fullTitle, classes]) => (
                   <div
                     key={fullTitle}
-                    className="rounded-xl border border-gray-700 bg-[#111827] p-5 shadow-md"
+                    className="
+                      rounded-xl border border-gray-700 bg-[#111827] p-5
+                      shadow-md
+                    "
                   >
                     <p className="mb-2 text-base font-semibold text-white">
                       {fullTitle}
@@ -266,7 +280,11 @@ export const ScheduledMeetingsList = ({
                                   href={meeting.joinUrl}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="mr-3 inline-block text-blue-400 underline transition hover:text-blue-300"
+                                  className="
+                                    mr-3 inline-block text-blue-400 underline
+                                    transition
+                                    hover:text-blue-300
+                                  "
                                 >
                                   🔗 Enlace de clase
                                 </a>
@@ -279,7 +297,11 @@ export const ScheduledMeetingsList = ({
                                       key={videoUrl}
                                       type="button"
                                       onClick={() => setVideoToShow(videoUrl)}
-                                      className="inline-block rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-500"
+                                      className="
+                                        inline-block rounded bg-green-600 px-3
+                                        py-1 text-sm text-white
+                                        hover:bg-green-500
+                                      "
                                     >
                                       🎥 Grabación{' '}
                                       {finalVideos.length > 1
@@ -293,7 +315,11 @@ export const ScheduledMeetingsList = ({
                               <button
                                 type="button"
                                 onClick={() => void handleDeleteSingle(meeting)}
-                                className="mt-2 ml-2 rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-500"
+                                className="
+                                  mt-2 ml-2 rounded bg-red-600 px-3 py-1 text-sm
+                                  text-white
+                                  hover:bg-red-500
+                                "
                               >
                                 🗑 Eliminar clase
                               </button>
@@ -310,11 +336,18 @@ export const ScheduledMeetingsList = ({
       })}
 
       {videoToShow && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="relative w-[90%] max-w-3xl rounded-lg bg-[#111827] p-6 shadow-xl">
+        <div className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/70
+        ">
+          <div className="
+            relative w-[90%] max-w-3xl rounded-lg bg-[#111827] p-6 shadow-xl
+          ">
             <button
               onClick={() => setVideoToShow(null)}
-              className="absolute top-3 right-3 text-white hover:text-red-400"
+              className="
+                absolute top-3 right-3 text-white
+                hover:text-red-400
+              "
               aria-label="Cerrar video"
               type="button"
             >

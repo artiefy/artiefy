@@ -537,9 +537,10 @@ const ForumPage = () => {
                       </CollapsibleTrigger>
                       <CollapsibleContent
                         className="
-                        absolute right-0 z-10 mt-1 flex flex-col overflow-hidden
-                        rounded-lg border border-gray-700 bg-gray-900 shadow-xl
-                      "
+                          absolute right-0 z-10 mt-1 flex flex-col
+                          overflow-hidden rounded-lg border border-gray-700
+                          bg-gray-900 shadow-xl
+                        "
                       >
                         <button
                           className="
@@ -646,11 +647,11 @@ const ForumPage = () => {
                             {reply.videoKey && (
                               <div
                                 className="
-                                relative h-40 w-full overflow-hidden rounded-lg
-                                border border-cyan-700/40 bg-gray-900
-                                transition-all
-                                hover:shadow-lg hover:shadow-cyan-500/20
-                              "
+                                  relative h-40 w-full overflow-hidden
+                                  rounded-lg border border-cyan-700/40
+                                  bg-gray-900 transition-all
+                                  hover:shadow-lg hover:shadow-cyan-500/20
+                                "
                               >
                                 <video
                                   src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.videoKey}`}
@@ -666,9 +667,9 @@ const ForumPage = () => {
                         {reply.audioKey && (
                           <div
                             className="
-                            col-span-1
-                            sm:col-span-2
-                          "
+                              col-span-1
+                              sm:col-span-2
+                            "
                           >
                             <audio
                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${reply.audioKey}`}
@@ -697,9 +698,9 @@ const ForumPage = () => {
       <main className="flex h-screen flex-col items-center justify-center">
         <div
           className="
-          size-12 animate-spin rounded-full border-4 border-primary
-          border-t-transparent
-        "
+            size-12 animate-spin rounded-full border-4 border-primary
+            border-t-transparent
+          "
         />
         <span className="mt-4 text-sm text-primary">Cargando foro...</span>
       </main>
@@ -712,8 +713,8 @@ const ForumPage = () => {
       {lightboxImage && (
         <div
           className="
-          fixed inset-0 z-50 flex items-center justify-center bg-black/80
-        "
+            fixed inset-0 z-50 flex items-center justify-center bg-black/80
+          "
         >
           <button
             onClick={() => setLightboxImage(null)}
@@ -773,10 +774,10 @@ const ForumPage = () => {
         {/* Contenedor principal con marco */}
         <div
           className="
-          rounded-3xl border border-gray-700/50 bg-gradient-to-b
-          from-gray-900/90 to-gray-950/95 p-6 shadow-2xl ring-1 shadow-black/40
-          ring-white/5 backdrop-blur-sm
-        "
+            rounded-3xl border border-gray-700/50 bg-gradient-to-b
+            from-gray-900/90 to-gray-950/95 p-6 shadow-2xl ring-1
+            shadow-black/40 ring-white/5 backdrop-blur-sm
+          "
         >
           {/* Header del Foro */}
           <div className="mb-6">
@@ -793,9 +794,9 @@ const ForumPage = () => {
           (forumData?.documentKey && forumData.documentKey.trim()) ? (
             <div
               className="
-              mb-6 flex flex-wrap gap-4 rounded-xl border border-gray-800
-              bg-gray-900/50 p-4
-            "
+                mb-6 flex flex-wrap gap-4 rounded-xl border border-gray-800
+                bg-gray-900/50 p-4
+              "
             >
               {forumData?.coverImageKey && forumData.coverImageKey.trim() && (
                 <div>
@@ -834,16 +835,16 @@ const ForumPage = () => {
                     />
                     <div
                       className="
-                      absolute inset-0 flex items-center justify-center
-                      bg-black/0 transition-colors
-                      group-hover:bg-black/40
-                    "
+                        absolute inset-0 flex items-center justify-center
+                        bg-black/0 transition-colors
+                        group-hover:bg-black/40
+                      "
                     >
                       <ImageIcon
                         className="
-                        size-6 text-white opacity-0 transition-opacity
-                        group-hover:opacity-100
-                      "
+                          size-6 text-white opacity-0 transition-opacity
+                          group-hover:opacity-100
+                        "
                       />
                     </div>
                   </button>
@@ -874,9 +875,9 @@ const ForumPage = () => {
           {/* Caja de nuevo mensaje */}
           <div
             className="
-            mb-8 overflow-hidden rounded-2xl border border-gray-800
-            bg-gray-900/80
-          "
+              mb-8 overflow-hidden rounded-2xl border border-gray-800
+              bg-gray-900/80
+            "
           >
             <textarea
               ref={textareaRef}
@@ -897,9 +898,9 @@ const ForumPage = () => {
             />
             <div
               className="
-              flex items-center justify-between border-t border-gray-800 px-4
-              py-3
-            "
+                flex items-center justify-between border-t border-gray-800 px-4
+                py-3
+              "
             >
               <div className="flex gap-2">
                 <input
@@ -923,10 +924,10 @@ const ForumPage = () => {
                   {selectedImage && (
                     <span
                       className="
-                      absolute -top-1 -right-1 flex size-4 items-center
-                      justify-center rounded-full bg-primary text-[10px]
-                      font-bold text-black
-                    "
+                        absolute -top-1 -right-1 flex size-4 items-center
+                        justify-center rounded-full bg-primary text-[10px]
+                        font-bold text-black
+                      "
                     >
                       ✓
                     </span>
@@ -955,10 +956,10 @@ const ForumPage = () => {
                     {selectedAudio && (
                       <span
                         className="
-                        absolute -top-1 -right-1 flex size-4 items-center
-                        justify-center rounded-full bg-primary text-[10px]
-                        font-bold text-black
-                      "
+                          absolute -top-1 -right-1 flex size-4 items-center
+                          justify-center rounded-full bg-primary text-[10px]
+                          font-bold text-black
+                        "
                       >
                         ✓
                       </span>
@@ -970,9 +971,9 @@ const ForumPage = () => {
                 {showAudioRecorder && (
                   <div
                     className="
-                    fixed top-40 right-6 z-[9999] w-80 rounded-lg border
-                    border-cyan-700/30 bg-slate-900 p-4 shadow-lg
-                  "
+                      fixed top-40 right-6 z-[9999] w-80 rounded-lg border
+                      border-cyan-700/30 bg-slate-900 p-4 shadow-lg
+                    "
                   >
                     <div className="space-y-3">
                       {/* Opción de subir archivo */}
@@ -1032,10 +1033,10 @@ const ForumPage = () => {
                   {selectedVideo && (
                     <span
                       className="
-                      absolute -top-1 -right-1 flex size-4 items-center
-                      justify-center rounded-full bg-primary text-[10px]
-                      font-bold text-black
-                    "
+                        absolute -top-1 -right-1 flex size-4 items-center
+                        justify-center rounded-full bg-primary text-[10px]
+                        font-bold text-black
+                      "
                     >
                       ✓
                     </span>
@@ -1047,16 +1048,16 @@ const ForumPage = () => {
               {(selectedImage || selectedVideo || selectedAudio) && (
                 <div
                   className="
-                  mt-4 grid grid-cols-1 gap-3
-                  sm:grid-cols-2
-                "
+                    mt-4 grid grid-cols-1 gap-3
+                    sm:grid-cols-2
+                  "
                 >
                   {selectedImage && (
                     <div
                       className="
-                      relative overflow-hidden rounded-lg border
-                      border-cyan-700/40
-                    "
+                        relative overflow-hidden rounded-lg border
+                        border-cyan-700/40
+                      "
                     >
                       <Image
                         src={URL.createObjectURL(selectedImage)}
@@ -1078,9 +1079,9 @@ const ForumPage = () => {
                       </button>
                       <span
                         className="
-                        absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1
-                        text-xs font-semibold text-white
-                      "
+                          absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1
+                          text-xs font-semibold text-white
+                        "
                       >
                         {selectedImage.name}
                       </span>
@@ -1089,9 +1090,9 @@ const ForumPage = () => {
                   {selectedVideo && (
                     <div
                       className="
-                      relative overflow-hidden rounded-lg border
-                      border-cyan-700/40 bg-black
-                    "
+                        relative overflow-hidden rounded-lg border
+                        border-cyan-700/40 bg-black
+                      "
                     >
                       <video
                         src={URL.createObjectURL(selectedVideo)}
@@ -1110,9 +1111,9 @@ const ForumPage = () => {
                       </button>
                       <span
                         className="
-                        absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1
-                        text-xs font-semibold text-white
-                      "
+                          absolute bottom-1 left-1 rounded bg-black/60 px-2 py-1
+                          text-xs font-semibold text-white
+                        "
                       >
                         {selectedVideo.name}
                       </span>
@@ -1121,16 +1122,16 @@ const ForumPage = () => {
                   {selectedAudio && (
                     <div
                       className="
-                      relative flex items-center gap-2 rounded-lg border
-                      border-cyan-700/40 bg-gradient-to-r from-slate-900/60
-                      via-slate-900/40 to-slate-900/60 p-2
-                    "
+                        relative flex items-center gap-2 rounded-lg border
+                        border-cyan-700/40 bg-gradient-to-r from-slate-900/60
+                        via-slate-900/40 to-slate-900/60 p-2
+                      "
                     >
                       <Music className="size-4 flex-shrink-0 text-cyan-400/80" />
                       <span
                         className="
-                        flex-1 truncate text-xs font-semibold text-white
-                      "
+                          flex-1 truncate text-xs font-semibold text-white
+                        "
                       >
                         {selectedAudio.name}
                       </span>
@@ -1169,9 +1170,9 @@ const ForumPage = () => {
                   <>
                     <div
                       className="
-                      size-4 animate-spin rounded-full border-2 border-black
-                      border-t-transparent
-                    "
+                        size-4 animate-spin rounded-full border-2 border-black
+                        border-t-transparent
+                      "
                     />
                     Publicando...
                   </>
@@ -1191,16 +1192,17 @@ const ForumPage = () => {
               <div className="flex justify-center py-8">
                 <div
                   className="
-                  size-8 animate-spin rounded-full border-2 border-primary
-                  border-t-transparent
-                "
+                    size-8 animate-spin rounded-full border-2 border-primary
+                    border-t-transparent
+                  "
                 />
               </div>
             ) : posts.length === 0 ? (
               <div
                 className="
-                rounded-xl border border-gray-800 bg-gray-900/50 p-8 text-center
-              "
+                  rounded-xl border border-gray-800 bg-gray-900/50 p-8
+                  text-center
+                "
               >
                 <p className="text-gray-400">
                   No hay comentarios aún. ¡Sé el primero en participar!
@@ -1245,10 +1247,10 @@ const ForumPage = () => {
                           {userRole && (
                             <span
                               className="
-                              flex items-center gap-1 rounded-full border
-                              border-primary/30 bg-primary/10 px-2 py-0.5
-                              text-[10px] font-medium text-primary
-                            "
+                                flex items-center gap-1 rounded-full border
+                                border-primary/30 bg-primary/10 px-2 py-0.5
+                                text-[10px] font-medium text-primary
+                              "
                             >
                               ☆ {userRole}
                             </span>
@@ -1299,8 +1301,8 @@ const ForumPage = () => {
                         ) : (
                           <p
                             className="
-                            mt-2 text-sm leading-relaxed text-primary
-                          "
+                              mt-2 text-sm leading-relaxed text-primary
+                            "
                           >
                             {post.content}
                           </p>
@@ -1313,9 +1315,9 @@ const ForumPage = () => {
                             {(post.imageKey || post.videoKey) && (
                               <div
                                 className="
-                                grid grid-cols-1 gap-4
-                                sm:grid-cols-2
-                              "
+                                  grid grid-cols-1 gap-4
+                                  sm:grid-cols-2
+                                "
                               >
                                 {/* Imagen - Marco premium */}
                                 {post.imageKey && (
@@ -1355,18 +1357,18 @@ const ForumPage = () => {
                                     />
                                     <div
                                       className="
-                                      absolute inset-0 flex items-center
-                                      justify-center bg-black/0
-                                      transition-colors duration-300
-                                      group-hover:bg-black/30
-                                    "
+                                        absolute inset-0 flex items-center
+                                        justify-center bg-black/0
+                                        transition-colors duration-300
+                                        group-hover:bg-black/30
+                                      "
                                     >
                                       <ImageIcon
                                         className="
-                                        size-6 text-white opacity-0
-                                        transition-opacity duration-300
-                                        group-hover:opacity-100
-                                      "
+                                          size-6 text-white opacity-0
+                                          transition-opacity duration-300
+                                          group-hover:opacity-100
+                                        "
                                       />
                                     </div>
                                   </button>
@@ -1375,12 +1377,13 @@ const ForumPage = () => {
                                 {post.videoKey && (
                                   <div
                                     className="
-                                    overflow-hidden rounded-lg border
-                                    border-gray-600/40 bg-black shadow-lg
-                                    shadow-black/50 transition-all duration-300
-                                    hover:border-cyan-400 hover:shadow-xl
-                                    hover:shadow-cyan-500/30
-                                  "
+                                      overflow-hidden rounded-lg border
+                                      border-gray-600/40 bg-black shadow-lg
+                                      shadow-black/50 transition-all
+                                      duration-300
+                                      hover:border-cyan-400 hover:shadow-xl
+                                      hover:shadow-cyan-500/30
+                                    "
                                   >
                                     <video
                                       controls
@@ -1401,19 +1404,19 @@ const ForumPage = () => {
                             {post.audioKey && (
                               <div
                                 className="
-                                flex items-center gap-3 rounded-lg border
-                                border-gray-600/40 bg-gradient-to-r
-                                from-gray-900/60 via-gray-900/40 to-gray-900/60
-                                p-4 shadow-md shadow-black/30 transition-all
-                                duration-300
-                                hover:border-cyan-400/60 hover:from-gray-900/80
-                                hover:to-gray-900/80
-                              "
+                                  flex items-center gap-3 rounded-lg border
+                                  border-gray-600/40 bg-gradient-to-r
+                                  from-gray-900/60 via-gray-900/40
+                                  to-gray-900/60 p-4 shadow-md shadow-black/30
+                                  transition-all duration-300
+                                  hover:border-cyan-400/60
+                                  hover:from-gray-900/80 hover:to-gray-900/80
+                                "
                               >
                                 <Music
                                   className="
-                                  size-5 flex-shrink-0 text-cyan-400/80
-                                "
+                                    size-5 flex-shrink-0 text-cyan-400/80
+                                  "
                                 />
                                 <audio
                                   controls
@@ -1435,10 +1438,10 @@ const ForumPage = () => {
                         <div className="mt-3 flex items-center gap-4">
                           <button
                             className="
-                            flex items-center gap-1.5 text-xs text-gray-400
-                            transition-colors
-                            hover:text-white
-                          "
+                              flex items-center gap-1.5 text-xs text-gray-400
+                              transition-colors
+                              hover:text-white
+                            "
                           >
                             <ThumbsUp className="size-4" />
                             Me gusta
@@ -1525,16 +1528,16 @@ const ForumPage = () => {
                               replyAudio[post.id]) && (
                               <div
                                 className="
-                                mt-3 grid grid-cols-1 gap-2
-                                sm:grid-cols-2
-                              "
+                                  mt-3 grid grid-cols-1 gap-2
+                                  sm:grid-cols-2
+                                "
                               >
                                 {replyImage[post.id] && (
                                   <div
                                     className="
-                                    relative overflow-hidden rounded-lg border
-                                    border-cyan-700/40
-                                  "
+                                      relative overflow-hidden rounded-lg border
+                                      border-cyan-700/40
+                                    "
                                   >
                                     <Image
                                       src={URL.createObjectURL(
@@ -1564,10 +1567,10 @@ const ForumPage = () => {
                                     </button>
                                     <span
                                       className="
-                                      absolute bottom-1 left-1 rounded
-                                      bg-black/60 px-1.5 py-0.5 text-xs
-                                      font-semibold text-white
-                                    "
+                                        absolute bottom-1 left-1 rounded
+                                        bg-black/60 px-1.5 py-0.5 text-xs
+                                        font-semibold text-white
+                                      "
                                     >
                                       {replyImage[post.id].name}
                                     </span>
@@ -1576,9 +1579,9 @@ const ForumPage = () => {
                                 {replyVideo[post.id] && (
                                   <div
                                     className="
-                                    relative overflow-hidden rounded-lg border
-                                    border-cyan-700/40 bg-black
-                                  "
+                                      relative overflow-hidden rounded-lg border
+                                      border-cyan-700/40 bg-black
+                                    "
                                   >
                                     <video
                                       src={URL.createObjectURL(
@@ -1605,10 +1608,10 @@ const ForumPage = () => {
                                     </button>
                                     <span
                                       className="
-                                      absolute bottom-1 left-1 rounded
-                                      bg-black/60 px-1.5 py-0.5 text-xs
-                                      font-semibold text-white
-                                    "
+                                        absolute bottom-1 left-1 rounded
+                                        bg-black/60 px-1.5 py-0.5 text-xs
+                                        font-semibold text-white
+                                      "
                                     >
                                       {replyVideo[post.id].name}
                                     </span>
@@ -1617,22 +1620,22 @@ const ForumPage = () => {
                                 {replyAudio[post.id] && (
                                   <div
                                     className="
-                                    relative flex items-center gap-2 rounded-lg
-                                    border border-cyan-700/40 bg-gradient-to-r
-                                    from-slate-900/60 via-slate-900/40
-                                    to-slate-900/60 p-2
-                                  "
+                                      relative flex items-center gap-2
+                                      rounded-lg border border-cyan-700/40
+                                      bg-gradient-to-r from-slate-900/60
+                                      via-slate-900/40 to-slate-900/60 p-2
+                                    "
                                   >
                                     <Music
                                       className="
-                                      size-4 flex-shrink-0 text-cyan-400/80
-                                    "
+                                        size-4 flex-shrink-0 text-cyan-400/80
+                                      "
                                     />
                                     <span
                                       className="
-                                      flex-1 truncate text-xs font-semibold
-                                      text-white
-                                    "
+                                        flex-1 truncate text-xs font-semibold
+                                        text-white
+                                      "
                                     >
                                       {replyAudio[post.id].name}
                                     </span>
@@ -1777,9 +1780,10 @@ const ForumPage = () => {
                                   <>
                                     <div
                                       className="
-                                      size-3 animate-spin rounded-full border-2
-                                      border-black border-t-transparent
-                                    "
+                                        size-3 animate-spin rounded-full
+                                        border-2 border-black
+                                        border-t-transparent
+                                      "
                                     />
                                     Enviando...
                                   </>
@@ -1800,18 +1804,18 @@ const ForumPage = () => {
                         <Collapsible className="relative">
                           <CollapsibleTrigger
                             className="
-                            rounded-full p-1.5 text-gray-500 transition-colors
-                            hover:bg-gray-800 hover:text-white
-                          "
+                              rounded-full p-1.5 text-gray-500 transition-colors
+                              hover:bg-gray-800 hover:text-white
+                            "
                           >
                             <MoreHorizontal className="size-5" />
                           </CollapsibleTrigger>
                           <CollapsibleContent
                             className="
-                            absolute right-0 z-10 mt-1 flex flex-col
-                            overflow-hidden rounded-xl border border-gray-700
-                            bg-gray-900 shadow-xl
-                          "
+                              absolute right-0 z-10 mt-1 flex flex-col
+                              overflow-hidden rounded-xl border border-gray-700
+                              bg-gray-900 shadow-xl
+                            "
                           >
                             <button
                               className="

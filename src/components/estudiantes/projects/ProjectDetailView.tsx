@@ -849,7 +849,10 @@ export default function ProjectDetailView({
     return (
       <div className="space-y-3">
         {visibleParagraphs.map((paragraph, index) => (
-          <p key={`${key}-${index}`} className={`leading-relaxed ${className}`}>
+          <p key={`${key}-${index}`} className={`
+            leading-relaxed
+            ${className}
+          `}>
             {paragraph}
           </p>
         ))}
@@ -863,7 +866,11 @@ export default function ProjectDetailView({
                   [key]: !prev[key],
                 }))
               }
-              className="inline-flex items-center text-xs font-semibold text-muted-foreground hover:text-purple-400 hover:underline"
+              className="
+                inline-flex items-center text-xs font-semibold
+                text-muted-foreground
+                hover:text-purple-400 hover:underline
+              "
             >
               {isExpanded ? 'Ver menos' : 'Ver más'}
             </button>
@@ -1034,14 +1041,27 @@ export default function ProjectDetailView({
   return (
     <section className="space-y-6">
       {/* Header del proyecto */}
-      <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-6">
-        <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+      <div className="
+        rounded-xl border border-border/50 bg-card/50 p-4
+        sm:p-6
+      ">
+        <div className="
+          mb-6 flex flex-col gap-4
+          md:flex-row md:items-start md:justify-between
+        ">
           <div className="flex-1">
             {/* Badges de Estado, Tipo y Categoría */}
             <div className="mb-4 flex flex-wrap items-center gap-2">
               {/* Badge de Estado */}
               {isProjectComplete ? (
-                <div className="inline-flex items-center rounded-full border border-green-500/30 bg-green-500/20 px-2.5 py-0.5 text-xs font-semibold text-green-400 transition-colors hover:bg-primary/80 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                <div className="
+                  inline-flex items-center rounded-full border
+                  border-green-500/30 bg-green-500/20 px-2.5 py-0.5 text-xs
+                  font-semibold text-green-400 transition-colors
+                  hover:bg-primary/80
+                  focus:ring-2 focus:ring-ring focus:ring-offset-2
+                  focus:outline-none
+                ">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="24"
@@ -1060,25 +1080,43 @@ export default function ProjectDetailView({
                   Completado
                 </div>
               ) : (
-                <div className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs font-semibold text-blue-400 transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                <div className="
+                  inline-flex items-center rounded-full border
+                  border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs
+                  font-semibold text-blue-400 transition-colors
+                  focus:ring-2 focus:ring-ring focus:ring-offset-2
+                  focus:outline-none
+                ">
                   <Clock className="mr-1 size-3" />
                   En progreso
                 </div>
               )}
               {/* Badge de Tipo de Proyecto */}
-              <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-foreground transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+              <div className="
+                inline-flex items-center rounded-full border px-2.5 py-0.5
+                text-xs font-semibold text-foreground transition-colors
+                focus:ring-2 focus:ring-ring focus:ring-offset-2
+                focus:outline-none
+              ">
                 {project.type_project}
               </div>
               {/* Badge de Categoría */}
               {project.categoryName && (
-                <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-foreground transition-colors focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none">
+                <div className="
+                  inline-flex items-center rounded-full border px-2.5 py-0.5
+                  text-xs font-semibold text-foreground transition-colors
+                  focus:ring-2 focus:ring-ring focus:ring-offset-2
+                  focus:outline-none
+                ">
                   {project.categoryName}
                 </div>
               )}
             </div>
 
             {/* Colaboradores */}
-            <div className="mb-2 flex items-center gap-1.5 text-sm text-muted-foreground">
+            <div className="
+              mb-2 flex items-center gap-1.5 text-sm text-muted-foreground
+            ">
               <Users className="size-4" />
               <span>
                 {collaboratorsLoading
@@ -1088,7 +1126,13 @@ export default function ProjectDetailView({
               <button
                 type="button"
                 onClick={() => setShowCollaboratorsModal(true)}
-                className="inline-flex h-7 items-center justify-center rounded-md px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                className="
+                  inline-flex h-7 items-center justify-center rounded-md px-2
+                  text-xs font-semibold text-muted-foreground transition-colors
+                  hover:bg-accent hover:text-black
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                "
               >
                 Ver
               </button>
@@ -1096,18 +1140,32 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(1, addedSections)}
-                  className="ml-auto inline-flex h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:hidden"
+                  className="
+                    ml-auto inline-flex h-8 items-center justify-center gap-2
+                    rounded-md px-3 text-xs font-semibold text-muted-foreground
+                    transition-colors
+                    hover:bg-accent hover:text-black
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    disabled:pointer-events-none disabled:opacity-50
+                    sm:hidden
+                  "
                 >
                   <Pencil className="size-3.5" />
                 </button>
               )}
             </div>
-            <div className="mb-3 flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="
+              mb-3 flex items-center gap-2 text-sm text-muted-foreground
+            ">
               <Calendar className="size-4" />
               <span>Entrega: {formatDate(project.createdAt)}</span>
             </div>
 
-            <h2 className="mb-3 text-xl font-bold text-foreground md:text-2xl">
+            <h2 className="
+              mb-3 text-xl font-bold text-foreground
+              md:text-2xl
+            ">
               {project.name}
             </h2>
             {project.description?.trim() ? (
@@ -1122,12 +1180,23 @@ export default function ProjectDetailView({
               </p>
             )}
           </div>
-          <div className="flex w-full shrink-0 flex-col items-start gap-2 sm:w-auto sm:items-end">
+          <div className="
+            flex w-full shrink-0 flex-col items-start gap-2
+            sm:w-auto sm:items-end
+          ">
             {showEditControls && (
               <button
                 type="button"
                 onClick={() => onEditSection?.(1, addedSections)}
-                className="hidden h-8 items-center justify-center gap-2 rounded-md px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:inline-flex"
+                className="
+                  hidden h-8 items-center justify-center gap-2 rounded-md px-3
+                  text-xs font-semibold text-muted-foreground transition-colors
+                  hover:bg-accent hover:text-black
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:pointer-events-none disabled:opacity-50
+                  sm:inline-flex
+                "
               >
                 <Pencil className="size-3.5" />
               </button>
@@ -1163,31 +1232,56 @@ export default function ProjectDetailView({
       </div>
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="flex h-auto w-full flex-wrap items-center justify-start gap-1 rounded-md border border-border/50 bg-card/50 p-1 text-muted-foreground sm:w-auto sm:flex-nowrap sm:justify-center">
+        <TabsList className="
+          flex h-auto w-full flex-wrap items-center justify-start gap-1
+          rounded-md border border-border/50 bg-card/50 p-1
+          text-muted-foreground
+          sm:w-auto sm:flex-nowrap sm:justify-center
+        ">
           <TabsTrigger
             value="overview"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="
+              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
+              text-muted-foreground
+              data-[state=active]:bg-accent data-[state=active]:text-background
+              data-[state=active]:shadow-sm
+            "
           >
             <FileText className="size-3.5" />
             Resumen
           </TabsTrigger>
           <TabsTrigger
             value="submissions"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="
+              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
+              text-muted-foreground
+              data-[state=active]:bg-accent data-[state=active]:text-background
+              data-[state=active]:shadow-sm
+            "
           >
             <Upload className="size-3.5" />
             Entregas
           </TabsTrigger>
           <TabsTrigger
             value="feedback"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="
+              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
+              text-muted-foreground
+              data-[state=active]:bg-accent data-[state=active]:text-background
+              data-[state=active]:shadow-sm
+            "
           >
             <MessageSquare className="size-3.5" />
             Retroalimentación
           </TabsTrigger>
           <TabsTrigger
             value="timeline"
-            className="gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap text-muted-foreground data-[state=active]:bg-accent data-[state=active]:text-background data-[state=active]:shadow-sm"
+            className="
+              gap-1.5 rounded-sm px-2.5 py-1.5 text-xs whitespace-nowrap
+              text-muted-foreground
+              data-[state=active]:bg-accent data-[state=active]:text-background
+              data-[state=active]:shadow-sm
+            "
           >
             <Calendar className="size-3.5" />
             Cronograma
@@ -1209,7 +1303,10 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-red-500/20">
+                <div className="
+                  flex size-8 items-center justify-center rounded-lg
+                  bg-red-500/20
+                ">
                   <TriangleAlert className="size-4 text-red-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
@@ -1220,7 +1317,16 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(2, addedSections)}
-                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="
+                    inline-flex size-8 items-center justify-center gap-2
+                    rounded-md text-sm font-medium text-muted-foreground
+                    transition-colors
+                    hover:bg-accent hover:text-black
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    disabled:pointer-events-none disabled:opacity-50
+                    [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                  "
                 >
                   <Pencil className="size-4" />
                 </button>
@@ -1241,10 +1347,16 @@ export default function ProjectDetailView({
 
           {/* Justificación - Solo si existe */}
           {(project.justificacion || addedSections['justificacion']) && (
-            <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
+            <div className="
+              rounded-xl border border-border/50 bg-card/50 p-4
+              sm:p-5
+            ">
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-yellow-500/20">
+                  <div className="
+                    flex size-8 items-center justify-center rounded-lg
+                    bg-yellow-500/20
+                  ">
                     <Lightbulb className="size-4 text-yellow-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground">
@@ -1287,7 +1399,16 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(3, addedSections)}
-                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="
+                    inline-flex size-8 items-center justify-center gap-2
+                    rounded-md text-sm font-medium text-muted-foreground
+                    transition-colors
+                    hover:bg-accent hover:text-black
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    disabled:pointer-events-none disabled:opacity-50
+                    [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                  "
                 >
                   <Pencil className="size-4" />
                 </button>
@@ -1310,7 +1431,10 @@ export default function ProjectDetailView({
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-amber-500/20">
+                <div className="
+                  flex size-8 items-center justify-center rounded-lg
+                  bg-amber-500/20
+                ">
                   <ClipboardList className="size-4 text-amber-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
@@ -1321,7 +1445,16 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(4, addedSections)}
-                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="
+                    inline-flex size-8 items-center justify-center gap-2
+                    rounded-md text-sm font-medium text-muted-foreground
+                    transition-colors
+                    hover:bg-accent hover:text-black
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    disabled:pointer-events-none disabled:opacity-50
+                    [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                  "
                 >
                   <Pencil className="size-4" />
                 </button>
@@ -1347,7 +1480,10 @@ export default function ProjectDetailView({
                   <div
                     className={
                       isExpanded
-                        ? 'max-h-64 overflow-y-auto pr-2 md:max-h-80'
+                        ? `
+                          max-h-64 overflow-y-auto pr-2
+                          md:max-h-80
+                        `
                         : ''
                     }
                   >
@@ -1355,9 +1491,15 @@ export default function ProjectDetailView({
                       {visible.map((req, idx) => (
                         <li
                           key={idx}
-                          className="flex items-start gap-3 text-sm text-muted-foreground"
+                          className="
+                            flex items-start gap-3 text-sm text-muted-foreground
+                          "
                         >
-                          <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-accent/10 text-xs font-medium text-accent">
+                          <div className="
+                            mt-0.5 flex size-5 shrink-0 items-center
+                            justify-center rounded-full bg-accent/10 text-xs
+                            font-medium text-accent
+                          ">
                             {idx + 1}
                           </div>
                           {req}
@@ -1375,7 +1517,11 @@ export default function ProjectDetailView({
                             [requisitosKey]: !isExpanded,
                           }))
                         }
-                        className="inline-flex items-center text-xs font-semibold text-muted-foreground hover:text-purple-400 hover:underline"
+                        className="
+                          inline-flex items-center text-xs font-semibold
+                          text-muted-foreground
+                          hover:text-purple-400 hover:underline
+                        "
                       >
                         {isExpanded ? 'Ver menos' : 'Ver más'}
                       </button>
@@ -1392,16 +1538,28 @@ export default function ProjectDetailView({
 
           {/* Objetivos Específicos */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="relative mb-4 sm:flex sm:items-start sm:justify-between sm:gap-3">
-              <div className="flex items-start gap-3 pr-10 sm:pr-0">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/20">
+            <div className="
+              relative mb-4
+              sm:flex sm:items-start sm:justify-between sm:gap-3
+            ">
+              <div className="
+                flex items-start gap-3 pr-10
+                sm:pr-0
+              ">
+                <div className="
+                  flex size-8 items-center justify-center rounded-lg
+                  bg-blue-500/20
+                ">
                   <ListChecks className="size-4 text-blue-400" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-foreground">
                     Objetivos Específicos
                   </h3>
-                  <span className="mt-1 block text-sm text-muted-foreground sm:mt-0 sm:inline">
+                  <span className="
+                    mt-1 block text-sm text-muted-foreground
+                    sm:mt-0 sm:inline
+                  ">
                     {(() => {
                       const objetivos = project.objetivos_especificos ?? [];
                       const completados = objetivos.filter((obj) => {
@@ -1420,7 +1578,17 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(6, addedSections)}
-                  className="absolute top-0 right-0 inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="
+                    absolute top-0 right-0 inline-flex size-8 items-center
+                    justify-center gap-2 rounded-md text-sm font-medium
+                    text-muted-foreground transition-colors
+                    hover:bg-accent hover:text-black
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    disabled:pointer-events-none disabled:opacity-50
+                    sm:static sm:ml-auto
+                    [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                  "
                 >
                   <Pencil className="size-4" />
                 </button>
@@ -1446,20 +1614,29 @@ export default function ProjectDetailView({
                   return (
                     <div
                       key={objetivo.id}
-                      className="overflow-hidden rounded-lg border border-border/50"
+                      className="
+                        overflow-hidden rounded-lg border border-border/50
+                      "
                     >
                       <button
                         type="button"
                         onClick={() => toggleObjective(objetivo.id)}
-                        className="relative w-full p-4 text-left transition-colors hover:bg-muted/30"
+                        className="
+                          relative w-full p-4 text-left transition-colors
+                          hover:bg-muted/30
+                        "
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                            className={`
+                              flex size-6 shrink-0 items-center justify-center
+                              rounded-full text-xs font-medium
+                              ${
                               objetivoCompletado
                                 ? 'bg-green-500/20 text-green-400'
                                 : 'bg-muted text-muted-foreground'
-                            }`}
+                            }
+                            `}
                           >
                             {objetivoCompletado ? (
                               <CircleCheckBig className="size-4" />
@@ -1467,68 +1644,116 @@ export default function ProjectDetailView({
                               idx + 1
                             )}
                           </div>
-                          <div className="min-w-0 flex-1 pr-8 sm:pr-0">
+                          <div className="
+                            min-w-0 flex-1 pr-8
+                            sm:pr-0
+                          ">
                             <span
-                              className={`block text-sm sm:hidden ${
+                              className={`
+                                block text-sm
+                                sm:hidden
+                                ${
                                 objetivoCompletado
                                   ? 'text-foreground'
                                   : 'text-muted-foreground'
-                              }`}
+                              }
+                              `}
                             >
                               {objetivo.description}
                             </span>
                             <span
-                              className={`hidden text-sm sm:inline ${
+                              className={`
+                                hidden text-sm
+                                sm:inline
+                                ${
                                 objetivoCompletado
                                   ? 'text-foreground'
                                   : 'text-muted-foreground'
-                              }`}
+                              }
+                              `}
                             >
                               {objetivo.description}
                             </span>
-                            <div className="mt-2 flex flex-col gap-1 sm:hidden">
+                            <div className="
+                              mt-2 flex flex-col gap-1
+                              sm:hidden
+                            ">
                               <span className="text-xs text-muted-foreground">
                                 {actividadesCompletadas}/{actividades.length}{' '}
                                 actividades
                               </span>
                               <span
-                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                className={`
+                                  inline-flex items-center rounded-full border
+                                  px-2.5 py-0.5 text-xs font-semibold
+                                  ${
                                   objetivoCompletado
-                                    ? 'border-transparent bg-green-500/20 text-green-400'
-                                    : 'border-transparent bg-blue-500/20 text-blue-400'
-                                }`}
+                                    ? `
+                                      border-transparent bg-green-500/20
+                                      text-green-400
+                                    `
+                                    : `
+                                      border-transparent bg-blue-500/20
+                                      text-blue-400
+                                    `
+                                }
+                                `}
                               >
                                 {estadoObjetivo}
                               </span>
                             </div>
                           </div>
-                          <span className="mr-2 hidden text-xs text-muted-foreground sm:inline">
+                          <span className="
+                            mr-2 hidden text-xs text-muted-foreground
+                            sm:inline
+                          ">
                             {actividadesCompletadas}/{actividades.length}{' '}
                             actividades
                           </span>
                           <span
-                            className={`hidden items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold sm:inline-flex ${
+                            className={`
+                              hidden items-center rounded-full border px-2.5
+                              py-0.5 text-xs font-semibold
+                              sm:inline-flex
+                              ${
                               objetivoCompletado
-                                ? 'border-transparent bg-green-500/20 text-green-400'
-                                : 'border-transparent bg-blue-500/20 text-blue-400'
-                            }`}
+                                ? `
+                                  border-transparent bg-green-500/20
+                                  text-green-400
+                                `
+                                : `
+                                  border-transparent bg-blue-500/20
+                                  text-blue-400
+                                `
+                            }
+                            `}
                           >
                             {estadoObjetivo}
                           </span>
                           <ChevronDown
-                            className={`hidden size-4 text-muted-foreground transition-transform sm:block ${
+                            className={`
+                              hidden size-4 text-muted-foreground
+                              transition-transform
+                              sm:block
+                              ${
                               expandedObjectives[objetivo.id]
                                 ? 'rotate-180'
                                 : 'rotate-0'
-                            }`}
+                            }
+                            `}
                           />
                         </div>
                         <ChevronDown
-                          className={`absolute top-4 right-2 size-4 text-muted-foreground transition-transform sm:hidden ${
+                          className={`
+                            absolute top-4 right-2 size-4 text-muted-foreground
+                            transition-transform
+                            sm:hidden
+                            ${
                             expandedObjectives[objetivo.id]
                               ? 'rotate-180'
                               : 'rotate-0'
-                          }`}
+                          }
+                          `}
                         />
                       </button>
 
@@ -1608,7 +1833,10 @@ export default function ProjectDetailView({
                               return (
                                 <div
                                   key={actIdx}
-                                  className="border-b border-border/30 last:border-b-0"
+                                  className="
+                                    border-b border-border/30
+                                    last:border-b-0
+                                  "
                                 >
                                   <button
                                     type="button"
@@ -1618,29 +1846,48 @@ export default function ProjectDetailView({
                                         activityId ?? undefined
                                       )
                                     }
-                                    className="w-full p-4 text-left transition-colors hover:bg-muted/30"
+                                    className="
+                                      w-full p-4 text-left transition-colors
+                                      hover:bg-muted/30
+                                    "
                                   >
                                     <div className="sm:hidden">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <span className="text-xs text-muted-foreground">
+                                      <div className="
+                                        flex items-center justify-between gap-2
+                                      ">
+                                        <span className="
+                                          text-xs text-muted-foreground
+                                        ">
                                           Actividad {actIdx + 1}
                                         </span>
                                         <ChevronDown
-                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`
+                                            size-4 flex-shrink-0
+                                            text-muted-foreground
+                                            transition-transform
+                                            ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
-                                          }`}
+                                          }
+                                          `}
                                         />
                                       </div>
-                                      <h4 className="mt-1 text-sm font-medium text-foreground">
+                                      <h4 className="
+                                        mt-1 text-sm font-medium text-foreground
+                                      ">
                                         {actividad.descripcion}
                                       </h4>
                                       {(actividad.startDate ||
                                         actividad.endDate) && (
-                                        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                                        <div className="
+                                          mt-1 flex items-center gap-3 text-xs
+                                          text-muted-foreground
+                                        ">
                                           {actividad.startDate && (
-                                            <span className="flex items-center gap-1">
+                                            <span className="
+                                              flex items-center gap-1
+                                            ">
                                               <Calendar className="size-3" />
                                               {formatActivityDate(
                                                 actividad.startDate
@@ -1650,7 +1897,9 @@ export default function ProjectDetailView({
                                           {actividad.startDate &&
                                             actividad.endDate && <span>-</span>}
                                           {actividad.endDate && (
-                                            <span className="flex items-center gap-1">
+                                            <span className="
+                                              flex items-center gap-1
+                                            ">
                                               <Clock className="size-3" />
                                               {formatActivityDate(
                                                 actividad.endDate
@@ -1661,41 +1910,78 @@ export default function ProjectDetailView({
                                       )}
                                       <div className="mt-2 flex flex-col gap-2">
                                         <span
-                                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                          className={`
+                                            inline-flex items-center
+                                            rounded-full border px-2.5 py-0.5
+                                            text-xs font-semibold
+                                            ${
                                             actividadCompletada
-                                              ? 'border-transparent bg-green-500/20 text-green-400'
-                                              : 'border-transparent bg-blue-500/20 text-blue-400'
-                                          }`}
+                                              ? `
+                                                border-transparent
+                                                bg-green-500/20 text-green-400
+                                              `
+                                              : `
+                                                border-transparent
+                                                bg-blue-500/20 text-blue-400
+                                              `
+                                          }
+                                          `}
                                         >
                                           {estadoActividad}
                                         </span>
                                       </div>
                                     </div>
-                                    <div className="hidden sm:flex sm:items-center sm:justify-between">
+                                    <div className="
+                                      hidden
+                                      sm:flex sm:items-center sm:justify-between
+                                    ">
                                       <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
-                                          <span className="text-xs text-muted-foreground">
+                                          <span className="
+                                            text-xs text-muted-foreground
+                                          ">
                                             Actividad {actIdx + 1}
                                           </span>
                                           <span
-                                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                            className={`
+                                              inline-flex items-center
+                                              rounded-full border px-2.5 py-0.5
+                                              text-xs font-semibold
+                                              ${
                                               actividadCompletada
-                                                ? 'border-transparent bg-green-500/20 text-green-400'
-                                                : 'border-transparent bg-blue-500/20 text-blue-400'
-                                            }`}
+                                                ? `
+                                                  border-transparent
+                                                  bg-green-500/20 text-green-400
+                                                `
+                                                : `
+                                                  border-transparent
+                                                  bg-blue-500/20 text-blue-400
+                                                `
+                                            }
+                                            `}
                                           >
                                             {estadoActividad}
                                           </span>
                                         </div>
-                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                          <h4 className="text-sm font-medium text-foreground">
+                                        <div className="
+                                          flex flex-wrap items-center gap-x-3
+                                          gap-y-1
+                                        ">
+                                          <h4 className="
+                                            text-sm font-medium text-foreground
+                                          ">
                                             {actividad.descripcion}
                                           </h4>
                                           {(actividad.startDate ||
                                             actividad.endDate) && (
-                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                            <div className="
+                                              flex items-center gap-3 text-xs
+                                              text-muted-foreground
+                                            ">
                                               {actividad.startDate && (
-                                                <span className="flex items-center gap-1">
+                                                <span className="
+                                                  flex items-center gap-1
+                                                ">
                                                   <Calendar className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.startDate
@@ -1707,7 +1993,9 @@ export default function ProjectDetailView({
                                                   <span>-</span>
                                                 )}
                                               {actividad.endDate && (
-                                                <span className="flex items-center gap-1">
+                                                <span className="
+                                                  flex items-center gap-1
+                                                ">
                                                   <Clock className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.endDate
@@ -1720,11 +2008,16 @@ export default function ProjectDetailView({
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <ChevronDown
-                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`
+                                            size-4 flex-shrink-0
+                                            text-muted-foreground
+                                            transition-transform
+                                            ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
-                                          }`}
+                                          }
+                                          `}
                                         />
                                       </div>
                                     </div>
@@ -1732,8 +2025,13 @@ export default function ProjectDetailView({
 
                                   {expandedActivities[activityKey] && (
                                     <div className="space-y-3 px-4 pb-4">
-                                      <div className="mt-2 rounded-lg bg-muted/30 p-3">
-                                        <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                                      <div className="
+                                        mt-2 rounded-lg bg-muted/30 p-3
+                                      ">
+                                        <span className="
+                                          mb-1 block text-xs font-medium
+                                          text-muted-foreground
+                                        ">
                                           Descripción
                                         </span>
                                         <textarea
@@ -1745,11 +2043,19 @@ export default function ProjectDetailView({
                                             }))
                                           }
                                           readOnly={!isEditingDescription}
-                                          className={`w-full rounded-md border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                                          className={`
+                                            w-full rounded-md border
+                                            border-border/60 bg-background/60
+                                            px-3 py-2 text-sm text-foreground
+                                            focus-visible:ring-2
+                                            focus-visible:ring-ring
+                                            focus-visible:outline-none
+                                            ${
                                             isEditingDescription
                                               ? ''
                                               : 'cursor-not-allowed opacity-70'
-                                          }`}
+                                          }
+                                          `}
                                           rows={3}
                                           placeholder="Describe el entregable..."
                                         />
@@ -1789,7 +2095,16 @@ export default function ProjectDetailView({
                                               }
                                             }}
                                             disabled={!activityId || isSaving}
-                                            className="inline-flex h-8 items-center justify-center rounded-[12px] bg-[#22c4d3] px-3 text-xs font-semibold text-[#01152d] transition-colors hover:bg-[#1fb4c2] disabled:cursor-not-allowed disabled:opacity-70"
+                                            className="
+                                              inline-flex h-8 items-center
+                                              justify-center rounded-[12px]
+                                              bg-[#22c4d3] px-3 text-xs
+                                              font-semibold text-[#01152d]
+                                              transition-colors
+                                              hover:bg-[#1fb4c2]
+                                              disabled:cursor-not-allowed
+                                              disabled:opacity-70
+                                            "
                                           >
                                             {isSaving
                                               ? 'Guardando...'
@@ -1800,10 +2115,19 @@ export default function ProjectDetailView({
                                         </div>
                                       </div>
                                       <div className="rounded-lg bg-muted/30 p-3">
-                                        <span className="mb-2 block text-xs font-medium text-muted-foreground">
+                                        <span className="
+                                          mb-2 block text-xs font-medium
+                                          text-muted-foreground
+                                        ">
                                           Entrega
                                         </span>
-                                        <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[13px] bg-[#22c4d3] px-3 text-sm font-medium text-[#01152d] transition-colors hover:bg-[#1fb4c2]">
+                                        <label className="
+                                          inline-flex h-9 cursor-pointer
+                                          items-center gap-2 rounded-[13px]
+                                          bg-[#22c4d3] px-3 text-sm font-medium
+                                          text-[#01152d] transition-colors
+                                          hover:bg-[#1fb4c2]
+                                        ">
                                           <Upload className="size-4" />
                                           {isUploading
                                             ? 'Subiendo...'
@@ -1830,9 +2154,19 @@ export default function ProjectDetailView({
                                           />
                                         </label>
                                         {isUploading && (
-                                          <div className="mt-3 rounded-lg border border-border/40 bg-background/60 p-3">
-                                            <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <span className="size-2 animate-pulse rounded-full bg-[#22c4d3]" />
+                                          <div className="
+                                            mt-3 rounded-lg border
+                                            border-border/40 bg-background/60
+                                            p-3
+                                          ">
+                                            <div className="
+                                              mb-2 flex items-center gap-2
+                                              text-sm text-muted-foreground
+                                            ">
+                                              <span className="
+                                                size-2 animate-pulse
+                                                rounded-full bg-[#22c4d3]
+                                              " />
                                               Subiendo archivo...{' '}
                                               {uploadProgressValue}%
                                             </div>
@@ -1843,15 +2177,30 @@ export default function ProjectDetailView({
                                           </div>
                                         )}
                                         {deliverableUrl && (
-                                          <div className="mt-3 rounded-lg border border-green-500/20 bg-green-500/10 p-3">
-                                            <div className="mb-2 flex items-center justify-between">
-                                              <span className="flex items-center gap-2 text-sm font-medium text-green-400">
+                                          <div className="
+                                            mt-3 rounded-lg border
+                                            border-green-500/20 bg-green-500/10
+                                            p-3
+                                          ">
+                                            <div className="
+                                              mb-2 flex items-center
+                                              justify-between
+                                            ">
+                                              <span className="
+                                                flex items-center gap-2 text-sm
+                                                font-medium text-green-400
+                                              ">
                                                 <CircleCheckBig className="size-4" />
                                                 Entregado
                                               </span>
-                                              <div className="flex items-center gap-2">
+                                              <div className="
+                                                flex items-center gap-2
+                                              ">
                                                 {deliverableSubmittedAt && (
-                                                  <span className="text-xs text-muted-foreground">
+                                                  <span className="
+                                                    text-xs
+                                                    text-muted-foreground
+                                                  ">
                                                     {formatDateTime(
                                                       deliverableSubmittedAt
                                                     )}
@@ -1868,7 +2217,19 @@ export default function ProjectDetailView({
                                                   disabled={
                                                     !activityId || isRemoving
                                                   }
-                                                  className="inline-flex h-7 items-center justify-center rounded-[10px] border border-red-500/30 bg-red-500/10 px-2 text-[11px] font-semibold text-red-300 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-70"
+                                                  className="
+                                                    inline-flex h-7 items-center
+                                                    justify-center
+                                                    rounded-[10px] border
+                                                    border-red-500/30
+                                                    bg-red-500/10 px-2
+                                                    text-[11px] font-semibold
+                                                    text-red-300
+                                                    transition-colors
+                                                    hover:bg-red-500/20
+                                                    disabled:cursor-not-allowed
+                                                    disabled:opacity-70
+                                                  "
                                                 >
                                                   {isRemoving
                                                     ? 'Quitando...'
@@ -1876,7 +2237,10 @@ export default function ProjectDetailView({
                                                 </button>
                                               </div>
                                             </div>
-                                            <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+                                            <div className="
+                                              mb-2 flex items-center gap-2
+                                              text-sm text-muted-foreground
+                                            ">
                                               <FileText className="size-4" />
                                               {(activityId
                                                 ? deliverableOverrides[
@@ -1886,8 +2250,13 @@ export default function ProjectDetailView({
                                                 actividad.deliverableName}
                                             </div>
                                             {activityDescription && (
-                                              <div className="mt-2 border-t border-green-500/20 pt-2">
-                                                <span className="text-xs text-muted-foreground">
+                                              <div className="
+                                                mt-2 border-t
+                                                border-green-500/20 pt-2
+                                              ">
+                                                <span className="
+                                                  text-xs text-muted-foreground
+                                                ">
                                                   Retroalimentación:
                                                 </span>
                                                 <div className="mt-1">
@@ -1904,7 +2273,10 @@ export default function ProjectDetailView({
                                       </div>
                                       {/* Link/URL Section */}
                                       <div className="rounded-lg bg-muted/30 p-3">
-                                        <span className="mb-2 block text-xs font-medium text-muted-foreground">
+                                        <span className="
+                                          mb-2 block text-xs font-medium
+                                          text-muted-foreground
+                                        ">
                                           Link / URL del Entregable
                                         </span>
                                         {editingActivityLinks[activityKey] ? (
@@ -1928,7 +2300,15 @@ export default function ProjectDetailView({
                                                   })
                                                 )
                                               }
-                                              className="w-full rounded-md border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                                              className="
+                                                w-full rounded-md border
+                                                border-border/60
+                                                bg-background/60 px-3 py-2
+                                                text-sm text-foreground
+                                                focus-visible:ring-2
+                                                focus-visible:ring-ring
+                                                focus-visible:outline-none
+                                              "
                                             />
                                             <div className="flex justify-end gap-2">
                                               <button
@@ -1952,7 +2332,15 @@ export default function ProjectDetailView({
                                                     }
                                                   );
                                                 }}
-                                                className="inline-flex h-8 items-center justify-center rounded-[12px] border border-muted-foreground px-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/50"
+                                                className="
+                                                  inline-flex h-8 items-center
+                                                  justify-center rounded-[12px]
+                                                  border border-muted-foreground
+                                                  px-3 text-xs font-semibold
+                                                  text-muted-foreground
+                                                  transition-colors
+                                                  hover:bg-muted/50
+                                                "
                                               >
                                                 Cancelar
                                               </button>
@@ -1966,7 +2354,16 @@ export default function ProjectDetailView({
                                                   }
                                                 }}
                                                 disabled={!activityId}
-                                                className="inline-flex h-8 items-center justify-center rounded-[12px] bg-[#22c4d3] px-3 text-xs font-semibold text-[#01152d] transition-colors hover:bg-[#1fb4c2] disabled:cursor-not-allowed disabled:opacity-70"
+                                                className="
+                                                  inline-flex h-8 items-center
+                                                  justify-center rounded-[12px]
+                                                  bg-[#22c4d3] px-3 text-xs
+                                                  font-semibold text-[#01152d]
+                                                  transition-colors
+                                                  hover:bg-[#1fb4c2]
+                                                  disabled:cursor-not-allowed
+                                                  disabled:opacity-70
+                                                "
                                               >
                                                 {savingActivityLinks[
                                                   activityKey
@@ -1977,18 +2374,27 @@ export default function ProjectDetailView({
                                             </div>
                                           </div>
                                         ) : (
-                                          <div className="flex max-w-3xl items-center justify-between">
+                                          <div className="
+                                            flex max-w-3xl items-center
+                                            justify-between
+                                          ">
                                             {resolvedActivityLinkUrl ? (
                                               <a
                                                 href={resolvedActivityLinkUrl}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-sm break-all text-cyan-400 underline hover:text-cyan-300"
+                                                className="
+                                                  text-sm break-all
+                                                  text-cyan-400 underline
+                                                  hover:text-cyan-300
+                                                "
                                               >
                                                 {resolvedActivityLinkUrl}
                                               </a>
                                             ) : (
-                                              <span className="text-sm text-muted-foreground">
+                                              <span className="
+                                                text-sm text-muted-foreground
+                                              ">
                                                 No hay link asignado
                                               </span>
                                             )}
@@ -2012,7 +2418,16 @@ export default function ProjectDetailView({
                                                       })
                                                     );
                                                   }}
-                                                  className="ml-2 inline-flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black"
+                                                  className="
+                                                    ml-2 inline-flex size-8
+                                                    shrink-0 items-center
+                                                    justify-center rounded-md
+                                                    text-sm font-medium
+                                                    text-muted-foreground
+                                                    transition-colors
+                                                    hover:bg-accent
+                                                    hover:text-black
+                                                  "
                                                 >
                                                   <Pencil className="size-4" />
                                                 </button>
@@ -2040,27 +2455,50 @@ export default function ProjectDetailView({
 
           {/* Cronograma */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div className="
+              mb-4 grid gap-3
+              sm:grid-cols-[1fr_auto] sm:items-center
+            ">
               <div className="flex items-center gap-3">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-purple-500/20">
+                <div className="
+                  flex size-8 items-center justify-center rounded-lg
+                  bg-purple-500/20
+                ">
                   <Calendar className="size-4 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Cronograma
                 </h3>
               </div>
-              <div className="flex items-center gap-2 sm:justify-end">
+              <div className="
+                flex items-center gap-2
+                sm:justify-end
+              ">
                 <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-1">
                   {(['dias', 'semanas', 'meses'] as const).map((view) => (
                     <button
                       key={view}
                       type="button"
                       onClick={() => setTimelineView(view)}
-                      className={`inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
+                      className={`
+                        inline-flex h-7 items-center justify-center gap-2
+                        rounded-md px-3 text-xs font-medium whitespace-nowrap
+                        ring-offset-background transition-colors
+                        focus-visible:ring-2 focus-visible:ring-ring
+                        focus-visible:ring-offset-2 focus-visible:outline-none
+                        disabled:pointer-events-none disabled:opacity-50
+                        ${
                         timelineView === view
-                          ? 'bg-accent text-background hover:bg-accent/90'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                      }`}
+                          ? `
+                            bg-accent text-background
+                            hover:bg-accent/90
+                          `
+                          : `
+                            text-muted-foreground
+                            hover:bg-accent hover:text-foreground
+                          `
+                      }
+                      `}
                     >
                       {view === 'dias'
                         ? 'Días'
@@ -2074,7 +2512,17 @@ export default function ProjectDetailView({
                   <button
                     type="button"
                     onClick={() => onEditSection?.(7, addedSections)}
-                    className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                    className="
+                      inline-flex size-8 items-center justify-center gap-2
+                      rounded-md text-sm font-medium text-muted-foreground
+                      transition-colors
+                      hover:bg-accent hover:text-black
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                      disabled:pointer-events-none disabled:opacity-50
+                      [&_svg]:pointer-events-none [&_svg]:size-4
+                      [&_svg]:shrink-0
+                    "
                   >
                     <Pencil className="size-4" />
                   </button>
@@ -2158,11 +2606,23 @@ export default function ProjectDetailView({
 
               return (
                 <>
-                  <div className="scrollbar-thin w-full max-w-full overflow-x-auto [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent">
+                  <div className="
+                    scrollbar-thin w-full max-w-full overflow-x-auto
+                    [&::-webkit-scrollbar]:h-1.5
+                    [&::-webkit-scrollbar-thumb]:rounded-full
+                    [&::-webkit-scrollbar-thumb]:bg-border/50
+                    hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30
+                    [&::-webkit-scrollbar-track]:bg-transparent
+                  ">
                     <div className="flex min-w-[720px]">
                       <div className="w-52 shrink-0 border-r border-border/30">
-                        <div className="mb-2 flex h-10 items-end border-b border-border/50 pr-3 pb-2">
-                          <span className="text-xs font-medium text-muted-foreground">
+                        <div className="
+                          mb-2 flex h-10 items-end border-b border-border/50
+                          pr-3 pb-2
+                        ">
+                          <span className="
+                            text-xs font-medium text-muted-foreground
+                          ">
                             Actividad
                           </span>
                         </div>
@@ -2177,7 +2637,10 @@ export default function ProjectDetailView({
                                   {row.key}
                                 </span>
                                 <span
-                                  className="max-w-[140px] truncate text-xs text-foreground"
+                                  className="
+                                    max-w-[140px] truncate text-xs
+                                    text-foreground
+                                  "
                                   title={row.title}
                                 >
                                   {row.title}
@@ -2193,13 +2656,21 @@ export default function ProjectDetailView({
                             {columns.map((column, index) => (
                               <div
                                 key={`${column.label}-${index}`}
-                                className="flex flex-col justify-end border-l border-border/30 px-1 pb-2 text-center first:border-l-0"
+                                className="
+                                  flex flex-col justify-end border-l
+                                  border-border/30 px-1 pb-2 text-center
+                                  first:border-l-0
+                                "
                                 style={{ width: columnWidth }}
                               >
-                                <div className="truncate text-xs text-muted-foreground">
+                                <div className="
+                                  truncate text-xs text-muted-foreground
+                                ">
                                   {column.label}
                                 </div>
-                                <div className="truncate text-xs font-medium text-foreground">
+                                <div className="
+                                  truncate text-xs font-medium text-foreground
+                                ">
                                   {column.sublabel}
                                 </div>
                               </div>
@@ -2268,21 +2739,31 @@ export default function ProjectDetailView({
                               return (
                                 <div
                                   key={`row-${row.key}`}
-                                  className="group relative h-6 rounded bg-muted/20"
+                                  className="
+                                    group relative h-6 rounded bg-muted/20
+                                  "
                                 >
                                   <div className="absolute inset-0 flex">
                                     {columns.map((_, index) => (
                                       <div
                                         key={`grid-${row.key}-${index}`}
-                                        className="border-l border-border/20 first:border-l-0"
+                                        className="
+                                          border-l border-border/20
+                                          first:border-l-0
+                                        "
                                         style={{ width: columnWidth }}
                                       />
                                     ))}
                                   </div>
                                   <div
-                                    className={`absolute top-1 h-4 rounded-full transition-all group-hover:opacity-80 ${getStatusClass(
+                                    className={`
+                                      absolute top-1 h-4 rounded-full
+                                      transition-all
+                                      group-hover:opacity-80
+                                      ${getStatusClass(
                                       row
-                                    )}`}
+                                    )}
+                                    `}
                                     title={`${row.title}: ${formatShortDate(
                                       startDate
                                     )} - ${formatShortDate(endDate)}`}
@@ -2300,7 +2781,10 @@ export default function ProjectDetailView({
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border/50 pt-4">
+                  <div className="
+                    mt-4 flex flex-wrap items-center gap-4 border-t
+                    border-border/50 pt-4
+                  ">
                     <span className="text-xs text-muted-foreground">
                       Estado:
                     </span>
@@ -2337,16 +2821,28 @@ export default function ProjectDetailView({
         <TabsContent value="submissions">
           {/* Entregas por Objetivo */}
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="relative mb-4 sm:flex sm:items-start sm:justify-between sm:gap-3">
-              <div className="flex items-start gap-3 pr-10 sm:pr-0">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/20">
+            <div className="
+              relative mb-4
+              sm:flex sm:items-start sm:justify-between sm:gap-3
+            ">
+              <div className="
+                flex items-start gap-3 pr-10
+                sm:pr-0
+              ">
+                <div className="
+                  flex size-8 items-center justify-center rounded-lg
+                  bg-blue-500/20
+                ">
                   <ListChecks className="size-4 text-blue-400" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-foreground">
                     Entregas por Objetivo
                   </h3>
-                  <span className="mt-1 block text-sm text-muted-foreground sm:mt-0 sm:inline">
+                  <span className="
+                    mt-1 block text-sm text-muted-foreground
+                    sm:mt-0 sm:inline
+                  ">
                     {(() => {
                       const objetivos = project.objetivos_especificos ?? [];
                       const completados = objetivos.filter(
@@ -2365,7 +2861,17 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(6, addedSections)}
-                  className="absolute top-0 right-0 inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:static sm:ml-auto [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                  className="
+                    absolute top-0 right-0 inline-flex size-8 items-center
+                    justify-center gap-2 rounded-md text-sm font-medium
+                    text-muted-foreground transition-colors
+                    hover:bg-accent hover:text-black
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    disabled:pointer-events-none disabled:opacity-50
+                    sm:static sm:ml-auto
+                    [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                  "
                 >
                   <Pencil className="size-4" />
                 </button>
@@ -2391,20 +2897,29 @@ export default function ProjectDetailView({
                   return (
                     <div
                       key={objetivo.id}
-                      className="overflow-hidden rounded-lg border border-border/50"
+                      className="
+                        overflow-hidden rounded-lg border border-border/50
+                      "
                     >
                       <button
                         type="button"
                         onClick={() => toggleObjective(objetivo.id)}
-                        className="relative w-full p-4 text-left transition-colors hover:bg-muted/30"
+                        className="
+                          relative w-full p-4 text-left transition-colors
+                          hover:bg-muted/30
+                        "
                       >
                         <div className="flex items-start gap-3">
                           <div
-                            className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                            className={`
+                              flex size-6 shrink-0 items-center justify-center
+                              rounded-full text-xs font-medium
+                              ${
                               objetivoCompletado
                                 ? 'bg-green-500/20 text-green-400'
                                 : 'bg-muted text-muted-foreground'
-                            }`}
+                            }
+                            `}
                           >
                             {objetivoCompletado ? (
                               <CircleCheckBig className="size-4" />
@@ -2412,68 +2927,116 @@ export default function ProjectDetailView({
                               idx + 1
                             )}
                           </div>
-                          <div className="min-w-0 flex-1 pr-8 sm:pr-0">
+                          <div className="
+                            min-w-0 flex-1 pr-8
+                            sm:pr-0
+                          ">
                             <span
-                              className={`block text-sm sm:hidden ${
+                              className={`
+                                block text-sm
+                                sm:hidden
+                                ${
                                 objetivoCompletado
                                   ? 'text-foreground'
                                   : 'text-muted-foreground'
-                              }`}
+                              }
+                              `}
                             >
                               {objetivo.description}
                             </span>
                             <span
-                              className={`hidden text-sm sm:inline ${
+                              className={`
+                                hidden text-sm
+                                sm:inline
+                                ${
                                 objetivoCompletado
                                   ? 'text-foreground'
                                   : 'text-muted-foreground'
-                              }`}
+                              }
+                              `}
                             >
                               {objetivo.description}
                             </span>
-                            <div className="mt-2 flex flex-col gap-1 sm:hidden">
+                            <div className="
+                              mt-2 flex flex-col gap-1
+                              sm:hidden
+                            ">
                               <span className="text-xs text-muted-foreground">
                                 {actividadesCompletadas}/{actividades.length}{' '}
                                 actividades
                               </span>
                               <span
-                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                className={`
+                                  inline-flex items-center rounded-full border
+                                  px-2.5 py-0.5 text-xs font-semibold
+                                  ${
                                   objetivoCompletado
-                                    ? 'border-transparent bg-green-500/20 text-green-400'
-                                    : 'border-transparent bg-blue-500/20 text-blue-400'
-                                }`}
+                                    ? `
+                                      border-transparent bg-green-500/20
+                                      text-green-400
+                                    `
+                                    : `
+                                      border-transparent bg-blue-500/20
+                                      text-blue-400
+                                    `
+                                }
+                                `}
                               >
                                 {estadoObjetivo}
                               </span>
                             </div>
                           </div>
-                          <span className="mr-2 hidden text-xs text-muted-foreground sm:inline">
+                          <span className="
+                            mr-2 hidden text-xs text-muted-foreground
+                            sm:inline
+                          ">
                             {actividadesCompletadas}/{actividades.length}{' '}
                             actividades
                           </span>
                           <span
-                            className={`hidden items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold sm:inline-flex ${
+                            className={`
+                              hidden items-center rounded-full border px-2.5
+                              py-0.5 text-xs font-semibold
+                              sm:inline-flex
+                              ${
                               objetivoCompletado
-                                ? 'border-transparent bg-green-500/20 text-green-400'
-                                : 'border-transparent bg-blue-500/20 text-blue-400'
-                            }`}
+                                ? `
+                                  border-transparent bg-green-500/20
+                                  text-green-400
+                                `
+                                : `
+                                  border-transparent bg-blue-500/20
+                                  text-blue-400
+                                `
+                            }
+                            `}
                           >
                             {estadoObjetivo}
                           </span>
                           <ChevronDown
-                            className={`hidden size-4 text-muted-foreground transition-transform sm:block ${
+                            className={`
+                              hidden size-4 text-muted-foreground
+                              transition-transform
+                              sm:block
+                              ${
                               expandedObjectives[objetivo.id]
                                 ? 'rotate-180'
                                 : 'rotate-0'
-                            }`}
+                            }
+                            `}
                           />
                         </div>
                         <ChevronDown
-                          className={`absolute top-4 right-2 size-4 text-muted-foreground transition-transform sm:hidden ${
+                          className={`
+                            absolute top-4 right-2 size-4 text-muted-foreground
+                            transition-transform
+                            sm:hidden
+                            ${
                             expandedObjectives[objetivo.id]
                               ? 'rotate-180'
                               : 'rotate-0'
-                          }`}
+                          }
+                          `}
                         />
                       </button>
 
@@ -2553,7 +3116,10 @@ export default function ProjectDetailView({
                               return (
                                 <div
                                   key={actIdx}
-                                  className="border-b border-border/30 last:border-b-0"
+                                  className="
+                                    border-b border-border/30
+                                    last:border-b-0
+                                  "
                                 >
                                   <button
                                     type="button"
@@ -2563,29 +3129,48 @@ export default function ProjectDetailView({
                                         activityId ?? undefined
                                       )
                                     }
-                                    className="w-full p-4 text-left transition-colors hover:bg-muted/30"
+                                    className="
+                                      w-full p-4 text-left transition-colors
+                                      hover:bg-muted/30
+                                    "
                                   >
                                     <div className="sm:hidden">
-                                      <div className="flex items-center justify-between gap-2">
-                                        <span className="text-xs text-muted-foreground">
+                                      <div className="
+                                        flex items-center justify-between gap-2
+                                      ">
+                                        <span className="
+                                          text-xs text-muted-foreground
+                                        ">
                                           Actividad {actIdx + 1}
                                         </span>
                                         <ChevronDown
-                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`
+                                            size-4 flex-shrink-0
+                                            text-muted-foreground
+                                            transition-transform
+                                            ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
-                                          }`}
+                                          }
+                                          `}
                                         />
                                       </div>
-                                      <h4 className="mt-1 text-sm font-medium text-foreground">
+                                      <h4 className="
+                                        mt-1 text-sm font-medium text-foreground
+                                      ">
                                         {actividad.descripcion}
                                       </h4>
                                       {(actividad.startDate ||
                                         actividad.endDate) && (
-                                        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                                        <div className="
+                                          mt-1 flex items-center gap-3 text-xs
+                                          text-muted-foreground
+                                        ">
                                           {actividad.startDate && (
-                                            <span className="flex items-center gap-1">
+                                            <span className="
+                                              flex items-center gap-1
+                                            ">
                                               <Calendar className="size-3" />
                                               {formatActivityDate(
                                                 actividad.startDate
@@ -2595,7 +3180,9 @@ export default function ProjectDetailView({
                                           {actividad.startDate &&
                                             actividad.endDate && <span>-</span>}
                                           {actividad.endDate && (
-                                            <span className="flex items-center gap-1">
+                                            <span className="
+                                              flex items-center gap-1
+                                            ">
                                               <Clock className="size-3" />
                                               {formatActivityDate(
                                                 actividad.endDate
@@ -2606,41 +3193,78 @@ export default function ProjectDetailView({
                                       )}
                                       <div className="mt-2 flex flex-col gap-2">
                                         <span
-                                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                          className={`
+                                            inline-flex items-center
+                                            rounded-full border px-2.5 py-0.5
+                                            text-xs font-semibold
+                                            ${
                                             actividadCompletada
-                                              ? 'border-transparent bg-green-500/20 text-green-400'
-                                              : 'border-transparent bg-blue-500/20 text-blue-400'
-                                          }`}
+                                              ? `
+                                                border-transparent
+                                                bg-green-500/20 text-green-400
+                                              `
+                                              : `
+                                                border-transparent
+                                                bg-blue-500/20 text-blue-400
+                                              `
+                                          }
+                                          `}
                                         >
                                           {estadoActividad}
                                         </span>
                                       </div>
                                     </div>
-                                    <div className="hidden sm:flex sm:items-center sm:justify-between">
+                                    <div className="
+                                      hidden
+                                      sm:flex sm:items-center sm:justify-between
+                                    ">
                                       <div className="flex flex-col gap-1">
                                         <div className="flex items-center gap-2">
-                                          <span className="text-xs text-muted-foreground">
+                                          <span className="
+                                            text-xs text-muted-foreground
+                                          ">
                                             Actividad {actIdx + 1}
                                           </span>
                                           <span
-                                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                                            className={`
+                                              inline-flex items-center
+                                              rounded-full border px-2.5 py-0.5
+                                              text-xs font-semibold
+                                              ${
                                               actividadCompletada
-                                                ? 'border-transparent bg-green-500/20 text-green-400'
-                                                : 'border-transparent bg-blue-500/20 text-blue-400'
-                                            }`}
+                                                ? `
+                                                  border-transparent
+                                                  bg-green-500/20 text-green-400
+                                                `
+                                                : `
+                                                  border-transparent
+                                                  bg-blue-500/20 text-blue-400
+                                                `
+                                            }
+                                            `}
                                           >
                                             {estadoActividad}
                                           </span>
                                         </div>
-                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                          <h4 className="text-sm font-medium text-foreground">
+                                        <div className="
+                                          flex flex-wrap items-center gap-x-3
+                                          gap-y-1
+                                        ">
+                                          <h4 className="
+                                            text-sm font-medium text-foreground
+                                          ">
                                             {actividad.descripcion}
                                           </h4>
                                           {(actividad.startDate ||
                                             actividad.endDate) && (
-                                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                            <div className="
+                                              flex items-center gap-3 text-xs
+                                              text-muted-foreground
+                                            ">
                                               {actividad.startDate && (
-                                                <span className="flex items-center gap-1">
+                                                <span className="
+                                                  flex items-center gap-1
+                                                ">
                                                   <Calendar className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.startDate
@@ -2652,7 +3276,9 @@ export default function ProjectDetailView({
                                                   <span>-</span>
                                                 )}
                                               {actividad.endDate && (
-                                                <span className="flex items-center gap-1">
+                                                <span className="
+                                                  flex items-center gap-1
+                                                ">
                                                   <Clock className="size-3" />
                                                   {formatActivityDate(
                                                     actividad.endDate
@@ -2665,11 +3291,16 @@ export default function ProjectDetailView({
                                       </div>
                                       <div className="flex items-center gap-2">
                                         <ChevronDown
-                                          className={`size-4 flex-shrink-0 text-muted-foreground transition-transform ${
+                                          className={`
+                                            size-4 flex-shrink-0
+                                            text-muted-foreground
+                                            transition-transform
+                                            ${
                                             expandedActivities[activityKey]
                                               ? 'rotate-180'
                                               : 'rotate-0'
-                                          }`}
+                                          }
+                                          `}
                                         />
                                       </div>
                                     </div>
@@ -2678,7 +3309,10 @@ export default function ProjectDetailView({
                                   {expandedActivities[activityKey] && (
                                     <div className="space-y-3 px-4 pb-4">
                                       <div className="rounded-lg bg-muted/30 p-3">
-                                        <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                                        <span className="
+                                          mb-1 block text-xs font-medium
+                                          text-muted-foreground
+                                        ">
                                           Descripción
                                         </span>
                                         <textarea
@@ -2690,11 +3324,19 @@ export default function ProjectDetailView({
                                             }))
                                           }
                                           readOnly={!isEditingDescription}
-                                          className={`w-full rounded-md border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none ${
+                                          className={`
+                                            w-full rounded-md border
+                                            border-border/60 bg-background/60
+                                            px-3 py-2 text-sm text-foreground
+                                            focus-visible:ring-2
+                                            focus-visible:ring-ring
+                                            focus-visible:outline-none
+                                            ${
                                             isEditingDescription
                                               ? ''
                                               : 'cursor-not-allowed opacity-70'
-                                          }`}
+                                          }
+                                          `}
                                           rows={3}
                                           placeholder="Describe el entregable..."
                                         />
@@ -2734,7 +3376,16 @@ export default function ProjectDetailView({
                                               }
                                             }}
                                             disabled={!activityId || isSaving}
-                                            className="inline-flex h-8 items-center justify-center rounded-[12px] bg-[#22c4d3] px-3 text-xs font-semibold text-[#01152d] transition-colors hover:bg-[#1fb4c2] disabled:cursor-not-allowed disabled:opacity-70"
+                                            className="
+                                              inline-flex h-8 items-center
+                                              justify-center rounded-[12px]
+                                              bg-[#22c4d3] px-3 text-xs
+                                              font-semibold text-[#01152d]
+                                              transition-colors
+                                              hover:bg-[#1fb4c2]
+                                              disabled:cursor-not-allowed
+                                              disabled:opacity-70
+                                            "
                                           >
                                             {isSaving
                                               ? 'Guardando...'
@@ -2745,10 +3396,19 @@ export default function ProjectDetailView({
                                         </div>
                                       </div>
                                       <div className="rounded-lg bg-muted/30 p-3">
-                                        <span className="mb-2 block text-xs font-medium text-muted-foreground">
+                                        <span className="
+                                          mb-2 block text-xs font-medium
+                                          text-muted-foreground
+                                        ">
                                           Entrega
                                         </span>
-                                        <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-[13px] bg-[#22c4d3] px-3 text-sm font-medium text-[#01152d] transition-colors hover:bg-[#1fb4c2]">
+                                        <label className="
+                                          inline-flex h-9 cursor-pointer
+                                          items-center gap-2 rounded-[13px]
+                                          bg-[#22c4d3] px-3 text-sm font-medium
+                                          text-[#01152d] transition-colors
+                                          hover:bg-[#1fb4c2]
+                                        ">
                                           <Upload className="size-4" />
                                           {isUploading
                                             ? 'Subiendo...'
@@ -2775,9 +3435,19 @@ export default function ProjectDetailView({
                                           />
                                         </label>
                                         {isUploading && (
-                                          <div className="mt-3 rounded-lg border border-border/40 bg-background/60 p-3">
-                                            <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
-                                              <span className="size-2 animate-pulse rounded-full bg-[#22c4d3]" />
+                                          <div className="
+                                            mt-3 rounded-lg border
+                                            border-border/40 bg-background/60
+                                            p-3
+                                          ">
+                                            <div className="
+                                              mb-2 flex items-center gap-2
+                                              text-sm text-muted-foreground
+                                            ">
+                                              <span className="
+                                                size-2 animate-pulse
+                                                rounded-full bg-[#22c4d3]
+                                              " />
                                               Subiendo archivo...{' '}
                                               {uploadProgressValue}%
                                             </div>
@@ -2788,15 +3458,30 @@ export default function ProjectDetailView({
                                           </div>
                                         )}
                                         {deliverableUrl && (
-                                          <div className="mt-3 rounded-lg border border-green-500/20 bg-green-500/10 p-3">
-                                            <div className="mb-2 flex items-center justify-between">
-                                              <span className="flex items-center gap-2 text-sm font-medium text-green-400">
+                                          <div className="
+                                            mt-3 rounded-lg border
+                                            border-green-500/20 bg-green-500/10
+                                            p-3
+                                          ">
+                                            <div className="
+                                              mb-2 flex items-center
+                                              justify-between
+                                            ">
+                                              <span className="
+                                                flex items-center gap-2 text-sm
+                                                font-medium text-green-400
+                                              ">
                                                 <CircleCheckBig className="size-4" />
                                                 Entregado
                                               </span>
-                                              <div className="flex items-center gap-2">
+                                              <div className="
+                                                flex items-center gap-2
+                                              ">
                                                 {deliverableSubmittedAt && (
-                                                  <span className="text-xs text-muted-foreground">
+                                                  <span className="
+                                                    text-xs
+                                                    text-muted-foreground
+                                                  ">
                                                     {formatDateTime(
                                                       deliverableSubmittedAt
                                                     )}
@@ -2813,7 +3498,19 @@ export default function ProjectDetailView({
                                                   disabled={
                                                     !activityId || isRemoving
                                                   }
-                                                  className="inline-flex h-7 items-center justify-center rounded-[10px] border border-red-500/30 bg-red-500/10 px-2 text-[11px] font-semibold text-red-300 transition-colors hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-70"
+                                                  className="
+                                                    inline-flex h-7 items-center
+                                                    justify-center
+                                                    rounded-[10px] border
+                                                    border-red-500/30
+                                                    bg-red-500/10 px-2
+                                                    text-[11px] font-semibold
+                                                    text-red-300
+                                                    transition-colors
+                                                    hover:bg-red-500/20
+                                                    disabled:cursor-not-allowed
+                                                    disabled:opacity-70
+                                                  "
                                                 >
                                                   {isRemoving
                                                     ? 'Quitando...'
@@ -2821,7 +3518,10 @@ export default function ProjectDetailView({
                                                 </button>
                                               </div>
                                             </div>
-                                            <div className="mb-2 flex items-center gap-2 text-sm text-muted-foreground">
+                                            <div className="
+                                              mb-2 flex items-center gap-2
+                                              text-sm text-muted-foreground
+                                            ">
                                               <FileText className="size-4" />
                                               {(activityId
                                                 ? deliverableOverrides[
@@ -2831,8 +3531,13 @@ export default function ProjectDetailView({
                                                 actividad.deliverableName}
                                             </div>
                                             {activityDescription && (
-                                              <div className="mt-2 border-t border-green-500/20 pt-2">
-                                                <span className="text-xs text-muted-foreground">
+                                              <div className="
+                                                mt-2 border-t
+                                                border-green-500/20 pt-2
+                                              ">
+                                                <span className="
+                                                  text-xs text-muted-foreground
+                                                ">
                                                   Retroalimentación:
                                                 </span>
                                                 <div className="mt-1">
@@ -2867,7 +3572,10 @@ export default function ProjectDetailView({
         </TabsContent>
 
         <TabsContent value="feedback">
-          <div className="rounded-xl border border-border/50 bg-card/50 p-4 text-center sm:p-6">
+          <div className="
+            rounded-xl border border-border/50 bg-card/50 p-4 text-center
+            sm:p-6
+          ">
             <p className="text-muted-foreground">
               No hay retroalimentación disponible aún.
             </p>
@@ -2876,27 +3584,50 @@ export default function ProjectDetailView({
 
         <TabsContent value="timeline" className="space-y-4">
           <div className="rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5">
-            <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div className="
+              mb-4 grid gap-3
+              sm:grid-cols-[1fr_auto] sm:items-center
+            ">
               <div className="flex items-center gap-3">
-                <div className="flex size-8 items-center justify-center rounded-lg bg-purple-500/20">
+                <div className="
+                  flex size-8 items-center justify-center rounded-lg
+                  bg-purple-500/20
+                ">
                   <Calendar className="size-4 text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground">
                   Cronograma
                 </h3>
               </div>
-              <div className="flex items-center gap-2 sm:justify-end">
+              <div className="
+                flex items-center gap-2
+                sm:justify-end
+              ">
                 <div className="flex items-center gap-1 rounded-lg bg-muted/30 p-1">
                   {(['dias', 'semanas', 'meses'] as const).map((view) => (
                     <button
                       key={view}
                       type="button"
                       onClick={() => setTimelineView(view)}
-                      className={`inline-flex h-7 items-center justify-center gap-2 rounded-md px-3 text-xs font-medium whitespace-nowrap ring-offset-background transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 ${
+                      className={`
+                        inline-flex h-7 items-center justify-center gap-2
+                        rounded-md px-3 text-xs font-medium whitespace-nowrap
+                        ring-offset-background transition-colors
+                        focus-visible:ring-2 focus-visible:ring-ring
+                        focus-visible:ring-offset-2 focus-visible:outline-none
+                        disabled:pointer-events-none disabled:opacity-50
+                        ${
                         timelineView === view
-                          ? 'bg-accent text-background hover:bg-accent/90'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-                      }`}
+                          ? `
+                            bg-accent text-background
+                            hover:bg-accent/90
+                          `
+                          : `
+                            text-muted-foreground
+                            hover:bg-accent hover:text-foreground
+                          `
+                      }
+                      `}
                     >
                       {view === 'dias'
                         ? 'Días'
@@ -2910,7 +3641,17 @@ export default function ProjectDetailView({
                   <button
                     type="button"
                     onClick={() => onEditSection?.(7, addedSections)}
-                    className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0"
+                    className="
+                      inline-flex size-8 items-center justify-center gap-2
+                      rounded-md text-sm font-medium text-muted-foreground
+                      transition-colors
+                      hover:bg-accent hover:text-black
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                      disabled:pointer-events-none disabled:opacity-50
+                      [&_svg]:pointer-events-none [&_svg]:size-4
+                      [&_svg]:shrink-0
+                    "
                   >
                     <Pencil className="size-4" />
                   </button>
@@ -2994,11 +3735,23 @@ export default function ProjectDetailView({
 
               return (
                 <>
-                  <div className="scrollbar-thin w-full max-w-full overflow-x-auto [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border/50 hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-track]:bg-transparent">
+                  <div className="
+                    scrollbar-thin w-full max-w-full overflow-x-auto
+                    [&::-webkit-scrollbar]:h-1.5
+                    [&::-webkit-scrollbar-thumb]:rounded-full
+                    [&::-webkit-scrollbar-thumb]:bg-border/50
+                    hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/30
+                    [&::-webkit-scrollbar-track]:bg-transparent
+                  ">
                     <div className="flex min-w-[720px]">
                       <div className="w-52 shrink-0 border-r border-border/30">
-                        <div className="mb-2 flex h-10 items-end border-b border-border/50 pr-3 pb-2">
-                          <span className="text-xs font-medium text-muted-foreground">
+                        <div className="
+                          mb-2 flex h-10 items-end border-b border-border/50
+                          pr-3 pb-2
+                        ">
+                          <span className="
+                            text-xs font-medium text-muted-foreground
+                          ">
                             Actividad
                           </span>
                         </div>
@@ -3013,7 +3766,10 @@ export default function ProjectDetailView({
                                   {row.key}
                                 </span>
                                 <span
-                                  className="max-w-[140px] truncate text-xs text-foreground"
+                                  className="
+                                    max-w-[140px] truncate text-xs
+                                    text-foreground
+                                  "
                                   title={row.title}
                                 >
                                   {row.title}
@@ -3029,13 +3785,21 @@ export default function ProjectDetailView({
                             {columns.map((column, index) => (
                               <div
                                 key={`${column.label}-${index}`}
-                                className="flex flex-col justify-end border-l border-border/30 px-1 pb-2 text-center first:border-l-0"
+                                className="
+                                  flex flex-col justify-end border-l
+                                  border-border/30 px-1 pb-2 text-center
+                                  first:border-l-0
+                                "
                                 style={{ width: columnWidth }}
                               >
-                                <div className="truncate text-xs text-muted-foreground">
+                                <div className="
+                                  truncate text-xs text-muted-foreground
+                                ">
                                   {column.label}
                                 </div>
-                                <div className="truncate text-xs font-medium text-foreground">
+                                <div className="
+                                  truncate text-xs font-medium text-foreground
+                                ">
                                   {column.sublabel}
                                 </div>
                               </div>
@@ -3104,21 +3868,31 @@ export default function ProjectDetailView({
                               return (
                                 <div
                                   key={`row-${row.key}`}
-                                  className="group relative h-6 rounded bg-muted/20"
+                                  className="
+                                    group relative h-6 rounded bg-muted/20
+                                  "
                                 >
                                   <div className="absolute inset-0 flex">
                                     {columns.map((_, index) => (
                                       <div
                                         key={`grid-${row.key}-${index}`}
-                                        className="border-l border-border/20 first:border-l-0"
+                                        className="
+                                          border-l border-border/20
+                                          first:border-l-0
+                                        "
                                         style={{ width: columnWidth }}
                                       />
                                     ))}
                                   </div>
                                   <div
-                                    className={`absolute top-1 h-4 rounded-full transition-all group-hover:opacity-80 ${getStatusClass(
+                                    className={`
+                                      absolute top-1 h-4 rounded-full
+                                      transition-all
+                                      group-hover:opacity-80
+                                      ${getStatusClass(
                                       row
-                                    )}`}
+                                    )}
+                                    `}
                                     title={`${row.title}: ${formatShortDate(
                                       startDate
                                     )} - ${formatShortDate(endDate)}`}
@@ -3136,7 +3910,10 @@ export default function ProjectDetailView({
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-border/50 pt-4">
+                  <div className="
+                    mt-4 flex flex-wrap items-center gap-4 border-t
+                    border-border/50 pt-4
+                  ">
                     <span className="text-xs text-muted-foreground">
                       Estado:
                     </span>
@@ -3176,7 +3953,10 @@ export default function ProjectDetailView({
       {Object.entries(addedSections).map(([sectionId, section]) => (
         <div
           key={sectionId}
-          className="mt-4 rounded-xl border border-border/50 bg-card/50 p-4 sm:p-5"
+          className="
+            mt-4 rounded-xl border border-border/50 bg-card/50 p-4
+            sm:p-5
+          "
         >
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-foreground">
@@ -3187,7 +3967,14 @@ export default function ProjectDetailView({
                 <button
                   type="button"
                   onClick={() => onEditSection?.(8, addedSections)}
-                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-black focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                  className="
+                    inline-flex size-8 items-center justify-center gap-2
+                    rounded-md text-sm font-medium text-muted-foreground
+                    transition-colors
+                    hover:bg-accent hover:text-black
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                  "
                   title="Editar sección en modal"
                 >
                   <Pencil size={16} />
@@ -3196,7 +3983,15 @@ export default function ProjectDetailView({
                   type="button"
                   onClick={() => handleDeleteSection(sectionId)}
                   disabled={isDeletingSection === sectionId}
-                  className="inline-flex size-8 items-center justify-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-red-500 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50"
+                  className="
+                    inline-flex size-8 items-center justify-center gap-2
+                    rounded-md text-sm font-medium text-muted-foreground
+                    transition-colors
+                    hover:bg-accent hover:text-red-500
+                    focus-visible:ring-2 focus-visible:ring-ring
+                    focus-visible:ring-offset-2 focus-visible:outline-none
+                    disabled:opacity-50
+                  "
                   title="Eliminar sección"
                 >
                   {isDeletingSection === sectionId ? '⏳' : '×'}

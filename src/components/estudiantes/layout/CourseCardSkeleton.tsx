@@ -5,9 +5,9 @@ export function CourseCardSkeleton() {
   return (
     <Card
       className="
-      -pt-2 overflow-hidden bg-gray-800 py-0 text-white
-      sm:pt-0
-    "
+        -pt-2 overflow-hidden bg-gray-800 py-0 text-white
+        sm:pt-0
+      "
     >
       <div className="flex h-32">
         <div className="w-48">

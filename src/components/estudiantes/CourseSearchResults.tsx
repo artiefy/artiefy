@@ -22,7 +22,11 @@ export default function CourseSearchResults({ results }: Props) {
           {/* <span className="text-xs text-gray-500">{course.category.name}</span> */}
           <Link
             href={`/curso/${course.id}`}
-            className="bg-primary hover:bg-primary/80 mt-2 inline-block rounded px-4 py-2 text-white"
+            className="
+              bg-primary
+              hover:bg-primary/80
+              mt-2 inline-block rounded px-4 py-2 text-white
+            "
           >
             Ir al curso
           </Link>

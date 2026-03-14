@@ -75,9 +75,12 @@ const CategoryDropdown: React.FC<CategoryDropdownProps> = ({
             const selectedId = Number(e.target.value);
             setCategory(selectedId);
           }}
-          className={`bg-background mb-5 w-60 rounded border p-2 text-white outline-hidden ${
+          className={`
+            bg-background mb-5 w-60 rounded border p-2 text-white outline-hidden
+            ${
             errors.category ? 'border-red-500' : 'border-primary'
-          }`}
+          }
+          `}
         >
           <option value="">Selecciona una categoría</option>
           {categories.map((category) => (

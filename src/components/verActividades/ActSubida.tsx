@@ -129,7 +129,11 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
         questions.map((question, index) => (
           <Card
             key={index}
-            className="h-auto overflow-hidden rounded-lg border border-gray-200 bg-white shadow-md transition-shadow duration-300 hover:shadow-lg"
+            className="
+              h-auto overflow-hidden rounded-lg border border-gray-200 bg-white
+              shadow-md transition-shadow duration-300
+              hover:shadow-lg
+            "
           >
             <CardContent className="space-y-4 p-6">
               <div className="mb-4 flex items-center space-x-2">
@@ -159,7 +163,9 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
                   <p className="mb-1 text-sm text-gray-600">
                     Pregunta actividad:
                   </p>
-                  <p className="rounded-md bg-gray-50 p-3 font-medium text-gray-800">
+                  <p className="
+                    rounded-md bg-gray-50 p-3 font-medium text-gray-800
+                  ">
                     {question.text}
                   </p>
                 </div>
@@ -168,7 +174,9 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
                   <p className="mb-1 text-sm text-gray-600">
                     Parámetros de evaluación:
                   </p>
-                  <p className="rounded-md bg-gray-50 p-3 font-medium text-gray-800">
+                  <p className="
+                    rounded-md bg-gray-50 p-3 font-medium text-gray-800
+                  ">
                     {question.parametros}
                   </p>
                 </div>
@@ -183,7 +191,9 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
                   </label>
                   <Input
                     type="file"
-                    className="ml-4 w-auto flex-1 cursor-pointer rounded-md border-none"
+                    className="
+                      ml-4 w-auto flex-1 cursor-pointer rounded-md border-none
+                    "
                     onChange={(e) =>
                       handleFileChange(question.id, e.target.files?.[0] ?? null)
                     }
@@ -193,7 +203,11 @@ const ActSubida: React.FC<QuestionListProps> = ({ activityId }) => {
                 </div>
                 <Button
                   type="button"
-                  className="rounded-md border-none bg-blue-600 py-2 font-medium text-white transition-colors duration-200 hover:bg-blue-700"
+                  className="
+                    rounded-md border-none bg-blue-600 py-2 font-medium
+                    text-white transition-colors duration-200
+                    hover:bg-blue-700
+                  "
                   onClick={() => handleSubmit(question.id)}
                   disabled={submitting || !selectedFiles[question.id]}
                 >

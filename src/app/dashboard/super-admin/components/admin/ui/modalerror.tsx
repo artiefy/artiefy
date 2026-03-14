@@ -16,7 +16,9 @@ export const ModalError: React.FC<ModalErrorProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="bg-opacity-50 fixed inset-0 flex items-center justify-center bg-black">
+    <div className="
+      bg-opacity-50 fixed inset-0 flex items-center justify-center bg-black
+    ">
       <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
         <h2 className="text-lg font-bold text-red-600">Error</h2>
         <p className="mt-4 text-gray-700">{message}</p>

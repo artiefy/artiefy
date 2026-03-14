@@ -2150,16 +2150,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
           <div className="space-y-4">
             <div
               className="
-              mb-4 rounded-[16px] border border-[#22c4d34d] bg-[#22c4d31a]
-              from-accent/10 via-primary/10 to-accent/10 p-4
-            "
+                mb-4 rounded-[16px] border border-[#22c4d34d] bg-[#22c4d31a]
+                from-accent/10 via-primary/10 to-accent/10 p-4
+              "
             >
               <div className="flex items-start gap-3">
                 <div
                   className="
-                  flex size-10 shrink-0 items-center justify-center rounded-full
-                  bg-[#22c4d333]
-                "
+                    flex size-10 shrink-0 items-center justify-center
+                    rounded-full bg-[#22c4d333]
+                  "
                 >
                   <FaWandMagicSparkles className="size-5 text-[#22c4d3]" />
                 </div>
@@ -2170,13 +2170,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     </h4>
                     <div
                       className="
-                      inline-flex items-center rounded-full border
-                      border-[#22c4d34d] bg-[#22c4d333] px-2.5 py-0.5 text-xs
-                      font-semibold text-accent transition-colors
-                      hover:bg-primary/80
-                      focus:ring-2 focus:ring-ring focus:ring-offset-2
-                      focus:outline-none
-                    "
+                        inline-flex items-center rounded-full border
+                        border-[#22c4d34d] bg-[#22c4d333] px-2.5 py-0.5 text-xs
+                        font-semibold text-accent transition-colors
+                        hover:bg-primary/80
+                        focus:ring-2 focus:ring-ring focus:ring-offset-2
+                        focus:outline-none
+                      "
                     >
                       Nuevo
                     </div>
@@ -2281,9 +2281,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               </div>
               <div
                 className="
-                mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
-                text-muted-foreground
-              "
+                  mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
+                  text-muted-foreground
+                "
               >
                 <Pencil className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
                 <span>
@@ -2358,9 +2358,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               {generationError && (
                 <div
                   className="
-                  mt-2 rounded-md border border-destructive/30 bg-destructive/10
-                  p-2 text-xs text-destructive
-                "
+                    mt-2 rounded-md border border-destructive/30
+                    bg-destructive/10 p-2 text-xs text-destructive
+                  "
                 >
                   <div className="flex items-start gap-2">
                     <span className="font-semibold">Error:</span>
@@ -2381,9 +2381,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             {isCreateStep && creationError && (
               <div
                 className="
-                rounded-md border border-destructive/30 bg-destructive/10 p-3
-                text-sm text-destructive
-              "
+                  rounded-md border border-destructive/30 bg-destructive/10 p-3
+                  text-sm text-destructive
+                "
               >
                 {creationError}
               </div>
@@ -2503,16 +2503,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               {/* Switch: ¿Proyecto Público? */}
               <div
                 className="
-                flex items-center justify-between rounded-lg border
-                border-border/50 bg-muted/30 p-3
-              "
+                  flex items-center justify-between rounded-lg border
+                  border-border/50 bg-muted/30 p-3
+                "
               >
                 <div className="flex items-center gap-3">
                   <div
                     className="
-                    flex size-8 items-center justify-center rounded-full
-                    bg-accent/10
-                  "
+                      flex size-8 items-center justify-center rounded-full
+                      bg-accent/10
+                    "
                   >
                     <Globe className="size-4 text-accent" />
                   </div>
@@ -2573,16 +2573,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               {/* Switch: ¿Necesitas Colaboradores? */}
               <div
                 className="
-                flex items-center justify-between rounded-lg border
-                border-border/50 bg-muted/30 p-3
-              "
+                  flex items-center justify-between rounded-lg border
+                  border-border/50 bg-muted/30 p-3
+                "
               >
                 <div className="flex items-center gap-3">
                   <div
                     className="
-                    flex size-8 items-center justify-center rounded-full
-                    bg-accent/10
-                  "
+                      flex size-8 items-center justify-center rounded-full
+                      bg-accent/10
+                    "
                   >
                     <Users className="size-4 text-accent" />
                   </div>
@@ -2648,9 +2648,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 <div className="rounded-lg border border-border/50 bg-muted/20 p-4">
                   <div
                     className="
-                    flex flex-col gap-3
-                    sm:flex-row sm:items-center sm:justify-between
-                  "
+                      flex flex-col gap-3
+                      sm:flex-row sm:items-center sm:justify-between
+                    "
                   >
                     <div>
                       <p className="text-sm font-semibold text-foreground">
@@ -2686,8 +2686,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       <div className="flex items-center justify-between">
                         <p
                           className="
-                          text-xs font-semibold text-muted-foreground
-                        "
+                            text-xs font-semibold text-muted-foreground
+                          "
                         >
                           Colaboradores agregados
                         </p>
@@ -2738,10 +2738,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                                 </div>
                                 <span
                                   className="
-                                  rounded-full border border-accent/40
-                                  bg-accent/10 px-2 py-0.5 text-[11px]
-                                  font-semibold text-accent
-                                "
+                                    rounded-full border border-accent/40
+                                    bg-accent/10 px-2 py-0.5 text-[11px]
+                                    font-semibold text-accent
+                                  "
                                 >
                                   Colaborador
                                 </span>
@@ -2762,18 +2762,18 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               <div className="space-y-3 border-t border-border/50 pt-4">
                 <label
                   className="
-                  text-sm leading-none font-medium
-                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
-                "
+                    text-sm leading-none font-medium
+                    peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                  "
                 >
                   Contenido multimedia (opcional)
                 </label>
                 <div
                   className="
-                  rounded-lg border-2 border-dashed border-border/50 p-6
-                  text-center transition-colors
-                  hover:border-primary/50
-                "
+                    rounded-lg border-2 border-dashed border-border/50 p-6
+                    text-center transition-colors
+                    hover:border-primary/50
+                  "
                 >
                   <input
                     type="file"
@@ -2787,9 +2787,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     <div className="flex flex-col items-center gap-2">
                       <div
                         className="
-                        flex size-12 items-center justify-center rounded-full
-                        bg-muted
-                      "
+                          flex size-12 items-center justify-center rounded-full
+                          bg-muted
+                        "
                       >
                         <Upload className="size-6 text-muted-foreground" />
                       </div>
@@ -2812,9 +2812,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         <div key={index} className="group relative">
                           <div
                             className="
-                            flex aspect-video items-center justify-center
-                            overflow-hidden rounded-lg bg-muted
-                          "
+                              flex aspect-video items-center justify-center
+                              overflow-hidden rounded-lg bg-muted
+                            "
                           >
                             {file.type.startsWith('image') ? (
                               <Image
@@ -2827,15 +2827,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                             ) : (
                               <div
                                 className="
-                                flex size-full flex-col items-center
-                                justify-center
-                              "
+                                  flex size-full flex-col items-center
+                                  justify-center
+                                "
                               >
                                 <FileText className="mb-2 size-8 text-muted-foreground" />
                                 <span
                                   className="
-                                  px-2 text-center text-xs text-muted-foreground
-                                "
+                                    px-2 text-center text-xs
+                                    text-muted-foreground
+                                  "
                                 >
                                   {file.name}
                                 </span>
@@ -2957,9 +2958,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               />
               <div
                 className="
-                mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
-                text-muted-foreground
-              "
+                  mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
+                  text-muted-foreground
+                "
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -3077,9 +3078,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             />
             <div
               className="
-              mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
-              text-muted-foreground
-            "
+                mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
+                text-muted-foreground
+              "
             >
               <Pencil className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
               <span>
@@ -3227,9 +3228,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               ) : (
                 <div
                   className="
-                  rounded-lg border-2 border-dashed border-border/50 p-6
-                  text-center
-                "
+                    rounded-lg border-2 border-dashed border-border/50 p-6
+                    text-center
+                  "
                 >
                   <p className="text-sm text-muted-foreground">
                     No hay requisitos definidos aún.
@@ -3262,9 +3263,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             </div>
             <div
               className="
-              mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
-              text-muted-foreground
-            "
+                mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
+                text-muted-foreground
+              "
             >
               <Pencil className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
               <span>
@@ -3310,9 +3311,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             <div className="space-y-2">
               <label
                 className="
-                text-sm leading-none font-medium
-                peer-disabled:cursor-not-allowed peer-disabled:opacity-70
-              "
+                  text-sm leading-none font-medium
+                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                "
               >
                 Tiempo estimado *
               </label>
@@ -3388,16 +3389,16 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             {/* Fechas de inicio y fin */}
             <div
               className="
-              grid grid-cols-1 gap-4
-              sm:grid-cols-2 sm:gap-6
-            "
+                grid grid-cols-1 gap-4
+                sm:grid-cols-2 sm:gap-6
+              "
             >
               <div className="mt-3 space-y-2">
                 <label
                   className="
-                  text-sm leading-none font-medium
-                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
-                "
+                    text-sm leading-none font-medium
+                    peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                  "
                 >
                   Fecha de inicio
                 </label>
@@ -3439,9 +3440,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
               <div className="mt-3 space-y-2">
                 <label
                   className="
-                  text-sm leading-none font-medium
-                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
-                "
+                    text-sm leading-none font-medium
+                    peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                  "
                 >
                   Fecha de fin
                 </label>
@@ -3474,9 +3475,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             {/* Tip */}
             <div
               className="
-              mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
-              text-muted-foreground
-            "
+                mt-2 flex items-start gap-2 rounded-md bg-muted/30 p-2 text-xs
+                text-muted-foreground
+              "
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -3507,9 +3508,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             <div className="flex items-center justify-between gap-2">
               <label
                 className="
-                text-sm leading-none font-medium
-                peer-disabled:cursor-not-allowed peer-disabled:opacity-70
-              "
+                  text-sm leading-none font-medium
+                  peer-disabled:cursor-not-allowed peer-disabled:opacity-70
+                "
               >
                 Objetivos específicos y actividades *
               </label>
@@ -3660,8 +3661,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                           <Target className="size-4 text-accent" />
                           <span
                             className="
-                            text-sm font-medium text-muted-foreground
-                          "
+                              text-sm font-medium text-muted-foreground
+                            "
                           >
                             Objetivo {idx + 1}
                           </span>
@@ -3718,8 +3719,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                               >
                                 <span
                                   className="
-                                  mt-2.5 text-xs text-muted-foreground
-                                "
+                                    mt-2.5 text-xs text-muted-foreground
+                                  "
                                 >
                                   {actIdx + 1}.
                                 </span>
@@ -3990,9 +3991,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 <div className="flex items-center gap-3">
                   <div
                     className="
-                    flex size-8 items-center justify-center rounded-lg
-                    bg-purple-500/20
-                  "
+                      flex size-8 items-center justify-center rounded-lg
+                      bg-purple-500/20
+                    "
                   >
                     <Calendar className="size-4 text-purple-400" />
                   </div>
@@ -4002,8 +4003,8 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 </div>
                 <div
                   className="
-                  ml-auto flex items-center gap-1 rounded-lg bg-muted/30 p-1
-                "
+                    ml-auto flex items-center gap-1 rounded-lg bg-muted/30 p-1
+                  "
                 >
                   {(['dias', 'semanas', 'meses'] as const).map((view) => (
                     <button
@@ -4020,13 +4021,13 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                         ${
                           timelineView === view
                             ? `
-                            bg-accent text-background
-                            hover:bg-accent/90
-                          `
+                              bg-accent text-background
+                              hover:bg-accent/90
+                            `
                             : `
-                            text-muted-foreground
-                            hover:bg-accent hover:text-foreground
-                          `
+                              text-muted-foreground
+                              hover:bg-accent hover:text-foreground
+                            `
                         }
                       `}
                     >
@@ -4068,9 +4069,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     >
                       <div
                         className="
-                        mb-2 flex h-10 items-end border-b border-border/50 pr-3
-                        pb-2
-                      "
+                          mb-2 flex h-10 items-end border-b border-border/50
+                          pr-3 pb-2
+                        "
                       >
                         <span className="text-xs font-medium text-muted-foreground">
                           Actividad
@@ -4095,9 +4096,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                               >
                                 <span
                                   className="
-                                  block overflow-x-auto pr-2 whitespace-nowrap
-                                  sm:truncate sm:overflow-hidden sm:pr-0
-                                "
+                                    block overflow-x-auto pr-2 whitespace-nowrap
+                                    sm:truncate sm:overflow-hidden sm:pr-0
+                                  "
                                 >
                                   {row.title}
                                 </span>
@@ -4109,9 +4110,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                     </div>
                     <div
                       className="
-                      flex-1 pl-1
-                      sm:pl-0
-                    "
+                        flex-1 pl-1
+                        sm:pl-0
+                      "
                     >
                       <div style={{ minWidth: gridWidth }}>
                         <div className="mb-2 flex h-10 border-b border-border/50">
@@ -4127,15 +4128,15 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                             >
                               <div
                                 className="
-                                truncate text-xs text-muted-foreground
-                              "
+                                  truncate text-xs text-muted-foreground
+                                "
                               >
                                 {column.label}
                               </div>
                               <div
                                 className="
-                                truncate text-xs font-medium text-foreground
-                              "
+                                  truncate text-xs font-medium text-foreground
+                                "
                               >
                                 {column.sublabel}
                               </div>
@@ -4241,9 +4242,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
               <div
                 className="
-                mt-4 flex flex-wrap items-center gap-4 border-t border-border/50
-                pt-4
-              "
+                  mt-4 flex flex-wrap items-center gap-4 border-t
+                  border-border/50 pt-4
+                "
               >
                 <span className="text-xs text-muted-foreground">Estado:</span>
                 <div className="flex items-center gap-1">
@@ -4310,9 +4311,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 ) : (
                   <div
                     className="
-                    rounded-lg border-2 border-dashed border-border/50 p-4
-                    text-center
-                  "
+                      rounded-lg border-2 border-dashed border-border/50 p-4
+                      text-center
+                    "
                   >
                     <p className="text-sm text-muted-foreground">
                       No hay secciones predefinidas agregadas.
@@ -4337,9 +4338,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                 ) : (
                   <div
                     className="
-                    rounded-lg border-2 border-dashed border-border/50 p-4
-                    text-center
-                  "
+                      rounded-lg border-2 border-dashed border-border/50 p-4
+                      text-center
+                    "
                   >
                     <p className="text-sm text-muted-foreground">
                       No hay secciones personalizadas agregadas aún.
@@ -4382,18 +4383,18 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
         {/* Layout principal con sidebar y contenido */}
         <div
           className="
-          flex min-h-0 flex-1 flex-col
-          sm:flex-row
-        "
+            flex min-h-0 flex-1 flex-col
+            sm:flex-row
+          "
         >
           {/* Sidebar de navegación */}
           <div
             className="
-            relative flex w-full shrink-0 flex-row items-center justify-center
-            gap-3 border-b border-border/50 bg-muted/30 px-3 py-2 pr-12
-            sm:w-12 sm:flex-col sm:justify-between sm:gap-2 sm:border-r
-            sm:border-b-0 sm:px-0 sm:py-4 sm:pr-0
-          "
+              relative flex w-full shrink-0 flex-row items-center justify-center
+              gap-3 border-b border-border/50 bg-muted/30 px-3 py-2 pr-12
+              sm:w-12 sm:flex-col sm:justify-between sm:gap-2 sm:border-r
+              sm:border-b-0 sm:px-0 sm:py-4 sm:pr-0
+            "
           >
             <button
               onClick={handlePrevious}
@@ -4414,19 +4415,19 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             >
               <ChevronLeft
                 className="
-                size-4
-                sm:rotate-90
-              "
+                  size-4
+                  sm:rotate-90
+                "
               />
             </button>
 
             {/* Indicadores de pasos */}
             <div
               className="
-              flex w-full flex-1 flex-row items-center justify-center gap-2
-              overflow-x-auto p-2
-              sm:w-auto sm:flex-col sm:overflow-visible sm:px-0 sm:py-4
-            "
+                flex w-full flex-1 flex-row items-center justify-center gap-2
+                overflow-x-auto p-2
+                sm:w-auto sm:flex-col sm:overflow-visible sm:px-0 sm:py-4
+              "
             >
               {steps.map((step) => (
                 <button
@@ -4445,9 +4446,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                       step.id === currentStep
                         ? 'scale-125 bg-[#22c4d3]'
                         : `
-                        bg-muted-foreground/30
-                        hover:bg-muted-foreground/50
-                      `
+                          bg-muted-foreground/30
+                          hover:bg-muted-foreground/50
+                        `
                     }
                   `}
                   title={step.title}
@@ -4478,9 +4479,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             >
               <ChevronRight
                 className="
-                size-4
-                sm:rotate-90
-              "
+                  size-4
+                  sm:rotate-90
+                "
               />
             </button>
           </div>
@@ -4490,9 +4491,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             {/* Header del modal */}
             <div
               className="
-              relative shrink-0 border-b border-border/50 p-4 pb-3
-              sm:p-6 sm:pb-4
-            "
+                relative shrink-0 border-b border-border/50 p-4 pb-3
+                sm:p-6 sm:pb-4
+              "
             >
               <div className="flex flex-col space-y-1.5 text-center sm:text-left">
                 <h2
@@ -4506,12 +4507,12 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {steps[currentStep - 1].title}
                   <div
                     className="
-                    ml-2 inline-flex items-center rounded-full border px-2.5
-                    py-0.5 text-xs font-semibold text-foreground
-                    transition-colors
-                    focus:ring-2 focus:ring-ring focus:ring-offset-2
-                    focus:outline-none
-                  "
+                      ml-2 inline-flex items-center rounded-full border px-2.5
+                      py-0.5 text-xs font-semibold text-foreground
+                      transition-colors
+                      focus:ring-2 focus:ring-ring focus:ring-offset-2
+                      focus:outline-none
+                    "
                   >
                     {currentStep}/{steps.length}
                   </div>
@@ -4519,9 +4520,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
                   {isProjectCreated && (
                     <div
                       className="
-                      absolute top-3 right-10 flex items-center
-                      sm:top-4 sm:right-12
-                    "
+                        absolute top-3 right-10 flex items-center
+                        sm:top-4 sm:right-12
+                      "
                     >
                       {isAutoSaving ? (
                         <RefreshCw className="size-4 animate-spin text-muted-foreground" />
@@ -4576,9 +4577,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             {/* Contenido del paso actual */}
             <div
               className="
-              min-h-0 flex-1 overflow-y-auto p-4
-              sm:p-6
-            "
+                min-h-0 flex-1 overflow-y-auto p-4
+                sm:p-6
+              "
             >
               {renderStepContent()}
             </div>
@@ -4586,10 +4587,10 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
             {/* Footer con botones de navegación */}
             <div
               className="
-              flex flex-row items-center justify-between gap-2 border-t
-              border-border/50 bg-card/50 p-3
-              sm:p-4
-            "
+                flex flex-row items-center justify-between gap-2 border-t
+                border-border/50 bg-card/50 p-3
+                sm:p-4
+              "
             >
               <button
                 onClick={handlePrevious}
@@ -4614,9 +4615,9 @@ const ModalResumen: React.FC<ModalResumenProps> = ({
 
               <div
                 className="
-                flex flex-1 items-center gap-2
-                sm:flex-none
-              "
+                  flex flex-1 items-center gap-2
+                  sm:flex-none
+                "
               >
                 <button
                   onClick={handleMainButtonClick}

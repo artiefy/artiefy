@@ -130,12 +130,21 @@ export default function DatesPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2 text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+              className="
+                flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2
+                text-white
+                focus:ring-2 focus:ring-cyan-500 focus:outline-none
+              "
             />
             <button
               onClick={handleSave}
               disabled={saving || !date}
-              className="rounded bg-cyan-500 px-4 py-2 font-semibold text-black transition hover:bg-cyan-400 disabled:opacity-60"
+              className="
+                rounded bg-cyan-500 px-4 py-2 font-semibold text-black
+                transition
+                hover:bg-cyan-400
+                disabled:opacity-60
+              "
             >
               {saving ? 'Guardando…' : 'Guardar'}
             </button>
@@ -166,7 +175,11 @@ export default function DatesPage() {
                         type="date"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2 text-white focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                        className="
+                          flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2
+                          text-white
+                          focus:ring-2 focus:ring-cyan-500 focus:outline-none
+                        "
                       />
                     ) : (
                       <span className="flex-1">{row.startDate}</span>
@@ -177,13 +190,22 @@ export default function DatesPage() {
                         <button
                           onClick={() => void handleUpdate(row.id)}
                           disabled={isUpdating || !editValue}
-                          className="rounded bg-green-500 px-3 py-1 font-semibold text-black hover:bg-green-400 disabled:opacity-60"
+                          className="
+                            rounded bg-green-500 px-3 py-1 font-semibold
+                            text-black
+                            hover:bg-green-400
+                            disabled:opacity-60
+                          "
                         >
                           {isUpdating ? 'Guardando…' : 'Guardar'}
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="rounded bg-gray-600 px-3 py-1 font-semibold text-white hover:bg-gray-500"
+                          className="
+                            rounded bg-gray-600 px-3 py-1 font-semibold
+                            text-white
+                            hover:bg-gray-500
+                          "
                         >
                           Cancelar
                         </button>
@@ -192,14 +214,23 @@ export default function DatesPage() {
                       <>
                         <button
                           onClick={() => startEdit(row)}
-                          className="rounded bg-blue-500 px-3 py-1 font-semibold text-black hover:bg-blue-400"
+                          className="
+                            rounded bg-blue-500 px-3 py-1 font-semibold
+                            text-black
+                            hover:bg-blue-400
+                          "
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => void handleDelete(row.id)}
                           disabled={isDeleting}
-                          className="rounded bg-red-500 px-3 py-1 font-semibold text-black hover:bg-red-400 disabled:opacity-60"
+                          className="
+                            rounded bg-red-500 px-3 py-1 font-semibold
+                            text-black
+                            hover:bg-red-400
+                            disabled:opacity-60
+                          "
                         >
                           {isDeleting ? 'Eliminando…' : 'Eliminar'}
                         </button>

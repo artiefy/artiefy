@@ -81,9 +81,9 @@ export default function CourseCarousel({ courses, userId }: Props) {
                 ) : (
                   <div
                     className="
-                    flex h-20 w-full items-center justify-center rounded-md
-                    bg-gray-700
-                  "
+                      flex h-20 w-full items-center justify-center rounded-md
+                      bg-gray-700
+                    "
                   >
                     Sin imagen
                   </div>
@@ -100,8 +100,9 @@ export default function CourseCarousel({ courses, userId }: Props) {
                 {/* Footer */}
                 <div
                   className="
-                  mt-2 flex flex-col items-start justify-between space-y-2 px-2
-                "
+                    mt-2 flex flex-col items-start justify-between space-y-2
+                    px-2
+                  "
                 >
                   <div className="flex w-full justify-between">
                     <p className="text-xs font-bold text-red-500">
@@ -125,12 +126,12 @@ export default function CourseCarousel({ courses, userId }: Props) {
                       <ArrowRight className="ml-2 size-4 animate-bounce-right" />
                       <div
                         className="
-                        absolute inset-0 flex w-full
-                        [transform:skew(-13deg)_translateX(-100%)]
-                        justify-center
-                        group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-                        group-hover/button:duration-1000
-                      "
+                          absolute inset-0 flex w-full
+                          [transform:skew(-13deg)_translateX(-100%)]
+                          justify-center
+                          group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                          group-hover/button:duration-1000
+                        "
                       >
                         <div className="relative h-full w-10 bg-white/30" />
                       </div>

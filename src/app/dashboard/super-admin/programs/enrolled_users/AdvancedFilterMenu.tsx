@@ -204,9 +204,9 @@ export function AdvancedFilterMenu({
                 sortOrder === 'asc'
                   ? 'bg-blue-600 text-white'
                   : `
-                  bg-gray-700 text-gray-300
-                  hover:bg-gray-600
-                `
+                    bg-gray-700 text-gray-300
+                    hover:bg-gray-600
+                  `
               }
             `}
           >
@@ -220,9 +220,9 @@ export function AdvancedFilterMenu({
                 sortOrder === 'desc'
                   ? 'bg-blue-600 text-white'
                   : `
-                  bg-gray-700 text-gray-300
-                  hover:bg-gray-600
-                `
+                    bg-gray-700 text-gray-300
+                    hover:bg-gray-600
+                  `
               }
             `}
           >
@@ -236,9 +236,9 @@ export function AdvancedFilterMenu({
                 sortOrder === 'count'
                   ? 'bg-blue-600 text-white'
                   : `
-                  bg-gray-700 text-gray-300
-                  hover:bg-gray-600
-                `
+                    bg-gray-700 text-gray-300
+                    hover:bg-gray-600
+                  `
               }
             `}
           >
@@ -310,9 +310,9 @@ export function AdvancedFilterMenu({
       {/* Footer */}
       <div
         className="
-        bg-gray-750 flex items-center justify-between gap-2 border-t
-        border-gray-700 px-4 py-3
-      "
+          bg-gray-750 flex items-center justify-between gap-2 border-t
+          border-gray-700 px-4 py-3
+        "
       >
         <button
           onClick={handleClear}

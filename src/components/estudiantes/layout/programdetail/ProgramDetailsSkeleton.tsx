@@ -11,10 +11,10 @@ export function ProgramDetailsSkeleton() {
     <div className="min-h-screen bg-background">
       <main
         className="
-        mx-auto max-w-7xl pb-4
-        md:pb-6
-        lg:pb-8
-      "
+          mx-auto max-w-7xl pb-4
+          md:pb-6
+          lg:pb-8
+        "
       >
         <Card className="overflow-hidden p-0">
           <CardHeader className="px-0">

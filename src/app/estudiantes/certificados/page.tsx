@@ -74,11 +74,11 @@ export default async function CertificatesListPage() {
                 </h2>
                 <div
                   className="
-                  grid gap-4
-                  sm:grid-cols-1
-                  md:grid-cols-2
-                  xl:grid-cols-3
-                "
+                    grid gap-4
+                    sm:grid-cols-1
+                    md:grid-cols-2
+                    xl:grid-cols-3
+                  "
                 >
                   {userCertificates
                     .filter((c) => c.courseId)
@@ -94,25 +94,25 @@ export default async function CertificatesListPage() {
                       >
                         <CardHeader
                           className="
-                          flex w-full flex-col items-center rounded-t-2xl
-                          bg-gradient-to-r from-blue-600 to-cyan-500 p-6
-                          text-white
-                        "
+                            flex w-full flex-col items-center rounded-t-2xl
+                            bg-gradient-to-r from-blue-600 to-cyan-500 p-6
+                            text-white
+                          "
                         >
                           <PiCertificate className="mb-2 size-12 text-white" />
                           <CardTitle
                             className="
-                            line-clamp-3 text-center text-lg font-bold
-                          "
+                              line-clamp-3 text-center text-lg font-bold
+                            "
                           >
                             {certificate.course?.title ?? 'Certificado'}
                           </CardTitle>
                         </CardHeader>
                         <CardContent
                           className="
-                          flex w-full flex-1 flex-col items-center
-                          justify-between p-6
-                        "
+                            flex w-full flex-1 flex-col items-center
+                            justify-between p-6
+                          "
                         >
                           <div className="mb-4 w-full text-base text-white">
                             <div className="mb-2 flex justify-between">
@@ -160,11 +160,11 @@ export default async function CertificatesListPage() {
                 </h2>
                 <div
                   className="
-                  grid gap-4
-                  sm:grid-cols-1
-                  md:grid-cols-2
-                  xl:grid-cols-3
-                "
+                    grid gap-4
+                    sm:grid-cols-1
+                    md:grid-cols-2
+                    xl:grid-cols-3
+                  "
                 >
                   {userCertificates
                     .filter((c) => c.programaId)
@@ -180,25 +180,25 @@ export default async function CertificatesListPage() {
                       >
                         <CardHeader
                           className="
-                          flex w-full flex-col items-center rounded-t-2xl
-                          bg-gradient-to-r from-blue-600 to-cyan-500 p-6
-                          text-white
-                        "
+                            flex w-full flex-col items-center rounded-t-2xl
+                            bg-gradient-to-r from-blue-600 to-cyan-500 p-6
+                            text-white
+                          "
                         >
                           <PiCertificate className="mb-2 size-12 text-white" />
                           <CardTitle
                             className="
-                            line-clamp-3 text-center text-lg font-bold
-                          "
+                              line-clamp-3 text-center text-lg font-bold
+                            "
                           >
                             {certificate.programa?.title ?? 'Certificado'}
                           </CardTitle>
                         </CardHeader>
                         <CardContent
                           className="
-                          flex w-full flex-1 flex-col items-center
-                          justify-between p-6
-                        "
+                            flex w-full flex-1 flex-col items-center
+                            justify-between p-6
+                          "
                         >
                           <div className="mb-4 w-full text-base text-white">
                             <div className="mb-2 flex justify-between">

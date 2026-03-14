@@ -261,9 +261,9 @@ export default function TicketModal({
       title={
         <span
           className="
-          bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text
-          text-transparent
-        "
+            bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500
+            bg-clip-text text-transparent
+          "
         >
           {ticket ? 'Editar Ticket' : 'Crear Nuevo Ticket'}
         </span>
@@ -275,8 +275,8 @@ export default function TicketModal({
           {ticket?.creatorName && (
             <div
               className="
-              rounded-lg border border-gray-700/50 bg-gray-800/30 p-4
-            "
+                rounded-lg border border-gray-700/50 bg-gray-800/30 p-4
+              "
             >
               <p className="text-sm text-gray-400">
                 Creado por:{' '}
@@ -290,9 +290,9 @@ export default function TicketModal({
           {/* Grid principal responsivo */}
           <div
             className="
-            grid gap-6
-            md:grid-cols-2
-          "
+              grid gap-6
+              md:grid-cols-2
+            "
           >
             {/* Primera columna */}
             <div className="space-y-4">
@@ -487,10 +487,10 @@ export default function TicketModal({
             </h3>
             <div
               className="
-              grid gap-4
-              sm:grid-cols-2
-              lg:grid-cols-3
-            "
+                grid gap-4
+                sm:grid-cols-2
+                lg:grid-cols-3
+              "
             >
               {/* Imagen */}
               <div className="space-y-2">
@@ -519,9 +519,9 @@ export default function TicketModal({
                 {formData.coverImageKey && (
                   <div
                     className="
-                    relative h-32 overflow-hidden rounded-lg border
-                    border-gray-600
-                  "
+                      relative h-32 overflow-hidden rounded-lg border
+                      border-gray-600
+                    "
                   >
                     <Image
                       src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${formData.coverImageKey}`}
@@ -565,9 +565,9 @@ export default function TicketModal({
                 {formData.videoKey && (
                   <div
                     className="
-                    relative h-32 overflow-hidden rounded-lg border
-                    border-gray-600
-                  "
+                      relative h-32 overflow-hidden rounded-lg border
+                      border-gray-600
+                    "
                   >
                     <video controls className="size-full object-contain">
                       <source
@@ -648,9 +648,9 @@ export default function TicketModal({
                 </h3>
                 <div
                   className="
-                  max-h-60 space-y-3 overflow-y-auto rounded-lg border
-                  border-gray-700/50 bg-gray-800/30 p-4
-                "
+                    max-h-60 space-y-3 overflow-y-auto rounded-lg border
+                    border-gray-700/50 bg-gray-800/30 p-4
+                  "
                 >
                   {isLoadingComments ? (
                     <div className="flex items-center justify-center py-4">
@@ -717,9 +717,9 @@ export default function TicketModal({
           {/* Action buttons */}
           <div
             className="
-            sticky bottom-0 flex justify-end gap-3 border-t border-gray-700
-            bg-gray-900/80 pt-4 backdrop-blur
-          "
+              sticky bottom-0 flex justify-end gap-3 border-t border-gray-700
+              bg-gray-900/80 pt-4 backdrop-blur
+            "
           >
             <button
               type="button"

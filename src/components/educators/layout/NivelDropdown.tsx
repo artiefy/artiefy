@@ -68,9 +68,12 @@ const NivelDropdown: React.FC<NivelDropdownProps> = ({
             const selectedId = Number(e.target.value);
             setNivel(selectedId);
           }}
-          className={`bg-background mb-5 w-60 rounded border p-2 text-white outline-hidden ${
+          className={`
+            bg-background mb-5 w-60 rounded border p-2 text-white outline-hidden
+            ${
             errors.nivel ? 'border-red-500' : 'border-primary'
-          }`}
+          }
+          `}
         >
           <option value="">Selecciona un nivel</option>
           {niveles.map((nivel) => (

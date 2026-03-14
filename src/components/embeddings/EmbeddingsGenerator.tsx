@@ -120,9 +120,9 @@ export function EmbeddingsGenerator({
           <>
             <span
               className="
-              inline-block size-4 animate-spin rounded-full border-2
-              border-current border-t-transparent
-            "
+                inline-block size-4 animate-spin rounded-full border-2
+                border-current border-t-transparent
+              "
             />
             Generando embeddings...
           </>
@@ -141,8 +141,8 @@ export function EmbeddingsGenerator({
       {isSuccess && stats && (
         <div
           className="
-          space-y-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4
-        "
+            space-y-3 rounded-lg border border-green-500/30 bg-green-500/10 p-4
+          "
         >
           <div className="flex items-start gap-2">
             <span className="text-2xl">✨</span>
@@ -160,9 +160,9 @@ export function EmbeddingsGenerator({
           {/* Grid de estadísticas */}
           <div
             className="
-            grid grid-cols-2 gap-3 pt-2
-            sm:grid-cols-4
-          "
+              grid grid-cols-2 gap-3 pt-2
+              sm:grid-cols-4
+            "
           >
             <div className="rounded bg-green-500/5 p-2">
               <div className="text-xs text-green-400/70">Chunks</div>
@@ -203,8 +203,8 @@ export function EmbeddingsGenerator({
       {error && (
         <div
           className="
-          space-y-2 rounded-lg border border-red-500/30 bg-red-500/10 p-4
-        "
+            space-y-2 rounded-lg border border-red-500/30 bg-red-500/10 p-4
+          "
         >
           <div className="flex items-start gap-2">
             <span className="text-2xl">❌</span>

@@ -36,24 +36,40 @@ const AnuncioPopup: React.FC<AnuncioPopupProps> = ({
   };
 
   return (
-    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-      <div className="relative w-full max-w-lg rounded-lg border border-[#3AF4EF] bg-[#01142B] p-6 text-center text-white shadow-lg">
+    <div className="
+      bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center p-4
+      backdrop-blur-md
+    ">
+      <div className="
+        relative w-full max-w-lg rounded-lg border border-[#3AF4EF] bg-[#01142B]
+        p-6 text-center text-white shadow-lg
+      ">
         {/* ❌ Botón de cierre */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-50 rounded-full bg-red-600 p-2 text-white transition-all hover:scale-110 hover:bg-red-700"
+          className="
+            absolute top-4 right-4 z-50 rounded-full bg-red-600 p-2 text-white
+            transition-all
+            hover:scale-110 hover:bg-red-700
+          "
         >
           <X size={24} />
         </button>
 
         {/* 🔢 Contador de anuncios (si hay más de uno) */}
         {totalAnuncios > 1 && (
-          <div className="bg-opacity-70 absolute top-3 left-3 rounded-md bg-black px-3 py-1 text-sm text-white">
+          <div className="
+            bg-opacity-70 absolute top-3 left-3 rounded-md bg-black px-3 py-1
+            text-sm text-white
+          ">
             {currentIndex + 1} / {totalAnuncios}
           </div>
         )}
 
-        <div className="bg-primary absolute top-2 left-1/2 -translate-x-1/2 rounded-md px-4 py-2 text-sm font-bold text-black uppercase shadow-md">
+        <div className="
+          bg-primary absolute top-2 left-1/2 -translate-x-1/2 rounded-md px-4
+          py-2 text-sm font-bold text-black uppercase shadow-md
+        ">
           📢 ¡Inscríbete ahora y transforma tu futuro! 🚀
         </div>
         {/* 📸 Imagen del Anuncio */}
@@ -63,10 +79,16 @@ const AnuncioPopup: React.FC<AnuncioPopupProps> = ({
             alt="Vista previa del anuncio"
             width={500}
             height={208}
-            className="mb-4 h-52 w-full rounded-md border-2 border-[#3AF4EF] object-cover shadow-md"
+            className="
+              mb-4 h-52 w-full rounded-md border-2 border-[#3AF4EF] object-cover
+              shadow-md
+            "
           />
         ) : (
-          <div className="flex h-52 w-full items-center justify-center rounded-md border-2 border-[#3AF4EF] bg-[#0B1D37] text-lg font-semibold text-[#3AF4EF]">
+          <div className="
+            flex h-52 w-full items-center justify-center rounded-md border-2
+            border-[#3AF4EF] bg-[#0B1D37] text-lg font-semibold text-[#3AF4EF]
+          ">
             Imagen del Anuncio
           </div>
         )}
@@ -89,7 +111,12 @@ const AnuncioPopup: React.FC<AnuncioPopupProps> = ({
           {/* Botón de Ver Planes */}
           <button
             onClick={() => handleNavigation('/planes', 'planes')}
-            className="relative flex items-center justify-center gap-2 rounded-md bg-blue-500 px-6 py-2 text-white transition-all hover:scale-105 hover:bg-blue-600 disabled:opacity-70"
+            className="
+              relative flex items-center justify-center gap-2 rounded-md
+              bg-blue-500 px-6 py-2 text-white transition-all
+              hover:scale-105 hover:bg-blue-600
+              disabled:opacity-70
+            "
             disabled={loadingButton !== null}
           >
             {loadingButton === 'planes' ? (

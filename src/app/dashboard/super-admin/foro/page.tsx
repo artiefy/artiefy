@@ -17,7 +17,10 @@ export default function page() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary text-sm hover:text-gray-300"
+                className="
+                  text-primary text-sm
+                  hover:text-gray-300
+                "
                 href="/"
               >
                 Inicio

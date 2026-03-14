@@ -198,8 +198,14 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
       }}
       className="space-y-6 rounded-lg bg-white p-6 shadow-md"
     >
-      <div className="flex-col space-y-4 md:flex md:flex-row md:space-x-4">
-        <div className="w-full md:w-3/4">
+      <div className="
+        flex-col space-y-4
+        md:flex md:flex-row md:space-x-4
+      ">
+        <div className="
+          w-full
+          md:w-3/4
+        ">
           <Label
             htmlFor="questions"
             className="block text-lg font-medium text-gray-700"
@@ -212,10 +218,16 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
             onChange={(e) => setQuestionText(e.target.value)}
             placeholder="Escribe tu pregunta aquí"
             required
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none"
+            className="
+              mt-1 block w-full rounded-md border border-gray-300 p-2 text-black
+              shadow-sm outline-none
+            "
           />
         </div>
-        <div className="w-11/12 md:w-1/4">
+        <div className="
+          w-11/12
+          md:w-1/4
+        ">
           <Label
             htmlFor="pesoPregunta"
             className="block text-lg font-medium text-gray-700"
@@ -230,7 +242,10 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
             min={1}
             max={100}
             required
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 text-black shadow-sm outline-none"
+            className="
+              mt-1 block w-full rounded-md border border-gray-300 p-2 text-black
+              shadow-sm outline-none
+            "
           />
         </div>
       </div>
@@ -265,14 +280,20 @@ const QuestionVOFForm: React.FC<QuestionFormProps> = ({
           type="button"
           onClick={handleCancel}
           variant="outline"
-          className="text-gray-100 hover:text-gray-800"
+          className="
+            text-gray-100
+            hover:text-gray-800
+          "
         >
           Cancelar
         </Button>
 
         <Button
           type="submit"
-          className="border-none bg-green-400 text-white hover:bg-green-500"
+          className="
+            border-none bg-green-400 text-white
+            hover:bg-green-500
+          "
         >
           {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta
         </Button>

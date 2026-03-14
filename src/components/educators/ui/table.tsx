@@ -25,7 +25,10 @@ export function TableBody({ children }: { children: React.ReactNode }) {
 }
 
 export function TableRow({ children }: { children: React.ReactNode }) {
-  return <tr className="transition hover:bg-gray-50">{children}</tr>;
+  return <tr className="
+    transition
+    hover:bg-gray-50
+  ">{children}</tr>;
 }
 
 export function TableCell({
@@ -36,7 +39,10 @@ export function TableCell({
   className?: string;
 }) {
   return (
-    <td className={`px-4 py-3 text-sm text-gray-700 ${className}`}>
+    <td className={`
+      px-4 py-3 text-sm text-gray-700
+      ${className}
+    `}>
       {children}
     </td>
   );

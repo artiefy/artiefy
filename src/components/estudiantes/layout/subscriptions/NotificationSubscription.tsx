@@ -54,16 +54,22 @@ export function NotificationSubscription() {
   return (
     <div className="artiefy-subscription-root">
       <div
-        className={`subscription-alert-inline ${isCollapsed ? 'collapsed' : ''}`}
+        className={`
+          subscription-alert-inline
+          ${isCollapsed ? 'collapsed' : ''}
+        `}
       >
         <div
-          className={`subscription-alert-content-inline ${
+          className={`
+            subscription-alert-content-inline
+            ${
             notification.severity === 'expired'
               ? 'border-gray-500 bg-gray-100'
               : notification.severity === 'high'
                 ? 'border-red-500 bg-red-50'
                 : 'border-yellow-500 bg-yellow-50'
-          }`}
+          }
+          `}
         >
           <div className="alert-message">
             <div className="flex items-center gap-2">
@@ -71,11 +77,14 @@ export function NotificationSubscription() {
                 <FaExclamationTriangle className="size-5 text-gray-500" />
               ) : (
                 <FaCrown
-                  className={`size-5 ${
+                  className={`
+                    size-5
+                    ${
                     notification.severity === 'high'
                       ? 'text-red-500'
                       : 'text-yellow-500'
-                  }`}
+                  }
+                  `}
                 />
               )}
               <span

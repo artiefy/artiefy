@@ -26,9 +26,9 @@ export function ProjectsLeftRail({
   return (
     <aside
       className={`
-      hidden w-56 shrink-0
-      lg:block
-    `}
+        hidden w-56 shrink-0
+        lg:block
+      `}
     >
       <div className="sticky top-24 space-y-3">
         <button
@@ -43,10 +43,10 @@ export function ProjectsLeftRail({
         >
           <div
             className={`
-            absolute inset-0 animate-[shimmerGradient_3s_linear_infinite] bg-gradient-to-r from-primary
-            via-cyan-500 to-primary
-            bg-[length:200%_100%]
-          `}
+              absolute inset-0 animate-[shimmerGradient_3s_linear_infinite]
+              bg-gradient-to-r from-primary via-cyan-500 to-primary
+              bg-[length:200%_100%]
+            `}
           />
           <span className="relative flex items-center gap-3">
             <span className="rounded-lg bg-white/20 p-1.5">
@@ -58,8 +58,8 @@ export function ProjectsLeftRail({
 
         <div
           className={`
-          h-px bg-gradient-to-r from-transparent via-border to-transparent
-        `}
+            h-px bg-gradient-to-r from-transparent via-border to-transparent
+          `}
         />
 
         <nav className="space-y-1">
@@ -75,18 +75,18 @@ export function ProjectsLeftRail({
                   activeView === item.key
                     ? 'text-[#080c16]'
                     : `
-                    text-muted-foreground
-                    hover:bg-[#1A2333]/50 hover:text-foreground
-                  `
+                      text-muted-foreground
+                      hover:bg-[#1A2333]/50 hover:text-foreground
+                    `
                 }
               `}
             >
               {activeView === item.key ? (
                 <div
                   className={`
-                  absolute inset-0 rounded-xl bg-gradient-to-r from-primary/90
-                  to-cyan-500/90 shadow-[0_0_20px_hsl(185_72%_48%/0.25)]
-                `}
+                    absolute inset-0 rounded-xl bg-gradient-to-r from-primary/90
+                    to-cyan-500/90 shadow-[0_0_20px_hsl(185_72%_48%/0.25)]
+                  `}
                 />
               ) : null}
               <span className="relative flex items-center gap-3">

@@ -99,9 +99,9 @@ function FileBadge({
   return (
     <div
       className="
-      mt-2 flex items-center gap-3 rounded border border-cyan-900/40
-      bg-[#0f1a38] p-2
-    "
+        mt-2 flex items-center gap-3 rounded border border-cyan-900/40
+        bg-[#0f1a38] p-2
+      "
     >
       {isImg && url ? (
         <Image
@@ -116,9 +116,9 @@ function FileBadge({
       ) : (
         <div
           className="
-          flex size-12 items-center justify-center rounded bg-[#101a35] text-xs
-          text-gray-300
-        "
+            flex size-12 items-center justify-center rounded bg-[#101a35]
+            text-xs text-gray-300
+          "
         >
           {isPdf ? 'PDF' : 'FILE'}
         </div>
@@ -869,23 +869,23 @@ export default function FormModal({ isOpen, onClose }: Props) {
     >
       <Dialog.Panel
         className="
-        flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl
-        bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20
-      "
+          flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl
+          bg-[#0B132B] text-white shadow-xl shadow-cyan-500/20
+        "
       >
         {showSuccess ? (
           // ==== Pantalla de ÉXITO ====
           <div
             className="
-            flex flex-col items-center justify-center gap-6 px-8 py-12
-            text-center
-          "
+              flex flex-col items-center justify-center gap-6 px-8 py-12
+              text-center
+            "
           >
             <div
               className="
-              flex size-20 items-center justify-center rounded-full bg-[#1C2541]
-              shadow shadow-cyan-500/30
-            "
+                flex size-20 items-center justify-center rounded-full
+                bg-[#1C2541] shadow shadow-cyan-500/30
+              "
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -948,9 +948,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
               {/* Header sticky */}
               <div
                 className="
-                sticky top-0 z-10 border-b border-cyan-900/30 bg-[#0B132B]/95
-                px-6 py-4 backdrop-blur
-              "
+                  sticky top-0 z-10 border-b border-cyan-900/30 bg-[#0B132B]/95
+                  px-6 py-4 backdrop-blur
+                "
               >
                 <Dialog.Title className="text-2xl font-semibold text-cyan-400">
                   Formulario de Inscripción
@@ -982,9 +982,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 <Section title="Datos personales">
                   <div
                     className="
-                    grid grid-cols-1 gap-4
-                    sm:grid-cols-2
-                  "
+                      grid grid-cols-1 gap-4
+                      sm:grid-cols-2
+                    "
                   >
                     <FieldInput
                       label="Primer nombre*"
@@ -1046,9 +1046,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 <Section title="Ubicación y educación">
                   <div
                     className="
-                    grid grid-cols-1 gap-4
-                    sm:grid-cols-2
-                  "
+                      grid grid-cols-1 gap-4
+                      sm:grid-cols-2
+                    "
                   >
                     <FieldSelect
                       label="País de Residencia*"
@@ -1094,9 +1094,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 <Section title="Acudiente o empresa (opcional)">
                   <div
                     className="
-                    grid grid-cols-1 gap-4
-                    sm:grid-cols-2
-                  "
+                      grid grid-cols-1 gap-4
+                      sm:grid-cols-2
+                    "
                   >
                     <FieldSelect
                       label="¿Acudiente o empresa?"
@@ -1137,9 +1137,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 <Section title="Programa y fechas">
                   <div
                     className="
-                    grid grid-cols-1 gap-4
-                    sm:grid-cols-2
-                  "
+                      grid grid-cols-1 gap-4
+                      sm:grid-cols-2
+                    "
                   >
                     <FieldSelect
                       label={
@@ -1193,9 +1193,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 <Section title="Sede y detalles de pago">
                   <div
                     className="
-                    grid grid-cols-1 gap-4
-                    sm:grid-cols-2
-                  "
+                      grid grid-cols-1 gap-4
+                      sm:grid-cols-2
+                    "
                   >
                     <FieldSelect
                       label="Sede*"
@@ -1261,9 +1261,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 <Section title="Documentos requeridos">
                   <div
                     className="
-                    grid grid-cols-1 gap-4
-                    sm:grid-cols-2
-                  "
+                      grid grid-cols-1 gap-4
+                      sm:grid-cols-2
+                    "
                   >
                     <FieldFile
                       label="Subir Documento de Identidad"
@@ -1297,9 +1297,9 @@ export default function FormModal({ isOpen, onClose }: Props) {
                 {/* Acciones */}
                 <div
                   className="
-                  sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30
-                  bg-[#0B132B] py-4
-                "
+                    sticky bottom-0 mt-6 flex gap-3 border-t border-cyan-900/30
+                    bg-[#0B132B] py-4
+                  "
                 >
                   <button
                     type="button"

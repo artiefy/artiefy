@@ -305,32 +305,33 @@ export default function AdminDashboard() {
     <>
       <div
         className="
-        p-4
-        sm:p-6
-      "
+          p-4
+          sm:p-6
+        "
       >
         <header className="group relative overflow-hidden rounded-lg p-[1px]">
           <div
             className="
-            absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF]
-            via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500
-          "
+              absolute -inset-0.5 animate-gradient bg-gradient-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur
+              transition duration-500
+            "
           />
           <div
             className="
-            relative flex flex-col items-start justify-between rounded-lg
-            bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
-            group-hover:bg-gray-800/95
-            sm:flex-row sm:items-center sm:p-6
-          "
+              relative flex flex-col items-start justify-between rounded-lg
+              bg-gray-800 p-4 text-white shadow-lg transition-all duration-300
+              group-hover:bg-gray-800/95
+              sm:flex-row sm:items-center sm:p-6
+            "
           >
             <h1
               className="
-              flex items-center gap-3 text-xl font-extrabold tracking-tight
-              text-primary
-              sm:text-2xl
-              lg:text-3xl
-            "
+                flex items-center gap-3 text-xl font-extrabold tracking-tight
+                text-primary
+                sm:text-2xl
+                lg:text-3xl
+              "
             >
               Administrador de usuarios
             </h1>
@@ -342,28 +343,28 @@ export default function AdminDashboard() {
           <button
             onClick={() => setShowCreateForm(true)}
             className="
-              group/button relative inline-flex
-              items-center
-              justify-center gap-1 overflow-hidden rounded-md border
-              border-white/20 bg-background px-2 py-1.5 text-xs text-primary
-              transition-all hover:bg-primary/10
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md border border-white/20
+              bg-background px-2 py-1.5 text-xs text-primary transition-all
+              hover:bg-primary/10
               sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
             "
           >
             <span className="relative z-10 font-medium">Crear Usuario</span>
             <UserPlus
               className="
-              relative z-10 size-3.5
-              sm:size-4
-            "
+                relative z-10 size-3.5
+                sm:size-4
+              "
             />
             <div
               className="
-              absolute inset-0 z-0 bg-gradient-to-r from-transparent
-              via-white/10 to-transparent opacity-0 transition-all duration-500
-              group-hover/button:[transform:translateX(100%)]
-              group-hover/button:opacity-100
-            "
+                absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                via-white/10 to-transparent opacity-0 transition-all
+                duration-500
+                group-hover/button:[transform:translateX(100%)]
+                group-hover/button:opacity-100
+              "
             />
           </button>
 
@@ -378,15 +379,15 @@ export default function AdminDashboard() {
         <div className="mt-6">
           <div
             className="
-            mb-6 grid grid-cols-1 gap-4
-            md:grid-cols-2
-            lg:grid-cols-3
-          "
+              mb-6 grid grid-cols-1 gap-4
+              md:grid-cols-2
+              lg:grid-cols-3
+            "
           >
             <div
               className="
-              rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
-            "
+                rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+              "
             >
               <input
                 type="text"
@@ -403,8 +404,8 @@ export default function AdminDashboard() {
 
             <div
               className="
-              rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
-            "
+                rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+              "
             >
               <select
                 className="
@@ -425,8 +426,8 @@ export default function AdminDashboard() {
 
             <div
               className="
-              rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
-            "
+                rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm
+              "
             >
               <select
                 className="
@@ -446,24 +447,24 @@ export default function AdminDashboard() {
 
           <div
             className="
-            mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl
-            backdrop-blur-sm
-          "
+              mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl
+              backdrop-blur-sm
+            "
           >
             <div className="overflow-x-auto">
               <table className="min-w-full table-auto border-collapse">
                 <thead>
                   <tr
                     className="
-                    border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF]
-                    via-[#00BDD8] to-[#01142B] text-white
-                  "
+                      border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF]
+                      via-[#00BDD8] to-[#01142B] text-white
+                    "
                   >
                     <th
                       className="
-                      w-12 px-2 py-3
-                      sm:px-4 sm:py-4
-                    "
+                        w-12 px-2 py-3
+                        sm:px-4 sm:py-4
+                      "
                     >
                       <input
                         type="checkbox"
@@ -478,33 +479,37 @@ export default function AdminDashboard() {
                     </th>
                     <th
                       className="
-                      px-2 py-3 text-left text-xs font-medium whitespace-nowrap
-                      sm:px-4 sm:py-4 sm:text-sm
-                    "
+                        px-2 py-3 text-left text-xs font-medium
+                        whitespace-nowrap
+                        sm:px-4 sm:py-4 sm:text-sm
+                      "
                     >
                       Usuario
                     </th>
                     <th
                       className="
-                      px-2 py-3 text-left text-xs font-medium whitespace-nowrap
-                      sm:px-4 sm:py-4 sm:text-sm
-                    "
+                        px-2 py-3 text-left text-xs font-medium
+                        whitespace-nowrap
+                        sm:px-4 sm:py-4 sm:text-sm
+                      "
                     >
                       Rol
                     </th>
                     <th
                       className="
-                      px-2 py-3 text-left text-xs font-medium whitespace-nowrap
-                      sm:px-4 sm:py-4 sm:text-sm
-                    "
+                        px-2 py-3 text-left text-xs font-medium
+                        whitespace-nowrap
+                        sm:px-4 sm:py-4 sm:text-sm
+                      "
                     >
                       Estado
                     </th>
                     <th
                       className="
-                      px-2 py-3 text-right text-xs font-medium whitespace-nowrap
-                      sm:px-4 sm:py-4 sm:text-sm
-                    "
+                        px-2 py-3 text-right text-xs font-medium
+                        whitespace-nowrap
+                        sm:px-4 sm:py-4 sm:text-sm
+                      "
                     >
                       Acciones
                     </th>
@@ -521,9 +526,9 @@ export default function AdminDashboard() {
                     >
                       <td
                         className="
-                        px-2 py-3
-                        sm:px-4 sm:py-4
-                      "
+                          px-2 py-3
+                          sm:px-4 sm:py-4
+                        "
                       >
                         <input
                           type="checkbox"
@@ -540,28 +545,28 @@ export default function AdminDashboard() {
                       </td>
                       <td
                         className="
-                        px-2 py-3
-                        sm:px-4 sm:py-4
-                      "
+                          px-2 py-3
+                          sm:px-4 sm:py-4
+                        "
                       >
                         <div
                           className="
-                          flex items-center gap-2
-                          sm:gap-3
-                        "
+                            flex items-center gap-2
+                            sm:gap-3
+                          "
                         >
                           <div
                             className="
-                            size-8 rounded-full bg-primary/10 p-1
-                            sm:size-10 sm:p-2
-                          "
+                              size-8 rounded-full bg-primary/10 p-1
+                              sm:size-10 sm:p-2
+                            "
                           >
                             <span
                               className="
-                              flex size-full items-center justify-center
-                              text-xs font-semibold text-primary
-                              sm:text-sm
-                            "
+                                flex size-full items-center justify-center
+                                text-xs font-semibold text-primary
+                                sm:text-sm
+                              "
                             >
                               {user.firstName[0]}
                               {user.lastName[0]}
@@ -570,17 +575,17 @@ export default function AdminDashboard() {
                           <div>
                             <div
                               className="
-                              text-xs font-medium text-white
-                              sm:text-sm
-                            "
+                                text-xs font-medium text-white
+                                sm:text-sm
+                              "
                             >
                               {user.firstName} {user.lastName}
                             </div>
                             <div
                               className="
-                              text-xs text-gray-400
-                              sm:text-sm
-                            "
+                                text-xs text-gray-400
+                                sm:text-sm
+                              "
                             >
                               {user.email}
                             </div>
@@ -589,9 +594,9 @@ export default function AdminDashboard() {
                       </td>
                       <td
                         className="
-                        px-2 py-3
-                        sm:px-4 sm:py-4
-                      "
+                          px-2 py-3
+                          sm:px-4 sm:py-4
+                        "
                       >
                         <select
                           value={user.role || 'sin-role'}
@@ -615,9 +620,9 @@ export default function AdminDashboard() {
                       </td>
                       <td
                         className="
-                        px-2 py-3
-                        sm:px-4 sm:py-4
-                      "
+                          px-2 py-3
+                          sm:px-4 sm:py-4
+                        "
                       >
                         <div
                           className={`
@@ -647,17 +652,17 @@ export default function AdminDashboard() {
                           />
                           <span
                             className="
-                            hidden
-                            sm:inline
-                          "
+                              hidden
+                              sm:inline
+                            "
                           >
                             {user.status}
                           </span>
                           <span
                             className="
-                            inline
-                            sm:hidden
-                          "
+                              inline
+                              sm:hidden
+                            "
                           >
                             {user.status === 'activo'
                               ? 'A'
@@ -669,15 +674,15 @@ export default function AdminDashboard() {
                       </td>
                       <td
                         className="
-                        px-2 py-3
-                        sm:px-4 sm:py-4
-                      "
+                          px-2 py-3
+                          sm:px-4 sm:py-4
+                        "
                       >
                         <div
                           className="
-                          flex items-center justify-end gap-1
-                          sm:gap-2
-                        "
+                            flex items-center justify-end gap-1
+                            sm:gap-2
+                          "
                         >
                           <button
                             onClick={() => handleEditUser(user)}
@@ -689,9 +694,9 @@ export default function AdminDashboard() {
                           >
                             <Edit
                               className="
-                              size-3.5
-                              sm:size-4
-                            "
+                                size-3.5
+                                sm:size-4
+                              "
                             />
                           </button>
                           <button
@@ -704,9 +709,9 @@ export default function AdminDashboard() {
                           >
                             <Trash2
                               className="
-                              size-3.5
-                              sm:size-4
-                            "
+                                size-3.5
+                                sm:size-4
+                              "
                             />
                           </button>
                         </div>
@@ -723,14 +728,15 @@ export default function AdminDashboard() {
       {showCreateForm && (
         <div
           className="
-          bg-opacity-30 fixed inset-0 z-[9999] flex items-center justify-center
-          p-4 backdrop-blur-md
-        "
+            bg-opacity-30 fixed inset-0 z-[9999] flex items-center
+            justify-center p-4 backdrop-blur-md
+          "
         >
           <div
             className="
-            relative z-50 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-2xl
-          "
+              relative z-50 w-full max-w-md rounded-lg bg-gray-800 p-6
+              shadow-2xl
+            "
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white">
@@ -739,9 +745,9 @@ export default function AdminDashboard() {
               <button onClick={() => setShowCreateForm(false)}>
                 <X
                   className="
-                  size-6 text-gray-300
-                  hover:text-white
-                "
+                    size-6 text-gray-300
+                    hover:text-white
+                  "
                 />
               </button>
             </div>
@@ -810,9 +816,8 @@ export default function AdminDashboard() {
             <button
               onClick={handleCreateUser}
               className="
-                mt-4
-                flex
-                w-full justify-center rounded-md bg-primary px-4 py-2 font-bold text-white
+                mt-4 flex w-full justify-center rounded-md bg-primary px-4 py-2
+                font-bold text-white
                 hover:bg-secondary
               "
               disabled={creatingUser}

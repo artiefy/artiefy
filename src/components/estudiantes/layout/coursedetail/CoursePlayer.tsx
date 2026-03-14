@@ -13,9 +13,14 @@ const CoursePlayer: React.FC<CoursePlayerProps> = ({
   onClose,
   progress,
 }) => (
-  <div className="relative w-full max-w-2xl overflow-hidden rounded-lg bg-white p-0 shadow-lg">
+  <div className="
+    relative w-full max-w-2xl overflow-hidden rounded-lg bg-white p-0 shadow-lg
+  ">
     <button
-      className="absolute top-2 right-2 z-20 text-2xl font-bold text-gray-700 hover:text-red-600"
+      className="
+        absolute top-2 right-2 z-20 text-2xl font-bold text-gray-700
+        hover:text-red-600
+      "
       onClick={onClose}
       aria-label="Cerrar"
       type="button"

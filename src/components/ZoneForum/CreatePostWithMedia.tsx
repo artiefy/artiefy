@@ -108,19 +108,30 @@ export function CreatePostWithMedia({
           placeholder="Escribe tu mensaje aquí..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="min-h-24 resize-none border-gray-600 bg-black/40 text-white placeholder:text-gray-500"
+          className="
+            min-h-24 resize-none border-gray-600 bg-black/40 text-white
+            placeholder:text-gray-500
+          "
           disabled={isLoading}
         />
       </div>
 
       {/* Inputs para media */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="
+        grid grid-cols-1 gap-4
+        sm:grid-cols-3
+      ">
         {/* Imagen */}
         <div>
           <label className="text-primary text-xs font-medium mb-1 block">
             Imagen (máx 5MB)
           </label>
-          <label className="flex items-center justify-center rounded-md border border-dashed border-gray-600 bg-black/20 p-3 cursor-pointer hover:bg-black/30 transition">
+          <label className="
+            flex items-center justify-center rounded-md border border-dashed
+            border-gray-600 bg-black/20 p-3 cursor-pointer
+            hover:bg-black/30
+            transition
+          ">
             <input
               type="file"
               accept="image/*"
@@ -139,7 +150,12 @@ export function CreatePostWithMedia({
           <label className="text-primary text-xs font-medium mb-1 block">
             Audio (máx 50MB)
           </label>
-          <label className="flex items-center justify-center rounded-md border border-dashed border-gray-600 bg-black/20 p-3 cursor-pointer hover:bg-black/30 transition">
+          <label className="
+            flex items-center justify-center rounded-md border border-dashed
+            border-gray-600 bg-black/20 p-3 cursor-pointer
+            hover:bg-black/30
+            transition
+          ">
             <input
               type="file"
               accept="audio/*"
@@ -158,7 +174,12 @@ export function CreatePostWithMedia({
           <label className="text-primary text-xs font-medium mb-1 block">
             Video (máx 200MB)
           </label>
-          <label className="flex items-center justify-center rounded-md border border-dashed border-gray-600 bg-black/20 p-3 cursor-pointer hover:bg-black/30 transition">
+          <label className="
+            flex items-center justify-center rounded-md border border-dashed
+            border-gray-600 bg-black/20 p-3 cursor-pointer
+            hover:bg-black/30
+            transition
+          ">
             <input
               type="file"
               accept="video/*"
@@ -189,7 +210,11 @@ export function CreatePostWithMedia({
       <Button
         type="submit"
         disabled={isLoading || isSubmitting || !content.trim()}
-        className="w-full bg-primary hover:bg-primary/90 text-black font-semibold"
+        className="
+          w-full bg-primary
+          hover:bg-primary/90
+          text-black font-semibold
+        "
       >
         {isLoading ? `Enviando... ${uploadProgress}%` : 'Publicar Post'}
       </Button>

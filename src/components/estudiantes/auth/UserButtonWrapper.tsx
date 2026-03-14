@@ -94,7 +94,11 @@ export function UserButtonWrapper() {
     const clickableClasses = isExpired ? 'cursor-pointer' : 'cursor-default';
     return (
       <span
-        className={`${baseClasses} ${stateClasses} ${clickableClasses}`}
+        className={`
+          ${baseClasses}
+          ${stateClasses}
+          ${clickableClasses}
+        `}
         onClick={isExpired ? () => window.open('/planes', '_blank') : undefined}
         title={
           isExpired
@@ -245,12 +249,20 @@ function SubscriptionDetailsPage({
 
   return (
     <div className="flex flex-col items-center justify-center px-2 py-4">
-      <h3 className="mb-4 text-center text-xl font-extrabold whitespace-nowrap text-gray-900">
+      <h3 className="
+        mb-4 text-center text-xl font-extrabold whitespace-nowrap text-gray-900
+      ">
         Detalles de Suscripción
       </h3>
       <div className="mb-6 flex flex-col items-center">
         <span
-          className={`inline-flex items-center rounded-full px-4 py-2 text-lg font-bold shadow-lg ${badgeStyle.bg} ${badgeStyle.border} ${badgeStyle.textColor}`}
+          className={`
+            inline-flex items-center rounded-full px-4 py-2 text-lg font-bold
+            shadow-lg
+            ${badgeStyle.bg}
+            ${badgeStyle.border}
+            ${badgeStyle.textColor}
+          `}
           style={{
             boxShadow: expired
               ? '0 0 0 2px #888'
@@ -284,7 +296,10 @@ function SubscriptionDetailsPage({
         <div className="text-center text-gray-500">Cargando...</div>
       ) : details ? (
         // Tarjeta más ancha, horizontal, sin saltos de línea
-        <div className="flex w-full max-w-2xl min-w-[350px] flex-row items-center gap-8 overflow-x-auto rounded-lg bg-gray-800 p-4 whitespace-nowrap shadow">
+        <div className="
+          flex w-full max-w-2xl min-w-[350px] flex-row items-center gap-8
+          overflow-x-auto rounded-lg bg-gray-800 p-4 whitespace-nowrap shadow
+        ">
           <div className="flex w-1/3 flex-col items-start gap-2">
             <span className="font-semibold text-gray-300">Plan:</span>
             <span className="font-semibold text-gray-300">
@@ -329,7 +344,10 @@ function SubscriptionDetailsPage({
       {/* Botón para renovar si está vencido */}
       {expired && (
         <button
-          className="mt-4 rounded bg-purple-500 px-4 py-2 font-bold text-white shadow hover:bg-purple-600"
+          className="
+            mt-4 rounded bg-purple-500 px-4 py-2 font-bold text-white shadow
+            hover:bg-purple-600
+          "
           onClick={() => window.open('/planes', '_blank')}
         >
           Renovar Suscripción

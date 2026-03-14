@@ -186,7 +186,9 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                         alt="Imagen complementaria"
                         width={800} // Ajusta según tu diseño
                         height={450}
-                        className="max-h-60 w-full rounded-md border object-cover shadow"
+                        className="
+                          max-h-60 w-full rounded-md border object-cover shadow
+                        "
                         style={{ objectFit: 'cover' }}
                       />
                     </div>
@@ -214,7 +216,11 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                           href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                          className="
+                            inline-block rounded bg-blue-600 px-4 py-2
+                            text-white
+                            hover:bg-blue-700
+                          "
                         >
                           Abrir archivo
                         </a>
@@ -227,7 +233,10 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                   <Button
                     onClick={() => handleEdit(question)}
                     variant="outline"
-                    className="text-white hover:text-blue-800"
+                    className="
+                      text-white
+                      hover:text-blue-800
+                    "
                     size="sm"
                   >
                     <Edit className="mr-2 size-4" /> Editar
@@ -235,7 +244,10 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                   <Button
                     onClick={() => handleDelete(question.id)}
                     variant="outline"
-                    className="text-red-600 hover:text-red-800"
+                    className="
+                      text-red-600
+                      hover:text-red-800
+                    "
                     size="sm"
                   >
                     <Trash className="mr-2 size-4" /> Eliminar

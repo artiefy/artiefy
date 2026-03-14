@@ -73,9 +73,12 @@ const ModalidadDropdown: React.FC<ModalidadDropdownProps> = ({
             const selectedId = Number(e.target.value);
             setModalidad(selectedId);
           }}
-          className={`bg-background mb-5 w-60 rounded border p-2 text-white outline-hidden ${
+          className={`
+            bg-background mb-5 w-60 rounded border p-2 text-white outline-hidden
+            ${
             errors.modalidad ? 'border-red-500' : 'border-primary'
-          }`}
+          }
+          `}
         >
           <option value="">Selecciona una modalidad</option>
           {modalidades.map((modalidad) => (

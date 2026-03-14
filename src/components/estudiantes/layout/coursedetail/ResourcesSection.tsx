@@ -240,8 +240,9 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
       >
         <div
           className="
-          mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50
-        "
+            mb-4 flex size-16 items-center justify-center rounded-full
+            bg-muted/50
+          "
         >
           <FaFilePdf className="size-8 text-black" />
         </div>
@@ -265,15 +266,12 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
         <button
           onClick={handleDownloadAll}
           className="
-            inline-flex
-            h-9
-            items-center
-            justify-center
-            gap-2 border bg-background px-3 text-sm font-medium whitespace-nowrap
-            ring-offset-background transition-colors hover:bg-[#22c4d3] hover:text-accent-foreground
-            focus-visible:ring-2
-            focus-visible:ring-ring focus-visible:ring-offset-2
-            focus-visible:outline-none
+            inline-flex h-9 items-center justify-center gap-2 border
+            bg-background px-3 text-sm font-medium whitespace-nowrap
+            ring-offset-background transition-colors
+            hover:bg-[#22c4d3] hover:text-accent-foreground
+            focus-visible:ring-2 focus-visible:ring-ring
+            focus-visible:ring-offset-2 focus-visible:outline-none
             disabled:pointer-events-none disabled:opacity-50
             [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
           "
@@ -302,9 +300,9 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
               <div className="flex items-center gap-3">
                 <div
                   className="
-                  flex size-6 items-center justify-center rounded-full
-                  bg-accent/20
-                "
+                    flex size-6 items-center justify-center rounded-full
+                    bg-accent/20
+                  "
                 >
                   <span className="text-xs font-medium text-accent">
                     {lesson.order}
@@ -347,8 +345,8 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
                       <div className="min-w-0">
                         <p
                           className="
-                          truncate text-sm font-medium text-foreground
-                        "
+                            truncate text-sm font-medium text-foreground
+                          "
                         >
                           {resource.fileName}
                         </p>
@@ -360,14 +358,12 @@ export function ResourcesSection({ courseId }: ResourcesSectionProps) {
                     <button
                       onClick={() => handleDownload(resource)}
                       className="
-                        inline-flex
-                        h-9
-                        items-center justify-center gap-2 rounded-2xl px-3
-                        text-sm font-medium whitespace-nowrap opacity-0 ring-offset-background
-                        transition-opacity group-hover:opacity-100
-                        focus-visible:ring-2
-                        focus-visible:ring-ring focus-visible:ring-offset-2
-                        focus-visible:outline-none
+                        inline-flex h-9 items-center justify-center gap-2
+                        rounded-2xl px-3 text-sm font-medium whitespace-nowrap
+                        opacity-0 ring-offset-background transition-opacity
+                        group-hover:opacity-100
+                        focus-visible:ring-2 focus-visible:ring-ring
+                        focus-visible:ring-offset-2 focus-visible:outline-none
                         disabled:pointer-events-none disabled:opacity-50
                         [&_svg]:pointer-events-none [&_svg]:size-4
                         [&_svg]:shrink-0

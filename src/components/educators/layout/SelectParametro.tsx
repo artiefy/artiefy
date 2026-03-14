@@ -88,7 +88,10 @@ const SelectParametro = ({
       </label>
       {isLoading ? (
         <p
-          className={`my-3 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+          className={`
+            my-3
+            ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+          `}
         >
           Cargando parametro...
         </p>
@@ -100,7 +103,10 @@ const SelectParametro = ({
             const selectedId = Number(e.target.value);
             onParametroChange(selectedId);
           }}
-          className={`mb-5 w-11/12 rounded border border-none bg-white p-2 text-black outline-none`}
+          className={`
+            mb-5 w-11/12 rounded border border-none bg-white p-2 text-black
+            outline-none
+          `}
         >
           <option value="">Selecciona un parametro:</option>
           {parametros.map((parametro) => (

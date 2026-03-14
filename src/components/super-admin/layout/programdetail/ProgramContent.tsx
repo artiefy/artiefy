@@ -38,11 +38,25 @@ export function ProgramContent({ program, isEnrolled }: ProgramContentProps) {
         Cursos del programa
       </h2>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="
+        mb-8 grid grid-cols-1 gap-4
+        sm:grid-cols-2
+        lg:grid-cols-3
+      ">
         {courses.map((course, index) => (
           <div key={`${course.id}-${index}`} className="group relative">
-            <div className="animate-gradient absolute -inset-2 rounded-xl bg-linear-to-r from-black via-[#000B19] to-[#012B4A] opacity-0 blur-[8px] transition-all duration-500 group-hover:opacity-100" />
-            <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
+            <div className="
+              animate-gradient absolute -inset-2 rounded-xl bg-linear-to-r
+              from-black via-[#000B19] to-[#012B4A] opacity-0 blur-[8px]
+              transition-all duration-500
+              group-hover:opacity-100
+            " />
+            <Card className="
+              zoom-in relative flex h-full flex-col justify-between
+              overflow-hidden border-0 bg-gray-800 text-white
+              transition-transform duration-300 ease-in-out
+              hover:scale-[1.02]
+            ">
               <CardHeader className="px-6">
                 <AspectRatio ratio={16 / 9}>
                   <div className="relative size-full">
@@ -53,7 +67,11 @@ export function ProgramContent({ program, isEnrolled }: ProgramContentProps) {
                           : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT'
                       }
                       alt={course.title || 'Imagen del curso'}
-                      className="rounded-md object-cover transition-transform duration-300 hover:scale-105"
+                      className="
+                        rounded-md object-cover transition-transform
+                        duration-300
+                        hover:scale-105
+                      "
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       quality={75}
@@ -69,7 +87,10 @@ export function ProgramContent({ program, isEnrolled }: ProgramContentProps) {
                 <div className="flex items-center justify-between">
                   <Badge
                     variant="outline"
-                    className="border-primary bg-background text-primary hover:bg-black/70"
+                    className="
+                      border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {course.category?.name}
                   </Badge>
@@ -103,14 +124,25 @@ export function ProgramContent({ program, isEnrolled }: ProgramContentProps) {
                       href={
                         isEnrolled ? `/estudiantes/cursos/${course.id}` : '#'
                       }
-                      className="group/button bg-background text-primary relative inline-flex h-10 items-center justify-center overflow-hidden rounded-md border border-white/20 p-2 active:scale-95"
+                      className="
+                        group/button bg-background text-primary relative
+                        inline-flex h-10 items-center justify-center
+                        overflow-hidden rounded-md border border-white/20 p-2
+                        active:scale-95
+                      "
                       onClick={(e) => !isEnrolled && e.preventDefault()}
                     >
                       <p className="font-bold">
                         {isEnrolled ? 'Ver Curso' : 'Requiere Inscripción'}
                       </p>
                       <ArrowRightCircleIcon className="animate-bounce-right ml-1.5 size-5" />
-                      <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+                      <div className="
+                        absolute inset-0 flex w-full
+                        [transform:skew(-13deg)_translateX(-100%)]
+                        justify-center
+                        group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                        group-hover/button:duration-1000
+                      ">
                         <div className="relative h-full w-10 bg-white/30" />
                       </div>
                     </Link>

@@ -31,8 +31,14 @@ export function Modal({ isOpen, onClose, children, title }: ModalProps) {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm">
-      <div className="relative my-8 w-full max-w-4xl rounded-xl border border-gray-800 bg-gray-900 p-6 shadow-xl">
+    <div className="
+      fixed inset-0 z-50 flex items-center justify-center overflow-y-auto
+      bg-black/50 p-4 backdrop-blur-sm
+    ">
+      <div className="
+        relative my-8 w-full max-w-4xl rounded-xl border border-gray-800
+        bg-gray-900 p-6 shadow-xl
+      ">
         {title && (
           <h2 className="mb-6 text-2xl font-bold text-white">{title}</h2>
         )}

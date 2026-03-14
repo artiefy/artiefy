@@ -146,7 +146,10 @@ const ListPreguntaAbierta2: React.FC<QuestionListProps> = ({ activityId }) => {
               <Button
                 onClick={() => handleEdit(question)}
                 variant="outline"
-                className="text-white hover:text-blue-800"
+                className="
+                  text-white
+                  hover:text-blue-800
+                "
                 size="sm"
               >
                 <Edit className="mr-2 size-4" /> Editar
@@ -154,7 +157,10 @@ const ListPreguntaAbierta2: React.FC<QuestionListProps> = ({ activityId }) => {
               <Button
                 onClick={() => handleDelete(question.id)}
                 variant="outline"
-                className="text-red-600 hover:text-red-800"
+                className="
+                  text-red-600
+                  hover:text-red-800
+                "
                 size="sm"
               >
                 <Trash className="mr-2 size-4" /> Eliminar

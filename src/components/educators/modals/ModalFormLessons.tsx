@@ -646,7 +646,9 @@ const ModalFormLessons = ({
 
   // Añadir componente de progreso persistente
   const UploadProgressDisplay = () => (
-    <div className="fixed right-4 bottom-4 z-50 w-96 rounded-lg bg-background p-4 shadow-lg">
+    <div className="
+      fixed right-4 bottom-4 z-50 w-96 rounded-lg bg-background p-4 shadow-lg
+    ">
       <h3 className="mb-2 font-semibold text-primary">Progreso de carga</h3>
       {Object.values(uploadProgresses).map((item) => (
         <div key={item.fileName} className="mb-4">
@@ -672,7 +674,10 @@ const ModalFormLessons = ({
     <>
       <Dialog open={isOpen} onOpenChange={onCloseAction}>
         <DialogContent
-          className={`max-h-[90vh] max-w-5xl overflow-y-auto ${modalClassName}`} // Use the same name
+          className={`
+            max-h-[90vh] max-w-5xl overflow-y-auto
+            ${modalClassName}
+          `} // Use the same name
         >
           <DialogHeader className="mt-4">
             <DialogTitle className="text-4xl">
@@ -692,9 +697,12 @@ const ModalFormLessons = ({
               placeholder="Título"
               value={formData.title}
               onChange={(e) => handleInputChange(e, 'title')}
-              className={`mb-4 w-full rounded border p-2 text-white outline-none ${
+              className={`
+                mb-4 w-full rounded border p-2 text-white outline-none
+                ${
                 errors.title ? 'border-red-500' : 'border-primary'
-              }`}
+              }
+              `}
             />
             {errors.title && (
               <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -710,9 +718,12 @@ const ModalFormLessons = ({
               placeholder="Descripción"
               value={formData.description}
               onChange={(e) => handleInputChange(e, 'description')}
-              className={`mb-3 h-auto w-full rounded border p-2 text-white outline-none ${
+              className={`
+                mb-3 h-auto w-full rounded border p-2 text-white outline-none
+                ${
                 errors.description ? 'border-red-500' : 'border-primary'
-              }`}
+              }
+              `}
             />
             {errors.description && (
               <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -729,9 +740,12 @@ const ModalFormLessons = ({
               placeholder="Duración"
               value={formData.duration}
               onChange={(e) => handleInputChange(e, 'duration')}
-              className={`mb-4 w-full rounded border p-2 text-white outline-none ${
+              className={`
+                mb-4 w-full rounded border p-2 text-white outline-none
+                ${
                 errors.duration ? 'border-red-500' : 'border-primary'
-              }`}
+              }
+              `}
             />
             {errors.duration && (
               <p className="text-sm text-red-500">Este campo es obligatorio.</p>
@@ -752,7 +766,11 @@ const ModalFormLessons = ({
             </div>
 
             {isEditing && (
-              <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="
+                mb-4 grid grid-cols-1 gap-4
+                md:grid-cols-2
+                lg:grid-cols-3
+              ">
                 {formData.cover_image_key && (
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-primary">
@@ -790,7 +808,10 @@ const ModalFormLessons = ({
                         href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${key}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary hover:underline"
+                        className="
+                          text-primary
+                          hover:underline
+                        "
                       >
                         {key.split('/').pop()}
                       </a>
@@ -799,7 +820,11 @@ const ModalFormLessons = ({
                 )}
               </div>
             )}
-            <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="
+              grid w-full grid-cols-1 gap-4
+              md:grid-cols-2
+              lg:grid-cols-3
+            ">
               <FileUpload
                 key="coverimage"
                 type="image"
@@ -839,7 +864,11 @@ const ModalFormLessons = ({
               />
             </div>
             <br />
-            <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="
+              grid w-full grid-cols-1 gap-4
+              md:grid-cols-2
+              lg:grid-cols-3
+            ">
               <FileUpload
                 key="additionalImages"
                 type="image"
@@ -860,7 +889,10 @@ const ModalFormLessons = ({
                 </label>
                 <textarea
                   placeholder="Pega los enlaces separados por saltos de línea"
-                  className="w-full rounded border border-primary p-2 text-white outline-none"
+                  className="
+                    w-full rounded border border-primary p-2 text-white
+                    outline-none
+                  "
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
@@ -879,7 +911,11 @@ const ModalFormLessons = ({
                 <video
                   ref={videoRef}
                   controls
-                  className="mx-auto rounded-lg md:w-1/2 lg:w-1/2"
+                  className="
+                    mx-auto rounded-lg
+                    md:w-1/2
+                    lg:w-1/2
+                  "
                 >
                   <source
                     src={URL.createObjectURL(formData.covervideo)}
@@ -916,7 +952,10 @@ const ModalFormLessons = ({
           <DialogFooter className="mt-4 grid grid-cols-2 gap-4">
             <Button
               onClick={handleCancel}
-              className="mr-2 w-full border-transparent bg-gray-600 p-3 text-white hover:bg-gray-700"
+              className="
+                mr-2 w-full border-transparent bg-gray-600 p-3 text-white
+                hover:bg-gray-700
+              "
             >
               Cancelar
             </Button>

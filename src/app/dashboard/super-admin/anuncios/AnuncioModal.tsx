@@ -147,15 +147,15 @@ const AnuncioModal: React.FC<AnuncioModalProps> = ({
   return (
     <div
       className="
-      bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4
-      backdrop-blur-md
-    "
+        bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center p-4
+        backdrop-blur-md
+      "
     >
       <div
         className="
-        relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg
-        bg-gray-900 p-6 text-white shadow-2xl
-      "
+          relative max-h-screen w-full max-w-2xl overflow-y-auto rounded-lg
+          bg-gray-900 p-6 text-white shadow-2xl
+        "
       >
         {/* Botón de Cerrar */}
         <button

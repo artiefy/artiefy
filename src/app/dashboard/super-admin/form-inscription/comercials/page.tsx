@@ -124,12 +124,21 @@ export default function ComercialsPage() {
               value={contact}
               onChange={(e) => setContact(e.target.value)}
               placeholder="Contacto comercial"
-              className="flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+              className="
+                flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2
+                text-white placeholder-gray-400
+                focus:ring-2 focus:ring-cyan-500 focus:outline-none
+              "
             />
             <button
               onClick={handleSave}
               disabled={saving || !contact.trim()}
-              className="rounded bg-cyan-500 px-4 py-2 font-semibold text-black transition hover:bg-cyan-400 disabled:opacity-60"
+              className="
+                rounded bg-cyan-500 px-4 py-2 font-semibold text-black
+                transition
+                hover:bg-cyan-400
+                disabled:opacity-60
+              "
             >
               {saving ? 'Guardando…' : 'Guardar'}
             </button>
@@ -159,7 +168,11 @@ export default function ComercialsPage() {
                       <input
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+                        className="
+                          flex-1 rounded border border-gray-700 bg-[#2C3E50] p-2
+                          text-white placeholder-gray-400
+                          focus:ring-2 focus:ring-cyan-500 focus:outline-none
+                        "
                       />
                     ) : (
                       <span className="flex-1">{c.contact}</span>
@@ -170,13 +183,22 @@ export default function ComercialsPage() {
                         <button
                           onClick={() => void handleUpdate(c.id)}
                           disabled={isUpdating || !editValue.trim()}
-                          className="rounded bg-green-500 px-3 py-1 font-semibold text-black hover:bg-green-400 disabled:opacity-60"
+                          className="
+                            rounded bg-green-500 px-3 py-1 font-semibold
+                            text-black
+                            hover:bg-green-400
+                            disabled:opacity-60
+                          "
                         >
                           {isUpdating ? 'Guardando…' : 'Guardar'}
                         </button>
                         <button
                           onClick={cancelEdit}
-                          className="rounded bg-gray-600 px-3 py-1 font-semibold text-white hover:bg-gray-500"
+                          className="
+                            rounded bg-gray-600 px-3 py-1 font-semibold
+                            text-white
+                            hover:bg-gray-500
+                          "
                         >
                           Cancelar
                         </button>
@@ -185,14 +207,23 @@ export default function ComercialsPage() {
                       <>
                         <button
                           onClick={() => startEdit(c)}
-                          className="rounded bg-blue-500 px-3 py-1 font-semibold text-black hover:bg-blue-400"
+                          className="
+                            rounded bg-blue-500 px-3 py-1 font-semibold
+                            text-black
+                            hover:bg-blue-400
+                          "
                         >
                           Editar
                         </button>
                         <button
                           onClick={() => void handleDelete(c.id)}
                           disabled={isDeleting}
-                          className="rounded bg-red-500 px-3 py-1 font-semibold text-black hover:bg-red-400 disabled:opacity-60"
+                          className="
+                            rounded bg-red-500 px-3 py-1 font-semibold
+                            text-black
+                            hover:bg-red-400
+                            disabled:opacity-60
+                          "
                         >
                           {isDeleting ? 'Eliminando…' : 'Eliminar'}
                         </button>

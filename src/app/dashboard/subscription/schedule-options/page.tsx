@@ -293,13 +293,13 @@ export default function ScheduleOptionsPage() {
                 <TableCell>
                   <span
                     className={`
-                                          rounded px-2 py-1 text-sm
-                                          ${
+                      rounded px-2 py-1 text-sm
+                      ${
                                             schedule.isActive
                                               ? 'bg-green-100 text-green-800'
                                               : 'bg-gray-100 text-gray-800'
                                           }
-                                        `}
+                    `}
                   >
                     {schedule.isActive ? 'Activo' : 'Inactivo'}
                   </span>

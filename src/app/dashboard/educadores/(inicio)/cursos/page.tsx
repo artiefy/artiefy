@@ -34,7 +34,11 @@ export interface CourseModel {
 // Define el modelo de datos de los parámetros de evaluación
 export function LoadingCourses() {
   return (
-    <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="
+      mt-10 grid grid-cols-1 gap-4
+      md:grid-cols-2
+      lg:grid-cols-3
+    ">
       {Array.from({ length: 9 }).map((_, index) => (
         <SkeletonCard key={index} />
       ))}
@@ -413,7 +417,10 @@ export default function Page() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href="../super-admin"
               >
                 Inicio
@@ -422,7 +429,10 @@ export default function Page() {
             <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink
-                className="text-primary hover:text-gray-300"
+                className="
+                  text-primary
+                  hover:text-gray-300
+                "
                 href="/"
               >
                 Lista de cursos
@@ -438,7 +448,9 @@ export default function Page() {
           {loading ? (
             <LoadingCourses />
           ) : error ? (
-            <div className="mt-10 flex flex-col items-center justify-center py-10 text-center">
+            <div className="
+              mt-10 flex flex-col items-center justify-center py-10 text-center
+            ">
               <p className="text-xl text-red-600">{error}</p>
               <button
                 onClick={fetchCourses}
@@ -448,7 +460,9 @@ export default function Page() {
               </button>
             </div>
           ) : courses.length === 0 ? (
-            <div className="mt-10 flex flex-col items-center justify-center py-10 text-center">
+            <div className="
+              mt-10 flex flex-col items-center justify-center py-10 text-center
+            ">
               <h2 className="mb-4 text-2xl font-bold">
                 Listado de Cursos Asociados
               </h2>

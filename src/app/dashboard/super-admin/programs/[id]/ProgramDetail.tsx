@@ -589,7 +589,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
         <BreadcrumbList className="flex flex-wrap gap-2">
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/dashboard/super-admin"
             >
               Inicio
@@ -598,7 +601,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary hover:text-gray-300"
+              className="
+                text-primary
+                hover:text-gray-300
+              "
               href="/dashboard/super-admin/programs"
             >
               Lista de programas
@@ -606,7 +612,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink className="text-primary hover:text-gray-300">
+            <BreadcrumbLink className="
+              text-primary
+              hover:text-gray-300
+            ">
               Detalles del programa
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -614,16 +623,32 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
       </Breadcrumb>
 
       <div className="group relative h-auto w-full">
-        <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition duration-500 group-hover:opacity-100" />
+        <div className="
+          absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
+          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition
+          duration-500
+          group-hover:opacity-100
+        " />
         <Card
-          className={`zoom-in relative mt-3 h-auto overflow-hidden border-none p-4 transition-transform duration-300 ease-in-out sm:p-6`}
+          className={`
+            zoom-in relative mt-3 h-auto overflow-hidden border-none p-4
+            transition-transform duration-300 ease-in-out
+            sm:p-6
+          `}
           style={{
             backgroundColor: selectedColor,
             color: getContrastYIQ(selectedColor),
           }}
         >
-          <CardHeader className="grid w-full grid-cols-1 gap-4 md:grid-cols-2 md:gap-8 lg:gap-16">
-            <CardTitle className="text-xl font-bold text-primary sm:text-2xl">
+          <CardHeader className="
+            grid w-full grid-cols-1 gap-4
+            md:grid-cols-2 md:gap-8
+            lg:gap-16
+          ">
+            <CardTitle className="
+              text-xl font-bold text-primary
+              sm:text-2xl
+            ">
               Programa: {program.title}
             </CardTitle>
             <div className="flex flex-col">
@@ -639,11 +664,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                   <Button
                     key={color}
                     style={{ backgroundColor: color }}
-                    className={`size-8 border ${
+                    className={`
+                      size-8 border
+                      ${
                       selectedColor === '#FFFFFF'
                         ? 'border-black'
                         : 'border-white'
-                    }`}
+                    }
+                    `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
                 ))}
@@ -651,7 +679,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
             </div>
           </CardHeader>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="
+            grid gap-6
+            md:grid-cols-2
+          ">
             {/* Left Column - Image */}
             <div className="flex w-full flex-col space-y-4">
               <div className="relative aspect-video w-full">
@@ -665,16 +696,26 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                   quality={75}
                 />
               </div>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
+              <div className="
+                grid grid-cols-1 gap-2
+                sm:grid-cols-2 sm:gap-4
+              ">
                 <Button
                   onClick={handleCreateCourse}
-                  className="w-full bg-secondary text-white sm:w-auto"
+                  className="
+                    w-full bg-secondary text-white
+                    sm:w-auto
+                  "
                 >
                   Crear Curso
                 </Button>
                 <Button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full bg-red-600 text-white hover:bg-red-700 sm:w-auto"
+                  className="
+                    w-full bg-red-600 text-white
+                    hover:bg-red-700
+                    sm:w-auto
+                  "
                 >
                   Eliminar Programa
                 </Button>
@@ -683,33 +724,53 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
 
             {/* Right Column - Information */}
             <div className="space-y-6">
-              <h2 className="text-xl font-bold text-primary sm:text-2xl">
+              <h2 className="
+                text-xl font-bold text-primary
+                sm:text-2xl
+              ">
                 Información Del Programa
               </h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="
+                grid grid-cols-1 gap-4
+                sm:grid-cols-2
+              ">
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
                       selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    }
+                    `}
                   >
                     Programa:
                   </h2>
-                  <h1 className="text-xl font-bold text-primary sm:text-2xl">
+                  <h1 className="
+                    text-xl font-bold text-primary
+                    sm:text-2xl
+                  ">
                     {program.title}
                   </h1>
                 </div>
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
                       selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    }
+                    `}
                   >
                     Categoría:
                   </h2>
                   <Badge
                     variant="outline"
-                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                    className="
+                      ml-1 w-fit border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {program.categoryid}
                   </Badge>
@@ -719,15 +780,22 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
               {program.certificationTypeId && (
                 <div className="space-y-2">
                   <h2
-                    className={`text-base font-semibold sm:text-lg ${
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
                       selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    }
+                    `}
                   >
                     Tipo de Certificación:
                   </h2>
                   <Badge
                     variant="outline"
-                    className="ml-1 w-fit border-primary bg-background text-primary hover:bg-black/70"
+                    className="
+                      ml-1 w-fit border-primary bg-background text-primary
+                      hover:bg-black/70
+                    "
                   >
                     {certificationTypes.find(
                       (type) => type.id === program.certificationTypeId
@@ -738,16 +806,24 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
 
               <div className="space-y-2">
                 <h2
-                  className={`text-base font-semibold sm:text-lg ${
+                  className={`
+                    text-base font-semibold
+                    sm:text-lg
+                    ${
                     selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  }
+                  `}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify text-sm sm:text-base ${
+                  className={`
+                    text-justify text-sm
+                    sm:text-base
+                    ${
                     selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  }
+                  `}
                 >
                   {program.description}
                 </p>
@@ -827,7 +903,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteProgram}
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="
+                bg-red-600 text-white
+                hover:bg-red-700
+              "
             >
               Eliminar
             </AlertDialogAction>

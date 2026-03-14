@@ -238,7 +238,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             <BreadcrumbLink
               href="#"
               onClick={() => window.history.back()}
-              className="transition duration-300 hover:scale-105 hover:text-gray-300"
+              className="
+                transition duration-300
+                hover:scale-105 hover:text-gray-300
+              "
             >
               Detalles curso:
               {course.title}
@@ -256,19 +259,36 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative h-auto w-full">
-        <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+        <div className="
+          animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
+          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+          duration-500
+          group-hover:opacity-100
+        " />
         <Card
-          className={`zoom-in relative z-20 mt-3 h-auto overflow-hidden border-none bg-black p-4 text-white transition-transform duration-300 ease-in-out`}
+          className={`
+            zoom-in relative z-20 mt-3 h-auto overflow-hidden border-none
+            bg-black p-4 text-white transition-transform duration-300
+            ease-in-out
+          `}
           style={{
             backgroundColor: selectedColor,
             color: getContrastYIQ(selectedColor),
           }}
         >
-          <CardHeader className="grid w-full grid-cols-2 justify-evenly md:gap-32 lg:gap-60">
+          <CardHeader className="
+            grid w-full grid-cols-2 justify-evenly
+            md:gap-32
+            lg:gap-60
+          ">
             <CardTitle
-              className={`text-2xl font-bold hover:underline ${
+              className={`
+                text-2xl font-bold
+                hover:underline
+                ${
                 selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-              }`}
+              }
+              `}
             >
               Curso: {course.title}
             </CardTitle>
@@ -292,11 +312,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div className="my-4 flex justify-between">
                   <div className="flex flex-col">
                     <h2
-                      className={`font-semibold ${
+                      className={`
+                        font-semibold
+                        ${
                         selectedColor === '#FFFFFF'
                           ? 'text-black'
                           : 'text-white'
-                      }`}
+                      }
+                      `}
                     >
                       Educador:
                     </h2>
@@ -312,11 +335,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </div>
                   <div className="flex gap-4">
                     <p
-                      className={`flex ${
+                      className={`
+                        flex
+                        ${
                         selectedColor === '#FFFFFF'
                           ? 'text-black'
                           : 'text-white'
-                      }`}
+                      }
+                      `}
                     >
                       <FaUserGraduate className="mr-2 text-blue-600" />
                       {course.totalStudents} Estudiantes
@@ -326,7 +352,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     {Array.from({ length: 5 }).map((_, index) => (
                       <StarIcon
                         key={index}
-                        className={`size-5 ${index < Math.floor(course.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
+                        className={`
+                          size-5
+                          ${index < Math.floor(course.rating ?? 0) ? 'text-yellow-400' : 'text-gray-300'}`}
                       />
                     ))}
                     <span className="ml-2 text-lg font-semibold text-yellow-400">
@@ -338,7 +366,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   <div>
                     <Badge
                       variant="outline"
-                      className="border-primary bg-background text-primary hover:bg-black/70"
+                      className="
+                        border-primary bg-background text-primary
+                        hover:bg-black/70
+                      "
                     >
                       {course.categoryid}
                     </Badge>
@@ -355,14 +386,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               </div>
               <div className="my-4">
                 <h2
-                  className={`text-lg font-semibold ${
+                  className={`
+                    text-lg font-semibold
+                    ${
                     selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }`}
+                  }
+                  `}
                 >
                   Descripción:
                 </h2>
                 <p
-                  className={`text-justify ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                  className={`
+                    text-justify
+                    ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                 >
                   {course.description}
                 </p>
@@ -370,9 +407,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               <div className="grid grid-cols-2">
                 <div className="flex flex-col">
                   <h2
-                    className={`text-lg font-semibold ${
+                    className={`
+                      text-lg font-semibold
+                      ${
                       selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    }
+                    `}
                   >
                     Nivel:
                   </h2>
@@ -386,9 +426,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 </div>
                 <div className="flex flex-col">
                   <h2
-                    className={`text-lg font-semibold ${
+                    className={`
+                      text-lg font-semibold
+                      ${
                       selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }`}
+                    }
+                    `}
                   >
                     Modalidad:
                   </h2>
@@ -410,15 +453,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       return (
                         <div
                           key={lesson.id}
-                          className={`overflow-hidden rounded-lg border transition-colors`}
+                          className={`
+                            overflow-hidden rounded-lg border transition-colors
+                          `}
                         >
                           <button
-                            className="flex w-full items-center justify-between px-6 py-4"
+                            className="
+                              flex w-full items-center justify-between px-6 py-4
+                            "
                             onClick={() => toggleLesson(lesson.id)}
                           >
-                            <div className="flex w-full items-center justify-between">
+                            <div className="
+                              flex w-full items-center justify-between
+                            ">
                               <div
-                                className={`flex items-center space-x-2 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                                className={`
+                                  flex items-center space-x-2
+                                  ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
                               >
                                 <span className="font-medium">
                                   Clase {lesson.order}: {lesson.title}{' '}
@@ -432,7 +483,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           </button>
                           {expandedLesson === lesson.id && (
                             <div
-                              className={`px-6 py-4 ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                              className={`
+                                px-6 py-4
+                                ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}`}
                             >
                               <p className="text-sm">
                                 Del Educador: {lesson.course.instructor}
@@ -445,7 +498,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                 {formatDate(lesson.createdAt)}
                               </p>
                               <Link
-                                className="rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-700"
+                                className="
+                                  rounded-lg bg-blue-500 px-4 py-2 text-white
+                                  hover:bg-blue-700
+                                "
                                 href={`/dashboard/educadores/cursos/${courseIdNumber}/${lesson.id}/verClase/${lesson.id}`}
                               >
                                 Ir a la clase
@@ -462,11 +518,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           <Link
             href={'#'}
             onClick={() => window.history.back()}
-            className="group/button relative inline-flex w-1/2 items-center justify-center overflow-hidden rounded-lg border border-white/20 bg-blue-500 p-2 px-4 text-white hover:bg-blue-700 active:scale-95"
+            className="
+              group/button relative inline-flex w-1/2 items-center
+              justify-center overflow-hidden rounded-lg border border-white/20
+              bg-blue-500 p-2 px-4 text-white
+              hover:bg-blue-700
+              active:scale-95
+            "
           >
             <ArrowLeftIcon className="animate-bounce-right size-5" />
             <p className="font-bold">Volver</p>
-            <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
+            <div className="
+              absolute inset-0 flex w-full
+              [transform:skew(-13deg)_translateX(-100%)] justify-center
+              group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+              group-hover/button:duration-1000
+            ">
               <div className="relative h-full w-10 bg-white/30" />
             </div>
           </Link>

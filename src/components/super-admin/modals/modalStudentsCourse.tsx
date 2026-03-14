@@ -51,7 +51,10 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4 backdrop-blur-md">
+    <div className="
+      bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black
+      p-4 backdrop-blur-md
+    ">
       <div className="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
         {/* 🔹 Modal Header */}
         <div className="flex items-center justify-between border-b pb-2">
@@ -59,7 +62,10 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
             Estudiantes inscritos
           </h2>
           <button onClick={onClose}>
-            <X className="size-6 text-gray-600 hover:text-red-500" />
+            <X className="
+              size-6 text-gray-600
+              hover:text-red-500
+            " />
           </button>
         </div>
 
@@ -82,7 +88,9 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
               students.map((student) => (
                 <li
                   key={student.id}
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className="
+                    flex items-center justify-between rounded-lg border p-3
+                  "
                 >
                   <div>
                     <p className="text-sm font-semibold text-gray-800">
@@ -90,9 +98,13 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
                     </p>
                     <p className="text-xs text-gray-500">{student.email}</p>
                   </div>
-                  <div className="h-4 w-36 overflow-hidden rounded-full bg-gray-200">
+                  <div className="
+                    h-4 w-36 overflow-hidden rounded-full bg-gray-200
+                  ">
                     <div
-                      className="h-full bg-blue-500 text-center text-xs text-white"
+                      className="
+                        h-full bg-blue-500 text-center text-xs text-white
+                      "
                       style={{ width: `${student.progress}%` }}
                     >
                       {student.progress}%
@@ -108,7 +120,10 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
         <div className="mt-4 flex justify-end">
           <button
             onClick={onClose}
-            className="rounded-md bg-gray-600 px-4 py-2 text-white hover:bg-gray-700"
+            className="
+              rounded-md bg-gray-600 px-4 py-2 text-white
+              hover:bg-gray-700
+            "
           >
             Cerrar
           </button>

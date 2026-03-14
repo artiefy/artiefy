@@ -32,12 +32,12 @@ const ModalObjetivoGen: React.FC<ModalObjetivoGenProps> = ({
     >
       <div
         className="
-        relative h-auto max-h-[95vh] w-full max-w-xs overflow-y-auto rounded-2xl
-        bg-[#0F2940] p-3 shadow-2xl transition-all duration-300
-        sm:max-w-lg sm:p-6
-        md:max-w-2xl
-        lg:max-w-4xl
-      "
+          relative h-auto max-h-[95vh] w-full max-w-xs overflow-y-auto
+          rounded-2xl bg-[#0F2940] p-3 shadow-2xl transition-all duration-300
+          sm:max-w-lg sm:p-6
+          md:max-w-2xl
+          lg:max-w-4xl
+        "
       >
         {/* Botón de cierre */}
         {/* <button
@@ -49,19 +49,19 @@ const ModalObjetivoGen: React.FC<ModalObjetivoGenProps> = ({
         </button> */}
         <h2
           className="
-          mb-4 text-center text-2xl font-bold text-cyan-400
-          sm:text-3xl
-          md:text-4xl
-        "
+            mb-4 text-center text-2xl font-bold text-cyan-400
+            sm:text-3xl
+            md:text-4xl
+          "
         >
           Objetivo General
         </h2>
         <div
           className="
-          min-h-[120px] rounded-xl bg-[#e6f0fa] p-2 text-base shadow-inner
-          sm:min-h-[200px] sm:p-4 sm:text-lg
-          md:text-xl
-        "
+            min-h-[120px] rounded-xl bg-[#e6f0fa] p-2 text-base shadow-inner
+            sm:min-h-[200px] sm:p-4 sm:text-lg
+            md:text-xl
+          "
         >
           <textarea
             name="Actividades"
@@ -80,9 +80,9 @@ const ModalObjetivoGen: React.FC<ModalObjetivoGenProps> = ({
         </div>
         <div
           className="
-          mt-6 flex flex-col justify-between gap-3
-          sm:flex-row sm:gap-4
-        "
+            mt-6 flex flex-col justify-between gap-3
+            sm:flex-row sm:gap-4
+          "
         >
           <button
             onClick={onAnterior}
@@ -96,9 +96,9 @@ const ModalObjetivoGen: React.FC<ModalObjetivoGenProps> = ({
           >
             <FaArrowLeft
               className="
-              transition-transform duration-300
-              group-hover:-translate-x-1
-            "
+                transition-transform duration-300
+                group-hover:-translate-x-1
+              "
             />
             Justificación
           </button>
@@ -126,9 +126,9 @@ const ModalObjetivoGen: React.FC<ModalObjetivoGenProps> = ({
             Objetivos Específicos
             <FaArrowRight
               className="
-              transition-transform duration-300
-              group-hover:translate-x-1
-            "
+                transition-transform duration-300
+                group-hover:translate-x-1
+              "
             />
           </button>
         </div>

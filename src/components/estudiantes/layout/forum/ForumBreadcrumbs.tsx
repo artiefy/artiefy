@@ -29,17 +29,17 @@ export function ForumBreadcrumbs({
   return (
     <div
       className="
-      relative z-20 flex w-full flex-col items-start backdrop-blur-sm
-      md:bg-transparent md:backdrop-blur-none
-    "
+        relative z-20 flex w-full flex-col items-start backdrop-blur-sm
+        md:bg-transparent md:backdrop-blur-none
+      "
     >
       <div className="w-full min-w-0">
         <Breadcrumb className="-px-0 w-full overflow-x-auto py-2 sm:px-6 md:pt-0">
           <BreadcrumbList
             className="
-            flex w-full flex-nowrap items-center gap-1 whitespace-nowrap
-            md:px-0
-          "
+              flex w-full flex-nowrap items-center gap-1 whitespace-nowrap
+              md:px-0
+            "
           >
             <BreadcrumbItem>
               <BreadcrumbLink href="/">
@@ -87,10 +87,10 @@ export function ForumBreadcrumbs({
       </div>
       <div
         className="
-        -mb-7 flex-shrink-0 pt-1 pl-0
-        sm:-mb-0
-        md:pl-4
-      "
+          -mb-7 flex-shrink-0 pt-1 pl-0
+          sm:-mb-0
+          md:pl-4
+        "
       >
         <Link
           href={`/estudiantes/cursos/${courseId}`}

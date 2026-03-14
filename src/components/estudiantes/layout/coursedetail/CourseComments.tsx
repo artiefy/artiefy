@@ -621,16 +621,15 @@ export default function CourseComments({
                 type="submit"
                 disabled={isSubmitting}
                 className="
-                  inline-flex h-9 items-center justify-center
-                  gap-2 rounded-[14px] bg-primary px-3
-                  text-sm
-                  font-medium whitespace-nowrap
-                  text-[#080c16] ring-offset-background
-                  transition-colors hover:bg-primary/90
-                  focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
-                  focus-visible:outline-none
-                  disabled:pointer-events-none
-                  disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
+                  inline-flex h-9 items-center justify-center gap-2
+                  rounded-[14px] bg-primary px-3 text-sm font-medium
+                  whitespace-nowrap text-[#080c16] ring-offset-background
+                  transition-colors
+                  hover:bg-primary/90
+                  focus-visible:ring-2 focus-visible:ring-ring
+                  focus-visible:ring-offset-2 focus-visible:outline-none
+                  disabled:pointer-events-none disabled:opacity-50
+                  [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0
                 "
                 style={{ backgroundColor: '#22c4d3' }}
               >
@@ -687,14 +686,14 @@ export default function CourseComments({
                 {/* Avatar */}
                 <div
                   className="
-                  relative flex size-10 shrink-0 overflow-hidden rounded-full
-                "
+                    relative flex size-10 shrink-0 overflow-hidden rounded-full
+                  "
                 >
                   <span
                     className="
-                    flex size-full items-center justify-center rounded-full
-                    bg-accent/20 text-sm font-semibold text-accent
-                  "
+                      flex size-full items-center justify-center rounded-full
+                      bg-accent/20 text-sm font-semibold text-accent
+                    "
                   >
                     {comment.userName
                       .split(' ')
@@ -735,8 +734,8 @@ export default function CourseComments({
                   <div className="group flex items-start gap-2">
                     <div
                       className="
-                      flex-1 text-sm whitespace-pre-wrap text-slate-300
-                    "
+                        flex-1 text-sm whitespace-pre-wrap text-slate-300
+                      "
                     >
                       {comment.content}
                     </div>
@@ -745,12 +744,10 @@ export default function CourseComments({
                         <button
                           onClick={() => toggleMenu(comment.id)}
                           className="
-                            ml-2 rounded-full p-1 text-slate-400
-                            opacity-0
+                            ml-2 rounded-full p-1 text-slate-400 opacity-0
                             transition-opacity
                             group-hover:opacity-100
-                            hover:bg-slate-700/20
-                            hover:text-slate-100
+                            hover:bg-slate-700/20 hover:text-slate-100
                           "
                           aria-label="Abrir menú"
                         >
@@ -776,8 +773,8 @@ export default function CourseComments({
                         {openMenuId === comment.id && (
                           <div
                             className="
-                              absolute top-1/2 left-full z-10 ml-2
-                              w-40 -translate-y-1/2 rounded-lg border shadow-lg
+                              absolute top-1/2 left-full z-10 ml-2 w-40
+                              -translate-y-1/2 rounded-lg border shadow-lg
                             "
                             style={{
                               backgroundColor: '#01152d',
@@ -788,8 +785,8 @@ export default function CourseComments({
                               onClick={() => handleEditFromMenu(comment)}
                               className="
                                 flex w-full items-center gap-2 rounded-t-lg px-4
-                                py-2 text-left text-sm
-                                text-slate-300 transition-colors
+                                py-2 text-left text-sm text-slate-300
+                                transition-colors
                                 hover:bg-slate-700/20 hover:text-slate-100
                               "
                             >
@@ -801,8 +798,8 @@ export default function CourseComments({
                               disabled={deletingComment === comment.id}
                               className="
                                 flex w-full items-center gap-2 rounded-b-lg px-4
-                                py-2 text-left text-sm
-                                text-slate-300 transition-colors
+                                py-2 text-left text-sm text-slate-300
+                                transition-colors
                                 hover:bg-slate-700/20 hover:text-red-400
                               "
                             >
@@ -830,9 +827,9 @@ export default function CourseComments({
                           comment.hasLiked
                             ? 'text-cyan-400'
                             : `
-                            text-slate-400
-                            hover:text-slate-100
-                          `
+                              text-slate-400
+                              hover:text-slate-100
+                            `
                         }
                       `}
                     >
@@ -913,13 +910,14 @@ export default function CourseComments({
                         <button
                           onClick={() => handleReply(comment.id)}
                           className="
-                            inline-flex h-8 items-center
-                            justify-center gap-2 rounded-md px-3
-                            text-sm font-medium
+                            inline-flex h-8 items-center justify-center gap-2
+                            rounded-md px-3 text-sm font-medium
                             whitespace-nowrap text-[#080c16]
                             ring-offset-background transition-colors
                             focus-visible:ring-2 focus-visible:ring-ring
-                            focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50
+                            focus-visible:ring-offset-2
+                            focus-visible:outline-none
+                            disabled:pointer-events-none disabled:opacity-50
                           "
                           style={{ backgroundColor: '#22c4d3' }}
                         >
@@ -932,9 +930,9 @@ export default function CourseComments({
                             setReplyContent('');
                           }}
                           className="
-                            inline-flex h-8 items-center
-                            justify-center rounded-md px-3
-                            text-sm font-medium whitespace-nowrap text-slate-400 transition-colors
+                            inline-flex h-8 items-center justify-center
+                            rounded-md px-3 text-sm font-medium
+                            whitespace-nowrap text-slate-400 transition-colors
                             hover:text-slate-100
                           "
                         >
@@ -954,16 +952,16 @@ export default function CourseComments({
                             <div key={reply.id} className="flex gap-2">
                               <div
                                 className="
-                                relative flex size-8 shrink-0
-                                overflow-hidden rounded-full
-                              "
+                                  relative flex size-8 shrink-0 overflow-hidden
+                                  rounded-full
+                                "
                               >
                                 <span
                                   className="
-                                  flex size-full items-center justify-center
-                                  rounded-full bg-accent/20 text-xs font-semibold
-                                  text-accent
-                                "
+                                    flex size-full items-center justify-center
+                                    rounded-full bg-accent/20 text-xs
+                                    font-semibold text-accent
+                                  "
                                 >
                                   {reply.userName
                                     .split(' ')
@@ -977,8 +975,8 @@ export default function CourseComments({
                                 <div className="flex items-center gap-2">
                                   <span
                                     className="
-                                    text-sm font-medium text-slate-100
-                                  "
+                                      text-sm font-medium text-slate-100
+                                    "
                                   >
                                     {reply.userName}
                                   </span>
@@ -1002,8 +1000,7 @@ export default function CourseComments({
                                         }
                                         className="
                                           ml-2 rounded-full p-1 text-slate-400
-                                          opacity-0
-                                          transition-opacity
+                                          opacity-0 transition-opacity
                                           group-hover:opacity-100
                                           hover:bg-slate-700/20
                                           hover:text-slate-100
@@ -1041,9 +1038,9 @@ export default function CourseComments({
                                       {openReplyMenuId === reply.id && (
                                         <div
                                           className="
-                                            absolute top-1/2 left-full
-                                            z-10 ml-2 w-40
-                                            -translate-y-1/2 rounded-lg border shadow-lg
+                                            absolute top-1/2 left-full z-10 ml-2
+                                            w-40 -translate-y-1/2 rounded-lg
+                                            border shadow-lg
                                           "
                                           style={{
                                             backgroundColor: '#01152d',
@@ -1064,10 +1061,10 @@ export default function CourseComments({
                                             className="
                                               flex w-full items-center gap-2
                                               rounded-lg px-4 py-2 text-left
-                                              text-sm
-                                              text-slate-300
+                                              text-sm text-slate-300
                                               transition-colors
-                                              hover:bg-slate-700/20 hover:text-red-400
+                                              hover:bg-slate-700/20
+                                              hover:text-red-400
                                             "
                                           >
                                             {deletingReply === reply.id ? (

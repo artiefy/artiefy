@@ -267,32 +267,45 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
   const handleClear = () => setSearch('');
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60">
+    <div className="
+      fixed inset-0 z-[200] flex items-center justify-center bg-black/60
+    ">
       {/* Barra de progreso de invitación */}
       {isInviting && (
-        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/60">
-          <div className="flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940] p-6 shadow-lg">
+        <div className="
+          fixed inset-0 z-[210] flex items-center justify-center bg-black/60
+        ">
+          <div className="
+            flex w-full max-w-md flex-col items-center rounded-lg bg-[#0F2940]
+            p-6 shadow-lg
+          ">
             <div className="mb-4 w-full">
               <div className="h-6 w-full rounded-full bg-gray-200">
                 <div
-                  className={`h-6 rounded-full transition-all duration-300 ${
+                  className={`
+                    h-6 rounded-full transition-all duration-300
+                    ${
                     inviteError
                       ? 'bg-red-500'
                       : inviteAlready
                         ? 'bg-yellow-400'
                         : 'bg-teal-500'
-                  }`}
+                  }
+                  `}
                   style={{ width: `${inviteProgress}%` }}
                 />
               </div>
               <div
-                className={`mt-2 text-center font-semibold ${
+                className={`
+                  mt-2 text-center font-semibold
+                  ${
                   inviteError
                     ? 'text-red-400'
                     : inviteAlready
                       ? 'text-yellow-500'
                       : 'text-gray-500'
-                }`}
+                }
+                `}
               >
                 {inviteStatusText
                   ? inviteStatusText
@@ -311,18 +324,31 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
           </div>
         </div>
       )}
-      <div className="relative mx-auto max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800 p-0 shadow-2xl">
+      <div className="
+        relative mx-auto max-h-[80vh] w-full max-w-2xl overflow-y-auto
+        rounded-xl bg-gradient-to-br from-slate-900 via-blue-900 to-teal-800 p-0
+        shadow-2xl
+      ">
         {/* Header sticky y barra de búsqueda sticky, ocupando todo el ancho */}
-        <div className="sticky top-0 z-10 w-full bg-gradient-to-br from-slate-900 to-blue-900 p-2 backdrop-blur-md">
+        <div className="
+          sticky top-0 z-10 w-full bg-gradient-to-br from-slate-900 to-blue-900
+          p-2 backdrop-blur-md
+        ">
           <div className="px-6 pt-6">
             {/* Header del Modal */}
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-4 pr-4">
-                <div className="flex size-16 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-teal-400 to-cyan-300">
+                <div className="
+                  flex size-16 flex-shrink-0 items-center justify-center
+                  rounded-lg bg-gradient-to-br from-teal-400 to-cyan-300
+                ">
                   <UserPlus className="size-8 text-slate-900" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h2 className="mb-2 text-2xl font-bold break-words text-white md:text-3xl">
+                  <h2 className="
+                    mb-2 text-2xl font-bold break-words text-white
+                    md:text-3xl
+                  ">
                     Invitar Integrante al Proyecto
                   </h2>
                   <div className="flex flex-wrap items-center gap-2">
@@ -336,7 +362,10 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-white hover:bg-white/10"
+                  className="
+                    text-white
+                    hover:bg-white/10
+                  "
                   onClick={() => {}}
                   aria-label="Recargar lista"
                   title="Búsqueda automática por email"
@@ -347,7 +376,10 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="flex-shrink-0 text-white hover:bg-white/10"
+                  className="
+                    flex-shrink-0 text-white
+                    hover:bg-white/10
+                  "
                   onClick={onClose}
                   aria-label="Cerrar"
                 >
@@ -362,7 +394,10 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                 placeholder="Buscar usuario por nombre o email..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="flex-1 bg-white/10 text-white placeholder:text-gray-400"
+                className="
+                  flex-1 bg-white/10 text-white
+                  placeholder:text-gray-400
+                "
               />
               {search && (
                 <Button
@@ -432,16 +467,32 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                 return (
                   <Card
                     key={user.id}
-                    className="group border-white/20 bg-white/10 backdrop-blur-sm transition-all duration-300 hover:bg-white/15"
+                    className="
+                      group border-white/20 bg-white/10 backdrop-blur-sm
+                      transition-all duration-300
+                      hover:bg-white/15
+                    "
                   >
                     <CardContent className="p-4">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="
+                        flex flex-col gap-3
+                        sm:flex-row sm:items-center sm:justify-between
+                      ">
                         <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex size-12 flex-shrink-0 items-center justify-center rounded-full border-2 border-teal-400/50 bg-gradient-to-br from-teal-400 to-cyan-300 text-sm font-semibold text-slate-900">
+                          <div className="
+                            flex size-12 flex-shrink-0 items-center
+                            justify-center rounded-full border-2
+                            border-teal-400/50 bg-gradient-to-br from-teal-400
+                            to-cyan-300 text-sm font-semibold text-slate-900
+                          ">
                             {avatarText}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="text-sm font-semibold break-words text-white transition-colors group-hover:text-teal-300">
+                            <h3 className="
+                              text-sm font-semibold break-words text-white
+                              transition-colors
+                              group-hover:text-teal-300
+                            ">
                               {displayName}
                             </h3>
                             <p className="text-xs break-words text-gray-300">
@@ -451,7 +502,10 @@ const ModalInvitarIntegrante: React.FC<ModalInvitarIntegranteProps> = ({
                         </div>
                         <Button
                           variant="outline"
-                          className="border-teal-400/40 bg-white/10 text-teal-300 hover:bg-teal-500/20 hover:text-teal-200"
+                          className="
+                            border-teal-400/40 bg-white/10 text-teal-300
+                            hover:bg-teal-500/20 hover:text-teal-200
+                          "
                           onClick={() => handleInvite(user.id)}
                           disabled={yaEnProyecto || invitacionPendiente}
                         >

@@ -142,9 +142,9 @@ const LessonContentTabs = ({
       {/* Mobile: menu con flechas */}
       <div
         className="
-        flex items-center gap-2
-        sm:hidden
-      "
+          flex items-center gap-2
+          sm:hidden
+        "
       >
         <button
           type="button"
@@ -191,10 +191,10 @@ const LessonContentTabs = ({
                   activeTab === tab.id
                     ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
                     : `
-                    border-transparent bg-transparent text-white/80
-                    hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50
-                    hover:text-white
-                  `
+                      border-transparent bg-transparent text-white/80
+                      hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50
+                      hover:text-white
+                    `
                 }
               `}
               style={{ scrollSnapAlign: 'start' }}
@@ -204,10 +204,10 @@ const LessonContentTabs = ({
               {tab.count !== undefined && (
                 <span
                   className="
-                  inline-flex aspect-square size-6 justify-center rounded-full
-                  border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs
-                  text-black
-                "
+                    inline-flex aspect-square size-6 justify-center rounded-full
+                    border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs
+                    text-black
+                  "
                 >
                   {tab.count}
                 </span>
@@ -245,9 +245,9 @@ const LessonContentTabs = ({
       {/* Desktop */}
       <nav
         className="
-        hidden items-center gap-2
-        sm:flex
-      "
+          hidden items-center gap-2
+          sm:flex
+        "
       >
         {tabs.map((tab) => (
           <button
@@ -260,10 +260,10 @@ const LessonContentTabs = ({
                 activeTab === tab.id
                   ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
                   : `
-                  border-transparent bg-transparent text-white/80
-                  hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50
-                  hover:text-white
-                `
+                    border-transparent bg-transparent text-white/80
+                    hover:border-[hsl(217,33%,17%)]/60 hover:bg-[#061c3780]/50
+                    hover:text-white
+                  `
               }
             `}
           >
@@ -272,10 +272,10 @@ const LessonContentTabs = ({
             {tab.count !== undefined && (
               <span
                 className="
-                inline-flex aspect-square size-6 justify-center rounded-full
-                border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs
-                text-black
-              "
+                  inline-flex aspect-square size-6 justify-center rounded-full
+                  border border-white/20 bg-[#22C4D3] pt-[2.5px] text-xs
+                  text-black
+                "
               >
                 {tab.count}
               </span>

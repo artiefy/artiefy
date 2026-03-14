@@ -375,9 +375,9 @@ export const ChatList = ({
   return (
     <div
       className="
-      flex size-full min-h-0 flex-col border-r border-transparent
-      bg-gradient-to-b from-[#061226] to-[#071024] text-white
-    "
+        flex size-full min-h-0 flex-col border-r border-transparent
+        bg-gradient-to-b from-[#061226] to-[#071024] text-white
+      "
     >
       <div
         className={`
@@ -392,9 +392,9 @@ export const ChatList = ({
             ${
               activeType === 'chatia'
                 ? `
-              bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text
-              text-transparent
-            `
+                  bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text
+                  text-transparent
+                `
                 : 'text-white'
             }
           `}
@@ -431,8 +431,9 @@ export const ChatList = ({
             >
               <div
                 className="
-                flex items-center justify-center gap-2 font-semibold text-black
-              "
+                  flex items-center justify-center gap-2 font-semibold
+                  text-black
+                "
               >
                 {isCreatingChat ? (
                   <>
@@ -499,8 +500,9 @@ export const ChatList = ({
             >
               <div
                 className="
-                flex items-center justify-center gap-2 font-semibold text-black
-              "
+                  flex items-center justify-center gap-2 font-semibold
+                  text-black
+                "
               >
                 {isCreatingTicket ? (
                   <>
@@ -554,8 +556,9 @@ export const ChatList = ({
       ) : chats.length === 0 ? (
         <div
           className="
-          flex flex-1 items-center justify-center p-8 text-center text-gray-500
-        "
+            flex flex-1 items-center justify-center p-8 text-center
+            text-gray-500
+          "
         >
           No hay{' '}
           {activeType === 'tickets'
@@ -627,9 +630,9 @@ export const ChatList = ({
                             {Number(chat.unreadCount) > 0 && (
                               <span
                                 className="
-                                rounded-full bg-red-600 px-2 py-0.5 text-xs
-                                font-semibold text-white
-                              "
+                                  rounded-full bg-red-600 px-2 py-0.5 text-xs
+                                  font-semibold text-white
+                                "
                               >
                                 Nuevo
                               </span>
@@ -641,10 +644,10 @@ export const ChatList = ({
                           <span className="ml-2 inline-flex items-center gap-2">
                             <span
                               className="
-                              animate-pulse rounded-full bg-gradient-to-r
-                              from-green-400 to-cyan-300 p-1
-                              shadow-[0_0_12px_rgba(34,197,94,0.9)]
-                            "
+                                animate-pulse rounded-full bg-gradient-to-r
+                                from-green-400 to-cyan-300 p-1
+                                shadow-[0_0_12px_rgba(34,197,94,0.9)]
+                              "
                             />
                             <span
                               className="

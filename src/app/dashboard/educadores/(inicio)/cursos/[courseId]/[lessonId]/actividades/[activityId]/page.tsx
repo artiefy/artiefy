@@ -336,7 +336,9 @@ const Page: React.FC = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 animate-spin rounded-full border-y-2">
+        <div className="
+          border-primary size-32 animate-spin rounded-full border-y-2
+        ">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -375,7 +377,10 @@ const Page: React.FC = () => {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+              className="
+                text-primary transition duration-300
+                hover:scale-105 hover:text-gray-300
+              "
               href="/dashboard/super-admin"
             >
               Cursos
@@ -384,7 +389,10 @@ const Page: React.FC = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+              className="
+                text-primary transition duration-300
+                hover:scale-105 hover:text-gray-300
+              "
               href="/dashboard/super-admin/cursos"
             >
               Lista de cursos
@@ -393,7 +401,10 @@ const Page: React.FC = () => {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+              className="
+                text-primary transition duration-300
+                hover:scale-105 hover:text-gray-300
+              "
               href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
             >
               Detalles curso
@@ -403,7 +414,10 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
-              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+              className="
+                text-primary transition duration-300
+                hover:scale-105 hover:text-gray-300
+              "
             >
               Lección
             </BreadcrumbLink>
@@ -413,7 +427,10 @@ const Page: React.FC = () => {
             <BreadcrumbLink
               href="#"
               onClick={() => window.history.back()}
-              className="text-primary transition duration-300 hover:scale-105 hover:text-gray-300"
+              className="
+                text-primary transition duration-300
+                hover:scale-105 hover:text-gray-300
+              "
             >
               Creación de actividad
             </BreadcrumbLink>
@@ -421,16 +438,43 @@ const Page: React.FC = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative h-auto w-full">
-        <div className="animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
+        <div className="
+          animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
+          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+          duration-500
+          group-hover:opacity-100
+        " />
         <div
-          className="relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg border border-gray-200 p-4 sm:p-6 lg:p-8 shadow-lg"
+          className="
+            relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg
+            border border-gray-200 p-4
+            sm:p-6
+            lg:p-8
+            shadow-lg
+          "
           style={{ backgroundColor: color, color: getContrastYIQ(color) }}
         >
-          <div className="mb-3 grid grid-cols-1 items-center justify-between gap-2 text-2xl sm:text-3xl md:text-3xl font-semibold md:grid-cols-2">
-            <h2 className="text-primary flex flex-col text-2xl sm:text-3xl md:text-4xl font-extrabold">
+          <div className="
+            mb-3 grid grid-cols-1 items-center justify-between gap-2 text-2xl
+            sm:text-3xl
+            md:text-3xl
+            font-semibold
+            md:grid-cols-2
+          ">
+            <h2 className="
+              text-primary flex flex-col text-2xl
+              sm:text-3xl
+              md:text-4xl
+              font-extrabold
+            ">
               Actividad: <b>{actividad.name}</b>
             </h2>
-            <h3 className="text-primary text-base sm:text-lg md:text-xl md:mr-8 lg:mr-24">
+            <h3 className="
+              text-primary text-base
+              sm:text-lg
+              md:text-xl md:mr-8
+              lg:mr-24
+            ">
               Perteneciente a la clase: {actividad.lesson?.title}
             </h3>
           </div>
@@ -462,13 +506,23 @@ const Page: React.FC = () => {
             </div>
           </div>
 
-          <div className="my-4 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-2">
-            <div className="space-y-5 text-base sm:text-lg">
+          <div className="
+            my-4 grid grid-cols-1 gap-6
+            md:grid-cols-2
+            lg:grid-cols-2
+          ">
+            <div className="
+              space-y-5 text-base
+              sm:text-lg
+            ">
               <p className="font-semibold">
                 Del docente:{' '}
                 <Badge
                   variant="outline"
-                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  className="
+                    border-primary bg-background text-primary ml-1 w-fit
+                    hover:bg-black/70
+                  "
                 >
                   {actividad.lesson?.courseInstructorName ?? actividad.lesson.courseInstructor}
                 </Badge>
@@ -480,7 +534,11 @@ const Page: React.FC = () => {
               <p className="font-semibold">
                 Permite: <b>{actividad.type?.description}</b>
               </p>
-              <p className="w-full sm:w-11/12 font-semibold">
+              <p className="
+                w-full
+                sm:w-11/12
+                font-semibold
+              ">
                 Descripción de la actividad:{' '}
                 <b className="block">{actividad.description}.</b>
               </p>
@@ -488,7 +546,10 @@ const Page: React.FC = () => {
                 ¿La actividad es calificable?:{' '}
                 <Badge
                   variant="outline"
-                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  className="
+                    border-primary bg-background text-primary ml-1 w-fit
+                    hover:bg-black/70
+                  "
                 >
                   {actividad.revisada ? 'Si' : 'No'}.
                 </Badge>
@@ -497,7 +558,10 @@ const Page: React.FC = () => {
                 Fecha máxima de entrega:{' '}
                 <Badge
                   variant="outline"
-                  className="border-primary bg-background text-primary ml-1 w-fit hover:bg-black/70"
+                  className="
+                    border-primary bg-background text-primary ml-1 w-fit
+                    hover:bg-black/70
+                  "
                 >
                   {actividad.fechaMaximaEntrega
                     ? new Date(actividad.fechaMaximaEntrega).toLocaleString()
@@ -517,29 +581,56 @@ const Page: React.FC = () => {
                   alt="Imagen de la lección"
                   width={400}
                   height={400}
-                  className="rounded-lg shadow-md w-full max-w-xs sm:max-w-sm md:max-w-md h-auto object-cover"
+                  className="
+                    rounded-lg shadow-md w-full max-w-xs
+                    sm:max-w-sm
+                    md:max-w-md
+                    h-auto object-cover
+                  "
                 />
               </div>
             </div>
           </div>
-          <div className="mx-auto flex w-full flex-col sm:flex-row flex-wrap justify-center gap-3 sm:justify-evenly md:gap-6">
+          <div className="
+            mx-auto flex w-full flex-col
+            sm:flex-row
+            flex-wrap justify-center gap-3
+            sm:justify-evenly
+            md:gap-6
+          ">
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-              className="w-full sm:w-auto rounded-lg bg-blue-500 px-4 py-2 text-white text-center transition-colors duration-200 hover:bg-blue-600"
+              className="
+                w-full
+                sm:w-auto
+                rounded-lg bg-blue-500 px-4 py-2 text-white text-center
+                transition-colors duration-200
+                hover:bg-blue-600
+              "
             >
               Realizar Actividad
             </Link>
 
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
-              className="w-full sm:w-auto rounded-lg bg-blue-500 px-4 py-2 text-white text-center transition-colors duration-200 hover:bg-blue-600"
+              className="
+                w-full
+                sm:w-auto
+                rounded-lg bg-blue-500 px-4 py-2 text-white text-center
+                transition-colors duration-200
+                hover:bg-blue-600
+              "
             >
               Editar Actividad
             </Link>
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:bg-white hover:text-red-600">
+                <Button className="
+                  rounded-lg border border-red-600 bg-red-600 px-4 py-2
+                  text-white transition-colors duration-200
+                  hover:bg-white hover:text-red-600
+                ">
                   Eliminar
                 </Button>
               </AlertDialogTrigger>
@@ -560,7 +651,12 @@ const Page: React.FC = () => {
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteAct}
-                    className="rounded-lg border border-red-600 bg-red-600 px-4 py-2 text-white transition-colors duration-200 hover:border-red-700 hover:bg-transparent hover:text-red-700"
+                    className="
+                      rounded-lg border border-red-600 bg-red-600 px-4 py-2
+                      text-white transition-colors duration-200
+                      hover:border-red-700 hover:bg-transparent
+                      hover:text-red-700
+                    "
                   >
                     Eliminar
                   </AlertDialogAction>
@@ -578,7 +674,9 @@ const Page: React.FC = () => {
                     <>
                       <div className="rounded-lg border border-gray-200 bg-white">
                         <div className="rounded-lg bg-blue-50 p-4">
-                          <h2 className="text-center text-2xl font-bold text-gray-800">
+                          <h2 className="
+                            text-center text-2xl font-bold text-gray-800
+                          ">
                             Gestión de Archivos y Calificaciones
                           </h2>
                           <p className="text-center text-sm text-black">
@@ -609,7 +707,9 @@ const Page: React.FC = () => {
                           />
                         )}
 
-                      <div className="rounded-lg border border-gray-200 bg-white p-6">
+                      <div className="
+                        rounded-lg border border-gray-200 bg-white p-6
+                      ">
                         <QuestionSubidaList
                           key={`subida-${shouldRefresh}`}
                           activityId={actividadIdNumber}
@@ -641,7 +741,10 @@ const Page: React.FC = () => {
                 onSelectChange={setSelectedActivityType}
               />
               <div
-                className={`mt-2 text-center text-sm ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                className={`
+                  mt-2 text-center text-sm
+                  ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                `}
               >
                 <p>
                   <strong>Porcentaje usado por tipo de pregunta:</strong>
@@ -663,7 +766,14 @@ const Page: React.FC = () => {
 
               {selectedActivityType && (
                 <Button
-                  className={`mx-auto mb-4 w-full sm:w-2/4 md:w-1/4 border border-slate-300 bg-transparent hover:bg-gray-300/20 ${color === '#FFFFFF' ? 'text-black' : 'text-white'}`}
+                  className={`
+                    mx-auto mb-4 w-full
+                    sm:w-2/4
+                    md:w-1/4
+                    border border-slate-300 bg-transparent
+                    hover:bg-gray-300/20
+                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                  `}
                   onClick={handleAddQuestion}
                 >
                   Agregar Pregunta

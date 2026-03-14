@@ -200,7 +200,9 @@ export const ModalScheduleMeeting = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="z-[9999] max-h-screen w-full max-w-screen-sm overflow-y-auto p-4">
+      <DialogContent className="
+        z-[9999] max-h-screen w-full max-w-screen-sm overflow-y-auto p-4
+      ">
         <DialogHeader>
           <DialogTitle>Agendar clases en Teams</DialogTitle>
         </DialogHeader>
@@ -211,7 +213,10 @@ export const ModalScheduleMeeting = ({
               Título general
             </label>
             <input
-              className="bg-background w-full rounded border border-gray-500 p-2 text-white"
+              className="
+                bg-background w-full rounded border border-gray-500 p-2
+                text-white
+              "
               placeholder="Ej. Matemáticas Avanzadas"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -225,7 +230,10 @@ export const ModalScheduleMeeting = ({
             </label>
             <input
               type="date"
-              className="bg-background w-full rounded border border-gray-500 p-2 text-white"
+              className="
+                bg-background w-full rounded border border-gray-500 p-2
+                text-white
+              "
               value={date}
               onChange={(e) => setDate(e.target.value)}
             />
@@ -238,7 +246,10 @@ export const ModalScheduleMeeting = ({
             </label>
             <input
               type="time"
-              className="bg-background w-full rounded border border-gray-500 p-2 text-white"
+              className="
+                bg-background w-full rounded border border-gray-500 p-2
+                text-white
+              "
               value={time}
               onChange={(e) => setTime(e.target.value)}
             />
@@ -253,7 +264,10 @@ export const ModalScheduleMeeting = ({
               type="number"
               min={15}
               step={15}
-              className="bg-background w-full rounded border border-gray-500 p-2 text-white"
+              className="
+                bg-background w-full rounded border border-gray-500 p-2
+                text-white
+              "
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
             />
@@ -268,7 +282,10 @@ export const ModalScheduleMeeting = ({
               type="number"
               min={1}
               max={50}
-              className="bg-background w-full rounded border border-gray-500 p-2 text-white"
+              className="
+                bg-background w-full rounded border border-gray-500 p-2
+                text-white
+              "
               value={repeatCount}
               onChange={(e) => {
                 const newCount = Number(e.target.value);
@@ -295,13 +312,16 @@ export const ModalScheduleMeeting = ({
                   key={day}
                   type="button"
                   disabled={day === firstDayOfWeek}
-                  className={`rounded border px-3 py-1 text-sm ${
+                  className={`
+                    rounded border px-3 py-1 text-sm
+                    ${
                     selectedDays.includes(day)
                       ? day === firstDayOfWeek
                         ? 'cursor-not-allowed bg-gray-400 text-white'
                         : 'bg-white text-black'
                       : 'border-gray-500 bg-transparent text-white'
-                  }`}
+                  }
+                  `}
                   onClick={() => toggleDay(day)}
                 >
                   {day.slice(0, 3)}
@@ -326,7 +346,10 @@ export const ModalScheduleMeeting = ({
                 <span className="w-20 text-white">{day.slice(0, 3)}:</span>
                 <input
                   placeholder={`Título para ${day}`}
-                  className="bg-background w-full rounded border border-gray-500 p-2 text-white"
+                  className="
+                    bg-background w-full rounded border border-gray-500 p-2
+                    text-white
+                  "
                   value={customTitles[index] || ''}
                   onChange={(e) =>
                     handleCustomTitleChange(index, e.target.value)
@@ -343,7 +366,10 @@ export const ModalScheduleMeeting = ({
             <input
               type="email"
               placeholder="email@ejemplo.com"
-              className="bg-background w-full rounded border border-gray-500 p-2 text-white"
+              className="
+                bg-background w-full rounded border border-gray-500 p-2
+                text-white
+              "
               value={coHostEmail}
               onChange={(e) => setCoHostEmail(e.target.value)}
             />
@@ -354,7 +380,10 @@ export const ModalScheduleMeeting = ({
           </div>
         </div>
         {formError && (
-          <div className="rounded border border-red-500 bg-red-100 px-4 py-2 text-sm text-red-800">
+          <div className="
+            rounded border border-red-500 bg-red-100 px-4 py-2 text-sm
+            text-red-800
+          ">
             {formError}
           </div>
         )}

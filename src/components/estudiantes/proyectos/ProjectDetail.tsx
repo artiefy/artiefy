@@ -493,10 +493,10 @@ export function ProjectDetail({ item }: ProjectDetailProps) {
                           ) : (
                             <div
                               className="
-                              flex size-6 items-center justify-center
-                              rounded-full bg-primary/20 text-[10px]
-                              font-semibold text-primary
-                            "
+                                flex size-6 items-center justify-center
+                                rounded-full bg-primary/20 text-[10px]
+                                font-semibold text-primary
+                              "
                             >
                               {comment.user.name.charAt(0).toUpperCase()}
                             </div>

@@ -65,9 +65,9 @@ const CourseVideo: React.FC<CourseVideoProps> = ({
     return (
       <div
         className="
-        flex h-64 items-center justify-center text-center text-lg font-semibold
-        text-gray-500
-      "
+          flex h-64 items-center justify-center text-center text-lg
+          font-semibold text-gray-500
+        "
       >
         No hay video disponible para esta clase grabada.
       </div>
@@ -97,13 +97,13 @@ const CourseVideo: React.FC<CourseVideoProps> = ({
       {isLoading && (
         <div
           className="
-          absolute inset-0 z-10 flex items-center justify-center bg-black/60
-        "
+            absolute inset-0 z-10 flex items-center justify-center bg-black/60
+          "
         >
           <div
             className="
-            size-12 animate-spin rounded-full border-y-2 border-cyan-400
-          "
+              size-12 animate-spin rounded-full border-y-2 border-cyan-400
+            "
           />
         </div>
       )}

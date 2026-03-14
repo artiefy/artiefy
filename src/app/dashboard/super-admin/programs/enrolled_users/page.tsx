@@ -2985,9 +2985,9 @@ export default function EnrolledUsersPage() {
     return (
       <div
         className="
-        flex flex-col gap-2
-        sm:flex-row sm:items-center
-      "
+          flex flex-col gap-2
+          sm:flex-row sm:items-center
+        "
       >
         <input
           type="text"
@@ -3327,9 +3327,9 @@ export default function EnrolledUsersPage() {
       {successMessage && (
         <div
           className="
-          animate-in fade-in fixed right-6 bottom-6 z-50 rounded-lg bg-green-600
-          px-6 py-3 text-white shadow-lg
-        "
+            animate-in fade-in fixed right-6 bottom-6 z-50 rounded-lg
+            bg-green-600 px-6 py-3 text-white shadow-lg
+          "
         >
           {successMessage}
         </div>
@@ -3337,9 +3337,9 @@ export default function EnrolledUsersPage() {
 
       <div
         className="
-        min-h-screen space-y-8 bg-gray-900 p-6 text-white
-        print:hidden
-      "
+          min-h-screen space-y-8 bg-gray-900 p-6 text-white
+          print:hidden
+        "
       >
         <div
           ref={headerRef}
@@ -3352,9 +3352,9 @@ export default function EnrolledUsersPage() {
 
           <div
             className="
-            relative w-full
-            sm:w-auto
-          "
+              relative w-full
+              sm:w-auto
+            "
           >
             <div className="flex items-center gap-2">
               <button
@@ -3370,18 +3370,18 @@ export default function EnrolledUsersPage() {
                 <span className="relative z-10 font-medium">Crear Usuario</span>
                 <UserPlus
                   className="
-                  relative z-10 size-3.5
-                  sm:size-4
-                "
+                    relative z-10 size-3.5
+                    sm:size-4
+                  "
                 />
                 <div
                   className="
-                  absolute inset-0 z-0 bg-gradient-to-r from-transparent
-                  via-white/10 to-transparent opacity-0 transition-all
-                  duration-500
-                  group-hover/button:[transform:translateX(100%)]
-                  group-hover/button:opacity-100
-                "
+                    absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                    via-white/10 to-transparent opacity-0 transition-all
+                    duration-500
+                    group-hover/button:[transform:translateX(100%)]
+                    group-hover/button:opacity-100
+                  "
                 />
               </button>
 
@@ -3401,18 +3401,18 @@ export default function EnrolledUsersPage() {
                 <span className="relative z-10 font-medium">📧 Correo</span>
                 <Mail
                   className="
-                  relative z-10 size-3.5
-                  sm:size-4
-                "
+                    relative z-10 size-3.5
+                    sm:size-4
+                  "
                 />
                 <div
                   className="
-                  absolute inset-0 z-0 bg-gradient-to-r from-transparent
-                  via-white/10 to-transparent opacity-0 transition-all
-                  duration-500
-                  group-hover/button:[transform:translateX(100%)]
-                  group-hover/button:opacity-100
-                "
+                    absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                    via-white/10 to-transparent opacity-0 transition-all
+                    duration-500
+                    group-hover/button:[transform:translateX(100%)]
+                    group-hover/button:opacity-100
+                  "
                 />
               </button>
 
@@ -3432,18 +3432,18 @@ export default function EnrolledUsersPage() {
                 <span className="relative z-10 font-medium">💬 WhatsApp</span>
                 <MessageCircle
                   className="
-                  relative z-10 size-3.5
-                  sm:size-4
-                "
+                    relative z-10 size-3.5
+                    sm:size-4
+                  "
                 />
                 <div
                   className="
-                  absolute inset-0 z-0 bg-gradient-to-r from-transparent
-                  via-white/10 to-transparent opacity-0 transition-all
-                  duration-500
-                  group-hover/button:[transform:translateX(100%)]
-                  group-hover/button:opacity-100
-                "
+                    absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                    via-white/10 to-transparent opacity-0 transition-all
+                    duration-500
+                    group-hover/button:[transform:translateX(100%)]
+                    group-hover/button:opacity-100
+                  "
                 />
               </button>
 
@@ -3461,10 +3461,10 @@ export default function EnrolledUsersPage() {
             {showColumnSelector && (
               <div
                 className="
-                absolute right-0 z-50 mt-2 max-h-60 w-full max-w-xs
-                overflow-y-auto rounded-md bg-gray-800 p-4 shadow-lg
-                sm:w-64
-              "
+                  absolute right-0 z-50 mt-2 max-h-60 w-full max-w-xs
+                  overflow-y-auto rounded-md bg-gray-800 p-4 shadow-lg
+                  sm:w-64
+                "
               >
                 <h3 className="mb-2 font-semibold text-white">
                   Mostrar columnas
@@ -3499,11 +3499,11 @@ export default function EnrolledUsersPage() {
         {/* Filtros */}
         <div
           className="
-          grid grid-cols-1 gap-4
-          sm:grid-cols-2
-          md:grid-cols-3
-          lg:grid-cols-4
-        "
+            grid grid-cols-1 gap-4
+            sm:grid-cols-2
+            md:grid-cols-3
+            lg:grid-cols-4
+          "
         >
           <input
             type="text"
@@ -3617,9 +3617,9 @@ export default function EnrolledUsersPage() {
             {programOpen && (
               <div
                 className="
-                absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded border
-                border-gray-700 bg-gray-800 shadow-xl
-              "
+                  absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded
+                  border border-gray-700 bg-gray-800 shadow-xl
+                "
               >
                 {filteredProgramOptions.length === 0 ? (
                   <div className="px-3 py-2 text-sm text-gray-400">
@@ -3705,9 +3705,9 @@ export default function EnrolledUsersPage() {
                   filters.enrollmentStatus === ''
                     ? 'border-b-2 border-cyan-400 text-white'
                     : `
-                    border-b-2 border-transparent text-gray-400
-                    hover:text-gray-200
-                  `
+                      border-b-2 border-transparent text-gray-400
+                      hover:text-gray-200
+                    `
                 }
               `}
             >
@@ -3728,9 +3728,9 @@ export default function EnrolledUsersPage() {
                     filters.enrollmentStatus === status
                       ? 'border-b-2 border-cyan-400 text-white'
                       : `
-                      border-b-2 border-transparent text-gray-400
-                      hover:text-gray-200
-                    `
+                        border-b-2 border-transparent text-gray-400
+                        hover:text-gray-200
+                      `
                   }
                 `}
               >
@@ -3738,9 +3738,9 @@ export default function EnrolledUsersPage() {
                 {enrollmentStatusCounts[status] > 0 && (
                   <span
                     className="
-                    ml-2 inline-flex items-center justify-center rounded-full
-                    bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950
-                  "
+                      ml-2 inline-flex items-center justify-center rounded-full
+                      bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950
+                    "
                   >
                     {enrollmentStatusCounts[status]}
                   </span>
@@ -3756,9 +3756,9 @@ export default function EnrolledUsersPage() {
           </h2>
           <div
             className="
-            mb-2 flex flex-wrap items-center gap-3 text-xs text-gray-300
-            sm:text-sm
-          "
+              mb-2 flex flex-wrap items-center gap-3 text-xs text-gray-300
+              sm:text-sm
+            "
           >
             <span>
               Seleccionados: <strong>{selectedStudents.length}</strong> /{' '}
@@ -3809,10 +3809,10 @@ export default function EnrolledUsersPage() {
               <thead className="sticky top-0 z-10 bg-gray-900">
                 <tr
                   className="
-                  border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF]
-                  via-[#00BDD8] to-[#01142B] text-xs text-white
-                  sm:text-sm
-                "
+                    border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF]
+                    via-[#00BDD8] to-[#01142B] text-xs text-white
+                    sm:text-sm
+                  "
                 >
                   <th className="w-12 px-4 py-2">
                     <input
@@ -3867,13 +3867,13 @@ export default function EnrolledUsersPage() {
                                 ${
                                   (advancedFilters[col.id]?.length ?? 0) > 0
                                     ? `
-                                    bg-blue-600
-                                    hover:bg-blue-700
-                                  `
+                                      bg-blue-600
+                                      hover:bg-blue-700
+                                    `
                                     : `
-                                    bg-gray-700
-                                    hover:bg-gray-600
-                                  `
+                                      bg-gray-700
+                                      hover:bg-gray-600
+                                    `
                                 }
                               `}
                               title="Filtro avanzado"
@@ -4023,9 +4023,9 @@ export default function EnrolledUsersPage() {
 
               <tbody
                 className="
-                divide-y divide-gray-700/50 text-xs
-                sm:text-sm
-              "
+                  divide-y divide-gray-700/50 text-xs
+                  sm:text-sm
+                "
               >
                 {displayedStudents.map((student) => (
                   <tr key={student.id} className="hover:bg-gray-700">
@@ -4406,9 +4406,9 @@ export default function EnrolledUsersPage() {
         {/* Acciones */}
         <div
           className="
-          mt-4 flex flex-col space-y-2
-          sm:flex-row sm:space-y-0 sm:space-x-4
-        "
+            mt-4 flex flex-col space-y-2
+            sm:flex-row sm:space-y-0 sm:space-x-4
+          "
         >
           <button
             disabled={selectedStudents.length === 0}
@@ -4457,20 +4457,21 @@ export default function EnrolledUsersPage() {
         {showUserProgramsModal && (
           <div
             className="
-            fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4
-          "
+              fixed inset-0 z-50 flex items-center justify-center bg-black/80
+              p-4
+            "
           >
             <div
               className="
-              w-full max-w-xs rounded-lg bg-white p-6
-              dark:bg-gray-800
-            "
+                w-full max-w-xs rounded-lg bg-white p-6
+                dark:bg-gray-800
+              "
             >
               <h3
                 className="
-                mb-4 text-lg font-semibold text-gray-900
-                dark:text-gray-100
-              "
+                  mb-4 text-lg font-semibold text-gray-900
+                  dark:text-gray-100
+                "
               >
                 Programas de {currentUser?.name ?? 'Usuario'}
               </h3>
@@ -4484,9 +4485,9 @@ export default function EnrolledUsersPage() {
                     <li
                       key={p.id}
                       className="
-                      text-gray-900
-                      dark:text-gray-100
-                    "
+                        text-gray-900
+                        dark:text-gray-100
+                      "
                     >
                       • {p.title}
                     </li>
@@ -4510,20 +4511,21 @@ export default function EnrolledUsersPage() {
         {showUserCoursesModal && (
           <div
             className="
-            fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4
-          "
+              fixed inset-0 z-50 flex items-center justify-center bg-black/80
+              p-4
+            "
           >
             <div
               className="
-              w-full max-w-xs rounded-lg bg-white p-6
-              dark:bg-gray-800
-            "
+                w-full max-w-xs rounded-lg bg-white p-6
+                dark:bg-gray-800
+              "
             >
               <h3
                 className="
-                mb-4 text-lg font-semibold text-gray-900
-                dark:text-gray-100
-              "
+                  mb-4 text-lg font-semibold text-gray-900
+                  dark:text-gray-100
+                "
               >
                 Cursos de {currentUser?.name ?? 'Usuario'}
               </h3>
@@ -4545,9 +4547,9 @@ export default function EnrolledUsersPage() {
                         <div>• {c.title}</div>
                         <div
                           className="
-                          mt-0.5 ml-4 text-xs text-emerald-600
-                          dark:text-emerald-400
-                        "
+                            mt-0.5 ml-4 text-xs text-emerald-600
+                            dark:text-emerald-400
+                          "
                         >
                           👨‍🏫 {instructorName}
                         </div>
@@ -4572,15 +4574,15 @@ export default function EnrolledUsersPage() {
         {showCreateForm && (
           <div
             className="
-            bg-opacity-30 fixed inset-0 z-[9999] flex items-center
-            justify-center p-4 backdrop-blur-md
-          "
+              bg-opacity-30 fixed inset-0 z-[9999] flex items-center
+              justify-center p-4 backdrop-blur-md
+            "
           >
             <div
               className="
-              relative z-50 w-full max-w-md rounded-lg bg-gray-800 p-6
-              shadow-2xl
-            "
+                relative z-50 w-full max-w-md rounded-lg bg-gray-800 p-6
+                shadow-2xl
+              "
             >
               {/* Header del formulario con botón de cierre */}
               <div className="mb-4 flex items-center justify-between">
@@ -4590,9 +4592,9 @@ export default function EnrolledUsersPage() {
                 <button onClick={() => setShowCreateForm(false)}>
                   <X
                     className="
-                    size-6 text-gray-300
-                    hover:text-white
-                  "
+                      size-6 text-gray-300
+                      hover:text-white
+                    "
                   />
                 </button>
               </div>
@@ -4683,15 +4685,15 @@ export default function EnrolledUsersPage() {
         {showPhoneModal && (
           <div
             className="
-            bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center
-            p-4 backdrop-blur-md
-          "
+              bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center
+              p-4 backdrop-blur-md
+            "
           >
             <div
               className="
-              relative max-h-screen w-full max-w-3xl overflow-y-auto rounded-lg
-              bg-gray-900 p-6 text-white shadow-2xl
-            "
+                relative max-h-screen w-full max-w-3xl overflow-y-auto
+                rounded-lg bg-gray-900 p-6 text-white shadow-2xl
+              "
             >
               <button
                 onClick={() => setShowPhoneModal(false)}
@@ -4717,9 +4719,9 @@ export default function EnrolledUsersPage() {
                       !sendWhatsapp
                         ? 'border-b-2 border-blue-500 text-blue-400'
                         : `
-                        text-gray-400
-                        hover:text-white
-                      `
+                          text-gray-400
+                          hover:text-white
+                        `
                     }
                   `}
                 >
@@ -4733,9 +4735,9 @@ export default function EnrolledUsersPage() {
                       sendWhatsapp
                         ? 'border-b-2 border-green-500 text-green-400'
                         : `
-                        text-gray-400
-                        hover:text-white
-                      `
+                          text-gray-400
+                          hover:text-white
+                        `
                     }
                   `}
                 >
@@ -5009,17 +5011,17 @@ export default function EnrolledUsersPage() {
                     {waLoading ? (
                       <div
                         className="
-                        rounded bg-gray-800 p-3 text-sm text-gray-400
-                      "
+                          rounded bg-gray-800 p-3 text-sm text-gray-400
+                        "
                       >
                         ⏳ Cargando plantillas...
                       </div>
                     ) : waError ? (
                       <div
                         className="
-                        rounded border border-red-600/50 bg-red-900/30 p-3
-                        text-sm text-red-400
-                      "
+                          rounded border border-red-600/50 bg-red-900/30 p-3
+                          text-sm text-red-400
+                        "
                       >
                         ⚠️ {waError}
                       </div>
@@ -5115,20 +5117,20 @@ export default function EnrolledUsersPage() {
         {showMassiveEditModal && (
           <div
             className="
-            fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4
-            backdrop-blur-sm
-          "
+              fixed inset-0 z-50 flex items-center justify-center bg-black/70
+              p-4 backdrop-blur-sm
+            "
           >
             <div
               className="
-              animate-fadeIn w-full max-w-lg rounded-xl bg-gray-800 p-6
-              text-white shadow-2xl transition-transform duration-300
-            "
+                animate-fadeIn w-full max-w-lg rounded-xl bg-gray-800 p-6
+                text-white shadow-2xl transition-transform duration-300
+              "
             >
               <h2
                 className="
-                mb-4 text-center text-2xl font-bold tracking-wide text-white
-              "
+                  mb-4 text-center text-2xl font-bold tracking-wide text-white
+                "
               >
                 Editar Masivamente
               </h2>
@@ -5136,9 +5138,9 @@ export default function EnrolledUsersPage() {
               {/* Mostrar estudiantes seleccionados */}
               <div
                 className="
-                mb-6 max-h-28 overflow-y-auto rounded-md border border-gray-700
-                bg-gray-900 p-3 shadow-inner
-              "
+                  mb-6 max-h-28 overflow-y-auto rounded-md border
+                  border-gray-700 bg-gray-900 p-3 shadow-inner
+                "
               >
                 {selectedStudents.length === 0 ? (
                   <p className="text-center text-gray-400">
@@ -5168,9 +5170,9 @@ export default function EnrolledUsersPage() {
 
                 <div
                   className="
-                  relative w-full rounded-lg border border-gray-600 bg-gray-800
-                  p-2 shadow-inner
-                "
+                    relative w-full rounded-lg border border-gray-600
+                    bg-gray-800 p-2 shadow-inner
+                  "
                 >
                   <input
                     type="text"
@@ -5206,9 +5208,9 @@ export default function EnrolledUsersPage() {
                                 isSelected
                                   ? 'bg-blue-600 text-white'
                                   : `
-                                  text-gray-300
-                                  hover:bg-gray-600
-                                `
+                                    text-gray-300
+                                    hover:bg-gray-600
+                                  `
                               }
                             `}
                           >
@@ -5238,8 +5240,8 @@ export default function EnrolledUsersPage() {
                     >
                       <label
                         className="
-                        mb-1 block text-sm font-semibold text-gray-200
-                      "
+                          mb-1 block text-sm font-semibold text-gray-200
+                        "
                       >
                         {col.label}
                       </label>
@@ -5351,9 +5353,9 @@ export default function EnrolledUsersPage() {
               {/* Acciones */}
               <div
                 className="
-                mt-6 flex flex-col-reverse gap-3
-                sm:flex-row sm:justify-end
-              "
+                  mt-6 flex flex-col-reverse gap-3
+                  sm:flex-row sm:justify-end
+                "
               >
                 <button
                   onClick={() => setShowMassiveEditModal(false)}
@@ -5403,30 +5405,30 @@ export default function EnrolledUsersPage() {
         {showCarteraModal && currentUser && (
           <div
             className="
-            showCarteraModal fixed inset-0 z-50 flex items-center justify-center
-            bg-black/80 p-4
-          "
+              showCarteraModal fixed inset-0 z-50 flex items-center
+              justify-center bg-black/80 p-4
+            "
           >
             <div
               className="
-              max-h-[90vh] w-full max-w-[min(100vw-1rem,72rem)] overflow-y-auto
-              rounded-lg bg-white text-gray-900 shadow-2xl
-              dark:bg-gray-800 dark:text-gray-100
-            "
+                max-h-[90vh] w-full max-w-[min(100vw-1rem,72rem)]
+                overflow-y-auto rounded-lg bg-white text-gray-900 shadow-2xl
+                dark:bg-gray-800 dark:text-gray-100
+              "
             >
               {/* CABECERA / LOGOS */}
               <div
                 className="
-                border-b border-gray-200 p-4
-                sm:p-6
-                dark:border-gray-700
-              "
+                  border-b border-gray-200 p-4
+                  sm:p-6
+                  dark:border-gray-700
+                "
               >
                 <div
                   className="
-                  flex flex-col items-center justify-between gap-4
-                  sm:flex-row
-                "
+                    flex flex-col items-center justify-between gap-4
+                    sm:flex-row
+                  "
                 >
                   {/* Logos: Artiefy primero */}
                   <div className="flex items-center gap-4">
@@ -5454,15 +5456,15 @@ export default function EnrolledUsersPage() {
 
                   <div
                     className="
-                    text-center
-                    sm:text-right
-                  "
+                      text-center
+                      sm:text-right
+                    "
                   >
                     <p
                       className="
-                      text-xs font-semibold tracking-wide text-gray-500
-                      dark:text-gray-300
-                    "
+                        text-xs font-semibold tracking-wide text-gray-500
+                        dark:text-gray-300
+                      "
                     >
                       POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
                     </p>
@@ -5476,10 +5478,10 @@ export default function EnrolledUsersPage() {
               {/* INFO INSTITUCIÓN / ESTUDIANTE */}
               <div
                 className="
-                grid grid-cols-1 gap-4 border-b border-gray-200 p-4 text-sm
-                sm:grid-cols-2 sm:p-6
-                dark:border-gray-700
-              "
+                  grid grid-cols-1 gap-4 border-b border-gray-200 p-4 text-sm
+                  sm:grid-cols-2 sm:p-6
+                  dark:border-gray-700
+                "
               >
                 <div className="space-y-1">
                   <p>
@@ -5499,10 +5501,10 @@ export default function EnrolledUsersPage() {
                     {userPrograms?.[0]?.title ?? '—'}
                     <span
                       className="
-                      ml-2 rounded bg-gray-200 px-2 py-0.5 text-xs font-medium
-                      text-gray-700
-                      dark:bg-gray-700 dark:text-gray-100
-                    "
+                        ml-2 rounded bg-gray-200 px-2 py-0.5 text-xs font-medium
+                        text-gray-700
+                        dark:bg-gray-700 dark:text-gray-100
+                      "
                     >
                       {currentUser.modalidad ?? 'virtual'}
                     </span>
@@ -5515,9 +5517,9 @@ export default function EnrolledUsersPage() {
 
                 <div
                   className="
-                  space-y-1
-                  sm:text-right
-                "
+                    space-y-1
+                    sm:text-right
+                  "
                 >
                   <p>
                     <span className="font-semibold">DIRECCIÓN: </span>
@@ -5565,28 +5567,29 @@ export default function EnrolledUsersPage() {
               {/* TABLA DE PAGOS */}
               <div
                 className="
-                p-4
-                sm:p-6
-              "
+                  p-4
+                  sm:p-6
+                "
               >
                 <h4
                   className="
-                  mb-3 flex items-center justify-between text-base font-semibold
-                "
+                    mb-3 flex items-center justify-between text-base
+                    font-semibold
+                  "
                 >
                   <span>Detalle de pagos</span>
                   <span
                     className="
-                    text-sm font-medium text-gray-600
-                    dark:text-gray-300
-                  "
+                      text-sm font-medium text-gray-600
+                      dark:text-gray-300
+                    "
                   >
                     Valor restante a pagar:{' '}
                     <strong
                       className="
-                      text-red-600
-                      dark:text-red-400
-                    "
+                        text-red-600
+                        dark:text-red-400
+                      "
                     >
                       {formatCOP(
                         price -
@@ -5603,63 +5606,63 @@ export default function EnrolledUsersPage() {
                 </h4>
                 <div
                   className="
-                  overflow-x-auto rounded border border-gray-200
-                  dark:border-gray-700
-                "
+                    overflow-x-auto rounded border border-gray-200
+                    dark:border-gray-700
+                  "
                 >
                   <table className="min-w-full border-collapse text-sm">
                     <thead
                       className="
-                      bg-gray-100 text-gray-700
-                      dark:bg-gray-700 dark:text-gray-100
-                    "
+                        bg-gray-100 text-gray-700
+                        dark:bg-gray-700 dark:text-gray-100
+                      "
                     >
                       <tr>
                         <th
                           className="
-                          border-b border-gray-200 px-3 py-2 text-left
-                          dark:border-gray-600
-                        "
+                            border-b border-gray-200 px-3 py-2 text-left
+                            dark:border-gray-600
+                          "
                         >
                           PRODUCTO
                         </th>
                         <th
                           className="
-                          border-b border-gray-200 px-3 py-2 text-left
-                          dark:border-gray-600
-                        "
+                            border-b border-gray-200 px-3 py-2 text-left
+                            dark:border-gray-600
+                          "
                         >
                           N° PAGO{' '}
                         </th>
                         <th
                           className="
-                          border-b border-gray-200 px-3 py-2 text-left
-                          dark:border-gray-600
-                        "
+                            border-b border-gray-200 px-3 py-2 text-left
+                            dark:border-gray-600
+                          "
                         >
                           FECHA PROGRAMADA
                         </th>
                         <th
                           className="
-                          border-b border-gray-200 px-3 py-2 text-left
-                          dark:border-gray-600
-                        "
+                            border-b border-gray-200 px-3 py-2 text-left
+                            dark:border-gray-600
+                          "
                         >
                           FECHA REAL DE PAGO
                         </th>
                         <th
                           className="
-                          border-b border-gray-200 px-3 py-2 text-left
-                          dark:border-gray-600
-                        "
+                            border-b border-gray-200 px-3 py-2 text-left
+                            dark:border-gray-600
+                          "
                         >
                           MÉTODO DE PAGO
                         </th>
                         <th
                           className="
-                          border-b border-gray-200 px-3 py-2 text-right
-                          dark:border-gray-600
-                        "
+                            border-b border-gray-200 px-3 py-2 text-right
+                            dark:border-gray-600
+                          "
                         >
                           VALOR
                         </th>
@@ -5667,18 +5670,18 @@ export default function EnrolledUsersPage() {
                         {/* 👇 NUEVA COLUMNA */}
                         <th
                           className="
-                          border-b border-gray-200 px-3 py-2 text-center
-                          dark:border-gray-600
-                        "
+                            border-b border-gray-200 px-3 py-2 text-center
+                            dark:border-gray-600
+                          "
                         >
                           VERIFICADO
                         </th>
 
                         <th
                           className="
-                          border-b border-gray-200 px-3 py-2 text-right
-                          dark:border-gray-600
-                        "
+                            border-b border-gray-200 px-3 py-2 text-right
+                            dark:border-gray-600
+                          "
                         >
                           ACCIONES
                         </th>
@@ -5711,9 +5714,9 @@ export default function EnrolledUsersPage() {
                             {/* PRODUCTO */}
                             <td
                               className="
-                              border-b border-gray-100 px-3 py-2
-                              dark:border-gray-700
-                            "
+                                border-b border-gray-100 px-3 py-2
+                                dark:border-gray-700
+                              "
                             >
                               <input
                                 type="text"
@@ -5737,9 +5740,9 @@ export default function EnrolledUsersPage() {
                             {/* N° PAGO */}
                             <td
                               className="
-                              border-b border-gray-100 px-3 py-2 text-center
-                              dark:border-gray-700
-                            "
+                                border-b border-gray-100 px-3 py-2 text-center
+                                dark:border-gray-700
+                              "
                             >
                               <input
                                 type="text"
@@ -5765,9 +5768,9 @@ export default function EnrolledUsersPage() {
                             {/* FECHA PROGRAMADA */}
                             <td
                               className="
-                              border-b border-gray-100 px-3 py-2
-                              dark:border-gray-700
-                            "
+                                border-b border-gray-100 px-3 py-2
+                                dark:border-gray-700
+                              "
                             >
                               <input
                                 type="date"
@@ -5799,9 +5802,9 @@ export default function EnrolledUsersPage() {
                             {/* FECHA REAL DE PAGO */}
                             <td
                               className="
-                              border-b border-gray-100 px-3 py-2
-                              dark:border-gray-700
-                            "
+                                border-b border-gray-100 px-3 py-2
+                                dark:border-gray-700
+                              "
                             >
                               <input
                                 type="date"
@@ -5833,9 +5836,9 @@ export default function EnrolledUsersPage() {
                             {/* MÉTODO */}
                             <td
                               className="
-                              border-b border-gray-100 px-3 py-2
-                              dark:border-gray-700
-                            "
+                                border-b border-gray-100 px-3 py-2
+                                dark:border-gray-700
+                              "
                             >
                               <select
                                 value={row.metodo ?? ''}
@@ -5864,16 +5867,16 @@ export default function EnrolledUsersPage() {
                             {/* VALOR */}
                             <td
                               className="
-                              border-b border-gray-100 px-3 py-2 text-right
-                              tabular-nums
-                              dark:border-gray-700
-                            "
+                                border-b border-gray-100 px-3 py-2 text-right
+                                tabular-nums
+                                dark:border-gray-700
+                              "
                             >
                               <div
                                 className="
-                                flex flex-col items-end gap-1
-                                sm:flex-row sm:items-center sm:justify-end
-                              "
+                                  flex flex-col items-end gap-1
+                                  sm:flex-row sm:items-center sm:justify-end
+                                "
                               >
                                 <input
                                   type="text"
@@ -5899,9 +5902,9 @@ export default function EnrolledUsersPage() {
                             {/* VERIFICADO */}
                             <td
                               className="
-                              border-b border-gray-100 px-3 py-2 text-center
-                              dark:border-gray-700
-                            "
+                                border-b border-gray-100 px-3 py-2 text-center
+                                dark:border-gray-700
+                              "
                             >
                               <div className="flex flex-col items-center gap-1">
                                 <span
@@ -5943,14 +5946,15 @@ export default function EnrolledUsersPage() {
 
                             <td
                               className="
-                              border-b border-gray-100 px-3 py-2 text-right
-                              dark:border-gray-700
-                            "
+                                border-b border-gray-100 px-3 py-2 text-right
+                                dark:border-gray-700
+                              "
                             >
                               <div
                                 className="
-                                flex flex-wrap items-center justify-end gap-1.5
-                              "
+                                  flex flex-wrap items-center justify-end
+                                  gap-1.5
+                                "
                               >
                                 {/* Guardar */}
                                 <button
@@ -6111,15 +6115,16 @@ export default function EnrolledUsersPage() {
                                     ${
                                       editablePagos[idx]?.receiptVerified
                                         ? `
-                                        bg-green-100 text-green-700 ring-1
-                                        ring-green-600/20
-                                        dark:bg-green-900/40 dark:text-green-300
-                                      `
+                                          bg-green-100 text-green-700 ring-1
+                                          ring-green-600/20
+                                          dark:bg-green-900/40
+                                          dark:text-green-300
+                                        `
                                         : `
-                                        bg-gray-100 text-gray-700 ring-1
-                                        ring-gray-600/20
-                                        dark:bg-gray-800 dark:text-gray-300
-                                      `
+                                          bg-gray-100 text-gray-700 ring-1
+                                          ring-gray-600/20
+                                          dark:bg-gray-800 dark:text-gray-300
+                                        `
                                     }
                                   `}
                                   title="Estado de verificación del comprobante"
@@ -6228,16 +6233,16 @@ export default function EnrolledUsersPage() {
                         <td colSpan={5} className="p-3">
                           <div
                             className="
-                            flex items-center justify-between rounded-lg
-                            bg-gray-50 p-3
-                            dark:bg-gray-800
-                          "
+                              flex items-center justify-between rounded-lg
+                              bg-gray-50 p-3
+                              dark:bg-gray-800
+                            "
                           >
                             <span
                               className="
-                              font-semibold text-gray-700
-                              dark:text-gray-200
-                            "
+                                font-semibold text-gray-700
+                                dark:text-gray-200
+                              "
                             >
                               PLAN / VALOR PROGRAMA
                             </span>
@@ -6271,24 +6276,24 @@ export default function EnrolledUsersPage() {
                         <td colSpan={5} className="p-3">
                           <div
                             className="
-                            flex items-center justify-between rounded-lg
-                            bg-green-50 p-3
-                            dark:bg-green-900/30
-                          "
+                              flex items-center justify-between rounded-lg
+                              bg-green-50 p-3
+                              dark:bg-green-900/30
+                            "
                           >
                             <span
                               className="
-                              font-semibold text-green-700
-                              dark:text-green-400
-                            "
+                                font-semibold text-green-700
+                                dark:text-green-400
+                              "
                             >
                               VALOR PAGADO
                             </span>
                             <span
                               className="
-                              font-semibold text-green-700
-                              dark:text-green-400
-                            "
+                                font-semibold text-green-700
+                                dark:text-green-400
+                              "
                             >
                               {formatCOP(
                                 editablePagos.slice(0, 12).reduce((sum, p) => {
@@ -6309,24 +6314,24 @@ export default function EnrolledUsersPage() {
                         <td colSpan={5} className="p-3">
                           <div
                             className="
-                            flex items-center justify-between rounded-lg
-                            bg-red-50 p-3
-                            dark:bg-red-900/30
-                          "
+                              flex items-center justify-between rounded-lg
+                              bg-red-50 p-3
+                              dark:bg-red-900/30
+                            "
                           >
                             <span
                               className="
-                              font-semibold text-red-700
-                              dark:text-red-400
-                            "
+                                font-semibold text-red-700
+                                dark:text-red-400
+                              "
                             >
                               DEUDA RESTANTE
                             </span>
                             <span
                               className="
-                              font-semibold text-red-700
-                              dark:text-red-400
-                            "
+                                font-semibold text-red-700
+                                dark:text-red-400
+                              "
                             >
                               {formatCOP(
                                 price -
@@ -6355,63 +6360,63 @@ export default function EnrolledUsersPage() {
                     </h4>
                     <div
                       className="
-                      overflow-x-auto rounded border border-gray-200
-                      dark:border-gray-700
-                    "
+                        overflow-x-auto rounded border border-gray-200
+                        dark:border-gray-700
+                      "
                     >
                       <table className="min-w-full border-collapse text-sm">
                         <thead
                           className="
-                          bg-gray-100 text-gray-700
-                          dark:bg-gray-700 dark:text-gray-100
-                        "
+                            bg-gray-100 text-gray-700
+                            dark:bg-gray-700 dark:text-gray-100
+                          "
                         >
                           <tr>
                             <th
                               className="
-                              border-b border-gray-200 px-3 py-2 text-left
-                              dark:border-gray-600
-                            "
+                                border-b border-gray-200 px-3 py-2 text-left
+                                dark:border-gray-600
+                              "
                             >
                               PRODUCTO
                             </th>
                             <th
                               className="
-                              border-b border-gray-200 px-3 py-2 text-left
-                              dark:border-gray-600
-                            "
+                                border-b border-gray-200 px-3 py-2 text-left
+                                dark:border-gray-600
+                              "
                             >
                               FECHA PROGRAMADA
                             </th>
                             <th
                               className="
-                              border-b border-gray-200 px-3 py-2 text-left
-                              dark:border-gray-600
-                            "
+                                border-b border-gray-200 px-3 py-2 text-left
+                                dark:border-gray-600
+                              "
                             >
                               FECHA REAL DE PAGO
                             </th>
                             <th
                               className="
-                              border-b border-gray-200 px-3 py-2 text-left
-                              dark:border-gray-600
-                            "
+                                border-b border-gray-200 px-3 py-2 text-left
+                                dark:border-gray-600
+                              "
                             >
                               MÉTODO DE PAGO
                             </th>
                             <th
                               className="
-                              border-b border-gray-200 px-3 py-2 text-right
-                              dark:border-gray-600
-                            "
+                                border-b border-gray-200 px-3 py-2 text-right
+                                dark:border-gray-600
+                              "
                             >
                               VALOR
                             </th>
                             <th
                               className="
-                              border-b border-gray-200 px-3 py-2 text-right
-                              dark:border-gray-600
-                            "
+                                border-b border-gray-200 px-3 py-2 text-right
+                                dark:border-gray-600
+                              "
                             >
                               ACCIONES
                             </th>
@@ -6445,9 +6450,9 @@ export default function EnrolledUsersPage() {
                                 {/* CONCEPTO (editable, se guarda tal cual en 'pagos') */}
                                 <td
                                   className="
-                                  border-b border-gray-100 px-3 py-2
-                                  dark:border-gray-700
-                                "
+                                    border-b border-gray-100 px-3 py-2
+                                    dark:border-gray-700
+                                  "
                                 >
                                   <input
                                     type="text"
@@ -6471,9 +6476,9 @@ export default function EnrolledUsersPage() {
                                 {/* FECHA PROGRAMADA */}
                                 <td
                                   className="
-                                  border-b border-gray-100 px-3 py-2
-                                  dark:border-gray-700
-                                "
+                                    border-b border-gray-100 px-3 py-2
+                                    dark:border-gray-700
+                                  "
                                 >
                                   <input
                                     type="date"
@@ -6506,9 +6511,9 @@ export default function EnrolledUsersPage() {
                                 {/* FECHA REAL DE PAGO */}
                                 <td
                                   className="
-                                  border-b border-gray-100 px-3 py-2
-                                  dark:border-gray-700
-                                "
+                                    border-b border-gray-100 px-3 py-2
+                                    dark:border-gray-700
+                                  "
                                 >
                                   <input
                                     type="date"
@@ -6541,9 +6546,9 @@ export default function EnrolledUsersPage() {
                                 {/* SELECT MÉTODO */}
                                 <td
                                   className="
-                                  border-b border-gray-100 px-3 py-2
-                                  dark:border-gray-700
-                                "
+                                    border-b border-gray-100 px-3 py-2
+                                    dark:border-gray-700
+                                  "
                                 >
                                   <select
                                     value={row.metodo ?? ''}
@@ -6572,16 +6577,16 @@ export default function EnrolledUsersPage() {
                                 {/* VALOR + acciones */}
                                 <td
                                   className="
-                                  border-b border-gray-100 px-3 py-2 text-right
-                                  tabular-nums
-                                  dark:border-gray-700
-                                "
+                                    border-b border-gray-100 px-3 py-2
+                                    text-right tabular-nums
+                                    dark:border-gray-700
+                                  "
                                 >
                                   <div
                                     className="
-                                    flex flex-col items-end gap-1
-                                    sm:flex-row sm:items-center sm:justify-end
-                                  "
+                                      flex flex-col items-end gap-1
+                                      sm:flex-row sm:items-center sm:justify-end
+                                    "
                                   >
                                     <input
                                       type="text"
@@ -6605,16 +6610,16 @@ export default function EnrolledUsersPage() {
                                 </td>
                                 <td
                                   className="
-                                  border-b border-gray-100 px-3 py-2 text-right
-                                  tabular-nums
-                                  dark:border-gray-700
-                                "
+                                    border-b border-gray-100 px-3 py-2
+                                    text-right tabular-nums
+                                    dark:border-gray-700
+                                  "
                                 >
                                   <div
                                     className="
-                                    flex flex-col items-end gap-1
-                                    sm:flex-row sm:items-center sm:justify-end
-                                  "
+                                      flex flex-col items-end gap-1
+                                      sm:flex-row sm:items-center sm:justify-end
+                                    "
                                   >
                                     <div className="flex items-center gap-1">
                                       <button
@@ -6727,9 +6732,9 @@ export default function EnrolledUsersPage() {
                 {currentUser.carteraStatus !== 'activo' && (
                   <div
                     className="
-                    mt-4 grid grid-cols-1 gap-3
-                    sm:grid-cols-2
-                  "
+                      mt-4 grid grid-cols-1 gap-3
+                      sm:grid-cols-2
+                    "
                   >
                     <button
                       onClick={markCarteraActivo}
@@ -6744,9 +6749,9 @@ export default function EnrolledUsersPage() {
 
                     <div
                       className="
-                      rounded border border-gray-300 p-3
-                      dark:border-gray-700
-                    "
+                        rounded border border-gray-300 p-3
+                        dark:border-gray-700
+                      "
                     >
                       <label className="mb-2 block text-sm font-medium">
                         Subir comprobante de pago
@@ -6830,9 +6835,9 @@ export default function EnrolledUsersPage() {
                     {/* Cabecera */}
                     <div
                       className="
-                      mb-6 flex items-center justify-between border-b
-                      border-black pb-4
-                    "
+                        mb-6 flex items-center justify-between border-b
+                        border-black pb-4
+                      "
                     >
                       <div className="flex items-center gap-4">
                         <Image
@@ -6854,8 +6859,8 @@ export default function EnrolledUsersPage() {
                       <div className="text-right">
                         <p
                           className="
-                          text-xs font-semibold tracking-wide text-black
-                        "
+                            text-xs font-semibold tracking-wide text-black
+                          "
                         >
                           POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
                         </p>
@@ -6916,56 +6921,56 @@ export default function EnrolledUsersPage() {
                     {/* Tabla de pagos solo con información, sin inputs */}
                     <table
                       className="
-                      mb-6 w-full border-collapse border border-black text-sm
-                    "
+                        mb-6 w-full border-collapse border border-black text-sm
+                      "
                     >
                       <thead>
                         <tr className="bg-white">
                           <th
                             className="
-                            border border-black px-3 py-2 text-left font-bold
-                            text-black
-                          "
+                              border border-black px-3 py-2 text-left font-bold
+                              text-black
+                            "
                           >
                             PRODUCTO
                           </th>
                           <th
                             className="
-                            border border-black px-3 py-2 text-center font-bold
-                            text-black
-                          "
+                              border border-black px-3 py-2 text-center
+                              font-bold text-black
+                            "
                           >
                             N° PAGO
                           </th>
                           <th
                             className="
-                            border border-black px-3 py-2 text-left font-bold
-                            text-black
-                          "
+                              border border-black px-3 py-2 text-left font-bold
+                              text-black
+                            "
                           >
                             FECHA PROGRAMADA
                           </th>
                           <th
                             className="
-                            border border-black px-3 py-2 text-left font-bold
-                            text-black
-                          "
+                              border border-black px-3 py-2 text-left font-bold
+                              text-black
+                            "
                           >
                             FECHA REAL DE PAGO
                           </th>
                           <th
                             className="
-                            border border-black px-3 py-2 text-left font-bold
-                            text-black
-                          "
+                              border border-black px-3 py-2 text-left font-bold
+                              text-black
+                            "
                           >
                             MÉTODO DE PAGO
                           </th>
                           <th
                             className="
-                            border border-black px-3 py-2 text-right font-bold
-                            text-black
-                          "
+                              border border-black px-3 py-2 text-right font-bold
+                              text-black
+                            "
                           >
                             VALOR
                           </th>
@@ -6988,23 +6993,23 @@ export default function EnrolledUsersPage() {
                             >
                               <td
                                 className="
-                                border border-black px-3 py-2 text-black
-                              "
+                                  border border-black px-3 py-2 text-black
+                                "
                               >
                                 {row.concepto ?? `Cuota ${cuotaNum}`}
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-center
-                                text-black
-                              "
+                                  border border-black px-3 py-2 text-center
+                                  text-black
+                                "
                               >
                                 {row.nro_pago ?? row.nroPago ?? cuotaNum}
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-black
-                              "
+                                  border border-black px-3 py-2 text-black
+                                "
                               >
                                 {row.fechaPrograma
                                   ? new Date(
@@ -7014,8 +7019,8 @@ export default function EnrolledUsersPage() {
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-black
-                              "
+                                  border border-black px-3 py-2 text-black
+                                "
                               >
                                 {row.fechaRealPago
                                   ? new Date(
@@ -7025,16 +7030,16 @@ export default function EnrolledUsersPage() {
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-black
-                              "
+                                  border border-black px-3 py-2 text-black
+                                "
                               >
                                 {row.metodo ?? '-'}
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-right
-                                text-black
-                              "
+                                  border border-black px-3 py-2 text-right
+                                  text-black
+                                "
                               >
                                 {formatCOP(valor)}
                               </td>
@@ -7061,24 +7066,24 @@ export default function EnrolledUsersPage() {
                             >
                               <td
                                 className="
-                                border border-black px-3 py-2 font-semibold
-                                text-black
-                              "
+                                  border border-black px-3 py-2 font-semibold
+                                  text-black
+                                "
                               >
                                 {row.concepto ?? label}
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-center
-                                text-black
-                              "
+                                  border border-black px-3 py-2 text-center
+                                  text-black
+                                "
                               >
                                 {idxBase + 1}
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-black
-                              "
+                                  border border-black px-3 py-2 text-black
+                                "
                               >
                                 {row.fechaPrograma
                                   ? new Date(
@@ -7088,8 +7093,8 @@ export default function EnrolledUsersPage() {
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-black
-                              "
+                                  border border-black px-3 py-2 text-black
+                                "
                               >
                                 {row.fechaRealPago
                                   ? new Date(
@@ -7099,16 +7104,16 @@ export default function EnrolledUsersPage() {
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-black
-                              "
+                                  border border-black px-3 py-2 text-black
+                                "
                               >
                                 {row.metodo ?? '-'}
                               </td>
                               <td
                                 className="
-                                border border-black px-3 py-2 text-right
-                                text-black
-                              "
+                                  border border-black px-3 py-2 text-right
+                                  text-black
+                                "
                               >
                                 {formatCOP(valor)}
                               </td>
@@ -7138,9 +7143,9 @@ export default function EnrolledUsersPage() {
                       </div>
                       <div
                         className="
-                        flex items-center justify-between border-t border-black
-                        pt-2
-                      "
+                          flex items-center justify-between border-t
+                          border-black pt-2
+                        "
                       >
                         <span className="text-lg font-bold text-black">
                           DEUDA RESTANTE:
@@ -7154,9 +7159,9 @@ export default function EnrolledUsersPage() {
                     {/* Pie de página opcional */}
                     <div
                       className="
-                      mt-8 border-t border-black pt-4 text-center text-xs
-                      text-black
-                    "
+                        mt-8 border-t border-black pt-4 text-center text-xs
+                        text-black
+                      "
                     >
                       <p>
                         Este documento es un comprobante de los pagos
@@ -7172,10 +7177,10 @@ export default function EnrolledUsersPage() {
               {/* FOOTER / BOTONES */}
               <div
                 className="
-                flex flex-col gap-2 border-t border-gray-200 p-4
-                sm:flex-row sm:justify-end
-                dark:border-gray-700
-              "
+                  flex flex-col gap-2 border-t border-gray-200 p-4
+                  sm:flex-row sm:justify-end
+                  dark:border-gray-700
+                "
               >
                 <button
                   onClick={handlePrint}
@@ -7227,25 +7232,26 @@ export default function EnrolledUsersPage() {
           >
             <div
               className="
-              w-full max-w-md animate-fade-in rounded-xl bg-white p-8 shadow-2xl
-              dark:bg-gray-800
-            "
+                w-full max-w-md animate-fade-in rounded-xl bg-white p-8
+                shadow-2xl
+                dark:bg-gray-800
+              "
             >
               {/* Header */}
               <div className="mb-6">
                 <h2
                   className="
-                  text-2xl font-bold text-gray-900
-                  dark:text-white
-                "
+                    text-2xl font-bold text-gray-900
+                    dark:text-white
+                  "
                 >
                   📋 Subir Comprobante
                 </h2>
                 <p
                   className="
-                  mt-1 text-sm text-gray-600
-                  dark:text-gray-400
-                "
+                    mt-1 text-sm text-gray-600
+                    dark:text-gray-400
+                  "
                 >
                   Carga un PDF o imagen del comprobante de pago
                 </p>
@@ -7256,15 +7262,15 @@ export default function EnrolledUsersPage() {
                 editablePagos[pendingRowForReceipt] && (
                   <div
                     className="
-                    mb-6 rounded-lg border-2 border-amber-200 bg-amber-50 p-4
-                    dark:border-amber-700 dark:bg-amber-900/30
-                  "
+                      mb-6 rounded-lg border-2 border-amber-200 bg-amber-50 p-4
+                      dark:border-amber-700 dark:bg-amber-900/30
+                    "
                   >
                     <h3
                       className="
-                      mb-3 font-semibold text-amber-900
-                      dark:text-amber-100
-                    "
+                        mb-3 font-semibold text-amber-900
+                        dark:text-amber-100
+                      "
                     >
                       📍 Información{' '}
                       {pendingRowForReceipt >= 12
@@ -7275,17 +7281,17 @@ export default function EnrolledUsersPage() {
                       <div>
                         <p
                           className="
-                          text-xs font-medium text-amber-700
-                          dark:text-amber-300
-                        "
+                            text-xs font-medium text-amber-700
+                            dark:text-amber-300
+                          "
                         >
                           {pendingRowForReceipt >= 12 ? 'Número' : 'Cuota #'}
                         </p>
                         <p
                           className="
-                          mt-1 font-semibold text-gray-900
-                          dark:text-white
-                        "
+                            mt-1 font-semibold text-gray-900
+                            dark:text-white
+                          "
                         >
                           {pendingRowForReceipt + 1}
                         </p>
@@ -7293,17 +7299,17 @@ export default function EnrolledUsersPage() {
                       <div>
                         <p
                           className="
-                          text-xs font-medium text-amber-700
-                          dark:text-amber-300
-                        "
+                            text-xs font-medium text-amber-700
+                            dark:text-amber-300
+                          "
                         >
                           {pendingRowForReceipt >= 12 ? 'Producto' : 'Concepto'}
                         </p>
                         <p
                           className="
-                          mt-1 font-semibold text-gray-900
-                          dark:text-white
-                        "
+                            mt-1 font-semibold text-gray-900
+                            dark:text-white
+                          "
                         >
                           {pendingRowForReceipt === 12
                             ? 'PÓLIZA Y CARNET'
@@ -7319,17 +7325,17 @@ export default function EnrolledUsersPage() {
                       <div>
                         <p
                           className="
-                          text-xs font-medium text-amber-700
-                          dark:text-amber-300
-                        "
+                            text-xs font-medium text-amber-700
+                            dark:text-amber-300
+                          "
                         >
                           Fecha
                         </p>
                         <p
                           className="
-                          mt-1 font-semibold text-gray-900
-                          dark:text-white
-                        "
+                            mt-1 font-semibold text-gray-900
+                            dark:text-white
+                          "
                         >
                           {editablePagos[pendingRowForReceipt].fechaPrograma
                             ? new Date(
@@ -7346,17 +7352,17 @@ export default function EnrolledUsersPage() {
                       <div>
                         <p
                           className="
-                          text-xs font-medium text-amber-700
-                          dark:text-amber-300
-                        "
+                            text-xs font-medium text-amber-700
+                            dark:text-amber-300
+                          "
                         >
                           Monto
                         </p>
                         <p
                           className="
-                          mt-1 font-semibold text-gray-900
-                          dark:text-white
-                        "
+                            mt-1 font-semibold text-gray-900
+                            dark:text-white
+                          "
                         >
                           $
                           {Number(
@@ -7371,17 +7377,17 @@ export default function EnrolledUsersPage() {
                         <div className="col-span-2">
                           <p
                             className="
-                            text-xs font-medium text-amber-700
-                            dark:text-amber-300
-                          "
+                              text-xs font-medium text-amber-700
+                              dark:text-amber-300
+                            "
                           >
                             Método de Pago
                           </p>
                           <p
                             className="
-                            mt-1 font-semibold text-gray-900
-                            dark:text-white
-                          "
+                              mt-1 font-semibold text-gray-900
+                              dark:text-white
+                            "
                           >
                             {editablePagos[pendingRowForReceipt].metodo}
                           </p>
@@ -7395,9 +7401,9 @@ export default function EnrolledUsersPage() {
               {receiptUploadFile ? (
                 <div
                   className="
-                  mb-6 rounded-lg bg-green-50 p-4
-                  dark:bg-green-900/30
-                "
+                    mb-6 rounded-lg bg-green-50 p-4
+                    dark:bg-green-900/30
+                  "
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex flex-1 items-start gap-3">
@@ -7405,17 +7411,17 @@ export default function EnrolledUsersPage() {
                       <div className="flex-1">
                         <p
                           className="
-                          font-semibold break-all text-gray-900
-                          dark:text-white
-                        "
+                            font-semibold break-all text-gray-900
+                            dark:text-white
+                          "
                         >
                           {receiptUploadFile.name}
                         </p>
                         <p
                           className="
-                          mt-1 text-xs text-gray-600
-                          dark:text-gray-400
-                        "
+                            mt-1 text-xs text-gray-600
+                            dark:text-gray-400
+                          "
                         >
                           {(receiptUploadFile.size / 1024).toFixed(2)} KB
                         </p>
@@ -7474,24 +7480,24 @@ export default function EnrolledUsersPage() {
                     ${
                       receiptUploadDragOver
                         ? `
-                        border-blue-500 bg-blue-50
-                        dark:border-blue-400 dark:bg-blue-900/30
-                      `
+                          border-blue-500 bg-blue-50
+                          dark:border-blue-400 dark:bg-blue-900/30
+                        `
                         : `
-                        border-gray-300 bg-gray-50
-                        hover:border-gray-400
-                        dark:border-gray-600 dark:bg-gray-900/50
-                        dark:hover:border-gray-500
-                      `
+                          border-gray-300 bg-gray-50
+                          hover:border-gray-400
+                          dark:border-gray-600 dark:bg-gray-900/50
+                          dark:hover:border-gray-500
+                        `
                     }
                   `}
                 >
                   <div className="mb-3 text-5xl">📁</div>
                   <p
                     className="
-                    mb-2 text-base font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      mb-2 text-base font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     {receiptUploadDragOver
                       ? 'Suelta aquí'
@@ -7499,9 +7505,9 @@ export default function EnrolledUsersPage() {
                   </p>
                   <p
                     className="
-                    mb-3 text-sm text-gray-600
-                    dark:text-gray-400
-                  "
+                      mb-3 text-sm text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     {receiptUploadDragOver
                       ? 'El archivo se cargará'
@@ -7509,9 +7515,9 @@ export default function EnrolledUsersPage() {
                   </p>
                   <p
                     className="
-                    text-xs text-gray-500
-                    dark:text-gray-500
-                  "
+                      text-xs text-gray-500
+                      dark:text-gray-500
+                    "
                   >
                     Máximo 10 MB • PDF, PNG, JPEG, JPG
                   </p>
@@ -7623,25 +7629,26 @@ export default function EnrolledUsersPage() {
           >
             <div
               className="
-              w-full max-w-md animate-fade-in rounded-xl bg-white p-8 shadow-2xl
-              dark:bg-gray-800
-            "
+                w-full max-w-md animate-fade-in rounded-xl bg-white p-8
+                shadow-2xl
+                dark:bg-gray-800
+              "
             >
               {/* Header */}
               <div className="mb-6">
                 <h2
                   className="
-                  text-2xl font-bold text-gray-900
-                  dark:text-white
-                "
+                    text-2xl font-bold text-gray-900
+                    dark:text-white
+                  "
                 >
                   💳 Comprobante Cartera
                 </h2>
                 <p
                   className="
-                  mt-1 text-sm text-gray-600
-                  dark:text-gray-400
-                "
+                    mt-1 text-sm text-gray-600
+                    dark:text-gray-400
+                  "
                 >
                   Sube el comprobante para marcar el estado como ACTIVO
                 </p>
@@ -7651,9 +7658,9 @@ export default function EnrolledUsersPage() {
               {carteraReceipt ? (
                 <div
                   className="
-                  mb-6 rounded-lg bg-green-50 p-4
-                  dark:bg-green-900/30
-                "
+                    mb-6 rounded-lg bg-green-50 p-4
+                    dark:bg-green-900/30
+                  "
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex flex-1 items-start gap-3">
@@ -7661,17 +7668,17 @@ export default function EnrolledUsersPage() {
                       <div className="flex-1">
                         <p
                           className="
-                          font-semibold break-all text-gray-900
-                          dark:text-white
-                        "
+                            font-semibold break-all text-gray-900
+                            dark:text-white
+                          "
                         >
                           {carteraReceipt.name}
                         </p>
                         <p
                           className="
-                          mt-1 text-xs text-gray-600
-                          dark:text-gray-400
-                        "
+                            mt-1 text-xs text-gray-600
+                            dark:text-gray-400
+                          "
                         >
                           {(carteraReceipt.size / 1024).toFixed(2)} KB
                         </p>
@@ -7730,24 +7737,24 @@ export default function EnrolledUsersPage() {
                     ${
                       carteraReceiptUploadDragOver
                         ? `
-                        border-blue-500 bg-blue-50
-                        dark:border-blue-400 dark:bg-blue-900/30
-                      `
+                          border-blue-500 bg-blue-50
+                          dark:border-blue-400 dark:bg-blue-900/30
+                        `
                         : `
-                        border-gray-300 bg-gray-50
-                        hover:border-gray-400
-                        dark:border-gray-600 dark:bg-gray-900/50
-                        dark:hover:border-gray-500
-                      `
+                          border-gray-300 bg-gray-50
+                          hover:border-gray-400
+                          dark:border-gray-600 dark:bg-gray-900/50
+                          dark:hover:border-gray-500
+                        `
                     }
                   `}
                 >
                   <div className="mb-3 text-5xl">📁</div>
                   <p
                     className="
-                    mb-2 text-base font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      mb-2 text-base font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     {carteraReceiptUploadDragOver
                       ? 'Suelta aquí'
@@ -7755,9 +7762,9 @@ export default function EnrolledUsersPage() {
                   </p>
                   <p
                     className="
-                    mb-3 text-sm text-gray-600
-                    dark:text-gray-400
-                  "
+                      mb-3 text-sm text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     {carteraReceiptUploadDragOver
                       ? 'El archivo se cargará'
@@ -7765,9 +7772,9 @@ export default function EnrolledUsersPage() {
                   </p>
                   <p
                     className="
-                    text-xs text-gray-500
-                    dark:text-gray-500
-                  "
+                      text-xs text-gray-500
+                      dark:text-gray-500
+                    "
                   >
                     Máximo 10 MB • PDF, PNG, JPEG, JPG
                   </p>
@@ -7858,15 +7865,15 @@ export default function EnrolledUsersPage() {
         {showModal && (
           <div
             className="
-            fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4
-            backdrop-blur-sm
-          "
+              fixed inset-0 z-50 flex items-center justify-center bg-black/70
+              p-4 backdrop-blur-sm
+            "
           >
             <div
               className="
-              animate-fadeIn w-full max-w-md scale-100 rounded-lg bg-gray-800
-              p-6 shadow-xl transition-transform duration-300
-            "
+                animate-fadeIn w-full max-w-md scale-100 rounded-lg bg-gray-800
+                p-6 shadow-xl transition-transform duration-300
+              "
             >
               <h3 className="mb-4 text-center text-xl font-bold text-white">
                 Matricular {selectedStudents.length} estudiante
@@ -7876,9 +7883,9 @@ export default function EnrolledUsersPage() {
               {/* Lista de estudiantes seleccionados */}
               <div
                 className="
-                mb-4 max-h-40 overflow-y-auto rounded-md border border-gray-600
-                bg-gray-700 p-3 shadow-inner
-              "
+                  mb-4 max-h-40 overflow-y-auto rounded-md border
+                  border-gray-600 bg-gray-700 p-3 shadow-inner
+                "
               >
                 {students
                   .filter((s) => selectedStudents.includes(s.id))
@@ -7925,9 +7932,9 @@ export default function EnrolledUsersPage() {
 
                 <div
                   className="
-                  max-h-48 space-y-2 overflow-y-auto rounded border
-                  border-gray-600 bg-gray-700 p-2 shadow-inner
-                "
+                    max-h-48 space-y-2 overflow-y-auto rounded border
+                    border-gray-600 bg-gray-700 p-2 shadow-inner
+                  "
                 >
                   {(filteredCourseResults.length > 0
                     ? filteredCourseResults
@@ -7972,9 +7979,9 @@ export default function EnrolledUsersPage() {
               {/* Acciones */}
               <div
                 className="
-                flex flex-col gap-3
-                sm:flex-row sm:justify-end
-              "
+                  flex flex-col gap-3
+                  sm:flex-row sm:justify-end
+                "
               >
                 <button
                   onClick={() => setShowModal(false)}
@@ -8021,9 +8028,9 @@ export default function EnrolledUsersPage() {
           {/* Caja */}
           <div
             className="
-            relative mx-4 w-full max-w-md rounded-2xl border border-white/10
-            bg-neutral-900 p-5 shadow-2xl
-          "
+              relative mx-4 w-full max-w-md rounded-2xl border border-white/10
+              bg-neutral-900 p-5 shadow-2xl
+            "
           >
             <div className="mb-4">
               <h3 className="text-lg font-semibold">Seleccionar estudiantes</h3>
@@ -8052,9 +8059,9 @@ export default function EnrolledUsersPage() {
             {/* Botones */}
             <div
               className="
-              flex flex-col gap-2
-              sm:flex-row sm:justify-end
-            "
+                flex flex-col gap-2
+                sm:flex-row sm:justify-end
+              "
             >
               <button
                 type="button"
@@ -8098,30 +8105,31 @@ export default function EnrolledUsersPage() {
       {receiptPreview.open && receiptPreview.url && (
         <div
           className="
-          fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4
-        "
+            fixed inset-0 z-[100] flex items-center justify-center bg-black/70
+            p-4
+          "
         >
           <div
             className="
-            relative grid max-h-[90vh] w-full max-w-4xl
-            grid-rows-[auto,1fr,auto] overflow-hidden rounded-xl bg-white
-            shadow-2xl
-            dark:bg-gray-900
-          "
+              relative grid max-h-[90vh] w-full max-w-4xl
+              grid-rows-[auto,1fr,auto] overflow-hidden rounded-xl bg-white
+              shadow-2xl
+              dark:bg-gray-900
+            "
           >
             {/* Header */}
             <div
               className="
-              flex items-center justify-between gap-3 border-b border-gray-200
-              px-4 py-3
-              dark:border-gray-700
-            "
+                flex items-center justify-between gap-3 border-b border-gray-200
+                px-4 py-3
+                dark:border-gray-700
+              "
             >
               <h3
                 className="
-                truncate text-sm font-semibold text-gray-900
-                dark:text-gray-100
-              "
+                  truncate text-sm font-semibold text-gray-900
+                  dark:text-gray-100
+                "
               >
                 {receiptPreview.name ?? 'Comprobante'}
               </h3>
@@ -8166,10 +8174,10 @@ export default function EnrolledUsersPage() {
             {/* Footer */}
             <div
               className="
-              flex items-center justify-end gap-2 border-t border-gray-200 px-4
-              py-3
-              dark:border-gray-700
-            "
+                flex items-center justify-end gap-2 border-t border-gray-200
+                px-4 py-3
+                dark:border-gray-700
+              "
             >
               <a
                 href={receiptPreview.url}
@@ -8207,14 +8215,14 @@ export default function EnrolledUsersPage() {
       {showTemplatePreview && waSelectedTemplate !== '__TEXT_ONLY__' && (
         <div
           className="
-          fixed inset-0 z-[9999] flex items-center justify-center bg-black/70
-          p-4 backdrop-blur-sm
-        "
+            fixed inset-0 z-[9999] flex items-center justify-center bg-black/70
+            p-4 backdrop-blur-sm
+          "
         >
           <div
             className="
-            w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-2xl
-          "
+              w-full max-w-md rounded-lg bg-gray-900 p-6 text-white shadow-2xl
+            "
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold">Preview de Plantilla</h3>
@@ -8237,9 +8245,9 @@ export default function EnrolledUsersPage() {
                   <div className="flex items-center gap-3 bg-[#202C33] px-3 py-2">
                     <div
                       className="
-                      flex size-8 items-center justify-center rounded-full
-                      bg-[#00a884]/30 text-xs text-[#00a884]
-                    "
+                        flex size-8 items-center justify-center rounded-full
+                        bg-[#00a884]/30 text-xs text-[#00a884]
+                      "
                     >
                       WA
                     </div>
@@ -8266,9 +8274,9 @@ export default function EnrolledUsersPage() {
 
                       <div
                         className="
-                        mt-1 flex items-center justify-end gap-1 text-[11px]
-                        text-gray-200/80
-                      "
+                          mt-1 flex items-center justify-end gap-1 text-[11px]
+                          text-gray-200/80
+                        "
                       >
                         <span>
                           {new Date().toLocaleTimeString([], {

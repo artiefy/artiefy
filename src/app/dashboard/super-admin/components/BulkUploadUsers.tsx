@@ -303,9 +303,9 @@ const BulkUploadUsers = ({
       {modalIsOpen && (
         <div
           className="
-          fixed inset-0 z-50 flex items-center justify-center bg-black/50
-          backdrop-blur-sm transition-all duration-300
-        "
+            fixed inset-0 z-50 flex items-center justify-center bg-black/50
+            backdrop-blur-sm transition-all duration-300
+          "
         >
           <div
             className="
@@ -354,10 +354,10 @@ const BulkUploadUsers = ({
                   {/* Drop Zone */}
                   <div
                     className="
-                    group relative rounded-xl border-2 border-dashed
-                    border-gray-300 bg-gray-50 p-12 text-center transition-all
-                    hover:border-[#00BDD8] hover:bg-[#00BDD8]/5
-                  "
+                      group relative rounded-xl border-2 border-dashed
+                      border-gray-300 bg-gray-50 p-12 text-center transition-all
+                      hover:border-[#00BDD8] hover:bg-[#00BDD8]/5
+                    "
                   >
                     <input
                       type="file"
@@ -369,9 +369,9 @@ const BulkUploadUsers = ({
                     />
                     <FiUpload
                       className="
-                      mx-auto mb-4 text-5xl text-gray-400 transition-colors
-                      group-hover:text-[#00BDD8]
-                    "
+                        mx-auto mb-4 text-5xl text-gray-400 transition-colors
+                        group-hover:text-[#00BDD8]
+                      "
                     />
                     <p className="mb-2 text-lg font-semibold text-gray-700">
                       {file ? file.name : 'Arrastra tu archivo aquí'}
@@ -410,9 +410,9 @@ const BulkUploadUsers = ({
                   {/* Info Banner */}
                   <div
                     className="
-                    rounded-xl border-l-4 border-blue-500 bg-blue-50 p-5
-                    shadow-sm
-                  "
+                      rounded-xl border-l-4 border-blue-500 bg-blue-50 p-5
+                      shadow-sm
+                    "
                   >
                     <div className="flex items-start gap-3">
                       <div className="rounded-full bg-blue-100 p-2">
@@ -436,9 +436,9 @@ const BulkUploadUsers = ({
                   {allRequiredMapped ? (
                     <div
                       className="
-                      flex items-center gap-2 rounded-lg border border-green-200
-                      bg-green-50 px-4 py-3 text-green-700
-                    "
+                        flex items-center gap-2 rounded-lg border
+                        border-green-200 bg-green-50 px-4 py-3 text-green-700
+                      "
                     >
                       <FiCheck className="text-lg" />
                       <span className="font-medium">
@@ -448,9 +448,9 @@ const BulkUploadUsers = ({
                   ) : (
                     <div
                       className="
-                      flex items-center gap-2 rounded-lg border border-amber-200
-                      bg-amber-50 px-4 py-3 text-amber-700
-                    "
+                        flex items-center gap-2 rounded-lg border
+                        border-amber-200 bg-amber-50 px-4 py-3 text-amber-700
+                      "
                     >
                       <FiAlertCircle className="text-lg" />
                       <span className="font-medium">
@@ -463,8 +463,9 @@ const BulkUploadUsers = ({
                   {/* Tabla tipo Excel */}
                   <div
                     className="
-                    overflow-x-auto rounded-xl border border-gray-200 shadow-sm
-                  "
+                      overflow-x-auto rounded-xl border border-gray-200
+                      shadow-sm
+                    "
                   >
                     <table className="w-full border-collapse">
                       <thead>
@@ -496,8 +497,8 @@ const BulkUploadUsers = ({
                                   {/* Nombre de la columna Excel */}
                                   <div
                                     className="
-                                    text-sm font-semibold text-gray-900
-                                  "
+                                      text-sm font-semibold text-gray-900
+                                    "
                                   >
                                     {mapping.excelColumn}
                                   </div>
@@ -519,23 +520,25 @@ const BulkUploadUsers = ({
                                     {mappedField ? (
                                       <div
                                         className="
-                                        flex items-center justify-between gap-2
-                                      "
+                                          flex items-center justify-between
+                                          gap-2
+                                        "
                                       >
                                         <div className="flex-1">
                                           <div
                                             className="
-                                            text-xs font-semibold text-gray-900
-                                          "
+                                              text-xs font-semibold
+                                              text-gray-900
+                                            "
                                           >
                                             {mappedField.label}
                                           </div>
                                           {mappedField.required && (
                                             <div
                                               className="
-                                              mt-1 flex items-center gap-1
-                                              text-xs text-green-600
-                                            "
+                                                mt-1 flex items-center gap-1
+                                                text-xs text-green-600
+                                              "
                                             >
                                               <FiCheck className="text-xs" />
                                               Obligatorio
@@ -559,9 +562,10 @@ const BulkUploadUsers = ({
                                     ) : (
                                       <div
                                         className="
-                                        flex h-full items-center justify-center
-                                        text-xs text-gray-400 italic
-                                      "
+                                          flex h-full items-center
+                                          justify-center text-xs text-gray-400
+                                          italic
+                                        "
                                       >
                                         Arrastra campo aquí
                                       </div>
@@ -622,25 +626,25 @@ const BulkUploadUsers = ({
                   {/* Campos disponibles para arrastrar */}
                   <div
                     className="
-                    rounded-xl border-2 border-gray-300 bg-gradient-to-br
-                    from-gray-50 to-gray-100 p-6
-                  "
+                      rounded-xl border-2 border-gray-300 bg-gradient-to-br
+                      from-gray-50 to-gray-100 p-6
+                    "
                   >
                     <h3
                       className="
-                      mb-4 flex items-center gap-2 text-lg font-semibold
-                      text-gray-800
-                    "
+                        mb-4 flex items-center gap-2 text-lg font-semibold
+                        text-gray-800
+                      "
                     >
                       <FiMove className="text-[#00BDD8]" />
                       Campos Disponibles (Arrastra hacia las columnas)
                     </h3>
                     <div
                       className="
-                      grid grid-cols-2 gap-3
-                      md:grid-cols-3
-                      lg:grid-cols-6
-                    "
+                        grid grid-cols-2 gap-3
+                        md:grid-cols-3
+                        lg:grid-cols-6
+                      "
                     >
                       {dbFields.map((field) => (
                         <div
@@ -655,18 +659,18 @@ const BulkUploadUsers = ({
                             ${
                               draggedField === field.value
                                 ? `
-                                scale-105 border-[#00BDD8] bg-[#00BDD8]
-                                text-white shadow-lg
-                              `
+                                  scale-105 border-[#00BDD8] bg-[#00BDD8]
+                                  text-white shadow-lg
+                                `
                                 : field.required
                                   ? `
-                                  border-red-300 bg-white
-                                  hover:border-red-400
-                                `
+                                    border-red-300 bg-white
+                                    hover:border-red-400
+                                  `
                                   : `
-                                  border-gray-300 bg-white
-                                  hover:border-[#00BDD8]
-                                `
+                                    border-gray-300 bg-white
+                                    hover:border-[#00BDD8]
+                                  `
                             }
                           `}
                         >
@@ -729,9 +733,9 @@ const BulkUploadUsers = ({
                       <>
                         <div
                           className="
-                          size-5 animate-spin rounded-full border-2 border-white
-                          border-t-transparent
-                        "
+                            size-5 animate-spin rounded-full border-2
+                            border-white border-t-transparent
+                          "
                         />
                         Subiendo...
                       </>

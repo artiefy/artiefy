@@ -125,38 +125,38 @@ export default function StudentCourseDashboard() {
     <>
       <div
         className="
-        relative flex min-h-screen flex-col items-center justify-center
-        bg-gradient-to-b from-[#01142B] to-[#1e2939] p-0
-      "
+          relative flex min-h-screen flex-col items-center justify-center
+          bg-gradient-to-b from-[#01142B] to-[#1e2939] p-0
+        "
       >
         {/* Header futurista reorganizado */}
         <header
           className="
-          relative z-20 mx-auto flex w-full max-w-6xl flex-col rounded-b-3xl
-          bg-[#01142B] px-4 py-8 shadow-2xl transition-all duration-700
-          md:py-12
-        "
+            relative z-20 mx-auto flex w-full max-w-6xl flex-col rounded-b-3xl
+            bg-[#01142B] px-4 py-8 shadow-2xl transition-all duration-700
+            md:py-12
+          "
         >
           <div
             className="
-            flex w-full flex-col gap-8
-            md:flex-row
-          "
+              flex w-full flex-col gap-8
+              md:flex-row
+            "
           >
             {/* Card principal: imagen + info curso */}
             <div
               className="
-              flex flex-1 flex-col items-center gap-6 rounded-2xl bg-[#182235]
-              p-6 shadow-xl
-              md:flex-row
-            "
+                flex flex-1 flex-col items-center gap-6 rounded-2xl bg-[#182235]
+                p-6 shadow-xl
+                md:flex-row
+              "
             >
               <div
                 className="
-                relative flex w-[320px] flex-shrink-0 flex-col items-center
-                justify-center
-                md:w-[260px]
-              "
+                  relative flex w-[320px] flex-shrink-0 flex-col items-center
+                  justify-center
+                  md:w-[260px]
+                "
               >
                 <Image
                   src={
@@ -173,25 +173,25 @@ export default function StudentCourseDashboard() {
                 />
                 <span
                   className="
-                  absolute top-3 left-3 rounded-full bg-yellow-500/90 px-3 py-1
-                  text-xs font-bold text-[#232B3E] shadow
-                "
+                    absolute top-3 left-3 rounded-full bg-yellow-500/90 px-3
+                    py-1 text-xs font-bold text-[#232B3E] shadow
+                  "
                 >
                   ★ Premium
                 </span>
               </div>
               <div
                 className="
-                flex w-full flex-col items-center justify-center gap-2
-                md:items-start
-              "
+                  flex w-full flex-col items-center justify-center gap-2
+                  md:items-start
+                "
               >
                 <h1
                   className="
-                  text-2xl font-extrabold tracking-wide text-white
-                  drop-shadow-lg
-                  md:text-3xl
-                "
+                    text-2xl font-extrabold tracking-wide text-white
+                    drop-shadow-lg
+                    md:text-3xl
+                  "
                 >
                   {courseInfo?.title ?? 'Portal de Notas del Estudiante'}
                 </h1>
@@ -200,9 +200,9 @@ export default function StudentCourseDashboard() {
                 </p>
                 <span
                   className="
-                  rounded bg-[#3AF4EF]/10 px-3 py-1 text-xs font-semibold
-                  text-[#3AF4EF]
-                "
+                    rounded bg-[#3AF4EF]/10 px-3 py-1 text-xs font-semibold
+                    text-[#3AF4EF]
+                  "
                 >
                   Nivel: {courseInfo?.nivel}
                 </span>
@@ -218,10 +218,10 @@ export default function StudentCourseDashboard() {
                 </span>
                 <button
                   className="
-                  mt-2 w-full max-w-[180px] rounded-lg bg-[#3AF4EF] px-4 py-2
-                  font-bold text-white shadow-lg transition-all
-                  hover:bg-[#27c2c2]
-                "
+                    mt-2 w-full max-w-[180px] rounded-lg bg-[#3AF4EF] px-4 py-2
+                    font-bold text-white shadow-lg transition-all
+                    hover:bg-[#27c2c2]
+                  "
                 >
                   Suscrito ✓
                 </button>
@@ -230,10 +230,10 @@ export default function StudentCourseDashboard() {
             {/* Card estudiante */}
             <div
               className="
-              mx-auto flex max-w-[320px] min-w-[220px] flex-col items-center
-              justify-center rounded-2xl bg-[#1e2939] p-6 shadow-xl
-              md:mx-0
-            "
+                mx-auto flex max-w-[320px] min-w-[220px] flex-col items-center
+                justify-center rounded-2xl bg-[#1e2939] p-6 shadow-xl
+                md:mx-0
+              "
             >
               <User className="mb-2 size-12 animate-pulse text-[#3AF4EF]" />
               <h2 className="mb-1 text-xl font-bold text-white">
@@ -242,9 +242,9 @@ export default function StudentCourseDashboard() {
               <p className="mb-1 text-sm text-[#3AF4EF]">{userInfo?.email}</p>
               <span
                 className="
-                rounded bg-[#3AF4EF]/10 px-3 py-1 text-xs font-semibold
-                text-[#3AF4EF]
-              "
+                  rounded bg-[#3AF4EF]/10 px-3 py-1 text-xs font-semibold
+                  text-[#3AF4EF]
+                "
               >
                 {userInfo?.role}
               </span>
@@ -255,15 +255,15 @@ export default function StudentCourseDashboard() {
         {/* Tabla de notas editable y detalles completos */}
         <div
           className="
-          animate-slide-up mx-auto mt-10 max-w-6xl rounded-2xl bg-[#1e2939] p-4
-          shadow-2xl
-          md:p-8
-        "
+            animate-slide-up mx-auto mt-10 max-w-6xl rounded-2xl bg-[#1e2939]
+            p-4 shadow-2xl
+            md:p-8
+          "
         >
           <h2
             className="
-            mb-6 animate-fade-in text-center text-2xl font-bold text-[#3AF4EF]
-          "
+              mb-6 animate-fade-in text-center text-2xl font-bold text-[#3AF4EF]
+            "
           >
             Clases y Notas del Estudiante
           </h2>
@@ -282,57 +282,58 @@ export default function StudentCourseDashboard() {
               </h3>
               <table
                 className="
-                w-full min-w-[750px] border-separate border-spacing-y-2 text-xs
-                md:text-base
-              "
+                  w-full min-w-[750px] border-separate border-spacing-y-2
+                  text-xs
+                  md:text-base
+                "
               >
                 <thead>
                   <tr className="bg-[#182235] text-[#3AF4EF]">
                     <th
                       className="
-                      rounded-l-xl p-2
-                      md:px-6 md:py-3
-                    "
+                        rounded-l-xl p-2
+                        md:px-6 md:py-3
+                      "
                     >
                       Actividad
                     </th>
                     <th
                       className="
-                      p-2
-                      md:px-6 md:py-3
-                    "
+                        p-2
+                        md:px-6 md:py-3
+                      "
                     >
                       Descripción
                     </th>
                     <th
                       className="
-                      p-2
-                      md:px-6 md:py-3
-                    "
+                        p-2
+                        md:px-6 md:py-3
+                      "
                     >
                       Clase
                     </th>
                     <th
                       className="
-                      p-2
-                      md:px-6 md:py-3
-                    "
+                        p-2
+                        md:px-6 md:py-3
+                      "
                     >
                       Estado
                     </th>
                     <th
                       className="
-                      p-2
-                      md:px-6 md:py-3
-                    "
+                        p-2
+                        md:px-6 md:py-3
+                      "
                     >
                       Nota
                     </th>
                     <th
                       className="
-                      rounded-r-xl p-2
-                      md:px-6 md:py-3
-                    "
+                        rounded-r-xl p-2
+                        md:px-6 md:py-3
+                      "
                     >
                       Editar
                     </th>
@@ -350,33 +351,33 @@ export default function StudentCourseDashboard() {
                     >
                       <td
                         className="
-                        p-2 font-semibold text-[#3AF4EF]
-                        md:px-6 md:py-4
-                      "
+                          p-2 font-semibold text-[#3AF4EF]
+                          md:px-6 md:py-4
+                        "
                       >
                         {activity.name}
                       </td>
                       <td
                         className="
-                        p-2 text-white/80
-                        md:px-6 md:py-4
-                      "
+                          p-2 text-white/80
+                          md:px-6 md:py-4
+                        "
                       >
                         {activity.description}
                       </td>
                       <td
                         className="
-                        p-2 text-white/80
-                        md:px-6 md:py-4
-                      "
+                          p-2 text-white/80
+                          md:px-6 md:py-4
+                        "
                       >
                         {activity.parentTitle ?? '—'}
                       </td>
                       <td
                         className="
-                        p-2 text-center
-                        md:px-6 md:py-4
-                      "
+                          p-2 text-center
+                          md:px-6 md:py-4
+                        "
                       >
                         <span
                           className={`
@@ -388,17 +389,17 @@ export default function StudentCourseDashboard() {
                       </td>
                       <td
                         className="
-                        p-2 text-center text-base font-bold
-                        md:px-6 md:py-4 md:text-lg
-                      "
+                          p-2 text-center text-base font-bold
+                          md:px-6 md:py-4 md:text-lg
+                        "
                       >
                         {activity.score ?? 0}
                       </td>
                       <td
                         className="
-                        p-2 text-center
-                        md:px-6 md:py-4
-                      "
+                          p-2 text-center
+                          md:px-6 md:py-4
+                        "
                       >
                         <input
                           type="number"
@@ -455,9 +456,9 @@ export default function StudentCourseDashboard() {
               {/* Mostrar detalles adicionales del curso y estudiante */}
               <div
                 className="
-                mt-8 grid grid-cols-1 gap-8
-                md:grid-cols-2
-              "
+                  mt-8 grid grid-cols-1 gap-8
+                  md:grid-cols-2
+                "
               >
                 <div className="rounded-xl bg-[#182235] p-6 shadow-lg">
                   <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
@@ -511,16 +512,16 @@ export default function StudentCourseDashboard() {
         {/* Resumen y progreso */}
         <div
           className="
-          animate-slide-up mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-8
-          md:grid-cols-3
-        "
+            animate-slide-up mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-8
+            md:grid-cols-3
+          "
         >
           <div
             className="
-            rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all
-            duration-500
-            hover:scale-105
-          "
+              rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all
+              duration-500
+              hover:scale-105
+            "
           >
             <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
               Progreso General
@@ -539,10 +540,10 @@ export default function StudentCourseDashboard() {
           </div>
           <div
             className="
-            rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all
-            duration-500
-            hover:scale-105
-          "
+              rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all
+              duration-500
+              hover:scale-105
+            "
           >
             <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
               Lecciones Completadas
@@ -553,10 +554,10 @@ export default function StudentCourseDashboard() {
           </div>
           <div
             className="
-            rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all
-            duration-500
-            hover:scale-105
-          "
+              rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all
+              duration-500
+              hover:scale-105
+            "
           >
             <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
               Nota Global

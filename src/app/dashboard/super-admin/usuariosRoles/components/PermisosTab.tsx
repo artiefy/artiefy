@@ -118,12 +118,20 @@ export default function PermisosTab() {
   };
 
   return (
-    <div className="rounded-lg border border-white/10 bg-gray-800/60 p-4 text-white shadow-md">
-      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className="
+      rounded-lg border border-white/10 bg-gray-800/60 p-4 text-white shadow-md
+    ">
+      <div className="
+        mb-4 flex flex-col gap-2
+        sm:flex-row sm:items-center sm:justify-between
+      ">
         <h2 className="text-lg font-bold">Permisos del Sistema</h2>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+          className="
+            rounded bg-blue-600 px-4 py-2 text-white transition
+            hover:bg-blue-700
+          "
         >
           + Nuevo Permiso
         </button>
@@ -134,7 +142,9 @@ export default function PermisosTab() {
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full table-auto text-sm">
-            <thead className="sticky top-0 bg-gray-900 text-left text-gray-400 shadow-md">
+            <thead className="
+              sticky top-0 bg-gray-900 text-left text-gray-400 shadow-md
+            ">
               <tr>
                 <th className="px-4 py-2">Nombre</th>
                 <th className="px-4 py-2">Descripción</th>
@@ -147,7 +157,10 @@ export default function PermisosTab() {
               {permisos.map((permiso) => (
                 <tr
                   key={permiso.id}
-                  className="border-t border-white/10 hover:bg-gray-700/30"
+                  className="
+                    border-t border-white/10
+                    hover:bg-gray-700/30
+                  "
                 >
                   <td className="px-4 py-2">
                     <input
@@ -162,7 +175,11 @@ export default function PermisosTab() {
                           )
                         )
                       }
-                      className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="
+                        w-full rounded border border-gray-600 bg-gray-700 px-2
+                        py-1 text-white
+                        focus:ring-2 focus:ring-blue-500 focus:outline-none
+                      "
                     />
                   </td>
                   <td className="px-4 py-2">
@@ -178,7 +195,11 @@ export default function PermisosTab() {
                           )
                         )
                       }
-                      className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="
+                        w-full rounded border border-gray-600 bg-gray-700 px-2
+                        py-1 text-white
+                        focus:ring-2 focus:ring-blue-500 focus:outline-none
+                      "
                     />
                   </td>
                   <td className="px-4 py-2">
@@ -194,7 +215,11 @@ export default function PermisosTab() {
                           )
                         )
                       }
-                      className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="
+                        w-full rounded border border-gray-600 bg-gray-700 px-2
+                        py-1 text-white
+                        focus:ring-2 focus:ring-blue-500 focus:outline-none
+                      "
                     />
                   </td>
                   <td className="px-4 py-2">
@@ -212,7 +237,11 @@ export default function PermisosTab() {
                           )
                         )
                       }
-                      className="w-full rounded border border-gray-600 bg-gray-700 px-2 py-1 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      className="
+                        w-full rounded border border-gray-600 bg-gray-700 px-2
+                        py-1 text-white
+                        focus:ring-2 focus:ring-blue-500 focus:outline-none
+                      "
                     >
                       <option value="create">Crear</option>
                       <option value="read">Leer</option>
@@ -223,10 +252,18 @@ export default function PermisosTab() {
                       <option value="publish">Publicar</option>
                     </select>
                   </td>
-                  <td className="flex flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center">
+                  <td className="
+                    flex flex-col gap-2 px-4 py-2
+                    sm:flex-row sm:items-center
+                  ">
                     <button
                       onClick={() => handleUpdate(permiso)}
-                      className="flex items-center justify-center rounded bg-green-600 px-3 py-1 text-white transition hover:bg-green-700 disabled:opacity-50"
+                      className="
+                        flex items-center justify-center rounded bg-green-600
+                        px-3 py-1 text-white transition
+                        hover:bg-green-700
+                        disabled:opacity-50
+                      "
                       disabled={updatingId === permiso.id}
                     >
                       {updatingId === permiso.id
@@ -235,7 +272,12 @@ export default function PermisosTab() {
                     </button>
                     <button
                       onClick={() => handleDelete(permiso.id)}
-                      className="flex items-center justify-center rounded bg-red-600 px-3 py-1 text-white transition hover:bg-red-700 disabled:opacity-50"
+                      className="
+                        flex items-center justify-center rounded bg-red-600 px-3
+                        py-1 text-white transition
+                        hover:bg-red-700
+                        disabled:opacity-50
+                      "
                       disabled={deletingId === permiso.id}
                     >
                       {deletingId === permiso.id ? 'Eliminando...' : 'Eliminar'}
@@ -249,13 +291,20 @@ export default function PermisosTab() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded bg-gray-900 p-6 text-white shadow-lg">
+        <div className="
+          fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4
+        ">
+          <div className="
+            w-full max-w-md rounded bg-gray-900 p-6 text-white shadow-lg
+          ">
             <div className="mb-4 flex items-center justify-between border-b pb-2">
               <h2 className="text-lg font-semibold">Crear Permiso</h2>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-xl text-red-400 hover:text-red-600"
+                className="
+                  text-xl text-red-400
+                  hover:text-red-600
+                "
               >
                 ×
               </button>
@@ -268,7 +317,11 @@ export default function PermisosTab() {
                 onChange={(e) =>
                   setNewPermiso({ ...newPermiso, name: e.target.value })
                 }
-                className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="
+                  rounded border border-gray-600 bg-gray-700 px-3 py-2
+                  text-white
+                  focus:ring-2 focus:ring-blue-500 focus:outline-none
+                "
               />
               <input
                 type="text"
@@ -277,7 +330,11 @@ export default function PermisosTab() {
                 onChange={(e) =>
                   setNewPermiso({ ...newPermiso, description: e.target.value })
                 }
-                className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="
+                  rounded border border-gray-600 bg-gray-700 px-3 py-2
+                  text-white
+                  focus:ring-2 focus:ring-blue-500 focus:outline-none
+                "
               />
               <input
                 type="text"
@@ -286,7 +343,11 @@ export default function PermisosTab() {
                 onChange={(e) =>
                   setNewPermiso({ ...newPermiso, servicio: e.target.value })
                 }
-                className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="
+                  rounded border border-gray-600 bg-gray-700 px-3 py-2
+                  text-white
+                  focus:ring-2 focus:ring-blue-500 focus:outline-none
+                "
               />
 
               <select
@@ -297,7 +358,11 @@ export default function PermisosTab() {
                     accion: e.target.value as Permiso['accion'],
                   })
                 }
-                className="rounded border border-gray-600 bg-gray-700 px-3 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="
+                  rounded border border-gray-600 bg-gray-700 px-3 py-2
+                  text-white
+                  focus:ring-2 focus:ring-blue-500 focus:outline-none
+                "
               >
                 <option value="create">Crear</option>
                 <option value="read">Leer</option>
@@ -310,7 +375,10 @@ export default function PermisosTab() {
 
               <button
                 onClick={handleCreate}
-                className="self-end rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+                className="
+                  self-end rounded bg-blue-600 px-4 py-2 text-white transition
+                  hover:bg-blue-700
+                "
               >
                 Crear Permiso
               </button>

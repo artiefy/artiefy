@@ -241,10 +241,15 @@ export function CourseActivities({
   if (!lessonsState.length) {
     return (
       <div
-        className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/50 py-12"
+        className="
+          flex flex-col items-center justify-center rounded-xl border
+          border-dashed border-border/50 py-12
+        "
         style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
       >
-        <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50">
+        <div className="
+          mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50
+        ">
           <CircleHelp className="size-8 text-black" />
         </div>
         <h3 className="mb-2 text-lg font-semibold text-slate-100">
@@ -287,7 +292,10 @@ export function CourseActivities({
               <Rocket className="size-3.5" />
             </div>
             {/* On small screens move this item to its own line */}
-            <span className="w-full text-xs text-[#94A3B8] sm:w-auto">
+            <span className="
+              w-full text-xs text-[#94A3B8]
+              sm:w-auto
+            ">
               Autocompletado
             </span>
           </div>
@@ -307,7 +315,10 @@ export function CourseActivities({
           return (
             <div key={lesson.id} className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="flex size-6 items-center justify-center rounded-full bg-accent/20">
+                <div className="
+                  flex size-6 items-center justify-center rounded-full
+                  bg-accent/20
+                ">
                   <span className="text-xs font-medium text-accent">
                     {lessonIndex + 1}
                   </span>
@@ -316,7 +327,10 @@ export function CourseActivities({
                   <h4 className="text-sm font-medium break-words text-[#f8fafc]">
                     {lesson.title}
                   </h4>
-                  <span className="block text-xs text-[#94A3B8] sm:inline">
+                  <span className="
+                    block text-xs text-[#94A3B8]
+                    sm:inline
+                  ">
                     {completedActivities}/{totalActivities} completadas
                   </span>
                 </div>
@@ -340,7 +354,11 @@ export function CourseActivities({
                     <div
                       key={activity.id}
                       className={cn(
-                        'group flex items-center justify-between border p-3 transition-all duration-200 hover:cursor-pointer',
+                        `
+                          group flex items-center justify-between border p-3
+                          transition-all duration-200
+                          hover:cursor-pointer
+                        `,
                         statusBadge.state === 'locked' && 'opacity-60'
                       )}
                       style={{
@@ -373,10 +391,14 @@ export function CourseActivities({
                           <Icon className="size-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">
+                          <p className="
+                            truncate text-sm font-medium text-foreground
+                          ">
                             {activity.name}
                           </p>
-                          <div className="flex items-center gap-2 text-xs text-[#94A3B8]">
+                          <div className="
+                            flex items-center gap-2 text-xs text-[#94A3B8]
+                          ">
                             <span>{activityType.label}</span>
                             {deadlineText && (
                               <>
@@ -391,7 +413,10 @@ export function CourseActivities({
                       <div className="ml-3 shrink-0">
                         <div
                           className={cn(
-                            'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold',
+                            `
+                              inline-flex items-center rounded-full border
+                              px-2.5 py-0.5 text-xs font-semibold
+                            `,
                             statusBadge.className
                           )}
                         >

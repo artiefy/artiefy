@@ -25,13 +25,19 @@ export default function StudentGradientText({
   return (
     <div
       className={cn(
-        'relative mx-auto flex max-w-fit cursor-pointer flex-row items-center justify-center overflow-hidden rounded-[1.25rem] font-extrabold backdrop-blur transition-shadow duration-500',
+        `
+          relative mx-auto flex max-w-fit cursor-pointer flex-row items-center
+          justify-center overflow-hidden rounded-[1.25rem] font-extrabold
+          backdrop-blur transition-shadow duration-500
+        `,
         className
       )}
     >
       {showBorder && (
         <div
-          className="animate-gradient pointer-events-none absolute inset-0 z-0 bg-cover"
+          className="
+            animate-gradient pointer-events-none absolute inset-0 z-0 bg-cover
+          "
           style={{
             ...gradientStyle,
             backgroundSize: '300% 100%',
@@ -50,7 +56,10 @@ export default function StudentGradientText({
         </div>
       )}
       <div
-        className="animate-text-gradient relative z-2 inline-block bg-cover pb-1 leading-relaxed text-transparent"
+        className="
+          animate-text-gradient relative z-2 inline-block bg-cover pb-1
+          leading-relaxed text-transparent
+        "
         style={{
           ...gradientStyle,
           backgroundClip: 'text',

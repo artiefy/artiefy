@@ -269,18 +269,34 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
     <div>
       <button
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-3 py-2 text-xs font-medium text-white hover:bg-gray-800"
+        className="
+          inline-flex items-center gap-2 rounded-md bg-gray-900 px-3 py-2
+          text-xs font-medium text-white
+          hover:bg-gray-800
+        "
       >
         <FiUpload className="text-sm" /> Subida desde excel
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 p-2 sm:p-4">
-          <div className="w-full max-w-[95vw] overflow-hidden rounded-xl bg-white text-gray-800 shadow-2xl">
+        <div className="
+          fixed inset-0 z-[2000] flex items-center justify-center bg-black/60
+          p-2
+          sm:p-4
+        ">
+          <div className="
+            w-full max-w-[95vw] overflow-hidden rounded-xl bg-white
+            text-gray-800 shadow-2xl
+          ">
             {/* Header */}
-            <div className="flex items-center justify-between bg-gray-900 px-4 py-3 text-white">
+            <div className="
+              flex items-center justify-between bg-gray-900 px-4 py-3 text-white
+            ">
               <div>
-                <h2 className="text-sm font-semibold sm:text-base">
+                <h2 className="
+                  text-sm font-semibold
+                  sm:text-base
+                ">
                   Carga Masiva de Usuarios (v2)
                 </h2>
                 <p className="text-[10px] opacity-80">
@@ -296,18 +312,27 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                   setColumns([]);
                   setRows([]);
                 }}
-                className="rounded-md p-1 hover:bg-white/10"
+                className="
+                  rounded-md p-1
+                  hover:bg-white/10
+                "
               >
                 <FiX size={18} />
               </button>
             </div>
 
             {/* Body */}
-            <div className="max-h-[90vh] overflow-auto p-4 text-[12px] leading-tight">
+            <div className="
+              max-h-[90vh] overflow-auto p-4 text-[12px] leading-tight
+            ">
               {!showMapping ? (
                 <div className="space-y-4">
                   {/* Dropzone */}
-                  <div className="relative rounded-lg border-2 border-dashed border-gray-300 p-8 text-center hover:border-gray-400">
+                  <div className="
+                    relative rounded-lg border-2 border-dashed border-gray-300
+                    p-8 text-center
+                    hover:border-gray-400
+                  ">
                     <input
                       type="file"
                       accept=".xlsx"
@@ -359,7 +384,11 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                         a.download = 'plantilla_usuarios_v2.xlsx';
                         a.click();
                       }}
-                      className="mt-2 inline-flex items-center gap-2 rounded-md bg-gray-900 px-3 py-2 text-xs font-medium text-white hover:bg-gray-800"
+                      className="
+                        mt-2 inline-flex items-center gap-2 rounded-md
+                        bg-gray-900 px-3 py-2 text-xs font-medium text-white
+                        hover:bg-gray-800
+                      "
                     >
                       <FiDownload /> Descargar plantilla
                     </button>
@@ -368,11 +397,17 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
               ) : (
                 <div className="space-y-4">
                   {allRequiredMapped ? (
-                    <div className="flex items-center gap-2 rounded-md bg-emerald-50 px-3 py-2 text-emerald-700">
+                    <div className="
+                      flex items-center gap-2 rounded-md bg-emerald-50 px-3 py-2
+                      text-emerald-700
+                    ">
                       <FiCheck /> Todos los campos obligatorios están mapeados
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 rounded-md bg-amber-50 px-3 py-2 text-amber-700">
+                    <div className="
+                      flex items-center gap-2 rounded-md bg-amber-50 px-3 py-2
+                      text-amber-700
+                    ">
                       <FiAlertCircle /> Faltan campos obligatorios por mapear
                     </div>
                   )}
@@ -408,26 +443,38 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                                     );
                                   }
                                 }}
-                                className={`min-w-[160px] border p-2 text-left font-semibold whitespace-nowrap ${
+                                className={`
+                                  min-w-[160px] border p-2 text-left
+                                  font-semibold whitespace-nowrap
+                                  ${
                                   over ? 'bg-gray-50' : ''
-                                }`}
+                                }
+                                `}
                               >
                                 <div>{m.excelColumn}</div>
                                 <div
-                                  className={`mt-2 min-h-[52px] rounded border-2 border-dashed p-2 ${
+                                  className={`
+                                    mt-2 min-h-[52px] rounded border-2
+                                    border-dashed p-2
+                                    ${
                                     hit
                                       ? 'border-emerald-400 bg-emerald-50'
                                       : 'border-gray-300 bg-gray-50'
-                                  }`}
+                                  }
+                                  `}
                                 >
                                   {hit ? (
-                                    <div className="flex items-center justify-between gap-2">
+                                    <div className="
+                                      flex items-center justify-between gap-2
+                                    ">
                                       <div>
                                         <div className="font-medium">
                                           {hit.label}
                                         </div>
                                         {hit.required && (
-                                          <div className="text-[10px] text-emerald-700">
+                                          <div className="
+                                            text-[10px] text-emerald-700
+                                          ">
                                             Obligatorio
                                           </div>
                                         )}
@@ -442,13 +489,18 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                                             )
                                           )
                                         }
-                                        className="text-[10px] text-red-600 hover:underline"
+                                        className="
+                                          text-[10px] text-red-600
+                                          hover:underline
+                                        "
                                       >
                                         quitar
                                       </button>
                                     </div>
                                   ) : (
-                                    <div className="text-[10px] text-gray-500 italic">
+                                    <div className="
+                                      text-[10px] text-gray-500 italic
+                                    ">
                                       Arrastra un campo aquí
                                     </div>
                                   )}
@@ -456,7 +508,9 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                               </th>
                             );
                           })}
-                          <th className="min-w-[100px] border p-2 text-left font-semibold">
+                          <th className="
+                            min-w-[100px] border p-2 text-left font-semibold
+                          ">
                             Acciones
                           </th>
                         </tr>
@@ -465,7 +519,10 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                         {rows.map((row, idx) => (
                           <tr
                             key={idx}
-                            className="odd:bg-white even:bg-gray-50"
+                            className="
+                              odd:bg-white
+                              even:bg-gray-50
+                            "
                           >
                             {visibleMappings.map((m) => (
                               <td
@@ -473,7 +530,9 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                                 className="min-w-[160px] border p-2"
                               >
                                 <input
-                                  className="w-full rounded border px-2 py-1 outline-none"
+                                  className="
+                                    w-full rounded border px-2 py-1 outline-none
+                                  "
                                   value={(() => {
                                     const val = row[m.excelColumn];
                                     if (val === null || val === undefined)
@@ -497,7 +556,11 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                             <td className="border p-2">
                               <button
                                 onClick={() => removeRow(idx)}
-                                className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] hover:bg-gray-50"
+                                className="
+                                  inline-flex items-center gap-1 rounded-md
+                                  border px-2 py-1 text-[11px]
+                                  hover:bg-gray-50
+                                "
                                 title="Quitar este candidato"
                               >
                                 <FiTrash2 /> Quitar
@@ -527,16 +590,24 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                         Campos disponibles
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-6">
+                    <div className="
+                      grid grid-cols-2 gap-2
+                      md:grid-cols-3
+                      lg:grid-cols-6
+                    ">
                       {dbFields.map((d) => (
                         <div
                           key={d.value}
                           draggable
                           onDragStart={() => setDragged(d.value)}
                           onDragEnd={() => setDragged(null)}
-                          className={`cursor-move rounded border p-2 text-center text-[11px] ${
+                          className={`
+                            cursor-move rounded border p-2 text-center
+                            text-[11px]
+                            ${
                             d.required ? 'border-red-300' : 'border-gray-300'
-                          }`}
+                          }
+                          `}
                           title={d.required ? 'Obligatorio' : 'Opcional'}
                         >
                           {d.label}
@@ -560,7 +631,10 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                         setColumns([]);
                         setRows([]);
                       }}
-                      className="rounded border px-3 py-2 text-xs hover:bg-gray-50"
+                      className="
+                        rounded border px-3 py-2 text-xs
+                        hover:bg-gray-50
+                      "
                     >
                       Cancelar
                     </button>
@@ -569,7 +643,12 @@ const BulkUploadUsersV2: React.FC<Props> = ({ onFinished }) => {
                       disabled={
                         uploading || !allRequiredMapped || rows.length === 0
                       }
-                      className="rounded bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-gray-800 disabled:opacity-60"
+                      className="
+                        rounded bg-gray-900 px-4 py-2 text-xs font-medium
+                        text-white
+                        hover:bg-gray-800
+                        disabled:opacity-60
+                      "
                     >
                       {uploading ? 'Subiendo...' : 'Subir'}
                     </button>

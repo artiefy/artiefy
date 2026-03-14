@@ -634,8 +634,8 @@ export default function ProjectInfoModal({
           {/* Imagen/video del proyecto con ciclo y fullscreen */}
           <Card
             className="
-            relative mb-6 border-slate-700 bg-slate-800/50 backdrop-blur-sm
-          "
+              relative mb-6 border-slate-700 bg-slate-800/50 backdrop-blur-sm
+            "
           >
             <div
               className="relative flex w-full items-center justify-center"
@@ -672,9 +672,9 @@ export default function ProjectInfoModal({
                       >
                         <Maximize
                           className="
-                          size-4
-                          md:size-5
-                        "
+                            size-4
+                            md:size-5
+                          "
                         />
                       </Button>
                     </div>
@@ -745,9 +745,9 @@ export default function ProjectInfoModal({
                     >
                       <Maximize
                         className="
-                        size-4
-                        md:size-5
-                      "
+                          size-4
+                          md:size-5
+                        "
                       />
                     </Button>
                   </div>
@@ -777,8 +777,8 @@ export default function ProjectInfoModal({
             {/* Header del Proyecto */}
             <Card
               className="
-              relative border-slate-700 bg-slate-800/50 backdrop-blur-sm
-            "
+                relative border-slate-700 bg-slate-800/50 backdrop-blur-sm
+              "
             >
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
@@ -797,9 +797,9 @@ export default function ProjectInfoModal({
                 <div className="flex flex-wrap gap-2">
                   <Badge
                     className="
-                    max-w-[150px] truncate border-cyan-500/30 bg-cyan-500/20
-                    text-cyan-400
-                  "
+                      max-w-[150px] truncate border-cyan-500/30 bg-cyan-500/20
+                      text-cyan-400
+                    "
                   >
                     {isOwner ? 'Propio' : 'Público'}
                   </Badge>
@@ -815,9 +815,9 @@ export default function ProjectInfoModal({
                 {/* Información del Proyecto */}
                 <div
                   className="
-                  grid gap-6
-                  md:grid-cols-2
-                "
+                    grid gap-6
+                    md:grid-cols-2
+                  "
                 >
                   <div className="min-w-0 space-y-4">
                     <div className="flex items-center gap-3 text-slate-300">
@@ -889,17 +889,17 @@ export default function ProjectInfoModal({
             {/* Secciones Principales */}
             <div
               className="
-              grid gap-6
-              md:grid-cols-2
-            "
+                grid gap-6
+                md:grid-cols-2
+              "
             >
               {/* Planteamiento */}
               <Card className="border-slate-700 bg-slate-800/50 backdrop-blur-sm">
                 <CardHeader>
                   <h2
                     className="
-                    flex items-center gap-2 text-xl font-semibold text-white
-                  "
+                      flex items-center gap-2 text-xl font-semibold text-white
+                    "
                   >
                     <div className="size-2 flex-shrink-0 rounded-full bg-cyan-400" />
                     Planteamiento
@@ -918,8 +918,8 @@ export default function ProjectInfoModal({
                 <CardHeader>
                   <h2
                     className="
-                    flex items-center gap-2 text-xl font-semibold text-white
-                  "
+                      flex items-center gap-2 text-xl font-semibold text-white
+                    "
                   >
                     <div className="size-2 flex-shrink-0 rounded-full bg-green-400" />
                     Objetivo
@@ -960,9 +960,9 @@ export default function ProjectInfoModal({
                 >
                   <span
                     className="
-                    flex w-full items-center justify-center text-lg
-                    font-semibold
-                  "
+                      flex w-full items-center justify-center text-lg
+                      font-semibold
+                    "
                   >
                     <Eye className="mr-2 size-5" />
                     Ver Proyecto
@@ -979,9 +979,9 @@ export default function ProjectInfoModal({
                   >
                     <span
                       className="
-                      flex w-full items-center justify-center text-lg
-                      font-semibold
-                    "
+                        flex w-full items-center justify-center text-lg
+                        font-semibold
+                      "
                     >
                       <Eye className="mr-2 size-5" />
                       Ver Proyecto

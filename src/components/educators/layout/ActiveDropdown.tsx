@@ -29,7 +29,10 @@ const ActiveDropdown: React.FC<ActiveDropdownProps> = ({
 
   return (
     <select
-      className="border-primary bg-background mt-2 rounded border p-2 text-white outline-none"
+      className="
+        border-primary bg-background mt-2 rounded border p-2 text-white
+        outline-none
+      "
       value={isActive !== null ? String(isActive) : ''}
       onChange={(e) => setIsActive(e.target.value === 'true')}
     >

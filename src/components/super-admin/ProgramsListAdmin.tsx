@@ -65,10 +65,10 @@ export default function ProgramListAdmin({
     <div className="flex flex-col space-y-6">
       <div
         className="
-        grid grid-cols-1 gap-4 px-8
-        sm:grid-cols-2
-        lg:grid-cols-3 lg:px-5
-      "
+          grid grid-cols-1 gap-4 px-8
+          sm:grid-cols-2
+          lg:grid-cols-3 lg:px-5
+        "
       >
         {currentItems.map((program) => (
           <div key={program.id} className="group relative">
@@ -79,19 +79,19 @@ export default function ProgramListAdmin({
             />
             <div
               className="
-              absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
-              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
-              transition duration-500
-              group-hover:opacity-100
-            "
+                absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+                from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
+                transition duration-500
+                group-hover:opacity-100
+              "
             />
             <Card
               className="
-              zoom-in relative flex h-full flex-col justify-between
-              overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white
-              transition-transform duration-300 ease-in-out
-              hover:scale-[1.02]
-            "
+                zoom-in relative flex h-full flex-col justify-between
+                overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white
+                transition-transform duration-300 ease-in-out
+                hover:scale-[1.02]
+              "
             >
               <CardHeader>
                 <AspectRatio ratio={16 / 9}>
@@ -117,9 +117,9 @@ export default function ProgramListAdmin({
 
               <CardContent
                 className="
-                flex grow flex-col items-center justify-between space-y-2 px-2
-                text-center
-              "
+                  flex grow flex-col items-center justify-between space-y-2 px-2
+                  text-center
+                "
               >
                 <CardTitle className="w-full rounded-lg text-lg text-background">
                   <div className="font-bold text-primary">{program.title}</div>
@@ -143,8 +143,8 @@ export default function ProgramListAdmin({
                 <div className="flex w-full justify-center gap-4">
                   <p
                     className="
-                    text-center text-sm font-bold text-gray-300 italic
-                  "
+                      text-center text-sm font-bold text-gray-300 italic
+                    "
                   >
                     Educador:{' '}
                     <span className="font-bold italic">
@@ -167,11 +167,11 @@ export default function ProgramListAdmin({
                     <Link
                       href={`/dashboard/super-admin/programs/${program.id}`}
                       className="
-                        group/button inline-flex size-full
-                        items-center
-                        justify-center gap-1.5 rounded-md border
-                        border-white/20 bg-background px-2 text-[10px] text-primary
-                        transition-all hover:bg-primary/10
+                        group/button inline-flex size-full items-center
+                        justify-center gap-1.5 rounded-md border border-white/20
+                        bg-background px-2 text-[10px] text-primary
+                        transition-all
+                        hover:bg-primary/10
                       "
                     >
                       <span className="relative z-10">Ver Programa</span>

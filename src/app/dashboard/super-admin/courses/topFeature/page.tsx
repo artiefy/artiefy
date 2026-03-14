@@ -123,7 +123,11 @@ export default function TopFeaturedCourses() {
         <button
           onClick={() => setPage(page - 1)}
           disabled={page === 1}
-          className="rounded border border-cyan-400 bg-[#0b2239] px-3 py-1 text-white hover:bg-cyan-700 disabled:opacity-30"
+          className="
+            rounded border border-cyan-400 bg-[#0b2239] px-3 py-1 text-white
+            hover:bg-cyan-700
+            disabled:opacity-30
+          "
         >
           ⬅
         </button>
@@ -133,11 +137,17 @@ export default function TopFeaturedCourses() {
             <button
               key={idx}
               onClick={() => setPage(btn)}
-              className={`rounded px-3 py-1 ${
+              className={`
+                rounded px-3 py-1
+                ${
                 btn === page
                   ? 'bg-cyan-400 font-bold text-black'
-                  : 'bg-[#0b2239] text-white hover:bg-cyan-600'
-              }`}
+                  : `
+                    bg-[#0b2239] text-white
+                    hover:bg-cyan-600
+                  `
+              }
+              `}
             >
               {btn}
             </button>
@@ -151,7 +161,11 @@ export default function TopFeaturedCourses() {
         <button
           onClick={() => setPage(page + 1)}
           disabled={page === totalPages}
-          className="rounded border border-cyan-400 bg-[#0b2239] px-3 py-1 text-white hover:bg-cyan-700 disabled:opacity-30"
+          className="
+            rounded border border-cyan-400 bg-[#0b2239] px-3 py-1 text-white
+            hover:bg-cyan-700
+            disabled:opacity-30
+          "
         >
           ➡
         </button>
@@ -161,12 +175,18 @@ export default function TopFeaturedCourses() {
             type="number"
             value={jumpTo}
             onChange={(e) => setJumpTo(e.target.value)}
-            className="w-16 rounded bg-[#0b2239] px-2 py-1 text-white focus:outline-none"
+            className="
+              w-16 rounded bg-[#0b2239] px-2 py-1 text-white
+              focus:outline-none
+            "
             placeholder="#"
           />
           <button
             onClick={handleJump}
-            className="rounded bg-cyan-600 px-2 py-1 text-sm font-medium text-black hover:bg-cyan-400"
+            className="
+              rounded bg-cyan-600 px-2 py-1 text-sm font-medium text-black
+              hover:bg-cyan-400
+            "
           >
             Ir
           </button>
@@ -186,17 +206,31 @@ export default function TopFeaturedCourses() {
         placeholder="Buscar por nombre..."
         value={search}
         onChange={(e) => handleSearch(e.target.value)}
-        className="mb-8 w-full max-w-md rounded border border-cyan-700 bg-[#0b2239] px-4 py-2 text-white placeholder-gray-400 focus:outline-none"
+        className="
+          mb-8 w-full max-w-md rounded border border-cyan-700 bg-[#0b2239] px-4
+          py-2 text-white placeholder-gray-400
+          focus:outline-none
+        "
       />
 
       {paginatedCourses.length === 0 ? (
         <p className="text-center text-gray-400">No hay cursos disponibles.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <div className="
+          grid grid-cols-1 gap-6
+          sm:grid-cols-2
+          md:grid-cols-3
+          lg:grid-cols-4
+        ">
           {paginatedCourses.map((course) => (
             <div
               key={course.id}
-              className="glass-card relative rounded-xl border border-cyan-500 p-5 text-white shadow-lg shadow-cyan-500/30 backdrop-blur-sm transition-all duration-300 hover:scale-[1.03] hover:shadow-cyan-400"
+              className="
+                glass-card relative rounded-xl border border-cyan-500 p-5
+                text-white shadow-lg shadow-cyan-500/30 backdrop-blur-sm
+                transition-all duration-300
+                hover:scale-[1.03] hover:shadow-cyan-400
+              "
             >
               <div className="mb-2 text-xs text-cyan-400">ID: {course.id}</div>
               <h2 className="mb-4 text-lg font-semibold text-white drop-shadow">

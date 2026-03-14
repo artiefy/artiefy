@@ -93,7 +93,10 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
     <>
       <button
         onClick={handleClick}
-        className={`button ${!isEnrolled && 'cursor-not-allowed opacity-50'}`}
+        className={`
+          button
+          ${!isEnrolled && 'cursor-not-allowed opacity-50'}
+        `}
         style={{ display: isOpen ? 'none' : 'flex' }}
         aria-label={
           isEnrolled
@@ -137,7 +140,10 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="rounded-full p-2 transition-colors hover:bg-gray-100"
+                className="
+                  rounded-full p-2 transition-colors
+                  hover:bg-gray-100
+                "
                 aria-label="Cerrar chat"
               >
                 <IoMdClose className="text-xl text-gray-500" />
@@ -148,14 +154,19 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+                  className={`
+                    flex
+                    ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
                 >
                   <div
-                    className={`flex max-w-[80%] items-start space-x-2 ${
+                    className={`
+                      flex max-w-[80%] items-start space-x-2
+                      ${
                       message.sender === 'user'
                         ? 'flex-row-reverse space-x-reverse'
                         : 'flex-row'
-                    }`}
+                    }
+                    `}
                   >
                     {message.sender === 'bot' ? (
                       <FaRobot className="mt-2 text-xl text-secondary" />
@@ -163,11 +174,14 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
                       <BsPersonCircle className="mt-2 text-xl text-gray-500" />
                     )}
                     <div
-                      className={`rounded-lg p-3 ${
+                      className={`
+                        rounded-lg p-3
+                        ${
                         message.sender === 'user'
                           ? 'bg-secondary text-white'
                           : 'bg-gray-100 text-gray-800'
-                      }`}
+                      }
+                      `}
                     >
                       {message.text}
                     </div>
@@ -200,13 +214,20 @@ const CourseChatbot: React.FC<CourseChatbotProps> = ({ isEnrolled }) => {
                       ? 'Escribe tu mensaje...'
                       : 'Inscríbete para chatear'
                   }
-                  className="flex-1 rounded-lg border border-gray-300 p-2 text-white focus:ring-2 focus:ring-secondary focus:outline-none"
+                  className="
+                    flex-1 rounded-lg border border-gray-300 p-2 text-white
+                    focus:ring-2 focus:ring-secondary focus:outline-none
+                  "
                   disabled={!isEnrolled || isLoading}
                 />
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="rounded-lg bg-secondary px-4 text-white transition-colors hover:bg-[#00A5C0] disabled:bg-gray-300"
+                  className="
+                    rounded-lg bg-secondary px-4 text-white transition-colors
+                    hover:bg-[#00A5C0]
+                    disabled:bg-gray-300
+                  "
                   aria-label="Enviar mensaje"
                 >
                   <FiSend className="text-xl" />

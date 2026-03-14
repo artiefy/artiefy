@@ -30,16 +30,16 @@ export function ProjectWorkspaceCard({
   return (
     <article
       className={`
-      rounded-2xl border border-border bg-card p-4 transition-all duration-300
-      hover:border-primary/30
-    `}
+        rounded-2xl border border-border bg-card p-4 transition-all duration-300
+        hover:border-primary/30
+      `}
     >
       <div className="flex gap-4">
         <div
           className={`
-          size-20 shrink-0 overflow-hidden rounded-xl
-          sm:size-24
-        `}
+            size-20 shrink-0 overflow-hidden rounded-xl
+            sm:size-24
+          `}
         >
           {item.coverImageUrl ? (
             <Image
@@ -55,9 +55,9 @@ export function ProjectWorkspaceCard({
           ) : (
             <div
               className={`
-              flex size-full items-center justify-center bg-[#1A2333] text-xs
-              text-muted-foreground
-            `}
+                flex size-full items-center justify-center bg-[#1A2333] text-xs
+                text-muted-foreground
+              `}
             >
               Sin portada
             </div>
@@ -112,18 +112,18 @@ export function ProjectWorkspaceCard({
             {item.needsCollaborators ? (
               <span
                 className={`
-                inline-flex items-center gap-1 rounded-full bg-emerald-500/20
-                px-2 py-0.5 text-[10px] font-medium text-emerald-400
-              `}
+                  inline-flex items-center gap-1 rounded-full bg-emerald-500/20
+                  px-2 py-0.5 text-[10px] font-medium text-emerald-400
+                `}
               >
                 <Users className="size-2.5" />
               </span>
             ) : null}
             <span
               className={`
-              inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2
-              py-0.5 text-[10px] font-medium text-amber-400
-            `}
+                inline-flex items-center gap-1 rounded-full bg-amber-500/20 px-2
+                py-0.5 text-[10px] font-medium text-amber-400
+              `}
             >
               <DollarSign className="size-2.5" />
             </span>
