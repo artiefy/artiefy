@@ -157,10 +157,10 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
       </h1>
       <ul
         className="
-        grid grid-cols-1 gap-5
-        md:grid-cols-2
-        lg:grid-cols-3
-      "
+          grid grid-cols-1 gap-5
+          md:grid-cols-2
+          lg:grid-cols-3
+        "
       >
         {files.map((file, index) => {
           if (!file) return null; // Manejar caso de clave vacía

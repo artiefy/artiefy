@@ -101,9 +101,9 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
     return (
       <div
         className="
-        mt-4 flex flex-col items-center justify-center rounded-lg bg-background
-        py-10 text-center
-      "
+          mt-4 flex flex-col items-center justify-center rounded-lg
+          bg-background py-10 text-center
+        "
       >
         <h2 className="mb-4 text-2xl font-bold">
           Lista de actividades creadas
@@ -125,20 +125,20 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
       <div className="flex w-full flex-col">
         <div
           className="
-          grid grid-cols-1 gap-4
-          md:grid-cols-2
-          lg:grid-cols-3
-        "
+            grid grid-cols-1 gap-4
+            md:grid-cols-2
+            lg:grid-cols-3
+          "
         >
           {actividades.map((actividad, index) => (
             <div key={index} className="group relative size-full">
               <div
                 className="
-                absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
-                from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
-                transition duration-500
-                group-hover:opacity-100
-              "
+                  absolute -inset-0.5 animate-gradient rounded-xl
+                  bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B]
+                  opacity-0 blur transition duration-500
+                  group-hover:opacity-100
+                "
               />
               <Card
                 className="
@@ -214,11 +214,12 @@ const ListActividadesEducator: React.FC<ActividadListProps> = ({
                     <ArrowRightIcon className="size-5 animate-bounce-right" />
                     <div
                       className="
-                      absolute inset-0 flex w-full
-                      [transform:skew(-13deg)_translateX(-100%)] justify-center
-                      group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-                      group-hover/button:duration-1000
-                    "
+                        absolute inset-0 flex w-full
+                        [transform:skew(-13deg)_translateX(-100%)]
+                        justify-center
+                        group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                        group-hover/button:duration-1000
+                      "
                     >
                       <div className="relative h-full w-10 bg-white/30" />
                     </div>

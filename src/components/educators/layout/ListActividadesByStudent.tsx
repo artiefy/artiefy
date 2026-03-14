@@ -166,11 +166,12 @@ const ListActividadesLookStudent: React.FC<ActividadListProps> = ({
                     <ArrowRightIcon className="size-5 animate-bounce-right" />
                     <div
                       className="
-                      absolute inset-0 flex w-full
-                      [transform:skew(-13deg)_translateX(-100%)] justify-center
-                      group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-                      group-hover/button:duration-1000
-                    "
+                        absolute inset-0 flex w-full
+                        [transform:skew(-13deg)_translateX(-100%)]
+                        justify-center
+                        group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                        group-hover/button:duration-1000
+                      "
                     >
                       <div className="relative h-full w-10 bg-white/30" />
                     </div>

@@ -191,9 +191,9 @@ const FormActCompletado: React.FC<formSubida> = ({
           </label>
           <div
             className="
-            relative flex items-center justify-between rounded-lg border
-            border-gray-300 bg-white px-4 py-2 shadow-sm
-          "
+              relative flex items-center justify-between rounded-lg border
+              border-gray-300 bg-white px-4 py-2 shadow-sm
+            "
           >
             <span className="truncate text-sm text-gray-500">
               {file1?.name ??
@@ -201,9 +201,10 @@ const FormActCompletado: React.FC<formSubida> = ({
             </span>
             <label
               className="
-              cursor-pointer rounded-md bg-blue-500 px-3 py-1 text-sm text-white
-              hover:bg-blue-600
-            "
+                cursor-pointer rounded-md bg-blue-500 px-3 py-1 text-sm
+                text-white
+                hover:bg-blue-600
+              "
             >
               Seleccionar
               <input
@@ -224,19 +225,19 @@ const FormActCompletado: React.FC<formSubida> = ({
           </label>
           <div
             className="
-            relative flex items-center justify-between rounded-lg border
-            border-gray-300 bg-white px-4 py-2 shadow-sm
-          "
+              relative flex items-center justify-between rounded-lg border
+              border-gray-300 bg-white px-4 py-2 shadow-sm
+            "
           >
             <span className="truncate text-sm text-gray-500">
               {file2?.name ?? 'Selecciona una imagen complementaria'}
             </span>
             <label
               className="
-              cursor-pointer rounded-md bg-purple-500 px-3 py-1 text-sm
-              text-white
-              hover:bg-purple-600
-            "
+                cursor-pointer rounded-md bg-purple-500 px-3 py-1 text-sm
+                text-white
+                hover:bg-purple-600
+              "
             >
               Seleccionar
               <input

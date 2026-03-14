@@ -238,9 +238,9 @@ export default function VerRespuestasArchivos({
       </h2>
       <div
         className="
-        grid gap-4 px-2 pb-4
-        md:grid-cols-2
-      "
+          grid gap-4 px-2 pb-4
+          md:grid-cols-2
+        "
       >
         {Object.entries(respuestas).length > 0 ? (
           Object.entries(respuestas).map(([key, respuesta]) => {
@@ -318,16 +318,16 @@ export default function VerRespuestasArchivos({
                   {/* Zona de calificación y acciones */}
                   <div
                     className="
-                    flex flex-col gap-4
-                    md:flex-row md:items-start md:justify-between
-                  "
+                      flex flex-col gap-4
+                      md:flex-row md:items-start md:justify-between
+                    "
                   >
                     {/* Calificación */}
                     <div
                       className="
-                      space-y-2
-                      md:w-1/3
-                    "
+                        space-y-2
+                        md:w-1/3
+                      "
                     >
                       <label className="block text-sm font-medium text-white">
                         Calificación (0 - 5):
@@ -349,13 +349,13 @@ export default function VerRespuestasArchivos({
                           ${
                             respuesta.status === 'calificado'
                               ? `
-                              bg-blue-500 text-white
-                              hover:bg-blue-600
-                            `
+                                bg-blue-500 text-white
+                                hover:bg-blue-600
+                              `
                               : `
-                              bg-green-500 text-white
-                              hover:bg-green-600
-                            `
+                                bg-green-500 text-white
+                                hover:bg-green-600
+                              `
                           }
                         `}
                       >
