@@ -1239,7 +1239,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         categoryid,
         modalidadesid,
         nivelid,
-        instructors: currentInstructors,
+        instructors:
+          currentInstructors.length > 0
+            ? currentInstructors
+            : course?.instructor
+              ? [course.instructor]
+              : [],
         rating,
         courseTypeId,
         isActive,
@@ -1380,8 +1385,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     setIsActive(course.isActive ?? true);
     setCurrentInstructors([course.instructor]);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
-    setEditHorario(course.horario ?? null);
-    setEditEspacios(course.espacios ?? null);
+    setEditHorario(course.scheduleOptionId ?? course.horario ?? null);
+    setEditEspacios(course.spaceOptionId ?? course.espacios ?? null);
     setIsModalOpen(true);
   };
 

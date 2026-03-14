@@ -115,6 +115,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
       name: string;
       description: string;
       porcentaje: number;
+      numberOfActivities: number;
     }[]
   >([]);
   const [courses, setCourses] = useState<CourseData[]>([]);
@@ -359,12 +360,16 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
     videoKey: string,
     horario: number | null,
     espacios: number | null,
-    certificationTypeId: number | null
+    certificationTypeId: number | null,
+    parametros: {
+      id: number;
+      name: string;
+      description: string;
+      porcentaje: number;
+    }[]
   ) => {
     if (!user) return;
     void videoKey;
-    void horario;
-    void espacios;
 
     try {
       setUploading(true);
@@ -441,6 +446,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
           programId,
           isActive,
           certificationTypeId,
+          scheduleOptionId: horario,
+          spaceOptionId: espacios,
         }),
       });
 
@@ -452,7 +459,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
           console.log(`Curso creado con ID: ${data.id}`);
 
           if (addParametros) {
-            for (const parametro of editParametros) {
+            for (const parametro of parametros) {
               try {
                 const paramResponse = await fetch(
                   '/api/educadores/parametros',
@@ -612,10 +619,12 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink className="
-              text-primary
-              hover:text-gray-300
-            ">
+            <BreadcrumbLink
+              className="
+                text-primary
+                hover:text-gray-300
+              "
+            >
               Detalles del programa
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -623,12 +632,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
       </Breadcrumb>
 
       <div className="group relative h-auto w-full">
-        <div className="
-          absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
-          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm transition
-          duration-500
-          group-hover:opacity-100
-        " />
+        <div
+          className="
+            absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
+            transition duration-500
+            group-hover:opacity-100
+          "
+        />
         <Card
           className={`
             zoom-in relative mt-3 h-auto overflow-hidden border-none p-4
@@ -640,15 +651,19 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
             color: getContrastYIQ(selectedColor),
           }}
         >
-          <CardHeader className="
-            grid w-full grid-cols-1 gap-4
-            md:grid-cols-2 md:gap-8
-            lg:gap-16
-          ">
-            <CardTitle className="
-              text-xl font-bold text-primary
-              sm:text-2xl
-            ">
+          <CardHeader
+            className="
+              grid w-full grid-cols-1 gap-4
+              md:grid-cols-2 md:gap-8
+              lg:gap-16
+            "
+          >
+            <CardTitle
+              className="
+                text-xl font-bold text-primary
+                sm:text-2xl
+              "
+            >
               Programa: {program.title}
             </CardTitle>
             <div className="flex flex-col">
@@ -667,10 +682,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                     className={`
                       size-8 border
                       ${
-                      selectedColor === '#FFFFFF'
-                        ? 'border-black'
-                        : 'border-white'
-                    }
+                        selectedColor === '#FFFFFF'
+                          ? 'border-black'
+                          : 'border-white'
+                      }
                     `}
                     onClick={() => handlePredefinedColorChange(color)}
                   />
@@ -679,10 +694,12 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
             </div>
           </CardHeader>
 
-          <div className="
-            grid gap-6
-            md:grid-cols-2
-          ">
+          <div
+            className="
+              grid gap-6
+              md:grid-cols-2
+            "
+          >
             {/* Left Column - Image */}
             <div className="flex w-full flex-col space-y-4">
               <div className="relative aspect-video w-full">
@@ -696,10 +713,12 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                   quality={75}
                 />
               </div>
-              <div className="
-                grid grid-cols-1 gap-2
-                sm:grid-cols-2 sm:gap-4
-              ">
+              <div
+                className="
+                  grid grid-cols-1 gap-2
+                  sm:grid-cols-2 sm:gap-4
+                "
+              >
                 <Button
                   onClick={handleCreateCourse}
                   className="
@@ -724,32 +743,40 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
 
             {/* Right Column - Information */}
             <div className="space-y-6">
-              <h2 className="
-                text-xl font-bold text-primary
-                sm:text-2xl
-              ">
+              <h2
+                className="
+                  text-xl font-bold text-primary
+                  sm:text-2xl
+                "
+              >
                 Información Del Programa
               </h2>
-              <div className="
-                grid grid-cols-1 gap-4
-                sm:grid-cols-2
-              ">
+              <div
+                className="
+                  grid grid-cols-1 gap-4
+                  sm:grid-cols-2
+                "
+              >
                 <div className="space-y-2">
                   <h2
                     className={`
                       text-base font-semibold
                       sm:text-lg
                       ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
                     `}
                   >
                     Programa:
                   </h2>
-                  <h1 className="
-                    text-xl font-bold text-primary
-                    sm:text-2xl
-                  ">
+                  <h1
+                    className="
+                      text-xl font-bold text-primary
+                      sm:text-2xl
+                    "
+                  >
                     {program.title}
                   </h1>
                 </div>
@@ -759,8 +786,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                       text-base font-semibold
                       sm:text-lg
                       ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
                     `}
                   >
                     Categoría:
@@ -784,8 +813,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                       text-base font-semibold
                       sm:text-lg
                       ${
-                      selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
                     `}
                   >
                     Tipo de Certificación:
@@ -809,9 +840,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                   className={`
                     text-base font-semibold
                     sm:text-lg
-                    ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }
+                    ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
                   `}
                 >
                   Descripción:
@@ -820,9 +849,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                   className={`
                     text-justify text-sm
                     sm:text-base
-                    ${
-                    selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'
-                  }
+                    ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
                   `}
                 >
                   {program.description}
@@ -889,6 +916,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
         certificationTypeId={certificationTypeId}
         setCertificationTypeId={setCertificationTypeId}
         certificationTypes={certificationTypes}
+        defaultAddParametros={editParametros.length > 0}
       />
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>

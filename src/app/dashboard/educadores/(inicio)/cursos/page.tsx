@@ -34,11 +34,13 @@ export interface CourseModel {
 // Define el modelo de datos de los parámetros de evaluación
 export function LoadingCourses() {
   return (
-    <div className="
-      mt-10 grid grid-cols-1 gap-4
-      md:grid-cols-2
-      lg:grid-cols-3
-    ">
+    <div
+      className="
+        mt-10 grid grid-cols-1 gap-4
+        md:grid-cols-2
+        lg:grid-cols-3
+      "
+    >
       {Array.from({ length: 9 }).map((_, index) => (
         <SkeletonCard key={index} />
       ))}
@@ -78,6 +80,10 @@ export default function Page() {
   const [certificationTypes, setCertificationTypes] = useState<
     { id: number; name: string; description: string | null }[]
   >([]);
+  const [educators, setEducators] = useState<{ id: string; name: string }[]>(
+    []
+  );
+  const [instructor, setInstructorState] = useState<string>('');
 
   // Función para cargar los cursos by userId
   const fetchCourses = useCallback(async () => {
@@ -175,6 +181,11 @@ export default function Page() {
         .catch((error) =>
           console.error('Error loading certification types:', error)
         );
+      // Cargar educadores
+      fetch('/api/super-admin/changeEducators')
+        .then((res) => res.json() as Promise<{ id: string; name: string }[]>)
+        .then((data) => setEducators(data))
+        .catch((error) => console.error('Error loading educators:', error));
     }
   }, [user, fetchCourses, fetchSubjects]);
 
@@ -204,14 +215,12 @@ export default function Page() {
     }[],
     horario: number | null,
     espacios: number | null,
-    certificationTypeId: number | null
+    certificationTypeId: number | null,
+    instructor: string
   ) => {
     if (!user) return;
     void subjects;
-    void horario;
     void coverVideoCourseKey;
-    void espacios;
-    void certificationTypeId;
     // Validar que haya al menos un parámetro si addParametros es true
     if (addParametros && parametros.length === 0) {
       toast.error('Error', {
@@ -280,13 +289,16 @@ export default function Page() {
         fileName,
         categoryid,
         modalidadesid,
-        instructor: user.fullName,
         creatorId: user.id,
         nivelid,
         rating,
         courseTypeId: courseTypeId ?? [],
         individualPrice,
         isActive,
+        instructorId: instructor || user.id,
+        horario,
+        espacios,
+        certificationTypeId,
       }),
     });
 
@@ -354,6 +366,10 @@ export default function Page() {
     setCourseTypeId([]);
     setIndividualPrice(null);
     setIsActive(true);
+    setInstructorState('');
+    setHorario(null);
+    setEspacios(null);
+    setCertificationTypeId(null);
   };
 
   // Manejo del título del curso en el modal si no es null
@@ -448,9 +464,12 @@ export default function Page() {
           {loading ? (
             <LoadingCourses />
           ) : error ? (
-            <div className="
-              mt-10 flex flex-col items-center justify-center py-10 text-center
-            ">
+            <div
+              className="
+                mt-10 flex flex-col items-center justify-center py-10
+                text-center
+              "
+            >
               <p className="text-xl text-red-600">{error}</p>
               <button
                 onClick={fetchCourses}
@@ -460,9 +479,12 @@ export default function Page() {
               </button>
             </div>
           ) : courses.length === 0 ? (
-            <div className="
-              mt-10 flex flex-col items-center justify-center py-10 text-center
-            ">
+            <div
+              className="
+                mt-10 flex flex-col items-center justify-center py-10
+                text-center
+              "
+            >
               <h2 className="mb-4 text-2xl font-bold">
                 Listado de Cursos Asociados
               </h2>
@@ -517,13 +539,14 @@ export default function Page() {
               setIndividualPrice={setIndividualPrice}
               isActive={isActive}
               setIsActive={setIsActive}
-              instructor={editingCourse?.instructor ?? ''}
-              setInstructor={(instructor: string) =>
+              instructor={editingCourse?.instructor ?? instructor}
+              setInstructor={(value: string) => {
+                setInstructorState(value);
                 setEditingCourse((prev) =>
-                  prev ? { ...prev, instructor } : prev
-                )
-              }
-              educators={[]}
+                  prev ? { ...prev, instructor: value } : prev
+                );
+              }}
+              educators={educators}
               horario={horario}
               setHorario={setHorario}
               espacios={espacios}
