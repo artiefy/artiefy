@@ -252,9 +252,9 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 className="
-                text-primary
-                hover:text-gray-300
-              "
+                  text-primary
+                  hover:text-gray-300
+                "
               >
                 Vista de la clase: {lessons.title}
               </BreadcrumbLink>
@@ -266,11 +266,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <ArrowLeftIcon className="size-5 animate-bounce-right" />
             <div
               className="
-              absolute inset-0 flex w-full
-              [transform:skew(-13deg)_translateX(-100%)] justify-center
-              group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-              group-hover/button:duration-1000
-            "
+                absolute inset-0 flex w-full
+                [transform:skew(-13deg)_translateX(-100%)] justify-center
+                group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                group-hover/button:duration-1000
+              "
             >
               <div className="relative h-full w-10 bg-white/30" />
             </div>
@@ -281,11 +281,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             <ArrowRightIcon className="size-5 animate-bounce-right" />
             <div
               className="
-              absolute inset-0 flex w-full
-              [transform:skew(-13deg)_translateX(-100%)] justify-center
-              group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-              group-hover/button:duration-1000
-            "
+                absolute inset-0 flex w-full
+                [transform:skew(-13deg)_translateX(-100%)] justify-center
+                group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                group-hover/button:duration-1000
+              "
             >
               <div className="relative h-full w-10 bg-white/30" />
             </div>
@@ -294,11 +294,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         <div className="group relative h-auto w-full">
           <div
             className="
-            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
-            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
-            duration-500
-            group-hover:opacity-100
-          "
+              absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
+              transition duration-500
+              group-hover:opacity-100
+            "
           />
           <div
             className="
@@ -373,11 +373,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               <p className="font-bold">Volver</p>
               <div
                 className="
-                absolute inset-0 flex w-full
-                [transform:skew(-13deg)_translateX(-100%)] justify-center
-                group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-                group-hover/button:duration-1000
-              "
+                  absolute inset-0 flex w-full
+                  [transform:skew(-13deg)_translateX(-100%)] justify-center
+                  group-hover/button:[transform:skew(-13deg)_translateX(100%)]
+                  group-hover/button:duration-1000
+                "
               >
                 <div className="relative h-full w-10 bg-white/30" />
               </div>

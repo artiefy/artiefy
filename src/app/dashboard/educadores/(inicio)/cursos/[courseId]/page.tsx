@@ -17,10 +17,10 @@ export default async function Page({
         {/* Skeleton opcional */}
         <section
           className="
-          mx-auto max-w-7xl px-4 py-2
-          md:px-6 md:py-8
-          lg:px-8
-        "
+            mx-auto max-w-7xl px-4 py-2
+            md:px-6 md:py-8
+            lg:px-8
+          "
         >
           <CourseDetail courseId={resolvedParams.courseId} />
         </section>

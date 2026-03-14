@@ -302,8 +302,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
     <>
       <div
         className="
-        container mx-auto mt-2 h-auto w-full rounded-lg bg-background
-      "
+          container mx-auto mt-2 h-auto w-full rounded-lg bg-background
+        "
       >
         <Breadcrumb>
           <BreadcrumbList>
@@ -359,11 +359,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         <div className="group relative h-auto w-full">
           <div
             className="
-            absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
-            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
-            transition duration-500
-            group-hover:opacity-100
-          "
+              absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
+              transition duration-500
+              group-hover:opacity-100
+            "
           />
           <Card
             className={`
@@ -405,10 +405,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             </CardHeader>
             <div
               className="
-              grid grid-cols-1
-              md:grid-cols-2
-              lg:grid-cols-2 lg:gap-6
-            "
+                grid grid-cols-1
+                md:grid-cols-2
+                lg:grid-cols-2 lg:gap-6
+              "
             >
               {/* Columna izquierda - Imagen */}
               <div className="relative flex w-full">
@@ -462,9 +462,9 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
             </div>
             <div
               className="
-              flex justify-evenly
-              lg:px-3 lg:py-6
-            "
+                flex justify-evenly
+                lg:px-3 lg:py-6
+              "
             >
               <Button
                 className={`
@@ -490,9 +490,9 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 <AlertDialogTrigger asChild>
                   <Button
                     className="
-                    border-red-600 bg-red-600 text-white
-                    hover:border-red-600 hover:bg-white hover:text-red-600
-                  "
+                      border-red-600 bg-red-600 text-white
+                      hover:border-red-600 hover:bg-white hover:text-red-600
+                    "
                   >
                     Eliminar
                   </Button>

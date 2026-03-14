@@ -36,10 +36,10 @@ export function LoadingCourses() {
   return (
     <div
       className="
-      mt-10 grid grid-cols-1 gap-4
-      md:grid-cols-2
-      lg:grid-cols-3
-    "
+        mt-10 grid grid-cols-1 gap-4
+        md:grid-cols-2
+        lg:grid-cols-3
+      "
     >
       {Array.from({ length: 9 }).map((_, index) => (
         <SkeletonCard key={index} />
@@ -452,8 +452,9 @@ export default function Page() {
           ) : error ? (
             <div
               className="
-              mt-10 flex flex-col items-center justify-center py-10 text-center
-            "
+                mt-10 flex flex-col items-center justify-center py-10
+                text-center
+              "
             >
               <p className="text-xl text-red-600">{error}</p>
               <button
@@ -466,8 +467,9 @@ export default function Page() {
           ) : courses.length === 0 ? (
             <div
               className="
-              mt-10 flex flex-col items-center justify-center py-10 text-center
-            "
+                mt-10 flex flex-col items-center justify-center py-10
+                text-center
+              "
             >
               <h2 className="mb-4 text-2xl font-bold">
                 Listado de Cursos Asociados
