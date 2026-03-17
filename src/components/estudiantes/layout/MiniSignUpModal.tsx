@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useSignUp } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
-import { useSignUp } from '@clerk/nextjs/legacy';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
@@ -35,9 +34,90 @@ const formatFields = (fields?: string[]) => {
   return fields.map((field) => labels[field] ?? field).join(', ');
 };
 
-const isUnexpectedEndOfJsonError = (error: unknown) => {
-  if (!(error instanceof Error)) return false;
-  return error.message.includes('Unexpected end of JSON input');
+const toClerkApiErrors = (error: unknown): ClerkAPIError[] => {
+  if (
+    error instanceof Error &&
+    /Unexpected end of JSON input/i.test(error.message)
+  ) {
+    return [
+      {
+        code: 'clerk_json_parse_error',
+        message:
+          'No se pudo completar el registro en este intento. Intenta de nuevo en unos segundos.',
+        longMessage:
+          'No se pudo completar el registro en este intento. Intenta de nuevo en unos segundos.',
+        meta: {},
+      },
+    ];
+  }
+
+  if (isClerkAPIResponseError(error)) {
+    return error.errors;
+  }
+
+  if (error && typeof error === 'object') {
+    const record = error as Record<string, unknown>;
+    const code =
+      typeof record.code === 'string' ? record.code : 'unknown_error';
+    const message =
+      typeof record.message === 'string'
+        ? record.message
+        : 'Ocurrió un error desconocido';
+    const longMessage =
+      typeof record.longMessage === 'string' ? record.longMessage : message;
+
+    return [
+      {
+        code,
+        message,
+        longMessage,
+        meta: {},
+      },
+    ];
+  }
+
+  return [
+    {
+      code: 'unknown_error',
+      message: 'Ocurrió un error desconocido',
+      longMessage: 'Ocurrió un error desconocido',
+      meta: {},
+    },
+  ];
+};
+
+const safeString = (value: unknown) =>
+  typeof value === 'string' ? value.trim() : '';
+
+const getSignUpEmail = (signUpResource: unknown) => {
+  if (!signUpResource || typeof signUpResource !== 'object') return '';
+
+  const record = signUpResource as Record<string, unknown>;
+  const direct = safeString(record.emailAddress);
+  if (direct) return direct;
+
+  const list = record.emailAddresses;
+  if (!Array.isArray(list)) return '';
+
+  for (const item of list) {
+    if (!item || typeof item !== 'object') continue;
+    const candidate = safeString(
+      (item as Record<string, unknown>).emailAddress ??
+        (item as Record<string, unknown>).value
+    );
+    if (candidate) return candidate;
+  }
+
+  return '';
+};
+
+const createOAuthPassword = () => {
+  const bytes = new Uint8Array(12);
+  globalThis.crypto.getRandomValues(bytes);
+  const base = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join(
+    ''
+  );
+  return `Arti3fy!${base.slice(0, 16)}`;
 };
 
 interface MiniSignUpModalProps {
@@ -59,7 +139,7 @@ export default function MiniSignUpModal({
   onAutoStartOAuthHandled,
   onSwitchToLogin,
 }: MiniSignUpModalProps) {
-  const { signUp, setActive, isLoaded } = useSignUp();
+  const { signUp } = useSignUp();
   const { isSignedIn } = useAuth({
     treatPendingAsSignedOut: false,
   });
@@ -73,11 +153,11 @@ export default function MiniSignUpModal({
   const [oauthMissingFields, setOauthMissingFields] = useState<string[] | null>(
     null
   );
+  const oauthGeneratedPasswordRef = useRef<string>('');
   const [code, setCode] = useState('');
   const [errors, setErrors] = useState<ClerkAPIError[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasHandledAuth, setHasHandledAuth] = useState(false);
-  void redirectUrl;
 
   useEffect(() => {
     if (!isOpen || !autoStartOAuthStrategy) return;
@@ -104,120 +184,30 @@ export default function MiniSignUpModal({
     };
   }, [isOpen, onClose]);
 
-  // Sincronizar estado cuando el popup termina el OAuth
+  // Sincronizar estado de SignUp al abrir el modal
   useEffect(() => {
-    if (!isOpen || !signUp || !setActive) return;
+    if (!isOpen || !signUp) return;
 
-    const handlePopupComplete = async (event: MessageEvent) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'clerk:oauth:complete') return;
+    if (signUp.status === 'complete') {
+      void signUp.finalize();
+      return;
+    }
 
-      try {
-        if (typeof signUp.reload === 'function') {
-          try {
-            await signUp.reload();
-          } catch (reloadError) {
-            if (!isUnexpectedEndOfJsonError(reloadError)) {
-              console.error(
-                '❌ Error al recargar SignUp tras popup:',
-                reloadError
-              );
-            }
-          }
-        }
-
-        if (signUp.status === 'complete') {
-          if (signUp.createdSessionId) {
-            await setActive({ session: signUp.createdSessionId });
-          }
-          return;
-        }
-
-        if (signUp.status === 'missing_requirements') {
-          const missingFields = normalizeMissingFields(
-            signUp.missingFields ?? []
-          );
-          if (missingFields.length > 0) {
-            setOauthMissingFields(missingFields);
-            setErrors([
-              {
-                code: 'missing_requirements',
-                message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-                longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-                meta: {},
-              },
-            ]);
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error al sincronizar OAuth:', error);
+    if (signUp.status === 'missing_requirements') {
+      const missingFields = normalizeMissingFields(signUp.missingFields ?? []);
+      if (missingFields.length > 0) {
+        setOauthMissingFields(missingFields);
+        setErrors([
+          {
+            code: 'missing_requirements',
+            message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+            longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
+            meta: {},
+          },
+        ]);
       }
-    };
-
-    window.addEventListener('message', handlePopupComplete);
-    return () => {
-      window.removeEventListener('message', handlePopupComplete);
-    };
-  }, [isOpen, signUp, setActive]);
-
-  // Sincronizar estado de SignUp al abrir el modal (caso redirect callback sin popup)
-  useEffect(() => {
-    if (!isOpen || !isLoaded || !signUp || !setActive) return;
-
-    let cancelled = false;
-    const syncSignUpState = async () => {
-      try {
-        if (typeof signUp.reload === 'function') {
-          try {
-            await signUp.reload();
-          } catch (reloadError) {
-            if (
-              !isUnexpectedEndOfJsonError(reloadError) &&
-              process.env.NODE_ENV !== 'production'
-            ) {
-              console.error(
-                'Error al recargar estado de SignUp en syncSignUpState:',
-                reloadError
-              );
-            }
-          }
-        }
-        if (cancelled) return;
-
-        if (signUp.status === 'complete' && signUp.createdSessionId) {
-          await setActive({ session: signUp.createdSessionId });
-          return;
-        }
-
-        if (signUp.status === 'missing_requirements') {
-          const missingFields = normalizeMissingFields(
-            signUp.missingFields ?? []
-          );
-          if (missingFields.length > 0) {
-            setOauthMissingFields(missingFields);
-            setErrors([
-              {
-                code: 'missing_requirements',
-                message: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-                longMessage: `Completa tu registro. Faltan: ${formatFields(missingFields)}.`,
-                meta: {},
-              },
-            ]);
-          }
-        }
-      } catch (error) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.error('Error al sincronizar estado de SignUp:', error);
-        }
-      }
-    };
-
-    void syncSignUpState();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isLoaded, isOpen, setActive, signUp]);
+    }
+  }, [isOpen, signUp]);
 
   // Detectar cuando OAuth o registro se completa exitosamente
   useEffect(() => {
@@ -228,8 +218,22 @@ export default function MiniSignUpModal({
       setHasHandledAuth(true);
       onSignUpSuccess();
       onClose();
+
+      if (redirectUrl !== '/' && redirectUrl !== '') {
+        const targetUrl = redirectUrl.startsWith('http')
+          ? redirectUrl
+          : `${window.location.origin}${redirectUrl}`;
+        window.location.href = targetUrl;
+      }
     }
-  }, [isSignedIn, hasHandledAuth, onSignUpSuccess, onClose, isOpen]);
+  }, [
+    isSignedIn,
+    hasHandledAuth,
+    onSignUpSuccess,
+    onClose,
+    isOpen,
+    redirectUrl,
+  ]);
 
   // Reset hasHandledAuth cuando se cierra el modal
   useEffect(() => {
@@ -245,6 +249,7 @@ export default function MiniSignUpModal({
       setCode('');
       setPendingVerification(false);
       setOauthMissingFields(null);
+      oauthGeneratedPasswordRef.current = '';
       setErrors(undefined);
     }
   }, [isOpen]);
@@ -481,7 +486,7 @@ export default function MiniSignUpModal({
     e.preventDefault();
     setErrors(undefined);
 
-    if (!isLoaded || !signUp || !setActive) {
+    if (!signUp) {
       setErrors([
         {
           code: 'sign_up_not_ready',
@@ -496,17 +501,49 @@ export default function MiniSignUpModal({
     }
 
     const missingFields = oauthMissingFields ?? [];
-    const trimmedEmail = email.trim();
-    const trimmedFirstName = firstName.trim();
-    const trimmedLastName = lastName.trim();
+    const normalizedMissingFields = normalizeMissingFields(missingFields);
     const trimmedUsername = username.trim();
+
+    if (
+      normalizedMissingFields.includes('username') &&
+      trimmedUsername.length < 3
+    ) {
+      setErrors([
+        {
+          code: 'form_param_format_invalid',
+          message: 'El nombre de usuario debe tener al menos 3 caracteres.',
+          longMessage: 'El nombre de usuario debe tener al menos 3 caracteres.',
+          meta: { paramName: 'username' },
+        },
+      ]);
+      return;
+    }
+
+    const derivedFirstName =
+      firstName.trim() ||
+      safeString((signUp as unknown as Record<string, unknown>).firstName) ||
+      'Estudiante';
+    const derivedLastName =
+      lastName.trim() ||
+      safeString((signUp as unknown as Record<string, unknown>).lastName) ||
+      'Artiefy';
+    const derivedEmail = email.trim() || getSignUpEmail(signUp);
+
+    if (
+      normalizedMissingFields.includes('password') &&
+      !oauthGeneratedPasswordRef.current
+    ) {
+      oauthGeneratedPasswordRef.current = createOAuthPassword();
+    }
+    const derivedPassword = password || oauthGeneratedPasswordRef.current;
+
     const validationErrors = validateOAuthCompletionInputs(missingFields, {
-      firstName: trimmedFirstName,
-      lastName: trimmedLastName,
+      firstName: derivedFirstName,
+      lastName: derivedLastName,
       username: trimmedUsername,
-      email: trimmedEmail,
-      password,
-      confirmPassword,
+      email: derivedEmail,
+      password: derivedPassword,
+      confirmPassword: derivedPassword,
     });
 
     if (validationErrors.length > 0) {
@@ -514,74 +551,79 @@ export default function MiniSignUpModal({
       return;
     }
 
+    if (normalizedMissingFields.includes('emailAddress') && !derivedEmail) {
+      setErrors([
+        {
+          code: 'missing_requirements',
+          message:
+            'Tu proveedor OAuth no devolvió correo. Prueba con otro proveedor o regístrate con correo.',
+          longMessage:
+            'Tu proveedor OAuth no devolvió correo. Prueba con otro proveedor o regístrate con correo.',
+          meta: {},
+        },
+      ]);
+      return;
+    }
+
     const payload: Record<string, string> = {};
-    const normalizedMissingFields = normalizeMissingFields(missingFields);
     if (normalizedMissingFields.includes('firstName')) {
-      payload.firstName = trimmedFirstName;
+      payload.firstName = derivedFirstName;
     }
     if (normalizedMissingFields.includes('lastName')) {
-      payload.lastName = trimmedLastName;
+      payload.lastName = derivedLastName;
     }
-    if (normalizedMissingFields.includes('username')) {
+    if (trimmedUsername) {
       payload.username = trimmedUsername;
     }
     if (normalizedMissingFields.includes('emailAddress')) {
-      payload.emailAddress = trimmedEmail;
+      payload.emailAddress = derivedEmail;
     }
     if (normalizedMissingFields.includes('password')) {
-      payload.password = password;
+      payload.password = derivedPassword;
     }
 
     try {
       setIsSubmitting(true);
-      const updated = await signUp.update(payload);
+      await signUp.update(payload);
 
-      if (updated.status === 'complete') {
-        if (updated.createdSessionId) {
-          await setActive({ session: updated.createdSessionId });
-        }
+      if (signUp.status === 'complete') {
+        await signUp.finalize();
         return;
       }
 
-      if (updated.unverifiedFields?.includes('email_address')) {
-        await signUp.prepareEmailAddressVerification({
-          strategy: 'email_code',
-        });
+      if (signUp.unverifiedFields?.includes('email_address')) {
+        const sendCodeResult = await signUp.verifications.sendEmailCode();
+        if (sendCodeResult.error) {
+          setErrors(toClerkApiErrors(sendCodeResult.error));
+          return;
+        }
         setOauthMissingFields(null);
         setPendingVerification(true);
         return;
       }
 
-      if (updated.status === 'missing_requirements') {
+      if (signUp.status === 'missing_requirements') {
         setOauthMissingFields(
-          normalizeMissingFields(updated.missingFields ?? missingFields)
+          normalizeMissingFields(signUp.missingFields ?? missingFields)
         );
         setErrors([
           {
             code: 'missing_requirements',
             message: `Completa tu registro. Faltan: ${formatFields(
-              updated.missingFields ?? missingFields
+              signUp.missingFields ?? missingFields
             )}.`,
             longMessage: `Completa tu registro. Faltan: ${formatFields(
-              updated.missingFields ?? missingFields
+              signUp.missingFields ?? missingFields
             )}.`,
             meta: {},
           },
         ]);
       }
     } catch (err) {
-      if (isClerkAPIResponseError(err)) {
-        setErrors(err.errors);
-      } else {
-        setErrors([
-          {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
-            meta: {},
-          },
-        ]);
+      if (process.env.NODE_ENV !== 'production') {
+        console.error('Error al completar OAuth sign-up:', err);
       }
+      setErrors(toClerkApiErrors(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -623,7 +665,7 @@ export default function MiniSignUpModal({
     }
 
     setIsSubmitting(true);
-    if (!isLoaded || !signUp) {
+    if (!signUp) {
       setIsSubmitting(false);
       setErrors([
         {
@@ -639,29 +681,31 @@ export default function MiniSignUpModal({
     }
 
     try {
-      await signUp.create({
+      const result = await signUp.password({
         firstName: trimmedFirstName,
         lastName: trimmedLastName,
         username: trimmedUsername,
         emailAddress: trimmedEmail,
         password,
       });
+      if (result.error) {
+        setErrors(toClerkApiErrors(result.error));
+        return;
+      }
 
-      await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+      if (signUp.status === 'complete') {
+        await signUp.finalize();
+        return;
+      }
+
+      const sendCodeResult = await signUp.verifications.sendEmailCode();
+      if (sendCodeResult.error) {
+        setErrors(toClerkApiErrors(sendCodeResult.error));
+        return;
+      }
       setPendingVerification(true);
     } catch (err) {
-      if (isClerkAPIResponseError(err)) {
-        setErrors(err.errors);
-      } else {
-        setErrors([
-          {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
-            meta: {},
-          },
-        ]);
-      }
+      setErrors(toClerkApiErrors(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -672,7 +716,7 @@ export default function MiniSignUpModal({
     e.preventDefault();
     setErrors(undefined);
     setIsSubmitting(true);
-    if (!isLoaded || !signUp || !setActive) {
+    if (!signUp) {
       setIsSubmitting(false);
       setErrors([
         {
@@ -687,43 +731,29 @@ export default function MiniSignUpModal({
     }
 
     try {
-      const completeSignUp = await signUp.attemptEmailAddressVerification({
+      const verifyResult = await signUp.verifications.verifyEmailCode({
         code,
       });
+      if (verifyResult.error) {
+        setErrors(toClerkApiErrors(verifyResult.error));
+        return;
+      }
 
-      if (completeSignUp.status === 'complete') {
-        if (!completeSignUp.createdSessionId) {
-          setErrors([
-            {
-              code: 'session_missing',
-              message:
-                'No se pudo iniciar sesión tras la verificación. Inténtalo de nuevo.',
-              longMessage:
-                'No se pudo iniciar sesión tras la verificación. Inténtalo de nuevo.',
-              meta: {},
-            },
-          ]);
-          return;
-        }
-        await setActive({
-          session: completeSignUp.createdSessionId,
-        });
+      if (signUp.status === 'complete') {
+        await signUp.finalize();
         return;
       }
 
       if (process.env.NODE_ENV !== 'production') {
-        console.log('📊 Estado del registro:', completeSignUp.status);
-        console.log('❌ Campos faltantes:', completeSignUp.missingFields);
-        console.log(
-          '⏳ Campos sin verificar:',
-          completeSignUp.unverifiedFields
-        );
-        console.log('✅ Campos requeridos:', completeSignUp.requiredFields);
+        console.log('📊 Estado del registro:', signUp.status);
+        console.log('❌ Campos faltantes:', signUp.missingFields);
+        console.log('⏳ Campos sin verificar:', signUp.unverifiedFields);
+        console.log('✅ Campos requeridos:', signUp.requiredFields);
       }
 
-      const missingFields = formatFields(completeSignUp.missingFields);
-      const unverifiedFields = formatFields(completeSignUp.unverifiedFields);
-      const statusLabel = completeSignUp.status ?? 'incompleto';
+      const missingFields = formatFields(signUp.missingFields);
+      const unverifiedFields = formatFields(signUp.unverifiedFields);
+      const statusLabel = signUp.status ?? 'incompleto';
 
       setErrors([
         {
@@ -734,18 +764,7 @@ export default function MiniSignUpModal({
         },
       ]);
     } catch (err) {
-      if (isClerkAPIResponseError(err)) {
-        setErrors(err.errors);
-      } else {
-        setErrors([
-          {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
-            meta: {},
-          },
-        ]);
-      }
+      setErrors(toClerkApiErrors(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -804,6 +823,8 @@ export default function MiniSignUpModal({
       return 'Las contraseñas no coinciden';
     if (error.code === 'missing_requirements')
       return 'Completa los campos faltantes para terminar tu registro.';
+    if (error.code === 'clerk_json_parse_error')
+      return 'No se pudo completar el registro en este intento. Inténtalo nuevamente.';
     const msg = error.longMessage ?? error.message ?? '';
     // Mensaje específico de Clerk en inglés: "This verification has already been verified."
     if (/already been verified|already verified/i.test(msg))
@@ -821,11 +842,9 @@ export default function MiniSignUpModal({
 
   const needsOAuthField = (field: string) =>
     oauthMissingFields?.includes(field) ?? false;
-  const needsFirstName = needsOAuthField('firstName');
-  const needsLastName = needsOAuthField('lastName');
+  const isOAuthCompletionFlow =
+    Array.isArray(oauthMissingFields) && oauthMissingFields.length > 0;
   const needsUsername = needsOAuthField('username');
-  const needsEmail = needsOAuthField('emailAddress');
-  const needsPassword = needsOAuthField('password');
 
   return (
     <div
@@ -1095,135 +1114,34 @@ export default function MiniSignUpModal({
               )}
             </button>
           </form>
-        ) : oauthMissingFields && oauthMissingFields.length > 0 ? (
+        ) : isOAuthCompletionFlow ? (
           <form onSubmit={handleOAuthCompletion} className="space-y-4">
             <p className="text-sm text-muted-foreground">
               Completa tu registro para continuar con OAuth.
             </p>
-            {(needsFirstName || needsLastName) && (
-              <div className="grid grid-cols-2 gap-3">
-                {needsFirstName && (
-                  <div>
-                    <input
-                      onChange={(e) => setFirstName(e.target.value)}
-                      id="oauth-firstName"
-                      name="firstName"
-                      type="text"
-                      value={firstName}
-                      placeholder="Nombre"
-                      required
-                      className={`
-                        w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
-                        outline-hidden ring-inset
-                        ${firstNameError ? 'ring-rose-400' : 'ring-border'}
-                        hover:ring-primary/50
-                        focus:ring-2 focus:ring-primary
-                      `}
-                    />
-                  </div>
-                )}
-                {needsLastName && (
-                  <div>
-                    <input
-                      onChange={(e) => setLastName(e.target.value)}
-                      id="oauth-lastName"
-                      name="lastName"
-                      type="text"
-                      value={lastName}
-                      placeholder="Apellido"
-                      required
-                      className={`
-                        w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
-                        outline-hidden ring-inset
-                        ${lastNameError ? 'ring-rose-400' : 'ring-border'}
-                        hover:ring-primary/50
-                        focus:ring-2 focus:ring-primary
-                      `}
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-            {needsUsername && (
-              <div>
-                <input
-                  onChange={(e) => setUsername(e.target.value)}
-                  id="oauth-username"
-                  name="username"
-                  type="text"
-                  value={username}
-                  placeholder="Usuario"
-                  required
-                  className={`
-                    w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
-                    outline-hidden ring-inset
-                    ${usernameError ? 'ring-rose-400' : 'ring-border'}
-                    hover:ring-primary/50
-                    focus:ring-2 focus:ring-primary
-                  `}
-                />
-              </div>
-            )}
-            {needsEmail && (
-              <div>
-                <input
-                  onChange={(e) => setEmail(e.target.value)}
-                  id="oauth-email"
-                  name="email"
-                  type="email"
-                  value={email}
-                  placeholder="Correo Electrónico"
-                  required
-                  className={`
-                    w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
-                    outline-hidden ring-inset
-                    ${emailError ? 'ring-rose-400' : 'ring-border'}
-                    hover:ring-primary/50
-                    focus:ring-2 focus:ring-primary
-                  `}
-                />
-              </div>
-            )}
-            {needsPassword && (
-              <>
-                <div>
-                  <input
-                    onChange={(e) => setPassword(e.target.value)}
-                    id="oauth-password"
-                    name="password"
-                    type="password"
-                    value={password}
-                    placeholder="Contraseña"
-                    required
-                    className={`
-                      w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
-                      outline-hidden ring-inset
-                      ${passwordError ? 'ring-rose-400' : 'ring-border'}
-                      hover:ring-primary/50
-                      focus:ring-2 focus:ring-primary
-                    `}
-                  />
-                </div>
-                <div>
-                  <input
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    id="oauth-confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    placeholder="Confirmar Contraseña"
-                    required
-                    className={`
-                      w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
-                      outline-hidden ring-inset
-                      ${confirmPasswordError ? 'ring-rose-400' : 'ring-border'}
-                      hover:ring-primary/50
-                      focus:ring-2 focus:ring-primary
-                    `}
-                  />
-                </div>
-              </>
-            )}
+            <p className="text-xs text-muted-foreground/80">
+              Solo necesitamos tu nombre de usuario. Los demás datos se
+              completan automáticamente con OAuth.
+            </p>
+            <div>
+              <input
+                onChange={(e) => setUsername(e.target.value)}
+                id="oauth-username"
+                name="username"
+                type="text"
+                value={username}
+                placeholder="Usuario"
+                required={needsUsername}
+                className={`
+                  w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
+                  outline-hidden ring-inset
+                  ${usernameError ? 'ring-rose-400' : 'ring-border'}
+                  hover:ring-primary/50
+                  focus:ring-2 focus:ring-primary
+                `}
+              />
+            </div>
+            <div id="clerk-captcha" />
             <button
               type="submit"
               className="
@@ -1353,6 +1271,7 @@ export default function MiniSignUpModal({
                 `}
               />
             </div>
+            <div id="clerk-captcha" />
             <button
               type="submit"
               className="

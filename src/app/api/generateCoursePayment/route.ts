@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
       body.buyerEmail,
       body.buyerFullName,
       body.telephone,
-      `${env.NEXT_PUBLIC_BASE_URL}/agradecimiento-curso/${body.productId}?from=payu`, // id del curso comprado
+      `${env.NEXT_PUBLIC_BASE_URL}/agradecimiento-curso/${body.productId}?from=payu&email=${encodeURIComponent(body.buyerEmail)}`, // incluir email del comprador
       'course'
     );
 

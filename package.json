@@ -33,7 +33,6 @@
     "@babylonjs/gui": "^8.55.1",
     "@babylonjs/loaders": "^8.55.1",
     "@bprogress/next": "^3.2.12",
-    "@clerk/clerk-react": "^5.61.3",
     "@clerk/localizations": "^4.2.1",
     "@clerk/nextjs": "^7.0.4",
     "@clerk/types": "^4.101.20",

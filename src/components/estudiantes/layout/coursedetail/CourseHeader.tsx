@@ -2626,6 +2626,7 @@ export function CourseHeader({
                 selectedProduct={courseProduct}
                 requireAuthOnSubmit={!isSignedIn}
                 redirectUrlOnAuth={`/estudiantes/cursos/${course.id}`}
+                isIndividualPurchase={course.courseTypeId === 4}
                 // No necesitas onAutoOpenModal aquí, el efecto ya lo maneja
               />
             </div>

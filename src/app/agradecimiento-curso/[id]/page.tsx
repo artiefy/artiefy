@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 
+import { useAuth } from '@clerk/nextjs';
+
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 import '~/styles/confetti.css';
@@ -16,10 +18,12 @@ export default function AgradecimientoCursoPage({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isSignedIn } = useAuth();
   const [showModal, setShowModal] = useState(false);
   const [metaPixelId, setMetaPixelId] = useState<string | null>(null);
   const { id: courseId } = use(params);
   const [courseTitle, setCourseTitle] = useState<string>('');
+  const [buyerEmail, setBuyerEmail] = useState<string>('');
 
   useEffect(() => {
     if (courseId) {
@@ -34,6 +38,11 @@ export default function AgradecimientoCursoPage({
   useEffect(() => {
     if (searchParams && searchParams.get('from') === 'payu') {
       setShowModal(true);
+      // Obtener email del pagador si viene en los parámetros
+      const email = searchParams.get('email');
+      if (email) {
+        setBuyerEmail(email);
+      }
       // Consultar el pixel dinámico desde la API
       console.log('📡 Consultando pixel para curso:', courseId);
       fetch(`/api/courses/${courseId}/pixel`)
@@ -129,7 +138,24 @@ export default function AgradecimientoCursoPage({
   }, [metaPixelId, courseId]);
 
   const handleContinue = () => {
-    router.replace(`/estudiantes/cursos/${courseId}`);
+    if (!isSignedIn) {
+      // Si no está logueado, redirigir a login con el email del comprador
+      const loginUrl = new URL(
+        `/sign-in`,
+        typeof window !== 'undefined' ? window.location.origin : ''
+      );
+      if (buyerEmail) {
+        loginUrl.searchParams.set('email', buyerEmail);
+        loginUrl.searchParams.set(
+          'redirect_url',
+          `/estudiantes/cursos/${courseId}`
+        );
+      }
+      router.replace(loginUrl.toString());
+    } else {
+      // Si está logueado, ir directamente al curso
+      router.replace(`/estudiantes/cursos/${courseId}`);
+    }
   };
 
   if (!showModal) return null;

@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useSignIn } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
-import { useSignIn } from '@clerk/nextjs/legacy';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
 
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
@@ -16,9 +15,45 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 
 import Loading from '../../loading';
 
+const toClerkApiErrors = (error: unknown): ClerkAPIError[] => {
+  if (isClerkAPIResponseError(error)) {
+    return error.errors;
+  }
+
+  if (error && typeof error === 'object') {
+    const record = error as Record<string, unknown>;
+    const code =
+      typeof record.code === 'string' ? record.code : 'unknown_error';
+    const message =
+      typeof record.message === 'string'
+        ? record.message
+        : 'Ocurrió un error desconocido';
+    const longMessage =
+      typeof record.longMessage === 'string' ? record.longMessage : message;
+
+    return [
+      {
+        code,
+        message,
+        longMessage,
+        meta: {},
+      },
+    ];
+  }
+
+  return [
+    {
+      code: 'unknown_error',
+      message: 'Ocurrió un error desconocido',
+      longMessage: 'Ocurrió un error desconocido',
+      meta: {},
+    },
+  ];
+};
+
 export default function SignInPage() {
   const { isLoaded, isSignedIn } = useAuth();
-  const { signIn, setActive } = useSignIn();
+  const { signIn, fetchStatus } = useSignIn();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
@@ -32,6 +67,48 @@ export default function SignInPage() {
   );
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // Extraer email de los parámetros de búsqueda para pre-rellenar
+  useEffect(() => {
+    if (searchParams) {
+      const emailParam = searchParams.get('email');
+      if (emailParam) {
+        try {
+          setEmail(decodeURIComponent(emailParam));
+        } catch {
+          setEmail(emailParam);
+        }
+      }
+    }
+  }, [searchParams]);
+
+  const getStoredMiniRedirect = () => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.sessionStorage.getItem('mini_auth_redirect_url');
+      return raw ? decodeURIComponent(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const isWeakRedirect = (value: string | null) => {
+    if (!value) return true;
+    const normalized = value.trim().toLowerCase();
+    return (
+      normalized === '/' ||
+      normalized === '/estudiantes' ||
+      normalized.startsWith('/sign-in') ||
+      normalized.startsWith('/sign-up')
+    );
+  };
+
+  const isCourseAutoEnrollRedirect = (value: string | null) =>
+    Boolean(
+      value &&
+      value.includes('/estudiantes/cursos/') &&
+      value.includes('auto_enroll=1')
+    );
 
   // Función para extraer redirect_url sin importar si está en query param o hash
   const getRedirectUrl = () => {
@@ -54,12 +131,25 @@ export default function SignInPage() {
       }
     }
 
+    const storedMiniRedirect = getStoredMiniRedirect();
+
     // Decodificar la URL si está codificada y usar fallback si es necesario
     try {
-      return redirectUrl ? decodeURIComponent(redirectUrl) : '/';
+      const decodedRedirect = redirectUrl
+        ? decodeURIComponent(redirectUrl)
+        : null;
+
+      if (
+        isWeakRedirect(decodedRedirect) &&
+        isCourseAutoEnrollRedirect(storedMiniRedirect)
+      ) {
+        return storedMiniRedirect!;
+      }
+
+      return decodedRedirect ?? storedMiniRedirect ?? '/estudiantes';
     } catch (error) {
       console.error('Error decoding redirect URL:', error);
-      return '/';
+      return storedMiniRedirect ?? '/estudiantes';
     }
   };
 
@@ -82,110 +172,97 @@ export default function SignInPage() {
   useEffect(() => {
     if (isSignedIn) {
       console.log('🔄 Usuario autenticado, redirigiendo a:', redirectUrl);
+      try {
+        window.sessionStorage.removeItem('mini_auth_redirect_url');
+      } catch {
+        // ignore storage failures
+      }
       router.replace(redirectUrl);
     }
   }, [isSignedIn, router, redirectUrl]);
 
-  // Si /sign-in se abre dentro del popup OAuth, notificar al parent
-  // para continuar en sign-up y evitar quedarse atascado en esta página.
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.opener) return;
+  // Login con OAuth (Google, Facebook, etc.)
+  const signInWith = useCallback(
+    async (strategy: OAuthStrategy) => {
+      if (!signIn) {
+        return;
+      }
 
-    const notifyParent = () => {
-      window.opener?.postMessage(
-        { type: 'clerk:oauth:needs_signup' },
-        window.location.origin
+      if (loadingProvider || fetchStatus === 'fetching') {
+        return;
+      }
+      console.log(
+        '🔄 Iniciando sesión con OAuth:',
+        strategy,
+        '➡️ Redirigiendo a:',
+        redirectUrl
       );
-    };
 
-    notifyParent();
-    const retryTimer = window.setTimeout(notifyParent, 120);
-    const closeTimer = window.setTimeout(() => {
-      window.close();
-    }, 240);
+      try {
+        setLoadingProvider(strategy);
+        const { error } = await signIn.sso({
+          strategy,
+          redirectCallbackUrl: '/sign-in/sso-callback',
+          redirectUrl,
+          ...(strategy === 'oauth_google'
+            ? { oidcPrompt: 'select_account' }
+            : {}),
+        });
 
-    return () => {
-      window.clearTimeout(retryTimer);
-      window.clearTimeout(closeTimer);
-    };
-  }, []);
+        if (error) {
+          setLoadingProvider(null);
+          setErrors(toClerkApiErrors(error));
+        }
+      } catch (err) {
+        setLoadingProvider(null);
+        console.error('❌ Error en OAuth:', err);
+        setErrors(toClerkApiErrors(err));
+      }
+    },
+    [fetchStatus, loadingProvider, redirectUrl, signIn]
+  );
 
   if (!isLoaded) {
     return <Loading />;
   }
 
-  // Login con OAuth (Google, Facebook, etc.)
-  const signInWith = async (strategy: OAuthStrategy) => {
-    if (!signIn) {
-      setErrors([
-        {
-          code: 'sign_in_undefined',
-          message: 'SignIn no está definido',
-          meta: {},
-        },
-      ]);
-      return;
-    }
-    console.log(
-      '🔄 Iniciando sesión con OAuth:',
-      strategy,
-      '➡️ Redirigiendo a:',
-      redirectUrl
-    );
-
-    try {
-      setLoadingProvider(strategy);
-      await signIn.authenticateWithRedirect({
-        strategy,
-        redirectUrl: '/sign-in/sso-callback',
-        redirectUrlComplete: redirectUrl,
-      });
-    } catch (err) {
-      setLoadingProvider(null);
-      console.error('❌ Error en OAuth:', err);
-      setErrors([
-        {
-          code: 'oauth_error',
-          message: 'Error en el inicio de sesión con OAuth',
-          meta: {},
-        },
-      ]);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors(undefined);
     setIsSubmitting(true);
-    if (!signIn) return;
-    if (!isLoaded) return;
+    if (!signIn) {
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      const signInAttempt = await signIn.create({
-        identifier: email,
+      const { error } = await signIn.password({
+        emailAddress: email.trim(),
         password,
       });
+      if (error) {
+        setErrors(toClerkApiErrors(error));
+        return;
+      }
 
-      if (signInAttempt.status === 'complete') {
-        if (setActive) {
-          await setActive({ session: signInAttempt.createdSessionId });
-        }
+      if (signIn.status === 'complete') {
+        await signIn.finalize();
         router.replace(redirectUrl);
-      } else if (signInAttempt.status === 'needs_first_factor') {
-        const supportedStrategies =
-          signInAttempt.supportedFirstFactors?.map(
-            (factor) => factor.strategy
-          ) ?? [];
-        if (!supportedStrategies.includes('password')) {
-          setErrors([
-            {
-              code: 'invalid_strategy',
-              message: 'Estrategia de verificación inválida',
-              longMessage: 'Estrategia de verificación inválida',
-              meta: {},
-            },
-          ]);
+      } else if (signIn.status === 'needs_second_factor') {
+        setSecondFactor(true);
+        setErrors(undefined);
+      } else if (signIn.status === 'needs_client_trust') {
+        const emailCodeFactor = signIn.supportedSecondFactors.find(
+          (factor) => factor.strategy === 'email_code'
+        );
+        if (emailCodeFactor) {
+          const sendCodeResult = await signIn.mfa.sendEmailCode();
+          if (sendCodeResult.error) {
+            setErrors(toClerkApiErrors(sendCodeResult.error));
+            return;
+          }
         }
+        setSecondFactor(true);
       } else {
         setErrors([
           {
@@ -197,18 +274,7 @@ export default function SignInPage() {
         ]);
       }
     } catch (err) {
-      if (isClerkAPIResponseError(err)) {
-        setErrors(err.errors);
-      } else {
-        setErrors([
-          {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
-            meta: {},
-          },
-        ]);
-      }
+      setErrors(toClerkApiErrors(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -220,26 +286,29 @@ export default function SignInPage() {
     setIsSubmitting(true);
 
     try {
-      if (!signIn) return;
-      await signIn.create({
-        strategy: 'reset_password_email_code',
-        identifier: email,
+      if (!signIn) {
+        return;
+      }
+
+      const { error: createError } = await signIn.create({
+        identifier: email.trim(),
       });
+      if (createError) {
+        setErrors(toClerkApiErrors(createError));
+        return;
+      }
+
+      const { error: sendCodeError } =
+        await signIn.resetPasswordEmailCode.sendCode();
+      if (sendCodeError) {
+        setErrors(toClerkApiErrors(sendCodeError));
+        return;
+      }
+
       setSuccessfulCreation(true);
       setErrors(undefined);
     } catch (err) {
-      if (isClerkAPIResponseError(err)) {
-        setErrors(err.errors);
-      } else {
-        setErrors([
-          {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
-            meta: {},
-          },
-        ]);
-      }
+      setErrors(toClerkApiErrors(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -263,20 +332,35 @@ export default function SignInPage() {
         setIsSubmitting(false);
         return;
       }
-      const result = await signIn.attemptFirstFactor({
-        strategy: 'reset_password_email_code',
-        code,
+
+      const verifyResult = await signIn.resetPasswordEmailCode.verifyCode({
+        code: code.trim(),
+      });
+      if (verifyResult.error) {
+        setErrors(toClerkApiErrors(verifyResult.error));
+        return;
+      }
+
+      const submitResult = await signIn.resetPasswordEmailCode.submitPassword({
         password,
       });
+      if (submitResult.error) {
+        setErrors(toClerkApiErrors(submitResult.error));
+        return;
+      }
 
-      if (result.status === 'needs_second_factor') {
-        setSecondFactor(true);
-        setErrors(undefined);
-      } else if (result.status === 'complete') {
-        if (setActive) {
-          await setActive({ session: result.createdSessionId });
-        }
+      if (signIn.status === 'complete') {
+        await signIn.finalize();
         router.replace(redirectUrl);
+      } else if (signIn.status === 'needs_second_factor') {
+        setSecondFactor(true);
+      } else if (signIn.status === 'needs_client_trust') {
+        const sendCodeResult = await signIn.mfa.sendEmailCode();
+        if (sendCodeResult.error) {
+          setErrors(toClerkApiErrors(sendCodeResult.error));
+          return;
+        }
+        setSecondFactor(true);
       } else {
         setErrors([
           {
@@ -288,18 +372,7 @@ export default function SignInPage() {
         ]);
       }
     } catch (err) {
-      if (isClerkAPIResponseError(err)) {
-        setErrors(err.errors);
-      } else {
-        setErrors([
-          {
-            code: 'unknown_error',
-            message: 'Ocurrió un error desconocido',
-            longMessage: 'Ocurrió un error desconocido',
-            meta: {},
-          },
-        ]);
-      }
+      setErrors(toClerkApiErrors(err));
     } finally {
       setIsSubmitting(false);
     }
