@@ -662,13 +662,21 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         {/* Header */}
         <header
           className="
-            relative z-20 flex flex-col rounded-lg bg-primary p-6 text-center
-            text-2xl font-bold text-[#01142B] shadow-md
+            relative z-20 flex flex-col rounded-2xl border border-cyan-500/20
+            bg-gradient-to-r from-slate-800 via-slate-800/95 to-cyan-950/30 p-6
+            text-center shadow-[0_0_20px_rgba(34,211,238,0.1)]
             sm:flex-row sm:items-center sm:justify-between sm:text-left
-            sm:text-3xl
           "
         >
-          <h1>📊 Estadísticas de Estudiantes</h1>
+          <h1
+            className="
+              bg-gradient-to-r from-cyan-300 to-white bg-clip-text text-2xl
+              font-bold text-transparent
+              sm:text-3xl
+            "
+          >
+            Estadísticas de Estudiantes
+          </h1>
         </header>
 
         {/* Tabs */}
@@ -681,13 +689,18 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                 setCurrentPage(1);
               }}
               className={`
-                rounded-lg px-4 py-2
+                rounded-full px-5 py-2 text-sm font-medium transition-all
+                duration-200
                 ${
                   activeTab === tab
-                    ? 'bg-blue-600 text-white'
+                    ? `
+                      bg-cyan-500/15 text-cyan-300
+                      shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                      ring-cyan-400/40
+                    `
                     : `
-                      bg-gray-700 text-gray-300
-                      hover:bg-gray-600
+                      text-white/80
+                      hover:bg-white/5
                     `
                 }
               `}
@@ -700,7 +713,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         </div>
 
         {/* Content */}
-        <div className="relative z-20 mt-4 rounded-lg bg-gray-800 p-6">
+        <div
+          className="
+            relative z-20 mt-4 rounded-2xl border border-cyan-500/10
+            bg-slate-800 p-6
+          "
+        >
           {error && currentUsers.length === 0 && (
             <div
               className="
@@ -720,7 +738,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
           ) : (
             <>
               {/* Search */}
-              <div className="mb-6 rounded-lg bg-gray-700 p-4 shadow-md">
+              <div
+                className="
+                  mb-6 rounded-xl border border-cyan-500/10 bg-slate-700/50 p-4
+                  shadow-md
+                "
+              >
                 <label className="mb-2 block text-sm font-semibold text-white">
                   Buscar estudiante
                 </label>
@@ -730,9 +753,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="
-                    w-full rounded-md border border-gray-500 px-4 py-2 text-sm
-                    text-black
-                    focus:ring-2 focus:ring-primary focus:outline-none
+                    w-full rounded-md border border-cyan-500/20 bg-slate-800
+                    px-4 py-2 text-sm text-white placeholder-gray-400
+                    focus:ring-2 focus:ring-cyan-400/40 focus:outline-none
                   "
                 />
               </div>
@@ -787,15 +810,19 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
               {/* Desktop table */}
               <div
                 className="
-                  hidden overflow-x-auto rounded-lg border border-gray-600
-                  shadow-md
+                  hidden overflow-x-auto rounded-2xl border border-cyan-500/20
+                  shadow-[0_0_20px_rgba(34,211,238,0.08)]
                   sm:block
                 "
               >
-                <table className="w-full divide-y divide-gray-700 text-white">
-                  <thead className="sticky top-0 bg-gray-900">
+                <table className="w-full divide-y divide-cyan-500/10 text-white">
+                  <thead className="sticky top-0 z-20 bg-slate-900">
                     <tr>
-                      <th className="px-4">
+                      <th
+                        className="
+                          sticky left-0 z-10 min-w-[48px] bg-slate-900 px-4
+                        "
+                      >
                         <input
                           type="checkbox"
                           checked={
@@ -813,14 +840,17 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                       </th>
                       <th
                         className="
-                          px-4 py-3 text-left text-xs font-semibold uppercase
+                          sticky left-[48px] z-10 bg-slate-900 px-4 py-3
+                          text-left text-xs font-semibold text-cyan-300/80
+                          uppercase
                         "
                       >
                         Nombre
                       </th>
                       <th
                         className="
-                          px-4 py-3 text-left text-xs font-semibold uppercase
+                          px-4 py-3 text-left text-xs font-semibold
+                          text-cyan-300/80 uppercase
                         "
                       >
                         Correo
@@ -828,7 +858,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                       <th
                         className="
                           px-4 py-3 text-left text-xs font-semibold
-                          whitespace-nowrap uppercase
+                          whitespace-nowrap text-cyan-300/80 uppercase
                         "
                       >
                         Progreso
@@ -836,7 +866,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                       <th
                         className="
                           px-4 py-3 text-left text-xs font-semibold
-                          whitespace-nowrap uppercase
+                          whitespace-nowrap text-cyan-300/80 uppercase
                         "
                       >
                         Última conexión
@@ -844,7 +874,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                       <th
                         className="
                           px-4 py-3 text-left text-xs font-semibold
-                          whitespace-nowrap uppercase
+                          whitespace-nowrap text-cyan-300/80 uppercase
                         "
                       >
                         Tiempo
@@ -861,7 +891,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                         >
                           <span
                             className="
-                              mb-1 block text-[10px] text-blue-400 italic
+                              mb-1 block text-[10px] text-cyan-400 italic
                             "
                           >
                             {activity.parametro} ({activity.parametroPeso}%)
@@ -889,7 +919,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                       <th
                         className="
                           px-4 py-3 text-center text-xs font-semibold
-                          whitespace-nowrap uppercase
+                          whitespace-nowrap text-cyan-300/80 uppercase
                         "
                       >
                         Nota Final
@@ -897,7 +927,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                       <th
                         className="
                           px-4 py-3 text-center text-xs font-semibold
-                          whitespace-nowrap uppercase
+                          whitespace-nowrap text-cyan-300/80 uppercase
                         "
                       >
                         Acciones
@@ -905,16 +935,21 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-gray-700">
+                  <tbody className="divide-y divide-cyan-500/10">
                     {currentUsers.map((user) => (
                       <tr
                         key={user.id}
                         className="
-                          transition-colors
-                          hover:bg-gray-700
+                          group transition-colors
+                          hover:bg-cyan-950/30
                         "
                       >
-                        <td className="px-4 text-center">
+                        <td
+                          className="
+                            sticky left-0 z-10 bg-slate-800 px-4 text-center
+                            group-hover:bg-slate-700
+                          "
+                        >
                           <input
                             type="checkbox"
                             checked={selectedIds.includes(user.id)}
@@ -928,7 +963,13 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                           />
                         </td>
 
-                        <td className="px-4 py-2 whitespace-nowrap">
+                        <td
+                          className="
+                            sticky left-[48px] z-10 bg-slate-800 px-4 py-2
+                            whitespace-nowrap
+                            group-hover:bg-slate-700
+                          "
+                        >
                           {user.firstName} {user.lastName}
                         </td>
                         <td className="px-4 py-2 whitespace-nowrap text-gray-300">
@@ -937,9 +978,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
                         <td className="px-4 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <div className="h-2.5 w-full rounded-full bg-gray-700">
+                            <div className="h-2.5 w-full rounded-full bg-slate-700">
                               <div
-                                className="h-2.5 rounded-full bg-blue-500"
+                                className="h-2.5 rounded-full bg-cyan-400"
                                 style={{ width: `${user.averageProgress}%` }}
                               />
                             </div>
@@ -1054,9 +1095,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                             onClick={() => openUserDetails(user)}
                             className="
                               inline-flex items-center gap-1 rounded-md
-                              bg-blue-600 px-3 py-1 text-xs font-medium
+                              bg-cyan-600 px-3 py-1 text-xs font-medium
                               text-white
-                              hover:bg-blue-700
+                              hover:bg-cyan-700
                             "
                           >
                             <Eye size={14} /> Ver
@@ -1086,9 +1127,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                   disabled={currentPage === 1}
                   aria-label="Página anterior"
                   className="
-                    flex size-8 items-center justify-center rounded bg-gray-700
-                    text-white transition
-                    hover:bg-gray-600
+                    flex size-8 items-center justify-center rounded-lg border
+                    border-cyan-500/20 bg-slate-700 text-white transition
+                    hover:bg-cyan-950/40
                     disabled:opacity-50
                   "
                 >
@@ -1097,7 +1138,8 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
                 <span
                   className="
-                    rounded bg-gray-800 px-3 py-1 text-sm font-medium text-white
+                    rounded-lg border border-cyan-500/10 bg-slate-800 px-3 py-1
+                    text-sm font-medium text-cyan-300
                   "
                 >
                   <span className="sm:hidden">
@@ -1120,9 +1162,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                   disabled={currentPage === totalPages}
                   aria-label="Página siguiente"
                   className="
-                    flex size-8 items-center justify-center rounded bg-gray-700
-                    text-white transition
-                    hover:bg-gray-600
+                    flex size-8 items-center justify-center rounded-lg border
+                    border-cyan-500/20 bg-slate-700 text-white transition
+                    hover:bg-cyan-950/40
                     disabled:opacity-50
                   "
                 >

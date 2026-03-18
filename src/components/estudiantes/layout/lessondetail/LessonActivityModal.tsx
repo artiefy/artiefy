@@ -1575,9 +1575,24 @@ export function LessonActivityModal({
                       />
                     </div>
                     <div className="px-4">
-                      <span className="text-sm text-gray-300">
-                        {uploadedFileInfo.fileName}
-                      </span>
+                      {uploadedFileInfo.submissionType === 'url' &&
+                      uploadedFileInfo.url ? (
+                        <a
+                          href={uploadedFileInfo.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="
+                            text-sm break-all text-blue-400 underline
+                            hover:text-blue-300
+                          "
+                        >
+                          {uploadedFileInfo.url}
+                        </a>
+                      ) : (
+                        <span className="text-sm text-gray-300">
+                          {uploadedFileInfo.fileName}
+                        </span>
+                      )}
                     </div>
                   </div>
                   {/* Upload date row */}
@@ -2645,7 +2660,7 @@ const handleDriveSubmit =
 
     try {
       const submission = {
-        fileName: 'URL Document',
+        fileName: driveUrl,
         fileUrl: driveUrl,
         uploadDate: new Date().toISOString(),
         status: 'pending' as const,
@@ -2670,7 +2685,7 @@ const handleDriveSubmit =
       }
 
       setUploadedFileInfo({
-        fileName: 'URL Document',
+        fileName: driveUrl,
         fileUrl: driveUrl,
         uploadDate: new Date().toISOString(),
         status: 'pending',

@@ -91,6 +91,7 @@ interface PorcentajeResponse {
 
 const getContrastYIQ = (hexcolor: string) => {
   if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
+  if (!hexcolor.startsWith('#')) return 'white'; // Colores no-hex (oklch, rgb, etc.) asumen fondo oscuro
   hexcolor = hexcolor.replace('#', '');
   const r = parseInt(hexcolor.substr(0, 2), 16);
   const g = parseInt(hexcolor.substr(2, 2), 16);
@@ -109,7 +110,7 @@ const Page: React.FC = () => {
   const [actividad, setActividad] = useState<ActivityDetails | null>(null); // Estado de la actividad
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
-  const [color, setColor] = useState<string>('#1f2937'); // Estado del color
+  const [color, setColor] = useState<string>('oklch(19% 0.0542 252.35)'); // Estado del color
   const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores rápidos
 
   const handlePredefinedColorChange = (v: string) => {
@@ -680,7 +681,7 @@ const Page: React.FC = () => {
           {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
           {actividad?.type.id === 1 ? (
             <div className="mt-8 space-y-6">
-              <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="rounded-lg bg-background p-6 shadow-md">
                 <div className="space-y-4">
                   {actividadIdNumber !== null && (
                     <>

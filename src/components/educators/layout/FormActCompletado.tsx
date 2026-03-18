@@ -160,24 +160,34 @@ const FormActCompletado: React.FC<formSubida> = ({
   };
 
   return (
-    <div className="container my-2 rounded-lg bg-white p-3 text-black shadow-lg">
-      <h2 className="text-center text-2xl font-bold text-gray-800">
+    <div
+      className="
+        container my-2 rounded-lg bg-background p-3 text-white shadow-lg
+      "
+    >
+      <h2 className="text-center text-2xl font-bold text-primary">
         {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta del tipo:
         Presentación de trabajo
       </h2>
       <form onSubmit={handleSubmit}>
-        <label>Pregunta</label>
+        <label className="text-white">Pregunta</label>
         <textarea
-          className="w-full rounded-lg border border-slate-400 p-2 outline-none"
+          className="
+            w-full rounded-lg border border-gray-600 bg-background p-2
+            text-white outline-none
+          "
           placeholder="Digite aquí la descripción del trabajo"
           name="text"
           value={formData.text}
           onChange={handleChange}
         />
 
-        <label>Criterios de evaluación</label>
+        <label className="text-white">Criterios de evaluación</label>
         <textarea
-          className="w-full rounded-lg border border-slate-400 p-2 outline-none"
+          className="
+            w-full rounded-lg border border-gray-600 bg-background p-2
+            text-white outline-none
+          "
           placeholder="Parámetros de evaluación"
           name="parametros"
           value={formData.parametros}
@@ -186,16 +196,16 @@ const FormActCompletado: React.FC<formSubida> = ({
 
         {/* Archivo de ayuda (documento, video, etc.) */}
         <div className="mb-4">
-          <label className="mb-2 block font-semibold text-gray-700">
+          <label className="mb-2 block font-semibold text-white">
             Archivo de ayuda
           </label>
           <div
             className="
               relative flex items-center justify-between rounded-lg border
-              border-gray-300 bg-white px-4 py-2 shadow-sm
+              border-gray-600 bg-background px-4 py-2 shadow-sm
             "
           >
-            <span className="truncate text-sm text-gray-500">
+            <span className="truncate text-sm text-gray-400">
               {file1?.name ??
                 'Selecciona un archivo de ayuda (PDF, Word, video...)'}
             </span>
@@ -220,16 +230,16 @@ const FormActCompletado: React.FC<formSubida> = ({
 
         {/* Imagen complementaria */}
         <div className="mb-6">
-          <label className="mb-2 block font-semibold text-gray-700">
+          <label className="mb-2 block font-semibold text-white">
             Recurso complementario (imagen)
           </label>
           <div
             className="
               relative flex items-center justify-between rounded-lg border
-              border-gray-300 bg-white px-4 py-2 shadow-sm
+              border-gray-600 bg-background px-4 py-2 shadow-sm
             "
           >
-            <span className="truncate text-sm text-gray-500">
+            <span className="truncate text-sm text-gray-400">
               {file2?.name ?? 'Selecciona una imagen complementaria'}
             </span>
             <label
@@ -254,7 +264,7 @@ const FormActCompletado: React.FC<formSubida> = ({
         {isUploading && (
           <div className="my-1">
             <Progress value={uploadProgress} className="w-full" />
-            <p className="mt-2 text-center text-sm text-gray-500">
+            <p className="mt-2 text-center text-sm text-gray-400">
               {uploadProgress}% Completado
             </p>
           </div>

@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -419,6 +419,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Estado para el scroll y la tarjeta mini sticky
   const [showStickyCard, setShowStickyCard] = useState(false);
+
+  // Ref para el contenedor de tabs con scroll horizontal
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   // Estados para foros
   const [forums, setForums] = useState<Forum[]>([]);
@@ -2557,19 +2560,89 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   "
                 >
                   {/* Tabs Navigation */}
-                  <div className="mb-8 border-b border-cyan-500/20">
-                    <div className="flex gap-8 overflow-x-auto pb-4">
+                  <div className="relative mb-8">
+                    {/* Flecha izquierda */}
+                    <button
+                      onClick={() => {
+                        tabsRef.current?.scrollBy({
+                          left: -200,
+                          behavior: 'smooth',
+                        });
+                      }}
+                      className="
+                        absolute top-1/2 left-0 z-10 -translate-y-1/2
+                        animate-[pulse-arrow_2s_ease-in-out_infinite]
+                        bg-gradient-to-r from-slate-900/90 to-transparent py-4
+                        pr-3 pl-1 text-cyan-400
+                      "
+                      aria-label="Desplazar tabs a la izquierda"
+                    >
+                      <span
+                        className="
+                          inline-block
+                          animate-[bounce-left_2s_ease-in-out_infinite] text-lg
+                          font-bold
+                        "
+                      >
+                        ‹
+                      </span>
+                    </button>
+
+                    {/* Flecha derecha */}
+                    <button
+                      onClick={() => {
+                        tabsRef.current?.scrollBy({
+                          left: 200,
+                          behavior: 'smooth',
+                        });
+                      }}
+                      className="
+                        absolute top-1/2 right-0 z-10 -translate-y-1/2
+                        animate-[pulse-arrow_2s_ease-in-out_infinite]
+                        bg-gradient-to-l from-slate-900/90 to-transparent py-4
+                        pr-1 pl-3 text-cyan-400
+                      "
+                      aria-label="Desplazar tabs a la derecha"
+                    >
+                      <span
+                        className="
+                          inline-block
+                          animate-[bounce-right_2s_ease-in-out_infinite] text-lg
+                          font-bold
+                        "
+                      >
+                        ›
+                      </span>
+                    </button>
+
+                    <div
+                      ref={tabsRef}
+                      className="
+                        scrollbar-none flex gap-2 overflow-x-auto scroll-smooth
+                        px-8 py-2
+                        md:gap-3
+                        lg:gap-4
+                      "
+                      style={{
+                        scrollbarWidth: 'none',
+                        msOverflowStyle: 'none',
+                      }}
+                    >
                       <button
                         onClick={() => setActiveTab('lecciones')}
                         className={`
-                          border-b-2 pb-4 font-semibold whitespace-nowrap
-                          transition-all
+                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                          transition-all duration-300
                           ${
                             activeTab === 'lecciones'
-                              ? 'border-cyan-400 text-white'
+                              ? `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                                border-transparent text-white/60
-                                hover:text-white
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
                               `
                           }
                         `}
@@ -2579,14 +2652,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <button
                         onClick={() => setActiveTab('en-vivo')}
                         className={`
-                          border-b-2 pb-4 font-semibold whitespace-nowrap
-                          transition-all
+                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                          transition-all duration-300
                           ${
                             activeTab === 'en-vivo'
-                              ? 'border-cyan-400 text-white'
+                              ? `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                                border-transparent text-white/60
-                                hover:text-white
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
                               `
                           }
                         `}
@@ -2596,14 +2673,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <button
                         onClick={() => setActiveTab('estudiantes')}
                         className={`
-                          border-b-2 pb-4 font-semibold whitespace-nowrap
-                          transition-all
+                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                          transition-all duration-300
                           ${
                             activeTab === 'estudiantes'
-                              ? 'border-cyan-400 text-white'
+                              ? `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                                border-transparent text-white/60
-                                hover:text-white
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
                               `
                           }
                         `}
@@ -2613,14 +2694,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <button
                         onClick={() => setActiveTab('grabadas')}
                         className={`
-                          border-b-2 pb-4 font-semibold whitespace-nowrap
-                          transition-all
+                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                          transition-all duration-300
                           ${
                             activeTab === 'grabadas'
-                              ? 'border-cyan-400 text-white'
+                              ? `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                                border-transparent text-white/60
-                                hover:text-white
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
                               `
                           }
                         `}
@@ -2638,14 +2723,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <button
                         onClick={() => setActiveTab('foros')}
                         className={`
-                          border-b-2 pb-4 font-semibold whitespace-nowrap
-                          transition-all
+                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                          transition-all duration-300
                           ${
                             activeTab === 'foros'
-                              ? 'border-cyan-400 text-white'
+                              ? `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                                border-transparent text-white/60
-                                hover:text-white
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
                               `
                           }
                         `}
@@ -2663,14 +2752,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <button
                         onClick={() => setActiveTab('proyectos')}
                         className={`
-                          border-b-2 pb-4 font-semibold whitespace-nowrap
-                          transition-all
+                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                          transition-all duration-300
                           ${
                             activeTab === 'proyectos'
-                              ? 'border-cyan-400 text-white'
+                              ? `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                                border-transparent text-white/60
-                                hover:text-white
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
                               `
                           }
                         `}
@@ -2690,14 +2783,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <button
                         onClick={() => setActiveTab('recursos')}
                         className={`
-                          border-b-2 pb-4 font-semibold whitespace-nowrap
-                          transition-all
+                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                          transition-all duration-300
                           ${
                             activeTab === 'recursos'
-                              ? 'border-cyan-400 text-white'
+                              ? `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                                border-transparent text-white/60
-                                hover:text-white
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
                               `
                           }
                         `}
@@ -2716,14 +2813,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       <button
                         onClick={() => setActiveTab('actividades')}
                         className={`
-                          border-b-2 pb-4 font-semibold whitespace-nowrap
-                          transition-all
+                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                          transition-all duration-300
                           ${
                             activeTab === 'actividades'
-                              ? 'border-cyan-400 text-white'
+                              ? `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                                border-transparent text-white/60
-                                hover:text-white
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
                               `
                           }
                         `}

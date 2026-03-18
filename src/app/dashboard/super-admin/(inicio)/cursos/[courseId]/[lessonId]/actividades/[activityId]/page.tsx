@@ -89,16 +89,6 @@ interface PorcentajeResponse {
   };
 }
 
-const getContrastYIQ = (hexcolor: string) => {
-  if (!hexcolor) return 'black'; // Manejar el caso de color indefinido
-  hexcolor = hexcolor.replace('#', '');
-  const r = parseInt(hexcolor.substr(0, 2), 16);
-  const g = parseInt(hexcolor.substr(2, 2), 16);
-  const b = parseInt(hexcolor.substr(4, 2), 16);
-  const yiq = (r * 299 + g * 587 + b * 114) / 1000;
-  return yiq >= 128 ? 'black' : 'white';
-};
-
 const Page: React.FC = () => {
   const params = useParams(); // Obtener los parametros de la URL
   const searchParams = useSearchParams(); // para obtener activityId del query string
@@ -109,7 +99,7 @@ const Page: React.FC = () => {
   const [actividad, setActividad] = useState<ActivityDetails | null>(null); // Estado de la actividad
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
-  const [color, setColor] = useState<string>('#FFFFFF'); // Estado del color
+  const [color, setColor] = useState<string>('oklch(19% 0.0542 252.35)'); // Estado del color
   const [selectedActivityType, setSelectedActivityType] = useState<string>(''); // Estado del tipo de actividad seleccionado
   const [questions, setQuestions] = useState<string[]>([]); // Estado de las preguntas
 
@@ -320,9 +310,11 @@ const Page: React.FC = () => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="
-          border-primary size-32 animate-spin rounded-full border-y-2
-        ">
+        <div
+          className="
+            size-32 animate-spin rounded-full border-y-2 border-primary
+          "
+        >
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -340,7 +332,7 @@ const Page: React.FC = () => {
           </p>
           <button
             onClick={fetchActividad}
-            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -362,8 +354,8 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
+                text-cyan-400 transition duration-300
+                hover:text-cyan-200
               "
               href="/dashboard/super-admin"
             >
@@ -374,8 +366,8 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
+                text-cyan-400 transition duration-300
+                hover:text-cyan-200
               "
               href="/dashboard/super-admin/cursos"
             >
@@ -386,8 +378,8 @@ const Page: React.FC = () => {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
+                text-cyan-400 transition duration-300
+                hover:text-cyan-200
               "
               href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
             >
@@ -399,8 +391,8 @@ const Page: React.FC = () => {
             <BreadcrumbLink
               href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
               className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
+                text-cyan-400 transition duration-300
+                hover:text-cyan-200
               "
             >
               Lección
@@ -412,8 +404,8 @@ const Page: React.FC = () => {
               href="#"
               onClick={() => window.history.back()}
               className="
-                text-primary transition duration-300
-                hover:scale-105 hover:text-gray-300
+                text-cyan-300 transition duration-300
+                hover:text-white
               "
             >
               Creación de actividad
@@ -422,81 +414,102 @@ const Page: React.FC = () => {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="group relative h-auto w-full">
-        <div className="
-          animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
-          duration-500
-          group-hover:opacity-100
-        " />
+        <div
+          className="
+            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+            duration-500
+            group-hover:opacity-100
+          "
+        />
 
         <div
           className="
-            relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-lg
-            border border-gray-200 p-4
+            relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-2xl
+            border border-cyan-500/20 bg-slate-800 p-4 text-white
+            shadow-[0_0_20px_rgba(34,211,238,0.08)]
             sm:p-6
             lg:p-8
-            shadow-lg
           "
-          style={{ backgroundColor: color, color: getContrastYIQ(color) }}
         >
           <div className="mb-6 space-y-3">
-            <h2 className="
-              text-primary text-2xl
-              sm:text-3xl
-              lg:text-4xl
-              font-bold
-            ">
+            <h2
+              className="
+                bg-gradient-to-r from-cyan-300 to-white bg-clip-text text-2xl
+                font-bold text-transparent
+                sm:text-3xl
+                lg:text-4xl
+              "
+            >
               {actividad.name}
             </h2>
-            <p className="
-              text-primary text-sm
-              sm:text-base
-              lg:text-lg
-              font-medium opacity-90
-            ">
+            <p
+              className="
+                text-sm font-medium text-white/70
+                sm:text-base
+                lg:text-lg
+              "
+            >
               Lección: {actividad.lesson?.title}
             </p>
           </div>
 
-          <div className="
-            my-6 grid grid-cols-1 gap-6
-            lg:grid-cols-2
-          ">
-            <div className="
-              space-y-4 text-sm
-              sm:text-base
-            ">
+          <div
+            className="
+              my-6 grid grid-cols-1 gap-6
+              lg:grid-cols-2
+            "
+          >
+            <div
+              className="
+                space-y-4 text-sm
+                sm:text-base
+              "
+            >
               <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide opacity-70">Docente</span>
+                <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                  Docente
+                </span>
                 <Badge
                   variant="outline"
                   className="
-                    border-primary bg-background text-primary w-fit
-                    hover:bg-black/70
-                    font-medium
+                    w-fit border-cyan-500/30 bg-cyan-950/30 font-medium
+                    text-cyan-300
+                    hover:bg-cyan-950/50
                   "
                 >
-                  {actividad.lesson?.courseInstructorName ?? actividad.lesson.courseInstructor}
+                  {actividad.lesson?.courseInstructorName ??
+                    actividad.lesson.courseInstructor}
                 </Badge>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide opacity-70">Tipo de actividad</span>
-                <p className="text-primary font-medium">{actividad.type?.name}</p>
+                <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                  Tipo de actividad
+                </span>
+                <p className="font-medium text-white/90">
+                  {actividad.type?.name}
+                </p>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide opacity-70">Descripción</span>
-                <p className="font-normal">{actividad.description}</p>
+                <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                  Descripción
+                </span>
+                <p className="font-normal text-white/80">
+                  {actividad.description}
+                </p>
               </div>
 
               <div className="flex flex-col gap-1">
-                <span className="text-xs uppercase tracking-wide opacity-70">Calificable</span>
+                <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                  Calificable
+                </span>
                 <Badge
                   variant="outline"
                   className="
-                    border-primary bg-background text-primary w-fit
-                    hover:bg-black/70
+                    w-fit border-cyan-500/30 bg-cyan-950/30 text-cyan-300
+                    hover:bg-cyan-950/50
                   "
                 >
                   {actividad.revisada ? 'Sí' : 'No'}
@@ -505,28 +518,37 @@ const Page: React.FC = () => {
 
               {actividad.fechaMaximaEntrega && (
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs uppercase tracking-wide opacity-70">Fecha de entrega</span>
-                  <p className="font-medium">
-                    {new Date(actividad.fechaMaximaEntrega).toLocaleString('es-ES', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}
+                  <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                    Fecha de entrega
+                  </span>
+                  <p className="font-medium text-white/90">
+                    {new Date(actividad.fechaMaximaEntrega).toLocaleString(
+                      'es-ES',
+                      {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      }
+                    )}
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="
-              flex items-center justify-center
-              lg:col-span-1
-            ">
-              <div className="
-                w-full max-w-xs
-                sm:max-w-sm
-              ">
+            <div
+              className="
+                flex items-center justify-center
+                lg:col-span-1
+              "
+            >
+              <div
+                className="
+                  w-full max-w-xs
+                  sm:max-w-sm
+                "
+              >
                 <Image
                   src={
                     actividad.lesson.coverImageKey
@@ -536,25 +558,26 @@ const Page: React.FC = () => {
                   alt="Imagen de la lección"
                   width={400}
                   height={400}
-                  className="rounded-lg shadow-lg w-full h-auto object-cover"
+                  className="h-auto w-full rounded-lg object-cover shadow-lg"
                 />
               </div>
             </div>
           </div>
 
-          <div className="
-            my-6 flex flex-col
-            sm:flex-row
-            gap-3 flex-wrap justify-center
-            lg:justify-start
-          ">
+          <div
+            className="
+              my-6 flex flex-col flex-wrap justify-center gap-3
+              sm:flex-row
+              lg:justify-start
+            "
+          >
             <Link
               href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
               className="
-                px-6 py-2 rounded-lg bg-blue-500
-                hover:bg-blue-600
-                text-white font-medium transition-colors duration-200
-                text-center text-sm
+                rounded-lg border border-cyan-500/30 bg-cyan-600 px-6 py-2
+                text-center text-sm font-medium text-white transition-colors
+                duration-200
+                hover:bg-cyan-700
                 sm:text-base
               "
             >
@@ -564,10 +587,10 @@ const Page: React.FC = () => {
             <Link
               href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
               className="
-                px-6 py-2 rounded-lg bg-blue-500
-                hover:bg-blue-600
-                text-white font-medium transition-colors duration-200
-                text-center text-sm
+                rounded-lg border border-cyan-500/30 bg-cyan-600 px-6 py-2
+                text-center text-sm font-medium text-white transition-colors
+                duration-200
+                hover:bg-cyan-700
                 sm:text-base
               "
             >
@@ -576,12 +599,15 @@ const Page: React.FC = () => {
 
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button className="
-                  px-6 py-2 rounded-lg border border-red-600 bg-red-600
-                  hover:bg-white hover:text-red-600
-                  text-white font-medium transition-colors duration-200 text-sm
-                  sm:text-base
-                ">
+                <Button
+                  className="
+                    rounded-lg border border-red-600 bg-red-600 px-6 py-2
+                    text-sm font-medium text-white transition-colors
+                    duration-200
+                    hover:bg-white hover:text-red-600
+                    sm:text-base
+                  "
+                >
                   Eliminar
                 </Button>
               </AlertDialogTrigger>
@@ -589,8 +615,10 @@ const Page: React.FC = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminará permanentemente la actividad
-                    <span className="font-bold"> {actividad?.name}</span> y todos los datos asociados.
+                    Esta acción no se puede deshacer. Se eliminará
+                    permanentemente la actividad
+                    <span className="font-bold"> {actividad?.name}</span> y
+                    todos los datos asociados.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -598,10 +626,10 @@ const Page: React.FC = () => {
                   <AlertDialogAction
                     onClick={handleDeleteAct}
                     className="
-                      rounded-lg border border-red-600 bg-red-600
+                      rounded-lg border border-red-600 bg-red-600 font-medium
+                      text-white transition-colors duration-200
                       hover:border-red-700 hover:bg-transparent
                       hover:text-red-700
-                      text-white font-medium transition-colors duration-200
                     "
                   >
                     Eliminar
@@ -614,31 +642,40 @@ const Page: React.FC = () => {
           {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
           {actividad?.type.id === 1 ? (
             <div className="mt-8 space-y-6">
-              <div className="rounded-lg bg-white shadow-md">
+              <div className="rounded-2xl bg-slate-900 shadow-md">
                 <div className="space-y-4">
                   {actividadIdNumber !== null && (
                     <>
-                      <div className="
-                        rounded-lg border border-gray-200 overflow-hidden
-                      ">
-                        <div className="
-                          rounded-t-lg bg-gradient-to-r from-blue-50 to-blue-100
-                          p-4
-                          sm:p-6
-                        ">
-                          <h2 className="
-                            text-lg
-                            sm:text-xl
-                            font-semibold text-gray-800
-                          ">
+                      <div
+                        className="
+                          overflow-hidden rounded-2xl border border-cyan-500/20
+                        "
+                      >
+                        <div
+                          className="
+                            rounded-t-2xl bg-gradient-to-r from-slate-800
+                            to-cyan-950/30 p-4
+                            sm:p-6
+                          "
+                        >
+                          <h2
+                            className="
+                              bg-gradient-to-r from-cyan-300 to-white
+                              bg-clip-text text-lg font-semibold
+                              text-transparent
+                              sm:text-xl
+                            "
+                          >
                             Gestión de Archivos y Calificaciones
                           </h2>
-                          <p className="
-                            text-xs
-                            sm:text-sm
-                            text-gray-600 mt-1
-                          ">
-                            Administra los archivos subidos y asigna calificaciones
+                          <p
+                            className="
+                              mt-1 text-xs text-white/60
+                              sm:text-sm
+                            "
+                          >
+                            Administra los archivos subidos y asigna
+                            calificaciones
                           </p>
                         </div>
                         <VerRespuestasArchivos
@@ -663,9 +700,11 @@ const Page: React.FC = () => {
                           />
                         )}
 
-                      <div className="
-                        rounded-lg border border-gray-200 bg-white p-6
-                      ">
+                      <div
+                        className="
+                          rounded-2xl border border-cyan-500/20 bg-slate-800 p-6
+                        "
+                      >
                         <QuestionSubidaList
                           key={`subida-${shouldRefresh}`}
                           activityId={actividadIdNumber}
@@ -697,47 +736,54 @@ const Page: React.FC = () => {
                 onSelectChange={setSelectedActivityType}
               />
               <div
-                className={`
-                  mt-4 p-4
-                  sm:p-6
-                  rounded-lg border
-                  ${color === '#FFFFFF'
-                    ? 'bg-gray-50 border-gray-200 text-gray-800'
-                    : 'bg-black/10 border-white/20'
-                  }
-                  text-sm
-                  sm:text-base
-                `}
+                className="
+                  mt-4 rounded-2xl border border-cyan-500/20 bg-slate-900 p-4
+                  text-sm text-white
+                  sm:p-6 sm:text-base
+                "
               >
-                <p className="font-semibold mb-3">Distribución de preguntas:</p>
-                <div className="
-                  space-y-2 text-xs
-                  sm:text-sm
-                ">
-                  <div className="flex justify-between items-center">
+                <p className="mb-3 font-semibold text-cyan-300">
+                  Distribución de preguntas:
+                </p>
+                <div
+                  className="
+                    space-y-2 text-xs
+                    sm:text-sm
+                  "
+                >
+                  <div className="flex items-center justify-between">
                     <span>Opción Múltiple</span>
-                    <span className="font-medium">{resumenPorTipo.opcionMultiple}%</span>
+                    <span className="font-medium">
+                      {resumenPorTipo.opcionMultiple}%
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <span>Verdadero/Falso</span>
-                    <span className="font-medium">{resumenPorTipo.verdaderoFalso}%</span>
+                    <span className="font-medium">
+                      {resumenPorTipo.verdaderoFalso}%
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <span>Completar</span>
-                    <span className="font-medium">{resumenPorTipo.completar}%</span>
+                    <span className="font-medium">
+                      {resumenPorTipo.completar}%
+                    </span>
                   </div>
-                  <div className="
-                    border-t border-current/20 pt-2 mt-2 flex justify-between
-                    items-center font-semibold
-                  ">
+                  <div
+                    className="
+                      mt-2 flex items-center justify-between border-t
+                      border-current/20 pt-2 font-semibold
+                    "
+                  >
                     <span>Total usado</span>
                     <span>{porcentajeUsado}%</span>
                   </div>
-                  <div className="
-                    flex justify-between items-center text-xs
-                    sm:text-sm
-                    opacity-80
-                  ">
+                  <div
+                    className="
+                      flex items-center justify-between text-xs opacity-80
+                      sm:text-sm
+                    "
+                  >
                     <span>Disponible</span>
                     <span>{porcentajeDisponible}%</span>
                   </div>
@@ -746,15 +792,12 @@ const Page: React.FC = () => {
 
               {selectedActivityType && (
                 <Button
-                  className={`
-                    mx-auto block mt-4 px-6 py-2 border border-slate-300
-                    bg-transparent
-                    hover:bg-gray-300/20
-                    font-medium text-sm
+                  className="
+                    mx-auto mt-4 block border border-cyan-500/30 bg-transparent
+                    px-6 py-2 text-sm font-medium text-cyan-300
+                    hover:bg-cyan-950/40
                     sm:text-base
-                    ${color === '#FFFFFF' ? 'text-black' : 'text-white'
-                    }
-                  `}
+                  "
                   onClick={handleAddQuestion}
                 >
                   Agregar Pregunta

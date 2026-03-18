@@ -264,7 +264,27 @@ export default function VerRespuestasArchivos({
                         : `ID: ${respuesta.userId}`}
                     </h3>
                     <p className="text-sm text-white">
-                      Archivo: <b>{respuesta.fileName}</b>
+                      {respuesta.fileContent?.startsWith('http') &&
+                      !respuesta.fileContent.includes('amazonaws.com') ? (
+                        <>
+                          URL:{' '}
+                          <a
+                            href={respuesta.fileContent}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="
+                              break-all text-blue-400 underline
+                              hover:text-blue-300
+                            "
+                          >
+                            {respuesta.fileContent}
+                          </a>
+                        </>
+                      ) : (
+                        <>
+                          Archivo: <b>{respuesta.fileName}</b>
+                        </>
+                      )}
                     </p>
                     <p className="text-sm text-white">
                       Enviado:{' '}
@@ -275,8 +295,8 @@ export default function VerRespuestasArchivos({
                         inline-block rounded-full px-3 py-1 text-xs font-medium
                         ${
                           respuesta.status === 'pendiente'
-                            ? 'bg-yellow-100 text-white'
-                            : 'bg-green-100 text-white'
+                            ? 'bg-yellow-100 text-background'
+                            : 'bg-green-100 text-background'
                         }
                       `}
                     >
@@ -295,7 +315,7 @@ export default function VerRespuestasArchivos({
                       rows={3}
                       className="
                         w-full rounded-md border border-gray-300 px-3 py-2
-                        text-sm shadow-sm
+                        text-sm text-white shadow-sm
                         focus:border-blue-500 focus:ring-1 focus:ring-blue-500
                         focus:outline-none
                       "
@@ -338,7 +358,10 @@ export default function VerRespuestasArchivos({
                         max="5"
                         step="0.1"
                         placeholder="0-5"
-                        className="w-full border-slate-300 text-center"
+                        className="
+                          w-full border-slate-300 text-center text-white
+                          placeholder:text-gray-400
+                        "
                         value={grades[key] ?? ''}
                         onChange={(e) => handleGradeChange(key, e.target.value)}
                       />
@@ -367,15 +390,35 @@ export default function VerRespuestasArchivos({
 
                     {/* Acción de descarga */}
                     <div className="md:w-1/3">
-                      <Button
-                        onClick={() => descargarArchivo(key)}
-                        className="
-                          w-full border-slate-300 bg-slate-600 text-white
-                          hover:bg-slate-700
-                        "
-                      >
-                        Descargar archivo
-                      </Button>
+                      {respuesta.fileContent?.startsWith('http') &&
+                      !respuesta.fileContent.includes('amazonaws.com') ? (
+                        <a
+                          href={respuesta.fileContent}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block w-full"
+                        >
+                          <Button
+                            type="button"
+                            className="
+                              w-full border-slate-300 bg-blue-600 text-white
+                              hover:bg-blue-700
+                            "
+                          >
+                            Ir a la URL
+                          </Button>
+                        </a>
+                      ) : (
+                        <Button
+                          onClick={() => descargarArchivo(key)}
+                          className="
+                            w-full border-slate-300 bg-slate-600 text-white
+                            hover:bg-slate-700
+                          "
+                        >
+                          Descargar archivo
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
