@@ -226,7 +226,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       id: number;
       name: string;
       description: string | null;
-      numberOfActivities?: number;
+      parametros: {
+        id: number;
+        name: string;
+        description: string;
+        porcentaje: number;
+        numberOfActivities: number;
+      }[];
     }[]
   >([]);
   const [_selectedParametroId, setSelectedParametroId] = useState<
@@ -640,15 +646,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     }
     const selectedTemplate = existingTemplates.find((t) => t.id === templateId);
     if (selectedTemplate) {
-      setParametrosAction([
-        {
+      if (selectedTemplate.parametros.length === 0) {
+        toast.error('La plantilla seleccionada no tiene parámetros');
+        setSelectedTemplateId(null);
+        return;
+      }
+
+      setParametrosAction(
+        selectedTemplate.parametros.map((parametro) => ({
           id: 0,
-          name: selectedTemplate.name,
-          description: selectedTemplate.description ?? '',
-          porcentaje: 100,
-          numberOfActivities: selectedTemplate.numberOfActivities ?? 1,
-        },
-      ]);
+          name: parametro.name,
+          description: parametro.description,
+          porcentaje: parametro.porcentaje,
+          numberOfActivities: parametro.numberOfActivities ?? 1,
+        }))
+      );
       toast.success(`Plantilla "${selectedTemplate.name}" seleccionada`);
       setSelectedTemplateId(null);
     }

@@ -1,5 +1,12 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -422,6 +429,81 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Ref para el contenedor de tabs con scroll horizontal
   const tabsRef = useRef<HTMLDivElement>(null);
+  const tabsDragStateRef = useRef({
+    hasDragged: false,
+    isDragging: false,
+    pointerId: null as number | null,
+    scrollLeft: 0,
+    startX: 0,
+  });
+
+  const handleTabsPointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!event.isPrimary || event.button !== 0) return;
+
+      const container = event.currentTarget;
+      tabsDragStateRef.current.isDragging = true;
+      tabsDragStateRef.current.hasDragged = false;
+      tabsDragStateRef.current.pointerId = event.pointerId;
+      tabsDragStateRef.current.startX = event.clientX;
+      tabsDragStateRef.current.scrollLeft = container.scrollLeft;
+      container.setPointerCapture(event.pointerId);
+    },
+    []
+  );
+
+  const handleTabsPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const dragState = tabsDragStateRef.current;
+      if (!dragState.isDragging) return;
+
+      const deltaX = event.clientX - dragState.startX;
+
+      if (!dragState.hasDragged && Math.abs(deltaX) > 6) {
+        dragState.hasDragged = true;
+      }
+
+      if (!dragState.hasDragged) return;
+
+      event.preventDefault();
+      event.currentTarget.scrollLeft = dragState.scrollLeft - deltaX;
+    },
+    []
+  );
+
+  const handleTabsPointerEnd = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const container = event.currentTarget;
+      const dragState = tabsDragStateRef.current;
+
+      if (
+        dragState.pointerId !== null &&
+        container.hasPointerCapture(dragState.pointerId)
+      ) {
+        container.releasePointerCapture(dragState.pointerId);
+      }
+
+      dragState.isDragging = false;
+      dragState.pointerId = null;
+
+      if (dragState.hasDragged) {
+        window.requestAnimationFrame(() => {
+          tabsDragStateRef.current.hasDragged = false;
+        });
+      }
+    },
+    []
+  );
+
+  const handleTabsClickCapture = useCallback(
+    (event: ReactMouseEvent<HTMLDivElement>) => {
+      if (!tabsDragStateRef.current.hasDragged) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+    },
+    []
+  );
 
   // Estados para foros
   const [forums, setForums] = useState<Forum[]>([]);
@@ -2617,15 +2699,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                     <div
                       ref={tabsRef}
+                      onClickCapture={handleTabsClickCapture}
+                      onPointerCancel={handleTabsPointerEnd}
+                      onPointerDown={handleTabsPointerDown}
+                      onPointerMove={handleTabsPointerMove}
+                      onPointerUp={handleTabsPointerEnd}
                       className="
-                        scrollbar-none flex gap-2 overflow-x-auto scroll-smooth
-                        px-8 py-2
+                        scrollbar-none flex cursor-grab gap-2 overflow-x-auto
+                        scroll-smooth px-8 py-2 select-none
+                        active:cursor-grabbing
                         md:gap-3
                         lg:gap-4
                       "
                       style={{
-                        scrollbarWidth: 'none',
                         msOverflowStyle: 'none',
+                        scrollbarWidth: 'none',
+                        touchAction: 'pan-y',
                       }}
                     >
                       <button
@@ -5502,6 +5591,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
           {isModalOpen && (
             <ModalFormCourse
+              userRole="educador"
               isOpen={isModalOpen}
               onSubmitAction={(
                 id,

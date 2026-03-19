@@ -127,26 +127,31 @@ export default function TicketsPage() {
   const [sortByUpdatedAtDesc, setSortByUpdatedAtDesc] = useState(true); // true = más recientes arriba
 
   useEffect(() => {
-    if (viewTicket?.id) {
-      const fetchComments = async () => {
-        try {
-          setIsLoadingComments(true);
-          const response = await fetch(
-            `/api/admin/tickets/${viewTicket.id}/comments`
-          );
-          if (!response.ok)
-            throw new Error('No se pudo obtener los comentarios');
-          const data = (await response.json()) as Comment[];
-          setComments(data);
-        } catch (error) {
-          console.error('Error cargando comentarios:', error);
-        } finally {
-          setIsLoadingComments(false);
-        }
-      };
+    if (!viewTicket?.id) return;
 
-      void fetchComments();
-    }
+    let isFirst = true;
+    const fetchComments = async () => {
+      try {
+        if (isFirst) setIsLoadingComments(true);
+        const response = await fetch(
+          `/api/admin/tickets/${viewTicket.id}/comments`
+        );
+        if (!response.ok) throw new Error('No se pudo obtener los comentarios');
+        const data = (await response.json()) as Comment[];
+        setComments(data);
+      } catch (error) {
+        if (isFirst) console.error('Error cargando comentarios:', error);
+      } finally {
+        if (isFirst) {
+          setIsLoadingComments(false);
+          isFirst = false;
+        }
+      }
+    };
+
+    void fetchComments();
+    const interval = setInterval(() => void fetchComments(), 1000);
+    return () => clearInterval(interval);
   }, [viewTicket?.id]);
 
   function formatElapsedTime(ms: number): string {
@@ -495,11 +500,18 @@ export default function TicketsPage() {
 
         {/* Tabs */}
         <div className="mt-6 border-b border-gray-700">
-          <div className="flex space-x-8">
+          <div
+            className="
+            -mb-px flex gap-1 overflow-x-auto
+            sm:gap-6
+          "
+          >
             <button
               onClick={() => setActiveTab('created')}
               className={`
-                border-b-2 pb-4 text-sm font-medium transition-colors
+                border-b-2 px-3 pb-3 text-xs font-medium whitespace-nowrap
+                transition-colors
+                sm:pb-4 sm:text-sm
                 ${
                   activeTab === 'created'
                     ? 'border-blue-500 text-blue-500'
@@ -515,7 +527,9 @@ export default function TicketsPage() {
             <button
               onClick={() => setActiveTab('assigned')}
               className={`
-                border-b-2 pb-4 text-sm font-medium transition-colors
+                border-b-2 px-3 pb-3 text-xs font-medium whitespace-nowrap
+                transition-colors
+                sm:pb-4 sm:text-sm
                 ${
                   activeTab === 'assigned'
                     ? 'border-blue-500 text-blue-500'
@@ -531,7 +545,9 @@ export default function TicketsPage() {
             <button
               onClick={() => setActiveTab('logs')}
               className={`
-                border-b-2 pb-4 text-sm font-medium transition-colors
+                border-b-2 px-3 pb-3 text-xs font-medium whitespace-nowrap
+                transition-colors
+                sm:pb-4 sm:text-sm
                 ${
                   activeTab === 'logs'
                     ? 'border-blue-500 text-blue-500'
@@ -547,7 +563,9 @@ export default function TicketsPage() {
             <button
               onClick={() => setActiveTab('chats')}
               className={`
-                border-b-2 pb-4 text-sm font-medium transition-colors
+                border-b-2 px-3 pb-3 text-xs font-medium whitespace-nowrap
+                transition-colors
+                sm:pb-4 sm:text-sm
                 ${
                   activeTab === 'chats'
                     ? 'border-blue-500 text-blue-500'
@@ -693,13 +711,19 @@ export default function TicketsPage() {
 
             <div
               className="
-                inline-flex items-center gap-3 rounded-lg border
+                inline-flex items-center gap-2 rounded-lg border
                 border-blue-400/30 bg-gradient-to-r from-blue-900 via-blue-800
-                to-blue-900 px-6 py-4 text-lg font-semibold text-blue-100
+                to-blue-900 px-3 py-2 text-sm font-semibold text-blue-100
                 shadow-lg backdrop-blur-sm
+                sm:gap-3 sm:px-6 sm:py-4 sm:text-lg
               "
             >
-              <FileText className="size-6 animate-pulse text-blue-300 drop-shadow-md" />
+              <FileText
+                className="
+                size-4 animate-pulse text-blue-300 drop-shadow-md
+                sm:size-6
+              "
+              />
               <span className="tracking-wide">
                 {filteredTickets.length} ticket(s) encontrado(s)
               </span>
@@ -1145,14 +1169,16 @@ export default function TicketsPage() {
         {viewTicket && (
           <div
             className="
-              fixed inset-0 z-50 flex items-center justify-center
-              overflow-hidden bg-black/60 p-4
+              fixed inset-0 z-50 flex items-end justify-center overflow-hidden
+              bg-black/60 p-0
+              sm:items-center sm:p-4
             "
           >
             <div
               className="
-                relative max-h-[90vh] w-full max-w-6xl overflow-y-auto
-                rounded-2xl border border-gray-700 bg-gray-900 p-4 shadow-2xl
+                relative max-h-[95vh] w-full overflow-y-auto rounded-t-2xl
+                border border-gray-700 bg-gray-900 p-4 shadow-2xl
+                sm:max-h-[90vh] sm:max-w-6xl sm:rounded-2xl
                 md:p-6
                 lg:p-10
               "
