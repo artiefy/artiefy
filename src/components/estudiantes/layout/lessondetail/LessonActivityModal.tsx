@@ -101,9 +101,16 @@ interface PresignedResponse {
 
 interface DocumentUploadResponse {
   success: boolean;
-  status: 'pending' | 'reviewed';
-  fileUrl: string;
+  message?: string;
+  error?: string;
   documentKey: string;
+}
+
+interface DirectUploadFallbackResponse {
+  success: boolean;
+  key?: string;
+  fileUrl?: string;
+  error?: string;
 }
 
 interface FilePreview {
@@ -1961,12 +1968,16 @@ export function LessonActivityModal({
                           selectedFile,
                           activity,
                           userId,
+                          isMobile,
                           setIsUploading,
                           setUploadProgress,
                           setUploadedFileInfo,
                           setShowResults,
                           setFilePreview,
                           setIsNewUpload, // Add this parameter
+                          onSwitchToUrlTab: () => {
+                            setActiveTab('drive');
+                          },
                         })
                       }
                       disabled={
@@ -2270,15 +2281,15 @@ export function LessonActivityModal({
             data-[state=closed]:zoom-out-95
             data-[state=open]:animate-in data-[state=open]:fade-in-0
             data-[state=open]:zoom-in-95
-            fixed top-[50%] left-[50%] z-[100004] flex translate-[-50%] flex-col
-            gap-4 overflow-hidden rounded-lg border bg-background shadow-lg
+            fixed top-1/2 left-1/2 z-[100004] flex -translate-1/2 flex-col gap-4
+            overflow-hidden rounded-lg border bg-background shadow-lg
             duration-200
             [&>button]:bg-background [&>button]:text-background
             [&>button]:hover:text-background
             ${
               isMobile
                 ? `
-                  max-h-[90vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)]
+                  max-h-[92dvh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)]
                   overflow-y-auto rounded-2xl p-4
                 `
                 : `
@@ -2398,12 +2409,14 @@ interface UploadParams {
   selectedFile: File | null;
   activity: Activity;
   userId: string;
+  isMobile?: boolean;
   setIsUploading: (value: boolean) => void;
   setUploadProgress: (value: number) => void;
   setUploadedFileInfo: (info: StoredFileInfo | null) => void;
   setShowResults: (value: boolean) => void;
   setFilePreview: (preview: FilePreview | null) => void;
   setIsNewUpload: (value: boolean) => void; // Add this line
+  onSwitchToUrlTab?: () => void;
 }
 
 // Add custom error type
@@ -2414,17 +2427,57 @@ class UploadError extends Error {
   }
 }
 
+const uploadThroughServerFallback = async (
+  selectedFile: File,
+  activityId: number,
+  userId: string
+): Promise<{ key: string; fileUrl: string }> => {
+  const fallbackFormData = new FormData();
+  fallbackFormData.append('file', selectedFile, selectedFile.name);
+  fallbackFormData.append('activityId', String(activityId));
+  fallbackFormData.append('userId', userId);
+
+  const fallbackResponse = await fetch(
+    '/api/activities/documentupload-direct',
+    {
+      method: 'POST',
+      body: fallbackFormData,
+    }
+  );
+
+  const fallbackData =
+    (await fallbackResponse.json()) as DirectUploadFallbackResponse;
+
+  if (
+    !fallbackResponse.ok ||
+    !fallbackData.success ||
+    !fallbackData.key ||
+    !fallbackData.fileUrl
+  ) {
+    throw new UploadError(
+      fallbackData.error ?? 'Upload to storage failed (fallback)'
+    );
+  }
+
+  return {
+    key: fallbackData.key,
+    fileUrl: fallbackData.fileUrl,
+  };
+};
+
 // Update handleUpload function with proper error handling
 async function handleUpload({
   selectedFile,
   activity,
   userId,
+  isMobile = false,
   setIsUploading,
   setUploadProgress,
   setUploadedFileInfo,
   setShowResults,
   setFilePreview,
   setIsNewUpload, // Add this parameter
+  onSwitchToUrlTab,
 }: UploadParams): Promise<void> {
   if (!selectedFile) return;
 
@@ -2464,27 +2517,47 @@ async function handleUpload({
 
     const presignedData = (await presignedResponse.json()) as PresignedResponse;
     const { url, fields, key, fileUrl } = presignedData;
+    let uploadedKey = key;
+    let uploadedFileUrl = fileUrl;
+    let usedFallbackUpload = false;
 
     updateFilePreview(20);
 
-    // Upload to S3
-    const formData = new FormData();
-    Object.entries(fields).forEach(([fieldKey, value]) => {
-      formData.append(fieldKey, String(value));
-    });
-    formData.append(
-      'file',
-      selectedFile,
-      getSafeUploadFilename(selectedFile.name)
-    );
+    try {
+      // Upload to S3 (direct, faster path)
+      const formData = new FormData();
+      Object.entries(fields).forEach(([fieldKey, value]) => {
+        formData.append(fieldKey, String(value));
+      });
+      formData.append(
+        'file',
+        selectedFile,
+        getSafeUploadFilename(selectedFile.name)
+      );
 
-    const uploadResponse = await fetch(url, {
-      method: 'POST',
-      body: formData,
-    });
+      const uploadResponse = await fetch(url, {
+        method: 'POST',
+        body: formData,
+      });
 
-    if (!uploadResponse.ok) {
-      throw new UploadError('Upload to storage failed');
+      if (!uploadResponse.ok) {
+        throw new UploadError('Upload to storage failed');
+      }
+    } catch (directUploadError) {
+      console.warn('Direct storage upload failed, using server fallback:', {
+        error:
+          directUploadError instanceof Error
+            ? directUploadError.message
+            : String(directUploadError),
+      });
+      usedFallbackUpload = true;
+      const fallbackResult = await uploadThroughServerFallback(
+        selectedFile,
+        activity.id,
+        userId
+      );
+      uploadedKey = fallbackResult.key;
+      uploadedFileUrl = fallbackResult.fileUrl;
     }
 
     updateFilePreview(60);
@@ -2498,32 +2571,35 @@ async function handleUpload({
         userId,
         fileInfo: {
           fileName: selectedFile.name,
-          fileUrl,
-          documentKey: key,
+          fileUrl: uploadedFileUrl,
+          documentKey: uploadedKey,
           uploadDate: new Date().toISOString(),
           status: 'pending',
         },
       }),
     });
 
-    if (!dbResponse.ok) {
-      throw new UploadError('Failed to save submission');
-    }
-
     const result = (await dbResponse.json()) as DocumentUploadResponse;
+    if (!dbResponse.ok || !result.success) {
+      throw new UploadError(result.error ?? 'Failed to save submission');
+    }
 
     updateFilePreview(100, 'complete');
     setUploadProgress(100);
     setUploadedFileInfo({
       fileName: selectedFile.name,
-      fileUrl: result.fileUrl,
+      fileUrl: uploadedFileUrl,
       uploadDate: new Date().toISOString(),
-      status: result.status,
+      status: 'pending',
       submissionType: 'file',
     });
 
     setIsNewUpload(true); // This will now work properly
-    toast.success('Documento subido correctamente');
+    toast.success(
+      usedFallbackUpload
+        ? 'Documento subido correctamente (modo compatible móvil)'
+        : 'Documento subido correctamente'
+    );
     setShowResults(true);
   } catch (error) {
     const errorMessage =
@@ -2540,7 +2616,20 @@ async function handleUpload({
       });
     }
     console.error('Error de subida:', errorMessage);
-    toast.error(`Error al subir el archivo: ${errorMessage}`);
+
+    const shouldSuggestUrlFallback =
+      isMobile &&
+      (error instanceof TypeError ||
+        /fetch|network|upload|failed|cors|timeout/i.test(errorMessage));
+
+    if (shouldSuggestUrlFallback) {
+      onSwitchToUrlTab?.();
+      toast.error(
+        'No se pudo subir el archivo desde el celular. Te abrimos "Archivo URL" para continuar.'
+      );
+    } else {
+      toast.error(`Error al subir el archivo: ${errorMessage}`);
+    }
   } finally {
     setIsUploading(false);
   }

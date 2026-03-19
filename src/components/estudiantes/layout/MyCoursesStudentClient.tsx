@@ -143,9 +143,10 @@ export default function MyCoursesStudentClient({
                   0,
                   Math.min(100, course.progress ?? 0)
                 );
-                const courseHref = course.continueLessonId
+                const continueHref = course.continueLessonId
                   ? `/estudiantes/clases/${course.continueLessonId}`
                   : `/estudiantes/cursos/${course.id}`;
+                const courseHref = `/estudiantes/cursos/${course.id}`;
                 const lessonLabel =
                   course.continueLessonNumber && course.continueLessonTitle
                     ? `Clase ${course.continueLessonNumber}: ${course.continueLessonTitle}`
@@ -153,10 +154,8 @@ export default function MyCoursesStudentClient({
                       ? `Clase ${course.continueLessonNumber}`
                       : 'Continuar en el curso';
                 return (
-                  <Link
+                  <article
                     key={course.id}
-                    href={courseHref}
-                    prefetch={false}
                     className="
                       group relative overflow-hidden rounded-2xl border
                       border-border/50 bg-card transition-all duration-300
@@ -164,54 +163,56 @@ export default function MyCoursesStudentClient({
                       hover:shadow-[0_0_30px_hsl(185_72%_48%/0.1)]
                     "
                   >
-                    <div className="relative aspect-video overflow-hidden">
-                      <Image
-                        src={getImageUrl(course.coverImageKey)}
-                        alt={course.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="
-                          size-full object-cover transition-transform
-                          duration-500
-                          group-hover:scale-105
-                        "
-                      />
-                      <div
-                        className="
-                          absolute inset-0 bg-gradient-to-t from-card
-                          via-transparent to-transparent
-                        "
-                      />
-                      <div
-                        className="
-                          absolute inset-0 flex items-center justify-center
-                          opacity-0 transition-opacity duration-300
-                          group-hover:opacity-100
-                        "
-                      >
+                    <Link href={courseHref} prefetch={false} className="block">
+                      <div className="relative aspect-video overflow-hidden">
+                        <Image
+                          src={getImageUrl(course.coverImageKey)}
+                          alt={course.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="
+                            size-full object-cover transition-transform
+                            duration-500
+                            group-hover:scale-105
+                          "
+                        />
                         <div
                           className="
-                            flex size-12 items-center justify-center
-                            rounded-full bg-primary/90
-                            shadow-[0_0_20px_hsl(185_72%_48%/0.5)]
+                            absolute inset-0 bg-gradient-to-t from-card
+                            via-transparent to-transparent
+                          "
+                        />
+                        <div
+                          className="
+                            absolute inset-0 flex items-center justify-center
+                            opacity-0 transition-opacity duration-300
+                            group-hover:opacity-100
                           "
                         >
-                          <Play className="ml-0.5 size-5 text-primary-foreground" />
+                          <div
+                            className="
+                              flex size-12 items-center justify-center
+                              rounded-full bg-primary/90
+                              shadow-[0_0_20px_hsl(185_72%_48%/0.5)]
+                            "
+                          >
+                            <Play className="ml-0.5 size-5 text-primary-foreground" />
+                          </div>
                         </div>
-                      </div>
-                      <div
-                        className="
-                          absolute right-0 bottom-0 left-0 h-1 bg-muted/30
-                        "
-                      >
                         <div
                           className="
-                            h-full rounded-r-full bg-primary transition-all
+                            absolute right-0 bottom-0 left-0 h-1 bg-muted/30
                           "
-                          style={{ width: `${progress}%` }}
-                        />
+                        >
+                          <div
+                            className="
+                              h-full rounded-r-full bg-primary transition-all
+                            "
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                     <div className="space-y-3 p-4">
                       {course.category && (
                         <Badge
@@ -261,21 +262,38 @@ export default function MyCoursesStudentClient({
                           }}
                         />
                       </div>
-                      <div
-                        className="
-                          inline-flex h-9 w-full items-center justify-center
-                          gap-2 rounded-md border border-primary/20
-                          bg-primary/10 text-sm font-medium text-primary
-                          transition-all
-                          hover:bg-primary hover:text-primary-foreground
-                        "
-                      >
-                        <Play className="size-3.5" />
-                        Continuar
-                        <ArrowRight className="size-3.5" />
+                      <div className="space-y-2">
+                        <Link
+                          href={courseHref}
+                          prefetch={false}
+                          className="
+                            inline-flex h-9 w-full items-center justify-center
+                            gap-2 rounded-md border border-primary/30
+                            bg-secondary/40 text-sm font-medium text-foreground
+                            transition-all
+                            hover:border-primary/60 hover:bg-secondary
+                          "
+                        >
+                          Ir al curso
+                        </Link>
+                        <Link
+                          href={continueHref}
+                          prefetch={false}
+                          className="
+                            inline-flex h-9 w-full items-center justify-center
+                            gap-2 rounded-md border border-primary/20
+                            bg-primary/10 text-sm font-medium text-primary
+                            transition-all
+                            hover:bg-primary hover:text-primary-foreground
+                          "
+                        >
+                          <Play className="size-3.5" />
+                          Continuar la clase
+                          <ArrowRight className="size-3.5" />
+                        </Link>
                       </div>
                     </div>
-                  </Link>
+                  </article>
                 );
               })}
             </div>

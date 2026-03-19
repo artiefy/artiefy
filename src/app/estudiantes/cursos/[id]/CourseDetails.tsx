@@ -1,10 +1,11 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
+import { type OAuthStrategy } from '@clerk/shared/types';
 import { AiFillFire, AiOutlineCalendar } from 'react-icons/ai';
 import {
   FaCheck,
@@ -19,6 +20,7 @@ import { IoPlayOutline } from 'react-icons/io5';
 import { MdOutlineVideocam } from 'react-icons/md';
 import { RiEqualizer2Line } from 'react-icons/ri';
 import { toast } from 'sonner';
+import useSWR, { useSWRConfig } from 'swr';
 
 import { CourseActivities } from '~/components/estudiantes/layout/coursedetail/CourseActivities';
 import { CourseBreadcrumb } from '~/components/estudiantes/layout/coursedetail/CourseBreadcrumb';
@@ -42,11 +44,10 @@ import {
 } from '~/components/estudiantes/ui/dialog';
 import { enrollInCourse } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { unenrollFromCourse } from '~/server/actions/estudiantes/courses/unenrollFromCourse';
-import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 import { sortLessons } from '~/utils/lessonSorting';
 import { createProductFromCourse } from '~/utils/paygateway/products';
 
-import type { ClassMeeting, Course, Enrollment } from '~/types';
+import type { ClassMeeting, Course, Lesson } from '~/types';
 
 type UserMetadata = {
   planType?: 'none' | 'Pro' | 'Premium';
@@ -97,6 +98,18 @@ type CourseGradeSummary = {
   }[];
 };
 
+type EnrollmentStatusResponse = {
+  isEnrolled: boolean;
+};
+
+const swrFetcher = async <T,>(url: string): Promise<T> => {
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error(`Error fetching ${url}: ${response.status}`);
+  }
+  return (await response.json()) as T;
+};
+
 export default function CourseDetails({
   course: initialCourse,
   classMeetings = [],
@@ -121,7 +134,10 @@ export default function CourseDetails({
   const [activeAuthModal, setActiveAuthModal] = useState<
     'login' | 'signup' | null
   >(null);
-  const [pendingOpenPayment, setPendingOpenPayment] = useState(false);
+  const [authIntent, setAuthIntent] = useState<'login' | 'enroll'>('login');
+  const [_pendingOpenPayment, setPendingOpenPayment] = useState(false);
+  const [oauthSignUpStrategy, setOauthSignUpStrategy] =
+    useState<OAuthStrategy | null>(null);
   const [seenSections, setSeenSections] = useState<Record<NavKey, boolean>>({
     curso: true,
     grabadas: false,
@@ -134,12 +150,55 @@ export default function CourseDetails({
   });
   const { isSignedIn, userId } = useAuth();
   const { user } = useUser();
+  const { mutate } = useSWRConfig();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
     null
   );
   const userMetadata = user?.publicMetadata as UserMetadata | undefined;
+  const initialIsEnrolledFromServer = useMemo(() => {
+    if (!userId) return false;
+    return (
+      Array.isArray(initialCourse.enrollments) &&
+      initialCourse.enrollments.some(
+        (enrollment) => enrollment.userId === userId
+      )
+    );
+  }, [initialCourse.enrollments, userId]);
+
+  const enrollmentStatusKey = useMemo(() => {
+    if (!userId) return null;
+    return `/api/estudiantes/courses/${initialCourse.id}/is-enrolled?userId=${encodeURIComponent(
+      userId
+    )}`;
+  }, [initialCourse.id, userId]);
+
+  const { data: enrollmentStatusData, isLoading: isEnrollmentStatusLoading } =
+    useSWR<EnrollmentStatusResponse>(
+      enrollmentStatusKey,
+      swrFetcher<EnrollmentStatusResponse>,
+      {
+        fallbackData: { isEnrolled: initialIsEnrolledFromServer },
+        revalidateOnFocus: true,
+      }
+    );
+
+  const lessonsByCourseKey = useMemo(() => {
+    if (!userId || !isEnrolled) return null;
+    return `/api/lessons/by-course?courseId=${initialCourse.id}&userId=${encodeURIComponent(
+      userId
+    )}`;
+  }, [initialCourse.id, isEnrolled, userId]);
+
+  const { data: lessonsFromSWR } = useSWR<Lesson[]>(
+    lessonsByCourseKey,
+    swrFetcher<Lesson[]>,
+    {
+      revalidateOnFocus: true,
+      keepPreviousData: true,
+    }
+  );
 
   const courseTypes = useMemo<CourseTypeLike[]>(() => {
     // Combine the main course.courseType (from course_type_id) with any
@@ -177,6 +236,9 @@ export default function CourseDetails({
   const [activePill, setActivePill] = useState<NavKey>('curso');
   const [projectsCount, setProjectsCount] = useState<number>(0);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const enrollmentRequestInFlight = useRef(false);
+  const autoEnrollTriggeredRef = useRef(false);
+  const autoEnrollForcePlansRef = useRef(false);
   const showLoginModal = activeAuthModal === 'login';
   const showSignUpModal = activeAuthModal === 'signup';
 
@@ -758,64 +820,53 @@ export default function CourseDetails({
     course.title,
   ]);
 
-  const loginRedirectUrl = '';
+  const courseBaseUrl = `/estudiantes/cursos/${course.id}`;
+  const autoEnrollStorageKey = `course:auto_enroll:${course.id}`;
+  const loginRedirectUrl =
+    authIntent === 'enroll' ? `${courseBaseUrl}?auto_enroll=1` : courseBaseUrl;
 
   const handleLoginSuccess = () => {
     setActiveAuthModal(null);
-
-    // Detectar si el curso es purchasable individually
-    const hasPurchasable = courseTypes.some((t) => t.isPurchasableIndividually);
-    const isIndividualPurchase =
-      hasPurchasable && course.individualPrice && course.individualPrice > 0;
-
-    console.log('🔍 handleLoginSuccess - Debug:', {
-      pendingOpenPayment,
-      hasPurchasable,
-      isIndividualPurchase,
-      courseId: course.id,
-      individualPrice: course.individualPrice,
-    });
-
-    // Si hay un pago pendiente Y el curso es de compra individual, abrir modal de pago
-    if (pendingOpenPayment && isIndividualPurchase) {
-      console.log('✅ Abriendo modal de pago después del login');
-      setPendingOpenPayment(false);
-      // Usar setTimeout para asegurar que el modal de login se cierre primero
-      setTimeout(() => {
-        setShowPaymentModal(true);
-      }, 100);
-      return;
-    }
-
-    // Si no hay pago pendiente o no es curso individual, continuar flujo normal
-    console.log('ℹ️ Continuando flujo normal de inscripción');
+    const shouldResumeStartNow = authIntent === 'enroll';
+    setAuthIntent('login');
     setPendingOpenPayment(false);
-    void handleStartNow();
+
+    if (shouldResumeStartNow) {
+      router.replace(loginRedirectUrl);
+    }
   };
 
   // Funciones para cambiar entre modales de login y signup
-  const handleSwitchToSignUp = () => {
+  const handleSwitchToSignUp = (strategy?: OAuthStrategy) => {
+    setOauthSignUpStrategy(strategy ?? null);
     setActiveAuthModal('signup');
   };
 
   const handleSwitchToLogin = () => {
+    setOauthSignUpStrategy(null);
     setActiveAuthModal('login');
   };
 
   // Handler para cuando se completa el signup
   const handleSignUpSuccess = () => {
-    console.log('✅ Registro completado, continuando flujo...');
+    const shouldResumeStartNow = authIntent === 'enroll';
+    setOauthSignUpStrategy(null);
     setActiveAuthModal(null);
+    setAuthIntent('login');
+    setPendingOpenPayment(false);
 
-    if (pendingOpenPayment) {
-      setShowPaymentModal(true);
-      setPendingOpenPayment(false);
-    } else {
-      void handleStartNow();
+    if (shouldResumeStartNow) {
+      router.replace(loginRedirectUrl);
     }
   };
 
-  const handleStartNow = async () => {
+  const handleStartNow = useCallback(async () => {
+    if (enrollmentRequestInFlight.current) {
+      return;
+    }
+    const forcePlansFromAutoEnroll = autoEnrollForcePlansRef.current;
+    autoEnrollForcePlansRef.current = false;
+
     const types = courseTypes;
     const hasPurchasable = types.some((t) => t.isPurchasableIndividually);
     const normalizedPlan = _userPlanType?.toLowerCase();
@@ -842,9 +893,21 @@ export default function CourseDetails({
       (_hasFree ? false : !hasPlanAccess && !_hasActiveSubscription);
 
     if (!isSignedIn) {
+      setAuthIntent('enroll');
       // Establecer pendingOpenPayment basado en si el curso requiere pago individual
       setPendingOpenPayment(!!isIndividualPurchaseRequired);
       setActiveAuthModal('login');
+      return;
+    }
+
+    const shouldForcePlansRedirect =
+      forcePlansFromAutoEnroll &&
+      !_hasFree &&
+      !hasPlanAccess &&
+      !_hasActiveSubscription;
+
+    if (shouldForcePlansRedirect) {
+      router.push('/planes');
       return;
     }
 
@@ -863,6 +926,7 @@ export default function CourseDetails({
     }
 
     const courseId = Number(course.id);
+    enrollmentRequestInFlight.current = true;
     setIsEnrolling(true);
 
     try {
@@ -883,75 +947,131 @@ export default function CourseDetails({
       });
       setIsEnrolled(true);
       setTotalStudents((prev) => (prev ?? 0) + 1);
-
-      const lessons = await getLessonsByCourseId(courseId, userId);
-      if (lessons) {
-        const normalizedLessons = lessons.map((lesson) => ({
-          ...lesson,
-          isLocked: false,
-          porcentajecompletado: lesson.userProgress,
-          isNew: lesson.isNew,
-        }));
-        setCourse((prev) => ({
-          ...prev,
-          lessons: sortLessons(normalizedLessons),
-        }));
-      }
+      const enrollmentKey = `/api/estudiantes/courses/${courseId}/is-enrolled?userId=${encodeURIComponent(
+        userId
+      )}`;
+      const lessonsKey = `/api/lessons/by-course?courseId=${courseId}&userId=${encodeURIComponent(
+        userId
+      )}`;
+      await mutate(enrollmentKey, { isEnrolled: true }, { revalidate: false });
+      await mutate(lessonsKey);
     } catch (error) {
       console.error('Error enrolling user:', error);
       toast.error('Ocurrió un error al inscribirte. Inténtalo de nuevo.');
     } finally {
+      enrollmentRequestInFlight.current = false;
       setIsEnrolling(false);
     }
-  };
+  }, [
+    _hasActiveSubscription,
+    _hasFree,
+    _hasPremium,
+    _hasPro,
+    _userPlanType,
+    course,
+    courseTypes,
+    isSignedIn,
+    mutate,
+    router,
+    userId,
+  ]);
 
   useEffect(() => {
-    const checkEnrollmentAndProgress = async () => {
-      setIsCheckingEnrollment(true);
-      try {
-        if (userId) {
-          const isUserEnrolled =
-            Array.isArray(initialCourse.enrollments) &&
-            initialCourse.enrollments.some(
-              (enrollment: Enrollment) => enrollment.userId === userId
-            );
-          setIsEnrolled(isUserEnrolled);
-          const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
-          const subscriptionEndDate = user?.publicMetadata
-            ?.subscriptionEndDate as string | null;
-          const isSubscriptionActive =
-            subscriptionStatus === 'active' &&
-            (!subscriptionEndDate ||
-              new Date(subscriptionEndDate) > new Date());
-          setIsSubscriptionActive(isSubscriptionActive);
-          if (isUserEnrolled) {
-            const lessons = await getLessonsByCourseId(
-              initialCourse.id,
-              userId
-            );
-            if (lessons) {
-              const normalizedLessons = lessons.map((lesson) => ({
-                ...lesson,
-                isLocked: false,
-                porcentajecompletado: lesson.userProgress,
-                isNew: lesson.isNew,
-              }));
-              setCourse((prev) => ({
-                ...prev,
-                lessons: sortLessons(normalizedLessons),
-              }));
-            }
-          }
+    if (typeof enrollmentStatusData?.isEnrolled !== 'boolean') return;
+    setIsEnrolled(enrollmentStatusData.isEnrolled);
+  }, [enrollmentStatusData?.isEnrolled]);
+
+  useEffect(() => {
+    const shouldAutoEnroll = searchParams?.get('auto_enroll') === '1';
+
+    if (!shouldAutoEnroll) {
+      autoEnrollTriggeredRef.current = false;
+      if (typeof window !== 'undefined') {
+        try {
+          window.sessionStorage.removeItem(autoEnrollStorageKey);
+        } catch {
+          // ignore storage failures
         }
-      } catch (error) {
-        console.error('Error checking enrollment:', error);
-      } finally {
-        setIsCheckingEnrollment(false);
+      }
+      return;
+    }
+
+    if (!isSignedIn || !userId || isEnrolled || autoEnrollTriggeredRef.current)
+      return;
+
+    let alreadyHandled = false;
+    if (typeof window !== 'undefined') {
+      try {
+        alreadyHandled =
+          window.sessionStorage.getItem(autoEnrollStorageKey) === '1';
+        if (!alreadyHandled) {
+          window.sessionStorage.setItem(autoEnrollStorageKey, '1');
+        }
+      } catch {
+        // ignore storage failures
+      }
+    }
+
+    if (alreadyHandled) return;
+
+    autoEnrollTriggeredRef.current = true;
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('auto_enroll');
+      const query = url.searchParams.toString();
+      window.history.replaceState(
+        {},
+        '',
+        `${url.pathname}${query ? `?${query}` : ''}${url.hash}`
+      );
+    }
+
+    autoEnrollForcePlansRef.current = true;
+    void handleStartNow();
+  }, [
+    autoEnrollStorageKey,
+    handleStartNow,
+    isEnrolled,
+    isSignedIn,
+    searchParams,
+    userId,
+  ]);
+
+  useEffect(() => {
+    if (!lessonsFromSWR) return;
+
+    const normalizedLessons = lessonsFromSWR.map((lesson) => ({
+      ...lesson,
+      isLocked: false,
+      porcentajecompletado: lesson.userProgress,
+      isNew: lesson.isNew,
+    }));
+
+    setCourse((prev) => ({
+      ...prev,
+      lessons: sortLessons(normalizedLessons),
+    }));
+  }, [lessonsFromSWR]);
+
+  useEffect(() => {
+    setIsCheckingEnrollment(true);
+    try {
+      const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
+      const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
+        | string
+        | null;
+      const nextSubscriptionActive =
+        subscriptionStatus === 'active' &&
+        (!subscriptionEndDate || new Date(subscriptionEndDate) > new Date());
+      setIsSubscriptionActive(nextSubscriptionActive);
+    } finally {
+      setIsCheckingEnrollment(false);
+      if (!userId || !isEnrollmentStatusLoading) {
         setIsLoading(false);
       }
-    };
-    void checkEnrollmentAndProgress();
-  }, [userId, user, initialCourse.id, initialCourse.enrollments]);
+    }
+  }, [isEnrollmentStatusLoading, user, userId]);
 
   // Abrir modal de pago si viene ?comprar=1 en la URL (flujo legacy)
   useEffect(() => {
@@ -1026,6 +1146,20 @@ export default function CourseDetails({
         const value = typeof prev === 'number' ? prev : 0;
         return value > 0 ? value - 1 : 0;
       });
+      if (userId) {
+        const enrollmentKey = `/api/estudiantes/courses/${course.id}/is-enrolled?userId=${encodeURIComponent(
+          userId
+        )}`;
+        const lessonsKey = `/api/lessons/by-course?courseId=${course.id}&userId=${encodeURIComponent(
+          userId
+        )}`;
+        await mutate(
+          enrollmentKey,
+          { isEnrolled: false },
+          { revalidate: false }
+        );
+        await mutate(lessonsKey, [], { revalidate: false });
+      }
     } catch (error) {
       console.error('Error unenrolling user:', error);
       toast.error('Ocurrió un error al desuscribirte. Intenta nuevamente.');
@@ -1062,6 +1196,7 @@ export default function CourseDetails({
               type="button"
               onClick={() => {
                 setPendingOpenPayment(false);
+                setAuthIntent('login');
                 setActiveAuthModal('login');
               }}
               className="
@@ -2953,6 +3088,7 @@ export default function CourseDetails({
         <MiniLoginModal
           isOpen={showLoginModal}
           onClose={() => {
+            setOauthSignUpStrategy(null);
             setActiveAuthModal(null);
           }}
           onLoginSuccess={handleLoginSuccess}
@@ -2966,11 +3102,14 @@ export default function CourseDetails({
         <MiniSignUpModal
           isOpen={showSignUpModal}
           onClose={() => {
+            setOauthSignUpStrategy(null);
             setActiveAuthModal(null);
             setPendingOpenPayment(false);
           }}
           onSignUpSuccess={handleSignUpSuccess}
-          redirectUrl={`/estudiantes/cursos/${course.id}`}
+          redirectUrl={loginRedirectUrl}
+          autoStartOAuthStrategy={oauthSignUpStrategy}
+          onAutoStartOAuthHandled={() => setOauthSignUpStrategy(null)}
           onSwitchToLogin={handleSwitchToLogin}
         />
       )}

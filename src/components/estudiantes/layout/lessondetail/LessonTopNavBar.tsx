@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 
+import { TiArrowBack } from 'react-icons/ti';
+
 import LessonNavigation from './LessonNavigation';
 
 interface LessonWithProgress {
@@ -110,6 +112,24 @@ const LessonTopNavBar = ({
               </svg>
             )}
           </button>
+
+          {/* Mobile toggle */}
+          <Link
+            href={`/estudiantes/cursos/${courseId}`}
+            style={{ backgroundColor: '#061c37cc' }}
+            className="
+              inline-flex size-10 items-center justify-center rounded-full
+              border border-border/50 bg-primary text-white backdrop-blur-xl
+              transition-colors
+              hover:bg-card
+              focus-visible:ring-2 focus-visible:ring-ring
+              focus-visible:outline-none
+              md:hidden
+            "
+            aria-label="Volver al curso"
+          >
+            <TiArrowBack className="size-5" />
+          </Link>
 
           {/* Mobile toggle */}
           <button

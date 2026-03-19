@@ -18,11 +18,13 @@ const PaymentForm: React.FC<{
   requireAuthOnSubmit?: boolean;
   redirectUrlOnAuth?: string;
   persistOnAuth?: { key: string; value: string };
+  isIndividualPurchase?: boolean; // Nuevo: indica si es compra individual sin suscripción
 }> = ({
   selectedProduct,
   requireAuthOnSubmit = false,
   redirectUrlOnAuth = '',
   persistOnAuth,
+  isIndividualPurchase = false,
 }) => {
   const { user } = useUser();
   const [error, setError] = useState<string | null>(null);
@@ -202,7 +204,8 @@ const PaymentForm: React.FC<{
     }
 
     // Si requiere autenticación y no hay usuario, mostrar modal de login
-    if (requireAuthOnSubmit && !isLoggedIn) {
+    // EXCEPTO si es una compra individual de curso (pago único)
+    if (requireAuthOnSubmit && !isLoggedIn && !isIndividualPurchase) {
       // Persistencia opcional (p.ej. planes) para reabrir el modal tras login SIN query params.
       // Importante: NO persistir por defecto para no afectar otros flujos (cursos, etc.).
       if (persistOnAuth) {
