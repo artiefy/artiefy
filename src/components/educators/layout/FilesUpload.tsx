@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -31,6 +31,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   file,
   files,
 }) => {
+  const inputId = useId();
   const externalFiles = Array.isArray(files)
     ? files
     : file instanceof File
@@ -41,6 +42,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   );
   const isControlled = externalFiles !== undefined;
   const currentFiles = externalFiles ?? internalFiles;
+  const primaryInputId = `${inputId}-${type}`;
+  const additionalInputId = `${inputId}-additional-${type}`;
   const fileNames = currentFiles.map((currentFile) => currentFile.name);
   const fileSizes = currentFiles.map((currentFile) => currentFile.size);
   const [isDragging, setIsDragging] = useState(false); // Cambiar el estado de isDragging a un booleano
@@ -212,11 +215,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
               accept={accept}
               className="hidden"
               onChange={handleFileChange}
-              id={`file-upload-${type}`}
-              multiple={type === 'file'} // Permitir múltiples archivos solo si el tipo es file
+              id={primaryInputId}
+              multiple={multiple}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
             />
             <label
-              htmlFor={`file-upload-${type}`}
+              htmlFor={primaryInputId}
               className="
                 mt-4 inline-flex cursor-pointer items-center rounded-md border
                 border-transparent bg-primary px-4 py-2 text-sm font-medium
@@ -225,6 +230,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                 focus:outline-none
               "
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
             >
               Seleccionar {tipo}
             </label>
@@ -246,7 +253,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       className="h-48 w-full object-cover"
                     />
                     <button
-                      onClick={() => handleRemoveFile(index)}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveFile(index);
+                      }}
                       className="
                         absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
                         text-white
@@ -281,7 +292,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   className="h-48 w-full object-cover"
                 />
                 <button
-                  onClick={() => handleRemoveFile(0)}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveFile(0);
+                  }}
                   className="
                     absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
                     text-white
@@ -313,7 +328,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   />
                 </video>
                 <button
-                  onClick={() => handleRemoveFile(0)}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleRemoveFile(0);
+                  }}
                   className="
                     absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
                     text-white
@@ -352,7 +371,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       KB
                     </p>
                     <button
-                      onClick={() => handleRemoveFile(index)}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemoveFile(index);
+                      }}
                       className="
                         absolute top-2 right-2 z-20 rounded-full bg-red-500 p-1
                         text-white
@@ -371,11 +394,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       accept={accept}
                       className="hidden"
                       onChange={handleFileChange}
-                      id={`additional-file-upload-${type}`}
+                      id={additionalInputId}
                       multiple
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
                     />{' '}
                     <label
-                      htmlFor={`additional-file-upload-${type}`}
+                      htmlFor={additionalInputId}
                       className="
                         inline-flex cursor-pointer items-center rounded-md
                         border border-transparent bg-primary px-4 py-2 text-sm
@@ -384,6 +409,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                         focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                         focus:outline-none
                       "
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
                     >
                       {' '}
                       Subir más archivos{' '}

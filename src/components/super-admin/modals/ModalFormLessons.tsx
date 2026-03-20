@@ -112,7 +112,15 @@ const ModalFormLessons = ({
   void setErrors;
 
   useEffect(() => {
+    console.log('[ModalFormLessons] MOUNTED');
+    return () => {
+      console.log('[ModalFormLessons] UNMOUNTED');
+    };
+  }, []);
+
+  useEffect(() => {
     if (isEditing && editingLesson) {
+      console.log('[ModalFormLessons] SYNC editingLesson');
       const hasVideo =
         !!editingLesson.coverVideoKey && editingLesson.coverVideoKey !== 'none';
       setNeedsVideo(hasVideo);
@@ -201,11 +209,12 @@ const ModalFormLessons = ({
     }
   };
 
-  // Manejador de archivos
-  const handleFileChange = async (
+  // Manejador de archivos (no async para evitar error de tipo)
+  const handleFileChange = (
     field: keyof typeof formData,
-    file: File | File[] | null
-  ) => {
+    file: File | File[] | null | undefined
+  ): void => {
+    console.log('[handleFileChange] field:', field, 'file:', file);
     if (file) {
       if (Array.isArray(file)) {
         if (field === 'resourcefiles') {
@@ -223,19 +232,20 @@ const ModalFormLessons = ({
         }
       } else {
         if (field === 'covervideo') {
-          try {
-            const duration = await getVideoDuration(file);
-            setFormData((prev) => ({
-              ...prev,
-              duration: Math.round(duration),
-              [field]: file,
-            }));
-            if (videoRef.current) {
-              videoRef.current.src = URL.createObjectURL(file);
-            }
-          } catch (error) {
-            console.error('Error al obtener la duración del video:', error);
-          }
+          getVideoDuration(file)
+            .then((duration) => {
+              setFormData((prev) => ({
+                ...prev,
+                duration: Math.round(duration),
+                [field]: file,
+              }));
+              if (videoRef.current) {
+                videoRef.current.src = URL.createObjectURL(file);
+              }
+            })
+            .catch((error) => {
+              console.error('Error al obtener la duración del video:', error);
+            });
         } else {
           setFormData((prev) => ({ ...prev, [field]: file }));
         }
@@ -632,9 +642,11 @@ const ModalFormLessons = ({
 
   // Añadir componente de progreso persistente
   const UploadProgressDisplay = () => (
-    <div className="
-      fixed right-4 bottom-4 z-50 w-96 rounded-lg bg-background p-4 shadow-lg
-    ">
+    <div
+      className="
+        fixed right-4 bottom-4 z-50 w-96 rounded-lg bg-background p-4 shadow-lg
+      "
+    >
       <h3 className="mb-2 font-semibold text-primary">Progreso de carga</h3>
       {Object.values(uploadProgresses).map((item) => (
         <div key={item.fileName} className="mb-4">
@@ -653,10 +665,16 @@ const ModalFormLessons = ({
     </div>
   );
 
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      onCloseAction();
+    }
+  };
+
   // Renderizar el formulario
   return (
     <>
-      <Dialog open={isOpen} onOpenChange={onCloseAction}>
+      <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
         <DialogContent
           className={`
             max-h-[90vh] max-w-5xl overflow-y-auto
@@ -683,15 +701,12 @@ const ModalFormLessons = ({
               onChange={(e) => handleInputChange(e, 'title')}
               className={`
                 mb-4 w-full rounded border p-2 text-white outline-none
-                ${
-                errors.title ? 'border-red-500' : 'border-primary'
-              }
+                ${errors.title ? 'border-red-500' : 'border-primary'}
               `}
             />
             {errors.title && (
               <p className="text-sm text-red-500">Este campo es obligatorio.</p>
             )}
-
             <label
               htmlFor="description"
               className="text-lg font-medium text-primary"
@@ -704,9 +719,7 @@ const ModalFormLessons = ({
               onChange={(e) => handleInputChange(e, 'description')}
               className={`
                 mb-3 h-auto w-full rounded border p-2 text-white outline-none
-                ${
-                errors.description ? 'border-red-500' : 'border-primary'
-              }
+                ${errors.description ? 'border-red-500' : 'border-primary'}
               `}
             />
             {errors.description && (
@@ -726,9 +739,7 @@ const ModalFormLessons = ({
               onChange={(e) => handleInputChange(e, 'duration')}
               className={`
                 mb-4 w-full rounded border p-2 text-white outline-none
-                ${
-                errors.duration ? 'border-red-500' : 'border-primary'
-              }
+                ${errors.duration ? 'border-red-500' : 'border-primary'}
               `}
             />
             {errors.duration && (
@@ -748,11 +759,13 @@ const ModalFormLessons = ({
               </Label>
             </div>
             {isEditing && (
-              <div className="
-                mb-4 grid grid-cols-1 gap-4
-                md:grid-cols-2
-                lg:grid-cols-3
-              ">
+              <div
+                className="
+                  mb-4 grid grid-cols-1 gap-4
+                  md:grid-cols-2
+                  lg:grid-cols-3
+                "
+              >
                 {formData.cover_image_key && (
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-primary">
@@ -802,11 +815,13 @@ const ModalFormLessons = ({
                 )}
               </div>
             )}
-            <div className="
-              grid w-full grid-cols-1 gap-4
-              md:grid-cols-2
-              lg:grid-cols-3
-            ">
+            <div
+              className="
+                grid w-full grid-cols-1 gap-4
+                md:grid-cols-2
+                lg:grid-cols-3
+              "
+            >
               <FileUpload
                 key="coverimage"
                 type="image"
@@ -814,9 +829,10 @@ const ModalFormLessons = ({
                 accept="image/*"
                 maxSize={5}
                 tipo="Imagen"
-                onFileChange={(file) =>
-                  handleFileChange('coverimage', file ?? null)
-                }
+                onFileChange={(file) => {
+                  console.log('[FileUpload] onFileChange coverimage', file);
+                  handleFileChange('coverimage', file);
+                }}
                 file={formData.coverimage}
               />
               {needsVideo && (
@@ -827,9 +843,10 @@ const ModalFormLessons = ({
                   accept="video/mp4"
                   maxSize={16000}
                   tipo="Video"
-                  onFileChange={(file) =>
-                    handleFileChange('covervideo', file ?? null)
-                  }
+                  onFileChange={(file) => {
+                    console.log('[FileUpload] onFileChange covervideo', file);
+                    handleFileChange('covervideo', file);
+                  }}
                 />
               )}
               <FileUpload
@@ -840,17 +857,20 @@ const ModalFormLessons = ({
                 maxSize={10}
                 multiple
                 tipo="Archivos"
-                onFileChange={(file) =>
-                  handleFileChange('resourcefiles', file ?? null)
-                }
+                onFileChange={(file) => {
+                  console.log('[FileUpload] onFileChange resourcefiles', file);
+                  handleFileChange('resourcefiles', file);
+                }}
               />
             </div>
             <br />
-            <div className="
-              grid w-full grid-cols-1 gap-4
-              md:grid-cols-2
-              lg:grid-cols-3
-            ">
+            <div
+              className="
+                grid w-full grid-cols-1 gap-4
+                md:grid-cols-2
+                lg:grid-cols-3
+              "
+            >
               <FileUpload
                 key="additionalImages"
                 type="image"
@@ -859,12 +879,15 @@ const ModalFormLessons = ({
                 maxSize={5}
                 multiple
                 tipo="Imágenes"
-                onFileChange={(file) =>
-                  handleFileChange('additionalImages', file ?? null)
-                }
+                onFileChange={(file) => {
+                  console.log(
+                    '[FileUpload] onFileChange additionalImages',
+                    file
+                  );
+                  handleFileChange('additionalImages', file);
+                }}
                 files={formData.additionalImages}
               />
-
               <div className="mb-4">
                 <label className="text-lg font-medium text-primary">
                   Enlaces externos
@@ -905,7 +928,7 @@ const ModalFormLessons = ({
                   />
                 </video>
                 <div className="mx-auto mt-2 w-fit">
-                  <Button onClick={captureFrame}>
+                  <Button type="button" onClick={captureFrame}>
                     Capturar frame como imagen de portada
                   </Button>
                   <canvas ref={canvasRef} className="hidden" />
@@ -933,6 +956,7 @@ const ModalFormLessons = ({
           </div>
           <DialogFooter className="mt-4 grid grid-cols-2 gap-4">
             <Button
+              type="button"
               onClick={handleCancel}
               className="
                 mr-2 w-full border-transparent bg-gray-600 p-3 text-white

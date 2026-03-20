@@ -1,11 +1,10 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
-import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 
 import ViewFiles from '~/components/educators/layout/ViewFiles';
@@ -74,16 +73,19 @@ const getContrastYIQ = (hexcolor: string) => {
 };
 
 const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
-  const { user } = useUser(); // obtener el usuario logeado para verificar permisos
   const router = useRouter(); // Hook para manejar la navegación
   const params = useParams(); // Hook para obtener los parámetros de la URL
   const courseId = params?.courseId ?? null; // Obtener el id del curso
   const lessonId = params?.lessonId ?? null; // Obtener el id de la lección
   const [lessons, setLessons] = useState<Lessons | null>(null); // Estado de la lección
+  // Copia local para el modal de edición (evita que el modal pierda estado)
+  const [modalLesson, setModalLesson] = useState<Lessons | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Estado del modal de edición
+
   const [loading, setLoading] = useState(true); // Estado de carga
   const [error, setError] = useState<string | null>(null); // Estado de error
   const [color, setColor] = useState<string>(selectedColor || '#FFFFFF'); // Estado del color
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false); // Estado del modal de edición
+  const hasLoadedLessonRef = useRef(false);
   const predefinedColors = ['#1f2937', '#000000', '#FFFFFF']; // Colores predefinidos
 
   // Obtener el id del curso
@@ -100,6 +102,15 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
     }
   }, [courseId]);
 
+  // Solo actualiza la copia local cuando se abre el modal, nunca mientras está abierto
+  useEffect(() => {
+    if (isEditModalOpen && lessons) {
+      setModalLesson(lessons);
+    }
+    // No actualices modalLesson si el modal ya está abierto
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditModalOpen]);
+
   // Función para cambiar el color predefinido
   const handlePredefinedColorChange = (newColor: string) => {
     setColor(newColor);
@@ -110,68 +121,70 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   };
 
   // Función para obtener las lecciones
-  const fetchLessons = useCallback(
-    async (lessonsIdNumber: number) => {
-      if (!user) return;
-      try {
+  const fetchLessons = useCallback(async (lessonsIdNumber: number) => {
+    const shouldShowLoading = !hasLoadedLessonRef.current;
+    try {
+      if (shouldShowLoading) {
         setLoading(true);
-        setError(null);
+      }
+      setError(null);
 
-        // Obtener los datos de la lección
-        const response = await fetch(
-          `/api/super-admin/lessons/${lessonsIdNumber}`
-        );
+      // Obtener los datos de la lección
+      const response = await fetch(
+        `/api/super-admin/lessons/${lessonsIdNumber}`
+      );
 
-        if (response.ok) {
-          const data = (await response.json()) as Lessons;
+      if (response.ok) {
+        const data = (await response.json()) as Lessons;
 
-          // Obtener datos del curso para traer nombres completos
-          // Obtener datos del curso para traer nombres completos
-          if (data.course?.id) {
-            try {
-              const courseResponse = await fetch(
-                `/api/educadores/courses/${data.course.id}`
-              );
-              if (courseResponse.ok) {
-                const courseData = (await courseResponse.json()) as {
-                  categoryName?: string;
-                  modalidadesName?: string;
-                  instructorName?: string;
-                };
+        // Obtener datos del curso para traer nombres completos
+        if (data.course?.id) {
+          try {
+            const courseResponse = await fetch(
+              `/api/educadores/courses/${data.course.id}`
+            );
+            if (courseResponse.ok) {
+              const courseData = (await courseResponse.json()) as {
+                categoryName?: string;
+                modalidadesName?: string;
+                instructorName?: string;
+              };
 
-                // Enriquecer los datos de la lección con los nombres del curso
-                data.course.categoryName = courseData.categoryName;
-                data.course.modalidadName = courseData.modalidadesName;
-                data.course.instructorName = courseData.instructorName;
-              }
-            } catch (err) {
-              console.error('Error fetching course details:', err);
-              // Continuamos sin los nombres si falla
+              // Enriquecer los datos de la lección con los nombres del curso
+              data.course.categoryName = courseData.categoryName;
+              data.course.modalidadName = courseData.modalidadesName;
+              data.course.instructorName = courseData.instructorName;
             }
+          } catch (err) {
+            console.error('Error fetching course details:', err);
+            // Continuamos sin los nombres si falla
           }
-
-          setLessons(data);
-        } else {
-          const errorData = (await response.json()) as { error?: string };
-          const errorMessage = errorData.error ?? response.statusText;
-          setError(`Error al cargar la leccion: ${errorMessage}`);
-          toast.error('Error', {
-            description: `No se pudo cargar la leccion: ${errorMessage}`,
-          });
         }
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Error desconocido';
+
+        setLessons(data);
+        setModalLesson(data); // Actualiza la copia local para el modal
+      } else {
+        const errorData = (await response.json()) as { error?: string };
+        const errorMessage = errorData.error ?? response.statusText;
         setError(`Error al cargar la leccion: ${errorMessage}`);
         toast.error('Error', {
           description: `No se pudo cargar la leccion: ${errorMessage}`,
         });
-      } finally {
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error desconocido';
+      setError(`Error al cargar la leccion: ${errorMessage}`);
+      toast.error('Error', {
+        description: `No se pudo cargar la leccion: ${errorMessage}`,
+      });
+    } finally {
+      hasLoadedLessonRef.current = true;
+      if (shouldShowLoading) {
         setLoading(false);
       }
-    },
-    [user]
-  );
+    }
+  }, []);
 
   // Cargar las lecciones al cargar la
   useEffect(() => {
@@ -300,7 +313,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -324,7 +337,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 );
               }
             }}
-            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -339,9 +352,11 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   // Renderizar la página
   return (
     <>
-      <div className="
-        bg-background container mx-auto mt-2 h-auto w-full rounded-lg
-      ">
+      <div
+        className="
+          container mx-auto mt-2 h-auto w-full rounded-lg bg-background
+        "
+      >
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -394,12 +409,14 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           </BreadcrumbList>
         </Breadcrumb>
         <div className="group relative h-auto w-full">
-          <div className="
-            animate-gradient absolute -inset-0.5 rounded-xl bg-linear-to-r
-            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
-            transition duration-500
-            group-hover:opacity-100
-          " />
+          <div
+            className="
+              absolute -inset-0.5 animate-gradient rounded-xl bg-linear-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur-sm
+              transition duration-500
+              group-hover:opacity-100
+            "
+          />
           <Card
             className={`
               relative mt-5 border-transparent bg-black p-5
@@ -410,41 +427,45 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               color: getContrastYIQ(color),
             }}
           >
-            <CardHeader className="
-              p-4
-              sm:p-6
-            ">
-              <CardTitle className={`
-                text-primary text-xl
-                sm:text-2xl
-                md:text-3xl
-                font-bold
-              `}>
+            <CardHeader
+              className="
+                p-4
+                sm:p-6
+              "
+            >
+              <CardTitle
+                className={`
+                  text-xl font-bold text-primary
+                  sm:text-2xl
+                  md:text-3xl
+                `}
+              >
                 Clase: {lessons.title}
               </CardTitle>
               {/* Add color selection buttons */}
-              <div className="flex flex-col gap-3 mt-4">
+              <div className="mt-4 flex flex-col gap-3">
                 <Label
                   className={`
-                    text-sm
+                    text-sm font-semibold
                     sm:text-base
-                    font-semibold
                     ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                   `}
                 >
                   🎨 Seleccione el color deseado
                 </Label>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex flex-wrap gap-2">
                   {predefinedColors.map((predefinedColor) => (
                     <Button
                       key={predefinedColor}
                       style={{ backgroundColor: predefinedColor }}
                       className={`
-                        size-10
-                        sm:size-12
-                        rounded-lg border-2 transition-all duration-300
+                        size-10 rounded-lg border-2 transition-all duration-300
                         hover:scale-110
-                        ${color === predefinedColor ? 'ring-2 ring-offset-2 ring-primary' : ''
+                        sm:size-12
+                        ${
+                          color === predefinedColor
+                            ? 'ring-2 ring-primary ring-offset-2'
+                            : ''
                         }
                       `}
                       onClick={() =>
@@ -456,18 +477,20 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 </div>
               </div>
             </CardHeader>
-            <div className="
-              grid grid-cols-1
-              md:grid-cols-2
-              gap-4
-              md:gap-6
-              lg:gap-8
-            ">
+            <div
+              className="
+                grid grid-cols-1 gap-4
+                md:grid-cols-2 md:gap-6
+                lg:gap-8
+              "
+            >
               {/* Columna izquierda - Imagen */}
-              <div className="
-                relative flex w-full items-center justify-center order-2
-                md:order-1
-              ">
+              <div
+                className="
+                  relative order-2 flex w-full items-center justify-center
+                  md:order-1
+                "
+              >
                 <Image
                   src={
                     lessons.coverImageKey
@@ -478,23 +501,24 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                   width={300}
                   height={300}
                   className="
-                    mx-auto rounded-lg object-contain w-full max-w-sm h-auto
+                    mx-auto h-auto w-full max-w-sm rounded-lg object-contain
                   "
                   priority
                   quality={75}
                 />
               </div>
               {/* Columna derecha - Video y botón */}
-              <div className="
-                relative w-full order-1
-                md:order-2
-                flex flex-col gap-4
-              ">
+              <div
+                className="
+                  relative order-1 flex w-full flex-col gap-4
+                  md:order-2
+                "
+              >
                 <div>
                   {lessons.coverVideoKey ? (
                     <video
                       className="
-                        w-full h-auto rounded-lg object-cover aspect-video
+                        aspect-video h-auto w-full rounded-lg object-cover
                       "
                       controls
                       aria-label={`Video de ${lessons.title}`}
@@ -511,7 +535,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                       <Image
                         src={'/NoHayVideos.jpg'}
                         className="
-                          mx-auto rounded-lg object-cover w-full h-auto
+                          mx-auto h-auto w-full rounded-lg object-cover
                         "
                         alt="No hay imagen o video disponible actualmente"
                         width={400}
@@ -526,15 +550,10 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                   href={`/api/super-admin/transcriptionMasive?lessonId=${lessons.id}`}
                   download
                   className="
-                    inline-block bg-primary
+                    inline-block rounded-lg bg-primary px-4 py-2 text-center
+                    text-sm font-medium text-black transition duration-300
                     hover:bg-[#00A5C0]
-                    text-black text-sm
-                    sm:text-base
-                    font-medium px-4
-                    sm:px-6
-                    py-2
-                    sm:py-3
-                    rounded-lg transition duration-300 text-center
+                    sm:px-6 sm:py-3 sm:text-base
                   "
                 >
                   📄 Descargar transcripción (.txt)
@@ -542,73 +561,57 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
               </div>
             </div>
             {/* Zona de los files */}
-            <div className="
-              mt-6
-              sm:mt-8
-            ">
+            <div
+              className="
+                mt-6
+                sm:mt-8
+              "
+            >
               <ViewFiles lessonId={lessons.id} selectedColor={color} />
             </div>
-            <div className="
-              flex flex-col
-              sm:flex-row
-              gap-3 justify-center
-              sm:justify-evenly
-              px-2
-              sm:px-3
-              py-4
-              sm:py-6
-              mt-4
-            ">
+            <div
+              className="
+                mt-4 flex flex-col justify-center gap-3 px-2 py-4
+                sm:flex-row sm:justify-evenly sm:px-3 sm:py-6
+              "
+            >
               <Button
                 className={`
-                  border-transparent bg-green-400 text-white
+                  w-full border-transparent bg-green-400 px-3 py-2 text-sm
+                  text-white
                   hover:bg-green-500
-                  w-full
-                  sm:w-auto
-                  text-sm
-                  sm:text-base
-                  px-3
-                  sm:px-6
-                  py-2
-                  sm:py-2.5
+                  sm:w-auto sm:px-6 sm:py-2.5 sm:text-base
                 `}
               >
-                <Link href={`./${lessons.id}/verClase/${lessons.id}`} className="w-full">
+                <Link
+                  href={`./${lessons.id}/verClase/${lessons.id}`}
+                  className="w-full"
+                >
                   👁️ Ver clase
                 </Link>
               </Button>
               <Button
                 onClick={() => setIsEditModalOpen(true)}
                 className="
-                  border-yellow-500 bg-yellow-500 text-white
+                  w-full border-yellow-500 bg-yellow-500 px-3 py-2 text-sm
+                  text-white
                   hover:bg-yellow-600
-                  w-full
-                  sm:w-auto
-                  text-sm
-                  sm:text-base
-                  px-3
-                  sm:px-6
-                  py-2
-                  sm:py-2.5
+                  sm:w-auto sm:px-6 sm:py-2.5 sm:text-base
                 "
               >
-                ✏️ Editar clase
+                Editar clase
               </Button>
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button className="
-                    border-red-600 bg-red-600 text-white
-                    hover:border-red-600 hover:bg-white hover:text-red-600
-                    w-full
-                    sm:w-auto
-                    text-sm
-                    sm:text-base
-                    px-3
-                    sm:px-6
-                    py-2
-                    sm:py-2.5
-                  ">
+                  <Button
+                    className="
+                      w-full border-red-600 bg-red-600 px-3 py-2 text-sm
+                      text-white
+                      hover:border-red-600 hover:bg-white hover:text-red-600
+                      sm:w-auto sm:px-6 sm:py-2.5 sm:text-base
+                    "
+                  >
                     🗑️ Eliminar
                   </Button>
                 </AlertDialogTrigger>
@@ -638,10 +641,12 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 </AlertDialogContent>
               </AlertDialog>
             </div>
-            <div className="
-              mt-6
-              sm:mt-8
-            ">
+            <div
+              className="
+                mt-6
+                sm:mt-8
+              "
+            >
               <div
                 className={`
                   pb-4
@@ -649,139 +654,157 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                   ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                 `}
               >
-                <h2 className="
-                  text-xl
-                  sm:text-2xl
-                  font-bold mb-6
-                ">📋 Información de la clase</h2>
+                <h2
+                  className="
+                    mb-6 text-xl font-bold
+                    sm:text-2xl
+                  "
+                >
+                  📋 Información de la clase
+                </h2>
 
                 {/* Grid de información principal */}
-                <div className="
-                  grid grid-cols-1
-                  md:grid-cols-2
-                  lg:grid-cols-4
-                  gap-6 mb-6
-                ">
+                <div
+                  className="
+                    mb-6 grid grid-cols-1 gap-6
+                    md:grid-cols-2
+                    lg:grid-cols-4
+                  "
+                >
                   <div className="space-y-2">
-                    <h3 className={`
-                      text-xs font-semibold uppercase tracking-wide
-                      md:text-sm
-                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                    `}>
+                    <h3
+                      className={`
+                        text-xs font-semibold tracking-wide uppercase
+                        md:text-sm
+                        ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                      `}
+                    >
                       📚 Clase
                     </h3>
-                    <h1 className="
-                      text-primary text-lg
-                      sm:text-xl
-                      font-bold
-                    ">
+                    <h1
+                      className="
+                        text-lg font-bold text-primary
+                        sm:text-xl
+                      "
+                    >
                       {lessons.title}
                     </h1>
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className={`
-                      text-xs font-semibold uppercase tracking-wide
-                      md:text-sm
-                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                    `}>
+                    <h3
+                      className={`
+                        text-xs font-semibold tracking-wide uppercase
+                        md:text-sm
+                        ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                      `}
+                    >
                       📂 Categoría
                     </h3>
                     <Badge
                       variant="outline"
                       className="
-                        border-primary bg-background text-primary w-fit
+                        w-fit border-primary bg-background text-xs text-primary
                         hover:bg-black/70
-                        text-xs
                         sm:text-sm
                       "
                     >
-                      {lessons.course?.categoryName ?? lessons.course?.categoryId ?? 'N/A'}
+                      {lessons.course?.categoryName ??
+                        lessons.course?.categoryId ??
+                        'N/A'}
                     </Badge>
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className={`
-                      text-xs font-semibold uppercase tracking-wide
-                      md:text-sm
-                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                    `}>
+                    <h3
+                      className={`
+                        text-xs font-semibold tracking-wide uppercase
+                        md:text-sm
+                        ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                      `}
+                    >
                       👨‍🏫 Educador
                     </h3>
                     <Badge
                       variant="outline"
                       className="
-                        border-primary bg-background text-primary w-fit
+                        w-fit border-primary bg-background text-xs text-primary
                         hover:bg-black/70
-                        text-xs
                         sm:text-sm
                       "
                     >
-                      {lessons.course?.instructorName ?? lessons.course?.instructor ?? 'N/A'}
+                      {lessons.course?.instructorName ??
+                        lessons.course?.instructor ??
+                        'N/A'}
                     </Badge>
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className={`
-                      text-xs font-semibold uppercase tracking-wide
-                      md:text-sm
-                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                    `}>
+                    <h3
+                      className={`
+                        text-xs font-semibold tracking-wide uppercase
+                        md:text-sm
+                        ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                      `}
+                    >
                       🎓 Modalidad
                     </h3>
                     <Badge
                       variant="outline"
                       className="
-                        border-primary bg-background text-primary w-fit
+                        w-fit border-primary bg-background text-xs text-primary
                         hover:bg-black/70
-                        text-xs
                         sm:text-sm
                       "
                     >
-                      {lessons.course?.modalidadName ?? lessons.course?.modalidadId ?? 'N/A'}
+                      {lessons.course?.modalidadName ??
+                        lessons.course?.modalidadId ??
+                        'N/A'}
                     </Badge>
                   </div>
                 </div>
 
                 {/* Descripción */}
                 <div className="space-y-3">
-                  <h3 className={`
-                    text-xs font-semibold uppercase tracking-wide
-                    md:text-sm
-                    ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
-                  `}>
+                  <h3
+                    className={`
+                      text-xs font-semibold tracking-wide uppercase
+                      md:text-sm
+                      ${color === '#FFFFFF' ? 'text-black/70' : 'text-white/70'}
+                    `}
+                  >
                     📝 Descripción
                   </h3>
-                  <p className={`text-justify text-sm sm:text-base leading-relaxed ${color === '#FFFFFF' ? 'text-black/90' : 'text-white/90'}`}>
+                  <p
+                    className={`
+                      text-justify text-sm leading-relaxed
+                      sm:text-base
+                      ${color === '#FFFFFF' ? 'text-black/90' : 'text-white/90'}
+                    `}
+                  >
                     {lessons.description}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="
-              flex w-full justify-center mt-6
-              sm:mt-8
-              px-2
-            ">
+            <div
+              className="
+                mt-6 flex w-full justify-center px-2
+                sm:mt-8
+              "
+            >
               <Link
                 href={`./${lessons.id}/actividades?lessonId=${lessons.id}`}
                 className="
-                  cursor-pointer justify-center rounded-lg border-transparent
-                  bg-green-400 px-4
-                  sm:px-6
-                  py-2
-                  sm:py-3
-                  text-white
+                  w-full cursor-pointer justify-center rounded-lg
+                  border-transparent bg-green-400 px-4 py-2 text-center text-sm
+                  text-white transition duration-300
                   hover:bg-green-500
-                  transition duration-300 text-sm
-                  sm:text-base
-                  w-full
-                  sm:w-auto
-                  text-center
+                  sm:w-auto sm:px-6 sm:py-3 sm:text-base
                 "
               >
-                ➕ Crear actividad
+                ➕Crear actividad
               </Link>
             </div>
           </Card>
@@ -803,8 +826,8 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
         uploading={false}
         courseId={courseIdNumber ?? 0}
         isEditing={true}
-        editingLesson={lessons}
-        modalClassName="z-[9999]" // Use the same name here
+        editingLesson={modalLesson ?? undefined}
+        modalClassName="z-[9999]" // Use the same name aquí
         onUpdateSuccess={() => {
           void refreshLessonData().catch(console.error);
         }}
