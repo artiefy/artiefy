@@ -258,6 +258,8 @@ interface Column {
   options?: string[];
 }
 
+const CARTERA_FILTER_OPTIONS = ['Al día', 'En cartera', 'No verificado'];
+
 const allColumns: Column[] = [
   // Básicos
   { id: 'name', label: 'Nombre', defaultVisible: true, type: 'text' },
@@ -307,7 +309,7 @@ const allColumns: Column[] = [
     label: 'Cartera',
     defaultVisible: true,
     type: 'select',
-    options: ['activo', 'inactivo', 'No verificado'],
+    options: CARTERA_FILTER_OPTIONS,
   },
   {
     id: 'inscripcionOrigen',
@@ -509,6 +511,15 @@ function safeToString(value: unknown): string {
     return value.toString();
   return JSON.stringify(value);
 }
+
+function normalizeFilterValue(value: unknown): string {
+  return safeToString(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
 function getByPath(obj: Record<string, unknown>, path: string): unknown {
   if (!obj || !path) return '';
   return path.split('.').reduce<unknown>((acc, k) => {
@@ -1573,7 +1584,7 @@ export default function EnrolledUsersPage() {
     planType?: string; // opcional
   }
 
-  function shouldMarkNoVerificado(arr: Pago[] = []): boolean {
+  const shouldMarkNoVerificado = useCallback((arr: Pago[] = []): boolean => {
     const hoy = new Date();
     const y = hoy.getFullYear();
     const m = hoy.getMonth();
@@ -1599,7 +1610,21 @@ export default function EnrolledUsersPage() {
     )[pagosMes.length - 1];
 
     return Boolean(ultimo?.receiptUrl) && ultimo?.receiptVerified === false;
-  }
+  }, []);
+
+  const getCarteraUiStatus = useCallback(
+    (
+      rawStatus?: Student['carteraStatus'] | null,
+      pagos: Pago[] = []
+    ): 'Al día' | 'En cartera' | 'No verificado' => {
+      if (rawStatus === 'no verificado' || shouldMarkNoVerificado(pagos)) {
+        return 'No verificado';
+      }
+
+      return rawStatus === 'activo' ? 'Al día' : 'En cartera';
+    },
+    [shouldMarkNoVerificado]
+  );
 
   // Ahora el estado usa exactamente CarteraInfo
   const [carteraInfo, setCarteraInfo] = useState<CarteraInfo>({
@@ -2660,47 +2685,13 @@ export default function EnrolledUsersPage() {
 
               // ⚠️ Caso especial: carteraStatus puede ser "derivado" = "No verificado"
               if (key === 'carteraStatus') {
-                const base = safeToString(studentValue);
-                let ui = base;
-                if (student.id === currentUserId) {
-                  const hoy = new Date();
-                  const y = hoy.getFullYear();
-                  const m = hoy.getMonth();
-
-                  const pagosMes = (editablePagos ?? []).filter((p) => {
-                    const f = p?.fechaPrograma
-                      ? new Date(String(p.fechaPrograma))
-                      : null;
-                    const v =
-                      typeof p?.valor === 'number'
-                        ? p.valor
-                        : Number(p?.valor ?? 0);
-                    return (
-                      f &&
-                      !isNaN(f.getTime()) &&
-                      f.getFullYear() === y &&
-                      f.getMonth() === m &&
-                      v > 0
-                    );
-                  });
-
-                  if (pagosMes.length > 0) {
-                    const ultimo = [...pagosMes].sort(
-                      (a, b) =>
-                        new Date(String(a.fechaPrograma)).getTime() -
-                        new Date(String(b.fechaPrograma)).getTime()
-                    )[pagosMes.length - 1];
-
-                    if (
-                      ultimo?.receiptUrl &&
-                      ultimo?.receiptVerified === false
-                    ) {
-                      ui = 'no verificado';
-                    }
-                  }
-                }
-
-                return ui.toLowerCase().includes(value.toLowerCase());
+                const ui = getCarteraUiStatus(
+                  student.carteraStatus,
+                  student.id === currentUserId ? editablePagos : []
+                );
+                return normalizeFilterValue(ui).includes(
+                  normalizeFilterValue(value)
+                );
               }
 
               if (!studentValue) return false;
@@ -2726,48 +2717,12 @@ export default function EnrolledUsersPage() {
 
               // Si es carteraStatus, usar la lógica derivada
               if (key === 'carteraStatus') {
-                const base = safeToString(studentValue);
-                let ui = base;
-                if (student.id === currentUserId) {
-                  const hoy = new Date();
-                  const y = hoy.getFullYear();
-                  const m = hoy.getMonth();
-
-                  const pagosMes = (editablePagos ?? []).filter((p) => {
-                    const f = p?.fechaPrograma
-                      ? new Date(String(p.fechaPrograma))
-                      : null;
-                    const v =
-                      typeof p?.valor === 'number'
-                        ? p.valor
-                        : Number(p?.valor ?? 0);
-                    return (
-                      f &&
-                      !isNaN(f.getTime()) &&
-                      f.getFullYear() === y &&
-                      f.getMonth() === m &&
-                      v > 0
-                    );
-                  });
-
-                  if (pagosMes.length > 0) {
-                    const ultimo = [...pagosMes].sort(
-                      (a, b) =>
-                        new Date(String(a.fechaPrograma)).getTime() -
-                        new Date(String(b.fechaPrograma)).getTime()
-                    )[pagosMes.length - 1];
-
-                    if (
-                      ultimo?.receiptUrl &&
-                      ultimo?.receiptVerified === false
-                    ) {
-                      ui = 'no verificado';
-                    }
-                  }
-                }
-
+                const ui = getCarteraUiStatus(
+                  student.carteraStatus,
+                  student.id === currentUserId ? editablePagos : []
+                );
                 return selectedValues.some((v) =>
-                  ui.toLowerCase().includes(v.toLowerCase())
+                  normalizeFilterValue(ui).includes(normalizeFilterValue(v))
                 );
               }
 
@@ -2825,48 +2780,12 @@ export default function EnrolledUsersPage() {
 
               // Si es carteraStatus, usar la lógica derivada
               if (colId === 'carteraStatus') {
-                const base = safeToString(studentValue);
-                let ui = base;
-                if (student.id === currentUserId) {
-                  const hoy = new Date();
-                  const y = hoy.getFullYear();
-                  const m = hoy.getMonth();
-
-                  const pagosMes = (editablePagos ?? []).filter((p) => {
-                    const f = p?.fechaPrograma
-                      ? new Date(String(p.fechaPrograma))
-                      : null;
-                    const v =
-                      typeof p?.valor === 'number'
-                        ? p.valor
-                        : Number(p?.valor ?? 0);
-                    return (
-                      f &&
-                      !isNaN(f.getTime()) &&
-                      f.getFullYear() === y &&
-                      f.getMonth() === m &&
-                      v > 0
-                    );
-                  });
-
-                  if (pagosMes.length > 0) {
-                    const ultimo = [...pagosMes].sort(
-                      (a, b) =>
-                        new Date(String(a.fechaPrograma)).getTime() -
-                        new Date(String(b.fechaPrograma)).getTime()
-                    )[pagosMes.length - 1];
-
-                    if (
-                      ultimo?.receiptUrl &&
-                      ultimo?.receiptVerified === false
-                    ) {
-                      ui = 'no verificado';
-                    }
-                  }
-                }
-
+                const ui = getCarteraUiStatus(
+                  student.carteraStatus,
+                  student.id === currentUserId ? editablePagos : []
+                );
                 return selectedValues.some((v) =>
-                  ui.toLowerCase().includes(v.toLowerCase())
+                  normalizeFilterValue(ui).includes(normalizeFilterValue(v))
                 );
               }
 
@@ -2904,7 +2823,10 @@ export default function EnrolledUsersPage() {
     totalColumns.forEach((col) => {
       const values: (string | null | undefined)[] = [];
       students.forEach((student) => {
-        const value = getValueForColumn(student, col.id);
+        const value =
+          col.id === 'carteraStatus'
+            ? getCarteraUiStatus(student.carteraStatus)
+            : getValueForColumn(student, col.id);
         if (value !== null && value !== undefined) {
           values.push(safeToString(value));
         }
@@ -2913,7 +2835,7 @@ export default function EnrolledUsersPage() {
     });
 
     return options;
-  }, [students, totalColumns]);
+  }, [students, totalColumns, getCarteraUiStatus]);
 
   const sortedStudents = getFilteredSortedStudents();
   // — Hooks para infinite scroll

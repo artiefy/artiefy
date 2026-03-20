@@ -137,40 +137,63 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
 
   // Retorno la vista del componente
   return (
-    <div className="my-2 space-y-4">
+    <div className="my-4 space-y-6">
       {!onEdit && (
-        <FormActCompletado
-          activityId={activityId}
-          onSubmit={handleFormSubmit}
-        />
+        <div
+          className="
+          rounded-2xl border border-cyan-500/20 bg-slate-900 p-8 shadow-2xl
+        "
+        >
+          <FormActCompletado
+            activityId={activityId}
+            onSubmit={handleFormSubmit}
+          />
+        </div>
       )}
       {questions.length > 0 ? (
         questions.map((question) => (
-          <Card key={question.id} className="border-none shadow-lg">
+          <Card
+            key={question.id}
+            className="
+              rounded-2xl border-none bg-slate-900 text-white shadow-xl
+            "
+          >
             {editingQuestion?.id === question.id ? (
-              <FormActCompletado
-                activityId={activityId}
-                editingQuestion={editingQuestion}
-                onSubmit={handleFormSubmit}
-                onCancel={handleCancel}
-              />
+              <div
+                className="
+                rounded-2xl border border-cyan-500/20 bg-slate-900 p-8
+                shadow-2xl
+              "
+              >
+                <FormActCompletado
+                  activityId={activityId}
+                  editingQuestion={editingQuestion}
+                  onSubmit={handleFormSubmit}
+                  onCancel={handleCancel}
+                />
+              </div>
             ) : (
               <>
                 <CardContent className="space-y-4 pt-6">
-                  <h3 className="text-lg font-semibold text-gray-800">
-                    Pregunta de subida de archivos
+                  <h3
+                    className="
+                    mb-2 bg-gradient-to-r from-cyan-400 to-white bg-clip-text
+                    text-xl font-extrabold tracking-tight text-transparent
+                  "
+                  >
+                    Pregunta de subida de archivo
                   </h3>
 
                   <div>
-                    <p className="text-sm text-gray-600">Pregunta:</p>
-                    <p className="font-bold text-gray-900">{question.text}</p>
+                    <p className="text-sm text-cyan-300">Pregunta:</p>
+                    <p className="font-bold text-white">{question.text}</p>
                   </div>
 
                   <div>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-cyan-300">
                       Criterios de evaluación:
                     </p>
-                    <p className="font-bold text-gray-900">
+                    <p className="font-bold text-white">
                       {question.parametros}
                     </p>
                   </div>
@@ -178,16 +201,17 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                   {/* Imagen complementaria */}
                   {question.portadaKey && (
                     <div>
-                      <p className="mb-1 text-sm text-gray-600">
+                      <p className="mb-1 text-sm text-cyan-300">
                         Imagen complementaria:
                       </p>
                       <Image
                         src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.portadaKey}`}
                         alt="Imagen complementaria"
-                        width={800} // Ajusta según tu diseño
+                        width={800}
                         height={450}
                         className="
-                          max-h-60 w-full rounded-md border object-cover shadow
+                          max-h-60 w-full rounded-md border border-cyan-500/30
+                          object-cover shadow
                         "
                         style={{ objectFit: 'cover' }}
                       />
@@ -197,19 +221,22 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                   {/* Archivo de ayuda */}
                   {question.archivoKey && (
                     <div>
-                      <p className="mb-1 text-sm text-gray-600">
+                      <p className="mb-1 text-sm text-cyan-300">
                         Archivo de ayuda:
                       </p>
                       {question.archivoKey.endsWith('.mp4') ? (
                         <video
                           controls
-                          className="w-full rounded-md shadow"
+                          className="w-full rounded-md bg-slate-800 shadow"
                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}`}
                         />
                       ) : /\.(pdf|docx?|pptx?)$/i.exec(question.archivoKey) ? (
                         <iframe
                           src={`https://docs.google.com/gview?url=${process.env.NEXT_PUBLIC_AWS_S3_URL}/${question.archivoKey}&embedded=true`}
-                          className="h-60 w-full rounded-md border shadow"
+                          className="
+                            h-60 w-full rounded-md border border-cyan-500/30
+                            bg-slate-800 shadow
+                          "
                         />
                       ) : (
                         <a
@@ -217,9 +244,9 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                           target="_blank"
                           rel="noopener noreferrer"
                           className="
-                            inline-block rounded bg-blue-600 px-4 py-2
-                            text-white
-                            hover:bg-blue-700
+                            inline-block rounded bg-cyan-600 px-4 py-2
+                            text-white transition-all duration-150
+                            hover:bg-cyan-700
                           "
                         >
                           Abrir archivo
@@ -229,13 +256,14 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                   )}
                 </CardContent>
 
-                <CardFooter className="flex justify-end space-x-2">
+                <CardFooter className="mt-2 flex justify-end gap-3">
                   <Button
                     onClick={() => handleEdit(question)}
                     variant="outline"
                     className="
-                      text-white
-                      hover:text-blue-800
+                      border-cyan-500/30 text-cyan-300 transition-all
+                      duration-150
+                      hover:bg-cyan-950/40 hover:text-white
                     "
                     size="sm"
                   >
@@ -245,8 +273,8 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                     onClick={() => handleDelete(question.id)}
                     variant="outline"
                     className="
-                      text-red-600
-                      hover:text-red-800
+                      border-red-600/30 text-red-400 transition-all duration-150
+                      hover:bg-red-900/40 hover:text-white
                     "
                     size="sm"
                   >
@@ -258,7 +286,7 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
           </Card>
         ))
       ) : (
-        <p className="text-center text-gray-500">No hay preguntas creadas</p>
+        <p className="text-center text-slate-400">No hay preguntas creadas</p>
       )}
     </div>
   );

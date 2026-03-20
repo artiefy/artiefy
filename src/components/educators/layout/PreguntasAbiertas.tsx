@@ -154,8 +154,8 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
             required
             className="
               mt-1 w-full rounded-md border border-cyan-500/20 bg-slate-900 p-2
-              text-white shadow-sm outline-none
-              placeholder:text-white/40
+              text-black shadow-sm outline-none
+              placeholder:text-black/40
             "
           />
         </div>
@@ -198,7 +198,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
         {isUploading && (
           <div>
             <Progress value={uploadProgress} className="w-full" />
-            <p className="mt-2 text-center text-sm text-white/60">
+            <p className="mt-2 text-center text-sm text-black/60">
               {uploadProgress}% subido
             </p>
           </div>
@@ -210,7 +210,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
             variant="outline"
             className="
               border-cyan-500/30 text-cyan-300
-              hover:bg-cyan-950/40 hover:text-white
+              hover:bg-cyan-950/40 hover:text-black
             "
             onClick={handleCancel}
           >
@@ -219,7 +219,7 @@ const PreguntasAbiertas: React.FC<PreguntasAbiertasProps> = ({
           <Button
             type="submit"
             className="
-              bg-cyan-600 text-white
+              bg-cyan-600 text-black
               hover:bg-cyan-700
             "
           >

@@ -118,11 +118,15 @@ const FormActCompletado: React.FC<formSubida> = ({
     }
 
     try {
-      if (!file1 || !file2)
-        throw new Error('Debes seleccionar ambos archivos.');
+      let archivoKey = formData.archivoKey;
+      let portadaKey = formData.portadaKey;
 
-      const archivoKey = await uploadToS3(file1);
-      const portadaKey = await uploadToS3(file2);
+      if (file1) {
+        archivoKey = await uploadToS3(file1);
+      }
+      if (file2) {
+        portadaKey = await uploadToS3(file2);
+      }
 
       formData.archivoKey = archivoKey;
       formData.portadaKey = portadaKey;
@@ -162,65 +166,85 @@ const FormActCompletado: React.FC<formSubida> = ({
   return (
     <div
       className="
-        container my-2 rounded-lg bg-background p-3 text-white shadow-lg
-      "
+      mt-8 space-y-8 rounded-2xl border border-[#22C4D3]/40 bg-[#01142B] p-8
+      shadow-2xl
+    "
     >
-      <h2 className="text-center text-2xl font-bold text-primary">
+      <h2
+        className="
+        mb-4 bg-gradient-to-r from-[#22C4D3] to-[#00BDD8] bg-clip-text
+        text-center text-2xl font-extrabold tracking-tight text-transparent
+      "
+      >
         {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta del tipo:
         Presentación de trabajo
       </h2>
-      <form onSubmit={handleSubmit}>
-        <label className="text-white">Pregunta</label>
-        <textarea
-          className="
-            w-full rounded-lg border border-gray-600 bg-background p-2
-            text-white outline-none
-          "
-          placeholder="Digite aquí la descripción del trabajo"
-          name="text"
-          value={formData.text}
-          onChange={handleChange}
-        />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-2">
+          <label className="block font-bold text-[#22C4D3]">Pregunta</label>
+          <textarea
+            className="
+              w-full rounded-lg border border-[#1d283a]/40 bg-[#1e2939] p-3
+              text-white shadow-md transition-all duration-200 outline-none
+              placeholder:text-[#00BDD8]
+              focus:border focus:border-[#22C4D3]
+              focus:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+            "
+            placeholder="Digite aquí la descripción del trabajo"
+            name="text"
+            value={formData.text}
+            onChange={handleChange}
+          />
+        </div>
 
-        <label className="text-white">Criterios de evaluación</label>
-        <textarea
-          className="
-            w-full rounded-lg border border-gray-600 bg-background p-2
-            text-white outline-none
-          "
-          placeholder="Parámetros de evaluación"
-          name="parametros"
-          value={formData.parametros}
-          onChange={handleChange}
-        />
+        <div className="space-y-2">
+          <label className="block font-bold text-[#22C4D3]">
+            Criterios de evaluación
+          </label>
+          <textarea
+            className="
+              w-full rounded-lg border border-[#1d283a]/40 bg-[#1e2939] p-3
+              text-white shadow-md transition-all duration-200 outline-none
+              placeholder:text-[#00BDD8]
+              focus:border focus:border-[#22C4D3]
+              focus:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+            "
+            placeholder="Parámetros de evaluación"
+            name="parametros"
+            value={formData.parametros}
+            onChange={handleChange}
+          />
+        </div>
 
         {/* Archivo de ayuda (documento, video, etc.) */}
-        <div className="mb-4">
-          <label className="mb-2 block font-semibold text-white">
+        <div className="space-y-2">
+          <label className="block font-bold text-[#22C4D3]">
             Archivo de ayuda
           </label>
           <div
             className="
-              relative flex items-center justify-between rounded-lg border
-              border-gray-600 bg-background px-4 py-2 shadow-sm
-            "
+            relative flex items-center justify-between rounded-lg border
+            border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
+            duration-200
+            focus-within:border-[#22C4D3]
+            focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+          "
           >
-            <span className="truncate text-sm text-gray-400">
+            <span className="truncate text-sm text-[#00BDD8]">
               {file1?.name ??
                 'Selecciona un archivo de ayuda (PDF, Word, video...)'}
             </span>
             <label
               className="
-                cursor-pointer rounded-md bg-blue-500 px-3 py-1 text-sm
-                text-white
-                hover:bg-blue-600
-              "
+              cursor-pointer rounded-md bg-[#00BDD8] px-3 py-1 text-sm font-bold
+              text-[#01142B] transition-all duration-150
+              hover:bg-[#00A5C0]
+            "
             >
               Seleccionar
               <input
                 type="file"
                 accept=".pdf,.doc,.docx,.ppt,.pptx,video/*,application/*"
-                required={!editingQuestion}
                 onChange={(e) => setFile1(e.target.files?.[0] ?? null)}
                 className="hidden"
               />
@@ -229,31 +253,33 @@ const FormActCompletado: React.FC<formSubida> = ({
         </div>
 
         {/* Imagen complementaria */}
-        <div className="mb-6">
-          <label className="mb-2 block font-semibold text-white">
+        <div className="space-y-2">
+          <label className="block font-bold text-[#22C4D3]">
             Recurso complementario (imagen)
           </label>
           <div
             className="
-              relative flex items-center justify-between rounded-lg border
-              border-gray-600 bg-background px-4 py-2 shadow-sm
-            "
+            relative flex items-center justify-between rounded-lg border
+            border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
+            duration-200
+            focus-within:border-[#22C4D3]
+            focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+          "
           >
-            <span className="truncate text-sm text-gray-400">
+            <span className="truncate text-sm text-[#00BDD8]">
               {file2?.name ?? 'Selecciona una imagen complementaria'}
             </span>
             <label
               className="
-                cursor-pointer rounded-md bg-purple-500 px-3 py-1 text-sm
-                text-white
-                hover:bg-purple-600
-              "
+              cursor-pointer rounded-md bg-[#22C4D3] px-3 py-1 text-sm font-bold
+              text-[#01142B] transition-all duration-150
+              hover:bg-[#00A5C0]
+            "
             >
               Seleccionar
               <input
                 type="file"
                 accept="image/*"
-                required={!editingQuestion}
                 onChange={(e) => setFile2(e.target.files?.[0] ?? null)}
                 className="hidden"
               />
@@ -264,20 +290,20 @@ const FormActCompletado: React.FC<formSubida> = ({
         {isUploading && (
           <div className="my-1">
             <Progress value={uploadProgress} className="w-full" />
-            <p className="mt-2 text-center text-sm text-gray-400">
+            <p className="mt-2 text-center text-sm text-[#00BDD8]">
               {uploadProgress}% Completado
             </p>
           </div>
         )}
 
-        <div className="flex justify-end space-x-2">
+        <div className="mt-4 flex justify-end space-x-2">
           {editingQuestion && (
             <Button
               type="button"
               variant="outline"
               className="
-                text-gray-100
-                hover:text-gray-800
+                border-[#22C4D3] text-[#22C4D3] transition-all duration-150
+                hover:bg-[#01142B] hover:text-white
               "
               onClick={onCancel}
             >
@@ -287,8 +313,9 @@ const FormActCompletado: React.FC<formSubida> = ({
           <Button
             type="submit"
             className="
-              border-none bg-green-400 text-white
-              hover:bg-green-500
+              border-none bg-[#22C4D3] font-bold text-[#01142B] transition-all
+              duration-150
+              hover:bg-[#00A5C0]
             "
           >
             {editingQuestion ? 'Actualizar' : 'Enviar'}
