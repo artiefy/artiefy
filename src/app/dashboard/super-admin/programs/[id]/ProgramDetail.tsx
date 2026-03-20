@@ -825,7 +825,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                     variant="outline"
                     className="
                       ml-1 w-fit border-primary bg-background text-primary
-                      hover:bg-black/70
+                      hover:bg-black/60
                     "
                   >
                     {Array.isArray(certificationTypes)
