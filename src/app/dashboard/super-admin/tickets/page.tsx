@@ -6,6 +6,7 @@ import Image from 'next/image';
 
 import {
   FileText,
+  Hand,
   Info,
   Loader2,
   Pencil,
@@ -104,6 +105,33 @@ export interface Ticket {
   unreadCount?: number;
 }
 
+const modernHorizontalScrollbarClass = `
+  [scrollbar-width:thin]
+  [scrollbar-color:rgba(125,211,252,0.45)_transparent]
+  [scrollbar-gutter:stable]
+  [&::-webkit-scrollbar]:h-2
+  [&::-webkit-scrollbar-thumb]:rounded-full
+  [&::-webkit-scrollbar-thumb]:border
+  [&::-webkit-scrollbar-thumb]:border-slate-950/30
+  [&::-webkit-scrollbar-thumb]:bg-sky-300/35
+  hover:[&::-webkit-scrollbar-thumb]:bg-sky-300/55
+  [&::-webkit-scrollbar-track]:bg-transparent
+`;
+
+const modernVerticalScrollbarClass = `
+  [scrollbar-width:thin]
+  [scrollbar-color:rgba(125,211,252,0.45)_rgba(15,23,42,0.35)]
+  [scrollbar-gutter:stable]
+  [&::-webkit-scrollbar]:w-2
+  [&::-webkit-scrollbar-thumb]:rounded-full
+  [&::-webkit-scrollbar-thumb]:border
+  [&::-webkit-scrollbar-thumb]:border-slate-950/30
+  [&::-webkit-scrollbar-thumb]:bg-sky-300/35
+  hover:[&::-webkit-scrollbar-thumb]:bg-sky-300/55
+  [&::-webkit-scrollbar-track]:rounded-full
+  [&::-webkit-scrollbar-track]:bg-slate-950/20
+`;
+
 // Component
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -137,6 +165,13 @@ export default function TicketsPage() {
   const [sortByUpdatedAtDesc, setSortByUpdatedAtDesc] = useState(true); // true = más recientes arriba
   const [draggedTicketId, setDraggedTicketId] = useState<string | null>(null);
   const [dragOverEstado, setDragOverEstado] = useState<string | null>(null);
+  const [mobileMoveTicketId, setMobileMoveTicketId] = useState<string | null>(
+    null
+  );
+  const mobileMovingTicket =
+    mobileMoveTicketId !== null
+      ? (tickets.find((ticket) => ticket.id === mobileMoveTicketId) ?? null)
+      : null;
 
   useEffect(() => {
     if (!viewTicket?.id) return;
@@ -586,6 +621,16 @@ export default function TicketsPage() {
     }
   };
 
+  const handleMobileMoveToggle = (ticketId: string): void => {
+    setMobileMoveTicketId((prev) => (prev === ticketId ? null : ticketId));
+  };
+
+  const handleMobileColumnSelect = (estado: string): void => {
+    if (!mobileMoveTicketId) return;
+    void handleDragStatusChange(mobileMoveTicketId, estado);
+    setMobileMoveTicketId(null);
+  };
+
   const handleOpenCreateModal = (): void => {
     setSelectedTicket(null);
     setIsModalOpen(true);
@@ -663,10 +708,11 @@ export default function TicketsPage() {
         {/* Tabs */}
         <div className="mt-6 border-b border-gray-700">
           <div
-            className="
-            -mb-px flex gap-1 overflow-x-auto
-            sm:gap-6
-          "
+            className={`
+              -mb-px flex gap-1 overflow-x-auto
+              ${modernHorizontalScrollbarClass}
+              sm:gap-6
+            `}
           >
             <button
               onClick={() => setActiveTab('created')}
@@ -882,9 +928,9 @@ export default function TicketsPage() {
             >
               <FileText
                 className="
-                size-4 animate-pulse text-blue-300 drop-shadow-md
-                sm:size-6
-              "
+                  size-4 animate-pulse text-blue-300 drop-shadow-md
+                  sm:size-6
+                "
               />
               <span className="tracking-wide">
                 {filteredTickets.length} ticket(s) encontrado(s)
@@ -908,10 +954,10 @@ export default function TicketsPage() {
             {/* Filter bar */}
             <div
               className="
-              mt-6 flex flex-wrap items-end gap-2 rounded-xl border
-              border-gray-700/50 bg-gray-800/30 p-3
-              sm:gap-3 sm:p-4
-            "
+                mt-6 flex flex-wrap items-end gap-2 rounded-xl border
+                border-gray-700/50 bg-gray-800/30 p-3
+                sm:gap-3 sm:p-4
+              "
             >
               <div className="flex flex-col">
                 <label className="mb-1 text-xs font-medium text-gray-400">
@@ -1072,218 +1118,324 @@ export default function TicketsPage() {
                 No hay tickets disponibles
               </div>
             ) : (
-              <div className="mt-4 flex snap-x gap-3 overflow-x-auto pb-4 sm:gap-4">
-                {(
-                  [
-                    'abierto',
-                    'en proceso',
-                    'en revision',
-                    'solucionado',
-                    'cerrado',
-                  ] as const
-                ).map((estado) => {
-                  const config = estadoConfig[estado];
-                  const columnTickets = paginatedTickets.filter(
-                    (t) => t.estado === estado
-                  );
-                  return (
-                    <div
-                      key={estado}
-                      className={`
-                        min-w-[240px] flex-shrink-0 snap-start rounded-xl border
-                        bg-gray-800/30 transition-colors
-                        sm:min-w-[280px]
-                        ${
-                          dragOverEstado === estado
-                            ? 'border-primary/60 bg-primary/5'
-                            : 'border-gray-700/50'
-                        }
-                      `}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        setDragOverEstado(estado);
-                      }}
-                      onDragLeave={() => setDragOverEstado(null)}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        setDragOverEstado(null);
-                        if (draggedTicketId) {
-                          void handleDragStatusChange(draggedTicketId, estado);
-                        }
-                        setDraggedTicketId(null);
-                      }}
-                    >
+              <>
+                {mobileMoveTicketId && (
+                  <div
+                    className="
+                      mt-4 rounded-xl border border-primary/30 bg-primary/10
+                      px-3 py-2 text-xs text-primary
+                      sm:hidden
+                    "
+                  >
+                    Toca la columna destino para mover el ticket #
+                    {mobileMoveTicketId}.
+                  </div>
+                )}
+                <div
+                  className={`
+                    mt-4 flex snap-x gap-3 overflow-x-auto pb-4
+                    ${modernHorizontalScrollbarClass}
+                    sm:gap-4
+                  `}
+                >
+                  {(
+                    [
+                      'abierto',
+                      'en proceso',
+                      'en revision',
+                      'solucionado',
+                      'cerrado',
+                    ] as const
+                  ).map((estado) => {
+                    const config = estadoConfig[estado];
+                    const columnTickets = paginatedTickets.filter(
+                      (t) => t.estado === estado
+                    );
+                    const isMobileTargetColumn =
+                      mobileMovingTicket !== null &&
+                      mobileMovingTicket.estado !== estado;
+
+                    return (
                       <div
-                        className="
-                        flex items-center justify-between border-b
-                        border-gray-700/50 p-3
-                      "
+                        key={estado}
+                        className={`
+                          min-w-[240px] flex-shrink-0 snap-start rounded-xl
+                          border bg-gray-800/30 transition-colors
+                          sm:min-w-[280px]
+                          ${
+                            dragOverEstado === estado || isMobileTargetColumn
+                              ? 'border-primary/60 bg-primary/5'
+                              : 'border-gray-700/50'
+                          }
+                        `}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOverEstado(estado);
+                        }}
+                        onDragLeave={() => setDragOverEstado(null)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragOverEstado(null);
+                          if (draggedTicketId) {
+                            void handleDragStatusChange(
+                              draggedTicketId,
+                              estado
+                            );
+                          }
+                          setDraggedTicketId(null);
+                        }}
                       >
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`
-                              rounded-full px-2 py-0.5 text-xs font-medium
-                              ${config.className}
-                            `}
-                          >
-                            {config.label}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {columnTickets.length}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="max-h-[65vh] space-y-2 overflow-y-auto p-2">
-                        {columnTickets.length === 0 ? (
-                          <p className="py-8 text-center text-xs text-gray-500">
-                            Sin tickets
-                          </p>
-                        ) : (
-                          columnTickets.map((ticket) => (
-                            <div
-                              key={ticket.id}
-                              draggable
-                              onDragStart={() => setDraggedTicketId(ticket.id)}
-                              onDragEnd={() => {
-                                setDraggedTicketId(null);
-                                setDragOverEstado(null);
-                              }}
+                        <div
+                          className="
+                            flex items-center justify-between border-b
+                            border-gray-700/50 p-3
+                          "
+                        >
+                          <div className="flex items-center gap-2">
+                            <span
                               className={`
-                                cursor-grab space-y-2 rounded-lg border
-                                border-gray-700/50 bg-gray-800/50 p-3
-                                transition-colors
-                                hover:bg-gray-700/50
-                                active:cursor-grabbing
-                                ${
-                                  draggedTicketId === ticket.id
-                                    ? 'opacity-50'
-                                    : ''
-                                }
+                                rounded-full px-2 py-0.5 text-xs font-medium
+                                ${config.className}
                               `}
                             >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <input
-                                    type="checkbox"
-                                    checked={selectedIds.includes(ticket.id)}
-                                    onChange={() => toggleSelectId(ticket.id)}
-                                  />
-                                  <span className="text-sm font-bold text-white">
-                                    #{ticket.id}
-                                  </span>
-                                  <span
-                                    className={`
-                                      rounded-full px-1.5 py-0.5 text-[10px]
-                                      font-medium
-                                      ${tipoConfig[ticket.tipo]?.className ?? 'bg-gray-500/10 text-gray-500'}`}
+                              {config.label}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {columnTickets.length}
+                            </span>
+                          </div>
+                          {isMobileTargetColumn && (
+                            <button
+                              type="button"
+                              onClick={() => handleMobileColumnSelect(estado)}
+                              className="
+                                rounded-full border border-primary/30
+                                bg-primary/10 px-2 py-1 text-[10px] font-medium
+                                text-primary transition
+                                hover:bg-primary/20
+                                sm:hidden
+                              "
+                            >
+                              Soltar aquí
+                            </button>
+                          )}
+                        </div>
+                        <div
+                          className={`
+                            max-h-[65vh] space-y-2 overflow-y-auto p-2
+                            ${modernVerticalScrollbarClass}
+                          `}
+                        >
+                          {columnTickets.length === 0 ? (
+                            <p className="py-8 text-center text-xs text-gray-500">
+                              Sin tickets
+                            </p>
+                          ) : (
+                            columnTickets.map((ticket) => {
+                              const ticketCardStateClass =
+                                draggedTicketId === ticket.id
+                                  ? 'opacity-50'
+                                  : mobileMoveTicketId === ticket.id
+                                    ? `
+                                      border-primary/60 bg-primary/10 ring-1
+                                      ring-primary/40
+                                    `
+                                    : '';
+
+                              const mobileHandleClass =
+                                mobileMoveTicketId === ticket.id
+                                  ? `
+                                    border-primary/50 bg-primary/15
+                                    text-primary
+                                  `
+                                  : `
+                                    border-white/10 bg-white/5
+                                    hover:border-primary/40
+                                    hover:bg-primary/10
+                                  `;
+
+                              return (
+                                <div
+                                  key={ticket.id}
+                                  draggable
+                                  onDragStart={() =>
+                                    setDraggedTicketId(ticket.id)
+                                  }
+                                  onDragEnd={() => {
+                                    setDraggedTicketId(null);
+                                    setDragOverEstado(null);
+                                  }}
+                                  className={`
+                                    cursor-grab space-y-2 rounded-lg border
+                                    border-gray-700/50 bg-gray-800/50 p-3
+                                    transition-colors
+                                    hover:bg-gray-700/50
+                                    active:cursor-grabbing
+                                    ${ticketCardStateClass}
+                                  `}
+                                >
+                                  <div
+                                    className="
+                                    flex items-center justify-between
+                                  "
                                   >
-                                    {tipoConfig[ticket.tipo]?.label ??
-                                      ticket.tipo}
-                                  </span>
-                                </div>
-                                {ticket.unreadCount &&
-                                  ticket.unreadCount > 0 && (
-                                    <span
-                                      className="
-                                      inline-flex items-center rounded-full
-                                      bg-red-500 px-2 py-0.5 text-[10px]
-                                      font-semibold text-white
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedIds.includes(
+                                          ticket.id
+                                        )}
+                                        onChange={() =>
+                                          toggleSelectId(ticket.id)
+                                        }
+                                      />
+                                      <span className="text-sm font-bold text-white">
+                                        #{ticket.id}
+                                      </span>
+                                      <span
+                                        className={`
+                                          rounded-full px-1.5 py-0.5 text-[10px]
+                                          font-medium
+                                          ${
+                                            tipoConfig[ticket.tipo]
+                                              ?.className ??
+                                            `bg-gray-500/10 text-gray-500`
+                                          }
+                                        `}
+                                      >
+                                        {tipoConfig[ticket.tipo]?.label ??
+                                          ticket.tipo}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleMobileMoveToggle(ticket.id)
+                                        }
+                                        className={`
+                                          inline-flex items-center
+                                          justify-center rounded-full border
+                                          p-1.5 text-sky-200 transition
+                                          sm:hidden
+                                          ${mobileHandleClass}
+                                        `}
+                                        title="Mover ticket"
+                                        aria-label={`Mover ticket ${ticket.id}`}
+                                      >
+                                        <Hand className="size-3.5" />
+                                      </button>
+                                      {ticket.unreadCount &&
+                                        ticket.unreadCount > 0 && (
+                                          <span
+                                            className="
+                                              inline-flex items-center
+                                              rounded-full bg-red-500 px-2
+                                              py-0.5 text-[10px] font-semibold
+                                              text-white
+                                            "
+                                          >
+                                            Nuevo
+                                          </span>
+                                        )}
+                                    </div>
+                                  </div>
+                                  <p
+                                    className="
+                                      max-w-full truncate text-xs text-gray-300
                                     "
-                                    >
-                                      Nuevo
+                                    title={ticket.email}
+                                  >
+                                    {ticket.email}
+                                  </p>
+                                  <p className="text-xs text-gray-400">
+                                    {ticket.assignedUsers &&
+                                    ticket.assignedUsers.length > 0
+                                      ? ticket.assignedUsers
+                                          .map((u) => u.name)
+                                          .join(', ')
+                                      : 'Sin asignar'}
+                                  </p>
+                                  <div
+                                    className="
+                                      flex items-center justify-between
+                                      text-[10px] text-gray-500
+                                    "
+                                  >
+                                    <span>
+                                      {formatDateColombiaShort(
+                                        ticket.createdAt
+                                      )}
                                     </span>
-                                  )}
-                              </div>
-                              <p
-                                className="
-                                  max-w-full truncate text-xs text-gray-300
-                                "
-                                title={ticket.email}
-                              >
-                                {ticket.email}
-                              </p>
-                              <p className="text-xs text-gray-400">
-                                {ticket.assignedUsers &&
-                                ticket.assignedUsers.length > 0
-                                  ? ticket.assignedUsers
-                                      .map((u) => u.name)
-                                      .join(', ')
-                                  : 'Sin asignar'}
-                              </p>
-                              <div
-                                className="
-                                flex items-center justify-between text-[10px]
-                                text-gray-500
-                              "
-                              >
-                                <span>
-                                  {formatDateColombiaShort(ticket.createdAt)}
-                                </span>
-                                <span>
-                                  {formatElapsedTime(ticket.timeElapsedMs)}
-                                </span>
-                              </div>
-                              <div
-                                className="
-                                flex items-center justify-end gap-1 border-t
-                                border-gray-700/30 pt-2
-                              "
-                              >
-                                <button
-                                  onClick={() => {
-                                    void markTicketAsRead(ticket.id);
-                                    setViewTicket(ticket);
-                                  }}
-                                  className="
-                                    rounded-md p-1
-                                    hover:bg-blue-500/10 hover:text-blue-500
-                                  "
-                                  title="Ver detalles"
-                                >
-                                  <Info className="size-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    void markTicketAsRead(ticket.id);
-                                    setSelectedTicket(ticket);
-                                    setIsModalOpen(true);
-                                  }}
-                                  className="
-                                    rounded-md p-1
-                                    hover:bg-gray-700
-                                  "
-                                  title="Editar"
-                                >
-                                  <Pencil className="size-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => void handleDelete(ticket.id)}
-                                  className="
-                                    rounded-md p-1
-                                    hover:bg-red-500/10 hover:text-red-500
-                                  "
-                                  title="Eliminar"
-                                >
-                                  <Trash2 className="size-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ))
-                        )}
+                                    <span>
+                                      {formatElapsedTime(ticket.timeElapsedMs)}
+                                    </span>
+                                  </div>
+                                  <div
+                                    className="
+                                      flex items-center justify-end gap-1
+                                      border-t border-gray-700/30 pt-2
+                                    "
+                                  >
+                                    <button
+                                      onClick={() => {
+                                        void markTicketAsRead(ticket.id);
+                                        setViewTicket(ticket);
+                                      }}
+                                      className="
+                                        rounded-md p-1
+                                        hover:bg-blue-500/10 hover:text-blue-500
+                                      "
+                                      title="Ver detalles"
+                                    >
+                                      <Info className="size-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        void markTicketAsRead(ticket.id);
+                                        setSelectedTicket(ticket);
+                                        setIsModalOpen(true);
+                                      }}
+                                      className="
+                                        rounded-md p-1
+                                        hover:bg-gray-700
+                                      "
+                                      title="Editar"
+                                    >
+                                      <Pencil className="size-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        void handleDelete(ticket.id)
+                                      }
+                                      className="
+                                        rounded-md p-1
+                                        hover:bg-red-500/10 hover:text-red-500
+                                      "
+                                      title="Eliminar"
+                                    >
+                                      <Trash2 className="size-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
 
             {/* Pagination */}
             {itemsPerPage !== -1 && (
               <div
                 className="
-                mt-4 mb-6 flex items-center justify-center gap-2 text-sm
-                text-white
-              "
+                  mt-4 mb-6 flex items-center justify-center gap-2 text-sm
+                  text-white
+                "
               >
                 <button
                   onClick={() =>
@@ -1328,16 +1480,16 @@ export default function TicketsPage() {
         {viewTicket && (
           <div
             className="
-            fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0
-            sm:items-center sm:p-4
-          "
+              fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0
+              sm:items-center sm:p-4
+            "
           >
             <div
               className="
-              relative flex h-[95vh] w-full flex-col overflow-hidden
-              rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl
-              sm:h-[85vh] sm:max-w-5xl sm:flex-row sm:rounded-2xl
-            "
+                relative flex h-[95vh] w-full flex-col overflow-hidden
+                rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl
+                sm:h-[85vh] sm:max-w-5xl sm:flex-row sm:rounded-2xl
+              "
             >
               {/* Close button */}
               <button
@@ -1354,17 +1506,19 @@ export default function TicketsPage() {
 
               {/* Left panel - Info */}
               <div
-                className="
-                flex max-h-[40vh] w-full flex-shrink-0 flex-col overflow-y-auto
-                border-b border-gray-700 p-4
-                sm:max-h-none sm:w-80 sm:border-r sm:border-b-0
-              "
+                className={`
+                  flex max-h-[40vh] w-full flex-shrink-0 flex-col
+                  overflow-y-auto
+                  ${modernVerticalScrollbarClass}
+                  border-b border-gray-700 p-4
+                  sm:max-h-none sm:w-80 sm:border-r sm:border-b-0
+                `}
               >
                 <h2
                   className="
-                  mb-4 text-lg font-extrabold tracking-tight text-white
-                  sm:text-xl
-                "
+                    mb-4 text-lg font-extrabold tracking-tight text-white
+                    sm:text-xl
+                  "
                 >
                   Ticket #{viewTicket.id}
                 </h2>
@@ -1372,13 +1526,13 @@ export default function TicketsPage() {
                 <div className="flex-1 space-y-3">
                   <div
                     className="
-                    rounded-lg border border-gray-800 bg-gray-800/50 p-3
-                  "
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
                   >
                     <h3
                       className="
-                      mb-1 text-xs font-semibold text-gray-400 uppercase
-                    "
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
                     >
                       Email
                     </h3>
@@ -1387,13 +1541,13 @@ export default function TicketsPage() {
 
                   <div
                     className="
-                    rounded-lg border border-gray-800 bg-gray-800/50 p-3
-                  "
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
                   >
                     <h3
                       className="
-                      mb-1 text-xs font-semibold text-gray-400 uppercase
-                    "
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
                     >
                       Estado
                     </h3>
@@ -1410,13 +1564,13 @@ export default function TicketsPage() {
 
                   <div
                     className="
-                    rounded-lg border border-gray-800 bg-gray-800/50 p-3
-                  "
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
                   >
                     <h3
                       className="
-                      mb-1 text-xs font-semibold text-gray-400 uppercase
-                    "
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
                     >
                       Tipo
                     </h3>
@@ -1432,13 +1586,13 @@ export default function TicketsPage() {
 
                   <div
                     className="
-                    rounded-lg border border-gray-800 bg-gray-800/50 p-3
-                  "
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
                   >
                     <h3
                       className="
-                      mb-1 text-xs font-semibold text-gray-400 uppercase
-                    "
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
                     >
                       Asignado a
                     </h3>
@@ -1452,13 +1606,13 @@ export default function TicketsPage() {
 
                   <div
                     className="
-                    rounded-lg border border-gray-800 bg-gray-800/50 p-3
-                  "
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
                   >
                     <h3
                       className="
-                      mb-1 text-xs font-semibold text-gray-400 uppercase
-                    "
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
                     >
                       Fecha creación
                     </h3>
@@ -1469,13 +1623,13 @@ export default function TicketsPage() {
 
                   <div
                     className="
-                    rounded-lg border border-gray-800 bg-gray-800/50 p-3
-                  "
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
                   >
                     <h3
                       className="
-                      mb-1 text-xs font-semibold text-gray-400 uppercase
-                    "
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
                     >
                       Tiempo transcurrido
                     </h3>
@@ -1486,13 +1640,13 @@ export default function TicketsPage() {
 
                   <div
                     className="
-                    rounded-lg border border-gray-800 bg-gray-800/50 p-3
-                  "
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
                   >
                     <h3
                       className="
-                      mb-1 text-xs font-semibold text-gray-400 uppercase
-                    "
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
                     >
                       Descripción
                     </h3>
@@ -1503,13 +1657,13 @@ export default function TicketsPage() {
 
                   <div
                     className="
-                    rounded-lg border border-gray-800 bg-gray-800/50 p-3
-                  "
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
                   >
                     <h3
                       className="
-                      mb-1 text-xs font-semibold text-gray-400 uppercase
-                    "
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
                     >
                       Comentario principal
                     </h3>
@@ -1524,13 +1678,13 @@ export default function TicketsPage() {
                     viewTicket.documentKey) && (
                     <div
                       className="
-                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
-                    "
+                        rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                      "
                     >
                       <h3
                         className="
-                        mb-2 text-xs font-semibold text-gray-400 uppercase
-                      "
+                          mb-2 text-xs font-semibold text-gray-400 uppercase
+                        "
                       >
                         Archivos adjuntos
                       </h3>
@@ -1538,9 +1692,9 @@ export default function TicketsPage() {
                         {viewTicket.coverImageKey && (
                           <div
                             className="
-                            relative h-24 overflow-hidden rounded-lg border
-                            border-gray-600
-                          "
+                              relative h-24 overflow-hidden rounded-lg border
+                              border-gray-600
+                            "
                           >
                             <Image
                               src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${viewTicket.coverImageKey}`}
@@ -1553,9 +1707,9 @@ export default function TicketsPage() {
                         {viewTicket.videoKey && (
                           <div
                             className="
-                            relative h-24 overflow-hidden rounded-lg border
-                            border-gray-600
-                          "
+                              relative h-24 overflow-hidden rounded-lg border
+                              border-gray-600
+                            "
                           >
                             <video
                               controls
@@ -1608,7 +1762,12 @@ export default function TicketsPage() {
                   </p>
                   <p className="text-sm text-gray-400">{viewTicket.email}</p>
                 </div>
-                <div className="flex-1 space-y-3 overflow-y-auto p-4">
+                <div
+                  className={`
+                    flex-1 space-y-3 overflow-y-auto p-4
+                    ${modernVerticalScrollbarClass}
+                  `}
+                >
                   {isLoadingComments ? (
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="size-6 animate-spin text-blue-500" />
@@ -1636,13 +1795,13 @@ export default function TicketsPage() {
                                 ${
                                   isUser
                                     ? `
-                                    rounded-tr-xl rounded-b-xl bg-gray-700
-                                    text-white
-                                  `
+                                      rounded-tr-xl rounded-b-xl bg-gray-700
+                                      text-white
+                                    `
                                     : `
-                                    rounded-tl-xl rounded-b-xl bg-blue-600
-                                    text-white
-                                  `
+                                      rounded-tl-xl rounded-b-xl bg-blue-600
+                                      text-white
+                                    `
                                 }
                               `}
                             >
