@@ -149,7 +149,7 @@ export default function Home() {
   if (loading) {
     return (
       <main className="flex h-screen flex-col items-center justify-center">
-        <div className="border-primary size-32 rounded-full border-y-2">
+        <div className="size-32 rounded-full border-y-2 border-primary">
           <span className="sr-only" />
         </div>
         <span className="text-primary">Cargando...</span>
@@ -164,7 +164,7 @@ export default function Home() {
           <p className="text-lg font-semibold text-red-500">{error}</p>
           <button
             onClick={fetchCourses}
-            className="bg-primary mt-4 rounded-md px-4 py-2 text-white"
+            className="mt-4 rounded-md bg-primary px-4 py-2 text-white"
           >
             Reintentar
           </button>
@@ -175,205 +175,134 @@ export default function Home() {
 
   // Render the component with the data of dashboard en general
   return (
-    <main>
-      <Breadcrumb className="mb-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="
-                text-primary
-                hover:text-gray-300
-              "
-              href="../educadores"
-            >
-              Inicio
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="group relative">
-        <div className="
-          animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-          from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
-          duration-500
-          group-hover:opacity-100
-        " />
-        <div className="
-          zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
-          border-0 bg-gray-800 py-4 text-white transition-transform duration-300
-          ease-in-out
-        ">
-          <div className="
-            flex w-full rounded-lg px-4
-            sm:px-6
-            lg:px-8
-          ">
-            <GraduationCap className="text-primary h-14 w-12" />
-            <div className="ml-4 flex flex-col">
-              <h1 className="text-2xl font-bold text-gray-200">
-                <span className="text-primary">Artiefy</span> panel de control
-              </h1>
-              <p className="text-white">
-                ¡Bienvenido al panel de vuelta, educador: {user?.firstName}!
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="
-        mx-auto mt-4 max-w-7xl p-4
+    <main className="min-h-screen bg-[#01142B] text-white">
+      <div
+        className="
+        mx-auto max-w-7xl px-2 py-4
         sm:px-6
-        lg:px-0
-      ">
-        <div className="
-          grid grid-cols-1 gap-6
-          sm:grid-cols-2
-          lg:grid-cols-4
-        ">
-          {/* Average Grade Card */}
-          <div className="group relative">
-            <div className="
-              animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
-              transition duration-500
-              group-hover:opacity-100
-            " />
-            <div className="
-              zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
-              border-0 bg-gray-800 px-2 text-white transition-transform
-              duration-300 ease-in-out
-            ">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="shrink-0">
-                    <FaGraduationCap className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="truncate text-sm font-medium text-gray-300">
-                        Promedio estudiantes
-                      </dt>
-                      <dd className="flex items-baseline">
-                        <div className="text-2xl font-semibold text-white">
-                          {stats.averageEnrollments ?? 0}
-                        </div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+        lg:px-8
+      "
+      >
+        <Breadcrumb className="mb-6">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="
+                  font-semibold text-[#22C4D3]
+                  hover:text-[#00BDD8]
+                "
+                href="../educadores"
+              >
+                Inicio
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+          </BreadcrumbList>
+        </Breadcrumb>
 
-          <div className="group relative">
-            <div className="
-              animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
-              transition duration-500
-              group-hover:opacity-100
-            " />
-            <div className="
-              zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
-              border-0 bg-gray-800 px-2 text-white transition-transform
-              duration-300 ease-in-out
-            ">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="shrink-0">
-                    <FaBook className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="truncate text-sm font-medium text-gray-200">
-                        Total de Cursos
-                      </dt>
-                      <dd className="flex items-baseline">
-                        <div className="text-2xl font-semibold text-white">
-                          {stats.totalCourses ?? 0}
-                        </div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <section
+          className="
+          mb-8 flex flex-col items-center gap-6 rounded-2xl bg-[#1e2939] p-6
+          shadow-xl
+          md:flex-row md:gap-10
+        "
+        >
+          <GraduationCap className="size-16 flex-shrink-0 text-[#22C4D3] drop-shadow-lg" />
+          <div
+            className="
+            flex flex-col items-center
+            md:items-start
+          "
+          >
+            <h1
+              className="
+              mb-1 text-3xl font-extrabold text-white
+              md:text-4xl
+            "
+            >
+              Bienvenido,{' '}
+              <span className="text-[#22C4D3]">{user?.firstName}</span>
+            </h1>
+            <p className="text-lg font-medium text-gray-200">
+              Este es tu panel de control de{' '}
+              <span className="font-bold text-[#00BDD8]">Artiefy</span>.
+              <br
+                className="
+                hidden
+                md:block
+              "
+              />
+              Aquí puedes ver tus cursos, estadísticas y más.
+            </p>
           </div>
+        </section>
 
-          <div className="group relative">
-            <div className="
-              animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
-              transition duration-500
-              group-hover:opacity-100
-            " />
-            <div className="
-              zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
-              border-0 bg-gray-800 px-2 text-white transition-transform
-              duration-300 ease-in-out
-            ">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="shrink-0">
-                    <FaChalkboardTeacher className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="truncate text-sm font-medium text-gray-200">
-                        Total de Clases
-                      </dt>
-                      <dd className="flex items-baseline">
-                        <div className="text-2xl font-semibold text-white">
-                          {stats.totalLessons ?? 0}
-                        </div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <section className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Estadísticas */}
+          <div
+            className="
+            flex flex-col items-center rounded-xl border border-[#1d283a]
+            bg-[#01142B] p-5 shadow-lg
+          "
+          >
+            <FaGraduationCap className="mb-2 size-10 text-[#22C4D3] drop-shadow" />
+            <span className="text-lg font-semibold text-white">
+              Promedio estudiantes
+            </span>
+            <span className="mt-1 text-3xl font-extrabold text-[#22C4D3]">
+              {stats.averageEnrollments ?? 0}
+            </span>
           </div>
+          <div
+            className="
+            flex flex-col items-center rounded-xl border border-[#1d283a]
+            bg-[#01142B] p-5 shadow-lg
+          "
+          >
+            <FaBook className="mb-2 size-10 text-[#00BDD8] drop-shadow" />
+            <span className="text-lg font-semibold text-white">
+              Total de Cursos
+            </span>
+            <span className="mt-1 text-3xl font-extrabold text-[#00BDD8]">
+              {stats.totalCourses ?? 0}
+            </span>
+          </div>
+          <div
+            className="
+            flex flex-col items-center rounded-xl border border-[#1d283a]
+            bg-[#01142B] p-5 shadow-lg
+          "
+          >
+            <FaChalkboardTeacher className="mb-2 size-10 text-[#2ecc71] drop-shadow" />
+            <span className="text-lg font-semibold text-white">
+              Total de Clases
+            </span>
+            <span className="mt-1 text-3xl font-extrabold text-[#2ecc71]">
+              {stats.totalLessons ?? 0}
+            </span>
+          </div>
+          <div
+            className="
+            flex flex-col items-center rounded-xl border border-[#1d283a]
+            bg-[#01142B] p-5 shadow-lg
+          "
+          >
+            <FaClock className="mb-2 size-10 text-[#22C4D3] drop-shadow" />
+            <span className="text-lg font-semibold text-white">
+              Duración total
+            </span>
+            <span className="mt-1 text-3xl font-extrabold text-[#22C4D3]">
+              {stats.totalDuration ?? 0} min
+            </span>
+          </div>
+        </section>
 
-          <div className="group relative">
-            <div className="
-              animate-gradient absolute -inset-0.5 rounded-xl bg-gradient-to-r
-              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
-              transition duration-500
-              group-hover:opacity-100
-            " />
-            <div className="
-              zoom-in relative flex h-full flex-col overflow-hidden rounded-lg
-              border-0 bg-gray-800 px-2 text-white transition-transform
-              duration-300 ease-in-out
-            ">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="shrink-0">
-                    <FaClock className="size-6 text-[hsl(178.4,89.4%,59.2%)]" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="truncate text-sm font-medium text-gray-200">
-                        Duración total
-                      </dt>
-                      <dd className="flex items-baseline">
-                        <div className="text-2xl font-semibold text-white">
-                          {stats.totalDuration ?? 0} minutos
-                        </div>
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div>
-        <h2 className="mt-5 mb-2 text-2xl font-bold">
-          Lista de cursos asignados al docente
-        </h2>
-        <CourseListDetails courses={courses} />
+        <section className="rounded-2xl bg-[#1e2939] p-6 shadow-xl">
+          <h2 className="mb-4 text-2xl font-bold text-[#22C4D3]">
+            Cursos asignados
+          </h2>
+          <CourseListDetails courses={courses} />
+        </section>
       </div>
     </main>
   );

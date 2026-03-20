@@ -5,7 +5,10 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useParams, useSearchParams } from 'next/navigation';
 
+import { PDFDownloadLink } from '@react-pdf/renderer';
 import { Calendar, Loader2, User } from 'lucide-react';
+
+import PDFReport from '~/components/PDFReport';
 
 interface Stats {
   totalLessons: number;
@@ -162,7 +165,7 @@ export default function StudentCourseDashboard() {
                   src={
                     courseInfo?.coverImageKey
                       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${courseInfo.coverImageKey}`
-                      : 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="260" height="140" viewBox="0 0 260 140"><rect width="260" height="140" fill="%231e2939"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="20" fill="%233AF4EF" font-family="Arial">Sin imagen</text></svg>'
+                      : 'data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"260\" height=\"140\" viewBox=\"0 0 260 140\"><rect width=\"260\" height=\"140\" fill=\"%231e2939\"/><text x=\"50%\" y=\"50%\" dominant-baseline=\"middle\" text-anchor=\"middle\" font-size=\"20\" fill=\"%233AF4EF\" font-family=\"Arial\">Sin imagen</text></svg>'
                   }
                   alt="Visual del curso"
                   width={260}
@@ -225,6 +228,37 @@ export default function StudentCourseDashboard() {
                 >
                   Suscrito ✓
                 </button>
+                {/* Botones para descargar CSV y PDF de notas */}
+                <div
+                  className="
+                  mt-2 flex w-full max-w-[180px] flex-col gap-2
+                  md:flex-row
+                "
+                >
+                  {stats && userInfo && courseInfo && (
+                    <PDFDownloadLink
+                      document={
+                        <PDFReport
+                          stats={stats}
+                          userInfo={userInfo}
+                          courseInfo={courseInfo}
+                          logoUrl={'/artiefy-logo.png'}
+                        />
+                      }
+                      fileName={`informe_notas_${userInfo.firstName}_${courseInfo.title}.pdf`}
+                      className="
+                        w-full rounded-lg border-2 border-[#3AF4EF] bg-[#182235]
+                        px-4 py-2 font-bold text-[#3AF4EF] shadow-lg
+                        transition-all
+                        hover:bg-[#232B3E]
+                      "
+                    >
+                      {({ loading }) =>
+                        loading ? 'Generando PDF...' : 'Descargar Notas'
+                      }
+                    </PDFDownloadLink>
+                  )}
+                </div>
               </div>
             </div>
             {/* Card estudiante */}
@@ -414,33 +448,83 @@ export default function StudentCourseDashboard() {
                             focus:bg-[#101A2B] focus:outline-none
                             md:w-20
                           "
-                          value={activity.score ?? 0}
+                          value={
+                            typeof activity.score === 'number' &&
+                            !isNaN(activity.score)
+                              ? activity.score
+                              : ''
+                          }
                           onChange={(e) => {
-                            const newScore = parseFloat(e.target.value);
-                            setStats((prev) =>
-                              prev
-                                ? {
-                                    ...prev,
-                                    activities: prev.activities.map((a) =>
-                                      a.activityId === activity.activityId
-                                        ? { ...a, score: newScore }
-                                        : a
-                                    ),
-                                  }
-                                : prev
-                            );
+                            const value = e.target.value;
+                            setStats((prev) => {
+                              if (!prev) return prev;
+                              return {
+                                ...prev,
+                                activities: prev.activities.map((a) =>
+                                  a.activityId === activity.activityId
+                                    ? {
+                                        ...a,
+                                        score:
+                                          value === ''
+                                            ? 0 // Siempre number, nunca undefined
+                                            : parseFloat(value),
+                                      }
+                                    : a
+                                ),
+                              };
+                            });
                           }}
                           onBlur={async (e) => {
-                            const newScore = parseFloat(e.target.value);
+                            const value = e.target.value;
+                            if (value === '') return;
+                            const newGrade = parseFloat(value);
                             try {
-                              await fetch(`/api/activities/updateScore`, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  activityId: activity.activityId,
-                                  userId: user,
-                                  score: newScore,
-                                }),
+                              await fetch(
+                                `/api/activities/getFileSubmission/getNotaEstudiantes`,
+                                {
+                                  method: 'POST',
+                                  headers: {
+                                    'Content-Type': 'application/json',
+                                  },
+                                  body: JSON.stringify({
+                                    activityId: activity.activityId,
+                                    userId: user,
+                                    grade: newGrade,
+                                  }),
+                                }
+                              );
+                              // Recalcular la nota global y actualizar el estado
+                              setStats((prev) => {
+                                if (!prev) return prev;
+                                // Calcular el nuevo promedio de las actividades
+                                const updatedActivities = prev.activities.map(
+                                  (a) =>
+                                    a.activityId === activity.activityId
+                                      ? { ...a, score: newGrade }
+                                      : a
+                                );
+                                // Solo considerar scores válidos (números)
+                                const validScores = updatedActivities.map(
+                                  (a) =>
+                                    typeof a.score === 'number' &&
+                                    !isNaN(a.score)
+                                      ? a.score
+                                      : 0
+                                );
+                                const avg =
+                                  validScores.length > 0
+                                    ? (
+                                        validScores.reduce(
+                                          (acc, n) => acc + n,
+                                          0
+                                        ) / validScores.length
+                                      ).toFixed(2)
+                                    : 'N/A';
+                                return {
+                                  ...prev,
+                                  activities: updatedActivities,
+                                  globalCourseScore: avg,
+                                };
                               });
                             } catch (err) {
                               // Puedes mostrar un toast futurista aquí
