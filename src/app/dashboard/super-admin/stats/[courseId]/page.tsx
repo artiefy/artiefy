@@ -136,28 +136,32 @@ export default function StudentCourseDashboard() {
         <header
           className="
             relative z-20 mx-auto flex w-full max-w-6xl flex-col rounded-b-3xl
-            bg-[#01142B] px-4 py-8 shadow-2xl transition-all duration-700
+            bg-[#01142B] px-2 py-6 shadow-2xl transition-all duration-700
+            sm:px-4 sm:py-8
             md:py-12
           "
         >
           <div
             className="
-              flex w-full flex-col gap-8
+              flex w-full flex-col gap-4
+              sm:gap-8
               md:flex-row
             "
           >
             {/* Card principal: imagen + info curso */}
             <div
               className="
-                flex flex-1 flex-col items-center gap-6 rounded-2xl bg-[#182235]
-                p-6 shadow-xl
+                flex flex-1 flex-col items-center gap-4 rounded-2xl bg-[#182235]
+                p-3 shadow-xl
+                sm:gap-6 sm:p-6
                 md:flex-row
               "
             >
               <div
                 className="
-                  relative flex w-[320px] flex-shrink-0 flex-col items-center
-                  justify-center
+                  relative flex w-full max-w-[320px] flex-shrink-0 flex-col
+                  items-center justify-center
+                  sm:w-[320px]
                   md:w-[260px]
                 "
               >
@@ -170,7 +174,10 @@ export default function StudentCourseDashboard() {
                   alt="Visual del curso"
                   width={260}
                   height={140}
-                  className="mb-2 h-36 w-full rounded-xl object-cover shadow-lg"
+                  className="
+                    mb-2 h-36 w-full max-w-full rounded-xl object-cover
+                    shadow-lg
+                  "
                   priority
                   quality={75}
                 />
@@ -186,6 +193,7 @@ export default function StudentCourseDashboard() {
               <div
                 className="
                   flex w-full flex-col items-center justify-center gap-2
+                  sm:gap-3
                   md:items-start
                 "
               >
@@ -224,6 +232,7 @@ export default function StudentCourseDashboard() {
                     mt-2 w-full max-w-[180px] rounded-lg bg-[#3AF4EF] px-4 py-2
                     font-bold text-white shadow-lg transition-all
                     hover:bg-[#27c2c2]
+                    sm:self-start
                   "
                 >
                   Suscrito ✓
@@ -231,9 +240,10 @@ export default function StudentCourseDashboard() {
                 {/* Botones para descargar CSV y PDF de notas */}
                 <div
                   className="
-                  mt-2 flex w-full max-w-[180px] flex-col gap-2
-                  md:flex-row
-                "
+                    mt-2 flex w-full max-w-[180px] flex-col gap-2
+                    sm:self-start
+                    md:flex-row
+                  "
                 >
                   {stats && userInfo && courseInfo && (
                     <PDFDownloadLink
@@ -264,8 +274,10 @@ export default function StudentCourseDashboard() {
             {/* Card estudiante */}
             <div
               className="
-                mx-auto flex max-w-[320px] min-w-[220px] flex-col items-center
-                justify-center rounded-2xl bg-[#1e2939] p-6 shadow-xl
+                mx-auto flex w-full max-w-[320px] min-w-[180px] flex-col
+                items-center justify-center rounded-2xl bg-[#1e2939] p-4
+                shadow-xl
+                sm:p-6
                 md:mx-0
               "
             >
@@ -289,8 +301,9 @@ export default function StudentCourseDashboard() {
         {/* Tabla de notas editable y detalles completos */}
         <div
           className="
-            animate-slide-up mx-auto mt-10 max-w-6xl rounded-2xl bg-[#1e2939]
-            p-4 shadow-2xl
+            animate-slide-up mx-auto mt-6 w-full max-w-6xl rounded-2xl
+            bg-[#1e2939] p-2 shadow-2xl
+            sm:p-4
             md:p-8
           "
         >
@@ -316,8 +329,9 @@ export default function StudentCourseDashboard() {
               </h3>
               <table
                 className="
-                  w-full min-w-[750px] border-separate border-spacing-y-2
+                  w-full min-w-[600px] border-separate border-spacing-y-2
                   text-xs
+                  sm:min-w-[750px]
                   md:text-base
                 "
               >
@@ -326,6 +340,7 @@ export default function StudentCourseDashboard() {
                     <th
                       className="
                         rounded-l-xl p-2
+                        sm:px-4
                         md:px-6 md:py-3
                       "
                     >
@@ -334,6 +349,7 @@ export default function StudentCourseDashboard() {
                     <th
                       className="
                         p-2
+                        sm:px-4
                         md:px-6 md:py-3
                       "
                     >
@@ -342,6 +358,7 @@ export default function StudentCourseDashboard() {
                     <th
                       className="
                         p-2
+                        sm:px-4
                         md:px-6 md:py-3
                       "
                     >
@@ -350,6 +367,7 @@ export default function StudentCourseDashboard() {
                     <th
                       className="
                         p-2
+                        sm:px-4
                         md:px-6 md:py-3
                       "
                     >
@@ -358,6 +376,7 @@ export default function StudentCourseDashboard() {
                     <th
                       className="
                         p-2
+                        sm:px-4
                         md:px-6 md:py-3
                       "
                     >
@@ -366,6 +385,7 @@ export default function StudentCourseDashboard() {
                     <th
                       className="
                         rounded-r-xl p-2
+                        sm:px-4
                         md:px-6 md:py-3
                       "
                     >
@@ -386,6 +406,7 @@ export default function StudentCourseDashboard() {
                       <td
                         className="
                           p-2 font-semibold text-[#3AF4EF]
+                          sm:px-4
                           md:px-6 md:py-4
                         "
                       >
@@ -394,6 +415,7 @@ export default function StudentCourseDashboard() {
                       <td
                         className="
                           p-2 text-white/80
+                          sm:px-4
                           md:px-6 md:py-4
                         "
                       >
@@ -402,6 +424,7 @@ export default function StudentCourseDashboard() {
                       <td
                         className="
                           p-2 text-white/80
+                          sm:px-4
                           md:px-6 md:py-4
                         "
                       >
@@ -410,6 +433,7 @@ export default function StudentCourseDashboard() {
                       <td
                         className="
                           p-2 text-center
+                          sm:px-4
                           md:px-6 md:py-4
                         "
                       >
@@ -424,6 +448,7 @@ export default function StudentCourseDashboard() {
                       <td
                         className="
                           p-2 text-center text-base font-bold
+                          sm:px-4
                           md:px-6 md:py-4 md:text-lg
                         "
                       >
@@ -432,6 +457,7 @@ export default function StudentCourseDashboard() {
                       <td
                         className="
                           p-2 text-center
+                          sm:px-4
                           md:px-6 md:py-4
                         "
                       >
@@ -441,11 +467,12 @@ export default function StudentCourseDashboard() {
                           max={100}
                           step={0.5}
                           className="
-                            w-16 rounded-lg border-2 border-[#3AF4EF]
+                            w-14 rounded-lg border-2 border-[#3AF4EF]
                             bg-[#232B3E] px-2 py-1 text-center font-bold
                             text-[#3AF4EF] shadow-md transition-all duration-300
                             focus:scale-105 focus:border-[#3AF4EF]
                             focus:bg-[#101A2B] focus:outline-none
+                            sm:w-16
                             md:w-20
                           "
                           value={
@@ -540,11 +567,17 @@ export default function StudentCourseDashboard() {
               {/* Mostrar detalles adicionales del curso y estudiante */}
               <div
                 className="
-                  mt-8 grid grid-cols-1 gap-8
+                  mt-8 grid grid-cols-1 gap-4
+                  sm:gap-8
                   md:grid-cols-2
                 "
               >
-                <div className="rounded-xl bg-[#182235] p-6 shadow-lg">
+                <div
+                  className="
+                  rounded-xl bg-[#182235] p-4 shadow-lg
+                  sm:p-6
+                "
+                >
                   <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
                     Datos del Curso
                   </h3>
@@ -567,7 +600,12 @@ export default function StudentCourseDashboard() {
                       : ''}
                   </p>
                 </div>
-                <div className="rounded-xl bg-[#182235] p-6 shadow-lg">
+                <div
+                  className="
+                  rounded-xl bg-[#182235] p-4 shadow-lg
+                  sm:p-6
+                "
+                >
                   <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
                     Datos del Estudiante
                   </h3>
@@ -596,15 +634,18 @@ export default function StudentCourseDashboard() {
         {/* Resumen y progreso */}
         <div
           className="
-            animate-slide-up mx-auto mt-10 grid max-w-6xl grid-cols-1 gap-8
+            animate-slide-up mx-auto mt-8 grid w-full max-w-6xl grid-cols-1
+            gap-4
+            sm:gap-8
             md:grid-cols-3
           "
         >
           <div
             className="
-              rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all
+              rounded-2xl bg-[#1e2939] p-4 text-center shadow-xl transition-all
               duration-500
               hover:scale-105
+              sm:p-6
             "
           >
             <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
@@ -624,9 +665,10 @@ export default function StudentCourseDashboard() {
           </div>
           <div
             className="
-              rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all
+              rounded-2xl bg-[#1e2939] p-4 text-center shadow-xl transition-all
               duration-500
               hover:scale-105
+              sm:p-6
             "
           >
             <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
@@ -638,9 +680,10 @@ export default function StudentCourseDashboard() {
           </div>
           <div
             className="
-              rounded-2xl bg-[#1e2939] p-6 text-center shadow-xl transition-all
+              rounded-2xl bg-[#1e2939] p-4 text-center shadow-xl transition-all
               duration-500
               hover:scale-105
+              sm:p-6
             "
           >
             <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
