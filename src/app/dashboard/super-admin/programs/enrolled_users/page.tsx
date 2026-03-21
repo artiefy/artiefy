@@ -260,6 +260,166 @@ interface Column {
 
 const CARTERA_FILTER_OPTIONS = ['Al día', 'En cartera', 'No verificado'];
 
+interface SearchableSelectFieldProps {
+  value: string;
+  options: string[];
+  onChange: (value: string) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
+}
+
+function SearchableSelectField({
+  value,
+  options,
+  onChange,
+  placeholder = 'Selecciona una opcion',
+  searchPlaceholder = 'Buscar...',
+  emptyMessage = 'Sin resultados',
+}: SearchableSelectFieldProps) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const selectRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filteredOptions = useMemo(() => {
+    const normalizedQuery = normalizeFilterValue(query);
+    if (!normalizedQuery) return options;
+
+    return options.filter((option) =>
+      normalizeFilterValue(option).includes(normalizedQuery)
+    );
+  }, [options, query]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (!selectRef.current) return;
+      if (!selectRef.current.contains(event.target as Node)) {
+        setQuery('');
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    inputRef.current?.focus();
+  }, [open]);
+
+  return (
+    <div ref={selectRef} className="relative">
+      <button
+        type="button"
+        onClick={() =>
+          setOpen((prev) => {
+            if (prev) setQuery('');
+            return !prev;
+          })
+        }
+        className="
+          flex w-full items-center justify-between rounded border
+          border-gray-600 bg-gray-800 px-3 py-2 text-left
+          focus:ring-2 focus:ring-blue-500 focus:outline-none
+        "
+      >
+        <span className={value ? 'text-white' : 'text-gray-400'}>
+          {value || placeholder}
+        </span>
+        <ChevronDown
+          className={`
+            size-4 transition-transform
+            ${open ? 'rotate-180' : ''}
+          `}
+        />
+      </button>
+
+      {open && (
+        <div
+          className="
+            absolute z-50 mt-2 w-full rounded border border-gray-600 bg-gray-800
+            shadow-xl
+          "
+        >
+          <div className="border-b border-gray-700 p-2">
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={searchPlaceholder}
+              className="
+                w-full rounded border border-gray-600 bg-gray-900 p-2 text-sm
+                text-white placeholder-gray-400
+                focus:border-blue-500 focus:ring-2 focus:ring-blue-500
+                focus:outline-none
+              "
+            />
+
+            <button
+              type="button"
+              onClick={() => {
+                onChange('');
+                setQuery('');
+                setOpen(false);
+              }}
+              className="
+                mt-2 w-full rounded bg-gray-700 px-3 py-2 text-left text-sm
+                text-gray-200 transition
+                hover:bg-gray-600
+              "
+            >
+              Limpiar seleccion
+            </button>
+          </div>
+
+          <div className="max-h-56 overflow-y-auto p-1">
+            {filteredOptions.length === 0 ? (
+              <div className="px-3 py-2 text-sm text-gray-400">
+                {emptyMessage}
+              </div>
+            ) : (
+              filteredOptions.map((option) => {
+                const isSelected = option === value;
+
+                return (
+                  <button
+                    key={option}
+                    type="button"
+                    onClick={() => {
+                      onChange(option);
+                      setQuery('');
+                      setOpen(false);
+                    }}
+                    className={`
+                      flex w-full items-center justify-between rounded px-3 py-2
+                      text-left text-sm transition
+                      ${
+                        isSelected
+                          ? 'bg-blue-600 text-white'
+                          : `
+                            text-gray-200
+                            hover:bg-gray-700
+                          `
+                      }
+                    `}
+                  >
+                    <span className="truncate">{option}</span>
+                    {isSelected && <span>✓</span>}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const allColumns: Column[] = [
   // Básicos
   { id: 'name', label: 'Nombre', defaultVisible: true, type: 'text' },
@@ -5168,72 +5328,19 @@ export default function EnrolledUsersPage() {
                         {col.label}
                       </label>
 
-                      {field === 'programTitle' ? (
-                        <select
-                          className="
-                            w-full rounded border border-gray-600 bg-gray-800
-                            p-2
-                            focus:border-blue-500 focus:ring-2
-                            focus:ring-blue-500
-                          "
-                          onChange={(e) =>
+                      {col.type === 'select' && col.options ? (
+                        <SearchableSelectField
+                          value={massiveEditFields[field] ?? ''}
+                          options={col.options}
+                          placeholder={`Selecciona ${col.label.toLowerCase()}`}
+                          searchPlaceholder={`Buscar ${col.label.toLowerCase()}...`}
+                          onChange={(value) =>
                             setMassiveEditFields((prev) => ({
                               ...prev,
-                              [field]: e.target.value,
+                              [field]: value,
                             }))
                           }
-                        >
-                          <option value="">--</option>
-                          {programs.map((prog) => (
-                            <option key={prog.id} value={prog.title}>
-                              {prog.title}
-                            </option>
-                          ))}
-                        </select>
-                      ) : field === 'courseTitle' ? (
-                        <select
-                          className="
-                            w-full rounded border border-gray-600 bg-gray-800
-                            p-2
-                            focus:border-blue-500 focus:ring-2
-                            focus:ring-blue-500
-                          "
-                          onChange={(e) =>
-                            setMassiveEditFields((prev) => ({
-                              ...prev,
-                              [field]: e.target.value,
-                            }))
-                          }
-                        >
-                          <option value="">--</option>
-                          {availableCourses.map((course) => (
-                            <option key={course.id} value={course.title}>
-                              {course.title}
-                            </option>
-                          ))}
-                        </select>
-                      ) : col.type === 'select' && col.options ? (
-                        <select
-                          className="
-                            w-full rounded border border-gray-600 bg-gray-800
-                            p-2
-                            focus:border-blue-500 focus:ring-2
-                            focus:ring-blue-500
-                          "
-                          onChange={(e) =>
-                            setMassiveEditFields((prev) => ({
-                              ...prev,
-                              [field]: e.target.value,
-                            }))
-                          }
-                        >
-                          <option value="">--</option>
-                          {col.options.map((opt) => (
-                            <option key={opt} value={opt}>
-                              {opt}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       ) : col.type === 'date' ? (
                         <input
                           type="date"

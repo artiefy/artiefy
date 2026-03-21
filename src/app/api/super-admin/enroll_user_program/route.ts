@@ -165,32 +165,16 @@ export async function GET(req: Request) {
       programsMap.get(enrollment.userId)!.push(enrollment.programTitle);
     }
     // 1) Fechas máximas de inscripción a cursos
-    const latestCourseDates = db
-      .select({
-        userId: enrollments.userId,
-        latestEnrolledAt: sql`MAX(${enrollments.enrolledAt})`.as(
-          'latestEnrolledAt'
-        ),
-      })
-      .from(enrollments)
-      .groupBy(enrollments.userId)
-      .as('latest_course_dates');
 
-    // 2) Únete a esa subconsulta para quedarte sólo con la fila más reciente
+    // DISTINCT ON por userId — solo el curso con mayor courseId entre los de fecha máxima
     const latestCourseEnrollments = db
       .select({
         userId: enrollments.userId,
-        courseId: enrollments.courseId,
-        enrolledAt: enrollments.enrolledAt,
+        courseId: sql<number>`MAX(${enrollments.courseId})`.as('courseId'),
+        enrolledAt: sql`MAX(${enrollments.enrolledAt})`.as('enrolledAt'),
       })
       .from(enrollments)
-      .innerJoin(
-        latestCourseDates,
-        and(
-          eq(enrollments.userId, latestCourseDates.userId),
-          eq(enrollments.enrolledAt, latestCourseDates.latestEnrolledAt)
-        )
-      )
+      .groupBy(enrollments.userId)
       .as('latest_course_enrollments');
 
     const students = await db
