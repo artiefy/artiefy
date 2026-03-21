@@ -164,17 +164,49 @@ export async function GET(req: Request) {
       }
       programsMap.get(enrollment.userId)!.push(enrollment.programTitle);
     }
-    // 1) Fechas máximas de inscripción a cursos
-
-    // DISTINCT ON por userId — solo el curso con mayor courseId entre los de fecha máxima
-    const latestCourseEnrollments = db
+    // 1) �ltima fecha de inscripci�n a cursos por usuario
+    const latestCourseDates = db
       .select({
         userId: enrollments.userId,
-        courseId: sql<number>`MAX(${enrollments.courseId})`.as('courseId'),
-        enrolledAt: sql`MAX(${enrollments.enrolledAt})`.as('enrolledAt'),
+        latestEnrolledAt: sql`MAX(${enrollments.enrolledAt})`.as(
+          'latestEnrolledAt'
+        ),
       })
       .from(enrollments)
       .groupBy(enrollments.userId)
+      .as('latest_course_dates');
+
+    // 2) Si hay empates en fecha, usamos el enrollment m�s reciente por id
+    const latestCourseEnrollmentIds = db
+      .select({
+        userId: enrollments.userId,
+        latestEnrollmentId: sql<number>`MAX(${enrollments.id})`.as(
+          'latestEnrollmentId'
+        ),
+      })
+      .from(enrollments)
+      .innerJoin(
+        latestCourseDates,
+        and(
+          eq(enrollments.userId, latestCourseDates.userId),
+          eq(enrollments.enrolledAt, latestCourseDates.latestEnrolledAt)
+        )
+      )
+      .groupBy(enrollments.userId)
+      .as('latest_course_enrollment_ids');
+
+    // 3) �ltimo enrollment real por usuario
+    const latestCourseEnrollments = db
+      .select({
+        userId: enrollments.userId,
+        courseId: enrollments.courseId,
+        enrolledAt: enrollments.enrolledAt,
+      })
+      .from(enrollments)
+      .innerJoin(
+        latestCourseEnrollmentIds,
+        eq(enrollments.id, latestCourseEnrollmentIds.latestEnrollmentId)
+      )
       .as('latest_course_enrollments');
 
     const students = await db

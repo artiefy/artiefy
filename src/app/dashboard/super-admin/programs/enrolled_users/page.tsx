@@ -7,13 +7,17 @@ import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { saveAs } from 'file-saver';
 import {
+  Check,
   ChevronDown,
   Loader2,
   Mail,
   MessageCircle,
+  Search,
   UserPlus,
+  Users,
   X,
 } from 'lucide-react';
+import Select, { type SingleValue } from 'react-select';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
 
@@ -277,145 +281,103 @@ function SearchableSelectField({
   searchPlaceholder = 'Buscar...',
   emptyMessage = 'Sin resultados',
 }: SearchableSelectFieldProps) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const selectRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const [menuIsOpen, setMenuIsOpen] = useState(false);
 
-  const filteredOptions = useMemo(() => {
-    const normalizedQuery = normalizeFilterValue(query);
-    if (!normalizedQuery) return options;
+  const normalizedOptions = useMemo(
+    () =>
+      Array.from(new Set(options.filter(Boolean))).map((option) => ({
+        value: option,
+        label: option,
+      })),
+    [options]
+  );
 
-    return options.filter((option) =>
-      normalizeFilterValue(option).includes(normalizedQuery)
-    );
-  }, [options, query]);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (!selectRef.current) return;
-      if (!selectRef.current.contains(event.target as Node)) {
-        setQuery('');
-        setOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-
-    inputRef.current?.focus();
-  }, [open]);
+  const selectedOption =
+    normalizedOptions.find((option) => option.value === value) ??
+    (value ? { value, label: value } : null);
 
   return (
-    <div ref={selectRef} className="relative">
-      <button
-        type="button"
-        onClick={() =>
-          setOpen((prev) => {
-            if (prev) setQuery('');
-            return !prev;
-          })
+    <div className="relative">
+      <Select<{ value: string; label: string }, false>
+        unstyled
+        isClearable
+        isSearchable
+        options={normalizedOptions}
+        value={selectedOption}
+        onChange={(option: SingleValue<{ value: string; label: string }>) =>
+          onChange(option?.value ?? '')
         }
-        className="
-          flex w-full items-center justify-between rounded border
-          border-gray-600 bg-gray-800 px-3 py-2 text-left
-          focus:ring-2 focus:ring-blue-500 focus:outline-none
-        "
-      >
-        <span className={value ? 'text-white' : 'text-gray-400'}>
-          {value || placeholder}
-        </span>
-        <ChevronDown
-          className={`
-            size-4 transition-transform
-            ${open ? 'rotate-180' : ''}
-          `}
-        />
-      </button>
-
-      {open && (
-        <div
-          className="
-            absolute z-50 mt-2 w-full rounded border border-gray-600 bg-gray-800
-            shadow-xl
-          "
-        >
-          <div className="border-b border-gray-700 p-2">
-            <input
-              ref={inputRef}
-              type="text"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={searchPlaceholder}
-              className="
-                w-full rounded border border-gray-600 bg-gray-900 p-2 text-sm
-                text-white placeholder-gray-400
-                focus:border-blue-500 focus:ring-2 focus:ring-blue-500
-                focus:outline-none
-              "
-            />
-
-            <button
-              type="button"
-              onClick={() => {
-                onChange('');
-                setQuery('');
-                setOpen(false);
-              }}
-              className="
-                mt-2 w-full rounded bg-gray-700 px-3 py-2 text-left text-sm
-                text-gray-200 transition
-                hover:bg-gray-600
-              "
-            >
-              Limpiar seleccion
-            </button>
-          </div>
-
-          <div className="max-h-56 overflow-y-auto p-1">
-            {filteredOptions.length === 0 ? (
-              <div className="px-3 py-2 text-sm text-gray-400">
-                {emptyMessage}
-              </div>
-            ) : (
-              filteredOptions.map((option) => {
-                const isSelected = option === value;
-
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() => {
-                      onChange(option);
-                      setQuery('');
-                      setOpen(false);
-                    }}
-                    className={`
-                      flex w-full items-center justify-between rounded px-3 py-2
-                      text-left text-sm transition
-                      ${
-                        isSelected
-                          ? 'bg-blue-600 text-white'
-                          : `
-                            text-gray-200
-                            hover:bg-gray-700
-                          `
-                      }
-                    `}
-                  >
-                    <span className="truncate">{option}</span>
-                    {isSelected && <span>✓</span>}
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </div>
-      )}
+        placeholder={menuIsOpen ? searchPlaceholder : placeholder}
+        noOptionsMessage={() => emptyMessage}
+        menuPlacement="auto"
+        menuPosition="fixed"
+        menuPortalTarget={
+          typeof document === 'undefined' ? undefined : document.body
+        }
+        menuShouldScrollIntoView={false}
+        blurInputOnSelect
+        tabSelectsValue={false}
+        onMenuOpen={() => setMenuIsOpen(true)}
+        onMenuClose={() => setMenuIsOpen(false)}
+        classNames={{
+          control: ({ isFocused }) =>
+            `
+              min-h-[3.25rem] rounded-xl border px-3 py-2 transition
+              ${
+                isFocused
+                  ? 'border-blue-500 bg-gray-950 ring-2 ring-blue-500/40'
+                  : `
+                    border-gray-700 bg-gray-950/80
+                    hover:border-gray-500
+                  `
+              }
+            `,
+          valueContainer: () => 'gap-2 px-0 py-0',
+          placeholder: () => 'text-sm text-gray-400',
+          singleValue: () => 'text-sm font-medium text-white',
+          input: () => 'text-sm text-white',
+          indicatorsContainer: () => 'gap-1',
+          clearIndicator: () =>
+            `
+              cursor-pointer rounded-lg p-1.5 text-gray-400 transition
+              hover:bg-gray-800 hover:text-white
+            `,
+          dropdownIndicator: ({ selectProps }) =>
+            `
+              cursor-pointer rounded-lg p-1.5 text-gray-400 transition
+              hover:bg-gray-800 hover:text-white
+              ${selectProps.menuIsOpen ? 'rotate-180' : ''}
+            `,
+          menu: () =>
+            `
+              mt-2 overflow-hidden rounded-2xl border border-gray-700
+              bg-gray-900 shadow-2xl shadow-black/40
+            `,
+          menuList: () =>
+            'modern-scrollbar max-h-80 space-y-1 overflow-y-auto pr-1.5 p-2',
+          option: ({ isFocused, isSelected }) =>
+            `
+              cursor-pointer rounded-xl px-3 py-3 text-sm transition
+              ${
+                isSelected
+                  ? 'bg-blue-600 text-white'
+                  : isFocused
+                    ? 'bg-gray-800 text-gray-100'
+                    : 'text-gray-200'
+              }
+            `,
+          noOptionsMessage: () => 'px-3 py-3 text-sm text-gray-400',
+        }}
+        styles={{
+          menuPortal: (base) => ({
+            ...base,
+            zIndex: 80,
+          }),
+        }}
+        components={{
+          IndicatorSeparator: () => null,
+        }}
+      />
     </div>
   );
 }
@@ -1712,6 +1674,7 @@ export default function EnrolledUsersPage() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [showMassiveEditModal, setShowMassiveEditModal] = useState(false);
+  const [isSavingMassiveEdit, setIsSavingMassiveEdit] = useState(false);
   const [massiveEditFields, setMassiveEditFields] = useState<
     Record<string, string>
   >({});
@@ -2232,7 +2195,22 @@ export default function EnrolledUsersPage() {
   );
   const [successMessage, setSuccessMessage] = useState('');
   const [searchFieldTerm, setSearchFieldTerm] = useState('');
-  const filteredColumns = totalColumns.filter((col) =>
+  const massiveEditableColumns = useMemo(
+    () =>
+      totalColumns.filter((col) => {
+        if (col.id === 'enrolledInCourseLabel' || col.id === 'nivelNombre') {
+          return false;
+        }
+
+        if (col.id.startsWith('userInscriptionDetails.')) {
+          return false;
+        }
+
+        return true;
+      }),
+    [totalColumns]
+  );
+  const filteredColumns = massiveEditableColumns.filter((col) =>
     col.label.toLowerCase().includes(searchFieldTerm.toLowerCase())
   );
   const [showCarteraModal, setShowCarteraModal] = useState(false);
@@ -3394,6 +3372,182 @@ export default function EnrolledUsersPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showColumnSelector]);
+
+  const selectedStudentIds = useMemo(
+    () => new Set(selectedStudents),
+    [selectedStudents]
+  );
+
+  const massiveEditSelectedStudents = useMemo(
+    () => students.filter((student) => selectedStudentIds.has(student.id)),
+    [selectedStudentIds, students]
+  );
+
+  const massiveEditSelectedColumns = useMemo(
+    () =>
+      selectedMassiveFields
+        .map((fieldId) =>
+          massiveEditableColumns.find((column) => column.id === fieldId)
+        )
+        .filter((column): column is Column => Boolean(column)),
+    [massiveEditableColumns, selectedMassiveFields]
+  );
+
+  const massiveConfiguredFieldsCount = useMemo(
+    () =>
+      selectedMassiveFields.filter((fieldId) =>
+        Boolean(massiveEditFields[fieldId]?.trim())
+      ).length,
+    [massiveEditFields, selectedMassiveFields]
+  );
+
+  const handleMassiveFieldToggle = (fieldId: string) => {
+    setSelectedMassiveFields((prev) =>
+      prev.includes(fieldId)
+        ? prev.filter((currentFieldId) => currentFieldId !== fieldId)
+        : [...prev, fieldId]
+    );
+  };
+
+  const handleMassiveFieldValueChange = (fieldId: string, value: string) => {
+    setMassiveEditFields((prev) => ({
+      ...prev,
+      [fieldId]: value,
+    }));
+  };
+
+  useEffect(() => {
+    const validFieldIds = new Set(
+      massiveEditableColumns.map((column) => column.id)
+    );
+
+    setSelectedMassiveFields((prev) =>
+      prev.filter((fieldId) => validFieldIds.has(fieldId))
+    );
+  }, [massiveEditableColumns]);
+
+  const getMassiveFieldTypeLabel = (type: ColumnType) => {
+    switch (type) {
+      case 'date': {
+        return 'Fecha';
+      }
+      case 'select': {
+        return 'Lista';
+      }
+      default: {
+        return 'Texto';
+      }
+    }
+  };
+
+  const getMassiveFieldHelpText = (column: Column) => {
+    if (column.id === 'programTitle') {
+      return 'Busca y selecciona el programa que se aplicará a todos.';
+    }
+
+    if (column.id === 'courseTitle') {
+      return 'El buscador está optimizado para recorrer listas largas de cursos.';
+    }
+
+    if (column.type === 'select') {
+      return 'Escribe para filtrar opciones y seleccionar más rápido.';
+    }
+
+    if (column.type === 'date') {
+      return 'La misma fecha se aplicará a todos los estudiantes seleccionados.';
+    }
+
+    return 'Este valor se replicará en bloque para todos los seleccionados.';
+  };
+
+  const renderMassiveEditInput = (column: Column) => {
+    const currentValue = massiveEditFields[column.id] ?? '';
+    const commonInputClassName = `
+      w-full rounded-xl border border-gray-700 bg-gray-950/80 px-4 py-3
+      text-sm text-white placeholder:text-gray-500
+      focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40
+      focus:outline-none
+    `;
+
+    if (column.type === 'select' && column.options) {
+      const lowerLabel = column.label.toLowerCase();
+      const selectOptions =
+        column.id === 'carteraStatus'
+          ? column.options.filter((option) => option !== 'No verificado')
+          : column.options;
+
+      return (
+        <SearchableSelectField
+          value={currentValue}
+          options={selectOptions}
+          onChange={(value) => handleMassiveFieldValueChange(column.id, value)}
+          placeholder={
+            column.id === 'programTitle'
+              ? 'Buscar y seleccionar programa'
+              : column.id === 'courseTitle'
+                ? 'Buscar y seleccionar curso'
+                : `Selecciona ${lowerLabel}`
+          }
+          searchPlaceholder={
+            column.id === 'programTitle'
+              ? 'Escribe para filtrar programas...'
+              : column.id === 'courseTitle'
+                ? 'Escribe para filtrar cursos...'
+                : `Buscar ${lowerLabel}...`
+          }
+          emptyMessage={`No se encontraron opciones para ${lowerLabel}`}
+        />
+      );
+    }
+
+    if (column.type === 'date') {
+      return (
+        <input
+          type="date"
+          value={currentValue}
+          className={commonInputClassName}
+          onChange={(e) =>
+            handleMassiveFieldValueChange(column.id, e.target.value)
+          }
+        />
+      );
+    }
+
+    return (
+      <input
+        type="text"
+        value={currentValue}
+        placeholder={`Ingresa ${column.label.toLowerCase()}`}
+        className={commonInputClassName}
+        onChange={(e) =>
+          handleMassiveFieldValueChange(column.id, e.target.value)
+        }
+      />
+    );
+  };
+
+  const handleMassiveEditSave = () => {
+    if (isSavingMassiveEdit) return;
+
+    setIsSavingMassiveEdit(true);
+    updateStudentsMassiveField(massiveEditFields)
+      .then((count) => {
+        setShowMassiveEditModal(false);
+        setMassiveEditFields({});
+        setSelectedMassiveFields([]);
+        setSuccessMessage(`✅ Cambios aplicados a ${count} usuarios`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      })
+      .catch((err) => {
+        console.error('❌ Error masivo:', err);
+        alert(
+          `❌ ${err instanceof Error ? err.message : 'Error al actualizar masivamente'}`
+        );
+      })
+      .finally(() => {
+        setIsSavingMassiveEdit(false);
+      });
+  };
 
   return (
     <>
@@ -5199,234 +5353,658 @@ export default function EnrolledUsersPage() {
         {showMassiveEditModal && (
           <div
             className="
-              fixed inset-0 z-50 flex items-center justify-center bg-black/70
-              p-4 backdrop-blur-sm
+              fixed inset-0 z-50 flex items-center justify-center bg-black/80
+              p-3 backdrop-blur-md
+              sm:p-4
             "
           >
             <div
               className="
-                animate-fadeIn w-full max-w-lg rounded-xl bg-gray-800 p-6
-                text-white shadow-2xl transition-transform duration-300
+                flex max-h-[92vh] w-full max-w-7xl flex-col overflow-hidden
+                rounded-[28px] border border-white/10 bg-gray-900 text-white
+                shadow-2xl shadow-black/50
               "
             >
-              <h2
-                className="
-                  mb-4 text-center text-2xl font-bold tracking-wide text-white
-                "
-              >
-                Editar Masivamente
-              </h2>
-
-              {/* Mostrar estudiantes seleccionados */}
               <div
                 className="
-                  mb-6 max-h-28 overflow-y-auto rounded-md border
-                  border-gray-700 bg-gray-900 p-3 shadow-inner
+                  shrink-0 border-b border-white/10 bg-gradient-to-r
+                  from-gray-950 via-gray-900 to-gray-950 px-5 py-4
+                  sm:px-8 sm:py-4
                 "
               >
-                {selectedStudents.length === 0 ? (
-                  <p className="text-center text-gray-400">
-                    No hay estudiantes seleccionados
-                  </p>
-                ) : (
-                  students
-                    .filter((s) => selectedStudents.includes(s.id))
-                    .map((s) => (
-                      <div
-                        key={s.id}
-                        className="
-                          mb-1 rounded bg-gray-700 px-3 py-1 text-sm
-                          hover:bg-gray-600
-                        "
-                      >
-                        {s.name}
-                      </div>
-                    ))
-                )}
-              </div>
-
-              <div className="mb-6">
-                <label className="mb-2 block text-sm font-semibold text-gray-300">
-                  Campos a editar
-                </label>
-
                 <div
                   className="
-                    relative w-full rounded-lg border border-gray-600
-                    bg-gray-800 p-2 shadow-inner
+                    flex items-start justify-between gap-3
+                    lg:flex-row lg:items-start lg:justify-between
                   "
                 >
-                  <input
-                    type="text"
-                    placeholder="Buscar campo..."
-                    className="
-                      mb-2 w-full rounded bg-gray-700 p-2 text-sm text-white
-                      focus:border-blue-500 focus:ring-2 focus:ring-blue-500
-                    "
-                    value={searchFieldTerm}
-                    onChange={(e) => setSearchFieldTerm(e.target.value)}
-                  />
-
-                  <div className="max-h-40 space-y-1 overflow-y-auto">
-                    {filteredColumns.length > 0 ? (
-                      filteredColumns.map((col) => {
-                        const isSelected = selectedMassiveFields.includes(
-                          col.id
-                        );
-                        return (
-                          <div
-                            key={col.id}
-                            onClick={() =>
-                              setSelectedMassiveFields((prev) =>
-                                isSelected
-                                  ? prev.filter((id) => id !== col.id)
-                                  : [...prev, col.id]
-                              )
-                            }
-                            className={`
-                              cursor-pointer rounded px-3 py-2 text-sm
-                              transition
-                              ${
-                                isSelected
-                                  ? 'bg-blue-600 text-white'
-                                  : `
-                                    text-gray-300
-                                    hover:bg-gray-600
-                                  `
-                              }
-                            `}
-                          >
-                            {col.label}
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <div className="text-center text-sm text-gray-400">
-                        No se encontraron campos
-                      </div>
-                    )}
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2
+                        className="
+                          text-xl font-semibold tracking-tight
+                          sm:text-2xl
+                        "
+                      >
+                        Editar Masivamente
+                      </h2>
+                      <span
+                        className="
+                          inline-flex rounded-full border border-blue-500/30
+                          bg-blue-500/10 px-3 py-1 text-[11px] font-semibold
+                          tracking-[0.16em] text-blue-200 uppercase
+                        "
+                      >
+                        {selectedStudents.length} seleccionados
+                      </span>
+                    </div>
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowMassiveEditModal(false)}
+                    className="
+                      inline-flex size-11 items-center justify-center
+                      rounded-2xl border border-white/10 bg-white/5
+                      text-gray-300 transition
+                      hover:bg-white/10 hover:text-white
+                      focus:ring-2 focus:ring-blue-500/50 focus:outline-none
+                    "
+                    aria-label="Cerrar modal de edicion masiva"
+                  >
+                    <X className="size-5" />
+                  </button>
                 </div>
               </div>
 
-              {/* Inputs dinámicos */}
-              <div className="max-h-80 space-y-4 overflow-y-auto pr-1">
-                {selectedMassiveFields.map((field) => {
-                  const col = totalColumns.find((c) => c.id === field);
-                  if (!col) return null;
-
-                  return (
-                    <div
-                      key={field}
-                      className="rounded-lg bg-gray-700 p-4 shadow-inner"
-                    >
-                      <label
-                        className="
-                          mb-1 block text-sm font-semibold text-gray-200
-                        "
-                      >
-                        {col.label}
-                      </label>
-
-                      {col.type === 'select' && col.options ? (
-                        <SearchableSelectField
-                          value={massiveEditFields[field] ?? ''}
-                          options={col.options}
-                          placeholder={`Selecciona ${col.label.toLowerCase()}`}
-                          searchPlaceholder={`Buscar ${col.label.toLowerCase()}...`}
-                          onChange={(value) =>
-                            setMassiveEditFields((prev) => ({
-                              ...prev,
-                              [field]: value,
-                            }))
-                          }
-                        />
-                      ) : col.type === 'date' ? (
-                        <input
-                          type="date"
-                          className="
-                            w-full rounded border border-gray-600 bg-gray-800
-                            p-2
-                            focus:border-blue-500 focus:ring-2
-                            focus:ring-blue-500
-                          "
-                          onChange={(e) =>
-                            setMassiveEditFields((prev) => ({
-                              ...prev,
-                              [field]: e.target.value,
-                            }))
-                          }
-                        />
-                      ) : (
-                        <input
-                          type="text"
-                          className="
-                            w-full rounded border border-gray-600 bg-gray-800
-                            p-2
-                            focus:border-blue-500 focus:ring-2
-                            focus:ring-blue-500
-                          "
-                          onChange={(e) =>
-                            setMassiveEditFields((prev) => ({
-                              ...prev,
-                              [field]: e.target.value,
-                            }))
-                          }
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Acciones */}
               <div
                 className="
-                  mt-6 flex flex-col-reverse gap-3
-                  sm:flex-row sm:justify-end
+                  modern-scrollbar flex-1 overflow-y-auto p-5
+                  sm:px-8 sm:py-6
                 "
               >
-                <button
-                  onClick={() => setShowMassiveEditModal(false)}
+                <div
                   className="
-                    w-full rounded bg-gray-600 px-4 py-2 transition
-                    hover:bg-gray-500
-                    focus:ring-2 focus:ring-gray-400 focus:outline-none
-                    sm:w-auto
+                    grid gap-6
+                    xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)_minmax(0,1.4fr)]
                   "
                 >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    updateStudentsMassiveField(massiveEditFields)
-                      .then((count) => {
-                        setShowMassiveEditModal(false);
-                        setMassiveEditFields({});
-                        setSelectedMassiveFields([]);
-                        setSuccessMessage(
-                          `✅ Cambios aplicados a ${count} usuarios`
-                        );
-                        setTimeout(() => setSuccessMessage(''), 3000);
-                      })
-                      .catch((err) => {
-                        console.error('❌ Error masivo:', err);
-                        alert(
-                          `❌ ${err instanceof Error ? err.message : 'Error al actualizar masivamente'}`
-                        );
-                      });
-                  }}
+                  <section
+                    className="
+                      overflow-hidden rounded-3xl border border-white/10
+                      bg-white/[0.03]
+                    "
+                  >
+                    <div className="border-b border-white/10 px-5 py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <span
+                            className="
+                              inline-flex rounded-full border border-white/10
+                              bg-white/5 px-2.5 py-1 text-[11px] font-medium
+                              tracking-[0.16em] text-gray-300 uppercase
+                            "
+                          >
+                            Paso 1
+                          </span>
+                          <h3 className="mt-3 text-base font-semibold text-white">
+                            Estudiantes seleccionados
+                          </h3>
+                        </div>
+
+                        <span
+                          className="
+                            inline-flex items-center gap-2 rounded-full border
+                            border-white/10 bg-white/5 px-3 py-1 text-xs
+                            font-medium text-gray-200
+                          "
+                        >
+                          <Users className="size-3.5 text-blue-300" />
+                          {massiveEditSelectedStudents.length}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      className="
+                        modern-scrollbar space-y-3 p-5
+                        xl:max-h-[52vh] xl:overflow-y-auto xl:pr-3
+                      "
+                    >
+                      {massiveEditSelectedStudents.length === 0 ? (
+                        <div
+                          className="
+                            flex min-h-44 items-center justify-center
+                            rounded-2xl border border-dashed border-white/10
+                            bg-gray-950/40 px-6 text-center text-sm
+                            text-gray-400
+                          "
+                        >
+                          No hay estudiantes seleccionados.
+                        </div>
+                      ) : (
+                        massiveEditSelectedStudents.map((student) => (
+                          <div
+                            key={student.id}
+                            className="
+                              rounded-2xl border border-white/10 bg-gray-950/70
+                              p-4 transition
+                              hover:border-white/20
+                            "
+                          >
+                            <div className="flex items-start gap-3">
+                              <div
+                                className="
+                                  flex size-11 shrink-0 items-center
+                                  justify-center rounded-2xl bg-blue-500/15
+                                  text-sm font-semibold text-blue-200
+                                "
+                              >
+                                {student.name.trim().charAt(0).toUpperCase() ||
+                                  'U'}
+                              </div>
+
+                              <div className="min-w-0 flex-1">
+                                <p
+                                  className="
+                                    truncate text-sm font-semibold text-white
+                                  "
+                                >
+                                  {student.name}
+                                </p>
+                                <p className="truncate text-xs text-gray-400">
+                                  {student.email}
+                                </p>
+
+                                <div
+                                  className="
+                                    mt-3 grid gap-2 text-[11px]
+                                    sm:grid-cols-2
+                                  "
+                                >
+                                  <div
+                                    className="
+                                      rounded-xl border border-white/10
+                                      bg-white/5 px-3 py-2 text-gray-300
+                                    "
+                                  >
+                                    <span
+                                      className="
+                                        block text-[10px] tracking-[0.16em]
+                                        text-gray-500 uppercase
+                                      "
+                                    >
+                                      Programa
+                                    </span>
+                                    <span
+                                      className="
+                                        mt-1 block truncate text-xs text-white
+                                      "
+                                    >
+                                      {student.programTitle ?? 'Sin programa'}
+                                    </span>
+                                  </div>
+
+                                  <div
+                                    className="
+                                      rounded-xl border border-white/10
+                                      bg-white/5 px-3 py-2 text-gray-300
+                                    "
+                                  >
+                                    <span
+                                      className="
+                                        block text-[10px] tracking-[0.16em]
+                                        text-gray-500 uppercase
+                                      "
+                                    >
+                                      �ltimo curso
+                                    </span>
+                                    <span
+                                      className="
+                                        mt-1 block truncate text-xs text-white
+                                      "
+                                    >
+                                      {student.courseTitle ?? 'Sin curso'}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </section>
+
+                  <section
+                    className="
+                      overflow-hidden rounded-3xl border border-white/10
+                      bg-white/[0.03]
+                    "
+                  >
+                    <div className="border-b border-white/10 px-5 py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <span
+                            className="
+                              inline-flex rounded-full border border-white/10
+                              bg-white/5 px-2.5 py-1 text-[11px] font-medium
+                              tracking-[0.16em] text-gray-300 uppercase
+                            "
+                          >
+                            Paso 2
+                          </span>
+                          <h3 className="mt-3 text-base font-semibold text-white">
+                            Campos a editar
+                          </h3>
+                        </div>
+
+                        <span
+                          className="
+                            rounded-full border border-blue-500/20
+                            bg-blue-500/10 px-3 py-1 text-xs font-medium
+                            text-blue-200
+                          "
+                        >
+                          {massiveEditSelectedColumns.length} activos
+                        </span>
+                      </div>
+
+                      <div className="relative mt-4">
+                        <Search
+                          className="
+                            pointer-events-none absolute top-1/2 left-4 size-4
+                            -translate-y-1/2 text-gray-500
+                          "
+                        />
+                        <input
+                          type="text"
+                          placeholder="Buscar campo por nombre..."
+                          className="
+                            w-full rounded-2xl border border-gray-700
+                            bg-gray-950/80 py-3 pr-4 pl-11 text-sm text-white
+                            placeholder:text-gray-500
+                            focus:border-blue-500 focus:ring-2
+                            focus:ring-blue-500/40 focus:outline-none
+                          "
+                          value={searchFieldTerm}
+                          onChange={(e) => setSearchFieldTerm(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border-b border-white/10 px-5 py-4">
+                      {massiveEditSelectedColumns.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                          A�n no has seleccionado campos para editar.
+                        </p>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {massiveEditSelectedColumns.map((column) => (
+                            <button
+                              key={column.id}
+                              type="button"
+                              onClick={() =>
+                                handleMassiveFieldToggle(column.id)
+                              }
+                              className="
+                                inline-flex items-center gap-2 rounded-full
+                                border border-blue-500/20 bg-blue-500/10 px-3
+                                py-1.5 text-xs font-medium text-blue-100
+                                transition
+                                hover:bg-blue-500/20
+                              "
+                            >
+                              <span>{column.label}</span>
+                              <X className="size-3.5" />
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div
+                      className="
+                        modern-scrollbar space-y-3 p-5
+                        xl:max-h-[52vh] xl:overflow-y-auto xl:pr-3
+                      "
+                    >
+                      {filteredColumns.length === 0 ? (
+                        <div
+                          className="
+                            flex min-h-44 items-center justify-center
+                            rounded-2xl border border-dashed border-white/10
+                            bg-gray-950/40 px-6 text-center text-sm
+                            text-gray-400
+                          "
+                        >
+                          No se encontraron campos con ese termino.
+                        </div>
+                      ) : (
+                        filteredColumns.map((column) => {
+                          const isSelected = selectedMassiveFields.includes(
+                            column.id
+                          );
+
+                          return (
+                            <button
+                              key={column.id}
+                              type="button"
+                              onClick={() =>
+                                handleMassiveFieldToggle(column.id)
+                              }
+                              className={
+                                isSelected
+                                  ? `
+                                    w-full rounded-2xl border border-blue-500/40
+                                    bg-blue-500/12 p-4 text-left shadow-lg
+                                    shadow-blue-500/10 transition
+                                  `
+                                  : `
+                                    w-full rounded-2xl border border-white/10
+                                    bg-gray-950/50 p-4 text-left transition
+                                    hover:border-white/20 hover:bg-white/[0.04]
+                                  `
+                              }
+                            >
+                              <div
+                                className="
+                                  flex items-start justify-between gap-3
+                                "
+                              >
+                                <div>
+                                  <div
+                                    className="
+                                      flex flex-wrap items-center gap-2
+                                    "
+                                  >
+                                    <span
+                                      className="
+                                        text-sm font-semibold text-white
+                                      "
+                                    >
+                                      {column.label}
+                                    </span>
+                                    <span
+                                      className="
+                                        rounded-full border border-white/10
+                                        bg-white/5 px-2 py-0.5 text-[11px]
+                                        text-gray-300
+                                      "
+                                    >
+                                      {getMassiveFieldTypeLabel(column.type)}
+                                    </span>
+                                  </div>
+                                  <p
+                                    className="
+                                      mt-2 text-xs leading-5 text-gray-400
+                                    "
+                                  >
+                                    {getMassiveFieldHelpText(column)}
+                                  </p>
+                                </div>
+
+                                <span
+                                  className={
+                                    isSelected
+                                      ? `
+                                        inline-flex size-8 items-center
+                                        justify-center rounded-full bg-blue-500
+                                        text-white
+                                      `
+                                      : `
+                                        inline-flex size-8 items-center
+                                        justify-center rounded-full border
+                                        border-white/10 bg-white/5 text-gray-500
+                                      `
+                                  }
+                                >
+                                  <Check className="size-4" />
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </section>
+
+                  <section
+                    className="
+                      overflow-hidden rounded-3xl border border-white/10
+                      bg-white/[0.03]
+                    "
+                  >
+                    <div className="border-b border-white/10 px-5 py-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <span
+                            className="
+                              inline-flex rounded-full border border-white/10
+                              bg-white/5 px-2.5 py-1 text-[11px] font-medium
+                              tracking-[0.16em] text-gray-300 uppercase
+                            "
+                          >
+                            Paso 3
+                          </span>
+                          <h3 className="mt-3 text-base font-semibold text-white">
+                            Valores nuevos
+                          </h3>
+                        </div>
+
+                        <span
+                          className="
+                            rounded-full border border-white/10 bg-white/5 px-3
+                            py-1 text-xs font-medium text-gray-200
+                          "
+                        >
+                          {massiveConfiguredFieldsCount}/
+                          {massiveEditSelectedColumns.length}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div
+                      className="
+                        modern-scrollbar space-y-4 p-5
+                        xl:max-h-[52vh] xl:overflow-y-auto xl:pr-3
+                      "
+                    >
+                      {massiveEditSelectedColumns.length === 0 ? (
+                        <div
+                          className="
+                            flex min-h-52 items-center justify-center
+                            rounded-2xl border border-dashed border-white/10
+                            bg-gray-950/40 px-6 text-center text-sm
+                            text-gray-400
+                          "
+                        >
+                          Selecciona uno o m�s campos en el panel central para
+                          habilitar sus controles de edici�n.
+                        </div>
+                      ) : (
+                        <div
+                          className="
+                            grid gap-4
+                            md:grid-cols-2
+                          "
+                        >
+                          {massiveEditSelectedColumns.map((column) => {
+                            const shouldSpanFull =
+                              column.type === 'select' ||
+                              column.id === 'programTitle' ||
+                              column.id === 'courseTitle';
+                            const currentValue =
+                              massiveEditFields[column.id] ?? '';
+
+                            return (
+                              <div
+                                key={column.id}
+                                className={
+                                  shouldSpanFull
+                                    ? `
+                                      rounded-2xl border border-white/10
+                                      bg-gray-950/70 p-4 shadow-inner
+                                      md:col-span-2
+                                    `
+                                    : `
+                                      rounded-2xl border border-white/10
+                                      bg-gray-950/70 p-4 shadow-inner
+                                    `
+                                }
+                              >
+                                <div
+                                  className="
+                                    mb-4 flex items-start justify-between gap-3
+                                  "
+                                >
+                                  <div>
+                                    <div
+                                      className="
+                                        flex flex-wrap items-center gap-2
+                                      "
+                                    >
+                                      <label
+                                        className="
+                                          text-sm font-semibold text-white
+                                        "
+                                      >
+                                        {column.label}
+                                      </label>
+                                      <span
+                                        className="
+                                          rounded-full border border-white/10
+                                          bg-white/5 px-2.5 py-1 text-[11px]
+                                          text-gray-300
+                                        "
+                                      >
+                                        {getMassiveFieldTypeLabel(column.type)}
+                                      </span>
+                                    </div>
+                                    <p
+                                      className="
+                                        mt-2 text-xs leading-5 text-gray-400
+                                      "
+                                    >
+                                      {getMassiveFieldHelpText(column)}
+                                    </p>
+                                  </div>
+
+                                  <span
+                                    className={
+                                      currentValue
+                                        ? `
+                                          rounded-full border
+                                          border-emerald-500/20
+                                          bg-emerald-500/10 px-2.5 py-1
+                                          text-[11px] text-emerald-200
+                                        `
+                                        : `
+                                          rounded-full border border-white/10
+                                          bg-white/5 px-2.5 py-1 text-[11px]
+                                          text-gray-400
+                                        `
+                                    }
+                                  >
+                                    {currentValue ? 'Configurado' : 'Pendiente'}
+                                  </span>
+                                </div>
+
+                                {renderMassiveEditInput(column)}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </section>
+                </div>
+              </div>
+
+              <div
+                className="
+                  shrink-0 border-t border-white/10 bg-gray-950/80 px-5 py-4
+                  sm:px-8
+                "
+              >
+                <div
                   className="
-                    hover:bg-primary-700
-                    focus:ring-primary-400
-                    w-full rounded bg-primary px-4 py-2 font-semibold text-white
-                    transition
-                    focus:ring-2 focus:outline-none
-                    sm:w-auto
+                    flex flex-col gap-4
+                    lg:flex-row lg:items-center lg:justify-between
                   "
                 >
-                  Guardar Cambios
-                </button>
+                  <div
+                    className="
+                      flex flex-wrap items-center gap-2 text-sm text-gray-300
+                    "
+                  >
+                    <span
+                      className="
+                        rounded-full border border-white/10 bg-white/5 px-3 py-1
+                      "
+                    >
+                      {selectedStudents.length} estudiantes
+                    </span>
+                    <span
+                      className="
+                        rounded-full border border-white/10 bg-white/5 px-3 py-1
+                      "
+                    >
+                      {selectedMassiveFields.length} campos
+                    </span>
+                    <span
+                      className="
+                        rounded-full border border-white/10 bg-white/5 px-3 py-1
+                      "
+                    >
+                      {massiveConfiguredFieldsCount} configurados
+                    </span>
+                  </div>
+
+                  <div
+                    className="
+                      flex flex-col-reverse gap-3
+                      sm:flex-row sm:items-center
+                    "
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setShowMassiveEditModal(false)}
+                      className="
+                        w-full rounded-2xl border border-white/10 bg-white/5
+                        px-5 py-3 text-sm font-medium text-gray-200 transition
+                        hover:bg-white/10
+                        focus:ring-2 focus:ring-gray-400/40 focus:outline-none
+                        sm:w-auto
+                      "
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleMassiveEditSave}
+                      disabled={isSavingMassiveEdit}
+                      className="
+                        hover:bg-primary-700
+                        focus:ring-primary-400
+                        w-full rounded-2xl bg-primary px-5 py-3 text-sm
+                        font-semibold text-white transition
+                        focus:ring-2 focus:outline-none
+                        disabled:cursor-not-allowed disabled:opacity-70
+                        sm:w-auto
+                      "
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        {isSavingMassiveEdit && (
+                          <Loader2 className="size-4 animate-spin" />
+                        )}
+                        {isSavingMassiveEdit
+                          ? 'Guardando cambios...'
+                          : 'Guardar Cambios'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

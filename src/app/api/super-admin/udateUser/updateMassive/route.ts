@@ -9,6 +9,7 @@ import {
   enrollmentPrograms,
   enrollments,
   pagos,
+  userCartera,
   users,
 } from '~/server/db/schema';
 
@@ -16,6 +17,26 @@ const updateSchema = z.object({
   userIds: z.array(z.string()),
   fields: z.record(z.string(), z.unknown()),
 });
+
+function normalizeCarteraStatus(value: unknown): 'activo' | 'inactivo' | null {
+  if (typeof value !== 'string') return null;
+
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (normalized === 'activo' || normalized === 'al dia') {
+    return 'activo';
+  }
+
+  if (normalized === 'inactivo' || normalized === 'en cartera') {
+    return 'inactivo';
+  }
+
+  return null;
+}
 
 export async function PATCH(req: Request) {
   try {
@@ -31,6 +52,20 @@ export async function PATCH(req: Request) {
     }
 
     const { userIds, fields } = parsed.data;
+    const ignoredFieldKeys = Object.keys(fields).filter(
+      (key) =>
+        key === 'enrolledInCourseLabel' ||
+        key === 'nivelNombre' ||
+        key.startsWith('userInscriptionDetails.')
+    );
+
+    if (ignoredFieldKeys.length > 0) {
+      console.warn(
+        '⚠️ Campos ignorados en edición masiva por no ser persistibles:',
+        ignoredFieldKeys
+      );
+    }
+
     console.log(
       '═══════════════════════════════════════════════════════════════'
     );
@@ -192,6 +227,7 @@ export async function PATCH(req: Request) {
       const userUpdateFields: Record<string, unknown> = {
         updatedAt: new Date(),
       };
+      let carteraStatusToPersist: 'activo' | 'inactivo' | null = null;
 
       // name → name; si no viene, y derivamos first/last, componemos name
       if (typeof name === 'string') {
@@ -210,6 +246,22 @@ export async function PATCH(req: Request) {
         fields as Record<string, unknown>
       )) {
         if (RESERVED_KEYS.has(key)) continue; // programId, courseId, status, etc. ya tratados
+        if (
+          key === 'enrolledInCourseLabel' ||
+          key === 'nivelNombre' ||
+          key.startsWith('userInscriptionDetails.')
+        ) {
+          continue;
+        }
+        if (key === 'carteraStatus') {
+          carteraStatusToPersist = normalizeCarteraStatus(value);
+          console.log(
+            `📝 Actualizando carteraStatus: ${String(value)} -> ${
+              carteraStatusToPersist ?? 'ignorado'
+            }`
+          );
+          continue;
+        }
         // ✅ enrollmentStatus va DIRECTO a la BD (sin mapeo)
         if (key === 'enrollmentStatus' && typeof value === 'string') {
           userUpdateFields.enrollmentStatus = value;
@@ -260,6 +312,17 @@ export async function PATCH(req: Request) {
         `   ├─ planType: ${userUpdateFields.planType ?? '(no cambiado)'}`
       );
       console.log(`   └─ nombre: ${userUpdateFields.name ?? '(no cambiado)'}`);
+
+      if (carteraStatusToPersist !== null) {
+        await db.insert(userCartera).values({
+          userId,
+          status: carteraStatusToPersist,
+          updatedAt: new Date(),
+        });
+        console.log(
+          `   └─ carteraStatus: ${carteraStatusToPersist} (registrado en user_cartera)`
+        );
+      }
 
       // === ACTUALIZACIÓN DE PAGOS (fechaRealPago) ===
       if (fields.fechaRealPago !== undefined && fields.fechaRealPago !== null) {
