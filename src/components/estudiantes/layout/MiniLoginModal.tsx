@@ -813,9 +813,9 @@ export default function MiniLoginModal({
                     ${
                       emailError
                         ? `
-                        border-red-300
-                        focus:border-red-500
-                      `
+                          border-red-300
+                          focus:border-red-500
+                        `
                         : ''
                     }
                   `}
@@ -854,9 +854,9 @@ export default function MiniLoginModal({
                     ${
                       passwordError
                         ? `
-                        border-red-300
-                        focus:border-red-500
-                      `
+                          border-red-300
+                          focus:border-red-500
+                        `
                         : ''
                     }
                   `}
