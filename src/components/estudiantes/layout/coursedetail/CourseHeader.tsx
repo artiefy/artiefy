@@ -837,13 +837,16 @@ export function CourseHeader({
   // Modifica handleEnrollClick para solo usuarios autenticados
   const handleEnrollClick = async () => {
     if (!isSignedIn) {
-      // Guardar flag para autoabrir modal tras login
-      if (
+      const isIndividualCourse =
         course.courseTypeId === 4 ||
-        course.courseTypes?.some((type) => type.isPurchasableIndividually)
-      ) {
-        sessionStorage.setItem('openPaymentModalAfterLogin', '1');
+        course.courseTypes?.some((type) => type.isPurchasableIndividually);
+      // Los cursos de compra individual no requieren login previo
+      if (isIndividualCourse) {
+        openPaymentModalFlow();
+        return;
       }
+      // Para otros cursos, requerir login
+      sessionStorage.setItem('openPaymentModalAfterLogin', '1');
       // El modal de login se abre automáticamente por <SignInButton>
       return;
     }
@@ -2221,60 +2224,13 @@ export function CourseHeader({
               ) : (
                 <>
                   {!isSignedIn ? (
-                    <SignInButton
-                      mode="modal"
-                      forceRedirectUrl={forceRedirectUrl}
-                    >
+                    isPurchasable ? (
                       <button
                         className="
                           btn h-10 w-56
                           sm:h-12 sm:w-64
                         "
-                        onClick={async () => {
-                          try {
-                            const suggested = String(
-                              sessionStorage.getItem(
-                                'clerkSuggestedUsername'
-                              ) ?? generateUsername()
-                            );
-                            try {
-                              sessionStorage.setItem(
-                                'clerkSuggestedUsername',
-                                suggested
-                              );
-                            } catch {
-                              // ignore storage errors
-                            }
-
-                            if (isPurchasable) {
-                              sessionStorage.setItem(
-                                'openPaymentModalAfterLogin',
-                                '1'
-                              );
-                            } else {
-                              sessionStorage.setItem('enrollAfterLogin', '1');
-                            }
-
-                            if (signUp) {
-                              const maybeCreate = (
-                                signUp as unknown as {
-                                  create?: (p: {
-                                    username?: string;
-                                  }) => Promise<unknown>;
-                                }
-                              ).create;
-                              if (typeof maybeCreate === 'function') {
-                                try {
-                                  await maybeCreate({ username: suggested });
-                                } catch (e) {
-                                  console.warn('signUp.create failed', e);
-                                }
-                              }
-                            }
-                          } catch {
-                            // ignore
-                          }
-                        }}
+                        onClick={handleEnrollClick}
                       >
                         <strong
                           className="
@@ -2293,7 +2249,76 @@ export function CourseHeader({
                           <div className="circle" />
                         </div>
                       </button>
-                    </SignInButton>
+                    ) : (
+                      <SignInButton
+                        mode="modal"
+                        forceRedirectUrl={forceRedirectUrl}
+                      >
+                        <button
+                          className="
+                            btn h-10 w-56
+                            sm:h-12 sm:w-64
+                          "
+                          onClick={async () => {
+                            try {
+                              const suggested = String(
+                                sessionStorage.getItem(
+                                  'clerkSuggestedUsername'
+                                ) ?? generateUsername()
+                              );
+                              try {
+                                sessionStorage.setItem(
+                                  'clerkSuggestedUsername',
+                                  suggested
+                                );
+                              } catch {
+                                // ignore storage errors
+                              }
+
+                              sessionStorage.setItem('enrollAfterLogin', '1');
+
+                              if (signUp) {
+                                const maybeCreate = (
+                                  signUp as unknown as {
+                                    create?: (p: {
+                                      username?: string;
+                                    }) => Promise<unknown>;
+                                  }
+                                ).create;
+                                if (typeof maybeCreate === 'function') {
+                                  try {
+                                    await maybeCreate({ username: suggested });
+                                  } catch (e) {
+                                    console.warn('signUp.create failed', e);
+                                  }
+                                }
+                              }
+                            } catch {
+                              // ignore
+                            }
+                          }}
+                        >
+                          <strong
+                            className="
+                              text-sm
+                              sm:text-lg
+                            "
+                          >
+                            {getButtonPrice() && (
+                              <span>{getButtonPrice()}</span>
+                            )}
+                            <span>{getEnrollButtonText()}</span>
+                          </strong>
+                          <div id="container-stars">
+                            <div id="stars" />
+                          </div>
+                          <div id="glow">
+                            <div className="circle" />
+                            <div className="circle" />
+                          </div>
+                        </button>
+                      </SignInButton>
+                    )
                   ) : (
                     <button
                       className="
@@ -2492,58 +2517,8 @@ export function CourseHeader({
               ) : (
                 <>
                   {!isSignedIn ? (
-                    <SignInButton
-                      mode="modal"
-                      forceRedirectUrl={forceRedirectUrl}
-                    >
-                      <button
-                        className="btn"
-                        onClick={async () => {
-                          try {
-                            const suggested = String(
-                              sessionStorage.getItem(
-                                'clerkSuggestedUsername'
-                              ) ?? generateUsername()
-                            );
-                            try {
-                              sessionStorage.setItem(
-                                'clerkSuggestedUsername',
-                                suggested
-                              );
-                            } catch {
-                              // ignore storage errors
-                            }
-
-                            if (isPurchasable) {
-                              sessionStorage.setItem(
-                                'openPaymentModalAfterLogin',
-                                '1'
-                              );
-                            } else {
-                              sessionStorage.setItem('enrollAfterLogin', '1');
-                            }
-
-                            if (signUp) {
-                              const maybeCreate = (
-                                signUp as unknown as {
-                                  create?: (p: {
-                                    username?: string;
-                                  }) => Promise<unknown>;
-                                }
-                              ).create;
-                              if (typeof maybeCreate === 'function') {
-                                try {
-                                  await maybeCreate({ username: suggested });
-                                } catch (e) {
-                                  console.warn('signUp.create failed', e);
-                                }
-                              }
-                            }
-                          } catch {
-                            // ignore
-                          }
-                        }}
-                      >
+                    isPurchasable ? (
+                      <button className="btn" onClick={handleEnrollClick}>
                         <strong>
                           {getButtonPrice() && <span>{getButtonPrice()}</span>}
                           <span>{getEnrollButtonText()}</span>
@@ -2556,7 +2531,68 @@ export function CourseHeader({
                           <div className="circle" />
                         </div>
                       </button>
-                    </SignInButton>
+                    ) : (
+                      <SignInButton
+                        mode="modal"
+                        forceRedirectUrl={forceRedirectUrl}
+                      >
+                        <button
+                          className="btn"
+                          onClick={async () => {
+                            try {
+                              const suggested = String(
+                                sessionStorage.getItem(
+                                  'clerkSuggestedUsername'
+                                ) ?? generateUsername()
+                              );
+                              try {
+                                sessionStorage.setItem(
+                                  'clerkSuggestedUsername',
+                                  suggested
+                                );
+                              } catch {
+                                // ignore storage errors
+                              }
+
+                              sessionStorage.setItem('enrollAfterLogin', '1');
+
+                              if (signUp) {
+                                const maybeCreate = (
+                                  signUp as unknown as {
+                                    create?: (p: {
+                                      username?: string;
+                                    }) => Promise<unknown>;
+                                  }
+                                ).create;
+                                if (typeof maybeCreate === 'function') {
+                                  try {
+                                    await maybeCreate({ username: suggested });
+                                  } catch (e) {
+                                    console.warn('signUp.create failed', e);
+                                  }
+                                }
+                              }
+                            } catch {
+                              // ignore
+                            }
+                          }}
+                        >
+                          <strong>
+                            {getButtonPrice() && (
+                              <span>{getButtonPrice()}</span>
+                            )}
+                            <span>{getEnrollButtonText()}</span>
+                          </strong>
+                          <div id="container-stars">
+                            <div id="stars" />
+                          </div>
+                          <div id="glow">
+                            <div className="circle" />
+                            <div className="circle" />
+                          </div>
+                        </button>
+                      </SignInButton>
+                    )
                   ) : (
                     <button
                       className="btn"
@@ -2624,9 +2660,9 @@ export function CourseHeader({
             <div>
               <PaymentForm
                 selectedProduct={courseProduct}
-                requireAuthOnSubmit={!isSignedIn}
+                requireAuthOnSubmit={false}
                 redirectUrlOnAuth={`/estudiantes/cursos/${course.id}`}
-                isIndividualPurchase={course.courseTypeId === 4}
+                isIndividualPurchase={true}
                 // No necesitas onAutoOpenModal aquí, el efecto ya lo maneja
               />
             </div>

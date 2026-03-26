@@ -860,6 +860,14 @@ export default function CourseDetails({
     }
   };
 
+  const getPlansRedirectUrl = useCallback(() => {
+    const recommendedPlanId = _hasPremium ? 2 : _hasPro ? 1 : null;
+
+    return recommendedPlanId
+      ? `/planes?plan_id=${recommendedPlanId}`
+      : '/planes';
+  }, [_hasPremium, _hasPro]);
+
   const handleStartNow = useCallback(async () => {
     if (enrollmentRequestInFlight.current) {
       return;
@@ -868,7 +876,13 @@ export default function CourseDetails({
     autoEnrollForcePlansRef.current = false;
 
     const types = courseTypes;
-    const hasPurchasable = types.some((t) => t.isPurchasableIndividually);
+    const hasPurchasable =
+      course.courseTypeId === 4 ||
+      types.some((t) => t.isPurchasableIndividually) ||
+      Boolean(course.courseType?.isPurchasableIndividually);
+    const individualPrice = Number(
+      course.individualPrice ?? course.courseType?.price ?? 0
+    );
     const normalizedPlan = _userPlanType?.toLowerCase();
     const hasPlanAccess =
       _hasActiveSubscription &&
@@ -883,16 +897,26 @@ export default function CourseDetails({
     // Simplificar la lógica: si el curso es purchasable individually, debe pagar
     // a menos que ya tenga acceso por suscripción
     const isIndividualPurchaseRequired =
-      hasPurchasable &&
-      course.individualPrice &&
-      course.individualPrice > 0 &&
-      !hasPlanAccess;
+      hasPurchasable && individualPrice > 0 && !hasPlanAccess;
 
     const shouldOpenPayment =
       isIndividualPurchaseRequired ||
       (_hasFree ? false : !hasPlanAccess && !_hasActiveSubscription);
 
     if (!isSignedIn) {
+      if (isIndividualPurchaseRequired) {
+        setShowPaymentModal(true);
+        return;
+      }
+
+      const shouldOpenPlansSubscription =
+        !_hasFree && !hasPlanAccess && !_hasActiveSubscription;
+
+      if (shouldOpenPlansSubscription) {
+        router.push(getPlansRedirectUrl());
+        return;
+      }
+
       setAuthIntent('enroll');
       // Establecer pendingOpenPayment basado en si el curso requiere pago individual
       setPendingOpenPayment(!!isIndividualPurchaseRequired);
@@ -907,13 +931,13 @@ export default function CourseDetails({
       !_hasActiveSubscription;
 
     if (shouldForcePlansRedirect) {
-      router.push('/planes');
+      router.push(getPlansRedirectUrl());
       return;
     }
 
     if (shouldOpenPayment) {
       if (!hasPurchasable) {
-        router.push('/planes');
+        router.push(getPlansRedirectUrl());
         return;
       }
       setShowPaymentModal(true);
@@ -937,7 +961,7 @@ export default function CourseDetails({
           description: enrollment.message,
         });
         if (enrollment.requiresSubscription) {
-          router.push('/planes');
+          router.push(getPlansRedirectUrl());
         }
         return;
       }
@@ -970,6 +994,7 @@ export default function CourseDetails({
     _userPlanType,
     course,
     courseTypes,
+    getPlansRedirectUrl,
     isSignedIn,
     mutate,
     router,
@@ -2888,52 +2913,6 @@ export default function CourseDetails({
                                 </div>
                               );
                             })()}
-                          {includedPlans.length > 0 && (
-                            <div className="space-y-1">
-                              {includedPlans.includes('Premium') &&
-                              includedPlans.includes('Pro') ? (
-                                <div
-                                  className="
-                                    inline-flex items-center gap-2 rounded-full
-                                    border border-red-400 bg-red-500/20 px-3
-                                    py-1.5 text-sm font-medium text-red-400
-                                  "
-                                >
-                                  <AiFillFire className="size-4 text-red-400" />
-                                  <span>Premium + Pro</span>
-                                </div>
-                              ) : (
-                                <div className="inline-flex items-center gap-2">
-                                  {includedPlans.includes('Premium') && (
-                                    <div
-                                      className="
-                                        inline-flex items-center gap-1
-                                        rounded-full border border-amber-400
-                                        bg-amber-500/20 px-3 py-1.5 text-sm
-                                        font-medium text-amber-400
-                                      "
-                                    >
-                                      <FaCrown className="size-3" />
-                                      <span>Premium</span>
-                                    </div>
-                                  )}
-                                  {includedPlans.includes('Pro') && (
-                                    <div
-                                      className="
-                                        inline-flex items-center gap-1
-                                        rounded-full border border-blue-400
-                                        bg-blue-500/20 px-3 py-1.5 text-sm
-                                        font-medium text-blue-400
-                                      "
-                                    >
-                                      <FaStar className="size-3" />
-                                      <span>Pro</span>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          )}
                           {(_hasPurchasable || course.individualPrice) && (
                             <div className="space-y-1">
                               <p className="text-2xl font-bold text-foreground">
@@ -3048,36 +3027,231 @@ export default function CourseDetails({
         >
           <div
             className="
-              relative w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl
+              relative w-full max-w-md overflow-hidden rounded-2xl border
+              shadow-2xl
             "
+            style={{
+              backgroundColor: '#061c37',
+              borderColor: '#1d283a',
+              borderWidth: '1px',
+            }}
           >
-            <button
-              type="button"
-              aria-label="Cerrar"
-              onClick={() => setShowPaymentModal(false)}
-              className="
-                absolute top-3 right-3 rounded-full p-1 text-gray-500 transition
-                hover:bg-gray-100 hover:text-gray-700
-              "
-            >
-              <FaTimes className="size-5" />
-            </button>
-            <div className="space-y-3 pt-2 text-center">
-              <h3 className="text-xl font-semibold text-gray-900">
-                Completa tu compra
-              </h3>
-              <p className="text-sm text-gray-600">
-                Curso:{' '}
-                <span className="font-semibold">
-                  {courseProduct.description}
-                </span>
-              </p>
-            </div>
-            <div className="mt-4">
+            {/* Imagen de portada + título */}
+            {coverImageUrl && (
+              <div
+                className="relative h-28 w-full overflow-hidden"
+                style={{
+                  backgroundImage: `url(${coverImageUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center top',
+                }}
+              >
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      'linear-gradient(to top, rgba(6,28,55,1) 0%, rgba(6,28,55,0.8) 45%, rgba(6,28,55,0.3) 100%)',
+                  }}
+                />
+                {isSignedIn ? (
+                  <div className="absolute right-4 bottom-3 left-4">
+                    <div
+                      className="
+                        space-y-0.5 text-center
+                        sm:text-left
+                      "
+                    >
+                      <h2
+                        className="
+                          line-clamp-1 text-sm leading-snug font-bold text-white
+                        "
+                      >
+                        {course.title}
+                      </h2>
+                      <p className="text-[11px] text-[#9fb3cc]">
+                        {course.instructorName || 'Artiefy Academy'}
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
+            <div className="space-y-3 px-4 pt-3 pb-4">
+              <button
+                type="button"
+                aria-label="Cerrar"
+                onClick={() => setShowPaymentModal(false)}
+                className="
+                  absolute top-3 right-3 rounded-full p-1 text-gray-400
+                  transition
+                  hover:bg-white/10 hover:text-white
+                "
+              >
+                <FaTimes className="size-5" />
+              </button>
+              {isSignedIn ? (
+                <div className="space-y-3">
+                  <div
+                    className="
+                      flex items-center gap-3 rounded-xl border border-[#1d283a]
+                      bg-[#0b223f] p-3
+                    "
+                  >
+                    <Image
+                      src={user?.imageUrl || '/artiefy-icon.png'}
+                      alt={user?.fullName?.trim() || 'Usuario Artiefy'}
+                      width={40}
+                      height={40}
+                      className="
+                        size-10 rounded-full object-cover ring-2
+                        ring-[#22c4d3]/30
+                      "
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-white">
+                        {user?.fullName?.trim() || 'Usuario Artiefy'}
+                      </p>
+                      <p className="truncate text-[11px] text-[#9fb3cc]">
+                        {user?.emailAddresses?.[0]?.emailAddress ||
+                          'correo@artiefy.com'}
+                      </p>
+                    </div>
+                    <span
+                      className="
+                        inline-flex items-center gap-1 rounded-full
+                        bg-[#10b981]/10 px-2 py-1 text-[10px] text-[#8ef3d1]
+                      "
+                    >
+                      <FaCheckCircle className="size-3" />
+                      Verificado
+                    </span>
+                  </div>
+
+                  <div
+                    className="
+                      overflow-hidden rounded-xl border border-[#1d283a]
+                      bg-[#09233f]
+                    "
+                  >
+                    <p
+                      className="
+                        border-b border-[#1d283a] px-3 py-2 text-[11px]
+                        font-semibold tracking-wide text-[#9fb3cc] uppercase
+                      "
+                    >
+                      Resumen de compra
+                    </p>
+                    <div className="space-y-2.5 p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-[#9fb3cc]">Curso</span>
+                        <span
+                          className="
+                            max-w-[220px] truncate text-xs font-medium
+                            text-white
+                          "
+                        >
+                          {course.title}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 text-[#9fb3cc]">
+                        <span className="inline-flex items-center gap-1 text-[10px]">
+                          {`${Math.max(
+                            1,
+                            Math.round(
+                              (course.lessons ?? []).reduce(
+                                (acc, lesson) => acc + (lesson.duration ?? 0),
+                                0
+                              ) / 60
+                            )
+                          )}h de contenido`}
+                        </span>
+                        <span className="inline-flex items-center gap-1 text-[10px]">
+                          {`${course.lessons?.length ?? 0} clases`}
+                        </span>
+                      </div>
+                      <div
+                        className="
+                          flex items-center justify-between border-t
+                          border-[#1d283a] pt-2
+                        "
+                      >
+                        <span className="text-xs font-medium text-white">
+                          Total
+                        </span>
+                        <span className="text-lg font-bold text-white">
+                          ${' '}
+                          {formatPrice(
+                            course.individualPrice ?? course.courseType?.price
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p
+                      className="
+                        mb-2 text-[11px] font-semibold tracking-wide
+                        text-[#9ec1dd] uppercase
+                      "
+                    >
+                      Metodo de pago
+                    </p>
+                    <div className="grid grid-cols-1 gap-2">
+                      <button
+                        type="button"
+                        className="
+                          flex items-center gap-2 rounded-xl border
+                          border-[#1f95b4] bg-[#0b3f5e] p-2.5 text-left
+                          text-[#d4f8ff]
+                        "
+                      >
+                        <FaCheck className="size-3.5" />
+                        <div>
+                          <p className="text-[11px] font-semibold">PayU</p>
+                          <p className="text-[10px] text-[#9fe8f4]">
+                            Tarjeta / PSE
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              {/* Header: título + instructor + precio */}
+              {!isSignedIn ? (
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm leading-tight font-semibold text-white">
+                      {course.title}
+                    </p>
+                    {course.instructorName && (
+                      <p className="mt-0.5 text-xs text-[#94A3B8]">
+                        {course.instructorName}
+                      </p>
+                    )}
+                  </div>
+                  {(_hasPurchasable || course.individualPrice) && (
+                    <div className="shrink-0 text-right">
+                      <p className="text-xl font-bold text-white">
+                        ${' '}
+                        {formatPrice(
+                          course.individualPrice ?? course.courseType?.price
+                        )}
+                      </p>
+                      <p className="text-xs text-[#94A3B8]">COP</p>
+                    </div>
+                  )}
+                </div>
+              ) : null}
               <PaymentForm
                 selectedProduct={courseProduct}
-                requireAuthOnSubmit={!isSignedIn}
+                requireAuthOnSubmit={false}
                 redirectUrlOnAuth=""
+                isIndividualPurchase={true}
+                submitLabel="Pagar con PayU"
+                showTitle={false}
+                variant="inline-course-card"
               />
             </div>
           </div>

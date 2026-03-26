@@ -11,12 +11,11 @@ export function validateFormData(
 ): ValidationErrors {
   const errors: ValidationErrors = {};
 
-  // Validar número telefónico: +57 + 10-11 dígitos, sin espacios
-  const phonePattern = /^\+57\d{10,11}$/;
+  // Validar número telefónico internacional (E.164): + y entre 7 y 15 dígitos
+  const phonePattern = /^\+\d{7,15}$/;
 
   if (!phonePattern.test(telephone)) {
-    errors.telephone =
-      'Formato de teléfono inválido. Debe ser +57 seguido de 10 o 11 dígitos, sin espacios.';
+    errors.telephone = 'Ingresa tu telefono';
   }
   if (!termsAndConditions || !privacyPolicy) {
     errors.termsAndConditions =

@@ -180,3 +180,251 @@
   display: flex;
   align-items: center; /* Alinea verticalmente los elementos dentro del label */
 }
+
+.form--course-card {
+  background: transparent;
+  box-shadow: none;
+  max-width: none;
+  padding: 0;
+  border-radius: 0;
+}
+
+.form--course-card .label {
+  margin-bottom: 0;
+}
+
+.form--course-card .input-field {
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid rgba(55, 90, 130, 0.65);
+  background-color: #102543;
+  color: #dbeafe;
+  text-indent: 12px;
+  font-size: 11px;
+  padding-right: 32px;
+}
+
+.form--course-card .input-field::placeholder {
+  color: #94a3b8;
+}
+
+.form--course-card .input-field:hover {
+  border-color: #22c4d3;
+}
+
+.form--course-card .input-field:focus,
+.form--course-card .input-field:not(:placeholder-shown) {
+  background-color: #102543;
+  border-color: #22c4d3;
+  box-shadow: 0 0 0 1px rgba(34, 196, 211, 0.15);
+}
+
+.form--course-card .input-field:-webkit-autofill,
+.form--course-card .input-field:-webkit-autofill:hover,
+.form--course-card .input-field:-webkit-autofill:focus,
+.form--course-card .input-field:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #102543 inset !important;
+  -webkit-text-fill-color: #dbeafe !important;
+  caret-color: #22c4d3;
+}
+
+.form--course-card .label svg {
+  color: #8aa0b8;
+  font-size: 11px;
+}
+
+.form--course-card .label > svg,
+.form--course-card .course-card-phone-row svg {
+  right: 11px;
+}
+
+.form--course-card .label-checkbox {
+  align-items: flex-start;
+}
+
+.form--course-card .label-checkbox--inline {
+  gap: 6px;
+}
+
+.form--course-card .label-checkbox input {
+  margin-top: 2px;
+  transform: scale(0.9);
+}
+
+.form--course-card .checkbox-title {
+  color: #8aa0b8;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.form--course-card .checkbox-title--inline {
+  font-size: 9px;
+  line-height: 1.2;
+  margin-left: 0;
+  display: inline-block;
+  padding-top: 2px;
+}
+
+.form--course-card .error-message {
+  color: #fca5a5;
+  font-size: 10px;
+}
+
+.course-card-benefits {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 10px;
+  margin-bottom: 0;
+  color: #93c5fd;
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.course-card-phone-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 6px;
+}
+
+.course-card-required-indicator {
+  pointer-events: none;
+  position: absolute;
+  top: -8px;
+  right: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(55, 90, 130, 0.65);
+}
+
+.course-card-country-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid rgba(55, 90, 130, 0.65);
+  background: #102543;
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.course-card-country-select-wrap {
+  position: relative;
+  height: 36px;
+}
+
+/* Display visual: muestra bandera + código de marcación */
+.course-card-country-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 36px;
+  border-radius: 9999px;
+  border: 1px solid rgba(55, 90, 130, 0.65);
+  background: #102543;
+  padding: 0 6px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.course-card-country-selected-flag {
+  font-size: 14px;
+  line-height: 1;
+  position: relative;
+  top: -2px;
+}
+
+.course-card-country-dial-code {
+  color: #cbd5e1;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.course-card-country-chevron {
+  color: #8aa0b8;
+  font-size: 9px;
+  line-height: 1;
+}
+
+/* Select nativo invisible superpuesto — mantiene interactividad y abre el dropdown del SO */
+.course-card-country-select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  background: #0d2d4c;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.course-card-country-select option {
+  background-color: #0d2d4c;
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+.course-card-country-select:focus + .course-card-country-display,
+.course-card-country-select:focus-visible ~ .course-card-country-display {
+  outline: none;
+  border-color: #22c4d3;
+  box-shadow: 0 0 0 1px rgba(34, 196, 211, 0.2);
+}
+
+.course-card-phone-input {
+  padding-right: 30px;
+}
+
+.security-message--inline {
+  color: #94a3b8;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.security-message--inline .lock-icon {
+  margin-right: 5px;
+  font-size: 11px;
+}
+
+.form .checkout-btn.checkout-btn--inline {
+  min-height: 36px;
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  color: #03101b;
+  background: #22c4d3;
+  gap: 4px;
+}
+
+.form .checkout-btn.checkout-btn--inline svg {
+  font-size: 12px;
+  color: inherit;
+}
+
+.form .checkout-btn.checkout-btn--inline:hover {
+  color: #000a14;
+  border: 2px solid transparent;
+  background: #22c4d3;
+}
+
+.form .checkout-btn.checkout-btn--inline:hover svg {
+  color: #000a14;
+}
+
+.form .checkout-btn.checkout-btn--inline:disabled,
+.form .checkout-btn.checkout-btn--inline:disabled:hover {
+  background: #22c4d3;
+  color: #03101b;
+  cursor: not-allowed;
+}
+
+.form .checkout-btn.checkout-btn--inline:disabled svg,
+.form .checkout-btn.checkout-btn--inline:disabled:hover svg {
+  color: inherit;
+}
