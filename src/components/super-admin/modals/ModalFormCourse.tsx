@@ -103,6 +103,7 @@ interface CourseFormProps {
     name: string;
     description: string | null;
   }[];
+  userRole?: string;
 }
 
 // Interfaz para los niveles
@@ -179,6 +180,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   certificationTypeId,
   setCertificationTypeId,
   certificationTypes = [],
+  userRole,
 }) => {
   const [file, setFile] = useState<File | null>(null as File | null); // Estado para el archivo
   const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
@@ -263,7 +265,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       id: number;
       name: string;
       description: string | null;
-      numberOfActivities?: number;
+      parametros: {
+        id: number;
+        name: string;
+        description: string;
+        porcentaje: number;
+        numberOfActivities: number;
+      }[];
     }[]
   >([]);
   const [selectedParametroId, setSelectedParametroId] = useState<number | null>(
@@ -688,15 +696,21 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     // Aquí iría la lógica para cargar los parámetros de la plantilla
     const selectedTemplate = existingTemplates.find((t) => t.id === templateId);
     if (selectedTemplate) {
-      setParametrosAction([
-        {
+      if (selectedTemplate.parametros.length === 0) {
+        toast.error('La plantilla seleccionada no tiene parámetros');
+        setSelectedTemplateId(null);
+        return;
+      }
+
+      setParametrosAction(
+        selectedTemplate.parametros.map((parametro) => ({
           id: 0,
-          name: selectedTemplate.name,
-          description: selectedTemplate.description ?? '',
-          porcentaje: 100,
-          numberOfActivities: selectedTemplate.numberOfActivities ?? 1,
-        },
-      ]);
+          name: parametro.name,
+          description: parametro.description,
+          porcentaje: parametro.porcentaje,
+          numberOfActivities: parametro.numberOfActivities ?? 1,
+        }))
+      );
       toast.success(`Plantilla "${selectedTemplate.name}" seleccionada`);
       setSelectedTemplateId(null);
     }
@@ -1301,7 +1315,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               md:text-4xl
             "
           >
-            {editingCourseId ? 'Editar Curso' : 'Crear Curso'}
+            {userRole === 'educador'
+              ? 'Editar Parámetros de Evaluación'
+              : editingCourseId
+                ? 'Editar Curso'
+                : 'Crear Curso'}
           </DialogTitle>
           <DialogDescription
             className="
@@ -1309,9 +1327,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               md:text-xl
             "
           >
-            {editingCourseId
-              ? 'Edita los detalles del curso'
-              : ' los detalles para crear un nuevo curso'}
+            {userRole === 'educador'
+              ? 'Edita los parámetros de evaluación del curso'
+              : editingCourseId
+                ? 'Edita los detalles del curso'
+                : ' los detalles para crear un nuevo curso'}
           </DialogDescription>
         </DialogHeader>
         <div
@@ -1326,665 +1346,689 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
               md:space-y-4
             "
           >
-            <div>
-              <label
-                htmlFor="title"
-                className="
-                  text-sm font-medium text-primary
-                  md:text-lg
-                "
-              >
-                Título
-              </label>
-              <input
-                type="text"
-                placeholder="Título"
-                value={title}
-                onChange={(e) => handleFieldChange('title', e.target.value)}
-                className={`
-                  mt-1 w-full rounded border p-2 text-sm text-white outline-none
-                  md:text-base
-                  ${errors.title ? 'border-red-500' : 'border-primary'}
-                `}
-              />
-              {errors.title && (
-                <p
-                  className="
-                    text-xs text-red-500
-                    md:text-sm
-                  "
-                >
-                  Este campo es obligatorio.
-                </p>
-              )}
-            </div>
-            <div>
-              <label
-                htmlFor="description"
-                className="
-                  text-sm font-medium text-primary
-                  md:text-lg
-                "
-              >
-                Descripción
-              </label>
-              <textarea
-                placeholder="Descripción"
-                value={description}
-                onChange={(e) =>
-                  handleFieldChange('description', e.target.value)
-                }
-                className={`
-                  mt-1 w-full rounded border p-2 text-sm text-white outline-none
-                  md:text-base
-                  ${errors.description ? 'border-red-500' : 'border-primary'}
-                `}
-                rows={4}
-              />
-              {errors.description && (
-                <p
-                  className="
-                    text-xs text-red-500
-                    md:text-sm
-                  "
-                >
-                  Este campo es obligatorio.
-                </p>
-              )}
-            </div>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
-              <div className="w-full">
-                <label
-                  className="
-                    text-sm font-medium text-primary
-                    md:text-lg
-                  "
-                >
-                  Nivel
-                </label>
-                <select
-                  className="
-                    mt-1 w-full rounded border bg-background p-2 text-sm
-                    text-white
-                    md:text-base
-                  "
-                  value={nivelid}
-                  onChange={(e) => setNivelid(Number(e.target.value))}
-                >
-                  {niveles.map((nivel) => (
-                    <option key={nivel.id} value={nivel.id}>
-                      {nivel.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.nivelid && (
-                  <p className="text-sm text-red-500">
-                    Este campo es obligatorio.
-                  </p>
-                )}
-              </div>
-              <div className="w-full">
-                <label
-                  className="
-                    text-sm font-medium text-primary
-                    md:text-lg
-                  "
-                >
-                  Modalidad
-                </label>
-                <select
-                  className="
-                    mt-1 w-full rounded border bg-background p-2 text-sm
-                    text-white
-                    md:text-base
-                  "
-                  value={modalidadesid}
-                  onChange={(e) => setModalidadesid(Number(e.target.value))}
-                >
-                  {modalidades.map((modalidad) => (
-                    <option key={modalidad.id} value={modalidad.id}>
-                      {modalidad.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.modalidadesid && (
-                  <p className="text-sm text-red-500">
-                    Este campo es obligatorio.
-                  </p>
-                )}
-              </div>
-              <div className="w-full">
-                <label
-                  className="
-                    text-sm font-medium text-primary
-                    md:text-lg
-                  "
-                >
-                  Categoría
-                </label>
-                <select
-                  className="
-                    mt-1 w-full rounded border bg-background p-2 text-sm
-                    text-white
-                    md:text-base
-                  "
-                  value={categoryid}
-                  onChange={(e) => setCategoryid(Number(e.target.value))}
-                >
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.categoryid && (
-                  <p className="text-sm text-red-500">
-                    Este campo es obligatorio.
-                  </p>
-                )}
-              </div>
-              <div className="w-full">
-                <label
-                  className="
-                    text-sm font-medium text-primary
-                    md:text-lg
-                  "
-                >
-                  Horario
-                </label>
-                <select
-                  className="
-                    mt-1 w-full rounded border bg-background p-2 text-sm
-                    text-white
-                    md:text-base
-                  "
-                  value={selectedScheduleId ?? ''}
-                  onChange={(e) =>
-                    setSelectedScheduleId(e.target.value || null)
-                  }
-                >
-                  <option value="">Seleccionar horario</option>
-                  {scheduleOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="w-full">
-                <label
-                  className="
-                    text-sm font-medium text-primary
-                    md:text-lg
-                  "
-                >
-                  Espacios
-                </label>
-                <select
-                  className="
-                    mt-1 w-full rounded border bg-background p-2 text-sm
-                    text-white
-                    md:text-base
-                  "
-                  value={selectedSpaceId ?? ''}
-                  onChange={(e) => setSelectedSpaceId(e.target.value || null)}
-                >
-                  <option value="">Seleccionar espacio</option>
-                  {spaceOptions.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="w-full">
-                <label
-                  className="
-                    text-sm font-medium text-primary
-                    md:text-lg
-                  "
-                >
-                  Tipo de Certificación
-                </label>
-                <select
-                  className="
-                    mt-1 w-full rounded border bg-background p-2 text-sm
-                    text-white
-                    md:text-base
-                  "
-                  value={localCertificationTypeId ?? ''}
-                  onChange={(e) => {
-                    const newValue = e.target.value
-                      ? Number(e.target.value)
-                      : null;
-                    setLocalCertificationTypeId(newValue);
-                    setCertificationTypeId(newValue);
-                  }}
-                  disabled={isLoadingCertifications}
-                >
-                  <option value="">
-                    {isLoadingCertifications
-                      ? 'Cargando...'
-                      : 'Seleccionar tipo de certificación'}
-                  </option>
-                  {localCertificationTypes.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {userRole !== 'educador' && (
               <>
-                <div className="w-full">
+                <div>
                   <label
+                    htmlFor="title"
                     className="
                       text-sm font-medium text-primary
                       md:text-lg
                     "
                   >
-                    Tipo de Curso
+                    Título
                   </label>
-                  <CourseTypeDropdown
-                    courseTypeId={courseTypeId}
-                    setCourseTypeId={setCourseTypeId}
+                  <input
+                    type="text"
+                    placeholder="Título"
+                    value={title}
+                    onChange={(e) => handleFieldChange('title', e.target.value)}
+                    className={`
+                      mt-1 w-full rounded border p-2 text-sm text-white
+                      outline-none
+                      md:text-base
+                      ${errors.title ? 'border-red-500' : 'border-primary'}
+                    `}
                   />
-                </div>
-                {errors.courseTypeId && (
-                  <p className="text-sm text-red-500">
-                    Este campo es obligatorio.
-                  </p>
-                )}
-                {safeCourseTypeId.includes(4) && (
-                  <div className="w-full">
-                    <label className="text-sm font-medium text-primary md:text-lg">
-                      Precio Individual
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="Ingrese el precio"
-                      value={individualPrice ?? ''}
-                      onChange={(e) =>
-                        setIndividualPrice(Number(e.target.value))
-                      }
+                  {errors.title && (
+                    <p
                       className="
-                        mt-1 w-full rounded border border-primary p-2 text-sm
-                        text-white
-                        md:text-base
-                      "
-                    />
-                  </div>
-                )}
-
-                <div className="w-full">
-                  <label
-                    className="
-                      text-sm font-medium text-primary
-                      md:text-lg
-                    "
-                  >
-                    Estado del Curso
-                  </label>
-                  <ActiveDropdown
-                    isActive={isActive}
-                    setIsActive={setIsActive}
-                  />
-                </div>
-              </>
-            </div>
-            <div>
-              <label
-                htmlFor="rating"
-                className="
-                  text-sm font-medium text-primary
-                  md:text-lg
-                "
-              >
-                Rating
-              </label>
-              <Input
-                type="number"
-                min="0"
-                max="5"
-                step="0.1"
-                placeholder="0-5"
-                className="
-                  mt-1 w-full rounded border border-primary p-2 text-sm
-                  text-white outline-none
-                  focus:no-underline
-                  md:text-base
-                "
-                value={isNaN(rating) ? '' : rating}
-                onChange={(e) => setRating(Number(e.target.value))}
-              />
-            </div>
-            <div className="mb-4">
-              <label
-                htmlFor="instructors"
-                className="
-                  text-sm font-medium text-primary
-                  md:text-lg
-                "
-              >
-                Instructores (Múltiples)
-              </label>
-              <Select
-                id="instructors"
-                isMulti
-                value={educators
-                  .filter((e) => instructors.includes(e.id))
-                  .map((e) => ({ value: e.id, label: e.name }))}
-                onChange={(
-                  selectedOptions: MultiValue<{ value: string; label: string }>
-                ) => {
-                  const selectedIds = selectedOptions.map((opt) => opt.value);
-                  setInstructors(selectedIds);
-                }}
-                options={educators.map((educator) => ({
-                  value: educator.id,
-                  label: educator.name,
-                }))}
-                placeholder="Seleccionar instructores..."
-                className="mt-1"
-                classNamePrefix="react-select"
-                styles={{
-                  control: (base) => ({
-                    ...base,
-                    backgroundColor: '#0a1628',
-                    borderColor: 'hsl(var(--primary))',
-                    color: 'white',
-                    minHeight: '42px',
-                  }),
-                  input: (base) => ({
-                    ...base,
-                    color: 'white',
-                  }),
-                  placeholder: (base) => ({
-                    ...base,
-                    color: 'hsl(var(--muted-foreground))',
-                  }),
-                  singleValue: (base) => ({
-                    ...base,
-                    color: 'white',
-                  }),
-                  menu: (base) => ({
-                    ...base,
-                    backgroundColor: '#0a1628',
-                    border: '1px solid hsl(var(--primary))',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
-                  }),
-                  menuList: (base) => ({
-                    ...base,
-                    backgroundColor: '#0a1628',
-                    padding: 0,
-                  }),
-                  option: (base, state) => ({
-                    ...base,
-                    backgroundColor: state.isFocused
-                      ? 'hsl(var(--primary) / 0.2)'
-                      : state.isSelected
-                        ? 'hsl(var(--primary) / 0.4)'
-                        : '#0a1628',
-                    color: 'white',
-                    cursor: 'pointer',
-                    ':active': {
-                      backgroundColor: 'hsl(var(--primary) / 0.3)',
-                    },
-                  }),
-                  multiValue: (base) => ({
-                    ...base,
-                    backgroundColor: 'hsl(var(--primary) / 0.3)',
-                    borderRadius: '4px',
-                  }),
-                  multiValueLabel: (base) => ({
-                    ...base,
-                    color: 'white',
-                    padding: '2px 6px',
-                  }),
-                  multiValueRemove: (base) => ({
-                    ...base,
-                    color: 'white',
-                    ':hover': {
-                      backgroundColor: 'hsl(var(--destructive))',
-                      color: 'white',
-                    },
-                  }),
-                }}
-              />
-            </div>
-
-            <div
-              className="
-                w-full px-2
-                md:px-0
-              "
-            >
-              <label
-                className="
-                  text-sm font-medium text-primary
-                  md:text-lg
-                "
-              >
-                Imagen de portada
-              </label>
-              <div
-                className={`
-                  mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4
-                  md:w-[80%] md:p-8
-                  ${
-                    isDragging
-                      ? 'border-blue-500 bg-blue-50'
-                      : errors.file
-                        ? 'border-red-500 bg-red-50'
-                        : 'border-gray-300 bg-gray-50'
-                  }
-                `}
-              >
-                <div className="text-center text-white">
-                  {!file && (coverVideoCourseKey || coverImage) ? (
-                    <div
-                      className="
-                        relative overflow-hidden rounded-lg bg-gray-800
+                        text-xs text-red-500
+                        md:text-sm
                       "
                     >
-                      {coverVideoCourseKey ? (
-                        <video
-                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverVideoCourseKey}`}
-                          controls
-                          className="h-48 w-full object-cover"
-                        />
-                      ) : (
-                        <Image
-                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImage}`}
-                          alt="current cover"
-                          width={500}
-                          height={200}
-                          className="h-48 w-full object-cover"
-                        />
-                      )}
-                      <button
-                        onClick={() => {
-                          setCoverImage(null);
-                          setCoverVideoCourseKey(null);
-                          setErrors((prev) => ({ ...prev, file: true }));
-                        }}
-                        className="
-                          absolute top-2 right-2 z-20 rounded-full bg-red-600
-                          p-1 text-white
-                          hover:bg-red-400
-                        "
-                      >
-                        <MdClose className="z-20 size-5" />
-                      </button>
-                    </div>
-                  ) : !file ? (
-                    <>
-                      <FiUploadCloud
-                        className={`
-                          mx-auto size-12
-                          ${errors.file ? 'text-red-500' : 'text-primary'}
-                        `}
-                      />
-                      <h2 className="mt-4 text-xl font-medium">
-                        Sube una imagen o video
-                      </h2>
-                      <p className="mt-2 text-sm text-gray-300">
-                        Arrastra o haz clic para seleccionar un archivo desde tu
-                        computadora
-                      </p>
-                      <p className="mt-1 text-xs text-gray-400">
-                        Formatos soportados: JPG, PNG, MP4, MOV
-                      </p>
-                      <input
-                        type="file"
-                        accept="image/*,video/*"
-                        className="hidden"
-                        onChange={handleFileChange}
-                        id="file-upload"
-                      />
-                      <label
-                        htmlFor="file-upload"
-                        className={`
-                          mt-4 inline-block cursor-pointer rounded-md
-                          bg-blue-600 px-4 py-2 text-sm font-medium text-white
-                          hover:bg-blue-700
-                        `}
-                      >
-                        Seleccionar Archivo
-                      </label>
-                    </>
-                  ) : (
-                    <div className="relative rounded-lg bg-gray-900 p-2">
-                      {file.type.startsWith('video/') ? (
-                        <>
-                          <video
-                            id="video-player"
-                            src={URL.createObjectURL(file)}
-                            controls
-                            className="mx-auto h-48 w-full rounded object-cover"
-                          />
-                          <div className="mt-4 space-y-3 text-left">
-                            <label className="block text-sm font-medium">
-                              Portada del video
-                            </label>
-                            <div
-                              className="
-                                flex flex-col items-start gap-3
-                                md:flex-row md:items-center
-                              "
-                            >
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFrameImageChange}
-                                className="text-sm text-white"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const video = document.getElementById(
-                                    'video-player'
-                                  ) as HTMLVideoElement | null;
-                                  if (!video) return;
-                                  const canvas =
-                                    document.createElement('canvas');
-                                  canvas.width = video.videoWidth;
-                                  canvas.height = video.videoHeight;
-                                  const ctx = canvas.getContext('2d');
-                                  if (ctx) {
-                                    ctx.drawImage(
-                                      video,
-                                      0,
-                                      0,
-                                      canvas.width,
-                                      canvas.height
-                                    );
-                                    canvas.toBlob((blob) => {
-                                      if (blob) {
-                                        const captured = new File(
-                                          [blob],
-                                          'captura.jpg',
-                                          { type: 'image/jpeg' }
-                                        );
-                                        setFrameImageFile(captured);
-                                        toast.success(
-                                          'Frame capturado correctamente'
-                                        );
-                                      }
-                                    }, 'image/jpeg');
-                                  }
-                                }}
-                                className="
-                                  rounded bg-green-600 px-3 py-1 text-sm
-                                  text-white
-                                  hover:bg-green-700
-                                "
-                              >
-                                Capturar Frame del Video
-                              </button>
-                            </div>
-
-                            {frameImageFile && (
-                              <div className="mt-3 flex flex-col items-start gap-2">
-                                <p className="text-sm text-gray-300">
-                                  Frame seleccionado: {frameImageFile.name}
-                                </p>
-                                <Image
-                                  src={URL.createObjectURL(frameImageFile)}
-                                  alt="preview frame"
-                                  width={200}
-                                  height={100}
-                                  className="
-                                    rounded border border-gray-600 object-cover
-                                  "
-                                />
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      ) : (
-                        <Image
-                          src={URL.createObjectURL(file)}
-                          alt="preview"
-                          width={500}
-                          height={200}
-                          className="h-48 w-full rounded object-cover"
-                        />
-                      )}
-
-                      <button
-                        onClick={() => {
-                          setFile(null);
-                          setFileName(null);
-                          setFileSize(null);
-                          setErrors((prev) => ({ ...prev, file: true }));
-                        }}
-                        className="
-                          absolute top-2 right-2 z-20 rounded-full bg-red-600
-                          p-1 text-white
-                          hover:bg-red-400
-                        "
-                      >
-                        <MdClose className="z-20 size-5" />
-                      </button>
-
-                      <div
-                        className="
-                          flex justify-between px-2 pt-2 text-sm text-gray-400
-                        "
-                      >
-                        <p className="truncate">{fileName}</p>
-                        <p>{((fileSize ?? 0) / 1024).toFixed(2)} KB</p>
-                      </div>
-                    </div>
-                  )}
-                  {errors.file && (
-                    <p className="mt-2 text-sm text-red-400">
                       Este campo es obligatorio.
                     </p>
                   )}
                 </div>
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="
+                      text-sm font-medium text-primary
+                      md:text-lg
+                    "
+                  >
+                    Descripción
+                  </label>
+                  <textarea
+                    placeholder="Descripción"
+                    value={description}
+                    onChange={(e) =>
+                      handleFieldChange('description', e.target.value)
+                    }
+                    className={`
+                      mt-1 w-full rounded border p-2 text-sm text-white
+                      outline-none
+                      md:text-base
+                      ${errors.description ? 'border-red-500' : 'border-primary'}
+                    `}
+                    rows={4}
+                  />
+                  {errors.description && (
+                    <p
+                      className="
+                        text-xs text-red-500
+                        md:text-sm
+                      "
+                    >
+                      Este campo es obligatorio.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+            {userRole !== 'educador' && (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                <div className="w-full">
+                  <label
+                    className="
+                      text-sm font-medium text-primary
+                      md:text-lg
+                    "
+                  >
+                    Nivel
+                  </label>
+                  <select
+                    className="
+                      mt-1 w-full rounded border bg-background p-2 text-sm
+                      text-white
+                      md:text-base
+                    "
+                    value={nivelid}
+                    onChange={(e) => setNivelid(Number(e.target.value))}
+                  >
+                    {niveles.map((nivel) => (
+                      <option key={nivel.id} value={nivel.id}>
+                        {nivel.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.nivelid && (
+                    <p className="text-sm text-red-500">
+                      Este campo es obligatorio.
+                    </p>
+                  )}
+                </div>
+                <div className="w-full">
+                  <label
+                    className="
+                      text-sm font-medium text-primary
+                      md:text-lg
+                    "
+                  >
+                    Modalidad
+                  </label>
+                  <select
+                    className="
+                      mt-1 w-full rounded border bg-background p-2 text-sm
+                      text-white
+                      md:text-base
+                    "
+                    value={modalidadesid}
+                    onChange={(e) => setModalidadesid(Number(e.target.value))}
+                  >
+                    {modalidades.map((modalidad) => (
+                      <option key={modalidad.id} value={modalidad.id}>
+                        {modalidad.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.modalidadesid && (
+                    <p className="text-sm text-red-500">
+                      Este campo es obligatorio.
+                    </p>
+                  )}
+                </div>
+                <div className="w-full">
+                  <label
+                    className="
+                      text-sm font-medium text-primary
+                      md:text-lg
+                    "
+                  >
+                    Categoría
+                  </label>
+                  <select
+                    className="
+                      mt-1 w-full rounded border bg-background p-2 text-sm
+                      text-white
+                      md:text-base
+                    "
+                    value={categoryid}
+                    onChange={(e) => setCategoryid(Number(e.target.value))}
+                  >
+                    {categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.categoryid && (
+                    <p className="text-sm text-red-500">
+                      Este campo es obligatorio.
+                    </p>
+                  )}
+                </div>
+                <div className="w-full">
+                  <label
+                    className="
+                      text-sm font-medium text-primary
+                      md:text-lg
+                    "
+                  >
+                    Horario
+                  </label>
+                  <select
+                    className="
+                      mt-1 w-full rounded border bg-background p-2 text-sm
+                      text-white
+                      md:text-base
+                    "
+                    value={selectedScheduleId ?? ''}
+                    onChange={(e) =>
+                      setSelectedScheduleId(e.target.value || null)
+                    }
+                  >
+                    <option value="">Seleccionar horario</option>
+                    {scheduleOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="w-full">
+                  <label
+                    className="
+                      text-sm font-medium text-primary
+                      md:text-lg
+                    "
+                  >
+                    Espacios
+                  </label>
+                  <select
+                    className="
+                      mt-1 w-full rounded border bg-background p-2 text-sm
+                      text-white
+                      md:text-base
+                    "
+                    value={selectedSpaceId ?? ''}
+                    onChange={(e) => setSelectedSpaceId(e.target.value || null)}
+                  >
+                    <option value="">Seleccionar espacio</option>
+                    {spaceOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="w-full">
+                  <label
+                    className="
+                      text-sm font-medium text-primary
+                      md:text-lg
+                    "
+                  >
+                    Tipo de Certificación
+                  </label>
+                  <select
+                    className="
+                      mt-1 w-full rounded border bg-background p-2 text-sm
+                      text-white
+                      md:text-base
+                    "
+                    value={localCertificationTypeId ?? ''}
+                    onChange={(e) => {
+                      const newValue = e.target.value
+                        ? Number(e.target.value)
+                        : null;
+                      setLocalCertificationTypeId(newValue);
+                      setCertificationTypeId(newValue);
+                    }}
+                    disabled={isLoadingCertifications}
+                  >
+                    <option value="">
+                      {isLoadingCertifications
+                        ? 'Cargando...'
+                        : 'Seleccionar tipo de certificación'}
+                    </option>
+                    {localCertificationTypes.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <>
+                  <div className="w-full">
+                    <label
+                      className="
+                        text-sm font-medium text-primary
+                        md:text-lg
+                      "
+                    >
+                      Tipo de Curso
+                    </label>
+                    <CourseTypeDropdown
+                      courseTypeId={courseTypeId}
+                      setCourseTypeId={setCourseTypeId}
+                    />
+                  </div>
+                  {errors.courseTypeId && (
+                    <p className="text-sm text-red-500">
+                      Este campo es obligatorio.
+                    </p>
+                  )}
+                  {safeCourseTypeId.includes(4) && (
+                    <div className="w-full">
+                      <label className="text-sm font-medium text-primary md:text-lg">
+                        Precio Individual
+                      </label>
+                      <input
+                        type="number"
+                        placeholder="Ingrese el precio"
+                        value={individualPrice ?? ''}
+                        onChange={(e) =>
+                          setIndividualPrice(Number(e.target.value))
+                        }
+                        className="
+                          mt-1 w-full rounded border border-primary p-2 text-sm
+                          text-white
+                          md:text-base
+                        "
+                      />
+                    </div>
+                  )}
+
+                  <div className="w-full">
+                    <label
+                      className="
+                        text-sm font-medium text-primary
+                        md:text-lg
+                      "
+                    >
+                      Estado del Curso
+                    </label>
+                    <ActiveDropdown
+                      isActive={isActive}
+                      setIsActive={setIsActive}
+                    />
+                  </div>
+                </>
               </div>
-            </div>
+            )}
+            {userRole !== 'educador' && (
+              <div>
+                <label
+                  htmlFor="rating"
+                  className="
+                    text-sm font-medium text-primary
+                    md:text-lg
+                  "
+                >
+                  Rating
+                </label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  placeholder="0-5"
+                  className="
+                    mt-1 w-full rounded border border-primary p-2 text-sm
+                    text-white outline-none
+                    focus:no-underline
+                    md:text-base
+                  "
+                  value={isNaN(rating) ? '' : rating}
+                  onChange={(e) => setRating(Number(e.target.value))}
+                />
+              </div>
+            )}
+            {userRole !== 'educador' && (
+              <div className="mb-4">
+                <label
+                  htmlFor="instructors"
+                  className="
+                    text-sm font-medium text-primary
+                    md:text-lg
+                  "
+                >
+                  Instructores (Múltiples)
+                </label>
+                <Select
+                  id="instructors"
+                  isMulti
+                  value={educators
+                    .filter((e) => instructors.includes(e.id))
+                    .map((e) => ({ value: e.id, label: e.name }))}
+                  onChange={(
+                    selectedOptions: MultiValue<{
+                      value: string;
+                      label: string;
+                    }>
+                  ) => {
+                    const selectedIds = selectedOptions.map((opt) => opt.value);
+                    setInstructors(selectedIds);
+                  }}
+                  options={educators.map((educator) => ({
+                    value: educator.id,
+                    label: educator.name,
+                  }))}
+                  placeholder="Seleccionar instructores..."
+                  className="mt-1"
+                  classNamePrefix="react-select"
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      backgroundColor: '#0a1628',
+                      borderColor: 'hsl(var(--primary))',
+                      color: 'white',
+                      minHeight: '42px',
+                    }),
+                    input: (base) => ({
+                      ...base,
+                      color: 'white',
+                    }),
+                    placeholder: (base) => ({
+                      ...base,
+                      color: 'hsl(var(--muted-foreground))',
+                    }),
+                    singleValue: (base) => ({
+                      ...base,
+                      color: 'white',
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      backgroundColor: '#0a1628',
+                      border: '1px solid hsl(var(--primary))',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
+                    }),
+                    menuList: (base) => ({
+                      ...base,
+                      backgroundColor: '#0a1628',
+                      padding: 0,
+                    }),
+                    option: (base, state) => ({
+                      ...base,
+                      backgroundColor: state.isFocused
+                        ? 'hsl(var(--primary) / 0.2)'
+                        : state.isSelected
+                          ? 'hsl(var(--primary) / 0.4)'
+                          : '#0a1628',
+                      color: 'white',
+                      cursor: 'pointer',
+                      ':active': {
+                        backgroundColor: 'hsl(var(--primary) / 0.3)',
+                      },
+                    }),
+                    multiValue: (base) => ({
+                      ...base,
+                      backgroundColor: 'hsl(var(--primary) / 0.3)',
+                      borderRadius: '4px',
+                    }),
+                    multiValueLabel: (base) => ({
+                      ...base,
+                      color: 'white',
+                      padding: '2px 6px',
+                    }),
+                    multiValueRemove: (base) => ({
+                      ...base,
+                      color: 'white',
+                      ':hover': {
+                        backgroundColor: 'hsl(var(--destructive))',
+                        color: 'white',
+                      },
+                    }),
+                  }}
+                />
+              </div>
+            )}
+
+            {userRole !== 'educador' && (
+              <div
+                className="
+                  w-full px-2
+                  md:px-0
+                "
+              >
+                <label
+                  className="
+                    text-sm font-medium text-primary
+                    md:text-lg
+                  "
+                >
+                  Imagen de portada
+                </label>
+                <div
+                  className={`
+                    mx-auto mt-2 w-full rounded-lg border-2 border-dashed p-4
+                    md:w-[80%] md:p-8
+                    ${
+                      isDragging
+                        ? 'border-blue-500 bg-blue-50'
+                        : errors.file
+                          ? 'border-red-500 bg-red-50'
+                          : 'border-gray-300 bg-gray-50'
+                    }
+                  `}
+                >
+                  <div className="text-center text-white">
+                    {!file && (coverVideoCourseKey || coverImage) ? (
+                      <div
+                        className="
+                          relative overflow-hidden rounded-lg bg-gray-800
+                        "
+                      >
+                        {coverVideoCourseKey ? (
+                          <video
+                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverVideoCourseKey}`}
+                            controls
+                            className="h-48 w-full object-cover"
+                          />
+                        ) : (
+                          <Image
+                            src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImage}`}
+                            alt="current cover"
+                            width={500}
+                            height={200}
+                            className="h-48 w-full object-cover"
+                          />
+                        )}
+                        <button
+                          onClick={() => {
+                            setCoverImage(null);
+                            setCoverVideoCourseKey(null);
+                            setErrors((prev) => ({ ...prev, file: true }));
+                          }}
+                          className="
+                            absolute top-2 right-2 z-20 rounded-full bg-red-600
+                            p-1 text-white
+                            hover:bg-red-400
+                          "
+                        >
+                          <MdClose className="z-20 size-5" />
+                        </button>
+                      </div>
+                    ) : !file ? (
+                      <>
+                        <FiUploadCloud
+                          className={`
+                            mx-auto size-12
+                            ${errors.file ? 'text-red-500' : 'text-primary'}
+                          `}
+                        />
+                        <h2 className="mt-4 text-xl font-medium">
+                          Sube una imagen o video
+                        </h2>
+                        <p className="mt-2 text-sm text-gray-300">
+                          Arrastra o haz clic para seleccionar un archivo desde
+                          tu computadora
+                        </p>
+                        <p className="mt-1 text-xs text-gray-400">
+                          Formatos soportados: JPG, PNG, MP4, MOV
+                        </p>
+                        <input
+                          type="file"
+                          accept="image/*,video/*"
+                          className="hidden"
+                          onChange={handleFileChange}
+                          id="file-upload"
+                        />
+                        <label
+                          htmlFor="file-upload"
+                          className={`
+                            mt-4 inline-block cursor-pointer rounded-md
+                            bg-blue-600 px-4 py-2 text-sm font-medium text-white
+                            hover:bg-blue-700
+                          `}
+                        >
+                          Seleccionar Archivo
+                        </label>
+                      </>
+                    ) : (
+                      <div className="relative rounded-lg bg-gray-900 p-2">
+                        {file.type.startsWith('video/') ? (
+                          <>
+                            <video
+                              id="video-player"
+                              src={URL.createObjectURL(file)}
+                              controls
+                              className="
+                                mx-auto h-48 w-full rounded object-cover
+                              "
+                            />
+                            <div className="mt-4 space-y-3 text-left">
+                              <label className="block text-sm font-medium">
+                                Portada del video
+                              </label>
+                              <div
+                                className="
+                                  flex flex-col items-start gap-3
+                                  md:flex-row md:items-center
+                                "
+                              >
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={handleFrameImageChange}
+                                  className="text-sm text-white"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const video = document.getElementById(
+                                      'video-player'
+                                    ) as HTMLVideoElement | null;
+                                    if (!video) return;
+                                    const canvas =
+                                      document.createElement('canvas');
+                                    canvas.width = video.videoWidth;
+                                    canvas.height = video.videoHeight;
+                                    const ctx = canvas.getContext('2d');
+                                    if (ctx) {
+                                      ctx.drawImage(
+                                        video,
+                                        0,
+                                        0,
+                                        canvas.width,
+                                        canvas.height
+                                      );
+                                      canvas.toBlob((blob) => {
+                                        if (blob) {
+                                          const captured = new File(
+                                            [blob],
+                                            'captura.jpg',
+                                            { type: 'image/jpeg' }
+                                          );
+                                          setFrameImageFile(captured);
+                                          toast.success(
+                                            'Frame capturado correctamente'
+                                          );
+                                        }
+                                      }, 'image/jpeg');
+                                    }
+                                  }}
+                                  className="
+                                    rounded bg-green-600 px-3 py-1 text-sm
+                                    text-white
+                                    hover:bg-green-700
+                                  "
+                                >
+                                  Capturar Frame del Video
+                                </button>
+                              </div>
+
+                              {frameImageFile && (
+                                <div
+                                  className="
+                                  mt-3 flex flex-col items-start gap-2
+                                "
+                                >
+                                  <p className="text-sm text-gray-300">
+                                    Frame seleccionado: {frameImageFile.name}
+                                  </p>
+                                  <Image
+                                    src={URL.createObjectURL(frameImageFile)}
+                                    alt="preview frame"
+                                    width={200}
+                                    height={100}
+                                    className="
+                                      rounded border border-gray-600
+                                      object-cover
+                                    "
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <Image
+                            src={URL.createObjectURL(file)}
+                            alt="preview"
+                            width={500}
+                            height={200}
+                            className="h-48 w-full rounded object-cover"
+                          />
+                        )}
+
+                        <button
+                          onClick={() => {
+                            setFile(null);
+                            setFileName(null);
+                            setFileSize(null);
+                            setErrors((prev) => ({ ...prev, file: true }));
+                          }}
+                          className="
+                            absolute top-2 right-2 z-20 rounded-full bg-red-600
+                            p-1 text-white
+                            hover:bg-red-400
+                          "
+                        >
+                          <MdClose className="z-20 size-5" />
+                        </button>
+
+                        <div
+                          className="
+                            flex justify-between px-2 pt-2 text-sm text-gray-400
+                          "
+                        >
+                          <p className="truncate">{fileName}</p>
+                          <p>{((fileSize ?? 0) / 1024).toFixed(2)} KB</p>
+                        </div>
+                      </div>
+                    )}
+                    {errors.file && (
+                      <p className="mt-2 text-sm text-red-400">
+                        Este campo es obligatorio.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="mt-6 flex flex-col text-white">
               <p>
                 ¿Es calificable? {editingCourseId ? 'actualizar' : 'agregar'}{' '}
@@ -2288,7 +2332,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 ))}
               </div>
             )}
-            {isOpen && (
+            {isOpen && userRole !== 'educador' && (
               <div className="my-4 flex flex-col">
                 <label
                   htmlFor="subjects"

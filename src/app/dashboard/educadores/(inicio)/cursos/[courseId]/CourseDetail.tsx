@@ -1,5 +1,12 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -422,6 +429,13 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Ref para el contenedor de tabs con scroll horizontal
   const tabsRef = useRef<HTMLDivElement>(null);
+  const tabsDragStateRef = useRef({
+    hasDragged: false,
+    isDragging: false,
+    pointerId: null as number | null,
+    scrollLeft: 0,
+    startX: 0,
+  });
 
   // Estados para foros
   const [forums, setForums] = useState<Forum[]>([]);
@@ -2579,10 +2593,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     >
                       <span
                         className="
-                          inline-block
-                          animate-[bounce-left_2s_ease-in-out_infinite] text-lg
-                          font-bold
-                        "
+                        inline-block
+                        animate-[bounce-left_2s_ease-in-out_infinite] text-lg
+                        font-bold
+                      "
                       >
                         ‹
                       </span>
@@ -2606,10 +2620,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     >
                       <span
                         className="
-                          inline-block
-                          animate-[bounce-right_2s_ease-in-out_infinite] text-lg
-                          font-bold
-                        "
+                        inline-block
+                        animate-[bounce-right_2s_ease-in-out_infinite] text-lg
+                        font-bold
+                      "
                       >
                         ›
                       </span>
@@ -2617,163 +2631,271 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
                     <div
                       ref={tabsRef}
+                      onClickCapture={(
+                        event: ReactMouseEvent<HTMLDivElement>
+                      ) => {
+                        console.log('🔴 clickCapture', {
+                          hasDragged: tabsDragStateRef.current.hasDragged,
+                          tag: (event.target as HTMLElement).tagName,
+                          text: (
+                            event.target as HTMLElement
+                          ).textContent?.slice(0, 25),
+                          defaultPrevented: event.defaultPrevented,
+                        });
+                        if (!tabsDragStateRef.current.hasDragged) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        tabsDragStateRef.current.hasDragged = false;
+                      }}
+                      onPointerCancel={(
+                        event: ReactPointerEvent<HTMLDivElement>
+                      ) => {
+                        console.log('🟤 pointerCancel');
+                        const container = event.currentTarget;
+                        const dragState = tabsDragStateRef.current;
+                        if (
+                          dragState.pointerId !== null &&
+                          container.hasPointerCapture(dragState.pointerId)
+                        ) {
+                          container.releasePointerCapture(dragState.pointerId);
+                        }
+                        dragState.isDragging = false;
+                        dragState.pointerId = null;
+                      }}
+                      onPointerDown={(
+                        event: ReactPointerEvent<HTMLDivElement>
+                      ) => {
+                        console.log('🟡 pointerDown', {
+                          isPrimary: event.isPrimary,
+                          button: event.button,
+                          tag: (event.target as HTMLElement).tagName,
+                          text: (
+                            event.target as HTMLElement
+                          ).textContent?.slice(0, 25),
+                        });
+                        if (!event.isPrimary || event.button !== 0) return;
+                        const container = event.currentTarget;
+                        tabsDragStateRef.current.isDragging = true;
+                        tabsDragStateRef.current.hasDragged = false;
+                        tabsDragStateRef.current.pointerId = event.pointerId;
+                        tabsDragStateRef.current.startX = event.clientX;
+                        tabsDragStateRef.current.scrollLeft =
+                          container.scrollLeft;
+                      }}
+                      onPointerMove={(
+                        event: ReactPointerEvent<HTMLDivElement>
+                      ) => {
+                        const dragState = tabsDragStateRef.current;
+                        if (!dragState.isDragging) return;
+                        const deltaX = event.clientX - dragState.startX;
+                        if (!dragState.hasDragged && Math.abs(deltaX) > 8) {
+                          dragState.hasDragged = true;
+                          console.log('🔵 drag detectado deltaX:', deltaX);
+                        }
+                        if (!dragState.hasDragged) return;
+                        event.preventDefault();
+                        event.currentTarget.scrollLeft =
+                          dragState.scrollLeft - deltaX;
+                      }}
+                      onPointerUp={(
+                        _event: ReactPointerEvent<HTMLDivElement>
+                      ) => {
+                        const dragState = tabsDragStateRef.current;
+                        dragState.isDragging = false;
+                        dragState.pointerId = null;
+                      }}
                       className="
-                        scrollbar-none flex gap-2 overflow-x-auto scroll-smooth
-                        px-8 py-2
+                        scrollbar-none flex cursor-grab gap-2 overflow-x-auto
+                        scroll-smooth px-8 py-2
+                        active:cursor-grabbing
                         md:gap-3
                         lg:gap-4
                       "
                       style={{
-                        scrollbarWidth: 'none',
                         msOverflowStyle: 'none',
+                        scrollbarWidth: 'none',
+                        touchAction: 'pan-y',
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
                       }}
                     >
                       <button
-                        onClick={() => setActiveTab('lecciones')}
+                        onClick={(e) => {
+                          console.log('✅ CLICK lecciones', {
+                            defaultPrevented: e.defaultPrevented,
+                            hasDragged: tabsDragStateRef.current.hasDragged,
+                          });
+                          setActiveTab('lecciones');
+                        }}
                         className={`
                           rounded-full px-4 py-2 font-semibold whitespace-nowrap
                           transition-all duration-300
                           ${
                             activeTab === 'lecciones'
                               ? `
-                                bg-cyan-500/15 text-cyan-300
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-cyan-400/40
-                              `
+                            bg-cyan-500/15 text-cyan-300
+                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                            ring-cyan-400/40
+                          `
                               : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
+                            text-white/80
+                            hover:bg-white/5 hover:text-white
+                          `
                           }
                         `}
                       >
                         Lista de Clases
                       </button>
                       <button
-                        onClick={() => setActiveTab('en-vivo')}
+                        onClick={(e) => {
+                          console.log('✅ CLICK en-vivo', {
+                            defaultPrevented: e.defaultPrevented,
+                          });
+                          setActiveTab('en-vivo');
+                        }}
                         className={`
                           rounded-full px-4 py-2 font-semibold whitespace-nowrap
                           transition-all duration-300
                           ${
                             activeTab === 'en-vivo'
                               ? `
-                                bg-cyan-500/15 text-cyan-300
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-cyan-400/40
-                              `
+                            bg-cyan-500/15 text-cyan-300
+                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                            ring-cyan-400/40
+                          `
                               : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
+                            text-white/80
+                            hover:bg-white/5 hover:text-white
+                          `
                           }
                         `}
                       >
                         Clases en Vivo
                       </button>
                       <button
-                        onClick={() => setActiveTab('estudiantes')}
+                        onClick={(e) => {
+                          console.log('✅ CLICK estudiantes', {
+                            defaultPrevented: e.defaultPrevented,
+                          });
+                          setActiveTab('estudiantes');
+                        }}
                         className={`
                           rounded-full px-4 py-2 font-semibold whitespace-nowrap
                           transition-all duration-300
                           ${
                             activeTab === 'estudiantes'
                               ? `
-                                bg-cyan-500/15 text-cyan-300
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-cyan-400/40
-                              `
+                            bg-cyan-500/15 text-cyan-300
+                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                            ring-cyan-400/40
+                          `
                               : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
+                            text-white/80
+                            hover:bg-white/5 hover:text-white
+                          `
                           }
                         `}
                       >
                         Estudiantes
                       </button>
                       <button
-                        onClick={() => setActiveTab('grabadas')}
+                        onClick={(e) => {
+                          console.log('✅ CLICK grabadas', {
+                            defaultPrevented: e.defaultPrevented,
+                          });
+                          setActiveTab('grabadas');
+                        }}
                         className={`
                           rounded-full px-4 py-2 font-semibold whitespace-nowrap
                           transition-all duration-300
                           ${
                             activeTab === 'grabadas'
                               ? `
-                                bg-cyan-500/15 text-cyan-300
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-cyan-400/40
-                              `
+                            bg-cyan-500/15 text-cyan-300
+                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                            ring-cyan-400/40
+                          `
                               : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
+                            text-white/80
+                            hover:bg-white/5 hover:text-white
+                          `
                           }
                         `}
                       >
                         Clases grabadas{' '}
                         <span
                           className="
-                            ml-2 inline-block rounded-full bg-cyan-500 px-2
-                            py-0.5 text-xs font-bold text-slate-950
-                          "
+                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                          text-xs font-bold text-slate-950
+                        "
                         >
                           {meetingsForList.length}
                         </span>
                       </button>
                       <button
-                        onClick={() => setActiveTab('foros')}
+                        onClick={(e) => {
+                          console.log('✅ CLICK foros', {
+                            defaultPrevented: e.defaultPrevented,
+                          });
+                          setActiveTab('foros');
+                        }}
                         className={`
                           rounded-full px-4 py-2 font-semibold whitespace-nowrap
                           transition-all duration-300
                           ${
                             activeTab === 'foros'
                               ? `
-                                bg-cyan-500/15 text-cyan-300
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-cyan-400/40
-                              `
+                            bg-cyan-500/15 text-cyan-300
+                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                            ring-cyan-400/40
+                          `
                               : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
+                            text-white/80
+                            hover:bg-white/5 hover:text-white
+                          `
                           }
                         `}
                       >
                         Foros{' '}
                         <span
                           className="
-                            ml-2 inline-block rounded-full bg-cyan-500 px-2
-                            py-0.5 text-xs font-bold text-slate-950
-                          "
+                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                          text-xs font-bold text-slate-950
+                        "
                         >
                           {forums.length}
                         </span>
                       </button>
                       <button
-                        onClick={() => setActiveTab('proyectos')}
+                        onClick={(e) => {
+                          console.log('✅ CLICK proyectos', {
+                            defaultPrevented: e.defaultPrevented,
+                          });
+                          setActiveTab('proyectos');
+                        }}
                         className={`
                           rounded-full px-4 py-2 font-semibold whitespace-nowrap
                           transition-all duration-300
                           ${
                             activeTab === 'proyectos'
                               ? `
-                                bg-cyan-500/15 text-cyan-300
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-cyan-400/40
-                              `
+                            bg-cyan-500/15 text-cyan-300
+                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                            ring-cyan-400/40
+                          `
                               : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
+                            text-white/80
+                            hover:bg-white/5 hover:text-white
+                          `
                           }
                         `}
                       >
                         Proyectos{' '}
                         <span
                           className="
-                            ml-2 inline-block rounded-full bg-cyan-500 px-2
-                            py-0.5 text-xs font-bold text-slate-950
-                          "
+                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                          text-xs font-bold text-slate-950
+                        "
                         >
                           {Array.isArray(studentProjects)
                             ? studentProjects.length
@@ -2781,60 +2903,69 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                         </span>
                       </button>
                       <button
-                        onClick={() => setActiveTab('recursos')}
+                        onClick={(e) => {
+                          console.log('✅ CLICK recursos', {
+                            defaultPrevented: e.defaultPrevented,
+                          });
+                          setActiveTab('recursos');
+                        }}
                         className={`
                           rounded-full px-4 py-2 font-semibold whitespace-nowrap
                           transition-all duration-300
                           ${
                             activeTab === 'recursos'
                               ? `
-                                bg-cyan-500/15 text-cyan-300
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-cyan-400/40
-                              `
+                            bg-cyan-500/15 text-cyan-300
+                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                            ring-cyan-400/40
+                          `
                               : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
+                            text-white/80
+                            hover:bg-white/5 hover:text-white
+                          `
                           }
                         `}
                       >
                         Recursos{' '}
                         <span
                           className="
-                            ml-2 inline-block rounded-full bg-cyan-500 px-2
-                            py-0.5 text-xs font-bold text-slate-950
-                          "
+                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                          text-xs font-bold text-slate-950
+                        "
                         >
                           3
                         </span>
                       </button>
-
                       <button
-                        onClick={() => setActiveTab('actividades')}
+                        onClick={(e) => {
+                          console.log('✅ CLICK actividades', {
+                            defaultPrevented: e.defaultPrevented,
+                          });
+                          setActiveTab('actividades');
+                        }}
                         className={`
                           rounded-full px-4 py-2 font-semibold whitespace-nowrap
                           transition-all duration-300
                           ${
                             activeTab === 'actividades'
                               ? `
-                                bg-cyan-500/15 text-cyan-300
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-cyan-400/40
-                              `
+                            bg-cyan-500/15 text-cyan-300
+                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                            ring-cyan-400/40
+                          `
                               : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
+                            text-white/80
+                            hover:bg-white/5 hover:text-white
+                          `
                           }
                         `}
                       >
                         Actividades{' '}
                         <span
                           className="
-                            ml-2 inline-block rounded-full bg-cyan-500 px-2
-                            py-0.5 text-xs font-bold text-slate-950
-                          "
+                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                          text-xs font-bold text-slate-950
+                        "
                         >
                           5
                         </span>
@@ -4154,9 +4285,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                                             } else {
                                                               newSet.add(
                                                                 post.id
-                                                              );
-                                                              setReplyMessage(
-                                                                ''
                                                               );
                                                             }
                                                             return newSet;
@@ -5502,6 +5630,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
           {isModalOpen && (
             <ModalFormCourse
+              userRole="educador"
               isOpen={isModalOpen}
               onSubmitAction={(
                 id,

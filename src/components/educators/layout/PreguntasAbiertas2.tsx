@@ -139,47 +139,70 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
   };
 
   return (
-    <div className="my-6 rounded-xl border bg-slate-50 p-6 shadow-lg">
-      <h2 className="mb-4 border-b pb-2 text-xl font-bold text-gray-800">
-        {editingQuestion ? 'Editar Pregunta' : 'Nueva Pregunta de Completado'}
-      </h2>
+    <div
+      className="
+      my-8 rounded-2xl border border-cyan-500/20 bg-slate-900 p-8 shadow-2xl
+    "
+    >
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <h2
+          className="
+          mb-6 bg-gradient-to-r from-cyan-400 to-white bg-clip-text text-2xl
+          font-extrabold tracking-tight text-transparent
+        "
+        >
+          {editingQuestion ? 'Editar Pregunta' : 'Nueva Pregunta de Completado'}
+        </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <Label htmlFor="text">Texto de la Pregunta</Label>
+          <Label htmlFor="text" className="font-semibold text-white">
+            Texto de la Pregunta
+          </Label>
           <textarea
             id="text"
             name="text"
             value={formData.text}
             onChange={handleChange}
-            placeholder="Ej: La independencia fue en el año _____."
+            placeholder="Escribe la pregunta aquí..."
             required
             className="
-              w-full rounded-lg border border-gray-300 p-3 shadow-sm
-              focus:ring-2 focus:ring-blue-500
+              mt-2 w-full rounded-lg border border-cyan-500/30 bg-slate-800 p-3
+              text-white shadow-md transition-all duration-200 outline-none
+              placeholder:text-slate-400
+              focus:ring-2 focus:ring-cyan-400
             "
           />
         </div>
 
         <div
           className="
-            grid grid-cols-1 gap-4
-            md:grid-cols-2
-          "
+          grid grid-cols-1 gap-6
+          md:grid-cols-2
+        "
         >
           <div>
-            <Label htmlFor="correctAnswer">Palabra de Completado</Label>
+            <Label htmlFor="correctAnswer" className="font-semibold text-white">
+              Palabra que completa
+            </Label>
             <Input
               id="correctAnswer"
               name="correctAnswer"
               value={formData.correctAnswer}
               onChange={handleChange}
+              placeholder="Ejemplo: revolución"
               required
-              placeholder="Ej: 1810"
+              className="
+                mt-2 w-full rounded-lg border border-cyan-500/30 bg-slate-800
+                text-white
+                placeholder:text-slate-400
+                focus:ring-2 focus:ring-cyan-400
+              "
             />
           </div>
           <div>
-            <Label htmlFor="pesoPregunta">Porcentaje</Label>
+            <Label htmlFor="pesoPregunta" className="font-semibold text-white">
+              Porcentaje de la Pregunta
+            </Label>
             <Input
               type="number"
               id="pesoPregunta"
@@ -189,26 +212,32 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
               min={1}
               max={100}
               required
+              className="
+                mt-2 w-full rounded-lg border border-cyan-500/30 bg-slate-800
+                text-white
+                placeholder:text-slate-400
+                focus:ring-2 focus:ring-cyan-400
+              "
             />
           </div>
         </div>
 
         {isUploading && (
           <div className="my-4">
-            <Progress value={uploadProgress} />
-            <p className="text-center text-sm text-gray-500">
-              {uploadProgress}% cargado
+            <Progress value={uploadProgress} className="w-full bg-slate-700" />
+            <p className="mt-2 text-center text-sm text-slate-300">
+              {uploadProgress}% subido
             </p>
           </div>
         )}
 
-        <div className="flex justify-end space-x-4">
+        <div className="mt-6 flex justify-end gap-4">
           <Button
             type="button"
             variant="outline"
             className="
-              border-gray-300 text-gray-700
-              hover:bg-gray-100
+              border-cyan-500/30 text-cyan-300 transition-all duration-150
+              hover:bg-cyan-950/40 hover:text-white
             "
             onClick={handleCancel}
           >
@@ -217,8 +246,9 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
           <Button
             type="submit"
             className="
-              bg-green-600 text-white
-              hover:bg-green-700
+              bg-cyan-600 font-bold text-white shadow-md transition-all
+              duration-150
+              hover:bg-cyan-700
             "
           >
             {editingQuestion ? 'Actualizar' : 'Guardar'}

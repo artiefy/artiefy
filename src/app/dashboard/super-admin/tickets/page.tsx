@@ -1,18 +1,24 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
-import { FileText, Info, Loader2, Pencil, Plus, Trash2 } from 'lucide-react';
+import {
+  FileText,
+  Hand,
+  Info,
+  Loader2,
+  Pencil,
+  Plus,
+  Send,
+  Trash2,
+} from 'lucide-react';
 import { toast, ToastContainer } from 'react-toastify';
 import { z } from 'zod';
 
 import ChatList from '~/app/dashboard/admin/chat/ChatList';
-import {
-  formatDateColombiaAdminTicket,
-  formatDateColombiaShort,
-} from '~/lib/formatDate';
+import { formatDateColombiaShort } from '~/lib/formatDate';
 
 import TicketModal from './TicketModal';
 
@@ -77,6 +83,7 @@ export interface Comment {
   user: {
     name: string;
   };
+  sender: string;
 }
 
 export interface Ticket {
@@ -97,6 +104,33 @@ export interface Ticket {
   documentKey?: string;
   unreadCount?: number;
 }
+
+const modernHorizontalScrollbarClass = `
+  [scrollbar-width:thin]
+  [scrollbar-color:rgba(125,211,252,0.45)_transparent]
+  [scrollbar-gutter:stable]
+  [&::-webkit-scrollbar]:h-2
+  [&::-webkit-scrollbar-thumb]:rounded-full
+  [&::-webkit-scrollbar-thumb]:border
+  [&::-webkit-scrollbar-thumb]:border-slate-950/30
+  [&::-webkit-scrollbar-thumb]:bg-sky-300/35
+  hover:[&::-webkit-scrollbar-thumb]:bg-sky-300/55
+  [&::-webkit-scrollbar-track]:bg-transparent
+`;
+
+const modernVerticalScrollbarClass = `
+  [scrollbar-width:thin]
+  [scrollbar-color:rgba(125,211,252,0.45)_rgba(15,23,42,0.35)]
+  [scrollbar-gutter:stable]
+  [&::-webkit-scrollbar]:w-2
+  [&::-webkit-scrollbar-thumb]:rounded-full
+  [&::-webkit-scrollbar-thumb]:border
+  [&::-webkit-scrollbar-thumb]:border-slate-950/30
+  [&::-webkit-scrollbar-thumb]:bg-sky-300/35
+  hover:[&::-webkit-scrollbar-thumb]:bg-sky-300/55
+  [&::-webkit-scrollbar-track]:rounded-full
+  [&::-webkit-scrollbar-track]:bg-slate-950/20
+`;
 
 // Component
 export default function TicketsPage() {
@@ -124,31 +158,96 @@ export default function TicketsPage() {
   const [filterEndDate, setFilterEndDate] = useState<string>('');
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [isSendingReply, setIsSendingReply] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const [sortByIdAsc, setSortByIdAsc] = useState(false); // false = mayor a menor
   const [sortByUpdatedAtDesc, setSortByUpdatedAtDesc] = useState(true); // true = más recientes arriba
+  const [draggedTicketId, setDraggedTicketId] = useState<string | null>(null);
+  const [dragOverEstado, setDragOverEstado] = useState<string | null>(null);
+  const [mobileMoveTicketId, setMobileMoveTicketId] = useState<string | null>(
+    null
+  );
+  const mobileMovingTicket =
+    mobileMoveTicketId !== null
+      ? (tickets.find((ticket) => ticket.id === mobileMoveTicketId) ?? null)
+      : null;
 
   useEffect(() => {
-    if (viewTicket?.id) {
-      const fetchComments = async () => {
-        try {
-          setIsLoadingComments(true);
-          const response = await fetch(
-            `/api/admin/tickets/${viewTicket.id}/comments`
-          );
-          if (!response.ok)
-            throw new Error('No se pudo obtener los comentarios');
-          const data = (await response.json()) as Comment[];
-          setComments(data);
-        } catch (error) {
-          console.error('Error cargando comentarios:', error);
-        } finally {
-          setIsLoadingComments(false);
-        }
-      };
+    if (!viewTicket?.id) return;
 
-      void fetchComments();
-    }
+    let isFirst = true;
+    const fetchComments = async () => {
+      try {
+        if (isFirst) setIsLoadingComments(true);
+        const response = await fetch(
+          `/api/admin/tickets/${viewTicket.id}/comments`
+        );
+        if (!response.ok) throw new Error('No se pudo obtener los comentarios');
+        const data = (await response.json()) as Comment[];
+        setComments(
+          [...data].sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          )
+        );
+      } catch (error) {
+        if (isFirst) console.error('Error cargando comentarios:', error);
+      } finally {
+        if (isFirst) {
+          setIsLoadingComments(false);
+          isFirst = false;
+        }
+      }
+    };
+
+    void fetchComments();
+    const interval = setInterval(() => void fetchComments(), 1000);
+    return () => clearInterval(interval);
   }, [viewTicket?.id]);
+
+  // Auto-scroll al fondo del chat cuando cambian los comentarios
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [comments]);
+
+  const handleSendReply = async (): Promise<void> => {
+    if (!viewTicket || !replyText.trim()) return;
+    setIsSendingReply(true);
+    try {
+      const response = await fetch(
+        `/api/admin/tickets/${viewTicket.id}/comments`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: replyText.trim() }),
+        }
+      );
+      if (!response.ok) throw new Error('No se pudo enviar el comentario');
+      setReplyText('');
+      // Refetch comments
+      const commentsRes = await fetch(
+        `/api/admin/tickets/${viewTicket.id}/comments`
+      );
+      if (commentsRes.ok) {
+        const data = (await commentsRes.json()) as Comment[];
+        setComments(
+          [...data].sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          )
+        );
+      }
+      void fetchTickets();
+    } catch (error) {
+      toast.error('❌ Error al enviar respuesta');
+      console.error('Error sending reply:', error);
+    } finally {
+      setIsSendingReply(false);
+    }
+  };
 
   function formatElapsedTime(ms: number): string {
     const totalSeconds = Math.floor(ms / 1000);
@@ -456,6 +555,82 @@ export default function TicketsPage() {
     setSelectedTicket(null);
   };
 
+  const handleCloseConversation = async (): Promise<void> => {
+    if (!viewTicket) return;
+    try {
+      const response = await fetch(`/api/admin/tickets/${viewTicket.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          estado: 'cerrado',
+          email: viewTicket.email,
+          description: viewTicket.description,
+          tipo: viewTicket.tipo,
+        }),
+      });
+      if (!response.ok) throw new Error('No se pudo cerrar el ticket');
+      toast.success('✅ Ticket cerrado correctamente');
+      setViewTicket(null);
+      void fetchTickets();
+    } catch (error) {
+      toast.error('❌ Error al cerrar el ticket');
+      console.error(
+        'Error closing ticket:',
+        error instanceof Error ? error.message : error
+      );
+    }
+  };
+
+  const handleDragStatusChange = async (
+    ticketId: string,
+    newEstado: string
+  ): Promise<void> => {
+    const ticket = tickets.find((t) => t.id === ticketId);
+    if (!ticket || ticket.estado === newEstado) return;
+    // Optimistic update
+    setTickets((prev) =>
+      prev.map((t) => (t.id === ticketId ? { ...t, estado: newEstado } : t))
+    );
+    try {
+      const response = await fetch(`/api/admin/tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          estado: newEstado,
+          email: ticket.email,
+          description: ticket.description,
+          tipo: ticket.tipo,
+        }),
+      });
+      if (!response.ok) throw new Error('No se pudo actualizar el estado');
+      toast.success(
+        `Ticket #${ticketId} movido a ${estadoConfig[newEstado]?.label ?? newEstado}`
+      );
+    } catch (error) {
+      // Revert on error
+      setTickets((prev) =>
+        prev.map((t) =>
+          t.id === ticketId ? { ...t, estado: ticket.estado } : t
+        )
+      );
+      toast.error('❌ Error al cambiar el estado del ticket');
+      console.error(
+        'Error updating ticket status:',
+        error instanceof Error ? error.message : error
+      );
+    }
+  };
+
+  const handleMobileMoveToggle = (ticketId: string): void => {
+    setMobileMoveTicketId((prev) => (prev === ticketId ? null : ticketId));
+  };
+
+  const handleMobileColumnSelect = (estado: string): void => {
+    if (!mobileMoveTicketId) return;
+    void handleDragStatusChange(mobileMoveTicketId, estado);
+    setMobileMoveTicketId(null);
+  };
+
   const handleOpenCreateModal = (): void => {
     setSelectedTicket(null);
     setIsModalOpen(true);
@@ -463,6 +638,33 @@ export default function TicketsPage() {
 
   const handleSelectChat = (chatId: string, receiverId: string): void => {
     setSelectedChat({ id: chatId, receiverId, userName: 'Usuario' });
+  };
+
+  const estadoConfig: Record<string, { label: string; className: string }> = {
+    abierto: { label: 'Abierto', className: 'bg-green-500/10 text-green-500' },
+    'en proceso': {
+      label: 'En Proceso',
+      className: 'bg-blue-500/10 text-blue-500',
+    },
+    'en revision': {
+      label: 'En Revisión',
+      className: 'bg-yellow-500/10 text-yellow-500',
+    },
+    solucionado: {
+      label: 'Solucionado',
+      className: 'bg-purple-500/10 text-purple-500',
+    },
+    cerrado: { label: 'Cerrado', className: 'bg-gray-500/10 text-gray-500' },
+  };
+
+  const tipoConfig: Record<string, { label: string; className: string }> = {
+    bug: { label: 'Bug', className: 'bg-red-500/10 text-red-500' },
+    revision: {
+      label: 'Revisión',
+      className: 'bg-yellow-500/10 text-yellow-500',
+    },
+    logs: { label: 'Logs', className: 'bg-purple-500/10 text-purple-500' },
+    otro: { label: 'Otro', className: 'bg-gray-500/10 text-gray-500' },
   };
 
   return (
@@ -505,11 +707,19 @@ export default function TicketsPage() {
 
         {/* Tabs */}
         <div className="mt-6 border-b border-gray-700">
-          <div className="flex space-x-8">
+          <div
+            className={`
+              -mb-px flex gap-1 overflow-x-auto
+              ${modernHorizontalScrollbarClass}
+              sm:gap-6
+            `}
+          >
             <button
               onClick={() => setActiveTab('created')}
               className={`
-                border-b-2 pb-4 text-sm font-medium transition-colors
+                border-b-2 px-3 pb-3 text-xs font-medium whitespace-nowrap
+                transition-colors
+                sm:pb-4 sm:text-sm
                 ${
                   activeTab === 'created'
                     ? 'border-blue-500 text-blue-500'
@@ -525,7 +735,9 @@ export default function TicketsPage() {
             <button
               onClick={() => setActiveTab('assigned')}
               className={`
-                border-b-2 pb-4 text-sm font-medium transition-colors
+                border-b-2 px-3 pb-3 text-xs font-medium whitespace-nowrap
+                transition-colors
+                sm:pb-4 sm:text-sm
                 ${
                   activeTab === 'assigned'
                     ? 'border-blue-500 text-blue-500'
@@ -541,7 +753,9 @@ export default function TicketsPage() {
             <button
               onClick={() => setActiveTab('logs')}
               className={`
-                border-b-2 pb-4 text-sm font-medium transition-colors
+                border-b-2 px-3 pb-3 text-xs font-medium whitespace-nowrap
+                transition-colors
+                sm:pb-4 sm:text-sm
                 ${
                   activeTab === 'logs'
                     ? 'border-blue-500 text-blue-500'
@@ -557,7 +771,9 @@ export default function TicketsPage() {
             <button
               onClick={() => setActiveTab('chats')}
               className={`
-                border-b-2 pb-4 text-sm font-medium transition-colors
+                border-b-2 px-3 pb-3 text-xs font-medium whitespace-nowrap
+                transition-colors
+                sm:pb-4 sm:text-sm
                 ${
                   activeTab === 'chats'
                     ? 'border-blue-500 text-blue-500'
@@ -703,13 +919,19 @@ export default function TicketsPage() {
 
             <div
               className="
-                inline-flex items-center gap-3 rounded-lg border
+                inline-flex items-center gap-2 rounded-lg border
                 border-blue-400/30 bg-gradient-to-r from-blue-900 via-blue-800
-                to-blue-900 px-6 py-4 text-lg font-semibold text-blue-100
+                to-blue-900 px-3 py-2 text-sm font-semibold text-blue-100
                 shadow-lg backdrop-blur-sm
+                sm:gap-3 sm:px-6 sm:py-4 sm:text-lg
               "
             >
-              <FileText className="size-6 animate-pulse text-blue-300 drop-shadow-md" />
+              <FileText
+                className="
+                  size-4 animate-pulse text-blue-300 drop-shadow-md
+                  sm:size-6
+                "
+              />
               <span className="tracking-wide">
                 {filteredTickets.length} ticket(s) encontrado(s)
               </span>
@@ -728,449 +950,552 @@ export default function TicketsPage() {
             />
           </div>
         ) : (
-          <div
-            className="
-              mt-6 overflow-hidden rounded-lg bg-gray-800/50 shadow-xl
-              backdrop-blur-sm
-            "
-          >
-            <div className="overflow-x-auto">
-              <table
-                className="
-                  min-w-full table-auto border-collapse text-xs
-                  sm:text-sm
-                "
-              >
-                <thead>
-                  {/* Filtros */}
-                  <tr
+          <>
+            {/* Filter bar */}
+            <div
+              className="
+                mt-6 flex flex-wrap items-end gap-2 rounded-xl border
+                border-gray-700/50 bg-gray-800/30 p-3
+                sm:gap-3 sm:p-4
+              "
+            >
+              <div className="flex flex-col">
+                <label className="mb-1 text-xs font-medium text-gray-400">
+                  Por página
+                </label>
+                <select
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="
+                    rounded-md border border-gray-600 bg-background p-1.5
+                    text-xs text-white
+                  "
+                >
+                  <option value={10}>10</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={-1}>Todos</option>
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label className="mb-1 text-xs font-medium text-gray-400">
+                  ID
+                </label>
+                <input
+                  type="text"
+                  placeholder="Buscar ID"
+                  value={filterId}
+                  onChange={(e) => setFilterId(e.target.value)}
+                  className="
+                    w-20 rounded border border-gray-700 bg-background px-2
+                    py-1.5 text-xs text-gray-300 placeholder-gray-500
+                    focus:text-white focus:ring-1 focus:ring-blue-500
+                    focus:outline-none
+                  "
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="mb-1 text-xs font-medium text-gray-400">
+                  Email
+                </label>
+                <select
+                  value={filterEmail}
+                  onChange={(e) => setFilterEmail(e.target.value)}
+                  className="
+                    w-40 rounded border border-gray-700 bg-background px-2
+                    py-1.5 text-xs text-gray-300
+                    focus:text-white focus:ring-1 focus:ring-blue-500
+                    focus:outline-none
+                  "
+                >
+                  <option value="">Todos</option>
+                  {uniqueUsers.map((user) => (
+                    <option key={user} value={user}>
+                      {user}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label className="mb-1 text-xs font-medium text-gray-400">
+                  Tipo
+                </label>
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="
+                    rounded border border-gray-700 bg-background px-2 py-1.5
+                    text-xs text-gray-300
+                    focus:text-white focus:ring-1 focus:ring-blue-500
+                    focus:outline-none
+                  "
+                >
+                  <option value="all">Todos</option>
+                  <option value="bug">Bug</option>
+                  <option value="revision">Revisión</option>
+                  <option value="logs">Logs</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label className="mb-1 text-xs font-medium text-gray-400">
+                  Estado
+                </label>
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="
+                    rounded border border-gray-700 bg-background px-2 py-1.5
+                    text-xs text-gray-300
+                    focus:text-white focus:ring-1 focus:ring-blue-500
+                    focus:outline-none
+                  "
+                >
+                  <option value="all">Todos</option>
+                  <option value="abierto">Abierto</option>
+                  <option value="en proceso">En Proceso</option>
+                  <option value="en revision">En Revisión</option>
+                  <option value="solucionado">Solucionado</option>
+                  <option value="cerrado">Cerrado</option>
+                </select>
+              </div>
+              <div className="flex flex-col">
+                <label className="mb-1 text-xs font-medium text-gray-400">
+                  Asignado
+                </label>
+                <select
+                  value={filterAssignedTo}
+                  onChange={(e) => setFilterAssignedTo(e.target.value)}
+                  className="
+                    rounded border border-gray-700 bg-background px-2 py-1.5
+                    text-xs text-gray-300
+                    focus:text-white focus:ring-1 focus:ring-blue-500
+                    focus:outline-none
+                  "
+                >
+                  <option value="">Todos</option>
+                  {uniqueAssignedTo.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-end gap-2">
+                <button
+                  onClick={() => setSortByIdAsc((prev) => !prev)}
+                  className="
+                    rounded border border-gray-600 bg-gray-800 px-2 py-1.5
+                    text-xs text-gray-300
+                    hover:text-white
+                  "
+                >
+                  ID {sortByIdAsc ? '↑' : '↓'}
+                </button>
+                <button
+                  onClick={() => setSortByUpdatedAtDesc((prev) => !prev)}
+                  className="
+                    rounded border border-gray-600 bg-gray-800 px-2 py-1.5
+                    text-xs text-gray-300
+                    hover:text-white
+                  "
+                >
+                  Actualización {sortByUpdatedAtDesc ? '↓' : '↑'}
+                </button>
+              </div>
+            </div>
+
+            {/* Kanban columns */}
+            {loading ? (
+              <div className="mt-6 flex items-center justify-center py-16">
+                <Loader2 className="size-8 animate-spin text-blue-500" />
+              </div>
+            ) : filteredTickets.length === 0 ? (
+              <div className="mt-6 py-16 text-center text-gray-400">
+                No hay tickets disponibles
+              </div>
+            ) : (
+              <>
+                {mobileMoveTicketId && (
+                  <div
                     className="
-                      border-b border-gray-700 bg-gray-600 text-xs text-white
-                      sm:text-sm
+                      mt-4 rounded-xl border border-primary/30 bg-primary/10
+                      px-3 py-2 text-xs text-primary
+                      sm:hidden
                     "
                   >
-                    <th className="w-6 px-0.5 py-2 text-center">
-                      {' '}
+                    Toca la columna destino para mover el ticket #
+                    {mobileMoveTicketId}.
+                  </div>
+                )}
+                <div
+                  className={`
+                    mt-4 flex snap-x gap-3 overflow-x-auto pb-4
+                    ${modernHorizontalScrollbarClass}
+                    sm:gap-4
+                  `}
+                >
+                  {(
+                    [
+                      'abierto',
+                      'en proceso',
+                      'en revision',
+                      'solucionado',
+                      'cerrado',
+                    ] as const
+                  ).map((estado) => {
+                    const config = estadoConfig[estado];
+                    const columnTickets = paginatedTickets.filter(
+                      (t) => t.estado === estado
+                    );
+                    const isMobileTargetColumn =
+                      mobileMovingTicket !== null &&
+                      mobileMovingTicket.estado !== estado;
+
+                    return (
                       <div
-                        className="
-                          flex items-center justify-center text-xs text-white
-                        "
+                        key={estado}
+                        className={`
+                          min-w-[240px] flex-shrink-0 snap-start rounded-xl
+                          border bg-gray-800/30 transition-colors
+                          sm:min-w-[280px]
+                          ${
+                            dragOverEstado === estado || isMobileTargetColumn
+                              ? 'border-primary/60 bg-primary/5'
+                              : 'border-gray-700/50'
+                          }
+                        `}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setDragOverEstado(estado);
+                        }}
+                        onDragLeave={() => setDragOverEstado(null)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setDragOverEstado(null);
+                          if (draggedTicketId) {
+                            void handleDragStatusChange(
+                              draggedTicketId,
+                              estado
+                            );
+                          }
+                          setDraggedTicketId(null);
+                        }}
                       >
-                        <select
-                          value={itemsPerPage}
-                          onChange={(e) => {
-                            const value = Number(e.target.value);
-                            setItemsPerPage(value);
-                            setCurrentPage(1); // reiniciar a primera página
-                          }}
+                        <div
                           className="
-                            rounded-md border border-gray-600 bg-background p-1
-                            text-xs text-white
+                            flex items-center justify-between border-b
+                            border-gray-700/50 p-3
                           "
                         >
-                          <option value={10}>10</option>
-                          <option value={50}>50</option>
-                          <option value={100}>100</option>
-                          <option value={-1}>Todos</option>
-                        </select>
-                      </div>{' '}
-                    </th>
-                    <th className="w-12 px-0.5 py-2">
-                      <input
-                        type="text"
-                        placeholder="ID"
-                        value={filterId}
-                        onChange={(e) => setFilterId(e.target.value)}
-                        className="
-                          w-full rounded border border-gray-700 bg-background
-                          px-2 py-1 text-xs text-gray-500 placeholder-gray-500
-                          focus:text-white focus:ring-1 focus:ring-blue-500
-                          focus:outline-none
-                        "
-                      />
-                    </th>
-                    <th className="min-w-[140px] px-1 py-2">
-                      <select
-                        value={filterEmail}
-                        onChange={(e) => setFilterEmail(e.target.value)}
-                        title={filterEmail || 'Todos los emails'}
-                        className="
-                          w-full rounded border border-gray-700 bg-background
-                          px-2 py-1 text-xs text-gray-500
-                          focus:text-white focus:ring-1 focus:ring-blue-500
-                          focus:outline-none
-                        "
-                      >
-                        <option value="">Todos los emails</option>
-                        {uniqueUsers.map((user) => (
-                          <option key={user} value={user}>
-                            {user}
-                          </option>
-                        ))}
-                      </select>
-                    </th>
-                    <th className="min-w-[110px] px-1 py-2">
-                      <select
-                        value={filterType}
-                        onChange={(e) => setFilterType(e.target.value)}
-                        title={
-                          filterType === 'all' ? 'Todos los tipos' : filterType
-                        }
-                        className="
-                          w-full rounded border border-gray-700 bg-background
-                          px-2 py-1 text-xs text-gray-500
-                          focus:text-white focus:ring-1 focus:ring-blue-500
-                          focus:outline-none
-                        "
-                      >
-                        <option value="all">Todos los tipos</option>
-                        <option value="bug">Bug</option>
-                        <option value="revision">Revisión</option>
-                        <option value="logs">Logs</option>
-                        <option value="otro">Otro</option>
-                      </select>
-                    </th>
-                    <th className="min-w-[120px] px-1 py-2">
-                      <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        title={
-                          filterStatus === 'all'
-                            ? 'Todos los estados'
-                            : filterStatus
-                        }
-                        className="
-                          w-full rounded border border-gray-700 bg-background
-                          px-2 py-1 text-xs text-gray-500
-                          focus:text-white focus:ring-1 focus:ring-blue-500
-                          focus:outline-none
-                        "
-                      >
-                        <option value="all">Todos los estados</option>
-                        <option value="abierto">Abierto</option>
-                        <option value="en proceso">En Proceso</option>
-                        <option value="en revision">En Revisión</option>
-                        <option value="solucionado">Solucionado</option>
-                        <option value="cerrado">Cerrado</option>
-                      </select>
-                    </th>
-                    <th className="min-w-[130px] px-1 py-2">
-                      <select
-                        value={filterAssignedTo}
-                        onChange={(e) => setFilterAssignedTo(e.target.value)}
-                        title={filterAssignedTo || 'Todos los asignados'}
-                        className="
-                          w-full rounded border border-gray-700 bg-background
-                          px-2 py-1 text-xs text-gray-500
-                          focus:text-white focus:ring-1 focus:ring-blue-500
-                          focus:outline-none
-                        "
-                      >
-                        <option value="">Todos los asignados</option>
-                        {uniqueAssignedTo.map((name) => (
-                          <option key={name} value={name}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    </th>
-                    <th />
-                    <th />
-                    <th />
-                    <th />
-                  </tr>
-
-                  {/* Títulos */}
-                  <tr
-                    className="
-                      border-b border-gray-700 bg-background text-xs
-                      text-gray-300
-                      sm:text-sm
-                    "
-                  >
-                    <th className="w-6 px-0.5 py-2 text-center" />
-                    <th
-                      className="
-                        w-12 cursor-pointer px-0.5 py-2 text-left
-                        whitespace-nowrap
-                      "
-                      onClick={() => setSortByIdAsc((prev) => !prev)}
-                    >
-                      ID {sortByIdAsc ? '↑' : '↓'}
-                    </th>
-
-                    <th className="px-1 py-2 text-left">Email</th>
-                    <th className="px-1 py-2 text-left">Tipo</th>
-                    <th className="px-1 py-2 text-left">Estado</th>
-                    <th className="px-1 py-2 text-left">Asignado</th>
-                    <th className="px-1 py-2 text-left">Creación</th>
-                    <th
-                      className="cursor-pointer px-1 py-2 text-left"
-                      onClick={() => setSortByUpdatedAtDesc((prev) => !prev)}
-                    >
-                      Actualización {sortByUpdatedAtDesc ? '↓' : '↑'}
-                    </th>
-                    <th className="px-1 py-2 text-left">Tiempo</th>
-
-                    <th className="px-1 py-2 text-left">Acciones</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-gray-700/50">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="px-2 py-8 text-center">
-                        <Loader2 className="mx-auto size-8 animate-spin text-blue-500" />
-                      </td>
-                    </tr>
-                  ) : filteredTickets.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-2 py-8 text-center text-gray-400"
-                      >
-                        No hay tickets disponibles
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedTickets.map((ticket) => (
-                      <tr
-                        key={ticket.id}
-                        className="
-                          group transition-colors
-                          hover:bg-gray-700/50
-                        "
-                      >
-                        <td className="w-6 px-0.5 py-2 text-center">
-                          <input
-                            type="checkbox"
-                            checked={selectedIds.includes(ticket.id)}
-                            onChange={() => toggleSelectId(ticket.id)}
-                          />
-                        </td>
-                        <td className="w-12 px-0.5 py-2 whitespace-nowrap">
-                          #{ticket.id}
-                        </td>
-                        <td
-                          className="
-                            max-w-[180px] truncate px-1 py-2 whitespace-nowrap
-                          "
-                          title={ticket.email}
-                        >
-                          {ticket.email}
-                        </td>
-                        <td className="px-1 py-2 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <span
                               className={`
-                                inline-block rounded-full px-1.5 py-0.5
-                                text-[10px] font-medium
-                                ${
-                                  ticket.tipo === 'bug'
-                                    ? 'bg-red-500/10 text-red-500'
-                                    : ticket.tipo === 'revision'
-                                      ? 'bg-yellow-500/10 text-yellow-500'
-                                      : ticket.tipo === 'logs'
-                                        ? 'bg-purple-500/10 text-purple-500'
-                                        : 'bg-gray-500/10 text-gray-500'
-                                }
+                                rounded-full px-2 py-0.5 text-xs font-medium
+                                ${config.className}
                               `}
                             >
-                              {ticket.tipo}
+                              {config.label}
                             </span>
-                            {ticket.unreadCount && ticket.unreadCount > 0 && (
-                              <span
-                                className="
-                                  inline-flex items-center rounded-full
-                                  bg-red-500 px-2 py-0.5 text-[10px]
-                                  font-semibold text-white
-                                "
-                              >
-                                Nuevo
-                              </span>
-                            )}
+                            <span className="text-xs text-gray-500">
+                              {columnTickets.length}
+                            </span>
                           </div>
-                        </td>
-                        <td className="px-1 py-2 whitespace-nowrap">
-                          <span
-                            className={`
-                              inline-block rounded-full px-1.5 py-0.5
-                              text-[10px] font-medium
-                              ${
-                                ticket.estado === 'abierto'
-                                  ? 'bg-green-500/10 text-green-500'
-                                  : ticket.estado === 'en proceso'
-                                    ? 'bg-blue-500/10 text-blue-500'
-                                    : ticket.estado === 'en revision'
-                                      ? 'bg-yellow-500/10 text-yellow-500'
-                                      : ticket.estado === 'solucionado'
-                                        ? 'bg-purple-500/10 text-purple-500'
-                                        : 'bg-gray-500/10 text-gray-500'
-                              }
-                            `}
-                          >
-                            {ticket.estado}
-                          </span>
-                        </td>
-                        <td
-                          className="
-                            max-w-[150px] truncate px-1 py-2 whitespace-nowrap
-                          "
-                          title={
-                            ticket.assignedUsers &&
-                            ticket.assignedUsers.length > 0
-                              ? ticket.assignedUsers
-                                  .map((u) => u.name)
-                                  .join(', ')
-                              : 'Sin asignar'
-                          }
+                          {isMobileTargetColumn && (
+                            <button
+                              type="button"
+                              onClick={() => handleMobileColumnSelect(estado)}
+                              className="
+                                rounded-full border border-primary/30
+                                bg-primary/10 px-2 py-1 text-[10px] font-medium
+                                text-primary transition
+                                hover:bg-primary/20
+                                sm:hidden
+                              "
+                            >
+                              Soltar aquí
+                            </button>
+                          )}
+                        </div>
+                        <div
+                          className={`
+                            max-h-[65vh] space-y-2 overflow-y-auto p-2
+                            ${modernVerticalScrollbarClass}
+                          `}
                         >
-                          {ticket.assignedUsers &&
-                          ticket.assignedUsers.length > 0
-                            ? ticket.assignedUsers.map((u) => u.name).join(', ')
-                            : 'Sin asignar'}
-                        </td>
+                          {columnTickets.length === 0 ? (
+                            <p className="py-8 text-center text-xs text-gray-500">
+                              Sin tickets
+                            </p>
+                          ) : (
+                            columnTickets.map((ticket) => {
+                              const ticketCardStateClass =
+                                draggedTicketId === ticket.id
+                                  ? 'opacity-50'
+                                  : mobileMoveTicketId === ticket.id
+                                    ? `
+                                      border-primary/60 bg-primary/10 ring-1
+                                      ring-primary/40
+                                    `
+                                    : '';
 
-                        <td className="px-1 py-2 whitespace-nowrap">
-                          {formatDateColombiaShort(ticket.createdAt)}
-                        </td>
-                        <td className="px-1 py-2 whitespace-nowrap">
-                          {formatDateColombiaAdminTicket(ticket.updatedAt)}
-                        </td>
-                        <td className="px-1 py-2 whitespace-nowrap">
-                          {formatElapsedTime(ticket.timeElapsedMs)}
-                        </td>
+                              const mobileHandleClass =
+                                mobileMoveTicketId === ticket.id
+                                  ? `
+                                    border-primary/50 bg-primary/15
+                                    text-primary
+                                  `
+                                  : `
+                                    border-white/10 bg-white/5
+                                    hover:border-primary/40
+                                    hover:bg-primary/10
+                                  `;
 
-                        <td className="px-1 py-2">
-                          <div className="flex items-center justify-start gap-1">
-                            <button
-                              onClick={() => {
-                                void markTicketAsRead(ticket.id);
-                                setViewTicket(ticket);
-                              }}
-                              className="
-                                rounded-md p-1
-                                hover:bg-blue-500/10 hover:text-blue-500
-                              "
-                              title="Ver detalles"
-                            >
-                              <Info
-                                className="
-                                  size-3.5
-                                  sm:size-4
-                                "
-                              />
-                            </button>
-                            <button
-                              onClick={() => {
-                                void markTicketAsRead(ticket.id);
-                                setSelectedTicket(ticket);
-                                setIsModalOpen(true);
-                              }}
-                              className="
-                                rounded-md p-1
-                                hover:bg-gray-700
-                              "
-                              title="Editar"
-                            >
-                              <Pencil
-                                className="
-                                  size-3.5
-                                  sm:size-4
-                                "
-                              />
-                            </button>
-                            <button
-                              onClick={() => void handleDelete(ticket.id)}
-                              className="
-                                rounded-md p-1
-                                hover:bg-red-500/10 hover:text-red-500
-                              "
-                              title="Eliminar"
-                            >
-                              <Trash2
-                                className="
-                                  size-3.5
-                                  sm:size-4
-                                "
-                              />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-              {itemsPerPage !== -1 && (
-                <div
+                              return (
+                                <div
+                                  key={ticket.id}
+                                  draggable
+                                  onDragStart={() =>
+                                    setDraggedTicketId(ticket.id)
+                                  }
+                                  onDragEnd={() => {
+                                    setDraggedTicketId(null);
+                                    setDragOverEstado(null);
+                                  }}
+                                  className={`
+                                    cursor-grab space-y-2 rounded-lg border
+                                    border-gray-700/50 bg-gray-800/50 p-3
+                                    transition-colors
+                                    hover:bg-gray-700/50
+                                    active:cursor-grabbing
+                                    ${ticketCardStateClass}
+                                  `}
+                                >
+                                  <div
+                                    className="
+                                    flex items-center justify-between
+                                  "
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedIds.includes(
+                                          ticket.id
+                                        )}
+                                        onChange={() =>
+                                          toggleSelectId(ticket.id)
+                                        }
+                                      />
+                                      <span className="text-sm font-bold text-white">
+                                        #{ticket.id}
+                                      </span>
+                                      <span
+                                        className={`
+                                          rounded-full px-1.5 py-0.5 text-[10px]
+                                          font-medium
+                                          ${
+                                            tipoConfig[ticket.tipo]
+                                              ?.className ??
+                                            `bg-gray-500/10 text-gray-500`
+                                          }
+                                        `}
+                                      >
+                                        {tipoConfig[ticket.tipo]?.label ??
+                                          ticket.tipo}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleMobileMoveToggle(ticket.id)
+                                        }
+                                        className={`
+                                          inline-flex items-center
+                                          justify-center rounded-full border
+                                          p-1.5 text-sky-200 transition
+                                          sm:hidden
+                                          ${mobileHandleClass}
+                                        `}
+                                        title="Mover ticket"
+                                        aria-label={`Mover ticket ${ticket.id}`}
+                                      >
+                                        <Hand className="size-3.5" />
+                                      </button>
+                                      {ticket.unreadCount &&
+                                        ticket.unreadCount > 0 && (
+                                          <span
+                                            className="
+                                              inline-flex items-center
+                                              rounded-full bg-red-500 px-2
+                                              py-0.5 text-[10px] font-semibold
+                                              text-white
+                                            "
+                                          >
+                                            Nuevo
+                                          </span>
+                                        )}
+                                    </div>
+                                  </div>
+                                  <p
+                                    className="
+                                      max-w-full truncate text-xs text-gray-300
+                                    "
+                                    title={ticket.email}
+                                  >
+                                    {ticket.email}
+                                  </p>
+                                  <p className="text-xs text-gray-400">
+                                    {ticket.assignedUsers &&
+                                    ticket.assignedUsers.length > 0
+                                      ? ticket.assignedUsers
+                                          .map((u) => u.name)
+                                          .join(', ')
+                                      : 'Sin asignar'}
+                                  </p>
+                                  <div
+                                    className="
+                                      flex items-center justify-between
+                                      text-[10px] text-gray-500
+                                    "
+                                  >
+                                    <span>
+                                      {formatDateColombiaShort(
+                                        ticket.createdAt
+                                      )}
+                                    </span>
+                                    <span>
+                                      {formatElapsedTime(ticket.timeElapsedMs)}
+                                    </span>
+                                  </div>
+                                  <div
+                                    className="
+                                      flex items-center justify-end gap-1
+                                      border-t border-gray-700/30 pt-2
+                                    "
+                                  >
+                                    <button
+                                      onClick={() => {
+                                        void markTicketAsRead(ticket.id);
+                                        setViewTicket(ticket);
+                                      }}
+                                      className="
+                                        rounded-md p-1
+                                        hover:bg-blue-500/10 hover:text-blue-500
+                                      "
+                                      title="Ver detalles"
+                                    >
+                                      <Info className="size-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        void markTicketAsRead(ticket.id);
+                                        setSelectedTicket(ticket);
+                                        setIsModalOpen(true);
+                                      }}
+                                      className="
+                                        rounded-md p-1
+                                        hover:bg-gray-700
+                                      "
+                                      title="Editar"
+                                    >
+                                      <Pencil className="size-3.5" />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        void handleDelete(ticket.id)
+                                      }
+                                      className="
+                                        rounded-md p-1
+                                        hover:bg-red-500/10 hover:text-red-500
+                                      "
+                                      title="Eliminar"
+                                    >
+                                      <Trash2 className="size-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Pagination */}
+            {itemsPerPage !== -1 && (
+              <div
+                className="
+                  mt-4 mb-6 flex items-center justify-center gap-2 text-sm
+                  text-white
+                "
+              >
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
                   className="
-                    mt-4 mb-6 flex items-center justify-center gap-2 text-sm
-                    text-white
+                    rounded-md border border-gray-600 bg-gray-800 px-3 py-1
+                    disabled:opacity-50
                   "
                 >
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                    className="
-                      rounded-md border border-gray-600 bg-gray-800 px-3 py-1
-                      disabled:opacity-50
-                    "
-                  >
-                    Anterior
-                  </button>
-
-                  <span className="px-2">
-                    Página {currentPage} de{' '}
-                    {Math.ceil(filteredTickets.length / itemsPerPage)}
-                  </span>
-
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) =>
-                        prev < Math.ceil(filteredTickets.length / itemsPerPage)
-                          ? prev + 1
-                          : prev
-                      )
-                    }
-                    disabled={
-                      currentPage >=
-                      Math.ceil(filteredTickets.length / itemsPerPage)
-                    }
-                    className="
-                      rounded-md border border-gray-600 bg-gray-800 px-3 py-1
-                      disabled:opacity-50
-                    "
-                  >
-                    Siguiente
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+                  Anterior
+                </button>
+                <span className="px-2">
+                  Página {currentPage} de{' '}
+                  {Math.ceil(filteredTickets.length / itemsPerPage)}
+                </span>
+                <button
+                  onClick={() =>
+                    setCurrentPage((prev) =>
+                      prev < Math.ceil(filteredTickets.length / itemsPerPage)
+                        ? prev + 1
+                        : prev
+                    )
+                  }
+                  disabled={
+                    currentPage >=
+                    Math.ceil(filteredTickets.length / itemsPerPage)
+                  }
+                  className="
+                    rounded-md border border-gray-600 bg-gray-800 px-3 py-1
+                    disabled:opacity-50
+                  "
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {viewTicket && (
           <div
             className="
-              fixed inset-0 z-50 flex items-center justify-center
-              overflow-hidden bg-black/60 p-4
+              fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0
+              sm:items-center sm:p-4
             "
           >
             <div
               className="
-                relative max-h-[90vh] w-full max-w-6xl overflow-y-auto
-                rounded-2xl border border-gray-700 bg-gray-900 p-4 shadow-2xl
-                md:p-6
-                lg:p-10
+                relative flex h-[95vh] w-full flex-col overflow-hidden
+                rounded-t-2xl border border-gray-700 bg-gray-900 shadow-2xl
+                sm:h-[85vh] sm:max-w-5xl sm:flex-row sm:rounded-2xl
               "
             >
+              {/* Close button */}
               <button
                 onClick={() => setViewTicket(null)}
                 className="
-                  absolute top-4 right-4 rounded-full p-2 text-gray-400
+                  absolute top-3 right-3 z-10 rounded-full p-2 text-gray-400
                   transition-colors
                   hover:bg-gray-800 hover:text-white
                 "
@@ -1179,133 +1504,99 @@ export default function TicketsPage() {
                 ✕
               </button>
 
-              <h2
-                className="
-                  mb-6 text-2xl font-extrabold tracking-tight text-white
-                  sm:text-3xl
-                "
-              >
-                Detalles del Ticket #{viewTicket.id}
-              </h2>
-
+              {/* Left panel - Info */}
               <div
-                className="
-                  grid gap-8
-                  lg:grid-cols-2
-                "
+                className={`
+                  flex max-h-[40vh] w-full flex-shrink-0 flex-col
+                  overflow-y-auto
+                  ${modernVerticalScrollbarClass}
+                  border-b border-gray-700 p-4
+                  sm:max-h-none sm:w-80 sm:border-r sm:border-b-0
+                `}
               >
-                <div className="space-y-6">
+                <h2
+                  className="
+                    mb-4 text-lg font-extrabold tracking-tight text-white
+                    sm:text-xl
+                  "
+                >
+                  Ticket #{viewTicket.id}
+                </h2>
+
+                <div className="flex-1 space-y-3">
                   <div
                     className="
-                      rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
                     "
                   >
                     <h3
                       className="
-                        mb-2 text-sm font-semibold text-gray-400 uppercase
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
                       "
                     >
-                      Usuario
+                      Email
                     </h3>
-                    <p className="text-lg text-white">{viewTicket.email}</p>
+                    <p className="text-sm text-white">{viewTicket.email}</p>
                   </div>
 
                   <div
                     className="
-                      rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
                     "
                   >
                     <h3
                       className="
-                        mb-2 text-sm font-semibold text-gray-400 uppercase
-                      "
-                    >
-                      Descripción
-                    </h3>
-                    <p className="text-lg whitespace-pre-wrap text-white">
-                      {viewTicket.description}
-                    </p>
-                  </div>
-
-                  <div
-                    className="
-                      rounded-lg border border-gray-800 bg-gray-800/50 p-4
-                    "
-                  >
-                    <h3
-                      className="
-                        mb-2 text-sm font-semibold text-gray-400 uppercase
-                      "
-                    >
-                      Tipo
-                    </h3>
-                    <span
-                      className={`
-                        inline-block rounded-full px-3 py-1 text-sm font-medium
-                        capitalize
-                        ${
-                          viewTicket.tipo === 'bug'
-                            ? 'bg-red-500/10 text-red-400'
-                            : viewTicket.tipo === 'revision'
-                              ? 'bg-yellow-500/10 text-yellow-400'
-                              : viewTicket.tipo === 'logs'
-                                ? 'bg-purple-500/10 text-purple-400'
-                                : 'bg-gray-500/10 text-gray-400'
-                        }
-                      `}
-                    >
-                      {viewTicket.tipo}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div
-                    className="
-                      rounded-lg border border-gray-800 bg-gray-800/50 p-4
-                    "
-                  >
-                    <h3
-                      className="
-                        mb-2 text-sm font-semibold text-gray-400 uppercase
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
                       "
                     >
                       Estado
                     </h3>
                     <span
                       className={`
-                        inline-block rounded-full px-3 py-1 text-sm font-medium
-                        capitalize
-                        ${
-                          viewTicket.estado === 'abierto'
-                            ? 'bg-green-500/10 text-green-400'
-                            : viewTicket.estado === 'en proceso'
-                              ? 'bg-blue-500/10 text-blue-400'
-                              : viewTicket.estado === 'en revision'
-                                ? 'bg-yellow-500/10 text-yellow-400'
-                                : viewTicket.estado === 'solucionado'
-                                  ? 'bg-purple-500/10 text-purple-400'
-                                  : 'bg-gray-500/10 text-gray-400'
-                        }
-                      `}
+                        inline-block rounded-full px-2 py-0.5 text-xs
+                        font-medium capitalize
+                        ${estadoConfig[viewTicket.estado]?.className ?? 'bg-gray-500/10 text-gray-500'}`}
                     >
-                      {viewTicket.estado}
+                      {estadoConfig[viewTicket.estado]?.label ??
+                        viewTicket.estado}
                     </span>
                   </div>
 
                   <div
                     className="
-                      rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
                     "
                   >
                     <h3
                       className="
-                        mb-2 text-sm font-semibold text-gray-400 uppercase
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
+                    >
+                      Tipo
+                    </h3>
+                    <span
+                      className={`
+                        inline-block rounded-full px-2 py-0.5 text-xs
+                        font-medium capitalize
+                        ${tipoConfig[viewTicket.tipo]?.className ?? 'bg-gray-500/10 text-gray-500'}`}
+                    >
+                      {tipoConfig[viewTicket.tipo]?.label ?? viewTicket.tipo}
+                    </span>
+                  </div>
+
+                  <div
+                    className="
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
+                  >
+                    <h3
+                      className="
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
                       "
                     >
                       Asignado a
                     </h3>
-                    <p className="text-lg text-white">
+                    <p className="text-sm text-white">
                       {viewTicket.assignedUsers &&
                       viewTicket.assignedUsers.length > 0
                         ? viewTicket.assignedUsers.map((u) => u.name).join(', ')
@@ -1315,49 +1606,93 @@ export default function TicketsPage() {
 
                   <div
                     className="
-                      rounded-lg border border-gray-800 bg-gray-800/50 p-4
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
                     "
                   >
                     <h3
                       className="
-                        mb-2 text-sm font-semibold text-gray-400 uppercase
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
                       "
                     >
-                      Comentario Principal
+                      Fecha creación
                     </h3>
-                    <p className="text-lg whitespace-pre-wrap text-white">
+                    <p className="text-sm text-white">
+                      {formatDateColombiaShort(viewTicket.createdAt)}
+                    </p>
+                  </div>
+
+                  <div
+                    className="
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
+                  >
+                    <h3
+                      className="
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
+                    >
+                      Tiempo transcurrido
+                    </h3>
+                    <p className="text-sm text-white">
+                      {formatElapsedTime(viewTicket.timeElapsedMs)}
+                    </p>
+                  </div>
+
+                  <div
+                    className="
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
+                  >
+                    <h3
+                      className="
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
+                    >
+                      Descripción
+                    </h3>
+                    <p className="text-sm whitespace-pre-wrap text-white">
+                      {viewTicket.description}
+                    </p>
+                  </div>
+
+                  <div
+                    className="
+                      rounded-lg border border-gray-800 bg-gray-800/50 p-3
+                    "
+                  >
+                    <h3
+                      className="
+                        mb-1 text-xs font-semibold text-gray-400 uppercase
+                      "
+                    >
+                      Comentario principal
+                    </h3>
+                    <p className="text-sm whitespace-pre-wrap text-white">
                       {viewTicket.comments ?? '—'}
                     </p>
                   </div>
-                </div>
 
-                {/* Archivos Adjuntos */}
-                <div className="lg:col-span-2">
-                  <div
-                    className="
-                      space-y-4 rounded-lg border border-gray-800 bg-gray-800/50
-                      p-4
-                    "
-                  >
-                    <h3 className="text-lg font-medium text-white">
-                      Archivos Adjuntos
-                    </h3>
+                  {/* Attachments */}
+                  {(viewTicket.coverImageKey ||
+                    viewTicket.videoKey ||
+                    viewTicket.documentKey) && (
                     <div
                       className="
-                        grid gap-4
-                        sm:grid-cols-2
-                        lg:grid-cols-3
+                        rounded-lg border border-gray-800 bg-gray-800/50 p-3
                       "
                     >
-                      {/* Imagen */}
-                      {viewTicket.coverImageKey && (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-gray-300">
-                            📷 Imagen
-                          </p>
+                      <h3
+                        className="
+                          mb-2 text-xs font-semibold text-gray-400 uppercase
+                        "
+                      >
+                        Archivos adjuntos
+                      </h3>
+                      <div className="space-y-2">
+                        {viewTicket.coverImageKey && (
                           <div
                             className="
-                              relative h-32 overflow-hidden rounded-lg border
+                              relative h-24 overflow-hidden rounded-lg border
                               border-gray-600
                             "
                           >
@@ -1368,18 +1703,11 @@ export default function TicketsPage() {
                               className="object-contain"
                             />
                           </div>
-                        </div>
-                      )}
-
-                      {/* Video */}
-                      {viewTicket.videoKey && (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-gray-300">
-                            🎥 Video
-                          </p>
+                        )}
+                        {viewTicket.videoKey && (
                           <div
                             className="
-                              relative h-32 overflow-hidden rounded-lg border
+                              relative h-24 overflow-hidden rounded-lg border
                               border-gray-600
                             "
                           >
@@ -1393,15 +1721,8 @@ export default function TicketsPage() {
                               />
                             </video>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Documento */}
-                      {viewTicket.documentKey && (
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium text-gray-300">
-                            📄 Documento
-                          </p>
+                        )}
+                        {viewTicket.documentKey && (
                           <a
                             href={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${viewTicket.documentKey}`}
                             target="_blank"
@@ -1414,73 +1735,151 @@ export default function TicketsPage() {
                           >
                             📄 Ver Documento
                           </a>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* Comentarios */}
-                <div className="lg:col-span-2">
-                  <div
-                    className="
-                      space-y-4 rounded-lg border border-gray-800 bg-gray-800/50
-                      p-4
-                    "
-                  >
-                    <h3 className="text-lg font-medium text-white">
-                      Historial de Chat
-                    </h3>
-                    <div
-                      className="
-                        max-h-[40vh] space-y-3 overflow-y-auto rounded-lg border
-                        border-gray-700 bg-gray-900/50 p-4
-                      "
-                    >
-                      {isLoadingComments ? (
-                        <div className="flex items-center justify-center py-4">
-                          <Loader2 className="size-6 animate-spin text-blue-500" />
-                        </div>
-                      ) : comments.length > 0 ? (
-                        comments
-                          .filter(
-                            (comment) =>
-                              !comment.content?.startsWith('Ticket asignado a ')
-                          )
-                          .map((comment, index) => (
+                {/* Close conversation button */}
+                <button
+                  onClick={() => void handleCloseConversation()}
+                  className="
+                    mt-4 w-full rounded-lg border border-gray-600 px-4 py-2
+                    text-sm text-gray-300 transition
+                    hover:bg-gray-800 hover:text-white
+                  "
+                >
+                  Cerrar conversación
+                </button>
+              </div>
+
+              {/* Right panel - Chat */}
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <div className="border-b border-gray-700 p-4">
+                  <p className="font-medium text-white">
+                    {viewTicket.creatorName || viewTicket.email}
+                  </p>
+                  <p className="text-sm text-gray-400">{viewTicket.email}</p>
+                </div>
+                <div
+                  className={`
+                    flex-1 space-y-3 overflow-y-auto p-4
+                    ${modernVerticalScrollbarClass}
+                  `}
+                >
+                  {isLoadingComments ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="size-6 animate-spin text-blue-500" />
+                    </div>
+                  ) : comments.length > 0 ? (
+                    comments
+                      .filter(
+                        (comment) =>
+                          !comment.content?.startsWith('Ticket asignado a ')
+                      )
+                      .map((comment) => {
+                        const isUser = comment.sender === 'user';
+                        const isAdmin = comment.sender === 'admin';
+                        return (
+                          <div
+                            key={comment.id}
+                            className={`
+                              flex
+                              ${isUser ? 'justify-start' : 'justify-end'}
+                            `}
+                          >
                             <div
-                              key={index}
-                              className="
-                                rounded-lg border border-gray-700 bg-gray-800/80
-                                p-4 backdrop-blur-sm
-                              "
+                              className={`
+                                max-w-[75%] px-3 py-2 text-sm
+                                ${
+                                  isUser
+                                    ? `
+                                      rounded-tr-xl rounded-b-xl bg-gray-700
+                                      text-white
+                                    `
+                                    : `
+                                      rounded-tl-xl rounded-b-xl bg-blue-600
+                                      text-white
+                                    `
+                                }
+                              `}
                             >
-                              <div
-                                className="
-                                  flex flex-wrap items-center justify-between
-                                  gap-2
-                                "
-                              >
-                                <span className="font-medium text-blue-400">
-                                  {comment.user?.name || 'Usuario'}
+                              <div className="mb-1 flex items-center gap-2">
+                                <span
+                                  className={`
+                                    rounded-full px-1.5 py-0.5 text-[10px]
+                                    font-medium
+                                    ${
+                                      isUser
+                                        ? 'bg-sky-500/10 text-sky-400'
+                                        : isAdmin
+                                          ? 'bg-amber-500/10 text-amber-400'
+                                          : 'bg-purple-500/10 text-purple-400'
+                                    }
+                                  `}
+                                >
+                                  {isUser
+                                    ? 'Estudiante'
+                                    : isAdmin
+                                      ? 'Admin'
+                                      : 'Soporte'}
                                 </span>
-                                <span className="text-sm text-gray-500">
+                                <span className="text-[10px] text-gray-400">
                                   {formatDateColombiaShort(
                                     new Date(comment.createdAt)
                                   )}
                                 </span>
                               </div>
-                              <p className="mt-2 text-gray-300">
-                                {comment.content}
-                              </p>
+                              <p>{comment.content}</p>
                             </div>
-                          ))
+                          </div>
+                        );
+                      })
+                  ) : (
+                    <p className="text-center text-gray-500">
+                      No hay comentarios
+                    </p>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+                {/* Reply input */}
+                <div className="border-t border-gray-700 p-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          void handleSendReply();
+                        }
+                      }}
+                      placeholder="Escribe una respuesta..."
+                      className="
+                        flex-1 rounded-lg border border-gray-600 bg-gray-800
+                        px-3 py-2 text-sm text-white placeholder-gray-400
+                        focus:border-blue-500 focus:ring-1 focus:ring-blue-500
+                        focus:outline-none
+                      "
+                    />
+                    <button
+                      onClick={() => void handleSendReply()}
+                      disabled={!replyText.trim() || isSendingReply}
+                      className="
+                        rounded-lg bg-blue-600 p-2 text-white transition
+                        hover:bg-blue-700
+                        disabled:opacity-50
+                      "
+                      title="Enviar"
+                    >
+                      {isSendingReply ? (
+                        <Loader2 className="size-4 animate-spin" />
                       ) : (
-                        <p className="text-center text-gray-500">
-                          No hay comentarios
-                        </p>
+                        <Send className="size-4" />
                       )}
-                    </div>
+                    </button>
                   </div>
                 </div>
               </div>

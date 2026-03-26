@@ -825,12 +825,14 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                     variant="outline"
                     className="
                       ml-1 w-fit border-primary bg-background text-primary
-                      hover:bg-black/70
+                      hover:bg-black/60
                     "
                   >
-                    {certificationTypes.find(
-                      (type) => type.id === program.certificationTypeId
-                    )?.name ?? 'No especificado'}
+                    {Array.isArray(certificationTypes)
+                      ? (certificationTypes.find(
+                          (type) => type.id === program.certificationTypeId
+                        )?.name ?? 'No especificado')
+                      : 'No especificado'}
                   </Badge>
                 </div>
               )}

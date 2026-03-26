@@ -6,6 +6,12 @@ import { toast } from 'sonner';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardContent } from '~/components/educators/ui/card';
 import { Input } from '~/components/educators/ui/input';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '~/components/educators/ui/tabs';
 
 interface RespuestaArchivo {
   fileName: string;
@@ -36,47 +42,76 @@ export default function VerRespuestasArchivos({
   const [loading, setLoading] = useState(true);
   const [grades, setGrades] = useState<Record<string, string>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
+  const [searchFilter, setSearchFilter] = useState('');
 
   /**
    * Función para obtener las respuestas de los estudiantes desde la API.
    */
-  const fetchRespuestas = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `/api/educadores/respuestas-archivos/${activityId}`
-      );
-      if (!response.ok) throw new Error('Error al obtener respuestas');
-      const data = (await response.json()) as {
-        respuestas: Record<string, RespuestaArchivo>;
-      };
+  const fetchRespuestas = useCallback(
+    async (silent = false) => {
+      try {
+        if (!silent) setLoading(true);
+        const response = await fetch(
+          `/api/educadores/respuestas-archivos/${activityId}`
+        );
+        if (!response.ok) throw new Error('Error al obtener respuestas');
+        const data = (await response.json()) as {
+          respuestas: Record<string, RespuestaArchivo>;
+        };
 
-      // Inicializar las calificaciones con los valores de la base de datos
-      const initialGrades: Record<string, string> = {};
-      const initialComments: Record<string, string> = {};
-
-      Object.entries(data.respuestas).forEach(([key, respuesta]) => {
-        const grade = respuesta.grade;
-        initialComments[key] = respuesta.comment ?? '';
-        initialGrades[key] = grade !== null ? grade.toString() : '';
-      });
-
-      setComments(initialComments); // ✅ AGREGA ESTA LÍNEA
-
-      setRespuestas(data.respuestas);
-      setGrades(initialGrades);
-    } catch (error) {
-      console.error('Error al cargar respuestas:', error);
-      toast('Error', {
-        description: 'No se pudieron cargar las respuestas',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [activityId]);
+        if (silent) {
+          // Solo actualizar respuestas sin tocar grades/comments que el usuario esté editando
+          setRespuestas(data.respuestas);
+          // Solo agregar grades/comments para entries NUEVAS que no existían antes
+          setGrades((prev) => {
+            const updated = { ...prev };
+            Object.entries(data.respuestas).forEach(([key, respuesta]) => {
+              if (!(key in updated)) {
+                updated[key] =
+                  respuesta.grade !== null ? respuesta.grade.toString() : '';
+              }
+            });
+            return updated;
+          });
+          setComments((prev) => {
+            const updated = { ...prev };
+            Object.entries(data.respuestas).forEach(([key, respuesta]) => {
+              if (!(key in updated)) {
+                updated[key] = respuesta.comment ?? '';
+              }
+            });
+            return updated;
+          });
+        } else {
+          const initialGrades: Record<string, string> = {};
+          const initialComments: Record<string, string> = {};
+          Object.entries(data.respuestas).forEach(([key, respuesta]) => {
+            initialGrades[key] =
+              respuesta.grade !== null ? respuesta.grade.toString() : '';
+            initialComments[key] = respuesta.comment ?? '';
+          });
+          setRespuestas(data.respuestas);
+          setGrades(initialGrades);
+          setComments(initialComments);
+        }
+      } catch (error) {
+        if (!silent) {
+          console.error('Error al cargar respuestas:', error);
+          toast('Error', {
+            description: 'No se pudieron cargar las respuestas',
+          });
+        }
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [activityId]
+  );
 
   useEffect(() => {
     void fetchRespuestas();
+    const interval = setInterval(() => void fetchRespuestas(true), 1000);
+    return () => clearInterval(interval);
   }, [fetchRespuestas]);
 
   /**
@@ -231,206 +266,306 @@ export default function VerRespuestasArchivos({
 
   if (loading) return <div>Cargando respuestas...</div>;
 
+  const ITEMS_PER_PAGE = 6;
+  const entries = Object.entries(respuestas).filter(([, r]) => {
+    if (!searchFilter.trim()) return true;
+    const term = searchFilter.toLowerCase();
+    const name = (r.userName ?? '').toLowerCase();
+    const id = (r.userId ?? '').toLowerCase();
+    return name.includes(term) || id.includes(term);
+  });
+  const pendientes = entries.filter(([, r]) => !r.grade || r.grade <= 0);
+  const calificadas = entries.filter(
+    ([, r]) => r.grade !== null && r.grade > 0
+  );
+
+  const renderCard = ([key, respuesta]: [string, RespuestaArchivo]) => (
+    <Card
+      key={key}
+      className="
+        group/card overflow-hidden rounded-2xl border border-slate-700/50
+        bg-gradient-to-br from-slate-800/80 to-slate-900/80 shadow-md
+        backdrop-blur-sm transition-all duration-300
+        hover:-translate-y-0.5 hover:border-cyan-500/30
+        hover:shadow-[0_8px_30px_rgba(0,200,255,0.08)]
+      "
+    >
+      <CardContent className="space-y-4 p-5">
+        {/* Header: nombre + badge */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate text-base font-semibold text-white">
+              {respuesta.userName && respuesta.userName !== 'user'
+                ? respuesta.userName
+                : `ID: ${respuesta.userId}`}
+            </h3>
+            <p className="mt-0.5 text-xs text-slate-400">
+              {new Date(respuesta.submittedAt).toLocaleString()}
+            </p>
+          </div>
+          <span
+            className={`
+              shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold
+              ${
+                respuesta.grade !== null && respuesta.grade > 0
+                  ? 'bg-green-500/20 text-green-400'
+                  : 'bg-yellow-500/20 text-yellow-400'
+              }
+            `}
+          >
+            {respuesta.grade !== null && respuesta.grade > 0
+              ? `${respuesta.grade}/5`
+              : 'Pendiente'}
+          </span>
+        </div>
+
+        {/* Archivo o URL */}
+        <div
+          className="
+            rounded-lg border border-slate-700/40 bg-slate-800/60 px-3 py-2
+          "
+        >
+          {respuesta.fileContent?.startsWith('http') &&
+          !respuesta.fileContent.includes('amazonaws.com') ? (
+            <p className="truncate text-sm">
+              <span className="text-slate-400">URL: </span>
+              <a
+                href={respuesta.fileContent}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
+                  text-blue-400 underline decoration-blue-400/30
+                  underline-offset-2
+                  hover:text-blue-300 hover:decoration-blue-300
+                "
+              >
+                {respuesta.fileContent}
+              </a>
+            </p>
+          ) : (
+            <p className="truncate text-sm text-slate-300">
+              <span className="text-slate-400">Archivo: </span>
+              <span className="font-medium text-white">
+                {respuesta.fileName}
+              </span>
+            </p>
+          )}
+        </div>
+
+        {/* Comentario del docente */}
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-400">
+            Comentario para el estudiante
+          </label>
+          <textarea
+            rows={2}
+            className="
+              w-full resize-none rounded-lg border border-slate-700/40
+              bg-slate-800/60 px-3 py-2 text-sm text-white shadow-sm
+              transition-colors
+              placeholder:text-slate-500
+              focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/30
+              focus:outline-none
+            "
+            value={comments[key] ?? ''}
+            onChange={(e) =>
+              setComments((prev) => ({
+                ...prev,
+                [key]: e.target.value,
+              }))
+            }
+            placeholder="Escribe un comentario..."
+          />
+        </div>
+        {respuesta.comment && (
+          <p className="text-xs text-slate-400">
+            Guardado: <i className="text-slate-300">{respuesta.comment}</i>
+          </p>
+        )}
+
+        {/* Calificación + acciones en fila compacta */}
+        <div className="flex items-end gap-2">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-slate-400">
+              Nota (0-5)
+            </label>
+            <Input
+              type="number"
+              min="0"
+              max="5"
+              step="0.1"
+              placeholder="0-5"
+              className="
+                h-9 w-full rounded-lg border-slate-700/40 bg-slate-800/60
+                text-center text-sm text-white
+                placeholder:text-slate-500
+              "
+              value={grades[key] ?? ''}
+              onChange={(e) => handleGradeChange(key, e.target.value)}
+            />
+          </div>
+          <Button
+            onClick={() => handleSubmitGrade(key)}
+            className={`
+              h-9 rounded-lg px-4 text-sm font-medium transition-all
+              ${
+                respuesta.status === 'calificado'
+                  ? `
+                    bg-blue-500 text-white
+                    hover:bg-blue-600
+                  `
+                  : `
+                    bg-green-500 text-white
+                    hover:bg-green-600
+                  `
+              }
+            `}
+          >
+            {respuesta.status === 'calificado' ? 'Actualizar' : 'Calificar'}
+          </Button>
+          {respuesta.fileContent?.startsWith('http') &&
+          !respuesta.fileContent.includes('amazonaws.com') ? (
+            <a
+              href={respuesta.fileContent}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button
+                type="button"
+                className="
+                  h-9 rounded-lg bg-blue-600 px-4 text-sm text-white
+                  hover:bg-blue-700
+                "
+              >
+                Abrir
+              </Button>
+            </a>
+          ) : (
+            <Button
+              onClick={() => descargarArchivo(key)}
+              className="
+                h-9 rounded-lg bg-slate-600 px-4 text-sm text-white
+                hover:bg-slate-700
+              "
+            >
+              Descargar
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const PaginatedGrid = ({
+    items,
+    emptyMsg,
+  }: {
+    items: [string, RespuestaArchivo][];
+    emptyMsg: string;
+  }) => {
+    const [page, setPage] = useState(0);
+    const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+    const paginated = items.slice(
+      page * ITEMS_PER_PAGE,
+      (page + 1) * ITEMS_PER_PAGE
+    );
+
+    if (items.length === 0) {
+      return (
+        <p className="py-8 text-center text-sm text-slate-400">{emptyMsg}</p>
+      );
+    }
+
+    return (
+      <>
+        <div
+          className="
+            grid gap-4
+            md:grid-cols-2
+            xl:grid-cols-3
+          "
+        >
+          {paginated.map(renderCard)}
+        </div>
+        {totalPages > 1 && (
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page === 0}
+              onClick={() => setPage((p) => p - 1)}
+              className="
+                h-8 rounded-lg border-slate-700 bg-slate-800 text-xs
+                text-slate-300
+                hover:bg-slate-700
+                disabled:opacity-40
+              "
+            >
+              Anterior
+            </Button>
+            <span className="px-2 text-xs text-slate-400">
+              {page + 1} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages - 1}
+              onClick={() => setPage((p) => p + 1)}
+              className="
+                h-8 rounded-lg border-slate-700 bg-slate-800 text-xs
+                text-slate-300
+                hover:bg-slate-700
+                disabled:opacity-40
+              "
+            >
+              Siguiente
+            </Button>
+          </div>
+        )}
+      </>
+    );
+  };
+
   return (
     <div>
       <h2 className="my-2 ml-4 text-xl font-semibold text-blue-600">
         Respuestas de los Estudiantes
       </h2>
-      <div
-        className="
-          grid gap-4 px-2 pb-4
-          md:grid-cols-2
-        "
-      >
-        {Object.entries(respuestas).length > 0 ? (
-          Object.entries(respuestas).map(([key, respuesta]) => {
-            console.log('🔍 Respuesta en frontend:', respuesta);
-
-            return (
-              <Card
-                key={key}
-                className="
-                  border-slate-200 transition-all
-                  hover:shadow-lg
-                "
-              >
-                <CardContent className="space-y-6 p-6">
-                  {/* Encabezado con datos del estudiante */}
-                  <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-white">
-                      Estudiante:{' '}
-                      {respuesta.userName && respuesta.userName !== 'user'
-                        ? respuesta.userName
-                        : `ID: ${respuesta.userId}`}
-                    </h3>
-                    <p className="text-sm text-white">
-                      {respuesta.fileContent?.startsWith('http') &&
-                      !respuesta.fileContent.includes('amazonaws.com') ? (
-                        <>
-                          URL:{' '}
-                          <a
-                            href={respuesta.fileContent}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="
-                              break-all text-blue-400 underline
-                              hover:text-blue-300
-                            "
-                          >
-                            {respuesta.fileContent}
-                          </a>
-                        </>
-                      ) : (
-                        <>
-                          Archivo: <b>{respuesta.fileName}</b>
-                        </>
-                      )}
-                    </p>
-                    <p className="text-sm text-white">
-                      Enviado:{' '}
-                      {new Date(respuesta.submittedAt).toLocaleString()}
-                    </p>
-                    <span
-                      className={`
-                        inline-block rounded-full px-3 py-1 text-xs font-medium
-                        ${
-                          respuesta.status === 'pendiente'
-                            ? 'bg-yellow-100 text-background'
-                            : 'bg-green-100 text-background'
-                        }
-                      `}
-                    >
-                      {respuesta.status === 'calificado'
-                        ? '✅ Calificado'
-                        : '⏳ Pendiente'}
-                    </span>
-                  </div>
-
-                  {/* Comentario del docente */}
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-white">
-                      Comentario para el estudiante:
-                    </label>
-                    <textarea
-                      rows={3}
-                      className="
-                        w-full rounded-md border border-gray-300 px-3 py-2
-                        text-sm text-white shadow-sm
-                        focus:border-blue-500 focus:ring-1 focus:ring-blue-500
-                        focus:outline-none
-                      "
-                      value={comments[key] ?? ''}
-                      onChange={(e) =>
-                        setComments((prev) => ({
-                          ...prev,
-                          [key]: e.target.value,
-                        }))
-                      }
-                      placeholder="Escribe un comentario..."
-                    />
-                  </div>
-                  {respuesta.comment && (
-                    <p className="mt-1 text-sm text-white">
-                      Último comentario guardado: <i>{respuesta.comment}</i>
-                    </p>
-                  )}
-
-                  {/* Zona de calificación y acciones */}
-                  <div
-                    className="
-                      flex flex-col gap-4
-                      md:flex-row md:items-start md:justify-between
-                    "
-                  >
-                    {/* Calificación */}
-                    <div
-                      className="
-                        space-y-2
-                        md:w-1/3
-                      "
-                    >
-                      <label className="block text-sm font-medium text-white">
-                        Calificación (0 - 5):
-                      </label>
-                      <Input
-                        type="number"
-                        min="0"
-                        max="5"
-                        step="0.1"
-                        placeholder="0-5"
-                        className="
-                          w-full border-slate-300 text-center text-white
-                          placeholder:text-gray-400
-                        "
-                        value={grades[key] ?? ''}
-                        onChange={(e) => handleGradeChange(key, e.target.value)}
-                      />
-                      <Button
-                        onClick={() => handleSubmitGrade(key)}
-                        className={`
-                          w-full transition-colors
-                          ${
-                            respuesta.status === 'calificado'
-                              ? `
-                                bg-blue-500 text-white
-                                hover:bg-blue-600
-                              `
-                              : `
-                                bg-green-500 text-white
-                                hover:bg-green-600
-                              `
-                          }
-                        `}
-                      >
-                        {respuesta.status === 'calificado'
-                          ? 'Actualizar Nota'
-                          : '✓ Enviar Nota'}
-                      </Button>
-                    </div>
-
-                    {/* Acción de descarga */}
-                    <div className="md:w-1/3">
-                      {respuesta.fileContent?.startsWith('http') &&
-                      !respuesta.fileContent.includes('amazonaws.com') ? (
-                        <a
-                          href={respuesta.fileContent}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-block w-full"
-                        >
-                          <Button
-                            type="button"
-                            className="
-                              w-full border-slate-300 bg-blue-600 text-white
-                              hover:bg-blue-700
-                            "
-                          >
-                            Ir a la URL
-                          </Button>
-                        </a>
-                      ) : (
-                        <Button
-                          onClick={() => descargarArchivo(key)}
-                          className="
-                            w-full border-slate-300 bg-slate-600 text-white
-                            hover:bg-slate-700
-                          "
-                        >
-                          Descargar archivo
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })
-        ) : (
-          <p className="col-span-2 text-center text-white">
-            No hay respuestas disponibles
-          </p>
-        )}
+      <div className="mb-3 px-2">
+        <Input
+          type="text"
+          placeholder="Buscar por nombre de estudiante..."
+          value={searchFilter}
+          onChange={(e) => setSearchFilter(e.target.value)}
+          className="
+            h-9 max-w-sm rounded-lg border-slate-700/40 bg-slate-800/60 text-sm
+            text-white
+            placeholder:text-slate-500
+          "
+        />
       </div>
+      <Tabs defaultValue="pendientes" className="px-2 pb-4">
+        <TabsList className="mb-4">
+          <TabsTrigger value="pendientes">
+            Por Calificar ({pendientes.length})
+          </TabsTrigger>
+          <TabsTrigger value="calificadas">
+            Calificadas ({calificadas.length})
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="pendientes">
+          <PaginatedGrid
+            items={pendientes}
+            emptyMsg="No hay respuestas pendientes por calificar"
+          />
+        </TabsContent>
+        <TabsContent value="calificadas">
+          <PaginatedGrid
+            items={calificadas}
+            emptyMsg="No hay respuestas calificadas aún"
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

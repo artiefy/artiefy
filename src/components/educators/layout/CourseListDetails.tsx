@@ -39,32 +39,37 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
   return (
     <div
       className="
-        grid grid-cols-1 gap-4 px-8
-        sm:grid-cols-2
-        lg:grid-cols-3 lg:px-2
-      "
+      grid grid-cols-1 gap-8 px-8
+      sm:grid-cols-2
+      lg:grid-cols-3 lg:px-2
+    "
     >
       {courses.map((course) => (
         <div key={course.id} className="group relative">
+          {/* Fondo animado sutil */}
           <div
             className="
-              absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
-              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
-              transition duration-500
-              group-hover:opacity-100
-            "
+            absolute -inset-1 z-0 animate-gradient rounded-2xl bg-gradient-to-r
+            from-[#22C4D3]/30 via-[#00BDD8]/20 to-[#01142B]/40 opacity-0 blur-md
+            transition duration-500
+            group-hover:opacity-100
+          "
           />
           <Card
             className="
-              zoom-in relative flex h-full flex-col justify-between
-              overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white
-              transition-transform duration-300 ease-in-out
-              hover:scale-[1.02]
-            "
+            relative z-10 flex h-full flex-col justify-between overflow-hidden
+            rounded-2xl border-2 border-[#1d283a] bg-[#223047] px-4 pt-4 pb-6
+            text-white shadow-2xl transition-transform duration-300 ease-in-out
+            hover:scale-[1.03] hover:border-[#00BDD8] hover:shadow-cyan-500/30
+          "
           >
-            <CardHeader>
+            <CardHeader className="mb-2 p-0">
               <AspectRatio ratio={16 / 9}>
-                <div className="relative size-full">
+                <div
+                  className="
+                  relative size-full overflow-hidden rounded-xl shadow-lg
+                "
+                >
                   <Image
                     src={
                       course.coverImageKey
@@ -73,84 +78,109 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
                     }
                     alt={course.title || 'Imagen del curso'}
                     className="
-                      object-cover px-2 pt-2 transition-transform duration-300
+                      size-full object-cover transition-transform duration-300
                       hover:scale-105
                     "
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    quality={75}
+                    quality={80}
                   />
                 </div>
               </AspectRatio>
             </CardHeader>
-
-            <CardContent className="flex grow flex-col justify-between space-y-2 px-2">
-              <CardTitle className="rounded-lg text-lg text-background">
-                <div className="w-full font-bold text-primary">
+            <CardContent className="flex flex-col gap-3 px-0 py-2">
+              <div className="mb-1 flex items-center gap-3">
+                <CardTitle className="mb-0 truncate text-xl font-extrabold text-primary">
                   {course.title}
+                </CardTitle>
+                <div
+                  className="
+                  flex items-center gap-1 rounded-lg bg-[#1e2939]/60 px-2 py-1
+                  shadow-inner
+                "
+                >
+                  <StarIcon className="size-5 text-yellow-400" />
+                  <span className="text-base font-bold text-yellow-400">
+                    {(course.rating ?? 0).toFixed(1)}
+                  </span>
                 </div>
-              </CardTitle>
-              <div className="flex items-center">
+              </div>
+              <div className="mb-1 flex items-center gap-2">
                 <Badge
                   variant="outline"
                   className="
-                    border-primary bg-background text-primary
-                    hover:bg-black/70
+                    rounded-full border-primary bg-background px-3 py-1 text-xs
+                    font-semibold text-primary shadow-sm
                   "
                 >
                   {course.categoryid}
                 </Badge>
+                <span className="ml-auto text-xs text-gray-400">
+                  {new Date(course.createdAt).toLocaleDateString()}
+                </span>
               </div>
-              <p className="line-clamp-2 text-sm text-gray-300">
-                Descripcion: {course.description}
+              <p className="min-h-[2.5em] text-sm leading-relaxed text-gray-200">
+                {course.description}
               </p>
             </CardContent>
             <CardFooter
               className="
-                flex flex-col items-start justify-between space-y-2 px-2
-              "
+              mt-2 flex flex-col gap-4 border-t border-white/10 px-0 pt-2
+            "
             >
-              <div className="flex w-full justify-between">
-                <p className="text-sm font-bold text-gray-300 italic">
-                  Educador:{' '}
-                  <span className="font-bold italic">{course.instructor}</span>
-                </p>
-                <p className="text-sm font-bold text-red-500">
-                  {course.modalidadesid}
-                </p>
-              </div>
-              <div className="flex w-full items-center justify-between">
-                <Button asChild>
-                  <Link
-                    href={`/dashboard/educadores/detailsDashboard/${course.id}`}
-                    className="
-                      group/button relative inline-flex items-center
-                      justify-center overflow-hidden rounded-md border
-                      border-white/20 bg-background p-2 text-primary
-                      active:scale-95
-                    "
-                  >
-                    <p className="font-bold">Ver estadisticas del curso</p>
-                    <ArrowRightIcon className="size-5 animate-bounce-right" />
-                    <div
-                      className="
-                        absolute inset-0 flex w-full
-                        [transform:skew(-13deg)_translateX(-100%)]
-                        justify-center
-                        group-hover/button:[transform:skew(-13deg)_translateX(100%)]
-                        group-hover/button:duration-1000
-                      "
-                    >
-                      <div className="relative h-full w-10 bg-white/30" />
-                    </div>
-                  </Link>
-                </Button>
-                <div className="flex items-center">
-                  <StarIcon className="size-5 text-yellow-500" />
-                  <span className="ml-1 text-sm font-bold text-yellow-500">
-                    {(course.rating ?? 0).toFixed(1)}
+              <div className="flex w-full items-center justify-between gap-2">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-semibold text-gray-400">
+                    Educador
+                  </span>
+                  <span className="text-sm font-bold text-white">
+                    {course.instructor}
                   </span>
                 </div>
+                <span
+                  className="
+                  rounded-full border border-[#22C4D3]/30 bg-[#01142B]/60 px-3
+                  py-1 text-xs font-bold text-[#22C4D3] shadow-sm
+                "
+                >
+                  {course.modalidadesid}
+                </span>
+              </div>
+              <div className="mt-2 flex w-full flex-row justify-end gap-3">
+                <Button
+                  asChild
+                  className="
+                    rounded-lg border border-primary bg-background px-4 py-2
+                    font-bold text-primary transition-all
+                    hover:bg-[#22C4D3]/10
+                  "
+                >
+                  <Link
+                    href={`/dashboard/educadores/detailsDashboard/${course.id}`}
+                    className="flex items-center gap-2"
+                  >
+                    <span>Estadísticas</span>
+                    <ArrowRightIcon className="size-5" />
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  className="
+                    mr-0 rounded-lg border border-primary bg-primary px-4 py-2
+                    font-bold text-white transition-all
+                    hover:bg-[#00BDD8]
+                    sm:mr-2
+                    lg:mr-4
+                  "
+                >
+                  <Link
+                    href={`/dashboard/educadores/cursos/${course.id}`}
+                    className="flex items-center gap-2"
+                  >
+                    <span>Ver Curso</span>
+                    <ArrowRightIcon className="size-5" />
+                  </Link>
+                </Button>
               </div>
             </CardFooter>
           </Card>

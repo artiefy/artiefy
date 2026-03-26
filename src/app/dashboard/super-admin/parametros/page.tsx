@@ -37,6 +37,12 @@ const ParametrosPage = () => {
     numberOfActivities: '',
   });
 
+  // Filtro de búsqueda
+  const [search, setSearch] = useState('');
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   // Fetch parámetros
   const fetchParametros = async () => {
     try {
@@ -46,6 +52,7 @@ const ParametrosPage = () => {
       const data = await res.json();
       setParametros(data);
       setError(null);
+      setCurrentPage(1); // Reiniciar página al cargar
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
@@ -186,7 +193,12 @@ const ParametrosPage = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="mx-auto max-w-6xl">
         {/* Encabezado */}
-        <div className="mb-8 flex items-center justify-between">
+        <div
+          className="
+          mb-8 flex flex-col gap-4
+          md:flex-row md:items-center md:justify-between
+        "
+        >
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
               Parámetros de Evaluación
@@ -195,35 +207,55 @@ const ParametrosPage = () => {
               Gestiona criterios de evaluación reutilizables
             </p>
           </div>
-          <button
-            onClick={() => handleOpenModal()}
+          <div
             className="
-              flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm
-              font-medium text-[#01142B] transition-colors
-              hover:bg-primary/90
-            "
+            flex flex-col gap-2
+            md:flex-row md:items-center
+          "
           >
-            <FiPlus size={18} />
-            Crear Nuevo Parámetro
-          </button>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o descripción..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="
+                rounded-lg border border-gray-300 px-3 py-2 text-sm
+                focus:border-primary focus:outline-none
+              "
+            />
+            <button
+              onClick={() => handleOpenModal()}
+              className="
+                flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm
+                font-medium text-[#01142B] transition-colors
+                hover:bg-primary/90
+              "
+            >
+              <FiPlus size={18} />
+              Crear Nuevo Parámetro
+            </button>
+          </div>
         </div>
 
         {error && (
           <div
             className="
-              mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
-            "
+            mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
+          "
           >
             {error}
           </div>
         )}
 
-        {/* Tabla de parámetros */}
+        {/* Tabla de parámetros con filtro y paginación */}
         {parametros.length === 0 ? (
           <div
             className="
-              rounded-lg border border-gray-200 bg-white p-8 text-center
-            "
+            rounded-lg border border-gray-200 bg-white p-8 text-center
+          "
           >
             <p className="text-gray-500">
               No hay parámetros creados aún. ¡Crea uno para empezar!
@@ -232,92 +264,163 @@ const ParametrosPage = () => {
         ) : (
           <div
             className="
-              overflow-x-auto rounded-lg border border-gray-200 bg-white
-            "
+            overflow-x-auto rounded-lg border border-gray-200 bg-white
+          "
           >
             <table className="w-full">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   <th
                     className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
+                    px-6 py-3 text-left text-xs font-semibold text-gray-700
+                  "
                   >
                     Nombre
                   </th>
                   <th
                     className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
+                    px-6 py-3 text-left text-xs font-semibold text-gray-700
+                  "
                   >
                     Descripción
                   </th>
                   <th
                     className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
+                    px-6 py-3 text-left text-xs font-semibold text-gray-700
+                  "
                   >
                     Porcentaje
                   </th>
                   <th
                     className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
+                    px-6 py-3 text-left text-xs font-semibold text-gray-700
+                  "
                   >
                     Número de Actividades
                   </th>
                   <th
                     className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
+                    px-6 py-3 text-left text-xs font-semibold text-gray-700
+                  "
                   >
                     Acciones
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {parametros.map((param) => (
-                  <tr key={param.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                      {param.name}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {param.description}
-                    </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                      {param.porcentaje}%
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {param.numberOfActivities}
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleOpenModal(param)}
-                          className="
-                            rounded-lg bg-blue-50 p-2 text-blue-600
-                            hover:bg-blue-100
-                          "
-                          title="Editar"
-                        >
-                          <FiEdit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(param.id)}
-                          className="
-                            rounded-lg bg-red-50 p-2 text-red-600
-                            hover:bg-red-100
-                          "
-                          title="Eliminar"
-                        >
-                          <FiTrash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {parametros
+                  .filter(
+                    (param) =>
+                      param.name.toLowerCase().includes(search.toLowerCase()) ||
+                      param.description
+                        .toLowerCase()
+                        .includes(search.toLowerCase())
+                  )
+                  .slice(
+                    (currentPage - 1) * itemsPerPage,
+                    currentPage * itemsPerPage
+                  )
+                  .map((param) => (
+                    <tr key={param.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                        {param.name}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {param.description}
+                      </td>
+                      <td
+                        className="
+                        px-6 py-4 text-sm font-semibold text-gray-900
+                      "
+                      >
+                        {param.porcentaje}%
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {param.numberOfActivities}
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleOpenModal(param)}
+                            className="
+                              rounded-lg bg-blue-50 p-2 text-blue-600
+                              hover:bg-blue-100
+                            "
+                            title="Editar"
+                          >
+                            <FiEdit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(param.id)}
+                            className="
+                              rounded-lg bg-red-50 p-2 text-red-600
+                              hover:bg-red-100
+                            "
+                            title="Eliminar"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
+            {/* Paginación */}
+            <div className="flex items-center justify-between px-6 py-4">
+              <span className="text-sm text-gray-600">
+                Página {currentPage} de{' '}
+                {Math.max(
+                  1,
+                  Math.ceil(
+                    parametros.filter(
+                      (param) =>
+                        param.name
+                          .toLowerCase()
+                          .includes(search.toLowerCase()) ||
+                        param.description
+                          .toLowerCase()
+                          .includes(search.toLowerCase())
+                    ).length / itemsPerPage
+                  )
+                )}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="
+                    rounded border px-3 py-1 text-sm
+                    disabled:opacity-50
+                  "
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                  disabled={
+                    currentPage >=
+                    Math.ceil(
+                      parametros.filter(
+                        (param) =>
+                          param.name
+                            .toLowerCase()
+                            .includes(search.toLowerCase()) ||
+                          param.description
+                            .toLowerCase()
+                            .includes(search.toLowerCase())
+                      ).length / itemsPerPage
+                    )
+                  }
+                  className="
+                    rounded border px-3 py-1 text-sm
+                    disabled:opacity-50
+                  "
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

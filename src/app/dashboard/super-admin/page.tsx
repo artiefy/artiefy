@@ -705,9 +705,7 @@ export default function AdminDashboard() {
 
   const fetchPrograms = useCallback(async () => {
     try {
-      const res = await fetch(
-        'server/actions/estudiantes/programs/getAllPrograms'
-      ); // Actualizar la ruta correcta
+      const res = await fetch('/api/super-admin/programs/enrollInProgram');
       if (!res.ok) throw new Error('Error al obtener programas');
 
       const rawData: unknown = await res.json();
@@ -719,14 +717,18 @@ export default function AdminDashboard() {
             item !== null &&
             'id' in item &&
             'title' in item &&
-            typeof (item as { id: unknown }).id === 'string' &&
+            (typeof (item as { id: unknown }).id === 'string' ||
+              typeof (item as { id: unknown }).id === 'number') &&
             typeof (item as { title: unknown }).title === 'string'
         )
       ) {
         throw new Error('Datos inválidos recibidos');
       }
 
-      const data = rawData as { id: string; title: string }[];
+      const data = rawData.map((program) => ({
+        id: String((program as { id: string | number }).id),
+        title: (program as { title: string }).title,
+      }));
       setPrograms(data);
     } catch (error) {
       console.error('Error fetching programs:', error);
@@ -739,7 +741,27 @@ export default function AdminDashboard() {
       const res = await fetch('/api/super-admin/programs/enrollInProgram');
       if (!res.ok) throw new Error('Error al obtener programas');
 
-      const data = (await res.json()) as { id: string; title: string }[];
+      const rawData: unknown = await res.json();
+      if (
+        !Array.isArray(rawData) ||
+        !rawData.every(
+          (item) =>
+            typeof item === 'object' &&
+            item !== null &&
+            'id' in item &&
+            'title' in item &&
+            (typeof (item as { id: unknown }).id === 'string' ||
+              typeof (item as { id: unknown }).id === 'number') &&
+            typeof (item as { title: unknown }).title === 'string'
+        )
+      ) {
+        throw new Error('Datos inválidos recibidos');
+      }
+
+      const data = rawData.map((program) => ({
+        id: String((program as { id: string | number }).id),
+        title: (program as { title: string }).title,
+      }));
       console.log('✅ Programas para asignación cargados:', data);
       setPrograms(data);
     } catch (error) {
@@ -1709,6 +1731,64 @@ export default function AdminDashboard() {
     });
   };
 
+  const handleMassDeleteUsers = () => {
+    if (selectedUsers.length === 0) {
+      showNotification('No has seleccionado usuarios.', 'error');
+      return;
+    }
+
+    setConfirmation({
+      isOpen: true,
+      title: 'Eliminar Usuarios Seleccionados',
+      message: `¿Estás seguro de que quieres eliminar ${selectedUsers.length} usuario(s)? Esta acción eliminará los usuarios de Clerk y de la base de datos. No se puede deshacer.`,
+      onConfirm: () => {
+        void (async () => {
+          try {
+            const response = await fetch('/api/users', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                action: 'deleteMultiple',
+                userIds: selectedUsers,
+              }),
+            });
+
+            const result = (await response.json()) as {
+              success: boolean;
+              summary?: { total: number; deleted: number; failed: number };
+            };
+
+            if (result.summary) {
+              setUsers((prev) =>
+                prev.filter((user) => !selectedUsers.includes(user.id))
+              );
+              setSelectedUsers([]);
+              setSelectedEmails([]);
+
+              if (result.summary.failed > 0) {
+                showNotification(
+                  `Se eliminaron ${result.summary.deleted} de ${result.summary.total} usuarios. ${result.summary.failed} fallaron.`,
+                  'error'
+                );
+              } else {
+                showNotification(
+                  `${result.summary.deleted} usuario(s) eliminados correctamente.`,
+                  'success'
+                );
+              }
+            } else {
+              showNotification('Error al eliminar usuarios.', 'error');
+            }
+          } catch {
+            showNotification('Error al eliminar usuarios.', 'error');
+          } finally {
+            setConfirmation(null);
+          }
+        })();
+      },
+    });
+  };
+
   const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
   const [programsCollapsed, setProgramsCollapsed] = useState(true);
   const [coursesCollapsed, setCoursesCollapsed] = useState(true);
@@ -2147,6 +2227,43 @@ export default function AdminDashboard() {
             />
           </button>
 
+          <button
+            onClick={handleMassDeleteUsers}
+            className={`
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md px-2 py-1.5 text-xs
+              transition-all
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+              ${
+                selectedUsers.length === 0
+                  ? 'cursor-not-allowed border border-gray-600 text-gray-500'
+                  : `
+                    border border-red-500/20 bg-red-500/10 text-red-500
+                    hover:bg-red-500/20
+                  `
+              }
+            `}
+            disabled={selectedUsers.length === 0}
+          >
+            <span className="relative z-10 font-medium">
+              Eliminar Seleccionados
+            </span>
+            <Trash2
+              className="
+                relative z-10 size-3.5
+                sm:size-4
+              "
+            />
+            <div
+              className="
+                absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                via-white/10 to-transparent opacity-0 transition-all
+                duration-500
+                group-hover/button:[transform:translateX(100%)]
+                group-hover/button:opacity-100
+              "
+            />
+          </button>
           <button
             onClick={async () => {
               try {

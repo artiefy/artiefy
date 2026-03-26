@@ -517,6 +517,43 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ success: true });
     }
 
+    if (action === 'deleteMultiple') {
+      if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+        return NextResponse.json(
+          { error: 'userIds es requerido y debe ser un array no vacío' },
+          { status: 400 }
+        );
+      }
+
+      const results: { userId: string; success: boolean; error?: string }[] =
+        [];
+      for (const userId of userIds) {
+        try {
+          await deleteUser(userId);
+          results.push({ userId, success: true });
+        } catch (err) {
+          results.push({
+            userId,
+            success: false,
+            error: err instanceof Error ? err.message : 'Error desconocido',
+          });
+        }
+      }
+
+      const successCount = results.filter((r) => r.success).length;
+      const failCount = results.filter((r) => !r.success).length;
+
+      return NextResponse.json({
+        success: failCount === 0,
+        results,
+        summary: {
+          total: userIds.length,
+          deleted: successCount,
+          failed: failCount,
+        },
+      });
+    }
+
     return NextResponse.json({ error: 'Acción desconocida' }, { status: 400 });
   } catch (error: unknown) {
     if (error instanceof Error) {
