@@ -810,27 +810,59 @@ export const getModalidadById = async (modalidadId: number) => {
 };
 
 export const getCoursesByUser = async (userId: string) => {
-  return (
-    db
-      .select({
-        id: courses.id,
-        title: courses.title,
-        description: courses.description,
-        coverImageKey: courses.coverImageKey,
-        categoryid: categories.name,
-        modalidadesid: modalidades.name,
-        nivelid: nivel.name,
-        instructor: courses.instructor, // Changed from instructorId
-        rating: courses.rating,
-        creatorId: courses.creatorId,
-        createdAt: courses.createdAt,
-        updatedAt: courses.updatedAt,
-      })
-      .from(courses)
-      // Removemos el leftJoin con users ya que no es necesario
-      .leftJoin(categories, eq(courses.categoryid, categories.id))
-      .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-      .leftJoin(nivel, eq(courses.nivelid, nivel.id))
-      .where(eq(courses.instructor, userId)) // Changed from instructorId
-  );
+  const { courseInstructors } = await import('~/server/db/schema');
+
+  // Query 1: cursos donde instructor (campo texto) = userId
+  const byDirectField = await db
+    .select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      coverImageKey: courses.coverImageKey,
+      categoryid: categories.name,
+      modalidadesid: modalidades.name,
+      nivelid: nivel.name,
+      instructor: courses.instructor,
+      rating: courses.rating,
+      creatorId: courses.creatorId,
+      createdAt: courses.createdAt,
+      updatedAt: courses.updatedAt,
+    })
+    .from(courses)
+    .leftJoin(categories, eq(courses.categoryid, categories.id))
+    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+    .leftJoin(nivel, eq(courses.nivelid, nivel.id))
+    .where(eq(courses.instructor, userId));
+
+  // Query 2: cursos donde el userId está en courseInstructors (tabla intermedia)
+  const byJunctionTable = await db
+    .select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      coverImageKey: courses.coverImageKey,
+      categoryid: categories.name,
+      modalidadesid: modalidades.name,
+      nivelid: nivel.name,
+      instructor: courses.instructor,
+      rating: courses.rating,
+      creatorId: courses.creatorId,
+      createdAt: courses.createdAt,
+      updatedAt: courses.updatedAt,
+    })
+    .from(courses)
+    .innerJoin(courseInstructors, eq(courseInstructors.courseId, courses.id))
+    .leftJoin(categories, eq(courses.categoryid, categories.id))
+    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+    .leftJoin(nivel, eq(courses.nivelid, nivel.id))
+    .where(eq(courseInstructors.instructorId, userId));
+
+  // Merge ambos resultados eliminando duplicados por id
+  const allCourses = [...byDirectField, ...byJunctionTable];
+  const seen = new Set<number>();
+  return allCourses.filter((course) => {
+    if (seen.has(course.id)) return false;
+    seen.add(course.id);
+    return true;
+  });
 };
