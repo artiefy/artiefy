@@ -67,3 +67,27 @@
     transform: rotate(360deg);
   }
 }
+
+.plans-payment-modal-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 196, 211, 0.45) #061c37;
+}
+
+.plans-payment-modal-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.plans-payment-modal-scroll::-webkit-scrollbar-track {
+  background: #061c37;
+  border-radius: 999px;
+}
+
+.plans-payment-modal-scroll::-webkit-scrollbar-thumb {
+  background: rgba(34, 196, 211, 0.45);
+  border-radius: 999px;
+  border: 2px solid #061c37;
+}
+
+.plans-payment-modal-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 196, 211, 0.65);
+}

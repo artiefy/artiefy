@@ -2,16 +2,15 @@
 
 import { createElement, useEffect, useRef, useState } from 'react';
 
-import { usePathname, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaTimes, FaTimesCircle } from 'react-icons/fa';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
-import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
 import { Button } from '~/components/estudiantes/ui/button';
 import { type Plan, plansEmpresas, plansPersonas } from '~/types/plans';
@@ -21,77 +20,25 @@ import '~/styles/buttonPlanes.css';
 
 const PlansPage: React.FC = () => {
   const { isSignedIn } = useAuth();
-  const pathname = usePathname();
+  const { user } = useUser();
   const searchParams = useSearchParams();
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const hasProcessedUrlRef = useRef(false);
-  const initialSearchParamsRef = useRef<URLSearchParams | null>(null);
-  const PENDING_PLAN_KEY = 'pendingPlanPurchaseId';
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignUpModal, setShowSignUpModal] = useState(false);
-  const [authDismissed, setAuthDismissed] = useState(false);
 
   const planIdParam = searchParams?.get('plan_id') ?? null;
-  const shouldShowSignupFromOAuth = searchParams?.get('show_signup') === 'true';
-  const isLoginModalOpen = showLoginModal && !shouldShowSignupFromOAuth;
-  const isSignUpModalOpen = showSignUpModal || shouldShowSignupFromOAuth;
 
   // Detectar plan_id en la URL y abrir modal si corresponde (solo una vez)
   useEffect(() => {
-    if (shouldShowSignupFromOAuth) return;
-
-    // Guardar searchParams inicial solo una vez
-    if (!initialSearchParamsRef.current) {
-      initialSearchParamsRef.current = searchParams;
-    }
-
-    // 1) Intentar recuperar el plan pendiente guardado (login sin query params)
-    const pendingPlanId =
-      typeof window !== 'undefined'
-        ? window.sessionStorage.getItem(PENDING_PLAN_KEY)
-        : null;
-
-    // 2) Si no hay pending, usar el plan_id del query actual
-    const effectivePlanId = pendingPlanId ?? planIdParam;
-    if (!effectivePlanId) return;
-
-    const allPlans = [...plansPersonas, ...plansEmpresas];
-    const plan = allPlans.find((p) => String(p.id) === String(effectivePlanId));
-    if (!plan) return;
-
-    // Si NO está logueado: primero mostrar login/signup y limpiar la URL.
-    // Guardamos el plan pendiente para que, al autenticarse, se abra el modal de pago automáticamente.
-    if (!isSignedIn) {
-      if (typeof window !== 'undefined') {
-        if (!pendingPlanId) {
-          window.sessionStorage.setItem(PENDING_PLAN_KEY, String(plan.id));
-        }
-
-        // Limpiar plan_id de la URL inmediatamente (no queremos mostrarlo ni depender de él)
-        if (planIdParam) {
-          const url = new URL(window.location.href);
-          url.searchParams.delete('plan_id');
-          window.history.replaceState({}, '', url.pathname + url.search);
-        }
-      }
-
-      // Abrir el modal de login si no está abierto
-      if (!authDismissed && !showLoginModal && !showSignUpModal) {
-        const openAuth = () => setShowLoginModal(true);
-        if (typeof queueMicrotask === 'function') {
-          queueMicrotask(openAuth);
-        } else {
-          setTimeout(openAuth, 0);
-        }
-      }
-      return;
-    }
-
-    // Si está logueado: abrir el modal de pago una sola vez desde pending/query
+    if (!planIdParam) return;
     if (hasProcessedUrlRef.current) return;
     hasProcessedUrlRef.current = true;
+
+    const allPlans = [...plansPersonas, ...plansEmpresas];
+    const plan = allPlans.find((p) => String(p.id) === String(planIdParam));
+    if (!plan) return;
+    if (plan.name === 'Enterprise') return;
 
     const openModal = () => {
       setSelectedPlan(plan);
@@ -103,48 +50,19 @@ const PlansPage: React.FC = () => {
       setTimeout(openModal, 0);
     }
 
-    // Consumir el pendingPlanId (si existía)
-    if (typeof window !== 'undefined' && pendingPlanId) {
-      window.sessionStorage.removeItem(PENDING_PLAN_KEY);
-    }
-
     // Limpiar plan_id de la URL (por si aún existe)
-    if (typeof window !== 'undefined' && planIdParam) {
+    if (typeof window !== 'undefined') {
       const url = new URL(window.location.href);
       url.searchParams.delete('plan_id');
       window.history.replaceState({}, '', url.pathname + url.search);
     }
-  }, [
-    isSignedIn,
-    planIdParam,
-    shouldShowSignupFromOAuth,
-    showLoginModal,
-    showSignUpModal,
-    authDismissed,
-    searchParams,
-  ]);
-
-  const clearShowSignupParam = () => {
-    if (typeof window === 'undefined') return;
-    const url = new URL(window.location.href);
-    if (!url.searchParams.has('show_signup')) return;
-    url.searchParams.delete('show_signup');
-    window.history.replaceState({}, '', `${url.pathname}${url.search}`);
-  };
+  }, [planIdParam]);
 
   // Permitir abrir el modal siempre
   const handlePlanSelect = (plan: Plan) => {
     if (plan.name === 'Enterprise') return;
     if (isProcessing) return;
     setIsProcessing(true);
-    // Si no está logueado, primero autenticación; luego se abrirá el modal de pago automáticamente.
-    if (!isSignedIn && typeof window !== 'undefined') {
-      window.sessionStorage.setItem(PENDING_PLAN_KEY, String(plan.id));
-      setAuthDismissed(false);
-      setShowLoginModal(true);
-      setIsProcessing(false);
-      return;
-    }
 
     setSelectedPlan(plan);
     setShowModal(true);
@@ -156,37 +74,6 @@ const PlansPage: React.FC = () => {
     setShowModal(false);
     setSelectedPlan(null);
     setIsProcessing(false);
-  };
-
-  const handleLoginSuccess = () => {
-    setShowLoginModal(false);
-    // No abrir manualmente aquí: el useEffect lo hace al detectar isSignedIn + pendingPlanPurchaseId
-  };
-
-  const handleSignUpSuccess = () => {
-    setShowSignUpModal(false);
-    // No abrir manualmente aquí: el useEffect lo hace al detectar isSignedIn + pendingPlanPurchaseId
-  };
-
-  const handleAuthClose = () => {
-    setShowLoginModal(false);
-    setShowSignUpModal(false);
-    setAuthDismissed(true);
-    clearShowSignupParam();
-    if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem(PENDING_PLAN_KEY);
-    }
-  };
-
-  const handleSwitchToSignUp = () => {
-    setShowLoginModal(false);
-    setShowSignUpModal(true);
-  };
-
-  const handleSwitchToLogin = () => {
-    setShowSignUpModal(false);
-    setShowLoginModal(true);
-    clearShowSignupParam();
   };
 
   const selectedProduct = selectedPlan ? getProductById(selectedPlan.id) : null;
@@ -369,64 +256,300 @@ const PlansPage: React.FC = () => {
         <div
           className="
             pointer-events-auto fixed inset-0 z-[1000] flex items-center
-            justify-center bg-black/50
+            justify-center bg-black/60 px-4 py-8
           "
         >
-          <div className="relative w-full max-w-lg rounded-lg bg-white p-4">
-            <div className="relative mb-4 flex items-center justify-between">
-              <h3
+          <div
+            className="
+              relative grid h-[calc(100vh-64px)] max-h-[780px] w-full max-w-lg
+              grid-rows-[auto,minmax(0,1fr)] gap-0 overflow-hidden rounded-2xl
+              border border-border/50 bg-card shadow-lg
+            "
+          >
+            <div
+              className="
+                bg-gradient-to-br from-primary/15 via-primary/5 to-transparent
+                px-5 pt-5 pb-4
+              "
+            >
+              <div
                 className="
-                  w-full text-center text-xl font-semibold text-gray-900
+                  flex flex-col space-y-1 text-center
+                  sm:text-left
                 "
               >
-                Llena este formulario
-                <br />
-                <span className="font-bold">Plan {selectedPlan.name}</span>
-              </h3>
+                <h3 className="text-lg font-bold tracking-tight text-foreground">
+                  Suscribete a un plan
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Selecciona tu plan y completa tus datos para comenzar
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="
+                plans-payment-modal-scroll min-h-0 space-y-4 overflow-y-auto
+                overscroll-contain px-5 pt-6 pb-5
+              "
+            >
+              {isSignedIn ? (
+                <div
+                  className="
+                    flex items-center gap-3 rounded-xl border border-border/40
+                    bg-muted/30 p-3
+                  "
+                >
+                  <Image
+                    src={user?.imageUrl || '/artiefy-icon.png'}
+                    alt={user?.fullName?.trim() || 'Usuario Artiefy'}
+                    width={40}
+                    height={40}
+                    className="
+                      size-10 rounded-full object-cover ring-2 ring-primary/30
+                    "
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {user?.fullName?.trim() || 'Usuario Artiefy'}
+                    </p>
+                    <p className="truncate text-[11px] text-muted-foreground">
+                      {user?.emailAddresses?.[0]?.emailAddress ||
+                        'correo@artiefy.com'}
+                    </p>
+                  </div>
+                  <div
+                    className="
+                      inline-flex items-center gap-1 rounded-full
+                      bg-emerald-500/10 px-2 py-1 text-[10px] text-emerald-400
+                    "
+                  >
+                    <BsCheck2Circle className="size-3" />
+                    Verificado
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                <p
+                  className="
+                    text-[11px] font-semibold tracking-wider
+                    text-muted-foreground uppercase
+                  "
+                >
+                  Plan
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {allPlans.map((plan) => {
+                    const isEnterprise = plan.name === 'Enterprise';
+                    const isSelected = selectedPlan.id === plan.id;
+                    const price =
+                      getDisplayCopPrice(plan).toLocaleString('es-CO');
+                    const badgeConfig =
+                      plan.name === 'Pro'
+                        ? {
+                            label: '15 dias gratis',
+                            className:
+                              'bg-emerald-400 text-[#080c16] ring-1 ring-emerald-300/50',
+                          }
+                        : plan.name === 'Premium'
+                          ? {
+                              label: 'Popular',
+                              className:
+                                'bg-primary text-[#080c16] ring-1 ring-primary/40',
+                            }
+                          : plan.name === 'Enterprise'
+                            ? {
+                                label: 'Muy pronto',
+                                className:
+                                  'bg-amber-400 text-black ring-1 ring-amber-300/40',
+                              }
+                            : null;
+
+                    return (
+                      <button
+                        key={`modal-${plan.id}`}
+                        type="button"
+                        disabled={isEnterprise}
+                        onClick={() => !isEnterprise && setSelectedPlan(plan)}
+                        className={`
+                          relative flex flex-col items-center gap-1.5 rounded-xl
+                          border p-3 text-center transition-all duration-200
+                          active:scale-[0.97]
+                          ${
+                            isSelected
+                              ? `
+                                border-primary bg-primary/10 shadow-sm
+                                shadow-primary/10
+                              `
+                              : `
+                                border-border/40 bg-muted/20
+                                hover:border-border/70
+                              `
+                          }
+                          ${isEnterprise ? 'cursor-not-allowed opacity-50' : ''}
+                        `}
+                      >
+                        {badgeConfig ? (
+                          <span
+                            className={`
+                              absolute -top-1.5 right-1.5 rounded-full px-1.5
+                              py-0.5 text-[8px] font-semibold
+                              ${badgeConfig.className}
+                            `}
+                          >
+                            {badgeConfig.label}
+                          </span>
+                        ) : null}
+
+                        <div
+                          className={`
+                            flex size-8 items-center justify-center rounded-lg
+                            ${
+                              isSelected
+                                ? `
+                                  bg-primary text-[#080c16] ring-1
+                                  ring-primary/40
+                                `
+                                : `
+                                  bg-muted/50 text-foreground ring-1
+                                  ring-border/40
+                                `
+                            }
+                          `}
+                        >
+                          {createElement(
+                            plan.icon as React.ComponentType<{
+                              className: string;
+                            }>,
+                            { className: 'h-4.5 w-4.5' }
+                          )}
+                        </div>
+                        <span
+                          className={`
+                            text-xs font-semibold
+                            ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}
+                        >
+                          {plan.name}
+                        </span>
+                        <span
+                          className={`
+                            text-[10px]
+                            ${isSelected ? 'text-foreground' : 'text-muted-foreground'}`}
+                        >
+                          ${price}/mes
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div
+                className="
+                  flex items-center gap-2 rounded-xl border border-primary
+                  bg-primary/10 p-2.5
+                "
+              >
+                <BsCheck2Circle className="size-4 text-foreground" />
+                <div className="text-left">
+                  <p className="text-[11px] font-medium text-foreground">
+                    PayU
+                  </p>
+                  <p className="text-[9px] text-muted-foreground">
+                    Tarjeta / PSE
+                  </p>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-xl border border-border/40">
+                <div className="border-b border-border/30 bg-muted/20 px-3 py-2">
+                  <p
+                    className="
+                      text-[11px] font-semibold tracking-wider
+                      text-muted-foreground uppercase
+                    "
+                  >
+                    Resumen
+                  </p>
+                </div>
+                <div className="space-y-2 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      Plan {selectedPlan.name}
+                    </span>
+                    <span className="text-xs font-medium text-foreground">
+                      $
+                      {getDisplayCopPrice(selectedPlan).toLocaleString('es-CO')}
+                      /mes
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedPlan.features
+                      .filter((feature) => feature.available)
+                      .slice(0, 4)
+                      .map((feature) => (
+                        <span
+                          key={`chip-${selectedPlan.id}-${feature.text}`}
+                          className="
+                            inline-flex items-center gap-1 rounded-full
+                            bg-muted/30 px-2 py-0.5 text-[10px]
+                            text-muted-foreground
+                          "
+                        >
+                          <BsCheck2Circle className="size-2.5 text-primary" />
+                          {feature.text}
+                        </span>
+                      ))}
+                  </div>
+                  <div
+                    className="
+                      flex items-center justify-between border-t
+                      border-border/30 pt-2
+                    "
+                  >
+                    <span className="text-xs font-medium text-foreground">
+                      Total mensual
+                    </span>
+                    <span className="text-lg font-bold text-foreground">
+                      $
+                      {getDisplayCopPrice(selectedPlan).toLocaleString('es-CO')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <PaymentForm
+                selectedProduct={selectedProduct}
+                requireAuthOnSubmit={false}
+                submitLabel={`Suscribirse por $${getDisplayCopPrice(selectedPlan).toLocaleString('es-CO')}/mes`}
+                showTitle={false}
+                variant="inline-plan-card"
+              />
+            </div>
+
+            <div className="pointer-events-none absolute inset-x-0 top-0 h-1" />
+
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1" />
+
+            <div className="absolute top-4 right-4">
               <button
                 onClick={handleCloseModal}
                 className="
-                  absolute top-0 right-0 z-[1010] mt-2 mr-2 text-gray-500
-                  hover:text-gray-700
+                  rounded-sm opacity-70 ring-offset-background
+                  transition-opacity
+                  hover:opacity-100
+                  focus:ring-2 focus:ring-ring focus:ring-offset-2
+                  focus:outline-none
                 "
                 type="button"
               >
-                <FaTimes className="size-6" />
+                <FaTimes className="size-4" />
               </button>
-            </div>
-            <div>
-              <PaymentForm
-                selectedProduct={selectedProduct}
-                requireAuthOnSubmit={!isSignedIn}
-                // Redirigir de vuelta a /planes SIN query params.
-                // El plan se reabre con sessionStorage(pendingPlanPurchaseId).
-                redirectUrlOnAuth={pathname}
-                persistOnAuth={{
-                  key: PENDING_PLAN_KEY,
-                  value: String(selectedPlan.id),
-                }}
-              />
             </div>
           </div>
         </div>
       )}
-
-      {/* Auth primero (planes) */}
-      <MiniLoginModal
-        isOpen={isLoginModalOpen}
-        onClose={handleAuthClose}
-        onLoginSuccess={handleLoginSuccess}
-        redirectUrl={pathname}
-        onSwitchToSignUp={handleSwitchToSignUp}
-      />
-
-      <MiniSignUpModal
-        isOpen={isSignUpModalOpen}
-        onClose={handleAuthClose}
-        onSignUpSuccess={handleSignUpSuccess}
-        redirectUrl={pathname}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
       <Footer />
     </div>
   );

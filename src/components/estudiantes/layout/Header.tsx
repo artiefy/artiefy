@@ -13,6 +13,8 @@ import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 import useSWR from 'swr';
 
+import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
+import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
@@ -40,14 +42,13 @@ export function Header({
   const [showPreview, setShowPreview] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState(false);
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignUpModal, setShowSignUpModal] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
   const pathname = usePathname();
   const isSignedIn = Boolean(user);
-  const signInHref = pathname
-    ? `/sign-in?redirect_url=${encodeURIComponent(pathname)}`
-    : '/sign-in';
 
   const navItems = [
     { href: '/', label: 'Inicio' },
@@ -211,7 +212,6 @@ export function Header({
             <Show when="signed-out">
               <div className="flex items-center">
                 <Button
-                  asChild
                   className="
                     ml-2 hidden h-9 items-center justify-center gap-2 rounded-md
                     bg-primary px-3 text-sm font-medium whitespace-nowrap
@@ -219,19 +219,13 @@ export function Header({
                     hover:bg-primary/90
                     md:inline-flex
                   "
+                  type="button"
+                  onClick={handleOpenLoginModal}
                 >
-                  <Link
-                    href={signInHref}
-                    onClick={() => {
-                      if (isMobileMenu) setMobileMenuOpen(false);
-                    }}
-                  >
-                    Acceder
-                  </Link>
+                  Acceder
                 </Button>
 
                 <Button
-                  asChild
                   className="
                     relative skew-x-[-15deg] cursor-pointer rounded-none border
                     border-primary bg-primary p-5 text-xl font-light
@@ -245,21 +239,16 @@ export function Header({
                     transition: '0.5s',
                     width: '180px',
                   }}
+                  type="button"
+                  onClick={handleOpenLoginModal}
                 >
-                  <Link
-                    href={signInHref}
-                    onClick={() => {
-                      if (isMobileMenu) setMobileMenuOpen(false);
-                    }}
+                  <span
+                    className="
+                      relative skew-x-[15deg] overflow-hidden font-semibold
+                    "
                   >
-                    <span
-                      className="
-                        relative skew-x-[15deg] overflow-hidden font-semibold
-                      "
-                    >
-                      Iniciar Sesión
-                    </span>
-                  </Link>
+                    Iniciar Sesión
+                  </span>
                 </Button>
               </div>
             </Show>
@@ -380,6 +369,12 @@ export function Header({
     e?.preventDefault();
     setShowEspaciosModal(true);
     onEspaciosClickAction?.();
+  };
+
+  const handleOpenLoginModal = () => {
+    setShowSignUpModal(false);
+    setShowLoginModal(true);
+    setMobileMenuOpen(false);
   };
 
   return (
@@ -1103,6 +1098,28 @@ export function Header({
           </div>
         </DialogPanel>
       </Dialog>
+
+      <MiniLoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onLoginSuccess={() => setShowLoginModal(false)}
+        redirectUrl={pathname || '/'}
+        onSwitchToSignUp={() => {
+          setShowLoginModal(false);
+          setShowSignUpModal(true);
+        }}
+      />
+
+      <MiniSignUpModal
+        isOpen={showSignUpModal}
+        onClose={() => setShowSignUpModal(false)}
+        onSignUpSuccess={() => setShowSignUpModal(false)}
+        redirectUrl={pathname || '/'}
+        onSwitchToLogin={() => {
+          setShowSignUpModal(false);
+          setShowLoginModal(true);
+        }}
+      />
     </nav>
   );
 }
