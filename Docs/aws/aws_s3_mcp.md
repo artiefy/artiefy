@@ -42,10 +42,8 @@ The S3 Tables MCP Server simplifies the management of S3-based tables by providi
 1.  Install `uv` from [Astral](https://docs.astral.sh/uv/getting-started/installation/) or the [GitHub README](https://github.com/astral-sh/uv#installation)
 2.  Install Python using `uv python install 3.10`
 3.  Set up AWS credentials with access to AWS services
-
-
-    *   You need an AWS account with appropriate permissions
-    *   Configure AWS credentials with `aws configure` or environment variables
+    - You need an AWS account with appropriate permissions
+    - Configure AWS credentials with `aws configure` or environment variables
 
 ## Setup[​](https://awslabs.github.io/mcp/servers/s3-tables-mcp-server#setup 'Direct link to Setup')
 
@@ -124,20 +122,14 @@ Kiro can provide better answers and code suggestions when it has additional cont
 ### How to Add Context to Kiro CLI[​](https://awslabs.github.io/mcp/servers/s3-tables-mcp-server#how-to-add-context-to-kiro-cli 'Direct link to How to Add Context to Kiro CLI')
 
 1.  **Download the CONTEXT.md file**
-
-
-    *   Download the `CONTEXT.md` file from the GitHub repository for this project.
+    - Download the `CONTEXT.md` file from the GitHub repository for this project.
 
 2.  **Start Kiro CLI**
-
-
-    *   Run the following command to start a chat session with Kiro:`kiro-cli chat`
+    - Run the following command to start a chat session with Kiro:`kiro-cli chat`
 
 3.  **Add the Context File**
-
-
-    *   In the Kiro chat, run:`/context add <path>/CONTEXT.md`
-    *   Replace `<path>` with the actual path to where you downloaded `CONTEXT.md`.
+    - In the Kiro chat, run:`/context add <path>/CONTEXT.md`
+    - Replace `<path>` with the actual path to where you downloaded `CONTEXT.md`.
 
 Now, Kiro CLI will have improved context about S3 Tables and can provide more relevant answers.
 

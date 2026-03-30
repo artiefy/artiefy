@@ -120,9 +120,6 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
                   {new Date(course.createdAt).toLocaleDateString()}
                 </span>
               </div>
-              <p className="min-h-[2.5em] text-sm leading-relaxed text-gray-200">
-                {course.description}
-              </p>
             </CardContent>
             <CardFooter
               className="
