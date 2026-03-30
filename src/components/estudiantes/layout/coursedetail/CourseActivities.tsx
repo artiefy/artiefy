@@ -249,8 +249,9 @@ export function CourseActivities({
       >
         <div
           className="
-          mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50
-        "
+            mb-4 flex size-16 items-center justify-center rounded-full
+            bg-muted/50
+          "
         >
           <CircleHelp className="size-8 text-black" />
         </div>
@@ -296,9 +297,9 @@ export function CourseActivities({
             {/* On small screens move this item to its own line */}
             <span
               className="
-              w-full text-xs text-[#94A3B8]
-              sm:w-auto
-            "
+                w-full text-xs text-[#94A3B8]
+                sm:w-auto
+              "
             >
               Autocompletado
             </span>
@@ -321,9 +322,9 @@ export function CourseActivities({
               <div className="flex flex-wrap items-center gap-2">
                 <div
                   className="
-                  flex size-6 items-center justify-center rounded-full
-                  bg-accent/20
-                "
+                    flex size-6 items-center justify-center rounded-full
+                    bg-accent/20
+                  "
                 >
                   <span className="text-xs font-medium text-accent">
                     {lessonIndex + 1}
@@ -335,9 +336,9 @@ export function CourseActivities({
                   </h4>
                   <span
                     className="
-                    block text-xs text-[#94A3B8]
-                    sm:inline
-                  "
+                      block text-xs text-[#94A3B8]
+                      sm:inline
+                    "
                   >
                     {completedActivities}/{totalActivities} completadas
                   </span>
@@ -346,9 +347,9 @@ export function CourseActivities({
 
               <div
                 className="
-                grid gap-2 pl-0
-                sm:pl-8
-              "
+                  grid gap-2 pl-0
+                  sm:pl-8
+                "
               >
                 {lesson.activities?.map((activity) => {
                   const activityType = resolveActivityType(activity);
@@ -407,8 +408,8 @@ export function CourseActivities({
                         <div className="min-w-0">
                           <p
                             className="
-                            truncate text-sm font-medium text-foreground
-                          "
+                              truncate text-sm font-medium text-foreground
+                            "
                           >
                             {activity.name}
                           </p>
@@ -431,9 +432,9 @@ export function CourseActivities({
 
                       <div
                         className="
-                        shrink-0 self-start
-                        sm:ml-3 sm:self-auto
-                      "
+                          shrink-0 self-start
+                          sm:ml-3 sm:self-auto
+                        "
                       >
                         <div
                           className={cn(

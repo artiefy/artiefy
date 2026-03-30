@@ -195,9 +195,9 @@ const ParametrosPage = () => {
         {/* Encabezado */}
         <div
           className="
-          mb-8 flex flex-col gap-4
-          md:flex-row md:items-center md:justify-between
-        "
+            mb-8 flex flex-col gap-4
+            md:flex-row md:items-center md:justify-between
+          "
         >
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
@@ -209,9 +209,9 @@ const ParametrosPage = () => {
           </div>
           <div
             className="
-            flex flex-col gap-2
-            md:flex-row md:items-center
-          "
+              flex flex-col gap-2
+              md:flex-row md:items-center
+            "
           >
             <input
               type="text"
@@ -243,8 +243,8 @@ const ParametrosPage = () => {
         {error && (
           <div
             className="
-            mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
-          "
+              mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
+            "
           >
             {error}
           </div>
@@ -254,8 +254,8 @@ const ParametrosPage = () => {
         {parametros.length === 0 ? (
           <div
             className="
-            rounded-lg border border-gray-200 bg-white p-8 text-center
-          "
+              rounded-lg border border-gray-200 bg-white p-8 text-center
+            "
           >
             <p className="text-gray-500">
               No hay parámetros creados aún. ¡Crea uno para empezar!
@@ -264,44 +264,44 @@ const ParametrosPage = () => {
         ) : (
           <div
             className="
-            overflow-x-auto rounded-lg border border-gray-200 bg-white
-          "
+              overflow-x-auto rounded-lg border border-gray-200 bg-white
+            "
           >
             <table className="w-full">
               <thead className="border-b border-gray-200 bg-gray-50">
                 <tr>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Nombre
                   </th>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Descripción
                   </th>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Porcentaje
                   </th>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Número de Actividades
                   </th>
                   <th
                     className="
-                    px-6 py-3 text-left text-xs font-semibold text-gray-700
-                  "
+                      px-6 py-3 text-left text-xs font-semibold text-gray-700
+                    "
                   >
                     Acciones
                   </th>
@@ -330,8 +330,8 @@ const ParametrosPage = () => {
                       </td>
                       <td
                         className="
-                        px-6 py-4 text-sm font-semibold text-gray-900
-                      "
+                          px-6 py-4 text-sm font-semibold text-gray-900
+                        "
                       >
                         {param.porcentaje}%
                       </td>

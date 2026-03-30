@@ -27,16 +27,16 @@ const DocumentActivityFields: React.FC<DocumentActivityFieldsProps> = ({
   return (
     <div
       className="
-      mt-8 space-y-8 rounded-2xl border border-[#22C4D3] bg-[#01142B] p-8
-      shadow-2xl
-    "
+        mt-8 space-y-8 rounded-2xl border border-[#22C4D3] bg-[#01142B] p-8
+        shadow-2xl
+      "
     >
       <div>
         <h3
           className="
-          mb-2 bg-gradient-to-r from-[#22C4D3] to-[#00BDD8] bg-clip-text
-          text-2xl font-extrabold tracking-tight text-transparent
-        "
+            mb-2 bg-gradient-to-r from-[#22C4D3] to-[#00BDD8] bg-clip-text
+            text-2xl font-extrabold tracking-tight text-transparent
+          "
         >
           Presentación de trabajo
         </h3>
@@ -87,12 +87,12 @@ const DocumentActivityFields: React.FC<DocumentActivityFieldsProps> = ({
         </label>
         <div
           className="
-          relative flex items-center justify-between rounded-lg border
-          border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
-          duration-200
-          focus-within:border-[#22C4D3]
-          focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
-        "
+            relative flex items-center justify-between rounded-lg border
+            border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
+            duration-200
+            focus-within:border-[#22C4D3]
+            focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+          "
         >
           <span className="truncate text-sm text-[#00BDD8]">
             {helpFile?.name ??
@@ -101,10 +101,10 @@ const DocumentActivityFields: React.FC<DocumentActivityFieldsProps> = ({
           </span>
           <label
             className="
-            cursor-pointer rounded-md bg-[#00BDD8] px-3 py-1 text-sm font-bold
-            text-[#01142B] transition-all duration-150
-            hover:bg-[#00A5C0]
-          "
+              cursor-pointer rounded-md bg-[#00BDD8] px-3 py-1 text-sm font-bold
+              text-[#01142B] transition-all duration-150
+              hover:bg-[#00A5C0]
+            "
           >
             Seleccionar
             <input
@@ -124,12 +124,12 @@ const DocumentActivityFields: React.FC<DocumentActivityFieldsProps> = ({
         </label>
         <div
           className="
-          relative flex items-center justify-between rounded-lg border
-          border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
-          duration-200
-          focus-within:border-[#22C4D3]
-          focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
-        "
+            relative flex items-center justify-between rounded-lg border
+            border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
+            duration-200
+            focus-within:border-[#22C4D3]
+            focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+          "
         >
           <span className="truncate text-sm text-[#00BDD8]">
             {imageFile?.name ??
@@ -138,10 +138,10 @@ const DocumentActivityFields: React.FC<DocumentActivityFieldsProps> = ({
           </span>
           <label
             className="
-            cursor-pointer rounded-md bg-[#22C4D3] px-3 py-1 text-sm font-bold
-            text-[#01142B] transition-all duration-150
-            hover:bg-[#00A5C0]
-          "
+              cursor-pointer rounded-md bg-[#22C4D3] px-3 py-1 text-sm font-bold
+              text-[#01142B] transition-all duration-150
+              hover:bg-[#00A5C0]
+            "
           >
             Seleccionar
             <input

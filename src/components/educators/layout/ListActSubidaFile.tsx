@@ -141,8 +141,8 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
       {!onEdit && (
         <div
           className="
-          rounded-2xl border border-cyan-500/20 bg-slate-900 p-8 shadow-2xl
-        "
+            rounded-2xl border border-cyan-500/20 bg-slate-900 p-8 shadow-2xl
+          "
         >
           <FormActCompletado
             activityId={activityId}
@@ -161,9 +161,9 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
             {editingQuestion?.id === question.id ? (
               <div
                 className="
-                rounded-2xl border border-cyan-500/20 bg-slate-900 p-8
-                shadow-2xl
-              "
+                  rounded-2xl border border-cyan-500/20 bg-slate-900 p-8
+                  shadow-2xl
+                "
               >
                 <FormActCompletado
                   activityId={activityId}
@@ -177,9 +177,9 @@ const QuestionSubidaList: React.FC<QuestionListProps> = ({
                 <CardContent className="space-y-4 pt-6">
                   <h3
                     className="
-                    mb-2 bg-gradient-to-r from-cyan-400 to-white bg-clip-text
-                    text-xl font-extrabold tracking-tight text-transparent
-                  "
+                      mb-2 bg-gradient-to-r from-cyan-400 to-white bg-clip-text
+                      text-xl font-extrabold tracking-tight text-transparent
+                    "
                   >
                     Pregunta de subida de archivo
                   </h3>

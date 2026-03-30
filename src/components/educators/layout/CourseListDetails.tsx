@@ -39,36 +39,37 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
   return (
     <div
       className="
-      grid grid-cols-1 gap-8 px-8
-      sm:grid-cols-2
-      lg:grid-cols-3 lg:px-2
-    "
+        grid grid-cols-1 gap-8 px-8
+        sm:grid-cols-2
+        lg:grid-cols-3 lg:px-2
+      "
     >
       {courses.map((course) => (
         <div key={course.id} className="group relative">
           {/* Fondo animado sutil */}
           <div
             className="
-            absolute -inset-1 z-0 animate-gradient rounded-2xl bg-gradient-to-r
-            from-[#22C4D3]/30 via-[#00BDD8]/20 to-[#01142B]/40 opacity-0 blur-md
-            transition duration-500
-            group-hover:opacity-100
-          "
+              absolute -inset-1 z-0 animate-gradient rounded-2xl
+              bg-gradient-to-r from-[#22C4D3]/30 via-[#00BDD8]/20
+              to-[#01142B]/40 opacity-0 blur-md transition duration-500
+              group-hover:opacity-100
+            "
           />
           <Card
             className="
-            relative z-10 flex h-full flex-col justify-between overflow-hidden
-            rounded-2xl border-2 border-[#1d283a] bg-[#223047] px-4 pt-4 pb-6
-            text-white shadow-2xl transition-transform duration-300 ease-in-out
-            hover:scale-[1.03] hover:border-[#00BDD8] hover:shadow-cyan-500/30
-          "
+              relative z-10 flex h-full flex-col justify-between overflow-hidden
+              rounded-2xl border-2 border-[#1d283a] bg-[#223047] px-4 pt-4 pb-6
+              text-white shadow-2xl transition-transform duration-300
+              ease-in-out
+              hover:scale-[1.03] hover:border-[#00BDD8] hover:shadow-cyan-500/30
+            "
           >
             <CardHeader className="mb-2 p-0">
               <AspectRatio ratio={16 / 9}>
                 <div
                   className="
-                  relative size-full overflow-hidden rounded-xl shadow-lg
-                "
+                    relative size-full overflow-hidden rounded-xl shadow-lg
+                  "
                 >
                   <Image
                     src={
@@ -95,9 +96,9 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
                 </CardTitle>
                 <div
                   className="
-                  flex items-center gap-1 rounded-lg bg-[#1e2939]/60 px-2 py-1
-                  shadow-inner
-                "
+                    flex items-center gap-1 rounded-lg bg-[#1e2939]/60 px-2 py-1
+                    shadow-inner
+                  "
                 >
                   <StarIcon className="size-5 text-yellow-400" />
                   <span className="text-base font-bold text-yellow-400">
@@ -125,8 +126,8 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
             </CardContent>
             <CardFooter
               className="
-              mt-2 flex flex-col gap-4 border-t border-white/10 px-0 pt-2
-            "
+                mt-2 flex flex-col gap-4 border-t border-white/10 px-0 pt-2
+              "
             >
               <div className="flex w-full items-center justify-between gap-2">
                 <div className="flex flex-col gap-1">
@@ -139,9 +140,9 @@ export default function CourseListDetails({ courses }: CourseListTeacherProps) {
                 </div>
                 <span
                   className="
-                  rounded-full border border-[#22C4D3]/30 bg-[#01142B]/60 px-3
-                  py-1 text-xs font-bold text-[#22C4D3] shadow-sm
-                "
+                    rounded-full border border-[#22C4D3]/30 bg-[#01142B]/60 px-3
+                    py-1 text-xs font-bold text-[#22C4D3] shadow-sm
+                  "
                 >
                   {course.modalidadesid}
                 </span>

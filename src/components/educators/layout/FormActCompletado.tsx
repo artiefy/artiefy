@@ -166,15 +166,15 @@ const FormActCompletado: React.FC<formSubida> = ({
   return (
     <div
       className="
-      mt-8 space-y-8 rounded-2xl border border-[#22C4D3]/40 bg-[#01142B] p-8
-      shadow-2xl
-    "
+        mt-8 space-y-8 rounded-2xl border border-[#22C4D3]/40 bg-[#01142B] p-8
+        shadow-2xl
+      "
     >
       <h2
         className="
-        mb-4 bg-gradient-to-r from-[#22C4D3] to-[#00BDD8] bg-clip-text
-        text-center text-2xl font-extrabold tracking-tight text-transparent
-      "
+          mb-4 bg-gradient-to-r from-[#22C4D3] to-[#00BDD8] bg-clip-text
+          text-center text-2xl font-extrabold tracking-tight text-transparent
+        "
       >
         {editingQuestion ? 'Actualizar' : 'Crear'} Pregunta del tipo:
         Presentación de trabajo
@@ -223,12 +223,12 @@ const FormActCompletado: React.FC<formSubida> = ({
           </label>
           <div
             className="
-            relative flex items-center justify-between rounded-lg border
-            border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
-            duration-200
-            focus-within:border-[#22C4D3]
-            focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
-          "
+              relative flex items-center justify-between rounded-lg border
+              border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
+              duration-200
+              focus-within:border-[#22C4D3]
+              focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+            "
           >
             <span className="truncate text-sm text-[#00BDD8]">
               {file1?.name ??
@@ -236,10 +236,10 @@ const FormActCompletado: React.FC<formSubida> = ({
             </span>
             <label
               className="
-              cursor-pointer rounded-md bg-[#00BDD8] px-3 py-1 text-sm font-bold
-              text-[#01142B] transition-all duration-150
-              hover:bg-[#00A5C0]
-            "
+                cursor-pointer rounded-md bg-[#00BDD8] px-3 py-1 text-sm
+                font-bold text-[#01142B] transition-all duration-150
+                hover:bg-[#00A5C0]
+              "
             >
               Seleccionar
               <input
@@ -259,22 +259,22 @@ const FormActCompletado: React.FC<formSubida> = ({
           </label>
           <div
             className="
-            relative flex items-center justify-between rounded-lg border
-            border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
-            duration-200
-            focus-within:border-[#22C4D3]
-            focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
-          "
+              relative flex items-center justify-between rounded-lg border
+              border-[#1d283a]/40 bg-[#1e2939] px-4 py-2 shadow transition-all
+              duration-200
+              focus-within:border-[#22C4D3]
+              focus-within:shadow-[0_0_0_2px_rgba(34,196,211,0.15)]
+            "
           >
             <span className="truncate text-sm text-[#00BDD8]">
               {file2?.name ?? 'Selecciona una imagen complementaria'}
             </span>
             <label
               className="
-              cursor-pointer rounded-md bg-[#22C4D3] px-3 py-1 text-sm font-bold
-              text-[#01142B] transition-all duration-150
-              hover:bg-[#00A5C0]
-            "
+                cursor-pointer rounded-md bg-[#22C4D3] px-3 py-1 text-sm
+                font-bold text-[#01142B] transition-all duration-150
+                hover:bg-[#00A5C0]
+              "
             >
               Seleccionar
               <input
