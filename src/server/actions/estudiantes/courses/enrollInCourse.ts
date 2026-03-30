@@ -1,6 +1,6 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { and, eq } from 'drizzle-orm';
 
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
@@ -17,8 +17,33 @@ import { sortLessons } from '~/utils/lessonSorting';
 
 import type { EnrollmentResponse } from '~/types';
 
+type EnrollmentClientAuthHint = {
+  userId?: string | null;
+  email?: string | null;
+  fullName?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  planType?: string | null;
+  subscriptionStatus?: string | null;
+  subscriptionEndDate?: string | null;
+};
+
+type PlanType = 'none' | 'Pro' | 'Premium' | 'Enterprise';
+const VALID_PLAN_TYPES = new Set<PlanType>([
+  'none',
+  'Pro',
+  'Premium',
+  'Enterprise',
+]);
+
+const normalizePlanType = (value?: string | null): PlanType | undefined =>
+  value && VALID_PLAN_TYPES.has(value as PlanType)
+    ? (value as PlanType)
+    : undefined;
+
 export async function enrollInCourse(
-  courseId: number
+  courseId: number,
+  clientAuthHint?: EnrollmentClientAuthHint
 ): Promise<EnrollmentResponse> {
   let course:
     | (typeof courses.$inferSelect & {
@@ -28,15 +53,31 @@ export async function enrollInCourse(
 
   try {
     const user = await currentUser();
+    const { userId: authUserId } = await auth();
+    const hintedUserId = clientAuthHint?.userId?.trim();
 
-    if (!user?.id) {
+    if (authUserId && hintedUserId && authUserId !== hintedUserId) {
+      return {
+        success: false,
+        message:
+          'No se pudo validar tu sesión actual. Recarga la página e inténtalo de nuevo.',
+      };
+    }
+
+    const userId = user?.id ?? authUserId ?? hintedUserId;
+
+    if (!userId) {
       return {
         success: false,
         message: 'Usuario no autenticado',
       };
     }
 
-    const userId = user.id;
+    if (!authUserId && hintedUserId && hintedUserId === userId) {
+      console.warn(
+        '[enrollInCourse] Usando fallback de userId desde cliente por auth() vacío'
+      );
+    }
 
     // Get course information first
     const foundCourse = await db.query.courses.findFirst({
@@ -94,27 +135,47 @@ export async function enrollInCourse(
     });
 
     if (!dbUser) {
-      const primaryEmail = user.emailAddresses.find(
+      const primaryEmail = user?.emailAddresses.find(
         (email) => email.id === user.primaryEmailAddressId
       );
+      const emailToUse =
+        primaryEmail?.emailAddress ?? clientAuthHint?.email?.trim() ?? null;
 
-      if (!primaryEmail?.emailAddress) {
+      if (!emailToUse) {
         return {
           success: false,
           message: 'No se pudo obtener el email del usuario',
         };
       }
 
+      const fallbackName =
+        clientAuthHint?.fullName?.trim() ||
+        `${clientAuthHint?.firstName ?? ''} ${clientAuthHint?.lastName ?? ''}`.trim() ||
+        clientAuthHint?.firstName?.trim() ||
+        'Usuario';
+
+      const nameToUse =
+        user?.firstName && user.lastName
+          ? `${user.firstName} ${user.lastName}`
+          : (user?.firstName ?? fallbackName);
+
+      const hintedPlanType = normalizePlanType(clientAuthHint?.planType);
+      const hintedSubscriptionStatus = clientAuthHint?.subscriptionStatus;
+      const hintedSubscriptionEndDate = clientAuthHint?.subscriptionEndDate
+        ? new Date(clientAuthHint.subscriptionEndDate)
+        : null;
+
       try {
         await db.insert(users).values({
           id: userId,
-          name:
-            user.firstName && user.lastName
-              ? `${user.firstName} ${user.lastName}`
-              : (user.firstName ?? 'Usuario'),
-          email: primaryEmail.emailAddress,
+          name: nameToUse,
+          email: emailToUse,
           role: 'estudiante',
-          subscriptionStatus: shouldBeActive ? 'active' : 'inactive', // Set based on course type
+          subscriptionStatus:
+            hintedSubscriptionStatus ??
+            (shouldBeActive ? 'active' : 'inactive'),
+          subscriptionEndDate: hintedSubscriptionEndDate,
+          planType: hintedPlanType,
           createdAt: new Date(),
           updatedAt: new Date(),
         });
@@ -152,12 +213,29 @@ export async function enrollInCourse(
     }
 
     // Verify subscription level requirements
-    const userPlanType = user.publicMetadata?.planType as string | undefined;
+    const userPlanType =
+      (user?.publicMetadata?.planType as string | undefined) ??
+      clientAuthHint?.planType ??
+      dbUser?.planType ??
+      undefined;
     const normalizedPlan = (userPlanType ?? '').toLowerCase();
-    const subscriptionStatus = user.publicMetadata?.subscriptionStatus;
-    const subscriptionEndDate = user.publicMetadata?.subscriptionEndDate as
-      | string
-      | null;
+    const subscriptionStatus =
+      (user?.publicMetadata?.subscriptionStatus as string | undefined) ??
+      clientAuthHint?.subscriptionStatus ??
+      dbUser?.subscriptionStatus ??
+      undefined;
+
+    const rawSubscriptionEndDate =
+      (user?.publicMetadata?.subscriptionEndDate as
+        | string
+        | null
+        | undefined) ??
+      clientAuthHint?.subscriptionEndDate ??
+      (dbUser?.subscriptionEndDate
+        ? new Date(dbUser.subscriptionEndDate).toISOString()
+        : null);
+
+    const subscriptionEndDate = rawSubscriptionEndDate;
 
     const isSubscriptionValid =
       subscriptionStatus === 'active' &&

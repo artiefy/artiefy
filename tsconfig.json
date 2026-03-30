@@ -19,7 +19,6 @@
     "incremental": true,
     "forceConsistentCasingInFileNames": true,
     "allowImportingTsExtensions": false,
-    "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"]
     },
@@ -40,7 +39,6 @@
     "video.d.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    ".next/types/**/*.ts",
     "new-types.d.ts"
   ],
   "exclude": [
