@@ -3621,9 +3621,9 @@ export default function EnrolledUsersPage() {
                 <span className="text-xs text-gray-400">{label}</span>
                 <span
                   className={`
-                  text-sm font-bold
-                  ${color}
-                `}
+                    text-sm font-bold
+                    ${color}
+                  `}
                 >
                   {value}
                 </span>
@@ -3686,9 +3686,9 @@ export default function EnrolledUsersPage() {
               {visibleColumns.length < totalColumns.length && (
                 <span
                   className="
-                  rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[10px]
-                  font-bold text-blue-300
-                "
+                    rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[10px]
+                    font-bold text-blue-300
+                  "
                 >
                   {totalColumns.length - visibleColumns.length} ocultas
                 </span>
@@ -3719,16 +3719,16 @@ export default function EnrolledUsersPage() {
             {/* Panel */}
             <div
               className="
-              fixed top-0 right-0 z-50 flex h-full w-80 flex-col border-l
-              border-white/10 bg-gray-950 shadow-2xl
-            "
+                fixed top-0 right-0 z-50 flex h-full w-80 flex-col border-l
+                border-white/10 bg-gray-950 shadow-2xl
+              "
             >
               {/* Header del panel */}
               <div
                 className="
-                flex items-center justify-between border-b border-white/10 px-5
-                py-4
-              "
+                  flex items-center justify-between border-b border-white/10
+                  px-5 py-4
+                "
               >
                 <div>
                   <p className="text-sm font-semibold text-white">
@@ -4109,10 +4109,10 @@ export default function EnrolledUsersPage() {
                     ${
                       isActive
                         ? `
-                      bg-${color}-500/30
-                      
-                      text-${color}-200
-                    `
+                          bg-${color}-500/30
+                          
+                          text-${color}-200
+                        `
                         : 'bg-white/10 text-gray-500'
                     }
                   `}
@@ -4173,8 +4173,8 @@ export default function EnrolledUsersPage() {
 
           <div
             className="
-              max-h-[60vh] w-full overflow-auto rounded-lg border
-              border-gray-700
+              modern-scrollbar max-h-[60vh] w-full overflow-auto rounded-lg
+              border border-gray-700
             "
             onScroll={handleScroll}
           >
@@ -4183,8 +4183,9 @@ export default function EnrolledUsersPage() {
               <thead className="sticky top-0 z-10 bg-gray-900">
                 <tr
                   className="
-                  border-b border-white/10 bg-gray-900/95 text-xs text-gray-400
-                "
+                    border-b border-white/10 bg-gray-900/95 text-xs
+                    text-gray-400
+                  "
                 >
                   <th className="w-12 px-4 py-2">
                     <input
@@ -4865,8 +4866,8 @@ export default function EnrolledUsersPage() {
             {selectedStudents.length > 0 && (
               <span
                 className="
-                rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold
-              "
+                  rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold
+                "
               >
                 {selectedStudents.length}
               </span>
