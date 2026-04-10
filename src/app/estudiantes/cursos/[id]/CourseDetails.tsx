@@ -157,6 +157,31 @@ export default function CourseDetails({
     null
   );
   const userMetadata = user?.publicMetadata as UserMetadata | undefined;
+  const enrollmentAuthHint = useMemo(
+    () => ({
+      userId,
+      email: user?.primaryEmailAddress?.emailAddress ?? null,
+      fullName: user?.fullName ?? null,
+      firstName: user?.firstName ?? null,
+      lastName: user?.lastName ?? null,
+      planType: userMetadata?.planType ?? null,
+      subscriptionStatus: userMetadata?.subscriptionStatus ?? null,
+      subscriptionEndDate:
+        typeof userMetadata?.subscriptionEndDate === 'string'
+          ? userMetadata.subscriptionEndDate
+          : null,
+    }),
+    [
+      userId,
+      user?.primaryEmailAddress?.emailAddress,
+      user?.fullName,
+      user?.firstName,
+      user?.lastName,
+      userMetadata?.planType,
+      userMetadata?.subscriptionStatus,
+      userMetadata?.subscriptionEndDate,
+    ]
+  );
   const initialIsEnrolledFromServer = useMemo(() => {
     if (!userId) return false;
     return (
@@ -954,7 +979,7 @@ export default function CourseDetails({
     setIsEnrolling(true);
 
     try {
-      const enrollment = await enrollInCourse(courseId);
+      const enrollment = await enrollInCourse(courseId, enrollmentAuthHint);
 
       if (!enrollment.success) {
         toast.error('No pudimos inscribirte', {
@@ -999,6 +1024,7 @@ export default function CourseDetails({
     mutate,
     router,
     userId,
+    enrollmentAuthHint,
   ]);
 
   useEffect(() => {
@@ -1156,7 +1182,9 @@ export default function CourseDetails({
     if (!course?.id) return;
     setIsUnenrolling(true);
     try {
-      const result = await unenrollFromCourse(Number(course.id));
+      const result = await unenrollFromCourse(Number(course.id), {
+        userId: enrollmentAuthHint.userId,
+      });
       if (!result.success) {
         toast.error('No pudimos desuscribirte', {
           description: result.message,
@@ -2301,13 +2329,13 @@ export default function CourseDetails({
                       <div
                         className={`
                           ${isEnrolled ? 'lg:hidden' : ''}
-                          flex items-center gap-2
+                          flex w-full items-center gap-2 overflow-hidden
                         `}
                       >
                         <button
                           onClick={() => scrollCarousel('left')}
                           className="
-                            inline-flex aspect-square size-9 items-center
+                            inline-flex size-9 shrink-0 items-center
                             justify-center rounded-full border
                             border-[#061c3799] bg-[#011329] p-0 text-white
                             transition
@@ -2332,8 +2360,8 @@ export default function CourseDetails({
                         <div
                           ref={carouselRef}
                           className="
-                            relative flex w-full gap-2 overflow-x-auto px-2
-                            py-1.5 [-ms-overflow-style:none]
+                            relative flex min-w-0 flex-1 gap-2 overflow-x-auto
+                            px-2 py-1.5 [-ms-overflow-style:none]
                             [scrollbar-width:none]
                             md:px-3
                             [&::-webkit-scrollbar]:hidden
@@ -2399,7 +2427,7 @@ export default function CourseDetails({
                         <button
                           onClick={() => scrollCarousel('right')}
                           className="
-                            inline-flex aspect-square size-9 items-center
+                            inline-flex size-9 shrink-0 items-center
                             justify-center rounded-full border
                             border-[#061c3799] bg-[#011329] p-0 text-white
                             transition
@@ -2841,78 +2869,52 @@ export default function CourseDetails({
                           </AspectRatio>
                         </div>
                         <div className="relative z-20 space-y-5 p-5">
-                          {courseTypes.length > 0 &&
-                            (() => {
-                              const primaryType = courseTypes[0];
-                              if (!primaryType) return null;
-
-                              const isPremium =
-                                primaryType.requiredSubscriptionLevel ===
-                                'premium';
-                              const isPro =
-                                primaryType.requiredSubscriptionLevel === 'pro';
-                              const isFree =
-                                primaryType.requiredSubscriptionLevel ===
-                                  'none' &&
-                                !primaryType.isPurchasableIndividually;
-                              const label = isPremium
-                                ? 'Premium'
-                                : isPro
-                                  ? 'Pro'
-                                  : isFree
-                                    ? 'Gratis'
-                                    : 'Compra única';
-                              const styleMap: Record<
-                                string,
-                                { bg: string; border: string; text: string }
-                              > = {
-                                Premium: {
-                                  bg: 'rgba(251, 191, 36, 0.15)',
-                                  border: '#f59e0b',
-                                  text: '#fef3c7',
-                                },
-                                Pro: {
-                                  bg: 'rgba(59, 130, 246, 0.15)',
-                                  border: '#60a5fa',
-                                  text: '#dbeafe',
-                                },
-                                Gratis: {
-                                  bg: 'rgba(34, 197, 94, 0.18)',
-                                  border: '#22c55e',
-                                  text: '#16a34a',
-                                },
-                                'Compra única': {
-                                  bg: 'rgba(37, 99, 235, 0.15)',
-                                  border: '#60a5fa',
-                                  text: '#dbeafe',
-                                },
-                              };
-
-                              if (label === 'Pro') return null;
-                              if (label === 'Premium') return null;
-                              if (label === 'Compra única') return null;
-
-                              const styles =
-                                styleMap[label] ?? styleMap['Compra única'];
-                              return (
-                                <div className="flex flex-wrap gap-2">
-                                  <span
-                                    className="
-                                      inline-flex items-center gap-1.5
-                                      rounded-full border px-3 py-1.5 text-xs
-                                      font-semibold tracking-wide uppercase
-                                    "
-                                    style={{
-                                      backgroundColor: styles.bg,
-                                      borderColor: styles.border,
-                                      color: styles.text,
-                                    }}
-                                  >
-                                    {label}
-                                  </span>
+                          {includedPlans.length > 0 && (
+                            <div className="space-y-1">
+                              {includedPlans.includes('Premium') &&
+                              includedPlans.includes('Pro') ? (
+                                <div
+                                  className="
+                                    inline-flex items-center gap-2 rounded-full
+                                    border border-red-400 bg-red-500/20 px-3
+                                    py-1.5 text-sm font-medium text-red-400
+                                  "
+                                >
+                                  <AiFillFire className="size-4 text-red-400" />
+                                  <span>Premium + Pro</span>
                                 </div>
-                              );
-                            })()}
+                              ) : (
+                                <div className="inline-flex items-center gap-2">
+                                  {includedPlans.includes('Premium') && (
+                                    <div
+                                      className="
+                                        inline-flex items-center gap-1
+                                        rounded-full border border-amber-400
+                                        bg-amber-500/20 px-3 py-1.5 text-sm
+                                        font-medium text-amber-400
+                                      "
+                                    >
+                                      <FaCrown className="size-3" />
+                                      <span>Premium</span>
+                                    </div>
+                                  )}
+                                  {includedPlans.includes('Pro') && (
+                                    <div
+                                      className="
+                                        inline-flex items-center gap-1
+                                        rounded-full border border-blue-400
+                                        bg-blue-500/20 px-3 py-1.5 text-sm
+                                        font-medium text-blue-400
+                                      "
+                                    >
+                                      <FaStar className="size-3" />
+                                      <span>Pro</span>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                           {(_hasPurchasable || course.individualPrice) && (
                             <div className="space-y-1">
                               <p className="text-2xl font-bold text-foreground">

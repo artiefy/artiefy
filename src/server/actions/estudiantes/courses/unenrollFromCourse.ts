@@ -1,25 +1,40 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { and, eq, gt, or } from 'drizzle-orm';
 
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { courses, enrollments, userLessonsProgress } from '~/server/db/schema';
 
+type UnenrollClientAuthHint = {
+  userId?: string | null;
+};
+
 export async function unenrollFromCourse(
-  courseId: number
+  courseId: number,
+  clientAuthHint?: UnenrollClientAuthHint
 ): Promise<{ success: boolean; message: string }> {
   const user = await currentUser();
+  const { userId: authUserId } = await auth();
+  const hintedUserId = clientAuthHint?.userId?.trim();
 
-  if (!user?.id) {
+  if (authUserId && hintedUserId && authUserId !== hintedUserId) {
+    return {
+      success: false,
+      message:
+        'No se pudo validar tu sesión actual. Recarga la página e inténtalo de nuevo.',
+    };
+  }
+
+  const userId = user?.id ?? authUserId ?? hintedUserId;
+
+  if (!userId) {
     return {
       success: false,
       message: 'Usuario no autenticado',
     };
   }
-
-  const userId = user.id;
 
   try {
     const existingEnrollment = await db.query.enrollments.findFirst({

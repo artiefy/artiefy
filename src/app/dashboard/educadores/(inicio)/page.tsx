@@ -178,10 +178,10 @@ export default function Home() {
     <main className="min-h-screen bg-[#01142B] text-white">
       <div
         className="
-        mx-auto max-w-7xl px-2 py-4
-        sm:px-6
-        lg:px-8
-      "
+          mx-auto max-w-7xl px-2 py-4
+          sm:px-6
+          lg:px-8
+        "
       >
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
@@ -202,23 +202,23 @@ export default function Home() {
 
         <section
           className="
-          mb-8 flex flex-col items-center gap-6 rounded-2xl bg-[#1e2939] p-6
-          shadow-xl
-          md:flex-row md:gap-10
-        "
+            mb-8 flex flex-col items-center gap-6 rounded-2xl bg-[#1e2939] p-6
+            shadow-xl
+            md:flex-row md:gap-10
+          "
         >
           <GraduationCap className="size-16 flex-shrink-0 text-[#22C4D3] drop-shadow-lg" />
           <div
             className="
-            flex flex-col items-center
-            md:items-start
-          "
+              flex flex-col items-center
+              md:items-start
+            "
           >
             <h1
               className="
-              mb-1 text-3xl font-extrabold text-white
-              md:text-4xl
-            "
+                mb-1 text-3xl font-extrabold text-white
+                md:text-4xl
+              "
             >
               Bienvenido,{' '}
               <span className="text-[#22C4D3]">{user?.firstName}</span>
@@ -228,9 +228,9 @@ export default function Home() {
               <span className="font-bold text-[#00BDD8]">Artiefy</span>.
               <br
                 className="
-                hidden
-                md:block
-              "
+                  hidden
+                  md:block
+                "
               />
               Aquí puedes ver tus cursos, estadísticas y más.
             </p>
@@ -241,9 +241,9 @@ export default function Home() {
           {/* Estadísticas */}
           <div
             className="
-            flex flex-col items-center rounded-xl border border-[#1d283a]
-            bg-[#01142B] p-5 shadow-lg
-          "
+              flex flex-col items-center rounded-xl border border-[#1d283a]
+              bg-[#01142B] p-5 shadow-lg
+            "
           >
             <FaGraduationCap className="mb-2 size-10 text-[#22C4D3] drop-shadow" />
             <span className="text-lg font-semibold text-white">
@@ -255,9 +255,9 @@ export default function Home() {
           </div>
           <div
             className="
-            flex flex-col items-center rounded-xl border border-[#1d283a]
-            bg-[#01142B] p-5 shadow-lg
-          "
+              flex flex-col items-center rounded-xl border border-[#1d283a]
+              bg-[#01142B] p-5 shadow-lg
+            "
           >
             <FaBook className="mb-2 size-10 text-[#00BDD8] drop-shadow" />
             <span className="text-lg font-semibold text-white">
@@ -269,9 +269,9 @@ export default function Home() {
           </div>
           <div
             className="
-            flex flex-col items-center rounded-xl border border-[#1d283a]
-            bg-[#01142B] p-5 shadow-lg
-          "
+              flex flex-col items-center rounded-xl border border-[#1d283a]
+              bg-[#01142B] p-5 shadow-lg
+            "
           >
             <FaChalkboardTeacher className="mb-2 size-10 text-[#2ecc71] drop-shadow" />
             <span className="text-lg font-semibold text-white">
@@ -283,9 +283,9 @@ export default function Home() {
           </div>
           <div
             className="
-            flex flex-col items-center rounded-xl border border-[#1d283a]
-            bg-[#01142B] p-5 shadow-lg
-          "
+              flex flex-col items-center rounded-xl border border-[#1d283a]
+              bg-[#01142B] p-5 shadow-lg
+            "
           >
             <FaClock className="mb-2 size-10 text-[#22C4D3] drop-shadow" />
             <span className="text-lg font-semibold text-white">

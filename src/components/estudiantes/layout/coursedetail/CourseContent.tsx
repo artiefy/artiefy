@@ -442,33 +442,47 @@ export function CourseContent({
           }}
         >
           <button
-            className="flex w-full items-center justify-between px-6 py-4"
+            className="
+              flex w-full items-center justify-between p-4
+              sm:px-6
+            "
             onClick={() => toggleLesson(lesson.id)}
             disabled={!isUnlocked}
           >
-            <div className="flex w-full items-center justify-between">
-              <div className="flex flex-col space-y-1">
-                <div className="flex items-center space-x-2">
+            <div
+              className="
+                flex w-full min-w-0 flex-wrap items-start justify-between gap-3
+                sm:flex-nowrap sm:items-center
+              "
+            >
+              <div className="min-w-0 flex-1">
+                <div className="flex min-w-0 items-start gap-2">
                   {!isUnlocked ? (
-                    <FaLock className="mr-2 size-5 text-gray-400" />
+                    <FaLock className="mt-0.5 size-5 shrink-0 text-gray-400" />
                   ) : isCompleted ? (
-                    <FaCheckCircle className="mr-2 size-5 text-green-500" />
+                    <FaCheckCircle className="mt-0.5 size-5 shrink-0 text-green-500" />
                   ) : (
-                    <FaClock className="mr-2 size-5 text-gray-400" />
+                    <FaClock className="mt-0.5 size-5 shrink-0 text-gray-400" />
                   )}
-                  <span className="font-medium text-white">{lesson.title}</span>
-                  <span className="ml-2 text-sm text-gray-300">
+                  <span
+                    className="
+                      min-w-0 flex-1 truncate text-left font-medium text-white
+                    "
+                  >
+                    {lesson.title}
+                  </span>
+                  <span className="shrink-0 text-sm text-gray-300">
                     ({lesson.duration} mins)
                   </span>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="ml-auto flex shrink-0 items-center gap-2">
                 {isUnlocked &&
                   lesson.isNew &&
                   lesson.porcentajecompletado === 0 && (
                     <span
                       className="
-                        ml-2 rounded bg-green-500 px-2 py-1 text-xs text-white
+                        rounded bg-green-500 px-2 py-1 text-xs text-white
                       "
                     >
                       Nuevo

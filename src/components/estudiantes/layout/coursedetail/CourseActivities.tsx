@@ -247,9 +247,12 @@ export function CourseActivities({
         "
         style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
       >
-        <div className="
-          mb-4 flex size-16 items-center justify-center rounded-full bg-muted/50
-        ">
+        <div
+          className="
+            mb-4 flex size-16 items-center justify-center rounded-full
+            bg-muted/50
+          "
+        >
           <CircleHelp className="size-8 text-black" />
         </div>
         <h3 className="mb-2 text-lg font-semibold text-slate-100">
@@ -292,10 +295,12 @@ export function CourseActivities({
               <Rocket className="size-3.5" />
             </div>
             {/* On small screens move this item to its own line */}
-            <span className="
-              w-full text-xs text-[#94A3B8]
-              sm:w-auto
-            ">
+            <span
+              className="
+                w-full text-xs text-[#94A3B8]
+                sm:w-auto
+              "
+            >
               Autocompletado
             </span>
           </div>
@@ -315,10 +320,12 @@ export function CourseActivities({
           return (
             <div key={lesson.id} className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="
-                  flex size-6 items-center justify-center rounded-full
-                  bg-accent/20
-                ">
+                <div
+                  className="
+                    flex size-6 items-center justify-center rounded-full
+                    bg-accent/20
+                  "
+                >
                   <span className="text-xs font-medium text-accent">
                     {lessonIndex + 1}
                   </span>
@@ -327,16 +334,23 @@ export function CourseActivities({
                   <h4 className="text-sm font-medium break-words text-[#f8fafc]">
                     {lesson.title}
                   </h4>
-                  <span className="
-                    block text-xs text-[#94A3B8]
-                    sm:inline
-                  ">
+                  <span
+                    className="
+                      block text-xs text-[#94A3B8]
+                      sm:inline
+                    "
+                  >
                     {completedActivities}/{totalActivities} completadas
                   </span>
                 </div>
               </div>
 
-              <div className="grid gap-2 pl-8">
+              <div
+                className="
+                  grid gap-2 pl-0
+                  sm:pl-8
+                "
+              >
                 {lesson.activities?.map((activity) => {
                   const activityType = resolveActivityType(activity);
                   const statusBadge = resolveStatusBadge(
@@ -355,9 +369,10 @@ export function CourseActivities({
                       key={activity.id}
                       className={cn(
                         `
-                          group flex items-center justify-between border p-3
-                          transition-all duration-200
+                          group flex flex-col gap-3 border p-3 transition-all
+                          duration-200
                           hover:cursor-pointer
+                          sm:flex-row sm:items-center sm:justify-between
                         `,
                         statusBadge.state === 'locked' && 'opacity-60'
                       )}
@@ -380,7 +395,7 @@ export function CourseActivities({
                           'hsla(217, 33%, 17%, 0.5)';
                       }}
                     >
-                      <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex w-full min-w-0 items-center gap-3">
                         <div
                           className={cn(
                             'rounded-lg p-2',
@@ -391,14 +406,19 @@ export function CourseActivities({
                           <Icon className="size-4" />
                         </div>
                         <div className="min-w-0">
-                          <p className="
-                            truncate text-sm font-medium text-foreground
-                          ">
+                          <p
+                            className="
+                              truncate text-sm font-medium text-foreground
+                            "
+                          >
                             {activity.name}
                           </p>
-                          <div className="
-                            flex items-center gap-2 text-xs text-[#94A3B8]
-                          ">
+                          <div
+                            className="
+                              flex flex-wrap items-center gap-x-2 gap-y-1
+                              text-xs text-[#94A3B8]
+                            "
+                          >
                             <span>{activityType.label}</span>
                             {deadlineText && (
                               <>
@@ -410,7 +430,12 @@ export function CourseActivities({
                         </div>
                       </div>
 
-                      <div className="ml-3 shrink-0">
+                      <div
+                        className="
+                          shrink-0 self-start
+                          sm:ml-3 sm:self-auto
+                        "
+                      >
                         <div
                           className={cn(
                             `

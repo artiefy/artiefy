@@ -2051,7 +2051,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       {showStickyCard && course && (
         <div
           className="
-            surface-glass animate-slideInDown fixed inset-x-0 top-4 z-[9999]
+            surface-glass animate-slideInDown fixed inset-x-0 top-4 z-[99999]
             flex max-w-full items-center justify-between gap-4 px-2 py-3
             shadow-lg
             md:top-6 md:px-4 md:py-3
@@ -2593,10 +2593,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     >
                       <span
                         className="
-                        inline-block
-                        animate-[bounce-left_2s_ease-in-out_infinite] text-lg
-                        font-bold
-                      "
+                          inline-block
+                          animate-[bounce-left_2s_ease-in-out_infinite] text-lg
+                          font-bold
+                        "
                       >
                         ‹
                       </span>
@@ -2620,10 +2620,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     >
                       <span
                         className="
-                        inline-block
-                        animate-[bounce-right_2s_ease-in-out_infinite] text-lg
-                        font-bold
-                      "
+                          inline-block
+                          animate-[bounce-right_2s_ease-in-out_infinite] text-lg
+                          font-bold
+                        "
                       >
                         ›
                       </span>
@@ -2733,14 +2733,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           ${
                             activeTab === 'lecciones'
                               ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
+                              `
                           }
                         `}
                       >
@@ -2759,14 +2759,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           ${
                             activeTab === 'en-vivo'
                               ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
+                              `
                           }
                         `}
                       >
@@ -2785,14 +2785,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           ${
                             activeTab === 'estudiantes'
                               ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
+                              `
                           }
                         `}
                       >
@@ -2811,23 +2811,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           ${
                             activeTab === 'grabadas'
                               ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
+                              `
                           }
                         `}
                       >
                         Clases grabadas{' '}
                         <span
                           className="
-                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                          text-xs font-bold text-slate-950
-                        "
+                            ml-2 inline-block rounded-full bg-cyan-500 px-2
+                            py-0.5 text-xs font-bold text-slate-950
+                          "
                         >
                           {meetingsForList.length}
                         </span>
@@ -2845,23 +2845,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           ${
                             activeTab === 'foros'
                               ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
+                              `
                           }
                         `}
                       >
                         Foros{' '}
                         <span
                           className="
-                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                          text-xs font-bold text-slate-950
-                        "
+                            ml-2 inline-block rounded-full bg-cyan-500 px-2
+                            py-0.5 text-xs font-bold text-slate-950
+                          "
                         >
                           {forums.length}
                         </span>
@@ -2879,23 +2879,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           ${
                             activeTab === 'proyectos'
                               ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
+                              `
                           }
                         `}
                       >
                         Proyectos{' '}
                         <span
                           className="
-                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                          text-xs font-bold text-slate-950
-                        "
+                            ml-2 inline-block rounded-full bg-cyan-500 px-2
+                            py-0.5 text-xs font-bold text-slate-950
+                          "
                         >
                           {Array.isArray(studentProjects)
                             ? studentProjects.length
@@ -2915,23 +2915,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           ${
                             activeTab === 'recursos'
                               ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
+                              `
                           }
                         `}
                       >
                         Recursos{' '}
                         <span
                           className="
-                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                          text-xs font-bold text-slate-950
-                        "
+                            ml-2 inline-block rounded-full bg-cyan-500 px-2
+                            py-0.5 text-xs font-bold text-slate-950
+                          "
                         >
                           3
                         </span>
@@ -2949,23 +2949,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           ${
                             activeTab === 'actividades'
                               ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
                               : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
+                              `
                           }
                         `}
                       >
                         Actividades{' '}
                         <span
                           className="
-                          ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                          text-xs font-bold text-slate-950
-                        "
+                            ml-2 inline-block rounded-full bg-cyan-500 px-2
+                            py-0.5 text-xs font-bold text-slate-950
+                          "
                         >
                           5
                         </span>

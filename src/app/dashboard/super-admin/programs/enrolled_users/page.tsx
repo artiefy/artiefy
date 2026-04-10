@@ -6,17 +6,7 @@ import Image from 'next/image';
 
 import { useUser } from '@clerk/nextjs';
 import { saveAs } from 'file-saver';
-import {
-  Check,
-  ChevronDown,
-  Loader2,
-  Mail,
-  MessageCircle,
-  Search,
-  UserPlus,
-  Users,
-  X,
-} from 'lucide-react';
+import { Check, ChevronDown, Loader2, Search, Users, X } from 'lucide-react';
 import Select, { type SingleValue } from 'react-select';
 import * as XLSX from 'xlsx';
 import { z } from 'zod';
@@ -683,6 +673,122 @@ function isErrorResponse(x: unknown): x is { error: string } {
   );
 }
 
+// CustomFieldForm: declarado a nivel de módulo para evitar que se recree
+// en cada render de EnrolledUsersPage (React trataría cada render como
+// un componente "nuevo" causando unmount/remount y pérdida de estado).
+function CustomFieldForm({ selectedUserId }: { selectedUserId: string }) {
+  const [fieldKey, setFieldKey] = useState('');
+  const [fieldType, setFieldType] = useState('text');
+  const [fieldDescription, setFieldDescription] = useState('');
+  const [fieldValue, setFieldValue] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/super-admin/enroll_user_program/newTable', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: selectedUserId,
+          fieldKey,
+          fieldType,
+          fieldDescription,
+          fieldValue,
+        }),
+      });
+
+      if (res.ok) {
+        alert('Columna agregada correctamente');
+        setFieldKey('');
+        setFieldType('text');
+        setFieldDescription('');
+        setFieldValue('');
+      } else {
+        const json: unknown = await res.json();
+        const errorData = errorResponseSchema.parse(json);
+        alert('Error: ' + errorData.error);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error inesperado');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div
+      className="
+        flex flex-col gap-2
+        sm:flex-row sm:items-center
+      "
+    >
+      <input
+        type="text"
+        placeholder="Nombre del campo"
+        value={fieldKey}
+        onChange={(e) => setFieldKey(e.target.value)}
+        className="
+          w-full rounded border border-gray-700 bg-gray-800 p-2 transition
+          focus:ring-2 focus:ring-blue-500 focus:outline-none
+          sm:flex-1
+        "
+      />
+      <input
+        type="text"
+        placeholder="Descripción (opcional)"
+        value={fieldDescription}
+        onChange={(e) => setFieldDescription(e.target.value)}
+        className="
+          w-full rounded border border-gray-700 bg-gray-800 p-2 transition
+          focus:ring-2 focus:ring-blue-500 focus:outline-none
+          sm:flex-1
+        "
+      />
+      <select
+        value={fieldType}
+        onChange={(e) => setFieldType(e.target.value)}
+        className="
+          w-full rounded border border-gray-700 bg-gray-800 p-2 transition
+          focus:ring-2 focus:ring-blue-500 focus:outline-none
+          sm:flex-1
+        "
+      >
+        <option value="text">Texto</option>
+        <option value="integer">Número entero</option>
+        <option value="decimal">Decimal</option>
+        <option value="boolean">Booleano</option>
+        <option value="date">Fecha</option>
+        <option value="timestamp">Fecha y hora</option>
+      </select>
+      <input
+        type="text"
+        placeholder="Valor inicial (opcional)"
+        value={fieldValue}
+        onChange={(e) => setFieldValue(e.target.value)}
+        className="
+          w-full rounded border border-gray-700 bg-gray-800 p-2 transition
+          focus:ring-2 focus:ring-blue-500 focus:outline-none
+          sm:flex-1
+        "
+      />
+      <button
+        disabled={loading || !fieldKey}
+        onClick={handleSubmit}
+        className="
+          w-full rounded bg-blue-600 px-4 py-2 font-semibold transition
+          hover:bg-blue-700
+          disabled:opacity-50
+          sm:w-auto
+        "
+      >
+        {loading ? 'Guardando...' : 'Agregar'}
+      </button>
+    </div>
+  );
+}
+
 export default function EnrolledUsersPage() {
   const [students, setStudents] = useState<Student[]>([]);
   const [availableCourses, setAvailableCourses] = useState<Course[]>([]);
@@ -701,6 +807,11 @@ export default function EnrolledUsersPage() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sendWhatsapp, setSendWhatsapp] = useState(false);
   const [loadingEmail, setLoadingEmail] = useState(false);
+
+  // PASO 2: estado de carga inicial de datos
+  const [isLoading, setIsLoading] = useState(true);
+  // PASO 2: set de índices de filas de cuota que están guardando (por índice de cuota)
+  const [savingRows, setSavingRows] = useState<Set<number>>(new Set());
 
   // ✅ Estados para WhatsApp separado (como en super-admin/page.tsx)
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
@@ -1343,6 +1454,9 @@ export default function EnrolledUsersPage() {
       return;
     }
 
+    // PASO 2: marcar la fila como guardando
+    setSavingRows((prev) => new Set(prev).add(index));
+
     const row = editablePagos[index] ?? {};
     const fechaStr = toISODateLike(row.fechaPrograma);
     const fechaRealPagoStr = toISODateLike(row.fechaRealPago);
@@ -1415,6 +1529,13 @@ export default function EnrolledUsersPage() {
     } catch (e) {
       console.error(e);
       alert('Error de red al guardar.');
+    } finally {
+      // PASO 2: quitar la fila del set de guardando
+      setSavingRows((prev) => {
+        const next = new Set(prev);
+        next.delete(index);
+        return next;
+      });
     }
   }
   const onReceiptChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1672,7 +1793,6 @@ export default function EnrolledUsersPage() {
     Record<string, string[]>
   >({});
 
-  const containerRef = useRef<HTMLDivElement>(null);
   const [showMassiveEditModal, setShowMassiveEditModal] = useState(false);
   const [isSavingMassiveEdit, setIsSavingMassiveEdit] = useState(false);
   const [massiveEditFields, setMassiveEditFields] = useState<
@@ -1799,19 +1919,8 @@ export default function EnrolledUsersPage() {
     }
   }, [carteraInfo]);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        showColumnSelector &&
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setShowColumnSelector(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showColumnSelector]);
+  // El column selector se cierra únicamente a través del overlay, botón ✕ o Listo
+  // (no con click-outside, porque el panel es fixed y está fuera de containerRef)
   // Cerrar dropdowns de multiselect al hacer clic fuera
   useEffect(() => {
     function handleClickOutsideMulti(e: MouseEvent) {
@@ -2523,6 +2632,7 @@ export default function EnrolledUsersPage() {
   }, []);
 
   const fetchData = async () => {
+    setIsLoading(true);
     try {
       const res = await fetch('/api/super-admin/enroll_user_program');
       const json: unknown = await res.json();
@@ -2667,6 +2777,8 @@ export default function EnrolledUsersPage() {
       setDynamicColumns([...dynamicUserColumns, ...dynamicUIDColumns]);
     } catch (err) {
       console.error('Error fetching data:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
   async function fetchUserPrograms(userId: string) {
@@ -2800,7 +2912,30 @@ export default function EnrolledUsersPage() {
     saveAs(blob, 'estudiantes_seleccionados.xlsx');
   };
 
-  const getFilteredSortedStudents = () => {
+  // REEMPLAZA getFilteredSortedStudents: ahora es useMemo para evitar recálculo en cada render
+
+  const columnFilterOptions = useMemo(() => {
+    const options: Record<string, (string | null | undefined)[]> = {};
+
+    totalColumns.forEach((col) => {
+      const values: (string | null | undefined)[] = [];
+      students.forEach((student) => {
+        const value =
+          col.id === 'carteraStatus'
+            ? getCarteraUiStatus(student.carteraStatus)
+            : getValueForColumn(student, col.id);
+        if (value !== null && value !== undefined) {
+          values.push(safeToString(value));
+        }
+      });
+      options[col.id] = values;
+    });
+
+    return options;
+  }, [students, totalColumns, getCarteraUiStatus]);
+
+  // REEMPLAZA sortedStudents: calculado como useMemo con todas sus dependencias
+  const sortedStudents = useMemo(() => {
     return (
       [...students]
         // Filtro por programa seleccionado
@@ -2953,29 +3088,18 @@ export default function EnrolledUsersPage() {
           return 0;
         })
     );
-  };
+  }, [
+    students,
+    selectedPrograms,
+    columnFilters,
+    columnFiltersMulti,
+    filters,
+    advancedFilters,
+    getCarteraUiStatus,
+    currentUserId,
+    editablePagos,
+  ]);
 
-  const columnFilterOptions = useMemo(() => {
-    const options: Record<string, (string | null | undefined)[]> = {};
-
-    totalColumns.forEach((col) => {
-      const values: (string | null | undefined)[] = [];
-      students.forEach((student) => {
-        const value =
-          col.id === 'carteraStatus'
-            ? getCarteraUiStatus(student.carteraStatus)
-            : getValueForColumn(student, col.id);
-        if (value !== null && value !== undefined) {
-          values.push(safeToString(value));
-        }
-      });
-      options[col.id] = values;
-    });
-
-    return options;
-  }, [students, totalColumns, getCarteraUiStatus]);
-
-  const sortedStudents = getFilteredSortedStudents();
   // — Hooks para infinite scroll
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -2983,136 +3107,24 @@ export default function EnrolledUsersPage() {
   // Estudiantes a mostrar según página actual
   const displayedStudents = sortedStudents.slice(0, currentPage * limit);
 
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    if (
-      scrollTop + clientHeight >= scrollHeight - 20 &&
-      !loadingMore &&
-      displayedStudents.length < sortedStudents.length
-    ) {
-      setLoadingMore(true);
-      setTimeout(() => {
-        setCurrentPage((p) => p + 1);
-        setLoadingMore(false);
-      }, 300);
-    }
-  };
-
-  function CustomFieldForm({ selectedUserId }: { selectedUserId: string }) {
-    const [fieldKey, setFieldKey] = useState('');
-    const [fieldType, setFieldType] = useState('text');
-    const [fieldDescription, setFieldDescription] = useState('');
-    const [fieldValue, setFieldValue] = useState('');
-    const [loading, setLoading] = useState(false);
-
-    const handleSubmit = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          '/api/super-admin/enroll_user_program/newTable',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: selectedUserId,
-              fieldKey,
-              fieldType,
-              fieldDescription,
-              fieldValue,
-            }),
-          }
-        );
-
-        if (res.ok) {
-          alert('Columna agregada correctamente');
-          setFieldKey('');
-          setFieldType('text');
-          setFieldDescription('');
-          setFieldValue('');
-        } else {
-          const json: unknown = await res.json();
-          const errorData = errorResponseSchema.parse(json);
-          alert('Error: ' + errorData.error);
-        }
-      } catch (err) {
-        console.error(err);
-        alert('Error inesperado');
-      } finally {
-        setLoading(false);
+  // REEMPLAZA handleScroll: useCallback evita recrear la función en cada render
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+      if (
+        scrollTop + clientHeight >= scrollHeight - 20 &&
+        !loadingMore &&
+        displayedStudents.length < sortedStudents.length
+      ) {
+        setLoadingMore(true);
+        setTimeout(() => {
+          setCurrentPage((p) => p + 1);
+          setLoadingMore(false);
+        }, 300);
       }
-    };
-
-    return (
-      <div
-        className="
-          flex flex-col gap-2
-          sm:flex-row sm:items-center
-        "
-      >
-        <input
-          type="text"
-          placeholder="Nombre del campo"
-          value={fieldKey}
-          onChange={(e) => setFieldKey(e.target.value)}
-          className="
-            w-full rounded border border-gray-700 bg-gray-800 p-2 transition
-            focus:ring-2 focus:ring-blue-500 focus:outline-none
-            sm:flex-1
-          "
-        />
-        <input
-          type="text"
-          placeholder="Descripción (opcional)"
-          value={fieldDescription}
-          onChange={(e) => setFieldDescription(e.target.value)}
-          className="
-            w-full rounded border border-gray-700 bg-gray-800 p-2 transition
-            focus:ring-2 focus:ring-blue-500 focus:outline-none
-            sm:flex-1
-          "
-        />
-        <select
-          value={fieldType}
-          onChange={(e) => setFieldType(e.target.value)}
-          className="
-            w-full rounded border border-gray-700 bg-gray-800 p-2 transition
-            focus:ring-2 focus:ring-blue-500 focus:outline-none
-            sm:flex-1
-          "
-        >
-          <option value="text">Texto</option>
-          <option value="integer">Número entero</option>
-          <option value="decimal">Decimal</option>
-          <option value="boolean">Booleano</option>
-          <option value="date">Fecha</option>
-          <option value="timestamp">Fecha y hora</option>
-        </select>
-        <input
-          type="text"
-          placeholder="Valor inicial (opcional)"
-          value={fieldValue}
-          onChange={(e) => setFieldValue(e.target.value)}
-          className="
-            w-full rounded border border-gray-700 bg-gray-800 p-2 transition
-            focus:ring-2 focus:ring-blue-500 focus:outline-none
-            sm:flex-1
-          "
-        />
-        <button
-          disabled={loading || !fieldKey}
-          onClick={handleSubmit}
-          className="
-            w-full rounded bg-blue-600 px-4 py-2 font-semibold transition
-            hover:bg-blue-700
-            disabled:opacity-50
-            sm:w-auto
-          "
-        >
-          {loading ? 'Guardando...' : 'Agregar'}
-        </button>
-      </div>
-    );
-  }
+    },
+    [loadingMore, displayedStudents.length, sortedStudents.length]
+  );
 
   const handleEnroll = async () => {
     try {
@@ -3142,169 +3154,172 @@ export default function EnrolledUsersPage() {
     }
   };
 
-  const updateStudentField = async (
-    userId: string,
-    field: string,
-    value: string
-  ) => {
-    console.log('🔧 [updateStudentField] Iniciando actualización:', {
-      userId,
-      field,
-      value,
-    });
+  // REEMPLAZA updateStudentField: useCallback estabiliza la referencia cuando
+  // se pasa como prop a celdas de la tabla.
+  const updateStudentField = useCallback(
+    async (userId: string, field: string, value: string) => {
+      console.log('🔧 [updateStudentField] Iniciando actualización:', {
+        userId,
+        field,
+        value,
+      });
 
-    const student = students.find((s) => s.id === userId);
-    if (!student) {
-      console.error(
-        '❌ [updateStudentField] Estudiante no encontrado:',
-        userId
-      );
-      return;
-    }
-    const updatedStudent = { ...student };
-    // Asigna directamente sobre el student (todo viene de users.*)
-    if (field in updatedStudent) {
-      (updatedStudent as Record<string, unknown>)[field] = value;
-    }
-    // Soporte edición en tabla para dinámicos
-    if (field.startsWith('userInscriptionDetails.')) {
-      const k = field.split('.')[1] ?? '';
-      updatedStudent.userInscriptionDetails = {
-        ...(updatedStudent.userInscriptionDetails ?? {}),
-        [k]: value,
+      const student = students.find((s) => s.id === userId);
+      if (!student) {
+        console.error(
+          '❌ [updateStudentField] Estudiante no encontrado:',
+          userId
+        );
+        return;
+      }
+      const updatedStudent = { ...student };
+      // Asigna directamente sobre el student (todo viene de users.*)
+      if (field in updatedStudent) {
+        (updatedStudent as Record<string, unknown>)[field] = value;
+      }
+      // Soporte edición en tabla para dinámicos
+      if (field.startsWith('userInscriptionDetails.')) {
+        const k = field.split('.')[1] ?? '';
+        updatedStudent.userInscriptionDetails = {
+          ...(updatedStudent.userInscriptionDetails ?? {}),
+          [k]: value,
+        };
+      } else if (!(field in updatedStudent)) {
+        (updatedStudent as Record<string, unknown>)[field] = value;
+      }
+
+      const nameParts = String(updatedStudent.name ?? '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      const firstNameVal = nameParts.length > 0 ? nameParts[0] : '';
+      const lastNameVal =
+        nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
+      const payload: Record<string, unknown> = {
+        userId: updatedStudent.id,
+        firstName: firstNameVal,
+        lastName: lastNameVal,
+        email: updatedStudent.email, // siempre incluir
+        role: updatedStudent.role ?? 'estudiante',
+        status: updatedStudent.subscriptionStatus,
+        permissions: [],
+
+        // datos básicos
+        phone: updatedStudent.phone,
+        address: updatedStudent.address,
+        city: updatedStudent.city,
+        country: updatedStudent.country,
+        birthDate: updatedStudent.birthDate,
+
+        // plan / fechas
+        planType: updatedStudent.planType,
+        purchaseDate: updatedStudent.purchaseDate,
+        subscriptionEndDate: updatedStudent.subscriptionEndDate
+          ? new Date(updatedStudent.subscriptionEndDate)
+              .toISOString()
+              .split('T')[0]
+          : null,
+
+        // 🔽 AHORA los de inscripción (users.*)
+        document: updatedStudent.document,
+        modalidad: updatedStudent.modalidad,
+        inscripcionValor: updatedStudent.inscripcionValor,
+        paymentMethod: updatedStudent.paymentMethod,
+        cuota1Fecha: updatedStudent.cuota1Fecha,
+        cuota1Metodo: updatedStudent.cuota1Metodo,
+        cuota1Valor: updatedStudent.cuota1Valor,
+        valorPrograma: updatedStudent.valorPrograma,
+
+        identificacionTipo: updatedStudent.identificacionTipo,
+        identificacionNumero: updatedStudent.identificacionNumero,
+        nivelEducacion: updatedStudent.nivelEducacion,
+        tieneAcudiente: updatedStudent.tieneAcudiente,
+        acudienteNombre: updatedStudent.acudienteNombre,
+        acudienteContacto: updatedStudent.acudienteContacto,
+        acudienteEmail: updatedStudent.acudienteEmail,
+
+        programa: updatedStudent.programa,
+        fechaInicio: updatedStudent.fechaInicio,
+        comercial: updatedStudent.comercial,
+        sede: updatedStudent.sede,
+        horario: updatedStudent.horario,
+        numeroCuotas: updatedStudent.numeroCuotas,
+        pagoInscripcion: updatedStudent.pagoInscripcion,
+        pagoCuota1: updatedStudent.pagoCuota1,
+
+        idDocKey: updatedStudent.idDocKey,
+        utilityBillKey: updatedStudent.utilityBillKey,
+        diplomaKey: updatedStudent.diplomaKey,
+        pagareKey: updatedStudent.pagareKey,
+
+        enrollmentStatus:
+          field === 'enrollmentStatus'
+            ? value
+            : updatedStudent.enrollmentStatus,
       };
-    } else if (!(field in updatedStudent)) {
-      (updatedStudent as Record<string, unknown>)[field] = value;
-    }
+      // Inyectar dinámicos en el payload
 
-    const nameParts = String(updatedStudent.name ?? '')
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
-    const firstNameVal = nameParts.length > 0 ? nameParts[0] : '';
-    const lastNameVal =
-      nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
-
-    const payload: Record<string, unknown> = {
-      userId: updatedStudent.id,
-      firstName: firstNameVal,
-      lastName: lastNameVal,
-      email: updatedStudent.email, // siempre incluir
-      role: updatedStudent.role ?? 'estudiante',
-      status: updatedStudent.subscriptionStatus,
-      permissions: [],
-
-      // datos básicos
-      phone: updatedStudent.phone,
-      address: updatedStudent.address,
-      city: updatedStudent.city,
-      country: updatedStudent.country,
-      birthDate: updatedStudent.birthDate,
-
-      // plan / fechas
-      planType: updatedStudent.planType,
-      purchaseDate: updatedStudent.purchaseDate,
-      subscriptionEndDate: updatedStudent.subscriptionEndDate
-        ? new Date(updatedStudent.subscriptionEndDate)
-            .toISOString()
-            .split('T')[0]
-        : null,
-
-      // 🔽 AHORA los de inscripción (users.*)
-      document: updatedStudent.document,
-      modalidad: updatedStudent.modalidad,
-      inscripcionValor: updatedStudent.inscripcionValor,
-      paymentMethod: updatedStudent.paymentMethod,
-      cuota1Fecha: updatedStudent.cuota1Fecha,
-      cuota1Metodo: updatedStudent.cuota1Metodo,
-      cuota1Valor: updatedStudent.cuota1Valor,
-      valorPrograma: updatedStudent.valorPrograma,
-
-      identificacionTipo: updatedStudent.identificacionTipo,
-      identificacionNumero: updatedStudent.identificacionNumero,
-      nivelEducacion: updatedStudent.nivelEducacion,
-      tieneAcudiente: updatedStudent.tieneAcudiente,
-      acudienteNombre: updatedStudent.acudienteNombre,
-      acudienteContacto: updatedStudent.acudienteContacto,
-      acudienteEmail: updatedStudent.acudienteEmail,
-
-      programa: updatedStudent.programa,
-      fechaInicio: updatedStudent.fechaInicio,
-      comercial: updatedStudent.comercial,
-      sede: updatedStudent.sede,
-      horario: updatedStudent.horario,
-      numeroCuotas: updatedStudent.numeroCuotas,
-      pagoInscripcion: updatedStudent.pagoInscripcion,
-      pagoCuota1: updatedStudent.pagoCuota1,
-
-      idDocKey: updatedStudent.idDocKey,
-      utilityBillKey: updatedStudent.utilityBillKey,
-      diplomaKey: updatedStudent.diplomaKey,
-      pagareKey: updatedStudent.pagareKey,
-
-      enrollmentStatus:
-        field === 'enrollmentStatus' ? value : updatedStudent.enrollmentStatus,
-    };
-    // Inyectar dinámicos en el payload
-
-    // Mantén la lógica de programTitle / courseTitle tal cual
-    if (field === 'programTitle') {
-      const prog = programs.find((p) => p.title === value);
-      if (prog) payload.programId = Number(prog.id);
-    }
-    if (field === 'courseTitle') {
-      const curso = availableCourses.find((c) => c.title === value);
-      if (curso) payload.courseId = Number(curso.id);
-    }
-
-    console.log(
-      '📤 [updateStudentField] Payload completo:',
-      JSON.stringify(payload, null, 2)
-    );
-    console.log('📧 [updateStudentField] Email en payload:', payload.email);
-
-    if (field === 'programTitle') {
-      const prog = programs.find((p) => p.title === value);
-      if (prog) {
-        payload.programId = Number(prog.id);
-        console.log('🎓 [updateStudentField] Programa encontrado:', prog.id);
+      // Mantén la lógica de programTitle / courseTitle tal cual
+      if (field === 'programTitle') {
+        const prog = programs.find((p) => p.title === value);
+        if (prog) payload.programId = Number(prog.id);
       }
-    }
-
-    if (field === 'courseTitle') {
-      const curso = availableCourses.find((c) => c.title === value);
-      if (curso) {
-        payload.courseId = Number(curso.id);
-        console.log('📚 [updateStudentField] Curso encontrado:', curso.id);
+      if (field === 'courseTitle') {
+        const curso = availableCourses.find((c) => c.title === value);
+        if (curso) payload.courseId = Number(curso.id);
       }
-    }
 
-    console.log('🚀 [updateStudentField] Enviando request a API...');
-    const res = await fetch('/api/super-admin/udateUser/updateUserDinamic', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-
-    console.log('📡 [updateStudentField] Response status:', res.status);
-
-    if (!res.ok) {
-      const data: unknown = await res.json();
-      const errorData = errorResponseSchema.parse(data);
-      console.error(
-        '❌ [updateStudentField] Error del servidor:',
-        errorData.error
+      console.log(
+        '📤 [updateStudentField] Payload completo:',
+        JSON.stringify(payload, null, 2)
       );
-      alert(`❌ Error al guardar: ${errorData.error}`);
-    } else {
-      console.log('✅ [updateStudentField] Actualización exitosa');
-      setStudents((prev) =>
-        prev.map((s) => (s.id === userId ? updatedStudent : s))
-      );
-      setSuccessMessage(`✅ Campo "${field}" guardado correctamente`);
-      setTimeout(() => setSuccessMessage(''), 3000);
-    }
-  };
+      console.log('📧 [updateStudentField] Email en payload:', payload.email);
+
+      if (field === 'programTitle') {
+        const prog = programs.find((p) => p.title === value);
+        if (prog) {
+          payload.programId = Number(prog.id);
+          console.log('🎓 [updateStudentField] Programa encontrado:', prog.id);
+        }
+      }
+
+      if (field === 'courseTitle') {
+        const curso = availableCourses.find((c) => c.title === value);
+        if (curso) {
+          payload.courseId = Number(curso.id);
+          console.log('📚 [updateStudentField] Curso encontrado:', curso.id);
+        }
+      }
+
+      console.log('🚀 [updateStudentField] Enviando request a API...');
+      const res = await fetch('/api/super-admin/udateUser/updateUserDinamic', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      console.log('📡 [updateStudentField] Response status:', res.status);
+
+      if (!res.ok) {
+        const data: unknown = await res.json();
+        const errorData = errorResponseSchema.parse(data);
+        console.error(
+          '❌ [updateStudentField] Error del servidor:',
+          errorData.error
+        );
+        alert(`❌ Error al guardar: ${errorData.error}`);
+      } else {
+        console.log('✅ [updateStudentField] Actualización exitosa');
+        setStudents((prev) =>
+          prev.map((s) => (s.id === userId ? updatedStudent : s))
+        );
+        setSuccessMessage(`✅ Campo "${field}" guardado correctamente`);
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    },
+    [students, programs, availableCourses, setStudents, setSuccessMessage]
+  );
 
   const updateStudentsMassiveField = async (fields: Record<string, string>) => {
     const payload: {
@@ -3358,20 +3373,6 @@ export default function EnrolledUsersPage() {
   };
 
   const headerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        showColumnSelector &&
-        headerRef.current &&
-        !headerRef.current.contains(e.target as Node)
-      ) {
-        setShowColumnSelector(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showColumnSelector]);
 
   const selectedStudentIds = useMemo(
     () => new Set(selectedStudents),
@@ -3577,160 +3578,281 @@ export default function EnrolledUsersPage() {
           print:hidden
         "
       >
-        <div
-          ref={headerRef}
-          className="
-            flex flex-col items-start justify-between gap-4
-            sm:flex-row sm:items-center
-          "
-        >
-          <h1 className="text-2xl font-bold">Matricular Estudiantes</h1>
+        <div ref={headerRef} className="flex flex-col gap-6">
+          {/* Título + métricas */}
+          <div className="flex flex-col gap-1">
+            <h1 className="text-3xl font-bold tracking-tight text-white">
+              Gestión de Estudiantes
+            </h1>
+            <p className="text-sm text-gray-400">
+              Administra matrículas, pagos y seguimiento académico
+            </p>
+          </div>
 
-          <div
-            className="
-              relative w-full
-              sm:w-auto
-            "
-          >
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowCreateForm(true)}
+          {/* Chips de métricas */}
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'Total', value: students.length, color: 'text-white' },
+              {
+                label: 'Activos',
+                value: students.filter((s) => s.subscriptionStatus === 'active')
+                  .length,
+                color: 'text-emerald-400',
+              },
+              {
+                label: 'En cartera',
+                value: students.filter((s) => s.carteraStatus === 'inactivo')
+                  .length,
+                color: 'text-red-400',
+              },
+              {
+                label: 'Nuevos',
+                value: students.filter((s) => s.isNew).length,
+                color: 'text-cyan-400',
+              },
+            ].map(({ label, value, color }) => (
+              <div
+                key={label}
                 className="
-                  group/button relative inline-flex items-center gap-1
-                  overflow-hidden rounded-md border border-white/20
-                  bg-background px-2 py-1.5 text-xs text-primary transition
-                  hover:bg-primary/10
-                  sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
+                  flex items-center gap-2 rounded-xl border border-white/10
+                  bg-white/5 px-3 py-1.5
                 "
               >
-                <span className="relative z-10 font-medium">Crear Usuario</span>
-                <UserPlus
-                  className="
-                    relative z-10 size-3.5
-                    sm:size-4
-                  "
-                />
-                <div
-                  className="
-                    absolute inset-0 z-0 bg-gradient-to-r from-transparent
-                    via-white/10 to-transparent opacity-0 transition-all
-                    duration-500
-                    group-hover/button:[transform:translateX(100%)]
-                    group-hover/button:opacity-100
-                  "
-                />
-              </button>
+                <span className="text-xs text-gray-400">{label}</span>
+                <span
+                  className={`
+                  text-sm font-bold
+                  ${color}
+                `}
+                >
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
 
-              <button
-                onClick={() => {
-                  setSendWhatsapp(false);
-                  setShowPhoneModal(true);
-                }}
-                className="
-                  group/button relative inline-flex items-center gap-1
-                  overflow-hidden rounded-md border border-white/20
-                  bg-background px-2 py-1.5 text-xs text-primary transition
-                  hover:bg-primary/10
-                  sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
-                "
-              >
-                <span className="relative z-10 font-medium">📧 Correo</span>
-                <Mail
-                  className="
-                    relative z-10 size-3.5
-                    sm:size-4
-                  "
-                />
-                <div
-                  className="
-                    absolute inset-0 z-0 bg-gradient-to-r from-transparent
-                    via-white/10 to-transparent opacity-0 transition-all
-                    duration-500
-                    group-hover/button:[transform:translateX(100%)]
-                    group-hover/button:opacity-100
-                  "
-                />
-              </button>
-
-              <button
-                onClick={() => {
-                  setSendWhatsapp(true);
-                  setShowPhoneModal(true);
-                }}
-                className="
-                  group/button relative inline-flex items-center gap-1
-                  overflow-hidden rounded-md border border-white/20
-                  bg-background px-2 py-1.5 text-xs text-primary transition
-                  hover:bg-primary/10
-                  sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
-                "
-              >
-                <span className="relative z-10 font-medium">💬 WhatsApp</span>
-                <MessageCircle
-                  className="
-                    relative z-10 size-3.5
-                    sm:size-4
-                  "
-                />
-                <div
-                  className="
-                    absolute inset-0 z-0 bg-gradient-to-r from-transparent
-                    via-white/10 to-transparent opacity-0 transition-all
-                    duration-500
-                    group-hover/button:[transform:translateX(100%)]
-                    group-hover/button:opacity-100
-                  "
-                />
-              </button>
-
-              <button
-                onClick={() => setShowColumnSelector((v) => !v)}
-                className="
-                  rounded-md bg-gray-700 px-4 py-2 text-white transition
-                  hover:bg-gray-600
-                "
-              >
-                ⚙️ Columnas
-              </button>
+          {/* Botones de acción */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Grupo unificado */}
+            <div className="flex overflow-hidden rounded-xl border border-white/10">
+              {(
+                [
+                  {
+                    label: 'Crear Usuario',
+                    onClick: () => setShowCreateForm(true),
+                  },
+                  {
+                    label: 'Correo',
+                    onClick: () => {
+                      setSendWhatsapp(false);
+                      setShowPhoneModal(true);
+                    },
+                  },
+                  {
+                    label: 'WhatsApp',
+                    onClick: () => {
+                      setSendWhatsapp(true);
+                      setShowPhoneModal(true);
+                    },
+                  },
+                ] as { label: string; onClick: () => void }[]
+              ).map(({ label, onClick }, i) => (
+                <button
+                  key={label}
+                  onClick={onClick}
+                  className={`
+                    bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-200
+                    transition-all duration-150
+                    hover:bg-white/10 hover:text-white
+                    ${i !== 0 ? 'border-l border-white/10' : ''}
+                  `}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
 
-            {showColumnSelector && (
-              <div
-                className="
-                  absolute right-0 z-50 mt-2 max-h-60 w-full max-w-xs
-                  overflow-y-auto rounded-md bg-gray-800 p-4 shadow-lg
-                  sm:w-64
+            {/* Botón columnas */}
+            <button
+              onClick={() => setShowColumnSelector((v) => !v)}
+              className="
+                flex items-center gap-2 rounded-xl border border-white/10
+                bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-200
+                transition-all duration-150
+                hover:bg-white/10 hover:text-white
+              "
+            >
+              <span>Columnas</span>
+              {visibleColumns.length < totalColumns.length && (
+                <span
+                  className="
+                  rounded-full bg-blue-500/20 px-1.5 py-0.5 text-[10px]
+                  font-bold text-blue-300
                 "
-              >
-                <h3 className="mb-2 font-semibold text-white">
-                  Mostrar columnas
-                </h3>
-                <div className="space-y-2">
-                  {totalColumns.map((col) => (
-                    <label
-                      key={col.id}
-                      className="flex items-center gap-2 text-white"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={visibleColumns.includes(col.id)}
-                        onChange={() =>
-                          setVisibleColumns((prev) =>
-                            prev.includes(col.id)
-                              ? prev.filter((id) => id !== col.id)
-                              : [...prev, col.id]
-                          )
-                        }
-                        className="size-4 rounded border-gray-400 bg-gray-700"
-                      />
-                      <span>{col.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
+                >
+                  {totalColumns.length - visibleColumns.length} ocultas
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={handlePrint}
+              className="
+                rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm
+                font-medium text-gray-200 transition-all duration-150
+                hover:bg-white/10 hover:text-white
+              "
+            >
+              Imprimir
+            </button>
           </div>
         </div>
+
+        {/* Slide-over selector de columnas */}
+        {showColumnSelector && (
+          <>
+            {/* Overlay */}
+            <div
+              className="fixed inset-0 z-40 bg-black/50"
+              onClick={() => setShowColumnSelector(false)}
+            />
+            {/* Panel */}
+            <div
+              className="
+              fixed top-0 right-0 z-50 flex h-full w-80 flex-col border-l
+              border-white/10 bg-gray-950 shadow-2xl
+            "
+            >
+              {/* Header del panel */}
+              <div
+                className="
+                flex items-center justify-between border-b border-white/10 px-5
+                py-4
+              "
+              >
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    Columnas visibles
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {visibleColumns.length} de {totalColumns.length}{' '}
+                    seleccionadas
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowColumnSelector(false)}
+                  className="
+                    rounded-lg p-1.5 text-gray-500
+                    hover:bg-white/10 hover:text-white
+                  "
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Acciones rápidas */}
+              <div className="flex gap-2 border-b border-white/10 px-5 py-3">
+                <button
+                  onClick={() =>
+                    setVisibleColumns(totalColumns.map((c) => c.id))
+                  }
+                  className="
+                    flex-1 rounded-lg border border-white/10 bg-white/5 py-1.5
+                    text-xs text-gray-300
+                    hover:bg-white/10
+                  "
+                >
+                  Mostrar todas
+                </button>
+                <button
+                  onClick={() =>
+                    setVisibleColumns(
+                      totalColumns
+                        .filter((c) => c.defaultVisible)
+                        .map((c) => c.id)
+                    )
+                  }
+                  className="
+                    flex-1 rounded-lg border border-white/10 bg-white/5 py-1.5
+                    text-xs text-gray-300
+                    hover:bg-white/10
+                  "
+                >
+                  Por defecto
+                </button>
+              </div>
+
+              {/* Lista de columnas */}
+              <div className="flex-1 overflow-y-auto px-5 py-3">
+                <div className="space-y-1">
+                  {totalColumns.map((col) => {
+                    const checked = visibleColumns.includes(col.id);
+                    const toggle = () =>
+                      setVisibleColumns((prev) =>
+                        prev.includes(col.id)
+                          ? prev.filter((id) => id !== col.id)
+                          : [...prev, col.id]
+                      );
+                    return (
+                      <div
+                        key={col.id}
+                        onClick={toggle}
+                        className="
+                          flex cursor-pointer items-center justify-between
+                          rounded-lg px-3 py-2.5 transition
+                          hover:bg-white/5
+                        "
+                      >
+                        <span className="text-sm text-gray-300">
+                          {col.label}
+                        </span>
+                        {/* Toggle iOS style */}
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={checked}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggle();
+                          }}
+                          className={`
+                            relative inline-flex h-5 w-9 shrink-0 cursor-pointer
+                            items-center rounded-full border-2
+                            border-transparent transition-colors duration-200
+                            ${checked ? 'bg-blue-500' : 'bg-gray-700'}
+                          `}
+                        >
+                          <span
+                            className={`
+                              pointer-events-none inline-block size-4
+                              rounded-full bg-white shadow transition-transform
+                              duration-200
+                              ${checked ? 'translate-x-4' : 'translate-x-0'}
+                            `}
+                          />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-white/10 px-5 py-4">
+                <button
+                  onClick={() => setShowColumnSelector(false)}
+                  className="
+                    w-full rounded-xl bg-blue-600 py-2.5 text-sm font-semibold
+                    text-white transition
+                    hover:bg-blue-500
+                  "
+                >
+                  Listo
+                </button>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Filtros */}
         <div
@@ -3928,62 +4050,78 @@ export default function EnrolledUsersPage() {
           )}
         </div>
 
-        {/* TABS DE ESTADO DE INSCRIPCIÓN - ESTILO IMAGEN */}
-        <div className="mb-6 border-b border-gray-700">
-          <div className="flex flex-wrap gap-2 overflow-x-auto pb-4">
-            {/* Botón "Todos" */}
-            <button
-              onClick={() => setFilters({ ...filters, enrollmentStatus: '' })}
-              className={`
-                rounded-t-lg px-4 py-2 font-semibold whitespace-nowrap
-                transition-all
-                ${
-                  filters.enrollmentStatus === ''
-                    ? 'border-b-2 border-cyan-400 text-white'
-                    : `
-                      border-b-2 border-transparent text-gray-400
-                      hover:text-gray-200
-                    `
-                }
-              `}
-            >
-              Todos
-            </button>
-
-            {/* Tabs por estado */}
-            {enrollmentStatusOptions.map((status) => (
+        {/* TABS DE ESTADO DE INSCRIPCIÓN */}
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { key: '', label: 'Todos', color: 'sky' },
+            { key: 'Activo', label: 'Activo', color: 'emerald' },
+            { key: 'Inactivo', label: 'Inactivo', color: 'red' },
+            { key: 'Pendiente', label: 'Pendiente', color: 'amber' },
+            { key: 'Suspendido', label: 'Suspendido', color: 'orange' },
+            { key: 'Cancelado', label: 'Cancelado', color: 'gray' },
+            ...enrollmentStatusOptions
+              .filter(
+                (s) =>
+                  ![
+                    'Activo',
+                    'Inactivo',
+                    'Pendiente',
+                    'Suspendido',
+                    'Cancelado',
+                  ].includes(s)
+              )
+              .map((s) => ({ key: s, label: s, color: 'slate' as const })),
+          ].map(({ key, label, color }) => {
+            const isActive = filters.enrollmentStatus === key;
+            const count =
+              key === ''
+                ? sortedStudents.length
+                : (enrollmentStatusCounts[key] ?? 0);
+            return (
               <button
-                key={status}
+                key={key}
                 onClick={() =>
-                  setFilters({ ...filters, enrollmentStatus: status })
+                  setFilters({ ...filters, enrollmentStatus: key })
                 }
                 className={`
-                  relative rounded-t-lg px-4 py-2 font-semibold
-                  whitespace-nowrap transition-all
+                  flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs
+                  font-medium transition-all duration-150
                   ${
-                    filters.enrollmentStatus === status
-                      ? 'border-b-2 border-cyan-400 text-white'
+                    isActive
+                      ? `
+                        bg-${color}-500/20
+                        
+                        text-${color}-300
+                        ring-1
+                        ring-${color}-500/40
+                      `
                       : `
-                        border-b-2 border-transparent text-gray-400
-                        hover:text-gray-200
+                        bg-white/5 text-gray-400
+                        hover:bg-white/10 hover:text-gray-200
                       `
                   }
                 `}
               >
-                {status}
-                {enrollmentStatusCounts[status] > 0 && (
-                  <span
-                    className="
-                      ml-2 inline-flex items-center justify-center rounded-full
-                      bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950
-                    "
-                  >
-                    {enrollmentStatusCounts[status]}
-                  </span>
-                )}
+                {label}
+                <span
+                  className={`
+                    rounded-full px-1.5 py-0.5 text-[10px] font-bold
+                    ${
+                      isActive
+                        ? `
+                      bg-${color}-500/30
+                      
+                      text-${color}-200
+                    `
+                        : 'bg-white/10 text-gray-500'
+                    }
+                  `}
+                >
+                  {count}
+                </span>
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
 
         <div>
@@ -4045,10 +4183,8 @@ export default function EnrolledUsersPage() {
               <thead className="sticky top-0 z-10 bg-gray-900">
                 <tr
                   className="
-                    border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF]
-                    via-[#00BDD8] to-[#01142B] text-xs text-white
-                    sm:text-sm
-                  "
+                  border-b border-white/10 bg-gray-900/95 text-xs text-gray-400
+                "
                 >
                   <th className="w-12 px-4 py-2">
                     <input
@@ -4263,290 +4399,360 @@ export default function EnrolledUsersPage() {
                   sm:text-sm
                 "
               >
-                {displayedStudents.map((student) => (
-                  <tr key={student.id} className="hover:bg-gray-700">
-                    <td className="px-4 py-2 align-top">
-                      <input
-                        type="checkbox"
-                        checked={selectedStudents.includes(student.id)}
-                        onChange={() =>
-                          setSelectedStudents((prev) =>
-                            prev.includes(student.id)
-                              ? prev.filter((id) => id !== student.id)
-                              : [...prev, student.id]
-                          )
-                        }
-                        className="rounded border-white/20"
-                      />
-                    </td>
+                {/* PASO 2: Skeleton rows mientras carga la data inicial */}
+                {isLoading &&
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={`skeleton-${i}`} className="animate-pulse">
+                      <td className="px-4 py-3">
+                        <div className="size-4 rounded bg-gray-700" />
+                      </td>
+                      {visibleColumns.map((colId) => (
+                        <td key={colId} className="px-4 py-3">
+                          <div
+                            className="h-4 rounded bg-gray-700"
+                            style={{
+                              width: `${60 + ((i * 17 + colId.length * 7) % 35)}%`,
+                            }}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
 
-                    {totalColumns
-                      .filter((col) => visibleColumns.includes(col.id))
-                      .map((col) => {
-                        let raw = safeToString(
-                          getValueForColumn(student, col.id)
-                        );
-                        if (col.type === 'date' && raw) {
-                          const d = new Date(raw);
-                          if (!isNaN(d.getTime()))
-                            raw = d.toISOString().split('T')[0];
-                        }
-                        if (col.id === 'programTitle') {
-                          return (
-                            <td
-                              key={col.id}
-                              className="px-4 py-2 align-top whitespace-nowrap"
-                            >
-                              <select
-                                value={raw}
-                                onChange={(e) =>
-                                  updateStudentField(
-                                    student.id,
-                                    col.id,
-                                    e.target.value
-                                  )
-                                }
-                                className="
-                                  min-w-[120px] rounded bg-gray-800 p-1 text-xs
-                                  text-white
-                                  sm:text-sm
-                                "
-                              >
-                                <option value="">-- Seleccionar --</option>
-                                {col.options?.map((opt) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ))}
-                              </select>
-                              <button
-                                onClick={() => {
-                                  setCurrentUserId(student.id);
-                                  void fetchUserPrograms(student.id);
-                                  setShowUserProgramsModal(true);
-                                }}
-                                className="
-                                  ml-2 inline-flex items-center gap-1
-                                  rounded-full bg-blue-600 px-3 py-1 text-xs
-                                  font-medium text-white
-                                  hover:bg-blue-700
-                                "
-                              >
-                                Ver más
-                              </button>
-                            </td>
+                {!isLoading &&
+                  displayedStudents.map((student) => (
+                    <tr
+                      key={student.id}
+                      className={`
+                        border-b border-white/5 transition-colors duration-100
+                        hover:bg-white/[0.04]
+                        ${selectedStudents.includes(student.id) ? 'bg-blue-500/[0.08]' : ''}
+                    `}
+                    >
+                      <td className="px-4 py-2 align-top">
+                        <input
+                          type="checkbox"
+                          checked={selectedStudents.includes(student.id)}
+                          onChange={() =>
+                            setSelectedStudents((prev) =>
+                              prev.includes(student.id)
+                                ? prev.filter((id) => id !== student.id)
+                                : [...prev, student.id]
+                            )
+                          }
+                          className="rounded border-white/20"
+                        />
+                      </td>
+
+                      {totalColumns
+                        .filter((col) => visibleColumns.includes(col.id))
+                        .map((col) => {
+                          let raw = safeToString(
+                            getValueForColumn(student, col.id)
                           );
-                        }
-
-                        if (col.id === 'carteraStatus') {
-                          // Estado base según el dato del alumno
-                          const esAlDiaBase = raw === 'activo';
-
-                          // 🔎 Reglas "No verificado" usando los pagos cargados del alumno actualmente abierto
-                          // (solo podemos evaluar para el alumno activo en la modal)
-                          const pagosParaEvaluar =
-                            student.id === currentUserId ? editablePagos : [];
-
-                          const hoy = new Date();
-                          const y = hoy.getFullYear();
-                          const m = hoy.getMonth();
-
-                          const pagosMes = pagosParaEvaluar.filter((p) => {
-                            const f = p?.fechaPrograma
-                              ? new Date(String(p.fechaPrograma))
-                              : null;
-                            const v =
-                              typeof p?.valor === 'number'
-                                ? p.valor
-                                : Number(p?.valor ?? 0);
+                          if (col.type === 'date' && raw) {
+                            const d = new Date(raw);
+                            if (!isNaN(d.getTime()))
+                              raw = d.toISOString().split('T')[0];
+                          }
+                          if (col.id === 'programTitle') {
                             return (
-                              f &&
-                              !isNaN(f.getTime()) &&
-                              f.getFullYear() === y &&
-                              f.getMonth() === m &&
-                              v > 0
+                              <td
+                                key={col.id}
+                                className="
+                                  px-4 py-2 align-top whitespace-nowrap
+                                "
+                              >
+                                <select
+                                  value={raw}
+                                  onChange={(e) =>
+                                    updateStudentField(
+                                      student.id,
+                                      col.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="
+                                    min-w-[120px] rounded bg-gray-800 p-1
+                                    text-xs text-white
+                                    sm:text-sm
+                                  "
+                                >
+                                  <option value="">-- Seleccionar --</option>
+                                  {col.options?.map((opt) => (
+                                    <option key={opt} value={opt}>
+                                      {opt}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  onClick={() => {
+                                    setCurrentUserId(student.id);
+                                    void fetchUserPrograms(student.id);
+                                    setShowUserProgramsModal(true);
+                                  }}
+                                  className="
+                                    ml-2 inline-flex items-center gap-1
+                                    rounded-full bg-blue-600 px-3 py-1 text-xs
+                                    font-medium text-white
+                                    hover:bg-blue-700
+                                  "
+                                >
+                                  Ver más
+                                </button>
+                              </td>
                             );
-                          });
-
-                          let etiqueta:
-                            | 'Al día'
-                            | 'En cartera'
-                            | 'No verificado' = esAlDiaBase
-                            ? 'Al día'
-                            : 'En cartera';
-
-                          if (pagosMes.length > 0) {
-                            const ultimo = [...pagosMes].sort(
-                              (a, b) =>
-                                new Date(String(a.fechaPrograma)).getTime() -
-                                new Date(String(b.fechaPrograma)).getTime()
-                            )[pagosMes.length - 1];
-
-                            // ✔️ Si el último pago del mes tiene comprobante y está no verificado → "No verificado"
-                            if (
-                              ultimo?.receiptUrl &&
-                              ultimo?.receiptVerified === false
-                            ) {
-                              etiqueta = 'No verificado';
-                            }
                           }
 
-                          const badgeClass =
-                            etiqueta === 'Al día'
-                              ? 'bg-green-600'
-                              : etiqueta === 'No verificado'
-                                ? 'bg-gray-600'
-                                : 'bg-red-600';
+                          if (col.id === 'carteraStatus') {
+                            // Estado base según el dato del alumno
+                            const esAlDiaBase = raw === 'activo';
 
+                            // 🔎 Reglas "No verificado" usando los pagos cargados del alumno actualmente abierto
+                            // (solo podemos evaluar para el alumno activo en la modal)
+                            const pagosParaEvaluar =
+                              student.id === currentUserId ? editablePagos : [];
+
+                            const hoy = new Date();
+                            const y = hoy.getFullYear();
+                            const m = hoy.getMonth();
+
+                            const pagosMes = pagosParaEvaluar.filter((p) => {
+                              const f = p?.fechaPrograma
+                                ? new Date(String(p.fechaPrograma))
+                                : null;
+                              const v =
+                                typeof p?.valor === 'number'
+                                  ? p.valor
+                                  : Number(p?.valor ?? 0);
+                              return (
+                                f &&
+                                !isNaN(f.getTime()) &&
+                                f.getFullYear() === y &&
+                                f.getMonth() === m &&
+                                v > 0
+                              );
+                            });
+
+                            let etiqueta:
+                              | 'Al día'
+                              | 'En cartera'
+                              | 'No verificado' = esAlDiaBase
+                              ? 'Al día'
+                              : 'En cartera';
+
+                            if (pagosMes.length > 0) {
+                              const ultimo = [...pagosMes].sort(
+                                (a, b) =>
+                                  new Date(String(a.fechaPrograma)).getTime() -
+                                  new Date(String(b.fechaPrograma)).getTime()
+                              )[pagosMes.length - 1];
+
+                              // ✔️ Si el último pago del mes tiene comprobante y está no verificado → "No verificado"
+                              if (
+                                ultimo?.receiptUrl &&
+                                ultimo?.receiptVerified === false
+                              ) {
+                                etiqueta = 'No verificado';
+                              }
+                            }
+
+                            const badgeStyles: Record<
+                              string,
+                              { dot: string; text: string; bg: string }
+                            > = {
+                              'Al día': {
+                                dot: 'bg-emerald-400',
+                                text: 'text-emerald-300',
+                                bg: 'bg-emerald-500/15 ring-emerald-500/30',
+                              },
+                              'No verificado': {
+                                dot: 'bg-gray-400',
+                                text: 'text-gray-300',
+                                bg: 'bg-gray-500/15    ring-gray-500/30',
+                              },
+                            };
+                            const badgeStyle = badgeStyles[etiqueta] ?? {
+                              dot: 'bg-red-400',
+                              text: 'text-red-300',
+                              bg: 'bg-red-500/15 ring-red-500/30',
+                            };
+
+                            return (
+                              <td
+                                key={col.id}
+                                className="
+                                  px-4 py-2 align-top whitespace-nowrap
+                                "
+                              >
+                                <span
+                                  className={`
+                                    inline-flex items-center gap-1.5
+                                    rounded-full px-2.5 py-1 text-xs font-medium
+                                    ring-1
+                                    ${badgeStyle.bg}
+                                    ${badgeStyle.text}
+                                  `}
+                                  title={etiqueta}
+                                >
+                                  <span
+                                    className={`
+                                      size-1.5 rounded-full
+                                      ${badgeStyle.dot}
+                                    `}
+                                  />
+                                  {etiqueta}
+                                </span>
+                                <button
+                                  onClick={() => openCarteraModal(student.id)}
+                                  className="
+                                    ml-2 inline-flex items-center gap-1
+                                    rounded-full border border-white/10
+                                    bg-white/5 px-2.5 py-1 text-xs font-medium
+                                    text-gray-300 transition-colors duration-150
+                                    hover:bg-white/10 hover:text-white
+                                  "
+                                >
+                                  Ver más
+                                </button>
+                              </td>
+                            );
+                          }
+
+                          // 2) columna Último curso
+                          if (col.id === 'courseTitle') {
+                            return (
+                              <td
+                                key={col.id}
+                                className="
+                                  px-4 py-2 align-top whitespace-nowrap
+                                "
+                              >
+                                <select
+                                  value={raw}
+                                  onChange={(e) =>
+                                    updateStudentField(
+                                      student.id,
+                                      col.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="
+                                    min-w-[120px] rounded bg-gray-800 p-1
+                                    text-xs text-white
+                                    sm:text-sm
+                                  "
+                                >
+                                  <option value="">-- Seleccionar --</option>
+                                  {col.options?.map((opt) => (
+                                    <option key={opt} value={opt}>
+                                      {opt}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  onClick={() => {
+                                    setCurrentUserId(student.id);
+                                    void fetchUserCourses(student.id);
+                                    setShowUserCoursesModal(true);
+                                  }}
+                                  className="
+                                    ml-2 inline-flex items-center gap-1
+                                    rounded-full bg-green-600 px-3 py-1 text-xs
+                                    font-medium text-white
+                                    hover:bg-green-700
+                                  "
+                                >
+                                  Ver más
+                                </button>
+                              </td>
+                            );
+                          }
+
+                          // Resto de columnas (select, date, text)
                           return (
                             <td
                               key={col.id}
-                              className="px-4 py-2 align-top whitespace-nowrap"
+                              className="
+                                px-4 py-2 align-top break-words
+                                whitespace-normal
+                              "
                             >
-                              <span
-                                className={`
-                                  inline-block rounded-full px-2 py-0.5 text-xs
-                                  font-semibold
-                                  ${badgeClass}
-                                `}
-                                title={etiqueta}
-                              >
-                                {etiqueta}
-                              </span>
-                              <button
-                                onClick={() => openCarteraModal(student.id)}
-                                className="
-                                  ml-2 inline-flex items-center gap-1
-                                  rounded-full bg-indigo-600 px-3 py-1 text-xs
-                                  font-medium
-                                  hover:bg-indigo-700
-                                "
-                              >
-                                Ver más
-                              </button>
+                              {col.type === 'select' && col.options ? (
+                                <select
+                                  value={raw}
+                                  onChange={(e) =>
+                                    updateStudentField(
+                                      student.id,
+                                      col.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="
+                                    w-full rounded-lg border border-transparent
+                                    bg-transparent px-2 py-1 text-xs
+                                    text-gray-300 transition-all duration-150
+                                    hover:border-white/10 hover:bg-white/5
+                                    focus:border-blue-500/40 focus:bg-white/5
+                                    focus:ring-1 focus:ring-blue-500/20
+                                    focus:outline-none
+                                  "
+                                >
+                                  <option value="">-- Seleccionar --</option>
+                                  {col.options.map((opt) => (
+                                    <option key={opt} value={opt}>
+                                      {opt}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : col.type === 'date' ? (
+                                <input
+                                  type="date"
+                                  defaultValue={raw}
+                                  onBlur={(e) =>
+                                    updateStudentField(
+                                      student.id,
+                                      col.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="
+                                    w-full rounded-lg border border-transparent
+                                    bg-transparent px-2 py-1 text-xs
+                                    text-gray-300 transition-all duration-150
+                                    hover:border-white/10 hover:bg-white/5
+                                    focus:border-blue-500/40 focus:bg-white/5
+                                    focus:ring-1 focus:ring-blue-500/20
+                                    focus:outline-none
+                                  "
+                                />
+                              ) : (
+                                <input
+                                  type="text"
+                                  defaultValue={raw}
+                                  onBlur={(e) =>
+                                    updateStudentField(
+                                      student.id,
+                                      col.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="
+                                    w-full rounded-lg border border-transparent
+                                    bg-transparent px-2 py-1 text-xs
+                                    text-gray-300 transition-all duration-150
+                                    hover:border-white/10 hover:bg-white/5
+                                    focus:border-blue-500/40 focus:bg-white/5
+                                    focus:ring-1 focus:ring-blue-500/20
+                                    focus:outline-none
+                                  "
+                                />
+                              )}
                             </td>
                           );
-                        }
-
-                        // 2) columna Último curso
-                        if (col.id === 'courseTitle') {
-                          return (
-                            <td
-                              key={col.id}
-                              className="px-4 py-2 align-top whitespace-nowrap"
-                            >
-                              <select
-                                value={raw}
-                                onChange={(e) =>
-                                  updateStudentField(
-                                    student.id,
-                                    col.id,
-                                    e.target.value
-                                  )
-                                }
-                                className="
-                                  min-w-[120px] rounded bg-gray-800 p-1 text-xs
-                                  text-white
-                                  sm:text-sm
-                                "
-                              >
-                                <option value="">-- Seleccionar --</option>
-                                {col.options?.map((opt) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ))}
-                              </select>
-                              <button
-                                onClick={() => {
-                                  setCurrentUserId(student.id);
-                                  void fetchUserCourses(student.id);
-                                  setShowUserCoursesModal(true);
-                                }}
-                                className="
-                                  ml-2 inline-flex items-center gap-1
-                                  rounded-full bg-green-600 px-3 py-1 text-xs
-                                  font-medium text-white
-                                  hover:bg-green-700
-                                "
-                              >
-                                Ver más
-                              </button>
-                            </td>
-                          );
-                        }
-
-                        // Resto de columnas (select, date, text)
-                        return (
-                          <td
-                            key={col.id}
-                            className="
-                              px-4 py-2 align-top break-words whitespace-normal
-                            "
-                          >
-                            {col.type === 'select' && col.options ? (
-                              <select
-                                value={raw}
-                                onChange={(e) =>
-                                  updateStudentField(
-                                    student.id,
-                                    col.id,
-                                    e.target.value
-                                  )
-                                }
-                                className="
-                                  w-full rounded bg-gray-800 p-1 text-xs
-                                  text-white
-                                  sm:text-sm
-                                "
-                              >
-                                <option value="">-- Seleccionar --</option>
-                                {col.options.map((opt) => (
-                                  <option key={opt} value={opt}>
-                                    {opt}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : col.type === 'date' ? (
-                              <input
-                                type="date"
-                                defaultValue={raw}
-                                onBlur={(e) =>
-                                  updateStudentField(
-                                    student.id,
-                                    col.id,
-                                    e.target.value
-                                  )
-                                }
-                                className="
-                                  w-full rounded bg-gray-800 p-1 text-xs
-                                  text-white
-                                  sm:text-sm
-                                "
-                              />
-                            ) : (
-                              <input
-                                type="text"
-                                defaultValue={raw}
-                                onBlur={(e) =>
-                                  updateStudentField(
-                                    student.id,
-                                    col.id,
-                                    e.target.value
-                                  )
-                                }
-                                className="
-                                  w-full rounded bg-gray-800 p-1 text-xs
-                                  text-white
-                                  sm:text-sm
-                                "
-                              />
-                            )}
-                          </td>
-                        );
-                      })}
-                  </tr>
-                ))}
+                        })}
+                    </tr>
+                  ))}
 
                 {loadingMore && (
                   <tr>
@@ -4640,12 +4846,7 @@ export default function EnrolledUsersPage() {
         </div>
 
         {/* Acciones */}
-        <div
-          className="
-            mt-4 flex flex-col space-y-2
-            sm:flex-row sm:space-y-0 sm:space-x-4
-          "
-        >
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
             disabled={selectedStudents.length === 0}
             onClick={() => {
@@ -4653,37 +4854,46 @@ export default function EnrolledUsersPage() {
               setShowModal(true);
             }}
             className="
-              w-full rounded bg-green-600 px-4 py-2 font-semibold text-white
-              transition
-              hover:bg-green-700
-              disabled:opacity-50
-              sm:flex-1
+              flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500
+              to-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm
+              transition-all duration-150
+              hover:from-cyan-400 hover:to-blue-500 hover:shadow-cyan-500/20
+              disabled:pointer-events-none disabled:opacity-40
             "
           >
             Matricular a curso
+            {selectedStudents.length > 0 && (
+              <span
+                className="
+                rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-bold
+              "
+              >
+                {selectedStudents.length}
+              </span>
+            )}
           </button>
           <button
             disabled={selectedStudents.length === 0}
             onClick={downloadSelectedAsExcel}
             className="
-              w-full rounded bg-indigo-600 px-4 py-2 font-semibold text-white
-              transition
-              hover:bg-indigo-700
-              disabled:opacity-50
-              sm:flex-1
+              flex items-center gap-2 rounded-xl border border-white/15
+              bg-white/5 px-5 py-2.5 text-sm font-medium text-gray-200
+              transition-all duration-150
+              hover:border-white/25 hover:bg-white/10 hover:text-white
+              disabled:pointer-events-none disabled:opacity-40
             "
           >
-            Descargar seleccionados en Excel
+            Descargar Excel
           </button>
           <button
             disabled={selectedStudents.length === 0}
             onClick={() => setShowMassiveEditModal(true)}
             className="
-              w-full rounded bg-yellow-600 px-4 py-2 font-semibold text-white
-              transition
-              hover:bg-yellow-700
-              disabled:opacity-50
-              sm:flex-1
+              flex items-center gap-2 rounded-xl border border-amber-500/20
+              bg-amber-500/10 px-5 py-2.5 text-sm font-medium text-amber-300
+              transition-all duration-150
+              hover:border-amber-500/40 hover:bg-amber-500/20
+              disabled:pointer-events-none disabled:opacity-40
             "
           >
             Editar masivamente
@@ -6567,6 +6777,7 @@ export default function EnrolledUsersPage() {
                                 <button
                                   type="button"
                                   onClick={() => savePagoRow(idx)}
+                                  disabled={savingRows.has(idx)}
                                   className="
                                     inline-flex items-center gap-1 rounded-md
                                     bg-emerald-600 px-2.5 py-1 text-xs
@@ -6574,17 +6785,46 @@ export default function EnrolledUsersPage() {
                                     hover:bg-emerald-700
                                     focus:ring-2 focus:ring-emerald-400/60
                                     focus:outline-none
+                                    disabled:cursor-not-allowed
+                                    disabled:opacity-60
                                   "
                                   title="Guardar cambios de esta cuota"
                                 >
-                                  <svg
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                    className="size-3.5"
-                                  >
-                                    <path d="M3 4a2 2 0 012-2h7l5 5v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4zM5 4v4h6V4H5z" />
-                                  </svg>
-                                  Guardar
+                                  {savingRows.has(idx) ? (
+                                    <>
+                                      <svg
+                                        className="size-3.5 animate-spin"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                      >
+                                        <circle
+                                          className="opacity-25"
+                                          cx="12"
+                                          cy="12"
+                                          r="10"
+                                          stroke="currentColor"
+                                          strokeWidth="4"
+                                        />
+                                        <path
+                                          className="opacity-75"
+                                          fill="currentColor"
+                                          d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+                                        />
+                                      </svg>
+                                      Guardando…
+                                    </>
+                                  ) : (
+                                    <>
+                                      <svg
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                        className="size-3.5"
+                                      >
+                                        <path d="M3 4a2 2 0 012-2h7l5 5v9a2 2 0 01-2 2H5a2 2 0 01-2-2V4zM5 4v4h6V4H5z" />
+                                      </svg>
+                                      Guardar
+                                    </>
+                                  )}
                                 </button>
 
                                 {/* Subir comprobante */}
@@ -7232,13 +7472,42 @@ export default function EnrolledUsersPage() {
                                       <button
                                         type="button"
                                         onClick={() => savePagoRow(idxBase)}
+                                        disabled={savingRows.has(idxBase)}
                                         className="
-                                          rounded bg-emerald-600 px-2 py-1
-                                          text-xs font-semibold text-white
+                                          inline-flex items-center gap-1 rounded
+                                          bg-emerald-600 px-2 py-1 text-xs
+                                          font-semibold text-white
                                           hover:bg-emerald-700
+                                          disabled:cursor-not-allowed
+                                          disabled:opacity-60
                                         "
                                       >
-                                        Guardar
+                                        {savingRows.has(idxBase) ? (
+                                          <>
+                                            <svg
+                                              className="size-3 animate-spin"
+                                              viewBox="0 0 24 24"
+                                              fill="none"
+                                            >
+                                              <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                              />
+                                              <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8h4z"
+                                              />
+                                            </svg>
+                                            Guardando…
+                                          </>
+                                        ) : (
+                                          'Guardar'
+                                        )}
                                       </button>
 
                                       <button

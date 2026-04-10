@@ -574,9 +574,9 @@ export default function StudentCourseDashboard() {
               >
                 <div
                   className="
-                  rounded-xl bg-[#182235] p-4 shadow-lg
-                  sm:p-6
-                "
+                    rounded-xl bg-[#182235] p-4 shadow-lg
+                    sm:p-6
+                  "
                 >
                   <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
                     Datos del Curso
@@ -602,9 +602,9 @@ export default function StudentCourseDashboard() {
                 </div>
                 <div
                   className="
-                  rounded-xl bg-[#182235] p-4 shadow-lg
-                  sm:p-6
-                "
+                    rounded-xl bg-[#182235] p-4 shadow-lg
+                    sm:p-6
+                  "
                 >
                   <h3 className="mb-2 text-lg font-bold text-[#3AF4EF]">
                     Datos del Estudiante

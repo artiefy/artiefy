@@ -1,6 +1,6 @@
 'use server';
 
-import { currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -34,14 +34,17 @@ export interface EnrolledCourse {
   lastUnlockedLessonNumber?: number | null;
 }
 
-export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
+export async function getEnrolledCourses(
+  userIdInput?: string | null
+): Promise<EnrolledCourse[]> {
   try {
-    const user = await currentUser();
-    if (!user?.id) throw new Error('Usuario no autenticado');
+    const { userId: authUserId } = await auth();
+    const userId = userIdInput ?? authUserId;
+    if (!userId) return [];
 
     // Get enrolled courses with category relation
     const enrolledCourses = await db.query.enrollments.findMany({
-      where: eq(enrollments.userId, user.id),
+      where: eq(enrollments.userId, userId),
       with: {
         course: {
           with: {
@@ -66,7 +69,7 @@ export async function getEnrolledCourses(): Promise<EnrolledCourse[]> {
 
         // Get progress for all lessons belonging to this user
         const allLessonsProgress = await db.query.userLessonsProgress.findMany({
-          where: eq(userLessonsProgress.userId, user.id),
+          where: eq(userLessonsProgress.userId, userId),
         });
 
         // Create a map of progress by lessonId for quick lookup

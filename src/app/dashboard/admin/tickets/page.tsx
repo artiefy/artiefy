@@ -502,9 +502,9 @@ export default function TicketsPage() {
         <div className="mt-6 border-b border-gray-700">
           <div
             className="
-            -mb-px flex gap-1 overflow-x-auto
-            sm:gap-6
-          "
+              -mb-px flex gap-1 overflow-x-auto
+              sm:gap-6
+            "
           >
             <button
               onClick={() => setActiveTab('created')}
@@ -720,9 +720,9 @@ export default function TicketsPage() {
             >
               <FileText
                 className="
-                size-4 animate-pulse text-blue-300 drop-shadow-md
-                sm:size-6
-              "
+                  size-4 animate-pulse text-blue-300 drop-shadow-md
+                  sm:size-6
+                "
               />
               <span className="tracking-wide">
                 {filteredTickets.length} ticket(s) encontrado(s)

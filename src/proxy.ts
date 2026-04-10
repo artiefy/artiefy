@@ -28,14 +28,35 @@ const routeMatchers = {
   ) => boolean,
 };
 
-const middlewareConfig: ClerkMiddlewareOptions = {
-  authorizedParties: [
+const envPartyCandidates = [
+  process.env.NEXT_PUBLIC_BASE_URL,
+  process.env.NEXT_PUBLIC_APP_URL,
+  process.env.NEXT_PUBLIC_SITE_URL,
+];
+
+const envAuthorizedParties = envPartyCandidates.flatMap((value) => {
+  if (!value) return [];
+  try {
+    return [new URL(value).origin];
+  } catch {
+    return [];
+  }
+});
+
+const authorizedParties = Array.from(
+  new Set([
     'https://artiefy.com',
+    'https://www.artiefy.com',
     'https://accounts.artiefy.com',
+    ...envAuthorizedParties,
     ...(process.env.NODE_ENV === 'development'
-      ? ['http://localhost:3000']
+      ? ['http://localhost:3000', 'http://127.0.0.1:3000']
       : []),
-  ],
+  ])
+);
+
+const middlewareConfig: ClerkMiddlewareOptions = {
+  authorizedParties,
   clockSkewInMs: 60 * 1000, // 60 seconds tolerance
 };
 

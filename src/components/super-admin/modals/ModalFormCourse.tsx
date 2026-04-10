@@ -1964,8 +1964,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                               {frameImageFile && (
                                 <div
                                   className="
-                                  mt-3 flex flex-col items-start gap-2
-                                "
+                                    mt-3 flex flex-col items-start gap-2
+                                  "
                                 >
                                   <p className="text-sm text-gray-300">
                                     Frame seleccionado: {frameImageFile.name}

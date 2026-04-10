@@ -141,15 +141,15 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
   return (
     <div
       className="
-      my-8 rounded-2xl border border-cyan-500/20 bg-slate-900 p-8 shadow-2xl
-    "
+        my-8 rounded-2xl border border-cyan-500/20 bg-slate-900 p-8 shadow-2xl
+      "
     >
       <form onSubmit={handleSubmit} className="space-y-8">
         <h2
           className="
-          mb-6 bg-gradient-to-r from-cyan-400 to-white bg-clip-text text-2xl
-          font-extrabold tracking-tight text-transparent
-        "
+            mb-6 bg-gradient-to-r from-cyan-400 to-white bg-clip-text text-2xl
+            font-extrabold tracking-tight text-transparent
+          "
         >
           {editingQuestion ? 'Editar Pregunta' : 'Nueva Pregunta de Completado'}
         </h2>
@@ -176,9 +176,9 @@ const PreguntasAbiertas2: React.FC<PreguntasAbiertasProps> = ({
 
         <div
           className="
-          grid grid-cols-1 gap-6
-          md:grid-cols-2
-        "
+            grid grid-cols-1 gap-6
+            md:grid-cols-2
+          "
         >
           <div>
             <Label htmlFor="correctAnswer" className="font-semibold text-white">
