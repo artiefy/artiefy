@@ -2051,7 +2051,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       {showStickyCard && course && (
         <div
           className="
-            surface-glass animate-slideInDown fixed inset-x-0 top-4 z-[9999]
+            surface-glass animate-slideInDown fixed inset-x-0 top-4 z-[99999]
             flex max-w-full items-center justify-between gap-4 px-2 py-3
             shadow-lg
             md:top-6 md:px-4 md:py-3
