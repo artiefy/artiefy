@@ -10,7 +10,6 @@ import { IoGiftOutline } from 'react-icons/io5';
 
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Badge } from '~/components/estudiantes/ui/badge';
 import { Card } from '~/components/estudiantes/ui/card';
 import { getImagePlaceholder } from '~/lib/plaiceholder';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
@@ -273,7 +272,7 @@ export default async function StudentListCourses({
           );
         }
       }
-      // Lógica para usuario sin suscripción activa (badge "Incluido en")
+      // Lógica para usuario sin suscripción activa
       // 1. Individual (si existe)
       if (hasPurchasable) {
         const purchasableType = course.courseTypes.find(
@@ -282,66 +281,17 @@ export default async function StudentListCourses({
         return (
           <div
             className="
-              flex flex-col
-              sm:flex-row sm:items-center sm:gap-2
+              flex items-center gap-1 rounded-full border border-orange-500/30
+              bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium
+              text-orange-400
             "
           >
-            <div
-              className="
-                flex items-center gap-1 rounded-full border border-orange-500/30
-                bg-orange-500/20 px-2 py-0.5 text-[10px] font-medium
-                text-orange-400
-              "
-            >
-              <FaStar className="size-3" />${' '}
-              {course.individualPrice
-                ? course.individualPrice.toLocaleString('es-CO')
-                : purchasableType?.price
-                  ? purchasableType.price.toLocaleString('es-CO')
-                  : 'Comprar'}
-            </div>
-            {includedInPlans.length > 0 && (
-              <>
-                {/* Mobile view */}
-                <div
-                  className="
-                    mt-0.5
-                    sm:hidden
-                  "
-                >
-                  <Badge
-                    className="
-                      rounded-full bg-yellow-400 text-[10px] text-gray-900
-                      hover:bg-yellow-500
-                    "
-                  >
-                    Incluido en:{' '}
-                    <span className="font-bold">
-                      {includedInPlans.join(', ')}
-                    </span>
-                  </Badge>
-                </div>
-                {/* Desktop view as badge */}
-                <div
-                  className="
-                    hidden
-                    sm:block
-                  "
-                >
-                  <Badge
-                    className="
-                      rounded-full bg-yellow-400 text-[10px] text-gray-900
-                      hover:bg-yellow-500
-                    "
-                  >
-                    Incluido en:{' '}
-                    <span className="font-bold">
-                      {includedInPlans.join(', ')}
-                    </span>
-                  </Badge>
-                </div>
-              </>
-            )}
+            <FaStar className="size-3" />${' '}
+            {course.individualPrice
+              ? course.individualPrice.toLocaleString('es-CO')
+              : purchasableType?.price
+                ? purchasableType.price.toLocaleString('es-CO')
+                : 'Comprar'}
           </div>
         );
       }
@@ -717,89 +667,6 @@ export default async function StudentListCourses({
     return getCourseTypeLabel(course);
   };
 
-  const getIncludedPlanBadgeAndText = (course: Course) => {
-    const userPlanType = user?.publicMetadata?.planType as
-      | 'none'
-      | 'Pro'
-      | 'Premium'
-      | 'Enterprise'
-      | undefined;
-    const normalizedPlan = userPlanType?.toLowerCase();
-
-    const allCourseTypes = [
-      ...(Array.isArray(course.courseTypes) ? course.courseTypes : []),
-      ...(course.courseType ? [course.courseType] : []),
-    ];
-
-    const hasPremium = allCourseTypes.some(
-      (type) => type.requiredSubscriptionLevel === 'premium'
-    );
-    const hasPro = allCourseTypes.some(
-      (type) => type.requiredSubscriptionLevel === 'pro'
-    );
-
-    if (!hasPremium && !hasPro) return null;
-
-    const hasPremiumAccess = normalizedPlan === 'premium';
-    const hasProAccess =
-      normalizedPlan === 'pro' || normalizedPlan === 'premium';
-
-    const includedText =
-      hasPremium && hasPro
-        ? hasPremiumAccess || hasProAccess
-          ? 'Incluido en tu plan Premium y Pro'
-          : 'Incluido en plan Premium y Pro'
-        : hasPremium
-          ? hasPremiumAccess
-            ? 'Incluido en tu plan PREMIUM'
-            : 'Incluido en plan PREMIUM'
-          : hasProAccess
-            ? 'Incluido en tu plan PRO'
-            : 'Incluido en plan PRO';
-
-    let badge: React.ReactNode;
-    if (hasPremium && hasPro) {
-      badge = (
-        <div
-          className="
-            inline-flex items-center gap-2 rounded-full border border-red-400
-            bg-red-500/20 px-3 py-1.5 text-[11px] font-medium text-red-400
-          "
-        >
-          <AiOutlineFire className="size-3.5" />
-          <span>Premium + Pro</span>
-        </div>
-      );
-    } else if (hasPremium) {
-      badge = (
-        <div
-          className="
-            inline-flex items-center gap-1.5 rounded-full border
-            border-amber-400 bg-amber-500/20 px-3 py-1.5 text-[11px] font-medium
-            text-amber-400
-          "
-        >
-          <FaCrown className="size-3" />
-          <span>Premium</span>
-        </div>
-      );
-    } else {
-      badge = (
-        <div
-          className="
-            inline-flex items-center gap-1.5 rounded-full border border-blue-400
-            bg-blue-500/20 px-3 py-1.5 text-[11px] font-medium text-blue-400
-          "
-        >
-          <FaStar className="size-3" />
-          <span>Pro</span>
-        </div>
-      );
-    }
-
-    return { badge, includedText };
-  };
-
   return (
     // Add an ID to this section so we can scroll to it
     <div id="courses-list-section">
@@ -837,7 +704,6 @@ export default async function StudentListCourses({
             isEnrolled,
             nextLiveClassDate,
           }) => {
-            const planBadgeInfo = getIncludedPlanBadgeAndText(course);
             const cardContent = (
               <Card
                 className={`
@@ -888,29 +754,6 @@ export default async function StudentListCourses({
                   >
                     {course.title}
                   </h3>
-
-                  {planBadgeInfo && (
-                    <div className="space-y-1">
-                      <div>{planBadgeInfo.badge}</div>
-                      <p
-                        className="
-                          inline-flex items-center gap-2 rounded-full px-3
-                          py-1.5 text-xs font-medium text-[#22C4D3]
-                        "
-                      >
-                        {planBadgeInfo.includedText}
-                        {planBadgeInfo.includedText.includes(
-                          'Premium y Pro'
-                        ) ? (
-                          <AiOutlineFire className="size-4 text-red-400" />
-                        ) : planBadgeInfo.includedText.includes('PREMIUM') ? (
-                          <FaCrown className="size-4 text-amber-400" />
-                        ) : (
-                          <FaStar className="size-4 text-blue-400" />
-                        )}
-                      </p>
-                    </div>
-                  )}
 
                   <div
                     className="
