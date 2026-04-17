@@ -4,7 +4,7 @@
   "compilerOptions": {
     "target": "ESNext",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "types": ["@webgpu/types"],
+    "types": ["@webgpu/types", "src/types/html2canvas"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
