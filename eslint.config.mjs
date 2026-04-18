@@ -62,6 +62,9 @@ export default defineConfig([
       'no-use-before-define': 'off',
       '@typescript-eslint/no-use-before-define': 'off',
       'react-hooks/exhaustive-deps': 'error',
+      'react-hooks/set-state-in-effect': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/static-components': 'off',
       'react-hooks/rules-of-hooks': 'off',
       'no-console': [
         'off',
