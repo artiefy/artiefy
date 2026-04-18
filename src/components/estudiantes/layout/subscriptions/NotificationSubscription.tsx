@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import {
@@ -18,14 +19,16 @@ import './notificationSubscription.css';
 
 export function NotificationSubscription() {
   const { user } = useUser();
+  const pathname = usePathname();
   const [notification, setNotification] = useState<{
     message: string;
     severity: string;
   } | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const isDashboardRoute = pathname?.startsWith('/dashboard');
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || isDashboardRoute) return;
 
     const subscriptionData = {
       subscriptionStatus: user.publicMetadata.subscriptionStatus as string,
@@ -47,9 +50,9 @@ export function NotificationSubscription() {
     };
 
     void checkStatus();
-  }, [user]);
+  }, [isDashboardRoute, user]);
 
-  if (!notification) return null;
+  if (isDashboardRoute || !notification) return null;
 
   return (
     <div className="artiefy-subscription-root">
@@ -63,12 +66,12 @@ export function NotificationSubscription() {
           className={`
             subscription-alert-content-inline
             ${
-            notification.severity === 'expired'
-              ? 'border-gray-500 bg-gray-100'
-              : notification.severity === 'high'
-                ? 'border-red-500 bg-red-50'
-                : 'border-yellow-500 bg-yellow-50'
-          }
+              notification.severity === 'expired'
+                ? 'border-gray-500 bg-gray-100'
+                : notification.severity === 'high'
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-yellow-500 bg-yellow-50'
+            }
           `}
         >
           <div className="alert-message">
@@ -80,10 +83,10 @@ export function NotificationSubscription() {
                   className={`
                     size-5
                     ${
-                    notification.severity === 'high'
-                      ? 'text-red-500'
-                      : 'text-yellow-500'
-                  }
+                      notification.severity === 'high'
+                        ? 'text-red-500'
+                        : 'text-yellow-500'
+                    }
                   `}
                 />
               )}

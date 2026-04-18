@@ -346,7 +346,9 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       setIsBuffering(false);
     }, []);
 
-    const shouldShowLoading = !videoUrl || isLoading || isBuffering;
+    const shouldShowInitialLoading = !videoUrl || isLoading;
+    const shouldShowBufferingIndicator =
+      !!videoUrl && !isLoading && isBuffering;
 
     return (
       <div className="relative aspect-video w-full" ref={containerRef}>
@@ -354,6 +356,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           <Player
             src={videoUrl}
             controls
+            playsInline
             onEnded={onVideoEnd}
             onError={handlePlayerError}
             // Cambia el tipo del ref para evitar 'any'
@@ -402,7 +405,19 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
             }}
           />
         ) : null}
-        {shouldShowLoading && renderLoadingState()}
+        {shouldShowInitialLoading && renderLoadingState()}
+        {shouldShowBufferingIndicator && (
+          <div
+            className="
+              pointer-events-none absolute top-3 right-3 z-40 rounded-full
+              bg-black/50 px-2 py-1 text-[10px] font-medium text-white
+              backdrop-blur
+            "
+            aria-live="polite"
+          >
+            Cargando...
+          </div>
+        )}
         {showCompletedIndicator && (
           <div
             className="

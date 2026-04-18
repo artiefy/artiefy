@@ -1,6 +1,16 @@
 {
   "version": 1,
   "skills": {
+    "competitive-analysis": {
+      "source": "mverab/eGEOagents",
+      "sourceType": "github",
+      "computedHash": "022fbe382e905baef8ed94caea024097b93b72d980eed34d924a9c6a545eddfb"
+    },
+    "content-scoring": {
+      "source": "mverab/eGEOagents",
+      "sourceType": "github",
+      "computedHash": "87b5d51ea01c1d39d4085a0ab6a4737df1b22b3a371721eb958176cda0575843"
+    },
     "deploy-to-vercel": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
@@ -14,7 +24,22 @@
     "nextjs-seo": {
       "source": "laguagu/claude-code-nextjs-skills",
       "sourceType": "github",
-      "computedHash": "cb162b4dddde7d73157a338d2a86347b816e67db691c39a8c29f1e1e7145cba5"
+      "computedHash": "dbe7bb9acf09e443b5bf2bef8e7bfe42b44cf6145ce1e9af6a579fcd962c6899"
+    },
+    "nextjs-seo-optimizer": {
+      "source": "kumbajirajkumar123/nextjs-seo-optimizer",
+      "sourceType": "github",
+      "computedHash": "debb6a6d992a035fee55cf6a74cf00deac53a7aed3572938ecfd8ce3b89caa63"
+    },
+    "schema-generator": {
+      "source": "mverab/eGEOagents",
+      "sourceType": "github",
+      "computedHash": "04cbb39f6dabec5b91aa70ee16b1b348038299177ab0548dac0b5073061f221f"
+    },
+    "validation-doctor": {
+      "source": "mverab/eGEOagents",
+      "sourceType": "github",
+      "computedHash": "2544394d0bc776c153494f55dc48ef6272c8d91f31d98fb80679c605706be823"
     },
     "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
