@@ -538,24 +538,43 @@ export default function SignInPage() {
                   <button
                     type="submit"
                     className="
-                      py-2. 5 f o nt-medium ring-primar y focu s
-                      -visible:outline-
-                      [ 1.5px]
-                      focus-visible:outline-
-                      ffset-2 z inc-950 active : rounded-none px-3.5 text-center
-                      text-sm text-primary/70 italic shadow-sm ring-1 ring-inset
-                      hover:bg-white/30
+                      group relative inline-flex h-[44px] min-w-[195px]
+                      items-center justify-center px-4 text-center text-[13px]
+                      font-bold tracking-[0.08em] text-primary/80 italic
+                      transition
+                      focus-visible:outline-[1.5px]
+                      focus-visible:outline-offset-2
+                      focus-visible:outline-primary
                       active:scale-95
+                      disabled:cursor-not-allowed disabled:opacity-60
                     "
-                    style={{ width: '150px' }}
                     disabled={isSubmitting}
                   >
-                    <div className="flex w-full items-center justify-center">
+                    <span
+                      aria-hidden="true"
+                      className="
+                        pointer-events-none absolute inset-0 -skew-x-[18deg]
+                        border border-white/20 bg-transparent
+                        transition-colors duration-200
+                        group-hover:border-white/30 group-hover:bg-white/10
+                      "
+                    />
+                    <div
+                      className="
+                        relative flex w-full skew-x-[18deg] items-center
+                        justify-center gap-3
+                      "
+                    >
                       {isSubmitting ? (
                         <Icons.spinner className="textmsizery size-5" />
                       ) : (
-                        <span className="inline-block font-bold">
-                          COMIENZA YA
+                        <span
+                          className="
+                          inline-flex -skew-x-[8deg] items-center gap-2.5
+                        "
+                        >
+                          <span>COMIENZA YA</span>
+                          <span className="text-[1.2em] leading-none">→</span>
                         </span>
                       )}
                     </div>
