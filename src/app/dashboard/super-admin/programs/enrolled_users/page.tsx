@@ -1389,17 +1389,22 @@ export default function EnrolledUsersPage() {
         current.fechaPrograma = value || null;
         next[index] = current;
 
-        // Autocompletar mes a mes a partir de la 1ª cuota
-        if (index === 0 && value) {
-          const base = value; // YYYY-MM-DD
-          for (let i = 1; i < 12; i++) {
+        // Autocompletar fechas siguientes en cascada
+        if (value) {
+          let base = value;
+          for (let i = index + 1; i < 12; i++) {
             const r: Pago = { ...(next[i] ?? {}) };
+            // Solo autocompleta si la fecha está vacía
             const hasFecha =
               typeof r.fechaPrograma === 'string' &&
               r.fechaPrograma.trim().length > 0;
             if (!hasFecha) {
-              r.fechaPrograma = addMonthsKeepingDay(base, i);
+              r.fechaPrograma = addMonthsKeepingDay(base, 1);
               next[i] = r;
+              base = r.fechaPrograma; // La nueva base es la recién asignada
+            } else {
+              // Si ya hay una fecha, la usamos como base para la siguiente
+              base = r.fechaPrograma as string;
             }
           }
         }
@@ -2870,6 +2875,7 @@ export default function EnrolledUsersPage() {
         email: '',
         role: 'estudiante',
       });
+      await fetchData();
     } catch {
       showNotification('Error al crear el usuario.', 'error');
     } finally {
@@ -5050,24 +5056,15 @@ export default function EnrolledUsersPage() {
               <div className="space-y-4">
                 <input
                   type="text"
-                  placeholder="Nombre"
+                  placeholder="Nombre completo"
                   className="
-                    w-full rounded-md border border-gray-600 bg-gray-700 px-3
-                    py-2 text-white
-                  "
+    w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white
+  "
                   value={newUser.firstName}
-                  onChange={(e) => {
-                    // Eliminar espacios y tomar solo la primera palabra
-                    const singleName = e.target.value.trim().split(' ')[0];
-                    setNewUser({ ...newUser, firstName: singleName });
-                  }}
-                  onKeyDown={(e) => {
-                    // Prevenir el espacio
-                    if (e.key === ' ') {
-                      e.preventDefault();
-                    }
-                  }}
-                  maxLength={30} // Opcional: limitar la longitud máxima
+                  onChange={(e) =>
+                    setNewUser({ ...newUser, firstName: e.target.value })
+                  }
+                  maxLength={60}
                 />
                 <input
                   type="text"

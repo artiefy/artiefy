@@ -419,7 +419,7 @@ const Page: React.FC = () => {
     const response = await fetch(
       '/api/educadores/actividades/actividadesByLesson',
       {
-        method: 'POST',
+        method: 'mPOST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           parametroId,
