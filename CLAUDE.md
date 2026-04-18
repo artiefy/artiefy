@@ -11,6 +11,7 @@
 @.agents/skills/upstash/SKILL.md
 @.agents/skills/frontend-skill/SKILL.md
 @.agents/skills/security-best-practices/SKILL.md
+@.agents/skills/playwright-cli/SKILL.md
 @.agents/skills/vercel-deploy/SKILL.md
 @.agents/skills/nextjs-seo/SKILL.md
 @.agents/skills/nextjs-seo-optimizer/SKILL.md

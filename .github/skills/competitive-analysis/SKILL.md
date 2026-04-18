@@ -10,27 +10,23 @@ When analyzing competition for AI-engine rankings:
 ## Process
 
 ### 1. Identify the Query Space
-
 - What queries would users search?
 - What intent do these queries have?
 - What type of content would AI engines prefer?
 
 ### 2. Generate Competitor Profiles
-
 Create 5 realistic competitor archetypes:
 
-| Type              | Description                                      |
-| ----------------- | ------------------------------------------------ |
+| Type | Description |
+|------|-------------|
 | **Market Leader** | Established player with strong brand recognition |
-| **Specialist**    | Niche focus with deep expertise                  |
-| **Budget Option** | Price-competitive alternative                    |
-| **Innovator**     | New approach or technology                       |
-| **Content King**  | Best educational/informational content           |
+| **Specialist** | Niche focus with deep expertise |
+| **Budget Option** | Price-competitive alternative |
+| **Innovator** | New approach or technology |
+| **Content King** | Best educational/informational content |
 
 ### 3. Evaluate Ranking Factors
-
 For each competitor, assess:
-
 - Content depth and quality
 - Social proof (reviews, testimonials, usage stats)
 - Authority signals (expertise, credentials)
@@ -64,16 +60,13 @@ For each competitor, assess:
 ```
 
 ### 5. Recommend Strategy
-
 Provide specific actions to outrank competitors:
-
 - Content gaps to fill
 - Social proof to add
 - Unique angles to pursue
 - Technical improvements
 
 ## Output Requirements
-
 - Always provide actionable differentiation strategies
 - Be specific about what competitors do well/poorly
 - Focus on what can realistically be improved

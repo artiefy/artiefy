@@ -18,21 +18,21 @@ export default function Home() {
         <meta name="author" content="Author Name" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="canonical" href="https://yourdomain.com/" />
-
+        
         {/* Open Graph */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://yourdomain.com/" />
         <meta property="og:title" content="Page Title" />
         <meta property="og:description" content="Page description" />
         <meta property="og:image" content="https://yourdomain.com/og-image.jpg" />
-
+        
         {/* Twitter Card */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@yourtwitterhandle" />
         <meta name="twitter:title" content="Page Title" />
         <meta name="twitter:description" content="Page description" />
         <meta name="twitter:image" content="https://yourdomain.com/twitter-image.jpg" />
-
+        
         {/* Structured Data */}
         <script
           type="application/ld+json"
@@ -46,7 +46,7 @@ export default function Home() {
           }}
         />
       </Head>
-
+      
       {/* Page content */}
       <main>
         <h1>Welcome</h1>
@@ -81,13 +81,13 @@ export default function BlogPost({ post }: Props) {
         <title>{post.title} | Your Blog</title>
         <meta name="description" content={post.excerpt} />
         <link rel="canonical" href={`https://yourdomain.com/blog/${post.slug}`} />
-
+        
         <meta property="og:type" content="article" />
         <meta property="og:title" content={post.title} />
         <meta property="og:description" content={post.excerpt} />
         <meta property="og:image" content={post.coverImage} />
         <meta property="og:url" content={`https://yourdomain.com/blog/${post.slug}`} />
-
+        
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -101,7 +101,7 @@ export default function BlogPost({ post }: Props) {
           }}
         />
       </Head>
-
+      
       <article>
         <h1>{post.title}</h1>
         {/* Content */}
@@ -112,14 +112,14 @@ export default function BlogPost({ post }: Props) {
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   const post = await fetchPost(params?.slug as string)
-
+  
   return {
     props: { post },
   }
 }
 ```
 
-## Global SEO with \_document.tsx
+## Global SEO with _document.tsx
 
 ```typescript
 // pages/_document.tsx
@@ -133,13 +133,13 @@ export default function Document() {
         <meta charSet="utf-8" />
         <link rel="icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-
+        
         {/* Fonts */}
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
           rel="stylesheet"
         />
-
+        
         {/* Preconnect to external domains */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
@@ -156,7 +156,6 @@ export default function Document() {
 ## next-seo Library (Recommended)
 
 Install:
-
 ```bash
 npm install next-seo
 ```
@@ -165,7 +164,7 @@ npm install next-seo
 
 ```typescript
 // next-seo.config.ts
-import { DefaultSeoProps } from 'next-seo';
+import { DefaultSeoProps } from 'next-seo'
 
 const config: DefaultSeoProps = {
   titleTemplate: '%s | Your Site Name',
@@ -201,9 +200,9 @@ const config: DefaultSeoProps = {
       content: 'keyword1, keyword2, keyword3',
     },
   ],
-};
+}
 
-export default config;
+export default config
 ```
 
 ### Apply Default SEO
@@ -244,7 +243,7 @@ export default function About() {
           description: 'Learn more about our company',
         }}
       />
-
+      
       <h1>About Us</h1>
     </>
   )
@@ -268,7 +267,7 @@ export default function BlogPost({ post }) {
         authorName={post.author.name}
         description={post.excerpt}
       />
-
+      
       {/* Page content */}
     </>
   )
@@ -285,7 +284,7 @@ module.exports = {
   siteUrl: 'https://yourdomain.com',
   generateRobotsTxt: true,
   exclude: ['/admin', '/api/*'],
-};
+}
 ```
 
 ```json
@@ -301,7 +300,7 @@ module.exports = {
 
 ```typescript
 // pages/api/sitemap.xml.ts
-import { GetServerSideProps } from 'next';
+import { GetServerSideProps } from 'next'
 
 function generateSiteMap(posts: any[]) {
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -319,25 +318,25 @@ function generateSiteMap(posts: any[]) {
               <lastmod>${new Date(post.updatedAt).toISOString()}</lastmod>
               <priority>0.8</priority>
             </url>
-          `;
+          `
         })
         .join('')}
     </urlset>
-  `;
+  `
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ res }) => {
-  const posts = await fetchAllPosts();
-  const sitemap = generateSiteMap(posts);
+  const posts = await fetchAllPosts()
+  const sitemap = generateSiteMap(posts)
 
-  res.setHeader('Content-Type', 'text/xml');
-  res.write(sitemap);
-  res.end();
+  res.setHeader('Content-Type', 'text/xml')
+  res.write(sitemap)
+  res.end()
 
   return {
     props: {},
-  };
-};
+  }
+}
 
 export default function SiteMap() {}
 ```
@@ -361,7 +360,7 @@ Sitemap: https://yourdomain.com/sitemap.xml
 
 ```typescript
 // pages/api/robots.txt.ts
-import { GetServerSideProps } from 'next';
+import { GetServerSideProps } from 'next'
 
 export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   const robots = `User-agent: *
@@ -369,16 +368,16 @@ Allow: /
 Disallow: /admin
 Disallow: /api
 
-Sitemap: https://yourdomain.com/sitemap.xml`;
+Sitemap: https://yourdomain.com/sitemap.xml`
 
-  res.setHeader('Content-Type', 'text/plain');
-  res.write(robots);
-  res.end();
+  res.setHeader('Content-Type', 'text/plain')
+  res.write(robots)
+  res.end()
 
   return {
     props: {},
-  };
-};
+  }
+}
 
 export default function Robots() {}
 ```
@@ -407,7 +406,6 @@ export default function Page() {
 Consider migrating for better SEO:
 
 ### Benefits of App Router for SEO:
-
 1. **Better Metadata API** - Type-safe, hierarchical
 2. **Streaming SSR** - Faster Core Web Vitals
 3. **Server Components** - Reduced JavaScript, faster LCP
@@ -415,7 +413,6 @@ Consider migrating for better SEO:
 5. **Better Performance** - Automatic optimization
 
 ### Migration Resources:
-
 - [Official Migration Guide](https://nextjs.org/docs/app/building-your-application/upgrading/app-router-migration)
 - Create `app` directory alongside `pages`
 - Migrate incrementally, route by route
@@ -424,17 +421,14 @@ Consider migrating for better SEO:
 ## Common Issues
 
 **Issue: Duplicate meta tags**
-
 - Solution: Ensure only one Head component per page
 - Solution: Use next-seo to prevent conflicts
 
 **Issue: SEO not working with CSR**
-
 - Solution: Use getServerSideProps or getStaticProps
 - Solution: Ensure metadata is rendered server-side
 
 **Issue: Slow page load affecting SEO**
-
 - Solution: Use next/image for optimization
 - Solution: Implement code splitting
 - Solution: Enable SWC compiler in next.config.js
@@ -442,7 +436,6 @@ Consider migrating for better SEO:
 ## When to Upgrade
 
 Upgrade to App Router if:
-
 - Starting new project
 - SEO is critical
 - Want better performance
@@ -450,7 +443,6 @@ Upgrade to App Router if:
 - Want built-in optimizations
 
 Stay on Pages Router if:
-
 - Tight deadline, no time for migration
 - Complex app with many dependencies
 - Team not familiar with App Router yet

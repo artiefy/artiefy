@@ -21,7 +21,6 @@ npx add-skill rajendraprasadn/nextjs-seo-optimizer
 ```
 
 This automatically detects and installs to:
-
 - Claude Code
 - Cursor
 - OpenCode
@@ -32,7 +31,6 @@ This automatically detects and installs to:
 ## Claude Code
 
 ### Global Installation
-
 Install once, use in all projects:
 
 ```bash
@@ -40,7 +38,6 @@ git clone https://github.com/rajendraprasadn/nextjs-seo-optimizer.git ~/.claude/
 ```
 
 ### Project-Specific Installation
-
 Install for a single project:
 
 ```bash
@@ -70,7 +67,6 @@ git clone https://github.com/rajendraprasadn/nextjs-seo-optimizer.git ~/.cursor/
 ### Verify
 
 Open Cursor and use:
-
 ```
 Cmd/Ctrl + Shift + P → "List Skills"
 ```
@@ -106,21 +102,18 @@ git clone https://github.com/rajendraprasadn/nextjs-seo-optimizer.git ~/.opencod
 If you prefer to install manually:
 
 1. **Clone the repository**
-
    ```bash
    git clone https://github.com/rajendraprasadn/nextjs-seo-optimizer.git
    ```
 
 2. **Copy to your skills directory**
-
+   
    For Claude Code:
-
    ```bash
    cp -r nextjs-seo-optimizer ~/.claude/skills/
    ```
-
+   
    For Cursor:
-
    ```bash
    cp -r nextjs-seo-optimizer ~/.cursor/skills/
    ```
@@ -145,19 +138,17 @@ After installation, verify the skill is working:
 1. **Start your AI assistant** (Claude Code, Cursor, etc.)
 
 2. **Ask a test question:**
-
    ```
    "Do you have the nextjs-seo-optimizer skill?"
    ```
-
+   
    Expected response: "Yes, I have the nextjs-seo-optimizer skill..."
 
 3. **Test with an SEO question:**
-
    ```
    "How do I add metadata to a Next.js page?"
    ```
-
+   
    Claude should use the skill to provide detailed Next.js-specific guidance.
 
 ## Updating the Skill
@@ -192,7 +183,6 @@ npx add-skill rajendraprasadn/nextjs-seo-optimizer --force
 **Issue:** AI assistant doesn't recognize the skill
 
 **Solutions:**
-
 1. Check file structure matches expected format
 2. Ensure `SKILL.md` exists with proper YAML frontmatter
 3. Restart your AI assistant
@@ -203,7 +193,6 @@ npx add-skill rajendraprasadn/nextjs-seo-optimizer --force
 **Issue:** Installed to wrong location
 
 **Solution:**
-
 ```bash
 # Find where skills should go
 # For Claude Code
@@ -221,7 +210,6 @@ mv /wrong/path/nextjs-seo-optimizer ~/.claude/skills/
 **Issue:** Permission denied during installation
 
 **Solution:**
-
 ```bash
 # Fix permissions
 sudo chown -R $USER ~/.claude/skills/
@@ -233,7 +221,6 @@ chmod -R 755 ~/.claude/skills/
 **Issue:** `validate-seo.js` script fails
 
 **Solution:**
-
 ```bash
 # Ensure script is executable
 chmod +x scripts/validate-seo.js

@@ -138,7 +138,7 @@ export default function HomePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
-
+      
       <main>
         <h1>Welcome to MyStore</h1>
         <Image
@@ -183,7 +183,7 @@ async function getProduct(slug: string): Promise<Product | null> {
   const res = await fetch(`https://api.mystore.com/products/${slug}`, {
     next: { revalidate: 3600 }, // Revalidate every hour
   })
-
+  
   if (!res.ok) return null
   return res.json()
 }
@@ -194,7 +194,7 @@ export async function generateMetadata({
   params: { slug: string }
 }): Promise<Metadata> {
   const product = await getProduct(params.slug)
-
+  
   if (!product) {
     return {
       title: 'Product Not Found',
@@ -237,7 +237,7 @@ export default async function ProductPage({
   params: { slug: string }
 }) {
   const product = await getProduct(params.slug)
-
+  
   if (!product) {
     notFound()
   }
@@ -308,7 +308,7 @@ export default async function ProductPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-
+      
       <main>
         <h1>{product.name}</h1>
         <Image
@@ -330,35 +330,35 @@ export default async function ProductPage({
 ## Dynamic Sitemap (app/sitemap.ts)
 
 ```typescript
-import { MetadataRoute } from 'next';
+import { MetadataRoute } from 'next'
 
 async function getAllProducts() {
-  const res = await fetch('https://api.mystore.com/products');
-  return res.json();
+  const res = await fetch('https://api.mystore.com/products')
+  return res.json()
 }
 
 async function getAllBlogPosts() {
-  const res = await fetch('https://api.mystore.com/blog');
-  return res.json();
+  const res = await fetch('https://api.mystore.com/blog')
+  return res.json()
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const products = await getAllProducts();
-  const posts = await getAllBlogPosts();
+  const products = await getAllProducts()
+  const posts = await getAllBlogPosts()
 
   const productUrls = products.map((product: any) => ({
     url: `https://mystore.com/products/${product.slug}`,
     lastModified: new Date(product.updatedAt),
     changeFrequency: 'daily' as const,
     priority: 0.9,
-  }));
+  }))
 
   const blogUrls = posts.map((post: any) => ({
     url: `https://mystore.com/blog/${post.slug}`,
     lastModified: new Date(post.updatedAt),
     changeFrequency: 'weekly' as const,
     priority: 0.7,
-  }));
+  }))
 
   return [
     {
@@ -393,24 +393,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     ...productUrls,
     ...blogUrls,
-  ];
+  ]
 }
 ```
 
 ## Robots Configuration (app/robots.ts)
 
 ```typescript
-import { MetadataRoute } from 'next';
+import { MetadataRoute } from 'next'
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://mystore.com';
+  const baseUrl = 'https://mystore.com'
 
   return {
     rules: [
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/api/', '/cart/', '/checkout/', '/account/'],
+        disallow: [
+          '/admin/',
+          '/api/',
+          '/cart/',
+          '/checkout/',
+          '/account/',
+        ],
       },
       {
         userAgent: 'GPTBot',
@@ -419,7 +425,7 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
     host: baseUrl,
-  };
+  }
 }
 ```
 
@@ -434,13 +440,13 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
-
+  
   experimental: {
     optimizePackageImports: ['lucide-react', 'date-fns'],
   },
-
+  
   compress: true,
-
+  
   async redirects() {
     return [
       {
@@ -448,11 +454,11 @@ const nextConfig = {
         destination: '/products/:slug',
         permanent: true,
       },
-    ];
+    ]
   },
-};
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
 ```
 
 ## Testing Checklist
@@ -486,7 +492,6 @@ node scripts/validate-seo.js
 ## Production Deployment
 
 1. Set environment variables:
-
    ```bash
    NEXT_PUBLIC_BASE_URL=https://mystore.com
    SITE_URL=https://mystore.com
@@ -495,7 +500,6 @@ node scripts/validate-seo.js
 2. Deploy to Vercel/Netlify/etc.
 
 3. Verify in production:
-
    ```bash
    curl https://mystore.com/sitemap.xml
    curl https://mystore.com/robots.txt

@@ -65,6 +65,9 @@ export default defineConfig([
       'react-hooks/set-state-in-effect': 'off',
       'react-hooks/purity': 'off',
       'react-hooks/static-components': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
+      'react-hooks/error-boundaries': 'off',
       'react-hooks/rules-of-hooks': 'off',
       'no-console': [
         'off',

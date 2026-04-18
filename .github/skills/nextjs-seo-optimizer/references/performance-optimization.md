@@ -1,9 +1,8 @@
 # Performance Optimization for SEO
 
 Core Web Vitals directly impact SEO rankings. Google uses these metrics:
-
 - **LCP (Largest Contentful Paint)**: < 2.5s
-- **FID (First Input Delay)**: < 100ms
+- **FID (First Input Delay)**: < 100ms  
 - **CLS (Cumulative Layout Shift)**: < 0.1
 
 ## Image Optimization
@@ -11,15 +10,13 @@ Core Web Vitals directly impact SEO rankings. Google uses these metrics:
 ### Use Next.js Image Component
 
 **Before (Poor SEO):**
-
 ```jsx
 <img src="/hero.jpg" alt="Hero image" />
 ```
 
 **After (Optimized):**
-
 ```jsx
-import Image from 'next/image';
+import Image from 'next/image'
 
 <Image
   src="/hero.jpg"
@@ -29,7 +26,7 @@ import Image from 'next/image';
   priority // For above-the-fold images
   placeholder="blur"
   blurDataURL="data:image/jpeg;base64,..."
-/>;
+/>
 ```
 
 ### Image Best Practices
@@ -69,7 +66,7 @@ module.exports = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
-};
+}
 ```
 
 ## Code Splitting & Dynamic Imports
@@ -89,7 +86,7 @@ const Modal = dynamic(() => import('@/components/Modal'))
 
 export default function Dashboard() {
   const [showChart, setShowChart] = useState(false)
-
+  
   return (
     <div>
       <button onClick={() => setShowChart(true)}>Show Chart</button>
@@ -102,9 +99,9 @@ export default function Dashboard() {
 ### Named Exports
 
 ```typescript
-const AdminPanel = dynamic(() =>
-  import('@/components/AdminPanel').then((mod) => mod.AdminPanel)
-);
+const AdminPanel = dynamic(() => 
+  import('@/components/AdminPanel').then(mod => mod.AdminPanel)
+)
 ```
 
 ## Font Optimization
@@ -112,16 +109,11 @@ const AdminPanel = dynamic(() =>
 ### Use next/font
 
 **Before:**
-
 ```jsx
-<link
-  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
-  rel="stylesheet"
-/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
 ```
 
 **After:**
-
 ```typescript
 // app/layout.tsx
 import { Inter } from 'next/font/google'
@@ -144,13 +136,13 @@ export default function RootLayout({ children }) {
 ### Custom Fonts
 
 ```typescript
-import localFont from 'next/font/local';
+import localFont from 'next/font/local'
 
 const customFont = localFont({
   src: './fonts/CustomFont.woff2',
   display: 'swap',
   variable: '--font-custom',
-});
+})
 ```
 
 ## Bundle Size Optimization
@@ -168,21 +160,19 @@ module.exports = {
       '@mui/icons-material',
     ],
   },
-};
+}
 ```
 
 ### Tree Shaking
 
 **Before:**
-
 ```typescript
-import _ from 'lodash'; // Imports entire library
+import _ from 'lodash' // Imports entire library
 ```
 
 **After:**
-
 ```typescript
-import debounce from 'lodash/debounce'; // Only imports what's needed
+import debounce from 'lodash/debounce' // Only imports what's needed
 ```
 
 ### Analyze Bundle
@@ -208,12 +198,11 @@ ANALYZE=true npm run build
 ### Maximize Server Components
 
 **Server Component (Default - Better for SEO):**
-
 ```typescript
 // app/blog/[slug]/page.tsx
 async function BlogPost({ params }: { params: { slug: string } }) {
   const post = await fetchPost(params.slug)
-
+  
   return (
     <article>
       <h1>{post.title}</h1>
@@ -224,7 +213,6 @@ async function BlogPost({ params }: { params: { slug: string } }) {
 ```
 
 **Client Component (Only When Needed):**
-
 ```typescript
 'use client'
 
@@ -244,7 +232,7 @@ import { InteractiveButton } from './InteractiveButton'
 
 export default function Page() {
   const data = await fetchData() // Server-side fetch
-
+  
   return (
     <div>
       <StaticContent data={data} />
@@ -260,27 +248,27 @@ export default function Page() {
 
 ```typescript
 // app/blog/[slug]/page.tsx
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 3600 // Revalidate every hour
 
 // Or use ISR
-export const revalidate = 60; // Revalidate every minute
+export const revalidate = 60 // Revalidate every minute
 ```
 
 ### Data Fetching Cache
 
 ```typescript
 // Cached by default
-const data = await fetch('https://api.example.com/data');
+const data = await fetch('https://api.example.com/data')
 
 // No cache
 const data = await fetch('https://api.example.com/data', {
-  cache: 'no-store',
-});
+  cache: 'no-store'
+})
 
 // Revalidate after 60 seconds
 const data = await fetch('https://api.example.com/data', {
-  next: { revalidate: 60 },
-});
+  next: { revalidate: 60 }
+})
 ```
 
 ## Lazy Loading Strategies
@@ -356,7 +344,7 @@ export function LazyComponent({ children }: { children: React.ReactNode }) {
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap', // Prevents layout shift
-});
+})
 ```
 
 ### Skeleton Screens
@@ -388,13 +376,13 @@ export default function Page() {
         src="https://www.googletagmanager.com/gtag/js?id=GA_ID"
         strategy="afterInteractive"
       />
-
+      
       {/* Load when browser is idle */}
       <Script
         src="https://example.com/analytics.js"
         strategy="lazyOnload"
       />
-
+      
       {/* Load immediately (blocking) */}
       <Script
         src="https://example.com/critical.js"
@@ -411,12 +399,12 @@ Instead of runtime redirects:
 
 ```typescript
 // middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname === '/old-path') {
-    return NextResponse.redirect(new URL('/new-path', request.url));
+    return NextResponse.redirect(new URL('/new-path', request.url))
   }
 }
 ```
@@ -426,33 +414,31 @@ export function middleware(request: NextRequest) {
 ### Use Parallel Fetching
 
 **Before:**
-
 ```typescript
-const user = await fetchUser(id);
-const posts = await fetchPosts(id);
-const comments = await fetchComments(id);
+const user = await fetchUser(id)
+const posts = await fetchPosts(id)
+const comments = await fetchComments(id)
 ```
 
 **After:**
-
 ```typescript
 const [user, posts, comments] = await Promise.all([
   fetchUser(id),
   fetchPosts(id),
   fetchComments(id),
-]);
+])
 ```
 
 ### Cache Database Queries
 
 ```typescript
-import { unstable_cache } from 'next/cache';
+import { unstable_cache } from 'next/cache'
 
 const getCachedUser = unstable_cache(
   async (id: string) => fetchUser(id),
   ['user'],
   { revalidate: 3600, tags: ['user'] }
-);
+)
 ```
 
 ## Compression
@@ -462,7 +448,7 @@ const getCachedUser = unstable_cache(
 ```javascript
 module.exports = {
   compress: true, // Enable gzip compression (default)
-};
+}
 ```
 
 ## Production Optimization Checklist
@@ -501,11 +487,10 @@ export const metadata = {
   other: {
     'google-site-verification': 'your-verification-code',
   },
-};
+}
 ```
 
 Then monitor in:
-
 - Google Search Console → Core Web Vitals
 - Vercel Analytics (if using Vercel)
 - Web Vitals library for custom tracking

@@ -11,18 +11,18 @@ When scoring content for GEO optimization:
 
 Score each criterion 0-10:
 
-| #   | Criterion            | What to Look For                                          |
-| --- | -------------------- | --------------------------------------------------------- |
-| 1   | **Ranking Emphasis** | "best", "top", "#1", superlatives, leadership claims      |
-| 2   | **User Intent**      | Direct answers, addresses specific needs, solves problems |
-| 3   | **Competitive Diff** | Unique advantages, "unlike others", differentiators       |
-| 4   | **Social Proof**     | Stats, testimonials, reviews, customer counts, ratings    |
-| 5   | **Narrative**        | Engaging flow, persuasive language, compelling story      |
-| 6   | **Authority**        | Expert tone, credentials, specific knowledge, confidence  |
-| 7   | **USPs**             | Clear unique value, what makes it special                 |
-| 8   | **Urgency**          | Time limits, scarcity, "now", limited availability        |
-| 9   | **Scannable**        | Headers, bullets, short paragraphs, clear structure       |
-| 10  | **Factual**          | Verifiable claims, specific numbers, accurate info        |
+| # | Criterion | What to Look For |
+|---|-----------|------------------|
+| 1 | **Ranking Emphasis** | "best", "top", "#1", superlatives, leadership claims |
+| 2 | **User Intent** | Direct answers, addresses specific needs, solves problems |
+| 3 | **Competitive Diff** | Unique advantages, "unlike others", differentiators |
+| 4 | **Social Proof** | Stats, testimonials, reviews, customer counts, ratings |
+| 5 | **Narrative** | Engaging flow, persuasive language, compelling story |
+| 6 | **Authority** | Expert tone, credentials, specific knowledge, confidence |
+| 7 | **USPs** | Clear unique value, what makes it special |
+| 8 | **Urgency** | Time limits, scarcity, "now", limited availability |
+| 9 | **Scannable** | Headers, bullets, short paragraphs, clear structure |
+| 10 | **Factual** | Verifiable claims, specific numbers, accurate info |
 
 ## Scoring Guide
 
@@ -71,7 +71,6 @@ Score each criterion 0-10:
 ```
 
 ## Rules
-
 - Always show evidence from the actual content
 - Prioritize improvements by potential impact
 - Be specific about what's missing and how to fix it

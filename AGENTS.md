@@ -72,6 +72,7 @@ Ruta: `.agents/skills`
 - `frontend-skill`
 - `security-best-practices`
 - `playwright`
+- `playwright-cli`
 - `vercel-deploy`
 - `find-skills`
 - `nextjs-seo`
@@ -123,6 +124,8 @@ Ruta: `.agents/skills`
   - `$debugging-and-error-recovery`
   - `$performance-optimization`
   - `$security-and-hardening`
+  - `$playwright`
+  - `$playwright-cli`
   - `$frontend-ui-engineering`
   - `$documentation-and-adrs`
   - `$shipping-and-launch`
@@ -137,9 +140,14 @@ Ruta: `.agents/skills`
   1. Descubrimiento/alcance: `context-engineering` + `spec-driven-development`.
   2. Diseño técnico: `api-and-interface-design` + `planning-and-task-breakdown`.
   3. Implementación incremental: `incremental-implementation` + `web-app-creator` + `frontend-ui-engineering` (si aplica UI).
-  4. Calidad: `test-driven-development` + `code-review-and-quality` + `debugging-and-error-recovery` (si hay fallos).
+  4. Calidad: `test-driven-development` + `code-review-and-quality` + `playwright-cli` para verificación real de flujos UI/auth/navegación + `debugging-and-error-recovery` (si hay fallos).
   5. Endurecimiento y performance: `security-and-hardening` + `performance-optimization`.
   6. Documentación y salida: `documentation-and-adrs`, luego `shipping-and-launch` y `ci-cd-and-automation` cuando aplique release.
+- Para cambios con impacto en UI, navegación, formularios, auth o integraciones visibles en navegador:
+  1. Priorizar `playwright-cli` como capa de validación operativa del flujo real.
+  2. Usar snapshots/accessibility tree como fuente principal; screenshots solo cuando aporten señal visual.
+  3. Preferir smoke tests y recorridos críticos sobre suites E2E completas en cambios pequeños.
+  4. Si el bug no es evidente en código o tests unitarios, reproducirlo primero en navegador con Playwright antes de corregir.
 - Para solicitudes SEO, aplicar por defecto este flujo:
   1. `nextjs-seo` para arquitectura SEO en App Router (metadata, sitemap, robots, canonical, OG).
   2. `nextjs-seo-optimizer` para optimización on-page técnica y de contenido.
@@ -159,6 +167,7 @@ Ruta: `.agents/skills`
 - Upstash: docs oficiales en `https://upstash.com/docs/redis/overall/getstarted` + context7
 - SEO Next.js: documentación oficial de metadata/sitemap/robots de Next.js (`https://nextjs.org/docs/app/getting-started/metadata-and-og-images` y `https://nextjs.org/docs/app/api-reference/file-conventions`)
 - SEO técnico: documentación primaria de Google Search Central (`https://developers.google.com/search/docs`)
+- Playwright browser automation: preferir `playwright-cli` skill para agentes de código; usar MCP de Playwright solo si el caso requiere sesión persistente, introspección rica o un loop exploratorio prolongado
 - Documentación web: primero docs oficiales/primarias de cada tecnología
 - `context7`: usar como acelerador para ubicar secciones y ejemplos oficiales
 - Búsqueda web: restringir a dominios oficiales cuando sea posible
@@ -178,8 +187,10 @@ Para cambios grandes (varios archivos o impacto alto):
 - `npm run lint` pasa
 - `npm run typecheck` pasa
 - `npm run build` pasa (si aplica al cambio)
+- Si el cambio afecta UI, rutas, auth o formularios, validar al menos un flujo crítico con `playwright-cli`
 
 Para cambios pequeños (acotados):
 
 - El cambio funciona y no rompe el flujo afectado
 - Ejecutar validación puntual solo si aporta señal (sin requerir `lint`/`typecheck` completos en cada solicitud)
+- Si el cambio toca comportamiento visible en navegador, preferir una verificación puntual con `playwright-cli`
