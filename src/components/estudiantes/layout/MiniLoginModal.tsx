@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
@@ -49,6 +49,143 @@ const toClerkApiErrors = (error: unknown): ClerkAPIError[] => {
   ];
 };
 
+const STAR_DECORATIONS = [
+  { left: '8%', top: '12%', animationDelay: '0.1s', animationDuration: '1.9s' },
+  {
+    left: '14%',
+    top: '28%',
+    animationDelay: '0.6s',
+    animationDuration: '2.7s',
+  },
+  { left: '22%', top: '7%', animationDelay: '1.1s', animationDuration: '2.2s' },
+  {
+    left: '31%',
+    top: '18%',
+    animationDelay: '1.8s',
+    animationDuration: '3.1s',
+  },
+  { left: '39%', top: '9%', animationDelay: '0.4s', animationDuration: '2.4s' },
+  {
+    left: '47%',
+    top: '24%',
+    animationDelay: '2.1s',
+    animationDuration: '1.8s',
+  },
+  {
+    left: '56%',
+    top: '14%',
+    animationDelay: '0.9s',
+    animationDuration: '2.6s',
+  },
+  {
+    left: '64%',
+    top: '30%',
+    animationDelay: '1.4s',
+    animationDuration: '2.1s',
+  },
+  { left: '72%', top: '11%', animationDelay: '2.5s', animationDuration: '3s' },
+  {
+    left: '81%',
+    top: '26%',
+    animationDelay: '0.7s',
+    animationDuration: '2.3s',
+  },
+  {
+    left: '10%',
+    top: '44%',
+    animationDelay: '1.6s',
+    animationDuration: '2.8s',
+  },
+  {
+    left: '19%',
+    top: '58%',
+    animationDelay: '0.3s',
+    animationDuration: '1.7s',
+  },
+  {
+    left: '28%',
+    top: '47%',
+    animationDelay: '2.3s',
+    animationDuration: '2.9s',
+  },
+  { left: '42%', top: '55%', animationDelay: '1.2s', animationDuration: '2s' },
+  {
+    left: '53%',
+    top: '41%',
+    animationDelay: '0.8s',
+    animationDuration: '2.5s',
+  },
+  {
+    left: '61%',
+    top: '62%',
+    animationDelay: '1.9s',
+    animationDuration: '2.2s',
+  },
+  {
+    left: '70%',
+    top: '49%',
+    animationDelay: '0.5s',
+    animationDuration: '2.7s',
+  },
+  {
+    left: '79%',
+    top: '57%',
+    animationDelay: '2.7s',
+    animationDuration: '1.9s',
+  },
+  {
+    left: '87%',
+    top: '43%',
+    animationDelay: '1.5s',
+    animationDuration: '2.4s',
+  },
+  {
+    left: '92%',
+    top: '16%',
+    animationDelay: '0.2s',
+    animationDuration: '2.6s',
+  },
+] as const;
+
+const PARTICLE_DECORATIONS = [
+  {
+    left: '24%',
+    bottom: '-10px',
+    animationDelay: '0s',
+    animationDuration: '3.2s',
+  },
+  {
+    left: '33%',
+    bottom: '-10px',
+    animationDelay: '0.8s',
+    animationDuration: '4s',
+  },
+  {
+    left: '42%',
+    bottom: '-10px',
+    animationDelay: '1.6s',
+    animationDuration: '3.4s',
+  },
+  {
+    left: '54%',
+    bottom: '-10px',
+    animationDelay: '2.4s',
+    animationDuration: '4.1s',
+  },
+  {
+    left: '66%',
+    bottom: '-10px',
+    animationDelay: '3.2s',
+    animationDuration: '3.6s',
+  },
+  {
+    left: '76%',
+    bottom: '-10px',
+    animationDelay: '4s',
+    animationDuration: '4.2s',
+  },
+] as const;
+
 interface MiniLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -84,29 +221,36 @@ export default function MiniLoginModal({
   const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
     null
   );
-  const [hasHandledAuth, setHasHandledAuth] = useState(false);
   const [isSwitchingToSignUp, setIsSwitchingToSignUp] = useState(false);
-
-  // Manejar error inicial de OAuth
-  useEffect(() => {
-    if (initialError && isOpen) {
-      setErrors([
-        {
-          code: 'oauth_account_not_found',
-          message: initialError,
-          longMessage: initialError,
-          meta: {},
-        },
-      ]);
-    }
+  const hasHandledAuthRef = useRef(false);
+  const normalizedInitialEmail = useMemo(
+    () => (isOpen && initialEmail ? initialEmail.trim().toLowerCase() : ''),
+    [initialEmail, isOpen]
+  );
+  const effectiveEmail = email || normalizedInitialEmail;
+  const initialOauthError = useMemo<ClerkAPIError[] | undefined>(() => {
+    if (!initialError || !isOpen) return undefined;
+    return [
+      {
+        code: 'oauth_account_not_found',
+        message: initialError,
+        longMessage: initialError,
+        meta: {},
+      },
+    ];
   }, [initialError, isOpen]);
+  const effectiveErrors = errors ?? initialOauthError;
 
-  useEffect(() => {
-    if (!isOpen) return;
-    if (!initialEmail) return;
+  const resetTransientState = useCallback(() => {
+    hasHandledAuthRef.current = false;
+    setIsSwitchingToSignUp(false);
+    setLoadingProvider(null);
+  }, []);
 
-    setEmail(initialEmail.trim().toLowerCase());
-  }, [initialEmail, isOpen]);
+  const handleModalClose = useCallback(() => {
+    resetTransientState();
+    onClose();
+  }, [onClose, resetTransientState]);
 
   // Detectar cuando OAuth o login se completa exitosamente
   useEffect(() => {
@@ -114,13 +258,12 @@ export default function MiniLoginModal({
     // Este componente se renderiza aunque retorne null, y el useEffect corría igual.
     if (!isOpen) return;
 
-    if (isSignedIn && !hasHandledAuth) {
-      // Marcar que ya manejamos esta autenticación
-      setHasHandledAuth(true);
+    if (isSignedIn && !hasHandledAuthRef.current) {
+      hasHandledAuthRef.current = true;
 
       // Si el usuario está autenticado, cerrar todo
       onLoginSuccess();
-      onClose();
+      handleModalClose();
 
       // Solo redirigir manualmente si NO es OAuth (OAuth ya redirige automáticamente)
       if (redirectUrl !== '/' && redirectUrl !== '') {
@@ -134,23 +277,19 @@ export default function MiniLoginModal({
         window.location.href = targetUrl;
       }
     }
-  }, [
-    isSignedIn,
-    hasHandledAuth,
-    onLoginSuccess,
-    onClose,
-    redirectUrl,
-    isOpen,
-  ]);
+  }, [isSignedIn, handleModalClose, onLoginSuccess, redirectUrl, isOpen]);
 
-  // Reset hasHandledAuth cuando se cierra el modal
   useEffect(() => {
-    if (!isOpen) {
-      setHasHandledAuth(false);
-      setIsSwitchingToSignUp(false);
-      setLoadingProvider(null);
-    }
-  }, [isOpen]);
+    if (isOpen) return;
+
+    const timeoutId = window.setTimeout(() => {
+      resetTransientState();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isOpen, resetTransientState]);
 
   const switchToSignUp = (strategy?: OAuthStrategy) => {
     if (!onSwitchToSignUp) return false;
@@ -264,7 +403,7 @@ export default function MiniLoginModal({
     setErrors(undefined);
     if (!signIn) return;
 
-    const trimmedEmail = email.trim();
+    const trimmedEmail = effectiveEmail.trim();
     const validationErrors = validateSignInInputs(trimmedEmail, password);
     if (validationErrors.length > 0) {
       setErrors(validationErrors);
@@ -340,7 +479,7 @@ export default function MiniLoginModal({
       if (!signIn) return;
 
       const { error: createError } = await signIn.create({
-        identifier: email.trim(),
+        identifier: effectiveEmail.trim(),
       });
       if (createError) {
         setErrors(toClerkApiErrors(createError));
@@ -418,7 +557,7 @@ export default function MiniLoginModal({
     }
   };
 
-  const emailError = errors?.some(
+  const emailError = effectiveErrors?.some(
     (error) =>
       error.code === 'form_identifier_not_found' ||
       (error.code === 'form_param_format_invalid' &&
@@ -426,7 +565,7 @@ export default function MiniLoginModal({
       (error.code === 'form_param_missing' &&
         error.meta?.paramName === 'identifier')
   );
-  const passwordError = errors?.some(
+  const passwordError = effectiveErrors?.some(
     (error) =>
       error.code === 'form_password_incorrect' ||
       (error.code === 'form_param_missing' &&
@@ -521,18 +660,13 @@ export default function MiniLoginModal({
           {/* Decorative background elements */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             {/* Stars */}
-            {Array.from({ length: 20 }).map((_, i) => (
+            {STAR_DECORATIONS.map((star, i) => (
               <div
                 key={`star-${i}`}
                 className="
                   absolute size-1 animate-pulse rounded-full bg-accent/40
                 "
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 3}s`,
-                  animationDuration: `${1.5 + Math.random() * 2}s`,
-                }}
+                style={star}
               />
             ))}
 
@@ -649,19 +783,14 @@ export default function MiniLoginModal({
             </div>
 
             {/* Floating particles */}
-            {Array.from({ length: 6 }).map((_, i) => (
+            {PARTICLE_DECORATIONS.map((particle, i) => (
               <div
                 key={`particle-${i}`}
                 className="
                   animate-rise absolute size-1.5 rounded-full bg-gradient-to-b
                   from-accent/60 to-orange-400/40
                 "
-                style={{
-                  left: `${20 + Math.random() * 60}%`,
-                  bottom: '-10px',
-                  animationDelay: `${i * 0.8}s`,
-                  animationDuration: `${3 + Math.random() * 1.5}s`,
-                }}
+                style={particle}
               />
             ))}
           </div>
@@ -669,7 +798,7 @@ export default function MiniLoginModal({
           {/* Close button */}
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleModalClose}
             className="
               absolute top-4 right-4 rounded-sm opacity-70
               ring-offset-background transition-opacity
@@ -737,16 +866,16 @@ export default function MiniLoginModal({
           )}
 
           {/* Error messages */}
-          {errors && (
+          {effectiveErrors && (
             <div className="relative z-10 text-sm text-red-400">
-              {errors.map((el, index) => (
+              {effectiveErrors.map((el, index) => (
                 <p key={index}>{mapErrorToMessage(el)}</p>
               ))}
             </div>
           )}
 
           {/* Special handling for account not found errors */}
-          {errors?.some(
+          {effectiveErrors?.some(
             (e) =>
               e.code === 'form_identifier_not_found' ||
               e.code === 'identifier_not_found'
@@ -796,7 +925,7 @@ export default function MiniLoginModal({
                   id="email"
                   name="email"
                   type="email"
-                  value={email}
+                  value={effectiveEmail}
                   placeholder="Correo electrónico"
                   required
                   className={`

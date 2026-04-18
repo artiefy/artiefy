@@ -3,30 +3,35 @@ import { NextResponse } from 'next/server';
 import {
   clerkMiddleware,
   type ClerkMiddlewareOptions,
-  createRouteMatcher,
 } from '@clerk/nextjs/server';
 
-// Protected route matchers with documentation
-const routeMatchers = {
-  admin: createRouteMatcher(['/dashboard/admin(.*)']) as (
-    req: Request
-  ) => boolean,
-  superAdmin: createRouteMatcher(['/dashboard/super-admin(.*)']) as (
-    req: Request
-  ) => boolean,
-  educador: createRouteMatcher(['/dashboard/educadores(.*)']) as (
-    req: Request
-  ) => boolean,
-  protectedStudent: createRouteMatcher(['/estudiantes/clases/:id']) as (
-    req: Request
-  ) => boolean,
-  publicRoutes: createRouteMatcher(['/cursos/:id*', '/programas/:id*']) as (
-    req: Request
-  ) => boolean,
-  protected: createRouteMatcher(['/dashboard(.*)']) as (
-    req: Request
-  ) => boolean,
-};
+function getPathname(req: Request): string {
+  return new URL(req.url).pathname;
+}
+
+function isAdminPath(pathname: string): boolean {
+  return pathname.startsWith('/dashboard/admin');
+}
+
+function isSuperAdminPath(pathname: string): boolean {
+  return pathname.startsWith('/dashboard/super-admin');
+}
+
+function isEducadorPath(pathname: string): boolean {
+  return pathname.startsWith('/dashboard/educadores');
+}
+
+function isDashboardPath(pathname: string): boolean {
+  return pathname.startsWith('/dashboard');
+}
+
+function isProtectedStudentPath(pathname: string): boolean {
+  return /^\/estudiantes\/clases\/[^/]+\/?$/.test(pathname);
+}
+
+function isPublicContentPath(pathname: string): boolean {
+  return /^\/(cursos|programas)(\/.*)?$/.test(pathname);
+}
 
 const envPartyCandidates = [
   process.env.NEXT_PUBLIC_BASE_URL,
@@ -60,27 +65,28 @@ const middlewareConfig: ClerkMiddlewareOptions = {
   clockSkewInMs: 60 * 1000, // 60 seconds tolerance
 };
 
-const isWhatsAppWebhook = createRouteMatcher([
+const whatsAppWebhookPaths = new Set([
   '/api/super-admin/whatsapp/webhook',
   '/api/super-admin/whatsapp/health',
   '/api/super-admin/whatsapp/inbox',
-]) as (req: Request) => boolean;
+]);
 
 export default clerkMiddleware(async (auth, req) => {
   try {
-    if (isWhatsAppWebhook(req)) {
+    const pathname = getPathname(req);
+
+    if (whatsAppWebhookPaths.has(pathname)) {
       return NextResponse.next();
     }
+
     const { userId, sessionClaims } = await auth();
     const role = sessionClaims?.metadata?.role;
 
-    // Allow public access to course and program routes
-    if (routeMatchers.publicRoutes(req)) {
+    if (isPublicContentPath(pathname)) {
       return NextResponse.next();
     }
 
-    // Check protected student routes (classes, programs, courses with ID)
-    if (routeMatchers.protectedStudent(req)) {
+    if (isProtectedStudentPath(pathname) || isDashboardPath(pathname)) {
       if (!userId) {
         return NextResponse.redirect(
           new URL(
@@ -91,16 +97,15 @@ export default clerkMiddleware(async (auth, req) => {
       }
     }
 
-    // Handle other protected routes (admin, super-admin, educador)
-    if (routeMatchers.admin(req) && role !== 'admin') {
+    if (isAdminPath(pathname) && role !== 'admin') {
       return NextResponse.redirect(new URL('/', req.url));
     }
 
-    if (routeMatchers.superAdmin(req) && role !== 'super-admin') {
+    if (isSuperAdminPath(pathname) && role !== 'super-admin') {
       return NextResponse.redirect(new URL('/', req.url));
     }
 
-    if (routeMatchers.educador(req) && role !== 'educador') {
+    if (isEducadorPath(pathname) && role !== 'educador') {
       return NextResponse.redirect(new URL('/', req.url));
     }
 
