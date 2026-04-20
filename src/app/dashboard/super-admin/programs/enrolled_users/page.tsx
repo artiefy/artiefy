@@ -4062,8 +4062,6 @@ export default function EnrolledUsersPage() {
             { key: 'Activo', label: 'Activo', color: 'emerald' },
             { key: 'Inactivo', label: 'Inactivo', color: 'red' },
             { key: 'Pendiente', label: 'Pendiente', color: 'amber' },
-            { key: 'Suspendido', label: 'Suspendido', color: 'orange' },
-            { key: 'Cancelado', label: 'Cancelado', color: 'gray' },
             ...enrollmentStatusOptions
               .filter(
                 (s) =>
