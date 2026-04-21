@@ -6,14 +6,15 @@
   overflow-x: clip;
   border-bottom: 1px solid rgb(255 255 255 / 0.08);
   animation: artiefy-subscription-reveal 0.35s ease-out;
+  backdrop-filter: blur(20px);
 }
 
 .artiefy-subscription-root.severity-medium,
 .artiefy-subscription-root.severity-high {
   background:
-    linear-gradient(180deg, rgb(52 38 19 / 0.96), rgb(40 29 17 / 0.96)),
-    linear-gradient(90deg, rgb(250 204 21 / 0.14), transparent 50%);
-  box-shadow: inset 0 -1px 0 rgb(250 204 21 / 0.35);
+    linear-gradient(180deg, rgb(7 53 79 / 0.97), rgb(4 42 65 / 0.97)),
+    linear-gradient(90deg, rgb(34 211 238 / 0.12), transparent 50%);
+  box-shadow: inset 0 -1px 0 rgb(34 211 238 / 0.38);
 }
 
 .artiefy-subscription-root.severity-expired {
@@ -23,19 +24,104 @@
   box-shadow: inset 0 -1px 0 rgb(239 68 68 / 0.35);
 }
 
+.artiefy-subscription-root .subscription-banner__sweep {
+  pointer-events: none;
+  position: absolute;
+  inset-block: 0;
+  left: -33%;
+  width: 33%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--primary) / 0.2),
+    transparent
+  );
+  transform: skewX(12deg);
+  animation: artiefy-subscription-sweep 4.8s linear infinite;
+}
+
+.artiefy-subscription-root.severity-expired .subscription-banner__sweep {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(239 68 68 / 0.18),
+    transparent
+  );
+}
+
+.artiefy-subscription-root .subscription-banner__line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  opacity: 0.5;
+  color: hsl(var(--primary));
+}
+
+.artiefy-subscription-root .subscription-banner__line--top {
+  top: 0;
+}
+
+.artiefy-subscription-root .subscription-banner__line--bottom {
+  bottom: 0;
+  height: 1.5px;
+}
+
+.artiefy-subscription-root.severity-expired .subscription-banner__line {
+  color: rgb(239 68 68);
+}
+
 .artiefy-subscription-root .container {
   width: 100%;
   max-width: 100%;
   margin-inline: 0;
+  padding-inline: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .artiefy-subscription-root .container {
+    padding-inline: 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .artiefy-subscription-root .container {
+    padding-inline: 2.5rem;
+  }
 }
 
 .artiefy-subscription-root .subscription-plan-icon {
+  position: relative;
   background: linear-gradient(
     135deg,
-    hsl(var(--primary) / 0.3),
-    hsl(var(--primary) / 0.1)
+    hsl(var(--primary) / 0.34),
+    hsl(var(--primary) / 0.12)
   );
-  box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.4);
+  box-shadow:
+    inset 0 0 0 1px hsl(var(--primary) / 0.45),
+    0 0 0 1px rgb(255 255 255 / 0.03);
+}
+
+.artiefy-subscription-root .subscription-plan-icon.is-animated {
+  animation: artiefy-plan-icon-float 2.8s ease-in-out infinite;
+}
+
+.artiefy-subscription-root .subscription-plan-icon.is-static {
+  transform: scale(1) rotate(0deg);
+}
+
+.artiefy-subscription-root .subscription-plan-icon::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.08),
+    rgb(255 255 255 / 0.01)
+  );
+  pointer-events: none;
 }
 
 .artiefy-subscription-root .subscription-plan-icon.is-pro {
@@ -64,6 +150,18 @@
   box-shadow: inset 0 0 0 1px rgb(251 191 36 / 0.24);
 }
 
+.artiefy-subscription-root.severity-medium .subscription-plan-icon,
+.artiefy-subscription-root.severity-high .subscription-plan-icon {
+  background: linear-gradient(
+    135deg,
+    rgb(34 211 238 / 0.22),
+    rgb(34 211 238 / 0.08)
+  );
+  box-shadow:
+    inset 0 0 0 1px rgb(34 211 238 / 0.34),
+    0 6px 18px rgb(0 0 0 / 0.18);
+}
+
 @keyframes artiefy-subscription-reveal {
   from {
     opacity: 0;
@@ -73,5 +171,29 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes artiefy-subscription-sweep {
+  from {
+    transform: translateX(0%) skewX(12deg);
+  }
+
+  to {
+    transform: translateX(420%) skewX(12deg);
+  }
+}
+
+@keyframes artiefy-plan-icon-float {
+  0% {
+    transform: scale(1.02) rotate(-2deg);
+  }
+
+  50% {
+    transform: scale(1.06) rotate(2deg);
+  }
+
+  100% {
+    transform: scale(1.02) rotate(-2deg);
   }
 }

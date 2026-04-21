@@ -45,7 +45,7 @@ const getNotificationCopy = (
     return {
       compactMessage: `${planType} expirado`,
       ctaLabelDesktop: 'Renovar ahora',
-      desktopMessage: `Tu suscripción al plan ${planType} ha expirado`,
+      desktopMessage: `Tu suscripción ${planType} ha expirado`,
       desktopSupport:
         'Renueva ahora para continuar accediendo a todos los cursos.',
       isPremium,
@@ -123,7 +123,14 @@ export function NotificationSubscription() {
         artiefy-subscription-root
         severity-${notification.severity}
       `}
+      role="alert"
     >
+      <div
+        aria-hidden="true"
+        className="subscription-banner__sweep"
+      />
+      <div className="subscription-banner__line subscription-banner__line--top" />
+      <div className="subscription-banner__line subscription-banner__line--bottom" />
       <div
         className="
           relative container flex items-center justify-between gap-2 py-2
@@ -141,10 +148,10 @@ export function NotificationSubscription() {
               subscription-plan-icon
               ${notificationCopy.isPremium ? 'is-premium' : 'is-pro'}
               ${notification.severity === 'expired' ? 'is-expired' : ''}
+              ${notification.severity === 'expired' ? 'is-static' : 'is-animated'}
               flex size-8 flex-shrink-0 items-center justify-center rounded-lg
               sm:size-9 sm:rounded-xl
             `}
-            style={{ transform: 'scale(1) rotate(0deg)' }}
           >
             <PlanIcon
               className="
@@ -194,7 +201,7 @@ export function NotificationSubscription() {
             className="
               group relative overflow-hidden rounded-full bg-gradient-to-r
               from-primary via-primary/90 to-primary px-3 py-1.5 text-[11px]
-              font-semibold whitespace-nowrap text-primary-foreground
+              font-semibold whitespace-nowrap text-background
               shadow-[0_0_15px_hsl(var(--primary)/0.35)] transition-all
               hover:scale-[1.04] hover:shadow-[0_0_25px_hsl(var(--primary)/0.6)]
               sm:px-5 sm:text-sm
