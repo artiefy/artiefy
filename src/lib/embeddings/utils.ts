@@ -16,11 +16,6 @@ export interface DocumentChunk {
     overlap: number;
   };
 }
-interface extractedText {
-  data?: { text?: string };
-  text?: string;
-}
-
 /**
  * Calcula el número de tokens aproximadamente
  * Regla simple: ~4 caracteres = 1 token en inglés
@@ -273,75 +268,18 @@ export async function extractCsvText(
 }
 
 /**
- * Extrae texto de una imagen usando OCR (node-tesseract-ocr)
- * Opcional: Requiere Tesseract-OCR instalado en el sistema
- * Soporta: JPG, PNG, BMP, TIF
- * Si OCR no está disponible, retorna cadena vacía gracefully
+ * Extrae texto de una imagen usando OCR.
+ * Temporalmente deshabilitado hasta migrar a una libreria mantenida.
  */
 export async function extractImageText(
   arrayBuffer: ArrayBuffer,
   fileName: string
 ): Promise<string> {
-  try {
-    // Intentar cargar node-tesseract-ocr de forma dinámica
-    const Tesseract = await import('node-tesseract-ocr').catch(() => null);
-
-    if (!Tesseract) {
-      console.warn(
-        `⚠️ OCR no disponible para ${fileName}. Para habilitar: npm install node-tesseract-ocr y instalar Tesseract-OCR en el sistema.`
-      );
-      return '';
-    }
-
-    console.log(`🔍 Procesando imagen con OCR: ${fileName}`);
-
-    // Usar dynamic imports para fs, path, os
-    const fs = await import('fs').then((m) => m.promises);
-    const path = await import('path');
-    const os = await import('os');
-
-    // Crear archivo temporal en carpeta temp del sistema
-    const tempDir = os.tmpdir();
-    const tempPath = path.join(tempDir, `ocr-${Date.now()}-${fileName}`);
-
-    try {
-      // Guardar ArrayBuffer a archivo temporal
-      await fs.writeFile(tempPath, Buffer.from(arrayBuffer));
-
-      // Realizar OCR - pasar opciones como objeto
-      const result = await Tesseract.recognize(tempPath, { lang: 'spa+eng' });
-      const extractedText =
-        (result as extractedText)?.data?.text ||
-        (result as extractedText)?.text ||
-        '';
-
-      // Limpiar archivo temporal
-      await fs.unlink(tempPath).catch(() => {});
-
-      if (!extractedText || extractedText.trim().length === 0) {
-        console.warn(`⚠️ No se detectó texto en la imagen: ${fileName}`);
-        return '';
-      }
-
-      return extractedText;
-    } catch (ocrError) {
-      // Si falla OCR, limpiar archivo temporal y continuar gracefully
-      await fs.unlink(tempPath).catch(() => {});
-      console.warn(
-        `⚠️ OCR falló para ${fileName}: ${ocrError instanceof Error ? ocrError.message : String(ocrError)}`
-      );
-      console.log(
-        `📸 Imagen "${fileName}" omitida (OCR requiere Tesseract-OCR en el sistema)`
-      );
-      return '';
-    }
-  } catch (error) {
-    console.warn(
-      `⚠️ No se pudo procesar imagen ${fileName} con OCR:`,
-      error instanceof Error ? error.message : String(error)
-    );
-    return '';
-  }
+  void arrayBuffer;
+  console.warn(
+    `OCR deshabilitado para ${fileName} por retiro de la dependencia insegura node-tesseract-ocr.`
+  );
+  return '';
 }
 
 /**

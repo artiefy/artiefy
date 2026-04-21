@@ -1,0 +1,25 @@
+interface:
+  display_name: 'Web App Creator'
+  short_description: 'Construye apps Next.js 16 listas para producir'
+  default_prompt: 'Use $web-app-creator to scaffold a full ecommerce-ready Next.js 16 stack with verified stable versions from official docs.'
+
+dependencies:
+  tools:
+    - type: 'mcp'
+      value: 'context7'
+      description: 'Official and up-to-date library documentation lookup.'
+    - type: 'mcp'
+      value: 'next_devtools'
+      description: 'Next.js diagnostics and runtime verification.'
+    - type: 'mcp'
+      value: 'clerk'
+      description: 'Clerk SDK snippets and integration patterns.'
+    - type: 'mcp'
+      value: 'shadcn'
+      description: 'shadcn/ui component discovery and setup helpers.'
+    - type: 'mcp'
+      value: 'neon'
+      description: 'Neon PostgreSQL integration and DB operations.'
+
+policy:
+  allow_implicit_invocation: true

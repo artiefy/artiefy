@@ -29,9 +29,32 @@ Mantener y evolucionar esta app (backend + frontend) usando:
 1. Antes de cambiar código, detectar tecnologías impactadas en el prompt.
 2. Consultar skills y MCP de esas tecnologías antes de implementar.
    2.1 Para configuración de variables de entorno, usar siempre `@t3-oss/env-nextjs` + `zod` en `src/env.ts`.
+   2.2 Mantener stack fijo del proyecto: no proponer ni introducir migraciones a otros frameworks (Vue/Angular/Svelte/Laravel/Django/Rails, etc.) salvo pedido explícito del usuario.
 3. Preservar arquitectura y convenciones del proyecto salvo petición explícita de refactor.
 4. Hacer cambios incrementales y mantener la app ejecutable en cada iteración.
 5. Ejecutar validaciones completas (`lint`, `typecheck`, `build`) solo tras cambios importantes (multiarchivo, cambios estructurales, refactors, dependencias, lógica crítica o before-merge). En cambios pequeños y acotados (por ejemplo 1 archivo/UI puntual), no correr `lint` y `typecheck` completos por defecto.
+6. Si un skill general incluye ejemplos de otras tecnologías, tratarlos solo como referencia metodológica; la implementación final debe quedar en el stack objetivo de este proyecto.
+
+## Modo no técnico (prompt simple)
+
+- Aceptar prompts de negocio sin jerga técnica (ejemplo: "quiero crear una app para mi negocio de...").
+- Traducir automáticamente objetivos de negocio a tareas técnicas del stack definido.
+- Si faltan detalles funcionales importantes, asumir defaults razonables y avanzar en incremental, documentando supuestos en la respuesta final.
+- No exigir al usuario invocar skills manualmente para tareas comunes; priorizar lenguaje natural.
+
+## Política de subagentes
+
+- Por defecto, resolver con agente principal + `AGENTS.md` + skills.
+- Usar subagentes solo cuando el usuario lo pida explícitamente o el trabajo sea claramente paralelizable y de alto volumen (auditorías por categorías, exploración masiva, lotes similares).
+- Evitar subagentes para cambios pequeños o lineales (1 feature acotada, 1-3 archivos, ajustes UI puntuales).
+- Si se usan subagentes, definir alcance por rol (seguridad/tests/mantenibilidad), esperar resultados y devolver consolidado con archivos afectados.
+
+## Seguridad operativa mínima
+
+- Nunca exponer secretos en respuestas, logs o commits.
+- Mantener `.env*` ignorado por git; usar `.env.example` solo como plantilla sin valores reales.
+- Antes de cerrar cambios de auth/roles/permisos, validar rutas protegidas, checks de rol y fallbacks de acceso denegado.
+- En cambios con riesgo de datos (DB/migraciones), priorizar estrategia segura e incremental y advertir impacto antes de ejecutar pasos destructivos.
 
 ## Skills locales disponibles
 
@@ -49,8 +72,30 @@ Ruta: `.agents/skills`
 - `frontend-skill`
 - `security-best-practices`
 - `playwright`
+- `playwright-cli`
 - `vercel-deploy`
 - `find-skills`
+- `nextjs-seo`
+- `nextjs-seo-optimizer`
+- `competitive-analysis`
+- `content-scoring`
+- `schema-generator`
+- `validation-doctor`
+- `source-driven-development` (validación contra documentación oficial con citas)
+- `spec-driven-development` (especificación previa para features no triviales)
+- `api-and-interface-design`
+- `planning-and-task-breakdown`
+- `incremental-implementation`
+- `test-driven-development`
+- `code-review-and-quality`
+- `debugging-and-error-recovery`
+- `performance-optimization`
+- `security-and-hardening`
+- `frontend-ui-engineering`
+- `documentation-and-adrs`
+- `shipping-and-launch`
+- `ci-cd-and-automation`
+- `context-engineering`
 
 ## Política de invocación de skills
 
@@ -63,7 +108,52 @@ Ruta: `.agents/skills`
   - `$drizzle-orm`
   - `$aws-s3`
   - `$upstash`
+  - `$nextjs-seo`
+  - `$nextjs-seo-optimizer`
+  - `$competitive-analysis`
+  - `$content-scoring`
+  - `$schema-generator`
+  - `$validation-doctor`
+  - `$source-driven-development`
+  - `$spec-driven-development`
+  - `$api-and-interface-design`
+  - `$planning-and-task-breakdown`
+  - `$incremental-implementation`
+  - `$test-driven-development`
+  - `$code-review-and-quality`
+  - `$debugging-and-error-recovery`
+  - `$performance-optimization`
+  - `$security-and-hardening`
+  - `$playwright`
+  - `$playwright-cli`
+  - `$frontend-ui-engineering`
+  - `$documentation-and-adrs`
+  - `$shipping-and-launch`
+  - `$ci-cd-and-automation`
+  - `$context-engineering`
 - Para tareas generales, permitir invocación implícita por `description`.
+- Para features SaaS no triviales, usar por defecto este orden:
+  1. `spec-driven-development` para convertir requerimientos en criterios claros.
+  2. `web-app-creator` para implementar incrementalmente en el stack del proyecto.
+  3. `source-driven-development` para validar decisiones de framework con fuentes oficiales y citar.
+- Para evolución continua de SaaS con prompts normales, aplicar flujo adaptativo:
+  1. Descubrimiento/alcance: `context-engineering` + `spec-driven-development`.
+  2. Diseño técnico: `api-and-interface-design` + `planning-and-task-breakdown`.
+  3. Implementación incremental: `incremental-implementation` + `web-app-creator` + `frontend-ui-engineering` (si aplica UI).
+  4. Calidad: `test-driven-development` + `code-review-and-quality` + `playwright-cli` para verificación real de flujos UI/auth/navegación + `debugging-and-error-recovery` (si hay fallos).
+  5. Endurecimiento y performance: `security-and-hardening` + `performance-optimization`.
+  6. Documentación y salida: `documentation-and-adrs`, luego `shipping-and-launch` y `ci-cd-and-automation` cuando aplique release.
+- Para cambios con impacto en UI, navegación, formularios, auth o integraciones visibles en navegador:
+  1. Priorizar `playwright-cli` como capa de validación operativa del flujo real.
+  2. Usar snapshots/accessibility tree como fuente principal; screenshots solo cuando aporten señal visual.
+  3. Preferir smoke tests y recorridos críticos sobre suites E2E completas en cambios pequeños.
+  4. Si el bug no es evidente en código o tests unitarios, reproducirlo primero en navegador con Playwright antes de corregir.
+- Para solicitudes SEO, aplicar por defecto este flujo:
+  1. `nextjs-seo` para arquitectura SEO en App Router (metadata, sitemap, robots, canonical, OG).
+  2. `nextjs-seo-optimizer` para optimización on-page técnica y de contenido.
+  3. `content-scoring` y `competitive-analysis` para priorización basada en oportunidades.
+  4. `schema-generator` para JSON-LD.
+  5. `validation-doctor` para validar dependencias/herramientas de verificación cuando aplique.
 
 ## MCP que se deben usar por tecnología
 
@@ -75,6 +165,9 @@ Ruta: `.agents/skills`
 - Drizzle ORM: docs oficiales en `https://orm.drizzle.team/docs/overview` + context7
 - AWS S3: docs SDK v3 en `https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/s3/` + context7
 - Upstash: docs oficiales en `https://upstash.com/docs/redis/overall/getstarted` + context7
+- SEO Next.js: documentación oficial de metadata/sitemap/robots de Next.js (`https://nextjs.org/docs/app/getting-started/metadata-and-og-images` y `https://nextjs.org/docs/app/api-reference/file-conventions`)
+- SEO técnico: documentación primaria de Google Search Central (`https://developers.google.com/search/docs`)
+- Playwright browser automation: preferir `playwright-cli` skill para agentes de código; usar MCP de Playwright solo si el caso requiere sesión persistente, introspección rica o un loop exploratorio prolongado
 - Documentación web: primero docs oficiales/primarias de cada tecnología
 - `context7`: usar como acelerador para ubicar secciones y ejemplos oficiales
 - Búsqueda web: restringir a dominios oficiales cuando sea posible
@@ -94,8 +187,10 @@ Para cambios grandes (varios archivos o impacto alto):
 - `npm run lint` pasa
 - `npm run typecheck` pasa
 - `npm run build` pasa (si aplica al cambio)
+- Si el cambio afecta UI, rutas, auth o formularios, validar al menos un flujo crítico con `playwright-cli`
 
 Para cambios pequeños (acotados):
 
 - El cambio funciona y no rompe el flujo afectado
 - Ejecutar validación puntual solo si aporta señal (sin requerir `lint`/`typecheck` completos en cada solicitud)
+- Si el cambio toca comportamiento visible en navegador, preferir una verificación puntual con `playwright-cli`
