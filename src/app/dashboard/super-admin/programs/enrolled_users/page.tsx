@@ -5058,8 +5058,9 @@ export default function EnrolledUsersPage() {
                   type="text"
                   placeholder="Nombre completo"
                   className="
-    w-full rounded-md border border-gray-600 bg-gray-700 px-3 py-2 text-white
-  "
+                    w-full rounded-md border border-gray-600 bg-gray-700 px-3
+                    py-2 text-white
+                  "
                   value={newUser.firstName}
                   onChange={(e) =>
                     setNewUser({ ...newUser, firstName: e.target.value })

@@ -554,8 +554,8 @@ export default function SignInPage() {
                       aria-hidden="true"
                       className="
                         pointer-events-none absolute inset-0 -skew-x-[18deg]
-                        border border-white/20 bg-transparent
-                        transition-colors duration-200
+                        border border-white/20 bg-transparent transition-colors
+                        duration-200
                         group-hover:border-white/30 group-hover:bg-white/10
                       "
                     />
@@ -570,8 +570,8 @@ export default function SignInPage() {
                       ) : (
                         <span
                           className="
-                          inline-flex -skew-x-[8deg] items-center gap-2.5
-                        "
+                            inline-flex -skew-x-[8deg] items-center gap-2.5
+                          "
                         >
                           <span>COMIENZA YA</span>
                           <span className="text-[1.2em] leading-none">→</span>
