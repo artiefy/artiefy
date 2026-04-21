@@ -1,30 +1,60 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
-import {
-  FaChevronLeft,
-  FaChevronRight,
-  FaCrown,
-  FaExclamationTriangle,
-} from 'react-icons/fa';
+import { Sparkles, TriangleAlert, X } from 'lucide-react';
 
 import { checkSubscriptionStatus } from '~/server/actions/estudiantes/subscriptions/checkSubscriptionStatus';
 
 import './notificationSubscription.css';
 
+type NotificationSeverity = 'medium' | 'high' | 'expired';
+
+type NotificationState = {
+  daysLeft: number;
+  message: string;
+  planType: string;
+  severity: NotificationSeverity;
+} | null;
+
+const getNotificationCopy = (
+  severity: NotificationSeverity,
+  planType: string,
+  daysLeft: number
+) => {
+  if (severity === 'expired') {
+    return {
+      compactMessage: `${planType} expirado`,
+      ctaLabel: 'Renovar',
+      ctaLabelDesktop: 'Renovar ahora',
+      desktopMessage: `Tu suscripción al plan ${planType} ha expirado`,
+      desktopSupport:
+        'Renueva ahora para continuar accediendo a todos los cursos.',
+      icon: TriangleAlert,
+    };
+  }
+
+  const pluralSuffix = daysLeft === 1 ? '' : 's';
+
+  return {
+    compactMessage: `${planType} expira en ${daysLeft} día${pluralSuffix}`,
+    ctaLabel: 'Renovar',
+    ctaLabelDesktop: 'Renovar plan',
+    desktopMessage: `Tu suscripción ${planType} expira en ${daysLeft} día${pluralSuffix}`,
+    desktopSupport: 'Mantén tu acceso ininterrumpido renovando tu plan.',
+    icon: Sparkles,
+  };
+};
+
 export function NotificationSubscription() {
   const { user } = useUser();
   const pathname = usePathname();
-  const [notification, setNotification] = useState<{
-    message: string;
-    severity: string;
-  } | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [notification, setNotification] = useState<NotificationState>(null);
+  const [isDismissed, setIsDismissed] = useState(false);
   const isDashboardRoute = pathname?.startsWith('/dashboard');
 
   useEffect(() => {
@@ -41,82 +71,88 @@ export function NotificationSubscription() {
         subscriptionData,
         user.primaryEmailAddress?.emailAddress
       );
+
       if (status?.shouldNotify) {
         setNotification({
+          daysLeft: status.daysLeft ?? 0,
           message: status.message,
-          severity: status.severity,
+          planType: subscriptionData.planType || 'PRO',
+          severity: status.severity as NotificationSeverity,
         });
+        setIsDismissed(false);
+      } else {
+        setNotification(null);
       }
     };
 
     void checkStatus();
   }, [isDashboardRoute, user]);
 
-  if (isDashboardRoute || !notification) return null;
+  const notificationCopy = useMemo(() => {
+    if (!notification) return null;
+
+    return getNotificationCopy(
+      notification.severity,
+      notification.planType,
+      notification.daysLeft
+    );
+  }, [notification]);
+
+  if (isDashboardRoute || !notification || !notificationCopy || isDismissed) {
+    return null;
+  }
+
+  const Icon = notificationCopy.icon;
 
   return (
-    <div className="artiefy-subscription-root">
-      <div
-        className={`
-          subscription-alert-inline
-          ${isCollapsed ? 'collapsed' : ''}
-        `}
-      >
-        <div
-          className={`
-            subscription-alert-content-inline
-            ${
-              notification.severity === 'expired'
-                ? 'border-gray-500 bg-gray-100'
-                : notification.severity === 'high'
-                  ? 'border-red-500 bg-red-50'
-                  : 'border-yellow-500 bg-yellow-50'
-            }
-          `}
-        >
-          <div className="alert-message">
-            <div className="flex items-center gap-2">
-              {notification.severity === 'expired' ? (
-                <FaExclamationTriangle className="size-5 text-gray-500" />
-              ) : (
-                <FaCrown
-                  className={`
-                    size-5
-                    ${
-                      notification.severity === 'high'
-                        ? 'text-red-500'
-                        : 'text-yellow-500'
-                    }
-                  `}
-                />
-              )}
-              <span
-                className={
-                  notification.severity === 'expired'
-                    ? 'text-gray-700'
-                    : notification.severity === 'high'
-                      ? 'text-red-700'
-                      : 'text-yellow-700'
-                }
-              >
-                <span className="alert-message-text">
-                  {notification.message}
-                </span>
-                <Link href="/planes" className="upgrade-link">
-                  Renovar suscripción
-                </Link>
+    <div
+      className={`
+        artiefy-subscription-root
+        severity-${notification.severity}
+      `}
+    >
+      <div className="subscription-shell">
+        <div className="subscription-banner">
+          <div className="subscription-banner__content">
+            <div className="subscription-banner__icon-shell">
+              <div className="subscription-banner__icon-frame">
+                <Icon className="subscription-banner__icon" />
+              </div>
+            </div>
+
+            <p className="subscription-banner__mobile-copy">
+              {notificationCopy.compactMessage}
+            </p>
+
+            <div className="subscription-banner__desktop-copy">
+              <p className="subscription-banner__title">
+                {notificationCopy.desktopMessage}
+              </p>
+              <span className="subscription-banner__support">
+                {notificationCopy.desktopSupport}
               </span>
             </div>
           </div>
-          <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className="mobile-toggle-button"
-            aria-label={
-              isCollapsed ? 'Expandir notificación' : 'Contraer notificación'
-            }
-          >
-            {isCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
-          </button>
+
+          <div className="subscription-banner__actions">
+            <Link href="/planes" className="subscription-banner__cta">
+              <span className="subscription-banner__cta-mobile">
+                {notificationCopy.ctaLabel}
+              </span>
+              <span className="subscription-banner__cta-desktop">
+                {notificationCopy.ctaLabelDesktop}
+              </span>
+            </Link>
+
+            <button
+              type="button"
+              className="subscription-banner__close"
+              aria-label="Cerrar notificación"
+              onClick={() => setIsDismissed(true)}
+            >
+              <X className="subscription-banner__close-icon" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
