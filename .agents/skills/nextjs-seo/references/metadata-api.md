@@ -55,9 +55,9 @@ export const metadata: Metadata = {
 
   // Title configuration
   title: {
-    default: 'Default Title', // Used when no page title
-    template: '%s | Site Name', // Template for child pages
-    absolute: 'Override All', // Ignores template
+    default: 'Default Title',        // Used when no page title
+    template: '%s | Site Name',      // Template for child pages
+    absolute: 'Override All',        // Ignores template
   },
 
   // Description (150-160 characters recommended)
@@ -115,7 +115,7 @@ export const metadata: Metadata = {
 
   // Twitter Cards
   twitter: {
-    card: 'summary_large_image', // or 'summary' for square images
+    card: 'summary_large_image',  // or 'summary' for square images
     site: '@username',
     creator: '@creator',
     title: 'Twitter Title',
@@ -193,21 +193,21 @@ app/layout.tsx (base metadata)
 
 ## Open Graph Image Sizes
 
-| Platform          | Recommended Size |
-| ----------------- | ---------------- |
-| Facebook          | 1200 x 630 px    |
-| Twitter (large)   | 1200 x 628 px    |
-| Twitter (summary) | 512 x 512 px     |
-| LinkedIn          | 1200 x 627 px    |
+| Platform | Recommended Size |
+|----------|------------------|
+| Facebook | 1200 x 630 px |
+| Twitter (large) | 1200 x 628 px |
+| Twitter (summary) | 512 x 512 px |
+| LinkedIn | 1200 x 627 px |
 
 ## Twitter Card Types
 
-| Card Type             | Image Size        | Use Case            |
-| --------------------- | ----------------- | ------------------- |
-| `summary`             | 1:1 (min 144x144) | Square logos, icons |
-| `summary_large_image` | 2:1 (min 300x157) | Articles, products  |
-| `player`              | Video embed       | Video content       |
-| `app`                 | App store link    | Mobile apps         |
+| Card Type | Image Size | Use Case |
+|-----------|------------|----------|
+| `summary` | 1:1 (min 144x144) | Square logos, icons |
+| `summary_large_image` | 2:1 (min 300x157) | Articles, products |
+| `player` | Video embed | Video content |
+| `app` | App store link | Mobile apps |
 
 ## Streaming Metadata
 

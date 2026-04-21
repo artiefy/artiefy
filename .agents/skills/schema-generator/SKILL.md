@@ -9,22 +9,22 @@ When generating schema markup:
 
 ## Schema Type Selection
 
-| Content Type     | Primary Schema      | Additional Types       |
-| ---------------- | ------------------- | ---------------------- |
-| SaaS Product     | SoftwareApplication | Offer, AggregateRating |
-| Physical Product | Product             | Offer, Brand, Review   |
-| Service          | Service             | Provider, AreaServed   |
-| Article          | Article             | Author, Organization   |
-| How-To           | HowTo               | Step, Tool             |
-| FAQ              | FAQPage             | Question, Answer       |
-| About Page       | Organization        | ContactPoint, Address  |
-| Person/Team      | Person              | Organization           |
-| Event            | Event               | Location, Offer        |
-| Course           | Course              | Organization           |
+| Content Type | Primary Schema | Additional Types |
+|--------------|---------------|------------------|
+| SaaS Product | SoftwareApplication | Offer, AggregateRating |
+| Physical Product | Product | Offer, Brand, Review |
+| Service | Service | Provider, AreaServed |
+| Article | Article | Author, Organization |
+| How-To | HowTo | Step, Tool |
+| FAQ | FAQPage | Question, Answer |
+| About Page | Organization | ContactPoint, Address |
+| Person/Team | Person | Organization |
+| Event | Event | Location, Offer |
+| Course | Course | Organization |
 
 ## Output Format
 
-````
+```
 ┌─────────────────────────────────────────────────────────────┐
 │  🏗️ SCHEMA MARKUP GENERATED                                 │
 ├─────────────────────────────────────────────────────────────┤
@@ -55,7 +55,7 @@ When generating schema markup:
   }
 }
 </script>
-````
+```
 
 ## Implementation Checklist
 
@@ -63,8 +63,7 @@ When generating schema markup:
 - [ ] Fill in `[FILL: ...]` placeholders with real data
 - [ ] Test with Google Rich Results Test
 - [ ] Verify in Google Search Console
-
-````
+```
 
 ## Common Templates
 
@@ -93,10 +92,9 @@ When generating schema markup:
     "name": ""
   }
 }
-````
+```
 
 ### B2B Service
-
 ```json
 {
   "@context": "https://schema.org",
@@ -122,7 +120,6 @@ When generating schema markup:
 ```
 
 ### FAQ Page
-
 ```json
 {
   "@context": "https://schema.org",
@@ -141,7 +138,6 @@ When generating schema markup:
 ```
 
 ## Rules
-
 - Always output valid JSON-LD
 - Mark fields needing human input as `[FILL: description]`
 - Include implementation instructions

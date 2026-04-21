@@ -71,7 +71,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1,
-      images: [`${baseUrl}/og-image.png`, `${baseUrl}/hero-image.jpg`],
+      images: [
+        `${baseUrl}/og-image.png`,
+        `${baseUrl}/hero-image.jpg`,
+      ],
     },
   ];
 }
@@ -234,13 +237,13 @@ export default function robots(): MetadataRoute.Robots {
 
 ## Sitemap Best Practices
 
-| Guideline            | Recommendation               |
-| -------------------- | ---------------------------- |
-| Max URLs per sitemap | 50,000                       |
-| Max file size        | 50 MB                        |
-| Update frequency     | Match actual content changes |
-| Priority values      | 0.0 to 1.0 (homepage = 1.0)  |
-| Include only         | Canonical, 200-status pages  |
+| Guideline | Recommendation |
+|-----------|----------------|
+| Max URLs per sitemap | 50,000 |
+| Max file size | 50 MB |
+| Update frequency | Match actual content changes |
+| Priority values | 0.0 to 1.0 (homepage = 1.0) |
+| Include only | Canonical, 200-status pages |
 
 ## Robots.txt Best Practices
 

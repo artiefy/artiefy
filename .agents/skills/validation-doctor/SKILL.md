@@ -15,15 +15,14 @@ description: Check Brave Search and Chrome DevTools MCP availability and provide
 
 ## Status Report
 
-| Component                    | Status  | Action Required         |
-| ---------------------------- | ------- | ----------------------- |
-| Market Validator (Brave)     | ✅ / ❌ | [Config Snippet / None] |
+| Component | Status | Action Required |
+|-----------|--------|-----------------|
+| Market Validator (Brave) | ✅ / ❌ | [Config Snippet / None] |
 | Technical Validator (Chrome) | ✅ / ❌ | [Config Snippet / None] |
 
 ## Setup Snippets
 
 ### Chrome DevTools (NPX)
-
 ```json
 {
   "mcpServers": {
@@ -36,7 +35,6 @@ description: Check Brave Search and Chrome DevTools MCP availability and provide
 ```
 
 ### Brave Search (NPX)
-
 ```json
 {
   "mcpServers": {

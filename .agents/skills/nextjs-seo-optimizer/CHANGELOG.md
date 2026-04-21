@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-01-27
 
 ### Added
-
 - Initial release of Next.js SEO Optimizer skill
 - Comprehensive SKILL.md with SEO implementation guide
 - Metadata API documentation (static and dynamic)
@@ -25,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - MIT License
 
 ### Features
-
 - ✅ Next.js 13+ App Router full support
 - ✅ Next.js 12 Pages Router support
 - ✅ Dynamic metadata with generateMetadata
@@ -39,7 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ✅ Environment-specific configurations
 
 ### Documentation
-
 - Main skill implementation guide
 - next-sitemap advanced configuration
 - Performance optimization strategies
@@ -50,7 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Detailed README with usage examples
 
 ### Scripts
-
 - validate-seo.js - Automated SEO validation
   - Sitemap validation
   - robots.txt verification
@@ -58,7 +54,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - SEO scoring system
 
 ### Compatibility
-
 - Next.js 15.x ✅
 - Next.js 14.x ✅
 - Next.js 13.x ✅
@@ -74,7 +69,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned Features
-
 - [ ] Video schema support
 - [ ] LocalBusiness schema for physical stores
 - [ ] Recipe schema for food blogs
@@ -91,7 +85,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] Structured data testing automation
 
 ### Under Consideration
-
 - [ ] Visual sitemap generator
 - [ ] SEO diff checker for deployments
 - [ ] Automated meta description generator
@@ -112,20 +105,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## How to Upgrade
 
 ### For Git Installations
-
 ```bash
 cd ~/.claude/skills/nextjs-seo-optimizer
 git pull origin main
 ```
 
 ### For npx Installations
-
 ```bash
 npx add-skill rajendraprasadn/nextjs-seo-optimizer --force
 ```
 
 ### For Claude.ai
-
 Download latest `.skill` from [Releases](https://github.com/rajendraprasadn/nextjs-seo-optimizer/releases)
 
 ## Breaking Changes
@@ -135,7 +125,6 @@ None yet (v1.0.0 is initial release)
 ## Migration Guides
 
 ### From Pre-1.0 Beta (if applicable)
-
 Not applicable - this is the first release
 
 ---

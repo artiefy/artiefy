@@ -23,7 +23,6 @@ When reporting an issue, please include:
 - **Error messages** if applicable
 
 **Example:**
-
 ```
 Next.js: 14.2.3
 Issue: Sitemap not generating correctly for dynamic routes
@@ -42,7 +41,6 @@ For feature requests or improvements:
 4. **Consider SEO impact** - How does it improve search rankings?
 
 **Example:**
-
 ```
 Feature: Add LocalBusiness schema support
 Use Case: Restaurants and physical stores need LocalBusiness schema
@@ -61,7 +59,6 @@ SEO Impact: Enables Google Maps integration and local search
 #### Code Standards
 
 **For SKILL.md updates:**
-
 - Keep instructions clear and concise
 - Include code examples
 - Follow imperative/infinitive form ("Configure metadata", not "Configuring metadata")
@@ -69,14 +66,12 @@ SEO Impact: Enables Google Maps integration and local search
 - Keep token count reasonable (avoid verbose explanations)
 
 **For reference files:**
-
 - Organize by topic
 - Include practical examples
 - Reference official Next.js docs
 - Keep up-to-date with latest Next.js features
 
 **For scripts:**
-
 - Add clear comments
 - Include usage examples
 - Test on multiple platforms (Mac, Linux, Windows)
@@ -97,16 +92,14 @@ SEO Impact: Enables Google Maps integration and local search
    ```
 5. **Update documentation** if needed
 6. **Commit with clear messages**:
-
    ```bash
    git commit -m "Add LocalBusiness schema support
-
+   
    - Add schema template for physical stores
    - Include opening hours and geo coordinates
    - Add example for restaurant use case
    - Update SKILL.md with implementation guide"
    ```
-
 7. **Push and create PR**
 8. **Describe your changes** in the PR description
 
@@ -129,20 +122,16 @@ When adding new SEO patterns:
 4. **Include validation** - How to test it works
 
 **Example structure:**
-
 ```markdown
 ## Video Schema (New Pattern)
 
 ### When to Use
-
 Use for pages with video content to enable video rich results.
 
 ### Implementation
-
 [code example]
 
 ### Validation
-
 Test at: https://search.google.com/test/rich-results
 ```
 
@@ -170,7 +159,6 @@ Documentation contributions are highly valued:
 Before submitting:
 
 1. **Create a test Next.js app**:
-
    ```bash
    npx create-next-app@latest test-seo
    cd test-seo
@@ -179,13 +167,11 @@ Before submitting:
 2. **Apply your changes**
 
 3. **Verify with validation script**:
-
    ```bash
    node scripts/validate-seo.js
    ```
 
 4. **Test in production build**:
-
    ```bash
    npm run build
    npm start
@@ -205,7 +191,6 @@ Before submitting:
 ## 🙏 Recognition
 
 All contributors will be acknowledged in:
-
 - README.md contributors section
 - Release notes
 - Project documentation

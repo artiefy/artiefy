@@ -26,12 +26,12 @@ Use for pages with unchanging content (home, about, contact):
 
 ```typescript
 // app/layout.tsx or app/page.tsx
-import { Metadata } from 'next';
+import { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: {
     default: 'Your Site Name',
-    template: '%s | Your Site Name', // Pages will be "Page Title | Your Site Name"
+    template: '%s | Your Site Name' // Pages will be "Page Title | Your Site Name"
   },
   description: 'Compelling 150-160 character description with keywords',
   keywords: ['keyword1', 'keyword2', 'keyword3'],
@@ -49,14 +49,12 @@ export const metadata: Metadata = {
     title: 'Your Site Name',
     description: 'Compelling description for social sharing',
     siteName: 'Your Site Name',
-    images: [
-      {
-        url: '/og-image.jpg', // 1200x630px recommended
-        width: 1200,
-        height: 630,
-        alt: 'Image description',
-      },
-    ],
+    images: [{
+      url: '/og-image.jpg', // 1200x630px recommended
+      width: 1200,
+      height: 630,
+      alt: 'Image description',
+    }],
   },
   twitter: {
     card: 'summary_large_image',
@@ -81,7 +79,7 @@ export const metadata: Metadata = {
     yandex: 'verification-code',
     yahoo: 'verification-code',
   },
-};
+}
 ```
 
 ### Dynamic Metadata (Database/CMS Content)
@@ -90,24 +88,24 @@ Use for blog posts, products, dynamic pages:
 
 ```typescript
 // app/blog/[slug]/page.tsx
-import { Metadata, ResolvingMetadata } from 'next';
+import { Metadata, ResolvingMetadata } from 'next'
 
 type Props = {
-  params: { slug: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
+  params: { slug: string }
+  searchParams: { [key: string]: string | string[] | undefined }
+}
 
 export async function generateMetadata(
   { params, searchParams }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   // Fetch data
-  const post = await fetchBlogPost(params.slug);
-
+  const post = await fetchBlogPost(params.slug)
+  
   // Optionally access and extend parent metadata
-  const previousImages = (await parent).openGraph?.images || [];
-  const previousKeywords = (await parent).keywords || [];
-
+  const previousImages = (await parent).openGraph?.images || []
+  const previousKeywords = (await parent).keywords || []
+ 
   return {
     title: post.title, // Will use template from layout
     description: post.excerpt.substring(0, 160),
@@ -132,7 +130,7 @@ export async function generateMetadata(
     alternates: {
       canonical: `https://yourdomain.com/blog/${params.slug}`,
     },
-  };
+  }
 }
 
 export default function Page({ params }: Props) {
@@ -143,7 +141,6 @@ export default function Page({ params }: Props) {
 ### Metadata Best Practices
 
 **Title Optimization:**
-
 - Length: 50-60 characters (mobile SERP display limit)
 - Include primary keyword near the beginning
 - Use template for consistency: `%s | Brand Name`
@@ -151,7 +148,6 @@ export default function Page({ params }: Props) {
 - Make each title unique across pages
 
 **Description Optimization:**
-
 - Length: 150-160 characters (desktop SERP limit), 120 chars (mobile)
 - Include primary and secondary keywords naturally
 - Write compelling copy that encourages clicks
@@ -159,7 +155,6 @@ export default function Page({ params }: Props) {
 - Make each description unique
 
 **Image Requirements:**
-
 - Open Graph: 1200x630px (16:9 ratio)
 - Twitter Card: 1200x628px (1.91:1 ratio)
 - File size: < 1MB
@@ -174,8 +169,8 @@ For sites with predictable static routes:
 
 ```typescript
 // app/sitemap.ts
-import { MetadataRoute } from 'next';
-
+import { MetadataRoute } from 'next'
+ 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     {
@@ -196,7 +191,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.5,
     },
-  ];
+  ]
 }
 ```
 
@@ -206,33 +201,27 @@ For sites with dynamic content from CMS or database:
 
 ```typescript
 // app/sitemap.ts
-import { MetadataRoute } from 'next';
-
+import { MetadataRoute } from 'next'
+ 
 export default async function sitemap(): MetadataRoute.Sitemap {
   // Fetch dynamic routes
-  const posts = await fetch('https://api.example.com/posts').then((res) =>
-    res.json()
-  );
-  const products = await fetch('https://api.example.com/products').then((res) =>
-    res.json()
-  );
-
+  const posts = await fetch('https://api.example.com/posts').then((res) => res.json())
+  const products = await fetch('https://api.example.com/products').then((res) => res.json())
+  
   const postEntries: MetadataRoute.Sitemap = posts.map((post: any) => ({
     url: `https://yourdomain.com/blog/${post.slug}`,
     lastModified: new Date(post.updatedAt),
     changeFrequency: 'weekly',
     priority: 0.7,
-  }));
-
-  const productEntries: MetadataRoute.Sitemap = products.map(
-    (product: any) => ({
-      url: `https://yourdomain.com/products/${product.slug}`,
-      lastModified: new Date(product.updatedAt),
-      changeFrequency: 'daily',
-      priority: 0.9,
-    })
-  );
-
+  }))
+  
+  const productEntries: MetadataRoute.Sitemap = products.map((product: any) => ({
+    url: `https://yourdomain.com/products/${product.slug}`,
+    lastModified: new Date(product.updatedAt),
+    changeFrequency: 'daily',
+    priority: 0.9,
+  }))
+  
   return [
     {
       url: 'https://yourdomain.com',
@@ -242,7 +231,7 @@ export default async function sitemap(): MetadataRoute.Sitemap {
     },
     ...postEntries,
     ...productEntries,
-  ];
+  ]
 }
 ```
 
@@ -251,7 +240,6 @@ export default async function sitemap(): MetadataRoute.Sitemap {
 See references/next-sitemap-guide.md for detailed setup with automatic generation.
 
 **Priority Guidelines:**
-
 - Homepage: 1.0
 - Key landing pages: 0.8-0.9
 - Blog posts / Products: 0.6-0.8
@@ -259,7 +247,6 @@ See references/next-sitemap-guide.md for detailed setup with automatic generatio
 - Other pages: 0.4-0.6
 
 **Change Frequency Guidelines:**
-
 - `always`: Stock prices, real-time data
 - `hourly`: News sites, frequently updated content
 - `daily`: Blogs, active e-commerce
@@ -274,8 +261,8 @@ See references/next-sitemap-guide.md for detailed setup with automatic generatio
 
 ```typescript
 // app/robots.ts
-import { MetadataRoute } from 'next';
-
+import { MetadataRoute } from 'next'
+ 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
@@ -284,7 +271,7 @@ export default function robots(): MetadataRoute.Robots {
       disallow: ['/admin/', '/api/', '/private/'],
     },
     sitemap: 'https://yourdomain.com/sitemap.xml',
-  };
+  }
 }
 ```
 
@@ -292,11 +279,11 @@ export default function robots(): MetadataRoute.Robots {
 
 ```typescript
 // app/robots.ts
-import { MetadataRoute } from 'next';
-
+import { MetadataRoute } from 'next'
+ 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://yourdomain.com';
-
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://yourdomain.com'
+  
   return {
     rules: [
       {
@@ -317,12 +304,11 @@ export default function robots(): MetadataRoute.Robots {
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
     host: baseUrl,
-  };
+  }
 }
 ```
 
 **Common Paths to Disallow:**
-
 - `/admin/` - Admin panels
 - `/api/` - API endpoints (unless public)
 - `/_next/` - Next.js internal files
@@ -335,8 +321,8 @@ export default function robots(): MetadataRoute.Robots {
 **Environment-Specific Rules:**
 
 ```typescript
-const isDevelopment = process.env.NODE_ENV === 'development';
-const isStaging = process.env.VERCEL_ENV === 'preview';
+const isDevelopment = process.env.NODE_ENV === 'development'
+const isStaging = process.env.VERCEL_ENV === 'preview'
 
 if (isDevelopment || isStaging) {
   return {
@@ -344,7 +330,7 @@ if (isDevelopment || isStaging) {
       userAgent: '*',
       disallow: '/', // Block all indexing in dev/staging
     },
-  };
+  }
 }
 ```
 
@@ -471,7 +457,7 @@ const productSchema = {
     ratingValue: product.rating,
     reviewCount: product.reviewCount,
   },
-};
+}
 ```
 
 ### FAQ Schema
@@ -488,7 +474,7 @@ const faqSchema = {
       text: faq.answer,
     },
   })),
-};
+}
 ```
 
 ### Breadcrumb Schema
@@ -503,7 +489,7 @@ const breadcrumbSchema = {
     name: crumb.name,
     item: `https://yourdomain.com${crumb.path}`,
   })),
-};
+}
 ```
 
 ## 5. Core Web Vitals Optimization
@@ -511,7 +497,6 @@ const breadcrumbSchema = {
 These directly impact search rankings. See references/performance-optimization.md for detailed strategies.
 
 **Quick Wins:**
-
 - Use Next.js `<Image>` component (automatic optimization)
 - Enable `experimental.optimizePackageImports` in next.config.js
 - Implement proper caching headers
@@ -524,7 +509,6 @@ These directly impact search rankings. See references/performance-optimization.m
 When auditing or implementing SEO, check:
 
 **Metadata:**
-
 - [ ] All pages have unique titles (50-60 chars)
 - [ ] All pages have unique descriptions (150-160 chars)
 - [ ] metadataBase set in root layout
@@ -534,7 +518,6 @@ When auditing or implementing SEO, check:
 - [ ] No duplicate metadata across pages
 
 **Technical SEO:**
-
 - [ ] sitemap.xml accessible at /sitemap.xml
 - [ ] robots.txt accessible at /robots.txt
 - [ ] Sitemap includes all public pages
@@ -545,7 +528,6 @@ When auditing or implementing SEO, check:
 - [ ] Redirects use 301 (permanent) properly
 
 **Structured Data:**
-
 - [ ] Organization schema on homepage
 - [ ] Article schema on blog posts
 - [ ] Product schema on product pages (if applicable)
@@ -553,7 +535,6 @@ When auditing or implementing SEO, check:
 - [ ] Valid JSON-LD (test with Google Rich Results Test)
 
 **Performance:**
-
 - [ ] LCP < 2.5s (Largest Contentful Paint)
 - [ ] FID < 100ms (First Input Delay)
 - [ ] CLS < 0.1 (Cumulative Layout Shift)
@@ -562,7 +543,6 @@ When auditing or implementing SEO, check:
 - [ ] JavaScript bundles < 100KB (initial)
 
 **Content:**
-
 - [ ] Proper heading hierarchy (one H1 per page)
 - [ ] Internal linking strategy implemented
 - [ ] Alt text on all images
@@ -572,29 +552,24 @@ When auditing or implementing SEO, check:
 ## 7. Common SEO Issues & Fixes
 
 **Issue: Duplicate metadata**
-
 - Fix: Use generateMetadata with unique data per page
 - Fix: Implement proper canonical URLs
 
 **Issue: Poor Core Web Vitals**
-
 - Fix: Use Next.js Image component
 - Fix: Implement code splitting
 - Fix: Enable SWC minification
 - See references/performance-optimization.md
 
 **Issue: Missing structured data**
-
 - Fix: Add JSON-LD to relevant page types
 - Fix: Test with Google Rich Results Test
 
 **Issue: Incorrect robots.txt blocking important pages**
-
 - Fix: Test with Google Search Console robots.txt tester
 - Fix: Review disallow rules carefully
 
 **Issue: Sitemap not updating**
-
 - Fix: Use dynamic sitemap with data fetching
 - Fix: Implement next-sitemap for automatic generation
 
@@ -603,21 +578,18 @@ When auditing or implementing SEO, check:
 Use these tools to validate SEO implementation:
 
 **Google Tools:**
-
 - Google Search Console - Monitor search performance
 - Google Rich Results Test - Validate structured data
 - PageSpeed Insights - Test Core Web Vitals
 - Lighthouse - Comprehensive audit
 
 **Third-Party Tools:**
-
 - Screaming Frog - Crawl site and identify issues
 - Ahrefs Site Audit - Technical SEO issues
 - SEMrush Site Audit - Comprehensive SEO analysis
 - Schema Markup Validator - Test JSON-LD
 
 **Testing Commands:**
-
 ```bash
 # Test metadata locally
 curl -I http://localhost:3000/page-to-test
@@ -635,7 +607,6 @@ npx lighthouse http://localhost:3000 --view
 ## Implementation Priority
 
 For new projects:
-
 1. Set up metadataBase in root layout
 2. Add basic metadata to all pages
 3. Create sitemap.ts
@@ -645,7 +616,6 @@ For new projects:
 7. Implement comprehensive testing
 
 For existing projects:
-
 1. Audit current SEO (use Lighthouse)
 2. Fix critical issues (broken robots.txt, missing sitemaps)
 3. Add missing metadata
@@ -656,7 +626,6 @@ For existing projects:
 ## Next.js Version Compatibility
 
 This skill supports:
-
 - ✅ Next.js 13+ (App Router) - All features
 - ⚠️ Next.js 12 (Pages Router) - Use legacy patterns, see references/pages-router-seo.md
 - ❌ Next.js < 12 - Upgrade recommended
@@ -692,7 +661,6 @@ GOOGLE_VERIFICATION_CODE=your-verification-code
 ## Additional Resources
 
 For specific scenarios and advanced patterns:
-
 - **next-sitemap setup**: See references/next-sitemap-guide.md
 - **Performance optimization**: See references/performance-optimization.md
 - **Pages Router migration**: See references/pages-router-seo.md

@@ -7,13 +7,11 @@
 **Meaning:** Google found the URL but hasn't crawled it yet.
 
 **Causes:**
-
 - New website (low crawl priority)
 - Low-quality signals
 - Crawl budget exhaustion
 
 **Solutions:**
-
 1. Request indexing via URL Inspection tool
 2. Build quality backlinks
 3. Improve internal linking
@@ -24,14 +22,12 @@
 **Meaning:** Google crawled but chose not to index.
 
 **Causes:**
-
 - Thin content
 - Duplicate content
 - Low-quality content
 - Technical issues
 
 **Solutions:**
-
 1. Add more unique, valuable content
 2. Check for duplicate content issues
 3. Ensure canonical URLs are correct
@@ -42,7 +38,6 @@
 **Meaning:** Page is not in Google's index.
 
 **Steps:**
-
 1. Check robots.txt isn't blocking
 2. Check for `noindex` meta tag
 3. Check canonical URL points to correct page
@@ -89,11 +84,11 @@ export default function robots(): MetadataRoute.Robots {
 
 Navigate to: **Indexing > Pages**
 
-| Status      | Meaning         | Action                |
-| ----------- | --------------- | --------------------- |
+| Status | Meaning | Action |
+|--------|---------|--------|
 | Not indexed | Various reasons | Check specific reason |
-| Indexed     | In Google       | Monitor               |
-| Error       | Technical issue | Fix immediately       |
+| Indexed | In Google | Monitor |
+| Error | Technical issue | Fix immediately |
 
 ## Common Technical Issues
 
@@ -102,7 +97,6 @@ Navigate to: **Indexing > Pages**
 **Symptom:** Content missing in Google's cached version.
 
 **Solutions:**
-
 1. Use SSR/SSG instead of CSR for SEO content
 2. Check with URL Inspection "View Crawled Page"
 3. Ensure critical content is in initial HTML
@@ -148,7 +142,6 @@ export default {
 **Symptom:** High LCP, poor Core Web Vitals.
 
 **Solutions:**
-
 1. Use `next/image` for images
 2. Use `next/font` for fonts
 3. Implement lazy loading
@@ -167,22 +160,22 @@ export default {
 
 ### Backlink Sources
 
-| Type            | Examples                      |
-| --------------- | ----------------------------- |
-| Directories     | Industry-specific directories |
-| Social profiles | LinkedIn, Twitter, GitHub     |
-| Guest posts     | Relevant blogs                |
-| PR              | News coverage                 |
-| Partners        | Business partners             |
+| Type | Examples |
+|------|----------|
+| Directories | Industry-specific directories |
+| Social profiles | LinkedIn, Twitter, GitHub |
+| Guest posts | Relevant blogs |
+| PR | News coverage |
+| Partners | Business partners |
 
 ## Timeline Expectations
 
-| Scenario            | Expected Time    |
-| ------------------- | ---------------- |
-| New site indexed    | 4 days - 4 weeks |
-| New page indexed    | 1 day - 2 weeks  |
-| Ranking improvement | 2-6 months       |
-| Authority building  | 6-12 months      |
+| Scenario | Expected Time |
+|----------|---------------|
+| New site indexed | 4 days - 4 weeks |
+| New page indexed | 1 day - 2 weeks |
+| Ranking improvement | 2-6 months |
+| Authority building | 6-12 months |
 
 ## Debug Checklist
 
@@ -200,9 +193,9 @@ When a page isn't indexed:
 
 ## Tools
 
-| Tool                  | Purpose               |
-| --------------------- | --------------------- |
+| Tool | Purpose |
+|------|---------|
 | Google Search Console | Primary indexing tool |
-| Bing Webmaster Tools  | Bing indexing         |
-| Screaming Frog        | Site crawl audit      |
-| Ahrefs/Semrush        | Backlink analysis     |
+| Bing Webmaster Tools | Bing indexing |
+| Screaming Frog | Site crawl audit |
+| Ahrefs/Semrush | Backlink analysis |
