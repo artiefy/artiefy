@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
-import { Sparkles, TriangleAlert, X } from 'lucide-react';
+import { X } from 'lucide-react';
+import { FaCrown, FaStar } from 'react-icons/fa';
 
 import { checkSubscriptionStatus } from '~/server/actions/estudiantes/subscriptions/checkSubscriptionStatus';
 
@@ -21,32 +22,44 @@ type NotificationState = {
   severity: NotificationSeverity;
 } | null;
 
+const normalizePlanType = (planType?: string) => {
+  const normalized = (planType ?? 'PRO').trim().toLowerCase();
+
+  if (normalized === 'premium') {
+    return 'Premium';
+  }
+
+  return 'PRO';
+};
+
 const getNotificationCopy = (
   severity: NotificationSeverity,
-  planType: string,
+  rawPlanType: string,
   daysLeft: number
 ) => {
+  const planType = normalizePlanType(rawPlanType);
+  const isPremium = planType === 'Premium';
+  const pluralSuffix = daysLeft === 1 ? '' : 's';
+
   if (severity === 'expired') {
     return {
       compactMessage: `${planType} expirado`,
-      ctaLabel: 'Renovar',
       ctaLabelDesktop: 'Renovar ahora',
       desktopMessage: `Tu suscripción al plan ${planType} ha expirado`,
       desktopSupport:
         'Renueva ahora para continuar accediendo a todos los cursos.',
-      icon: TriangleAlert,
+      isPremium,
+      planType,
     };
   }
 
-  const pluralSuffix = daysLeft === 1 ? '' : 's';
-
   return {
     compactMessage: `${planType} expira en ${daysLeft} día${pluralSuffix}`,
-    ctaLabel: 'Renovar',
     ctaLabelDesktop: 'Renovar plan',
     desktopMessage: `Tu suscripción ${planType} expira en ${daysLeft} día${pluralSuffix}`,
     desktopSupport: 'Mantén tu acceso ininterrumpido renovando tu plan.',
-    icon: Sparkles,
+    isPremium,
+    planType,
   };
 };
 
@@ -102,7 +115,7 @@ export function NotificationSubscription() {
     return null;
   }
 
-  const Icon = notificationCopy.icon;
+  const PlanIcon = notificationCopy.isPremium ? FaCrown : FaStar;
 
   return (
     <div
@@ -111,48 +124,116 @@ export function NotificationSubscription() {
         severity-${notification.severity}
       `}
     >
-      <div className="subscription-shell">
-        <div className="subscription-banner">
-          <div className="subscription-banner__content">
-            <div className="subscription-banner__icon-shell">
-              <div className="subscription-banner__icon-frame">
-                <Icon className="subscription-banner__icon" />
-              </div>
-            </div>
-
-            <p className="subscription-banner__mobile-copy">
-              {notificationCopy.compactMessage}
-            </p>
-
-            <div className="subscription-banner__desktop-copy">
-              <p className="subscription-banner__title">
-                {notificationCopy.desktopMessage}
-              </p>
-              <span className="subscription-banner__support">
-                {notificationCopy.desktopSupport}
-              </span>
-            </div>
+      <div
+        className="
+          relative container flex items-center justify-between gap-2 py-2
+          sm:gap-3 sm:px-4 sm:py-2.5
+        "
+      >
+        <div
+          className="
+            flex min-w-0 flex-1 items-center gap-2
+            sm:gap-3
+          "
+        >
+          <div
+            className={`
+              subscription-plan-icon
+              ${notificationCopy.isPremium ? 'is-premium' : 'is-pro'}
+              ${notification.severity === 'expired' ? 'is-expired' : ''}
+              flex size-8 flex-shrink-0 items-center justify-center rounded-lg
+              sm:size-9 sm:rounded-xl
+            `}
+            style={{ transform: 'scale(1) rotate(0deg)' }}
+          >
+            <PlanIcon
+              className="
+                size-3.5 drop-shadow-[0_0_4px_currentColor]
+                sm:size-4
+              "
+            />
           </div>
 
-          <div className="subscription-banner__actions">
-            <Link href="/planes" className="subscription-banner__cta">
-              <span className="subscription-banner__cta-mobile">
-                {notificationCopy.ctaLabel}
-              </span>
-              <span className="subscription-banner__cta-desktop">
+          <p
+            className="
+              truncate text-[13px] font-semibold text-foreground
+              sm:hidden
+            "
+          >
+            {notificationCopy.compactMessage}
+          </p>
+
+          <div
+            className="
+              hidden min-w-0
+              sm:flex sm:items-center sm:gap-2
+            "
+          >
+            <p className="truncate text-sm font-semibold text-foreground">
+              {notificationCopy.desktopMessage}
+            </p>
+            <span
+              className="
+                hidden text-xs text-muted-foreground
+                md:inline
+              "
+            >
+              · {notificationCopy.desktopSupport}
+            </span>
+          </div>
+        </div>
+
+        <div
+          className="
+            flex flex-shrink-0 items-center gap-1.5
+            sm:gap-2
+          "
+        >
+          <Link
+            href="/planes"
+            className="
+              group relative overflow-hidden rounded-full bg-gradient-to-r
+              from-primary via-primary/90 to-primary px-3 py-1.5 text-[11px]
+              font-semibold whitespace-nowrap text-primary-foreground
+              shadow-[0_0_15px_hsl(var(--primary)/0.35)] transition-all
+              hover:scale-[1.04] hover:shadow-[0_0_25px_hsl(var(--primary)/0.6)]
+              sm:px-5 sm:text-sm
+            "
+          >
+            <span className="relative z-10">
+              <span className="sm:hidden">Renovar</span>
+              <span
+                className="
+                hidden
+                sm:inline
+              "
+              >
                 {notificationCopy.ctaLabelDesktop}
               </span>
-            </Link>
+            </span>
+            <span
+              className="
+                absolute inset-0 -translate-x-full bg-gradient-to-r
+                from-transparent via-white/30 to-transparent
+                transition-transform duration-700
+                group-hover:translate-x-full
+              "
+            />
+          </Link>
 
-            <button
-              type="button"
-              className="subscription-banner__close"
-              aria-label="Cerrar notificación"
-              onClick={() => setIsDismissed(true)}
-            >
-              <X className="subscription-banner__close-icon" />
-            </button>
-          </div>
+          <button
+            type="button"
+            className="
+              hidden size-7 items-center justify-center rounded-full
+              text-muted-foreground transition-colors
+              hover:bg-white/10 hover:text-foreground
+              sm:flex
+            "
+            aria-label="Cerrar"
+            onClick={() => setIsDismissed(true)}
+          >
+            <X className="size-4" />
+          </button>
         </div>
       </div>
     </div>

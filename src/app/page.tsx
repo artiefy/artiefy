@@ -153,7 +153,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
       {anuncios.length > 0 && <AnuncioCarrusel anuncios={anuncios} />}
 
       <SmoothGradient />
