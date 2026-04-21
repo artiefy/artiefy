@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -66,6 +66,7 @@ const getNotificationCopy = (
 export function NotificationSubscription() {
   const { user } = useUser();
   const pathname = usePathname();
+  const rootRef = useRef<HTMLDivElement>(null);
   const [notification, setNotification] = useState<NotificationState>(null);
   const [isDismissed, setIsDismissed] = useState(false);
   const isDashboardRoute = pathname?.startsWith('/dashboard');
@@ -111,6 +112,45 @@ export function NotificationSubscription() {
     );
   }, [notification]);
 
+  useEffect(() => {
+    if (isDashboardRoute || !notification || isDismissed) {
+      document.documentElement.style.setProperty(
+        '--subscription-banner-height',
+        '0px'
+      );
+      return;
+    }
+
+    const updateHeight = () => {
+      const height = rootRef.current?.offsetHeight ?? 0;
+      document.documentElement.style.setProperty(
+        '--subscription-banner-height',
+        `${height}px`
+      );
+    };
+
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    if (rootRef.current) {
+      resizeObserver.observe(rootRef.current);
+    }
+
+    window.addEventListener('resize', updateHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', updateHeight);
+      document.documentElement.style.setProperty(
+        '--subscription-banner-height',
+        '0px'
+      );
+    };
+  }, [isDashboardRoute, isDismissed, notification]);
+
   if (isDashboardRoute || !notification || !notificationCopy || isDismissed) {
     return null;
   }
@@ -119,16 +159,14 @@ export function NotificationSubscription() {
 
   return (
     <div
+      ref={rootRef}
       className={`
         artiefy-subscription-root
         severity-${notification.severity}
       `}
       role="alert"
     >
-      <div
-        aria-hidden="true"
-        className="subscription-banner__sweep"
-      />
+      <div aria-hidden="true" className="subscription-banner__sweep" />
       <div className="subscription-banner__line subscription-banner__line--top" />
       <div className="subscription-banner__line subscription-banner__line--bottom" />
       <div

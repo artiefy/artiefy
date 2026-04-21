@@ -1,6 +1,8 @@
 .artiefy-subscription-root {
-  position: relative;
-  z-index: 70;
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  isolation: isolate;
   width: 100%;
   max-width: 100%;
   overflow-x: clip;
@@ -28,25 +30,57 @@
   pointer-events: none;
   position: absolute;
   inset-block: 0;
-  left: -33%;
-  width: 33%;
+  left: -75%;
+  width: 75%;
   background: linear-gradient(
-    90deg,
-    transparent,
-    hsl(var(--primary) / 0.2),
-    transparent
+    105deg,
+    transparent 0%,
+    transparent 22%,
+    hsl(var(--primary) / 0.03) 36%,
+    hsl(var(--primary) / 0.12) 44%,
+    hsl(var(--primary) / 0.32) 50%,
+    hsl(var(--primary) / 0.12) 56%,
+    hsl(var(--primary) / 0.03) 64%,
+    transparent 78%,
+    transparent 100%
   );
-  transform: skewX(12deg);
-  animation: artiefy-subscription-sweep 4.8s linear infinite;
+  opacity: 0.62;
+  mix-blend-mode: screen;
+  filter: blur(6px);
+  transform: translateX(0) skewX(-14deg);
+  z-index: 1;
+  animation: artiefy-subscription-sweep 2.4s linear infinite;
 }
 
 .artiefy-subscription-root.severity-expired .subscription-banner__sweep {
   background: linear-gradient(
-    90deg,
-    transparent,
-    rgb(239 68 68 / 0.18),
-    transparent
+    105deg,
+    transparent 0%,
+    transparent 22%,
+    rgb(239 68 68 / 0.03) 36%,
+    rgb(239 68 68 / 0.1) 44%,
+    rgb(255 120 120 / 0.3) 50%,
+    rgb(239 68 68 / 0.1) 56%,
+    rgb(239 68 68 / 0.03) 64%,
+    transparent 78%,
+    transparent 100%
   );
+}
+
+.artiefy-subscription-root .subscription-banner__sweep::after {
+  content: '';
+  position: absolute;
+  inset: -8% -12%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 42%,
+    rgb(255 255 255 / 0.4) 50%,
+    transparent 58%,
+    transparent 100%
+  );
+  opacity: 0.32;
+  filter: blur(2px);
 }
 
 .artiefy-subscription-root .subscription-banner__line {
@@ -176,11 +210,11 @@
 
 @keyframes artiefy-subscription-sweep {
   from {
-    transform: translateX(0%) skewX(12deg);
+    transform: translateX(0) skewX(-14deg);
   }
 
   to {
-    transform: translateX(420%) skewX(12deg);
+    transform: translateX(290%) skewX(-14deg);
   }
 }
 
