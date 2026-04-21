@@ -94,6 +94,7 @@
     "geist": "^1.7.0",
     "html2canvas": "^1.4.1",
     "intro.js": "^8.3.2",
+    "jspdf": "^4.2.1",
     "jszip": "^3.10.1",
     "lru-cache": "^11.2.7",
     "lucide-react": "^0.577.0",
