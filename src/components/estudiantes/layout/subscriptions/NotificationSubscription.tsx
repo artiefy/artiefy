@@ -204,9 +204,9 @@ export function NotificationSubscription() {
               <span className="sm:hidden">Renovar</span>
               <span
                 className="
-                hidden
-                sm:inline
-              "
+                  hidden
+                  sm:inline
+                "
               >
                 {notificationCopy.ctaLabelDesktop}
               </span>
