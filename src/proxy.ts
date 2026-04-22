@@ -5,6 +5,8 @@ import {
   type ClerkMiddlewareOptions,
 } from '@clerk/nextjs/server';
 
+import { getPrivilegedDashboardRoute, getUserRole } from '~/utils/roles';
+
 function getPathname(req: Request): string {
   return new URL(req.url).pathname;
 }
@@ -19,6 +21,13 @@ function isSuperAdminPath(pathname: string): boolean {
 
 function isEducadorPath(pathname: string): boolean {
   return pathname.startsWith('/dashboard/educadores');
+}
+
+function isLegacyEducadorPath(pathname: string): boolean {
+  return (
+    pathname === '/dashboard/educador' ||
+    pathname.startsWith('/dashboard/educador/')
+  );
 }
 
 function isDashboardPath(pathname: string): boolean {
@@ -79,11 +88,25 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.next();
     }
 
+    if (isLegacyEducadorPath(pathname)) {
+      return NextResponse.redirect(
+        new URL(
+          pathname.replace('/dashboard/educador', '/dashboard/educadores'),
+          req.url
+        )
+      );
+    }
+
     const { userId, sessionClaims } = await auth();
-    const role = sessionClaims?.metadata?.role;
+    const role = getUserRole(sessionClaims?.metadata?.role);
+    const privilegedDashboardRoute = getPrivilegedDashboardRoute(role);
 
     if (isPublicContentPath(pathname)) {
       return NextResponse.next();
+    }
+
+    if (pathname === '/' && userId && privilegedDashboardRoute) {
+      return NextResponse.redirect(new URL(privilegedDashboardRoute, req.url));
     }
 
     if (isProtectedStudentPath(pathname) || isDashboardPath(pathname)) {

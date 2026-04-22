@@ -3216,7 +3216,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   }
 
   // Renderiza el TooltipProvider en el nivel superior del componente
-  return (
+  return _isMounted ? (
     <>
       <Tooltip.Provider>
         <div
@@ -3899,7 +3899,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         }
       `}</style>
     </>
-  );
+  ) : null;
 };
 
 export default StudentChatbot;

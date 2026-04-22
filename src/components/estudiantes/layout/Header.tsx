@@ -380,9 +380,10 @@ export function Header({
   return (
     <nav
       className="
-        sticky top-0 z-[100] mb-8 w-full border-b bg-[#01152d] backdrop-blur-md
+        sticky z-[100] mb-8 w-full border-b bg-[#01152d] backdrop-blur-md
         sm:mb-8
       "
+      style={{ top: 'var(--subscription-banner-height, 0px)' }}
     >
       <Dialog
         open={showEspaciosModal}

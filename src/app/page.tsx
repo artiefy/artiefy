@@ -18,24 +18,14 @@ import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportC
 import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
-
-const getDashboardRoute = (role?: string) => {
-  switch (role) {
-    case 'super-admin':
-      return '/dashboard/super-admin';
-    case 'admin':
-      return '/dashboard/admin';
-    case 'educador':
-      return '/dashboard/educadores';
-    default:
-      return '/estudiantes';
-  }
-};
-const getUserRole = (role: unknown): string | undefined =>
-  typeof role === 'string' ? role : undefined;
+import {
+  getDashboardRouteByRole,
+  getPrivilegedDashboardRoute,
+  getUserRole,
+} from '~/utils/roles';
 
 export default function HomePage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -61,14 +51,13 @@ export default function HomePage() {
   const [postAuthAction, setPostAuthAction] = useState<'dashboard' | null>(
     null
   );
+  const userRole = getUserRole(user?.publicMetadata?.role);
 
   const handleSearchComplete = useCallback(() => {
     setShowChatbot(false);
   }, []);
 
-  const dashboardRoute = getDashboardRoute(
-    getUserRole(user?.publicMetadata?.role)
-  );
+  const dashboardRoute = getDashboardRouteByRole(userRole);
 
   useEffect(() => {
     const fetchAnuncioActivo = async (userId: string) => {
@@ -128,12 +117,24 @@ export default function HomePage() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (!_isSignedIn) return;
+
+    const privilegedDashboardRoute = getPrivilegedDashboardRoute(userRole);
+
+    if (!privilegedDashboardRoute) return;
+
+    setLoading(true);
+    router.replace(privilegedDashboardRoute);
+  }, [_isSignedIn, isLoaded, router, userRole]);
+
   const handlePostAuthAction = useCallback(() => {
     if (postAuthAction !== 'dashboard') return;
     setPostAuthAction(null);
     setLoading(true);
-    router.push(getDashboardRoute(getUserRole(user?.publicMetadata?.role)));
-  }, [postAuthAction, router, user?.publicMetadata?.role]);
+    router.push(getDashboardRouteByRole(userRole));
+  }, [postAuthAction, router, userRole]);
 
   const handleStartNowClick = useCallback(() => {
     setLoading(true);
@@ -152,7 +153,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="relative flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
       {anuncios.length > 0 && <AnuncioCarrusel anuncios={anuncios} />}
 
       <SmoothGradient />

@@ -162,8 +162,8 @@ export default function RootLayout({
 
           <Providers>
             <TourManager />
-            {children}
             <NotificationSubscription />
+            {children}
           </Providers>
           <SpeedInsights />
           <Analytics />
