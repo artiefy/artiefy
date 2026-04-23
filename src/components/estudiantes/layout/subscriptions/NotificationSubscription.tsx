@@ -173,8 +173,8 @@ export function NotificationSubscription() {
         <div className="subscription-banner__line subscription-banner__line--top" />
         <div
           className="
-          subscription-banner__line subscription-banner__line--bottom
-        "
+            subscription-banner__line subscription-banner__line--bottom
+          "
         />
 
         <div
