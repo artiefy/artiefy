@@ -49,7 +49,6 @@ const getNotificationCopy = (
       desktopSupport:
         'Renueva ahora para continuar accediendo a todos los cursos.',
       isPremium,
-      planType,
     };
   }
 
@@ -59,7 +58,6 @@ const getNotificationCopy = (
     desktopMessage: `Tu suscripción ${planType} expira en ${daysLeft} día${pluralSuffix}`,
     desktopSupport: 'Mantén tu acceso ininterrumpido renovando tu plan.',
     isPremium,
-    planType,
   };
 };
 
@@ -70,6 +68,7 @@ export function NotificationSubscription() {
   const [notification, setNotification] = useState<NotificationState>(null);
   const [isDismissed, setIsDismissed] = useState(false);
   const isDashboardRoute = pathname?.startsWith('/dashboard');
+  const shouldRenderSpacer = pathname !== '/';
 
   useEffect(() => {
     if (!user || isDashboardRoute) return;
@@ -158,129 +157,140 @@ export function NotificationSubscription() {
   const PlanIcon = notificationCopy.isPremium ? FaCrown : FaStar;
 
   return (
-    <div
-      ref={rootRef}
-      className={`
-        artiefy-subscription-root
-        severity-${notification.severity}
-      `}
-      role="alert"
-    >
-      <div aria-hidden="true" className="subscription-banner__sweep" />
-      <div className="subscription-banner__line subscription-banner__line--top" />
-      <div className="subscription-banner__line subscription-banner__line--bottom" />
+    <>
+      {shouldRenderSpacer && (
+        <div aria-hidden="true" className="artiefy-subscription-spacer" />
+      )}
       <div
-        className="
-          relative container flex items-center justify-between gap-2 py-2
-          sm:gap-3 sm:px-4 sm:py-2.5
-        "
+        ref={rootRef}
+        className={`
+          artiefy-subscription-root
+          severity-${notification.severity}
+        `}
+        role="alert"
       >
+        <div aria-hidden="true" className="subscription-banner__sweep" />
+        <div className="subscription-banner__line subscription-banner__line--top" />
         <div
           className="
-            flex min-w-0 flex-1 items-center gap-2
-            sm:gap-3
+          subscription-banner__line subscription-banner__line--bottom
+        "
+        />
+
+        <div
+          className="
+            relative container flex items-center justify-between gap-2 py-2
+            sm:gap-3 sm:px-4 sm:py-2.5
           "
         >
           <div
-            className={`
-              subscription-plan-icon
-              ${notificationCopy.isPremium ? 'is-premium' : 'is-pro'}
-              ${notification.severity === 'expired' ? 'is-expired' : ''}
-              ${notification.severity === 'expired' ? 'is-static' : 'is-animated'}
-              flex size-8 flex-shrink-0 items-center justify-center rounded-lg
-              sm:size-9 sm:rounded-xl
-            `}
-          >
-            <PlanIcon
-              className="
-                size-3.5 drop-shadow-[0_0_4px_currentColor]
-                sm:size-4
-              "
-            />
-          </div>
-
-          <p
             className="
-              truncate text-[13px] font-semibold text-foreground
-              sm:hidden
+              flex min-w-0 flex-1 items-center gap-2
+              sm:gap-3
             "
           >
-            {notificationCopy.compactMessage}
-          </p>
+            <div
+              className={`
+                subscription-plan-icon
+                ${notificationCopy.isPremium ? 'is-premium' : 'is-pro'}
+                ${notification.severity === 'expired' ? 'is-expired' : ''}
+                ${notification.severity === 'expired' ? 'is-static' : 'is-animated'}
+                flex size-8 flex-shrink-0 items-center justify-center rounded-lg
+                sm:size-9 sm:rounded-xl
+              `}
+            >
+              <PlanIcon
+                className="
+                  size-3.5 drop-shadow-[0_0_4px_currentColor]
+                  sm:size-4
+                "
+              />
+            </div>
 
-          <div
-            className="
-              hidden min-w-0
-              sm:flex sm:items-center sm:gap-2
-            "
-          >
-            <p className="truncate text-sm font-semibold text-foreground">
-              {notificationCopy.desktopMessage}
-            </p>
-            <span
+            <p
               className="
-                hidden text-xs text-muted-foreground
-                md:inline
+                truncate text-[13px] font-semibold text-foreground
+                sm:hidden
               "
             >
-              · {notificationCopy.desktopSupport}
-            </span>
-          </div>
-        </div>
+              {notificationCopy.compactMessage}
+            </p>
 
-        <div
-          className="
-            flex flex-shrink-0 items-center gap-1.5
-            sm:gap-2
-          "
-        >
-          <Link
-            href="/planes"
-            className="
-              group relative overflow-hidden rounded-full bg-gradient-to-r
-              from-primary via-primary/90 to-primary px-3 py-1.5 text-[11px]
-              font-semibold whitespace-nowrap text-background
-              shadow-[0_0_15px_hsl(var(--primary)/0.35)] transition-all
-              hover:scale-[1.04] hover:shadow-[0_0_25px_hsl(var(--primary)/0.6)]
-              sm:px-5 sm:text-sm
-            "
-          >
-            <span className="relative z-10">
-              <span className="sm:hidden">Renovar</span>
+            <div
+              className="
+                hidden min-w-0
+                sm:flex sm:items-center sm:gap-2
+              "
+            >
+              <p className="truncate text-sm font-semibold text-foreground">
+                {notificationCopy.desktopMessage}
+              </p>
               <span
                 className="
-                  hidden
-                  sm:inline
+                  hidden text-xs text-muted-foreground
+                  md:inline
                 "
               >
-                {notificationCopy.ctaLabelDesktop}
+                · {notificationCopy.desktopSupport}
               </span>
-            </span>
-            <span
-              className="
-                absolute inset-0 -translate-x-full bg-gradient-to-r
-                from-transparent via-white/30 to-transparent
-                transition-transform duration-700
-                group-hover:translate-x-full
-              "
-            />
-          </Link>
+            </div>
+          </div>
 
-          <button
-            type="button"
+          <div
             className="
-              hidden size-7 items-center justify-center rounded-full
-              text-muted-foreground transition-colors
-              hover:bg-white/10 hover:text-foreground
-              sm:flex
+              flex flex-shrink-0 items-center gap-1.5
+              sm:gap-2
             "
-            aria-label="Cerrar"
-            onClick={() => setIsDismissed(true)}
           >
-            <X className="size-4" />
-          </button>
+            <Link
+              href="/planes"
+              className="
+                group relative overflow-hidden rounded-full bg-gradient-to-r
+                from-primary via-primary/90 to-primary px-3 py-1.5 text-[11px]
+                font-semibold whitespace-nowrap text-background
+                shadow-[0_0_15px_hsl(var(--primary)/0.35)] transition-all
+                hover:scale-[1.04]
+                hover:shadow-[0_0_25px_hsl(var(--primary)/0.6)]
+                sm:px-5 sm:text-sm
+              "
+            >
+              <span className="relative z-10">
+                <span className="sm:hidden">Renovar</span>
+                <span
+                  className="
+                    hidden
+                    sm:inline
+                  "
+                >
+                  {notificationCopy.ctaLabelDesktop}
+                </span>
+              </span>
+              <span
+                className="
+                  absolute inset-0 -translate-x-full bg-gradient-to-r
+                  from-transparent via-white/30 to-transparent
+                  transition-transform duration-700
+                  group-hover:translate-x-full
+                "
+              />
+            </Link>
+
+            <button
+              type="button"
+              className="
+                hidden size-7 items-center justify-center rounded-full
+                text-muted-foreground transition-colors
+                hover:bg-white/10 hover:text-foreground
+                sm:flex
+              "
+              aria-label="Cerrar"
+              onClick={() => setIsDismissed(true)}
+            >
+              <X className="size-4" />
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
