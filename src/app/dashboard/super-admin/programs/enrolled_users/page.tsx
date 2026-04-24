@@ -8107,35 +8107,38 @@ export default function EnrolledUsersPage() {
                       const html2canvas = (await import('html2canvas')).default;
 
                       const canvas = await html2canvas(el, {
-                        backgroundColor: '#ffffff',
+                        background: '#ffffff',
                         scale: 2,
                         useCORS: true,
                         allowTaint: false,
                         logging: false,
-                        onclone: (clonedDoc) => {
-                          // Strip all stylesheets from the clone to avoid lab() colors
-                          Array.from(clonedDoc.styleSheets).forEach((sheet) => {
-                            try {
-                              // Remove all rules that contain lab( or oklch( or color-mix(
-                              const rules = Array.from(sheet.cssRules ?? []);
-                              for (let i = rules.length - 1; i >= 0; i--) {
-                                const text = rules[i]?.cssText ?? '';
-                                if (
-                                  /\blab\(|\boklch\(|\bcolor-mix\(|\blch\(|\boklab\(/.test(
-                                    text
-                                  )
-                                ) {
-                                  sheet.deleteRule(i);
+                        onclone: (
+                          _clonedWindow: Window,
+                          clonedDoc: Document
+                        ) => {
+                          Array.from(clonedDoc.styleSheets).forEach(
+                            (sheet: CSSStyleSheet) => {
+                              try {
+                                const rules = Array.from(sheet.cssRules);
+                                for (let i = rules.length - 1; i >= 0; i--) {
+                                  const rule = rules[i] as CSSRule;
+                                  const text = rule.cssText ?? '';
+                                  if (
+                                    /\blab\(|\boklch\(|\bcolor-mix\(|\blch\(|\boklab\(/.test(
+                                      text
+                                    )
+                                  ) {
+                                    sheet.deleteRule(i);
+                                  }
                                 }
+                              } catch {
+                                // Cross-origin stylesheets throw on cssRules access — ignore
                               }
-                            } catch {
-                              // Cross-origin stylesheets throw on cssRules access — ignore
                             }
-                          });
+                          );
 
-                          // Forzar todos los elementos a blanco y negro en el clon
                           const allEls = clonedDoc.querySelectorAll('*');
-                          allEls.forEach((node) => {
+                          allEls.forEach((node: Element) => {
                             if (node instanceof HTMLElement) {
                               node.style.setProperty(
                                 'color',
@@ -8170,7 +8173,7 @@ export default function EnrolledUsersPage() {
                             }
                           });
                         },
-                      });
+                      } as Parameters<typeof html2canvas>[1]);
 
                       canvas.toBlob(async (blob) => {
                         if (!blob) return;
