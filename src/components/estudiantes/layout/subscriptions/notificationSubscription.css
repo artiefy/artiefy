@@ -1,6 +1,12 @@
+.artiefy-subscription-spacer {
+  height: var(--subscription-banner-height, 0px);
+}
+
 .artiefy-subscription-root {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 80;
   isolation: isolate;
   width: 100%;
