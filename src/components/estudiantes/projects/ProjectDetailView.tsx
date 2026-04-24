@@ -1,4 +1,3 @@
-/* eslint-disable better-tailwindcss/enforce-consistent-line-wrapping */
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
