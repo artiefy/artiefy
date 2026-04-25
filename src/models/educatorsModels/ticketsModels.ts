@@ -30,18 +30,23 @@ export async function createTicket({
   userId: string;
 }) {
   try {
-    return db.insert(tickets).values({
-      description,
-      comments, // <-- también faltaba comments
-      coverImageKey: coverImageKey || null,
-      estado: 'abierto',
-      email,
-      creatorId: userId, // <-- corregido aquí
-      tipo: 'otro', // <-- falta en tu insert porque "tipo" es obligatorio en la tabla
-      title: 'Ticket de soporte', // <-- título por defecto
-    });
+    const result = await db
+      .insert(tickets)
+      .values({
+        description,
+        comments,
+        coverImageKey: coverImageKey || null,
+        estado: 'abierto',
+        email,
+        creatorId: userId,
+        tipo: 'otro',
+        title: 'Ticket de soporte',
+      })
+      .returning();
+    return result?.[0] ?? null;
   } catch (error) {
     console.error('Error al crear el ticket:', error);
+    return null;
   }
 }
 

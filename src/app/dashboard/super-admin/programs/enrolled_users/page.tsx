@@ -198,11 +198,11 @@ interface Student {
   carteraStatus?: 'activo' | 'inactivo' | 'no verificado';
   enrollmentStatus?:
     | 'Nuevo'
+    | 'Estudiante'
     | 'Graduando'
     | 'Egresado'
     | 'Aplaza'
-    | 'Retirado'
-    | 'Estudiante';
+    | 'Retirado';
   userInscriptionDetails?: Record<string, unknown>;
 }
 
@@ -395,11 +395,11 @@ const allColumns: Column[] = [
     type: 'select',
     options: [
       'Nuevo',
+      'Estudiante',
       'Graduando',
       'Egresado',
       'Aplaza',
       'Retirado',
-      'Estudiante',
     ],
   },
   {
@@ -1605,11 +1605,11 @@ export default function EnrolledUsersPage() {
   const enrollmentStatusOptions = useMemo(
     () => [
       'Nuevo',
+      'Estudiante',
       'Graduando',
       'Egresado',
       'Aplaza',
       'Retirado',
-      'Estudiante',
     ],
     []
   );
@@ -2668,11 +2668,11 @@ export default function EnrolledUsersPage() {
 
           const validEnrollmentStatuses = [
             'Nuevo',
+            'Estudiante',
             'Graduando',
             'Egresado',
             'Aplaza',
             'Retirado',
-            'Estudiante',
           ];
           const trimmedEnrollmentStatus = (s.enrollmentStatus ?? '')
             .toString()
@@ -2682,11 +2682,11 @@ export default function EnrolledUsersPage() {
           )
             ? (trimmedEnrollmentStatus as
                 | 'Nuevo'
+                | 'Estudiante'
                 | 'Graduando'
                 | 'Egresado'
                 | 'Aplaza'
-                | 'Retirado'
-                | 'Estudiante')
+                | 'Retirado')
             : 'Nuevo';
 
           const obj: Student = {

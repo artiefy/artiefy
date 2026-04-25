@@ -282,11 +282,11 @@ export async function updateEnrollmentStatus(
   id: string,
   enrollmentStatus:
     | 'Nuevo'
+    | 'Estudiante'
     | 'Graduando'
     | 'Egresado'
     | 'Aplaza'
     | 'Retirado'
-    | 'Estudiante'
 ) {
   try {
     await db
@@ -714,11 +714,11 @@ export interface FullUserUpdateInput {
   carteraStatus?: string | null;
   enrollmentStatus?:
     | 'Nuevo'
+    | 'Estudiante'
     | 'Graduando'
     | 'Egresado'
     | 'Aplaza'
     | 'Retirado'
-    | 'Estudiante'
     | null;
   // matriculas
   programId?: number | null;
@@ -984,29 +984,29 @@ export async function updateFullUser(
 
         enrollmentStatus: (():
           | 'Nuevo'
+          | 'Estudiante'
           | 'Graduando'
           | 'Egresado'
           | 'Aplaza'
           | 'Retirado'
-          | 'Estudiante'
           | null => {
           const validStatuses = [
             'Nuevo',
+            'Estudiante',
             'Graduando',
             'Egresado',
             'Aplaza',
             'Retirado',
-            'Estudiante',
           ];
           const trimmed = (enrollmentStatus ?? '').toString().trim();
           if (trimmed && validStatuses.includes(trimmed)) {
             return trimmed as
               | 'Nuevo'
+              | 'Estudiante'
               | 'Graduando'
               | 'Egresado'
               | 'Aplaza'
-              | 'Retirado'
-              | 'Estudiante';
+              | 'Retirado';
           }
           return null;
         })(),
