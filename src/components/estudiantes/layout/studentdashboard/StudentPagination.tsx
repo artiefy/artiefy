@@ -101,8 +101,8 @@ const StudentPagination = ({
   return (
     <div
       className="
-      div-pagination flex flex-col items-center justify-between space-y-4 py-8
-    "
+        div-pagination flex flex-col items-center justify-between space-y-4 py-8
+      "
     >
       <p className="text-sm text-gray-600">
         Mostrando {startItem}-{endItem} de {totalCourses} cursos

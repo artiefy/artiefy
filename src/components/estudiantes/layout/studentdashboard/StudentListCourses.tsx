@@ -739,7 +739,7 @@ export default function StudentListCourses({
         </div>
         <CourseSortControl
           value={sortValue}
-          onSortChange={(nextSort) => {
+          onSortChange={(nextSort: CourseSortValue) => {
             setSortValue(nextSort);
             setPageValue(1);
           }}
@@ -761,28 +761,28 @@ export default function StudentListCourses({
           const cardContent = (
             <div
               className={`
-                  artiefy-course-card zoom-in relative flex h-full flex-col
-                  overflow-hidden rounded-2xl border border-border/50 bg-card
-                  text-foreground transition-all duration-300
-                  ${
-                    course.isActive
-                      ? `
-                        cursor-pointer
-                        hover:-translate-y-1 hover:border-primary/30
-                        hover:shadow-[0_8px_32px_hsl(var(--primary)/0.15)]
-                      `
-                      : 'cursor-not-allowed'
-                  }
-                `}
+                artiefy-course-card zoom-in relative flex h-full flex-col
+                overflow-hidden rounded-2xl border border-border/50 bg-card
+                text-foreground transition-all duration-300
+                ${
+                  course.isActive
+                    ? `
+                      cursor-pointer
+                      hover:-translate-y-1 hover:border-primary/30
+                      hover:shadow-[0_8px_32px_hsl(var(--primary)/0.15)]
+                    `
+                    : 'cursor-not-allowed'
+                }
+              `}
             >
               <div className="relative h-40 overflow-hidden">
                 <Image
                   src={imageUrl}
                   alt={course.title || 'Imagen del curso'}
                   className="
-                      size-full object-cover transition-transform duration-500
-                      group-hover:scale-110
-                    "
+                    size-full object-cover transition-transform duration-500
+                    group-hover:scale-110
+                  "
                   fill
                   placeholder="empty"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -790,16 +790,16 @@ export default function StudentListCourses({
                 />
                 <div
                   className="
-                      absolute inset-0 bg-gradient-to-t from-card via-card/20
-                      to-transparent
-                    "
+                    absolute inset-0 bg-gradient-to-t from-card via-card/20
+                    to-transparent
+                  "
                 />
                 <span
                   className="
-                      absolute bottom-3 left-3 rounded-full border
-                      border-primary/30 bg-primary/20 px-3 py-1 text-[11px]
-                      font-semibold text-primary backdrop-blur-sm
-                    "
+                    absolute bottom-3 left-3 rounded-full border
+                    border-primary/30 bg-primary/20 px-3 py-1 text-[11px]
+                    font-semibold text-primary backdrop-blur-sm
+                  "
                 >
                   {categoryLabel}
                 </span>
@@ -808,10 +808,10 @@ export default function StudentListCourses({
               <div className="flex flex-1 flex-col gap-2 p-4">
                 <h3
                   className="
-                      line-clamp-2 text-base leading-snug font-bold
-                      text-foreground transition-colors duration-200
-                      group-hover:text-primary
-                    "
+                    line-clamp-2 text-base leading-snug font-bold
+                    text-foreground transition-colors duration-200
+                    group-hover:text-primary
+                  "
                 >
                   {course.title}
                 </h3>
@@ -831,17 +831,17 @@ export default function StudentListCourses({
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className="
-                        rounded-full border border-accent/20 bg-accent/10 px-2.5
-                        py-0.5 text-[10px] font-medium text-accent
-                      "
+                      rounded-full border border-accent/20 bg-accent/10 px-2.5
+                      py-0.5 text-[10px] font-medium text-accent
+                    "
                   >
                     {modalidadLabel}
                   </span>
                   <span
                     className="
-                        rounded-full border border-white/10 bg-white/8 px-2.5
-                        py-0.5 text-[10px] font-medium text-foreground/90
-                      "
+                      rounded-full border border-white/10 bg-white/8 px-2.5
+                      py-0.5 text-[10px] font-medium text-foreground/90
+                    "
                   >
                     {nivelLabel}
                   </span>
@@ -849,35 +849,35 @@ export default function StudentListCourses({
 
                 <div
                   className="
-                      mt-auto flex items-center justify-between pt-2 text-xs
-                      text-muted-foreground
-                    "
+                    mt-auto flex items-center justify-between pt-2 text-xs
+                    text-muted-foreground
+                  "
                 >
                   {hasLiveClass && nextLiveClassDate ? (
                     <span className="flex items-center gap-1">
                       <span
                         className="
-                            relative mr-0.5 flex size-2 items-center
-                            justify-center
-                          "
+                          relative mr-0.5 flex size-2 items-center
+                          justify-center
+                        "
                       >
                         <span
                           className="
-                              absolute inline-flex size-3 animate-ping
-                              rounded-full bg-red-500/45 blur-[1px]
-                            "
+                            absolute inline-flex size-3 animate-ping
+                            rounded-full bg-red-500/45 blur-[1px]
+                          "
                         />
                         <span
                           className="
-                              absolute inline-flex size-2.5 animate-pulse
-                              rounded-full bg-red-500/50
-                            "
+                            absolute inline-flex size-2.5 animate-pulse
+                            rounded-full bg-red-500/50
+                          "
                         />
                         <span
                           className="
-                              relative inline-flex size-2 rounded-full
-                              bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.9)]
-                            "
+                            relative inline-flex size-2 rounded-full bg-red-500
+                            shadow-[0_0_10px_rgba(239,68,68,0.9)]
+                          "
                         />
                       </span>
                       <CalendarDays className="size-3.5 text-primary/60" />
@@ -890,9 +890,9 @@ export default function StudentListCourses({
                   )}
                   <span
                     className="
-                        flex items-center gap-1 font-semibold
-                        text-[hsl(45,100%,60%)]
-                      "
+                      flex items-center gap-1 font-semibold
+                      text-[hsl(45,100%,60%)]
+                    "
                   >
                     <FaStar className="size-3.5 fill-[hsl(45,100%,60%)]" />
                     {(course.rating ?? 0).toFixed(1)}
@@ -912,9 +912,9 @@ export default function StudentListCourses({
                   href={`/estudiantes/cursos/${course.id}`}
                   aria-label={`Ver detalles del curso ${course.title}`}
                   className={`
-                      group
-                      ${cardWrapperClass}
-                    `}
+                    group
+                    ${cardWrapperClass}
+                  `}
                 >
                   {cardContent}
                 </Link>
@@ -923,10 +923,10 @@ export default function StudentListCourses({
                   {cardContent}
                   <div
                     className="
-                        pointer-events-none absolute inset-0 flex items-center
-                        justify-center rounded-2xl bg-black/40 text-lg
-                        font-semibold
-                      "
+                      pointer-events-none absolute inset-0 flex items-center
+                      justify-center rounded-2xl bg-black/40 text-lg
+                      font-semibold
+                    "
                   >
                     Muy pronto
                   </div>
