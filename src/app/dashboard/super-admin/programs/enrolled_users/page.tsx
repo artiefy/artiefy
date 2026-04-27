@@ -8175,30 +8175,103 @@ export default function EnrolledUsersPage() {
                         },
                       } as Parameters<typeof html2canvas>[1]);
 
+                      // Convert to blob for multiple export options
                       canvas.toBlob(async (blob: Blob | null) => {
-                        if (!blob) return;
+                        if (!blob) {
+                          setInfoDialogTitle('Error');
+                          setInfoDialogMessage('No se pudo generar la imagen');
+                          setInfoDialogOpen(true);
+                          return;
+                        }
+
+                        // Create object URL for downloads
+                        const objectUrl = URL.createObjectURL(blob);
+                        const fileName = `factura-${currentUser?.name || 'estudiante'}-${new Date().toISOString().split('T')[0]}.png`;
+
+                        // Strategy 1: Try clipboard copy (PC & some mobile)
                         let copied = false;
                         try {
                           await navigator.clipboard.write([
                             new window.ClipboardItem({ 'image/png': blob }),
                           ]);
                           copied = true;
-                        } catch (err) {
-                          console.error('Error al copiar imagen:', err);
+                        } catch {
+                          // Clipboard not available
                         }
-                        setInfoDialogTitle('Factura copiada');
-                        setInfoDialogMessage(
-                          copied
-                            ? 'Factura copiada al portapapeles. Ahora puedes pegarla en cualquier chat, correo o documento.'
-                            : 'Factura generada como imagen. Si no puedes pegarla, intenta actualizar tu navegador o usa la función de imprimir/guardar PDF.'
-                        );
-                        setInfoDialogOpen(true);
+
+                        // Strategy 2: Check if Web Share API is available (mobile)
+                        const canShare =
+                          typeof navigator !== 'undefined' &&
+                          'share' in navigator &&
+                          typeof (
+                            navigator as unknown as {
+                              share?: (data: {
+                                files?: File[];
+                              }) => Promise<void>;
+                            }
+                          ).share === 'function';
+
+                        // Strategy 3: Always provide download link
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = objectUrl;
+                        downloadLink.download = fileName;
+
+                        if (copied) {
+                          // PC: clipboard worked
+                          setInfoDialogTitle('✅ Factura copiada');
+                          setInfoDialogMessage(
+                            'La factura se ha copiado al portapapeles. Puedes pegarla en cualquier chat, correo o documento.'
+                          );
+                          setInfoDialogOpen(true);
+                        } else if (canShare && window.innerWidth < 768) {
+                          // Mobile: use Web Share API
+                          try {
+                            const file = new File([blob], fileName, {
+                              type: 'image/png',
+                            });
+                            await (
+                              navigator as unknown as {
+                                share: (data: {
+                                  files: File[];
+                                  title: string;
+                                }) => Promise<void>;
+                              }
+                            ).share({
+                              files: [file],
+                              title: 'Factura de matrícula',
+                            });
+                            setInfoDialogTitle('✅ Factura compartida');
+                            setInfoDialogMessage(
+                              'La factura se ha compartido correctamente.'
+                            );
+                            setInfoDialogOpen(true);
+                          } catch {
+                            // Fallback to download
+                            downloadLink.click();
+                            setInfoDialogTitle('📥 Factura descargada');
+                            setInfoDialogMessage(
+                              'La factura se ha descargado como imagen. Puedes compartirla desde tus archivos.'
+                            );
+                            setInfoDialogOpen(true);
+                          }
+                        } else {
+                          // Default: download directly
+                          downloadLink.click();
+                          setInfoDialogTitle('📥 Factura descargada');
+                          setInfoDialogMessage(
+                            'La factura se ha descargado como imagen PNG. Puedes compartirla desde tus archivos o usar "Imprimir / Guardar PDF" para obtener un PDF.'
+                          );
+                          setInfoDialogOpen(true);
+                        }
+
+                        // Cleanup
+                        setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
                       }, 'image/png');
                     } catch (err) {
                       console.error('Error en html2canvas:', err);
                       setInfoDialogTitle('No se pudo copiar');
                       setInfoDialogMessage(
-                        'No se pudo copiar la imagen. Intenta actualizar tu navegador o usa la función de imprimir/guardar PDF.'
+                        'No se pudo generar la imagen. Intenta usar "Imprimir / Guardar PDF".'
                       );
                       setInfoDialogOpen(true);
                     } finally {
@@ -8218,7 +8291,7 @@ export default function EnrolledUsersPage() {
                     dark:hover:bg-blue-600
                   "
                 >
-                  Copiar imagen
+                  📤 Compartir / Descargar
                 </button>
 
                 <button
