@@ -5127,32 +5127,47 @@ export default function EnrolledUsersPage() {
         {showPhoneModal && (
           <div
             className="
-              bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center
-              p-4 backdrop-blur-md
+              fixed inset-0 z-50 flex items-end
+              justify-center
+              bg-black/80 sm:items-center
             "
           >
             <div
               className="
-                relative max-h-screen w-full max-w-3xl overflow-y-auto
-                rounded-lg bg-gray-900 p-6 text-white shadow-2xl
+                h-[95vh] w-full
+                overflow-y-auto rounded-t-3xl bg-gray-900
+                p-4 text-white
+                shadow-2xl
+                sm:h-auto sm:max-h-[90vh]
+                sm:max-w-2xl
+                sm:rounded-lg sm:p-6
               "
             >
               <button
                 onClick={() => setShowPhoneModal(false)}
                 className="
-                  absolute top-4 right-4 text-white
-                  hover:text-red-500
+                  absolute top-4 right-4 inline-flex size-10 items-center
+                  justify-center rounded-full bg-gray-800 text-white transition
+                  hover:bg-red-600
                 "
+                aria-label="Cerrar modal"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
 
-              <h2 className="mb-6 text-center text-3xl font-bold">
+              <h2
+                className="
+                mb-6 pr-12 text-center text-2xl
+                font-bold
+                sm:text-3xl
+              "
+              >
                 Enviar Correo y/o WhatsApp
               </h2>
 
               {/* Tabs para Email y WhatsApp */}
               <div className="mb-6 flex gap-2 border-b border-gray-700">
+                \n{' '}
                 <button
                   onClick={() => setSendWhatsapp(false)}
                   className={`
@@ -5257,26 +5272,36 @@ export default function EnrolledUsersPage() {
                   </div>
 
                   {/* Asunto y Mensaje */}
-                  <div>
+                  <div className="space-y-3">
                     <input
                       type="text"
                       placeholder="Asunto"
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
-                      className="mb-2 w-full rounded bg-gray-800 p-2"
+                      className="
+                        w-full rounded-lg border border-gray-700 bg-gray-800
+                        px-4 py-3 text-white placeholder-gray-500 transition
+                        focus:border-blue-500 focus:ring-2
+                        focus:ring-blue-500/20 focus:outline-none
+                      "
                     />
                     <textarea
                       placeholder="Mensaje"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      className="w-full rounded bg-gray-800 p-2"
+                      className="
+                        w-full rounded-lg border border-gray-700 bg-gray-800
+                        px-4 py-3 text-white placeholder-gray-500 transition
+                        focus:border-blue-500 focus:ring-2
+                        focus:ring-blue-500/20 focus:outline-none
+                      "
                       rows={5}
                     />
                   </div>
 
                   {/* Adjuntos */}
                   <div>
-                    <label className="mb-2 block text-sm font-semibold">
+                    <label className="mb-3 block text-sm font-semibold">
                       Adjuntos (opcional)
                     </label>
                     <input
@@ -5291,16 +5316,18 @@ export default function EnrolledUsersPage() {
                       className="text-sm text-gray-300"
                     />
                     {attachments.length > 0 && (
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-3 space-y-2">
                         {attachments.map((file, idx) => (
                           <div
                             key={idx}
                             className="
-                              flex items-center justify-between rounded
-                              bg-gray-800 p-2
+                              flex items-center justify-between rounded-lg
+                              border border-gray-700 bg-gray-800 px-3 py-2
                             "
                           >
-                            <span className="text-sm">{file.name}</span>
+                            <span className="truncate text-sm">
+                              {file.name}
+                            </span>
                             <button
                               onClick={() =>
                                 setAttachments((prev) =>
@@ -5308,7 +5335,7 @@ export default function EnrolledUsersPage() {
                                 )
                               }
                               className="
-                                text-red-400
+                                ml-2 shrink-0 text-red-400 transition
                                 hover:text-red-600
                               "
                             >
@@ -5321,13 +5348,21 @@ export default function EnrolledUsersPage() {
                   </div>
 
                   {/* Botón enviar correo */}
-                  <div className="mt-6 flex justify-center gap-4">
+                  <div
+                    className="
+                    mt-6 flex flex-col gap-2
+                    sm:flex-row sm:justify-center
+                  "
+                  >
                     <button
                       onClick={sendEmail}
                       className="
-                        rounded bg-blue-600 px-6 py-3 font-semibold text-white
+                        w-full rounded-lg bg-blue-600 px-6 py-3 font-semibold
+                        text-white transition
                         hover:bg-blue-700
+                        active:scale-95
                         disabled:opacity-50
+                        sm:w-auto
                       "
                       disabled={loadingEmail}
                     >
@@ -5336,8 +5371,11 @@ export default function EnrolledUsersPage() {
                     <button
                       onClick={() => setShowPhoneModal(false)}
                       className="
-                        rounded bg-gray-700 px-6 py-3 font-semibold text-white
+                        w-full rounded-lg bg-gray-700 px-6 py-3 font-semibold
+                        text-white transition
                         hover:bg-gray-600
+                        active:scale-95
+                        sm:w-auto
                       "
                     >
                       Cerrar
@@ -5358,7 +5396,12 @@ export default function EnrolledUsersPage() {
                       placeholder="+57"
                       value={codigoPais}
                       onChange={(e) => setCodigoPais(e.target.value)}
-                      className="w-full rounded border bg-gray-800 p-2"
+                      className="
+                        w-full rounded-lg border border-gray-700 bg-gray-800
+                        px-4 py-3 text-white placeholder-gray-500 transition
+                        focus:border-green-500 focus:ring-2
+                        focus:ring-green-500/20 focus:outline-none
+                      "
                     />
                   </div>
 
@@ -5370,7 +5413,12 @@ export default function EnrolledUsersPage() {
                       placeholder="3001234567, 3007654321"
                       value={numerosLocales}
                       onChange={(e) => setNumerosLocales(e.target.value)}
-                      className="w-full rounded border bg-gray-800 p-2"
+                      className="
+                        w-full rounded-lg border border-gray-700 bg-gray-800
+                        px-4 py-3 text-white placeholder-gray-500 transition
+                        focus:border-green-500 focus:ring-2
+                        focus:ring-green-500/20 focus:outline-none
+                      "
                       rows={3}
                     />
                   </div>
@@ -5385,7 +5433,12 @@ export default function EnrolledUsersPage() {
                         placeholder="3001234567"
                         value={newManualPhone}
                         onChange={(e) => setNewManualPhone(e.target.value)}
-                        className="flex-1 rounded border bg-gray-800 p-2"
+                        className="
+                          flex-1 rounded-lg border border-gray-700 bg-gray-800
+                          px-4 py-3 text-white placeholder-gray-500 transition
+                          focus:border-green-500 focus:ring-2
+                          focus:ring-green-500/20 focus:outline-none
+                        "
                       />
                       <button
                         onClick={() => {
@@ -5399,8 +5452,10 @@ export default function EnrolledUsersPage() {
                           }
                         }}
                         className="
-                          rounded bg-green-600 px-4 py-2 font-semibold
+                          rounded-lg bg-green-600 px-4 py-3 font-semibold
+                          transition
                           hover:bg-green-700
+                          active:scale-95
                         "
                       >
                         ➕ Agregar
@@ -5520,31 +5575,45 @@ export default function EnrolledUsersPage() {
                       placeholder="Mensaje"
                       value={waMessageText}
                       onChange={(e) => setWaMessageText(e.target.value)}
-                      className="w-full rounded bg-gray-800 p-2"
+                      className="
+                        w-full rounded-lg border border-gray-700 bg-gray-800
+                        px-4 py-3 text-white placeholder-gray-500 transition
+                        focus:border-green-500 focus:ring-2
+                        focus:ring-green-500/20 focus:outline-none
+                      "
                       rows={5}
                     />
                   </div>
 
                   {/* Botón enviar WhatsApp */}
-                  <div className="mt-6 flex justify-center gap-4">
+                  <div
+                    className="
+                    mt-6 flex flex-col gap-2
+                    sm:flex-row sm:justify-center
+                  "
+                  >
                     <button
                       onClick={sendWhatsApp}
                       className="
-                        rounded bg-green-600 px-6 py-3 font-semibold text-white
+                        w-full rounded-lg bg-green-600 px-6 py-3 font-semibold
+                        text-white transition
                         hover:bg-green-700
+                        active:scale-95
                         disabled:opacity-50
+                        sm:w-auto
                       "
                       disabled={loadingWhatsApp}
                     >
-                      {loadingWhatsApp
-                        ? '⏳ Enviando...'
-                        : '💬 Enviar WhatsApp'}
+                      {loadingWhatsApp ? '⏳ Enviando...' : '💬 WhatsApp'}
                     </button>
                     <button
                       onClick={() => setShowPhoneModal(false)}
                       className="
-                        rounded bg-gray-700 px-6 py-3 font-semibold text-white
+                        w-full rounded-lg bg-gray-700 px-6 py-3 font-semibold
+                        text-white transition
                         hover:bg-gray-600
+                        active:scale-95
+                        sm:w-auto
                       "
                     >
                       Cerrar
@@ -6218,50 +6287,59 @@ export default function EnrolledUsersPage() {
         {showCarteraModal && currentUser && (
           <div
             className="
-              showCarteraModal fixed inset-0 z-50 flex items-center
-              justify-center bg-black/80 p-4
+              showCarteraModal fixed inset-0 z-50 flex items-end
+              justify-center
+              bg-black/80 sm:items-center
             "
           >
             <div
               className="
-                max-h-[90vh] w-full max-w-[min(100vw-1rem,72rem)]
-                overflow-y-auto rounded-lg bg-white text-gray-900 shadow-2xl
+                h-[95vh] w-full
+                overflow-y-auto rounded-t-3xl bg-white
+                text-gray-900 shadow-2xl
+                sm:h-auto
+                sm:max-h-[90vh] sm:max-w-[min(100vw-1rem,72rem)] sm:rounded-lg
                 dark:bg-gray-800 dark:text-gray-100
               "
             >
               {/* CABECERA / LOGOS */}
               <div
                 className="
-                  border-b border-gray-200 p-4
+                  sticky top-0 border-b border-gray-200 bg-white p-3
                   sm:p-6
-                  dark:border-gray-700
+                  dark:border-gray-700 dark:bg-gray-800
                 "
               >
                 <div
                   className="
-                    flex flex-col items-center justify-between gap-4
-                    sm:flex-row
+                    flex flex-col gap-3
+                    sm:flex-row sm:items-center sm:justify-between
                   "
                 >
-                  {/* Logos: Artiefy primero */}
-                  <div className="flex items-center gap-4">
+                  {/* Logos: más compactos en móvil */}
+                  <div
+                    className="
+                    flex items-center gap-2
+                    sm:gap-4
+                  "
+                  >
                     <Image
                       src="/artiefy-logo.png"
                       alt="Artiefy"
-                      width={160}
-                      height={48}
+                      width={140}
+                      height={42}
                       className="
-                        h-10 w-auto object-contain
+                        h-8 w-auto object-contain
                         sm:h-12
                       "
                     />
                     <Image
                       src="/logo-ponao.png"
                       alt="PONAO"
-                      width={160}
-                      height={48}
+                      width={140}
+                      height={42}
                       className="
-                        h-10 w-auto object-contain
+                        h-8 w-auto object-contain
                         sm:h-12
                       "
                     />
@@ -6275,104 +6353,226 @@ export default function EnrolledUsersPage() {
                   >
                     <p
                       className="
-                        text-xs font-semibold tracking-wide text-gray-500
+                        text-[11px] font-semibold tracking-wide text-gray-500
+                        sm:text-xs
                         dark:text-gray-300
                       "
                     >
                       POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
                     </p>
-                    <h3 className="text-lg font-bold">
-                      FACTURA PAGO DE MATRÍCULA
+                    <h3
+                      className="
+                      text-base font-bold
+                      sm:text-lg
+                    "
+                    >
+                      FACTURA PAGO
                     </h3>
                   </div>
                 </div>
               </div>
 
-              {/* INFO INSTITUCIÓN / ESTUDIANTE */}
+              {/* INFO INSTITUCIÓN / ESTUDIANTE - CARDS */}
               <div
                 className="
-                  grid grid-cols-1 gap-4 border-b border-gray-200 p-4 text-sm
-                  sm:grid-cols-2 sm:p-6
+                  grid grid-cols-2 gap-2 border-b border-gray-200 p-3
+                  sm:grid-cols-3 sm:gap-3 sm:p-6
+                  lg:grid-cols-4
                   dark:border-gray-700
                 "
               >
-                <div className="space-y-1">
-                  <p>
-                    <span className="font-semibold">NOMBRE ESTUDIANTE: </span>
-                    {currentUser.name ?? '-'}
-                  </p>
-                  <p>
-                    <span className="font-semibold">CC: </span>
-                    {currentUser.document ?? currentUser.id ?? '-'}
-                  </p>
-                  <p>
-                    <span className="font-semibold">CELULAR: </span>
-                    {currentUser.phone ?? '-'}
-                  </p>
-                  <p>
-                    <span className="font-semibold">PROGRAMA: </span>
-                    {userPrograms?.[0]?.title ?? '—'}
-                    <span
-                      className="
-                        ml-2 rounded bg-gray-200 px-2 py-0.5 text-xs font-medium
-                        text-gray-700
-                        dark:bg-gray-700 dark:text-gray-100
-                      "
-                    >
-                      {currentUser.modalidad ?? 'virtual'}
-                    </span>
-                  </p>
-                  <p>
-                    <span className="font-semibold">FECHA: </span>
-                    {new Date().toISOString().split('T')[0]}
-                  </p>
-                </div>
-
                 <div
                   className="
-                    space-y-1
-                    sm:text-right
-                  "
+                  rounded-lg bg-blue-50 p-2.5
+                  dark:bg-blue-900/20
+                "
                 >
-                  <p>
-                    <span className="font-semibold">DIRECCIÓN: </span>
-                    {currentUser.address ?? '-'}
+                  <p
+                    className="
+                    text-xs font-medium text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
+                    NOMBRE
                   </p>
-                  <p>
-                    <span className="font-semibold">CIUDAD: </span>
+                  <p
+                    className="
+                    mt-1 truncate text-sm font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
+                    {currentUser.name ?? '-'}
+                  </p>
+                </div>
+                <div
+                  className="
+                  rounded-lg bg-purple-50 p-2.5
+                  dark:bg-purple-900/20
+                "
+                >
+                  <p
+                    className="
+                    text-xs font-medium text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
+                    CC
+                  </p>
+                  <p
+                    className="
+                    mt-1 truncate text-sm font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
+                    {currentUser.document ?? currentUser.id ?? '-'}
+                  </p>
+                </div>
+                \n{' '}
+                <div className="rounded-lg bg-green-50 p-2.5 dark:bg-green-900/20">
+                  <p
+                    className="
+                    text-xs font-medium text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
+                    CELULAR
+                  </p>
+                  <p
+                    className="
+                    mt-1 truncate text-sm font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
+                    {currentUser.phone ?? '-'}
+                  </p>
+                </div>
+                <div
+                  className="
+                  rounded-lg bg-orange-50 p-2.5
+                  dark:bg-orange-900/20
+                "
+                >
+                  <p
+                    className="
+                    text-xs font-medium text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
+                    MODALIDAD
+                  </p>
+                  <p
+                    className="
+                    mt-1 text-sm font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
+                    {currentUser.modalidad ?? 'virtual'}
+                  </p>
+                </div>
+                <div
+                  className="
+                  col-span-2 rounded-lg bg-red-50 p-2.5
+                  sm:col-span-1
+                  dark:bg-red-900/20
+                "
+                >
+                  <p
+                    className="
+                    text-xs font-medium text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
+                    ESTADO
+                  </p>
+                  <p
+                    className={`
+                    mt-1 text-sm font-semibold
+                    ${
+                      currentUser.carteraStatus === 'activo'
+                        ? `
+                        text-green-600
+                        dark:text-green-400
+                      `
+                        : `
+                        text-red-600
+                        dark:text-red-400
+                      `
+                    }
+                  `}
+                  >
+                    {currentUser.carteraStatus === 'activo'
+                      ? 'Al día'
+                      : 'En cartera'}
+                  </p>
+                </div>
+                <div
+                  className="
+                  rounded-lg bg-indigo-50 p-2.5
+                  dark:bg-indigo-900/20
+                "
+                >
+                  <p
+                    className="
+                    text-xs font-medium text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
+                    CIUDAD
+                  </p>
+                  <p
+                    className="
+                    mt-1 truncate text-sm font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
                     {currentUser.city ?? '-'}
                   </p>
-                  <p>
-                    <span className="font-semibold">EMAIL: </span>
-                    {currentUser.email ?? '-'}
+                </div>
+                <div
+                  className="
+                  rounded-lg bg-yellow-50 p-2.5
+                  dark:bg-yellow-900/20
+                "
+                >
+                  <p
+                    className="
+                    text-xs font-medium text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
+                    DIRECCIÓN
                   </p>
-                  <p>
-                    <span className="font-semibold">ESTADO: </span>
-                    <strong
-                      className={
-                        currentUser.carteraStatus === 'activo'
-                          ? 'text-green-600'
-                          : 'text-red-600'
-                      }
-                    >
-                      {currentUser.carteraStatus === 'activo'
-                        ? 'Al día'
-                        : 'En cartera'}
-                    </strong>
+                  <p
+                    className="
+                    mt-1 truncate text-sm font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
+                    {currentUser.address ?? '-'}
                   </p>
-                  <p>
-                    <span className="font-semibold">FIN SUSCRIPCIÓN: </span>
-                    {currentUser.subscriptionEndDate
-                      ? new Date(currentUser.subscriptionEndDate)
-                          .toISOString()
-                          .split('T')[0]
-                      : '-'}
+                </div>
+                <div
+                  className="
+                  col-span-2 rounded-lg bg-pink-50 p-2.5
+                  sm:col-span-1
+                  dark:bg-pink-900/20
+                "
+                >
+                  <p
+                    className="
+                    text-xs font-medium text-gray-600
+                    dark:text-gray-400
+                  "
+                  >
+                    PROGRAMA
                   </p>
-                  <p>
-                    <span className="font-semibold">
-                      CARNET / PÓLIZA / UNIFORME:{' '}
-                    </span>
-                    {formatCOP(carteraInfo?.carnetPolizaUniforme ?? 0)}
+                  <p
+                    className="
+                    mt-1 truncate text-sm font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
+                    {userPrograms?.[0]?.title ?? '—'}
                   </p>
                 </div>
               </div>
@@ -6380,27 +6580,41 @@ export default function EnrolledUsersPage() {
               {/* TABLA DE PAGOS */}
               <div
                 className="
-                  p-4
+                  space-y-4 p-3
                   sm:p-6
                 "
               >
-                <h4
+                <div
                   className="
-                    mb-3 flex items-center justify-between text-base
-                    font-semibold
-                  "
+                  flex flex-col gap-3
+                  sm:flex-row sm:items-center sm:justify-between
+                "
                 >
-                  <span>Detalle de pagos</span>
-                  <span
+                  <h4
                     className="
-                      text-sm font-medium text-gray-600
+                    text-base font-semibold text-gray-900
+                    dark:text-white
+                  "
+                  >
+                    Detalle de pagos
+                  </h4>
+                  <div
+                    className="
+                    rounded-lg bg-red-50 p-2
+                    dark:bg-red-900/20
+                  "
+                  >
+                    <span
+                      className="
+                      text-xs font-medium text-gray-600
                       dark:text-gray-300
                     "
-                  >
-                    Valor restante a pagar:{' '}
+                    >
+                      Restante:{' '}
+                    </span>
                     <strong
                       className="
-                        text-red-600
+                        text-base text-red-600
                         dark:text-red-400
                       "
                     >
@@ -6415,12 +6629,13 @@ export default function EnrolledUsersPage() {
                           }, 0)
                       )}
                     </strong>
-                  </span>
-                </h4>
+                  </div>
+                </div>
                 <div
                   className="
-                    overflow-x-auto rounded border border-gray-200
-                    dark:border-gray-700
+                    -mx-3 overflow-x-auto px-3
+                    sm:rounded sm:border sm:border-gray-200
+                    dark:sm:border-gray-700
                   "
                 >
                   <table className="min-w-full border-collapse text-sm">
@@ -8058,21 +8273,25 @@ export default function EnrolledUsersPage() {
               {/* FOOTER / BOTONES */}
               <div
                 className="
-                  flex flex-col gap-2 border-t border-gray-200 p-4
-                  sm:flex-row sm:justify-end
-                  dark:border-gray-700
+                  sticky bottom-0 flex flex-col gap-2 border-t border-gray-200
+                  bg-white p-3
+                  sm:flex-row sm:justify-end sm:gap-3 sm:p-4
+                  dark:border-gray-700 dark:bg-gray-800
                 "
               >
                 <button
                   onClick={handlePrint}
                   className="
-                    rounded bg-gray-200 px-4 py-2 font-semibold text-gray-900
+                    w-full rounded-lg bg-gray-200 px-4 py-3 font-semibold
+                    text-gray-900 transition
                     hover:bg-gray-300
+                    active:scale-95
+                    sm:w-auto
                     dark:bg-gray-700 dark:text-white
                     dark:hover:bg-gray-600
                   "
                 >
-                  Imprimir / Guardar PDF
+                  🖨️ PDF
                 </button>
 
                 <button
@@ -8188,7 +8407,13 @@ export default function EnrolledUsersPage() {
                         const objectUrl = URL.createObjectURL(blob);
                         const fileName = `factura-${currentUser?.name || 'estudiante'}-${new Date().toISOString().split('T')[0]}.png`;
 
-                        // Strategy 1: Try clipboard copy (PC & some mobile)
+                        // Detect mobile more reliably
+                        const isMobile =
+                          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                            navigator.userAgent
+                          ) || window.innerWidth < 768;
+
+                        // Strategy 1: Try clipboard copy (works on PC and some mobile)
                         let copied = false;
                         try {
                           await navigator.clipboard.write([
@@ -8199,23 +8424,6 @@ export default function EnrolledUsersPage() {
                           // Clipboard not available
                         }
 
-                        // Strategy 2: Check if Web Share API is available (mobile)
-                        const canShare =
-                          typeof navigator !== 'undefined' &&
-                          'share' in navigator &&
-                          typeof (
-                            navigator as unknown as {
-                              share?: (data: {
-                                files?: File[];
-                              }) => Promise<void>;
-                            }
-                          ).share === 'function';
-
-                        // Strategy 3: Always provide download link
-                        const downloadLink = document.createElement('a');
-                        downloadLink.href = objectUrl;
-                        downloadLink.download = fileName;
-
                         if (copied) {
                           // PC: clipboard worked
                           setInfoDialogTitle('✅ Factura copiada');
@@ -8223,39 +8431,78 @@ export default function EnrolledUsersPage() {
                             'La factura se ha copiado al portapapeles. Puedes pegarla en cualquier chat, correo o documento.'
                           );
                           setInfoDialogOpen(true);
-                        } else if (canShare && window.innerWidth < 768) {
-                          // Mobile: use Web Share API
+                        } else if (isMobile) {
+                          // Mobile: use Web Share API to show all apps
                           try {
                             const file = new File([blob], fileName, {
                               type: 'image/png',
                             });
-                            await (
-                              navigator as unknown as {
-                                share: (data: {
-                                  files: File[];
-                                  title: string;
-                                }) => Promise<void>;
+
+                            // Try Web Share API with files first (Chrome Android)
+                            if (
+                              'share' in navigator &&
+                              typeof (
+                                navigator as unknown as {
+                                  share?: (data: {
+                                    files?: File[];
+                                  }) => Promise<void>;
+                                }
+                              ).share === 'function'
+                            ) {
+                              try {
+                                await (
+                                  navigator as unknown as {
+                                    share: (data: {
+                                      files: File[];
+                                      title: string;
+                                    }) => Promise<void>;
+                                  }
+                                ).share({
+                                  files: [file],
+                                  title:
+                                    'Factura de matrícula - ' +
+                                    (currentUser?.name || 'Estudiante'),
+                                });
+                                setInfoDialogTitle('✅ Factura compartida');
+                                setInfoDialogMessage(
+                                  'La factura se ha compartido correctamente.'
+                                );
+                                setInfoDialogOpen(true);
+                                return;
+                              } catch {
+                                // Files not supported, try text-only share
                               }
-                            ).share({
-                              files: [file],
-                              title: 'Factura de matrícula',
-                            });
-                            setInfoDialogTitle('✅ Factura compartida');
+                            }
+
+                            // Fallback: Share as image URL (open in new tab for manual save)
+                            const shareUrl = objectUrl;
+                            window.open(shareUrl, '_blank');
+
+                            setInfoDialogTitle(
+                              '📤 Abre la imagen para compartir'
+                            );
                             setInfoDialogMessage(
-                              'La factura se ha compartido correctamente.'
+                              'La imagen se ha abierto en una nueva pestaña. Mantén presionada sobre ella y selecciona "Compartir" para enviarla por WhatsApp, Telegram, etc.'
                             );
                             setInfoDialogOpen(true);
-                          } catch {
-                            // Fallback to download
+                          } catch (e) {
+                            console.error('Web Share error:', e);
+                            // Final fallback: download
+                            const downloadLink = document.createElement('a');
+                            downloadLink.href = objectUrl;
+                            downloadLink.download = fileName;
                             downloadLink.click();
                             setInfoDialogTitle('📥 Factura descargada');
                             setInfoDialogMessage(
-                              'La factura se ha descargado como imagen. Puedes compartirla desde tus archivos.'
+                              'La factura se ha descargado. Abre el archivo y compártela desde ahí.'
                             );
                             setInfoDialogOpen(true);
                           }
                         } else {
-                          // Default: download directly
+                          // Desktop fallback: download directly
+                          const downloadLink = document.createElement('a');
+                          downloadLink.href = objectUrl;
+                          downloadLink.download = fileName;
                           downloadLink.click();
                           setInfoDialogTitle('📥 Factura descargada');
                           setInfoDialogMessage(
@@ -8285,20 +8532,26 @@ export default function EnrolledUsersPage() {
                     }
                   }}
                   className="
-                    rounded bg-blue-600 px-4 py-2 font-semibold text-white
+                    w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold
+                    text-white transition
                     hover:bg-blue-700
+                    active:scale-95
+                    sm:w-auto
                     dark:bg-blue-500
                     dark:hover:bg-blue-600
                   "
                 >
-                  📤 Compartir / Descargar
+                  📤 Compartir
                 </button>
 
                 <button
                   onClick={() => setShowCarteraModal(false)}
                   className="
-                    rounded bg-gray-900 px-4 py-2 font-semibold text-white
+                    w-full rounded-lg bg-gray-900 px-4 py-3 font-semibold
+                    text-white transition
                     hover:bg-black
+                    active:scale-95
+                    sm:w-auto
                     dark:bg-gray-600
                     dark:hover:bg-gray-700
                   "
