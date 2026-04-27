@@ -5127,20 +5127,15 @@ export default function EnrolledUsersPage() {
         {showPhoneModal && (
           <div
             className="
-              fixed inset-0 z-50 flex items-end
-              justify-center
-              bg-black/80 sm:items-center
+              fixed inset-0 z-50 flex items-end justify-center bg-black/80
+              sm:items-center
             "
           >
             <div
               className="
-                h-[95vh] w-full
-                overflow-y-auto rounded-t-3xl bg-gray-900
-                p-4 text-white
-                shadow-2xl
-                sm:h-auto sm:max-h-[90vh]
-                sm:max-w-2xl
-                sm:rounded-lg sm:p-6
+                h-[95vh] w-full overflow-y-auto rounded-t-3xl bg-gray-900 p-4
+                text-white shadow-2xl
+                sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-lg sm:p-6
               "
             >
               <button
@@ -5157,10 +5152,9 @@ export default function EnrolledUsersPage() {
 
               <h2
                 className="
-                mb-6 pr-12 text-center text-2xl
-                font-bold
-                sm:text-3xl
-              "
+                  mb-6 pr-12 text-center text-2xl font-bold
+                  sm:text-3xl
+                "
               >
                 Enviar Correo y/o WhatsApp
               </h2>
@@ -5350,9 +5344,9 @@ export default function EnrolledUsersPage() {
                   {/* Botón enviar correo */}
                   <div
                     className="
-                    mt-6 flex flex-col gap-2
-                    sm:flex-row sm:justify-center
-                  "
+                      mt-6 flex flex-col gap-2
+                      sm:flex-row sm:justify-center
+                    "
                   >
                     <button
                       onClick={sendEmail}
@@ -5588,9 +5582,9 @@ export default function EnrolledUsersPage() {
                   {/* Botón enviar WhatsApp */}
                   <div
                     className="
-                    mt-6 flex flex-col gap-2
-                    sm:flex-row sm:justify-center
-                  "
+                      mt-6 flex flex-col gap-2
+                      sm:flex-row sm:justify-center
+                    "
                   >
                     <button
                       onClick={sendWhatsApp}
@@ -6287,18 +6281,17 @@ export default function EnrolledUsersPage() {
         {showCarteraModal && currentUser && (
           <div
             className="
-              showCarteraModal fixed inset-0 z-50 flex items-end
-              justify-center
-              bg-black/80 sm:items-center
+              showCarteraModal fixed inset-0 z-50 flex items-end justify-center
+              bg-black/80
+              sm:items-center
             "
           >
             <div
               className="
-                h-[95vh] w-full
-                overflow-y-auto rounded-t-3xl bg-white
+                h-[95vh] w-full overflow-y-auto rounded-t-3xl bg-white
                 text-gray-900 shadow-2xl
-                sm:h-auto
-                sm:max-h-[90vh] sm:max-w-[min(100vw-1rem,72rem)] sm:rounded-lg
+                sm:h-auto sm:max-h-[90vh] sm:max-w-[min(100vw-1rem,72rem)]
+                sm:rounded-lg
                 dark:bg-gray-800 dark:text-gray-100
               "
             >
@@ -6319,9 +6312,9 @@ export default function EnrolledUsersPage() {
                   {/* Logos: más compactos en móvil */}
                   <div
                     className="
-                    flex items-center gap-2
-                    sm:gap-4
-                  "
+                      flex items-center gap-2
+                      sm:gap-4
+                    "
                   >
                     <Image
                       src="/artiefy-logo.png"
@@ -6362,9 +6355,9 @@ export default function EnrolledUsersPage() {
                     </p>
                     <h3
                       className="
-                      text-base font-bold
-                      sm:text-lg
-                    "
+                        text-base font-bold
+                        sm:text-lg
+                      "
                     >
                       FACTURA PAGO
                     </h3>
@@ -6383,46 +6376,46 @@ export default function EnrolledUsersPage() {
               >
                 <div
                   className="
-                  rounded-lg bg-blue-50 p-2.5
-                  dark:bg-blue-900/20
-                "
+                    rounded-lg bg-blue-50 p-2.5
+                    dark:bg-blue-900/20
+                  "
                 >
                   <p
                     className="
-                    text-xs font-medium text-gray-600
-                    dark:text-gray-400
-                  "
+                      text-xs font-medium text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     NOMBRE
                   </p>
                   <p
                     className="
-                    mt-1 truncate text-sm font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      mt-1 truncate text-sm font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     {currentUser.name ?? '-'}
                   </p>
                 </div>
                 <div
                   className="
-                  rounded-lg bg-purple-50 p-2.5
-                  dark:bg-purple-900/20
-                "
+                    rounded-lg bg-purple-50 p-2.5
+                    dark:bg-purple-900/20
+                  "
                 >
                   <p
                     className="
-                    text-xs font-medium text-gray-600
-                    dark:text-gray-400
-                  "
+                      text-xs font-medium text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     CC
                   </p>
                   <p
                     className="
-                    mt-1 truncate text-sm font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      mt-1 truncate text-sm font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     {currentUser.document ?? currentUser.id ?? '-'}
                   </p>
@@ -6431,74 +6424,74 @@ export default function EnrolledUsersPage() {
                 <div className="rounded-lg bg-green-50 p-2.5 dark:bg-green-900/20">
                   <p
                     className="
-                    text-xs font-medium text-gray-600
-                    dark:text-gray-400
-                  "
+                      text-xs font-medium text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     CELULAR
                   </p>
                   <p
                     className="
-                    mt-1 truncate text-sm font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      mt-1 truncate text-sm font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     {currentUser.phone ?? '-'}
                   </p>
                 </div>
                 <div
                   className="
-                  rounded-lg bg-orange-50 p-2.5
-                  dark:bg-orange-900/20
-                "
+                    rounded-lg bg-orange-50 p-2.5
+                    dark:bg-orange-900/20
+                  "
                 >
                   <p
                     className="
-                    text-xs font-medium text-gray-600
-                    dark:text-gray-400
-                  "
+                      text-xs font-medium text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     MODALIDAD
                   </p>
                   <p
                     className="
-                    mt-1 text-sm font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      mt-1 text-sm font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     {currentUser.modalidad ?? 'virtual'}
                   </p>
                 </div>
                 <div
                   className="
-                  col-span-2 rounded-lg bg-red-50 p-2.5
-                  sm:col-span-1
-                  dark:bg-red-900/20
-                "
+                    col-span-2 rounded-lg bg-red-50 p-2.5
+                    sm:col-span-1
+                    dark:bg-red-900/20
+                  "
                 >
                   <p
                     className="
-                    text-xs font-medium text-gray-600
-                    dark:text-gray-400
-                  "
+                      text-xs font-medium text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     ESTADO
                   </p>
                   <p
                     className={`
-                    mt-1 text-sm font-semibold
-                    ${
-                      currentUser.carteraStatus === 'activo'
-                        ? `
-                        text-green-600
-                        dark:text-green-400
-                      `
-                        : `
-                        text-red-600
-                        dark:text-red-400
-                      `
-                    }
-                  `}
+                      mt-1 text-sm font-semibold
+                      ${
+                        currentUser.carteraStatus === 'activo'
+                          ? `
+                            text-green-600
+                            dark:text-green-400
+                          `
+                          : `
+                            text-red-600
+                            dark:text-red-400
+                          `
+                      }
+                    `}
                   >
                     {currentUser.carteraStatus === 'activo'
                       ? 'Al día'
@@ -6507,70 +6500,70 @@ export default function EnrolledUsersPage() {
                 </div>
                 <div
                   className="
-                  rounded-lg bg-indigo-50 p-2.5
-                  dark:bg-indigo-900/20
-                "
+                    rounded-lg bg-indigo-50 p-2.5
+                    dark:bg-indigo-900/20
+                  "
                 >
                   <p
                     className="
-                    text-xs font-medium text-gray-600
-                    dark:text-gray-400
-                  "
+                      text-xs font-medium text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     CIUDAD
                   </p>
                   <p
                     className="
-                    mt-1 truncate text-sm font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      mt-1 truncate text-sm font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     {currentUser.city ?? '-'}
                   </p>
                 </div>
                 <div
                   className="
-                  rounded-lg bg-yellow-50 p-2.5
-                  dark:bg-yellow-900/20
-                "
+                    rounded-lg bg-yellow-50 p-2.5
+                    dark:bg-yellow-900/20
+                  "
                 >
                   <p
                     className="
-                    text-xs font-medium text-gray-600
-                    dark:text-gray-400
-                  "
+                      text-xs font-medium text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     DIRECCIÓN
                   </p>
                   <p
                     className="
-                    mt-1 truncate text-sm font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      mt-1 truncate text-sm font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     {currentUser.address ?? '-'}
                   </p>
                 </div>
                 <div
                   className="
-                  col-span-2 rounded-lg bg-pink-50 p-2.5
-                  sm:col-span-1
-                  dark:bg-pink-900/20
-                "
+                    col-span-2 rounded-lg bg-pink-50 p-2.5
+                    sm:col-span-1
+                    dark:bg-pink-900/20
+                  "
                 >
                   <p
                     className="
-                    text-xs font-medium text-gray-600
-                    dark:text-gray-400
-                  "
+                      text-xs font-medium text-gray-600
+                      dark:text-gray-400
+                    "
                   >
                     PROGRAMA
                   </p>
                   <p
                     className="
-                    mt-1 truncate text-sm font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      mt-1 truncate text-sm font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     {userPrograms?.[0]?.title ?? '—'}
                   </p>
@@ -6586,29 +6579,29 @@ export default function EnrolledUsersPage() {
               >
                 <div
                   className="
-                  flex flex-col gap-3
-                  sm:flex-row sm:items-center sm:justify-between
-                "
+                    flex flex-col gap-3
+                    sm:flex-row sm:items-center sm:justify-between
+                  "
                 >
                   <h4
                     className="
-                    text-base font-semibold text-gray-900
-                    dark:text-white
-                  "
+                      text-base font-semibold text-gray-900
+                      dark:text-white
+                    "
                   >
                     Detalle de pagos
                   </h4>
                   <div
                     className="
-                    rounded-lg bg-red-50 p-2
-                    dark:bg-red-900/20
-                  "
+                      rounded-lg bg-red-50 p-2
+                      dark:bg-red-900/20
+                    "
                   >
                     <span
                       className="
-                      text-xs font-medium text-gray-600
-                      dark:text-gray-300
-                    "
+                        text-xs font-medium text-gray-600
+                        dark:text-gray-300
+                      "
                     >
                       Restante:{' '}
                     </span>
@@ -8326,15 +8319,12 @@ export default function EnrolledUsersPage() {
                       const html2canvas = (await import('html2canvas')).default;
 
                       const canvas = await html2canvas(el, {
-                        background: '#ffffff',
+                        backgroundColor: '#ffffff',
                         scale: 2,
                         useCORS: true,
                         allowTaint: false,
                         logging: false,
-                        onclone: (
-                          _clonedWindow: Window,
-                          clonedDoc: Document
-                        ) => {
+                        onclone: (clonedDoc: Document) => {
                           Array.from(clonedDoc.styleSheets).forEach(
                             (sheet: CSSStyleSheet) => {
                               try {
