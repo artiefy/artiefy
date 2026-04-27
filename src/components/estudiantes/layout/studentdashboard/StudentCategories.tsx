@@ -138,15 +138,28 @@ export default function StudentCategories({
   };
 
   const handleCategorySelect = (category: string | null) => {
-    saveScrollPosition();
-    start();
     setLoadingCategory(category ?? 'all');
     setSelectedCategory(category);
-    setIsSearching(true);
-    window.dispatchEvent(new Event('search-start'));
-    const params = new URLSearchParams();
-    if (category) params.set('category', category);
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    setSearchQuery('');
+
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+
+    if (category) {
+      params.set('category', category);
+    } else {
+      params.delete('category');
+    }
+
+    params.delete('query');
+    params.delete('page');
+
+    const query = params.toString();
+    window.history.pushState(
+      null,
+      '',
+      query ? `${pathname}?${query}` : pathname
+    );
+    window.setTimeout(() => setLoadingCategory(null), 120);
   };
 
   const handleSearch = useCallback(() => {

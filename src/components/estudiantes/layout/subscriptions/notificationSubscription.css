@@ -165,11 +165,11 @@
 }
 
 .artiefy-subscription-root .subscription-plan-icon.is-pro {
-  color: rgb(96 165 250);
+  color: rgb(12 39 68);
 }
 
 .artiefy-subscription-root .subscription-plan-icon.is-premium {
-  color: rgb(251 191 36);
+  color: rgb(12 39 68);
 }
 
 .artiefy-subscription-root .subscription-plan-icon.is-expired.is-pro {
@@ -194,11 +194,11 @@
 .artiefy-subscription-root.severity-high .subscription-plan-icon {
   background: linear-gradient(
     135deg,
-    rgb(34 211 238 / 0.22),
-    rgb(34 211 238 / 0.08)
+    rgb(114 214 235 / 0.28),
+    rgb(114 214 235 / 0.14)
   );
   box-shadow:
-    inset 0 0 0 1px rgb(34 211 238 / 0.34),
+    inset 0 0 0 1px rgb(114 214 235 / 0.4),
     0 6px 18px rgb(0 0 0 / 0.18);
 }
 

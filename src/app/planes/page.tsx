@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { BsCheck2Circle } from 'react-icons/bs';
-import { FaTimes, FaTimesCircle } from 'react-icons/fa';
+import { FaCrown, FaStar, FaTimes, FaTimesCircle } from 'react-icons/fa';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
@@ -83,6 +83,12 @@ const PlansPage: React.FC = () => {
   const getDisplayCopPrice = (plan: Plan) =>
     plan.name === 'Pro' ? 99900 : plan.name === 'Premium' ? 124900 : plan.price;
 
+  const getPlanDisplayIcon = (plan: Plan) => {
+    if (plan.name === 'Pro') return FaStar;
+    if (plan.name === 'Premium') return FaCrown;
+    return plan.icon as React.ComponentType<{ className: string }>;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -119,6 +125,7 @@ const PlansPage: React.FC = () => {
               const isPremium = plan.name === 'Premium';
               const isPro = plan.name === 'Pro';
               const isEnterprise = plan.name === 'Enterprise';
+              const PlanIcon = getPlanDisplayIcon(plan);
               const isCurrentPlanProcessing =
                 isProcessing && selectedPlan?.id === plan.id;
               const isPlanDisabled = isEnterprise || isCurrentPlanProcessing;
@@ -181,13 +188,11 @@ const PlansPage: React.FC = () => {
                     <div
                       className="
                         mx-auto mb-4 flex size-14 items-center justify-center
-                        rounded-2xl bg-primary text-white
+                        rounded-2xl border border-primary/25 bg-primary/10
+                        text-[#0d2744]
                       "
                     >
-                      {createElement(
-                        plan.icon as React.ComponentType<{ className: string }>,
-                        { className: 'h-6 w-6' }
-                      )}
+                      {createElement(PlanIcon, { className: 'h-6 w-6' })}
                     </div>
                     <h3 className="font-display text-2xl font-bold text-white">
                       {plan.name}
@@ -343,6 +348,7 @@ const PlansPage: React.FC = () => {
                   {allPlans.map((plan) => {
                     const isEnterprise = plan.name === 'Enterprise';
                     const isSelected = selectedPlan.id === plan.id;
+                    const PlanIcon = getPlanDisplayIcon(plan);
                     const price =
                       getDisplayCopPrice(plan).toLocaleString('es-CO');
                     const badgeConfig =
@@ -408,22 +414,19 @@ const PlansPage: React.FC = () => {
                             ${
                               isSelected
                                 ? `
-                                  bg-primary text-[#080c16] ring-1
+                                  bg-primary/15 text-[#0d2744] ring-1
                                   ring-primary/40
                                 `
                                 : `
-                                  bg-muted/50 text-foreground ring-1
+                                  bg-muted/50 text-[#0d2744] ring-1
                                   ring-border/40
                                 `
                             }
                           `}
                         >
-                          {createElement(
-                            plan.icon as React.ComponentType<{
-                              className: string;
-                            }>,
-                            { className: 'h-4.5 w-4.5' }
-                          )}
+                          {createElement(PlanIcon, {
+                            className: 'h-4.5 w-4.5',
+                          })}
                         </div>
                         <span
                           className={`

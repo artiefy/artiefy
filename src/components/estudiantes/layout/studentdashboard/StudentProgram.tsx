@@ -26,7 +26,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
 
   const containerClassName = `group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-card transition-all duration-300 ${
     hasCourses
-      ? 'opacity-0 animate-fade-up hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_8px_32px_hsl(var(--primary)/0.15)]'
+      ? 'hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_8px_32px_hsl(var(--primary)/0.15)]'
       : 'cursor-not-allowed opacity-75'
   }`;
 
@@ -48,17 +48,18 @@ export function StudentProgram({ program }: StudenProgramProps) {
         />
         <div
           className="
-          absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent
-        "
+            absolute inset-0 bg-gradient-to-t from-card via-card/20
+            to-transparent
+          "
         />
 
         <div className="absolute top-3 left-3 flex gap-2">
           {!hasCourses && (
             <span
               className="
-              rounded-full border border-amber-300/30 bg-amber-400 px-3 py-1
-              text-[11px] font-semibold text-slate-950 shadow-sm
-            "
+                rounded-full border border-amber-300/30 bg-amber-400 px-3 py-1
+                text-[11px] font-semibold text-slate-950 shadow-sm
+              "
             >
               Muy pronto
             </span>
@@ -68,10 +69,10 @@ export function StudentProgram({ program }: StudenProgramProps) {
         {program.certificationType && (
           <span
             className="
-            absolute bottom-3 left-3 rounded-full border border-primary/30
-            bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary
-            backdrop-blur-sm
-          "
+              absolute bottom-3 left-3 rounded-full border border-primary/30
+              bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary
+              backdrop-blur-sm
+            "
           >
             {program.certificationType.name}
           </span>
@@ -111,11 +112,11 @@ export function StudentProgram({ program }: StudenProgramProps) {
 
         <div
           className="
-          mt-auto flex items-center justify-between pt-2 text-xs
-          text-muted-foreground
-        "
+            mt-auto flex items-end justify-between pt-3 text-xs
+            text-muted-foreground
+          "
         >
-          <span className="flex items-center gap-1">
+          <span className="flex items-center gap-1 pb-0.5">
             <Users className="size-3.5 text-primary/60" />
             <EnrollmentCount
               programId={parseInt(program.id)}
@@ -124,30 +125,25 @@ export function StudentProgram({ program }: StudenProgramProps) {
             {' estudiantes'}
           </span>
 
-          <div className="flex items-end gap-2">
-            <div
-              className="
-              flex size-8 items-center justify-center overflow-hidden
-              rounded-full border border-border/60 bg-secondary/40
-            "
-            >
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center justify-center">
               <Image
-                src="/artiefy-logo2.png"
-                alt="Artiefy"
-                width={24}
-                height={24}
-                className="size-6 object-contain opacity-90"
+                src="/logo-ponao-CLqWBdjb.png"
+                alt="PONAO"
+                width={38}
+                height={18}
+                className="h-auto w-[38px] object-contain opacity-85"
               />
             </div>
             <span
               className="
-              flex items-center gap-1 font-semibold text-[hsl(45,100%,60%)]
-            "
+                flex items-center gap-1 font-semibold text-[hsl(45,100%,60%)]
+              "
             >
               <StarIcon
                 className="
-                size-3.5 fill-[hsl(45,100%,60%)] text-[hsl(45,100%,60%)]
-              "
+                  size-3.5 fill-[hsl(45,100%,60%)] text-[hsl(45,100%,60%)]
+                "
               />
               {rating.toFixed(1)}
             </span>

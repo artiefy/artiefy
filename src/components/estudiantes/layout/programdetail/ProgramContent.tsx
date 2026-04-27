@@ -519,7 +519,15 @@ export function ProgramCertificationPanel({
       try {
         const res = await fetch('/api/enrolled-courses');
         if (!res.ok) return;
-        const data = (await res.json()) as { id: number; progress: number }[];
+        const raw = (await res.json()) as
+          | { id: number; progress: number }[]
+          | { courses?: { id: number; progress: number }[] };
+
+        const data = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.courses)
+            ? raw.courses
+            : [];
 
         const progressMap: Record<
           number,
@@ -580,7 +588,10 @@ export function ProgramCertificationPanel({
   const canSeeProgramCertificate =
     isEnrolled &&
     courses.length > 0 &&
-    completedCoursesCount === courses.length;
+    courses.every((course) => {
+      const progressEntry = courseProgress[course.id];
+      return (progressEntry?.progress ?? 0) >= 100;
+    });
   const isProgramCertificateUnlocked = canSeeProgramCertificate;
 
   return (

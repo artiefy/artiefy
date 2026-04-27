@@ -1,21 +1,23 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
-import { CheckCircleIcon } from '@heroicons/react/24/solid';
-import { randomInt } from 'crypto';
+import { CalendarDays } from 'lucide-react';
 import { AiOutlineFire } from 'react-icons/ai';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { HiLibrary } from 'react-icons/hi';
 import { IoGiftOutline } from 'react-icons/io5';
 
+import CourseSortControl from '~/components/estudiantes/layout/studentdashboard/CourseSortControl';
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Card } from '~/components/estudiantes/ui/card';
-import { getImagePlaceholder } from '~/lib/plaiceholder';
-import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 
 import StudentPagination from './StudentPagination';
 
+import type { CourseSortValue } from '~/components/estudiantes/layout/studentdashboard/CourseSortControl';
 import type { ClerkUser } from '~/types';
 import type { ClassMeeting, Course } from '~/types';
 
@@ -26,56 +28,93 @@ interface CourseListStudentProps {
   totalCourses: number;
   category?: string;
   searchTerm?: string;
+  sort?: CourseSortValue;
   user?: ClerkUser; // <-- Usar tipo seguro
 }
 
-export const revalidate = 3600;
+const ITEMS_PER_PAGE = 12;
+const COURSE_SORT_VALUES = ['random', 'az', 'created', 'category'] as const;
 
-export default async function StudentListCourses({
-  courses,
-  currentPage,
-  totalPages,
-  totalCourses,
-  category,
-  searchTerm,
-  user,
-}: CourseListStudentProps) {
-  const userId = user?.id;
+function removeAccents(str: string): string {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
 
-  // Función para barajar (shuffle) el array de cursos de forma aleatoria
-  function shuffleArray<T>(array: T[]): T[] {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = randomInt(i + 1);
-      [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
-    }
-    return shuffled;
+function isCourseSortValue(value: string | null): value is CourseSortValue {
+  return COURSE_SORT_VALUES.includes(value as CourseSortValue);
+}
+
+function shuffleArray<T>(array: T[]): T[] {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
+  }
+  return shuffled;
+}
+
+function sortCourses(courses: Course[], sort: CourseSortValue): Course[] {
+  if (sort === 'az') {
+    return [...courses].sort((a, b) =>
+      a.title.localeCompare(b.title, 'es', { sensitivity: 'base' })
+    );
   }
 
-  // Barajar los cursos para mostrarlos en orden aleatorio en cada recarga
-  const shuffledCourses = shuffleArray(courses);
+  if (sort === 'created') {
+    return [...courses].sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
 
-  // Helper para formatear la fecha en español (con hora y am/pm)
-  function formatSpanishDate(dateString: string) {
-    if (
-      dateString === '2025-08-20T08:30:00' ||
-      dateString.startsWith('2025-08-20')
-    ) {
-      return '20 de agosto de 2025, 08:30 a.m.';
-    }
+  if (sort === 'category') {
+    return [...courses].sort((a, b) => {
+      const categoryCompare = (a.category?.name ?? '').localeCompare(
+        b.category?.name ?? '',
+        'es',
+        { sensitivity: 'base' }
+      );
+
+      if (categoryCompare !== 0) return categoryCompare;
+
+      return a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
+    });
+  }
+
+  return shuffleArray(courses);
+}
+
+export default function StudentListCourses({
+  courses,
+  currentPage,
+  category,
+  searchTerm,
+  sort = 'random',
+  user,
+}: CourseListStudentProps) {
+  const searchParams = useSearchParams();
+  const [sortValue, setSortValue] = useState<CourseSortValue>(sort);
+  const [pageValue, setPageValue] = useState(currentPage);
+  const [categoryValue, setCategoryValue] = useState<string | null>(
+    category ?? null
+  );
+  const [searchTermValue, setSearchTermValue] = useState(searchTerm ?? '');
+
+  useEffect(() => {
+    const nextSort = searchParams?.get('sort');
+    const nextPage = Number(searchParams?.get('page') ?? currentPage);
+
+    setSortValue(isCourseSortValue(nextSort) ? nextSort : sort);
+    setPageValue(Number.isFinite(nextPage) && nextPage > 0 ? nextPage : 1);
+    setCategoryValue(searchParams?.get('category') ?? category ?? null);
+    setSearchTermValue(searchParams?.get('query') ?? searchTerm ?? '');
+  }, [category, currentPage, searchParams, searchTerm, sort]);
+
+  function formatShortSpanishDate(dateString: string) {
     const date = new Date(dateString);
-    const options: Intl.DateTimeFormatOptions = {
+    return date.toLocaleDateString('es-ES', {
       day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    };
-    let formatted = date.toLocaleDateString('es-ES', options);
-    // Normalizar a.m./p.m. a minúsculas y sin espacios extra
-    formatted = formatted.replace('a. m.', 'a.m.').replace('p. m.', 'p.m.');
-    return formatted;
+      month: 'short',
+    });
   }
 
   // Obtener la próxima clase en vivo directamente de course.classMeetings si existe
@@ -98,73 +137,83 @@ export default async function StudentListCourses({
     return nextMeeting?.startDateTime ?? null;
   }
 
-  // Process all courses data in parallel before rendering
-  const processedCourses = await Promise.all(
-    shuffledCourses.map(async (course) => {
-      // Handle image URL and blur data
-      let imageUrl =
-        'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
-      let blurDataURL: string | undefined = undefined;
-      try {
+  const filteredCourses = useMemo(() => {
+    let nextCourses = courses;
+
+    if (categoryValue) {
+      const categoryId = Number(categoryValue);
+      nextCourses = nextCourses.filter(
+        (course) => course.categoryid === categoryId
+      );
+    }
+
+    const trimmedSearchTerm = searchTermValue.trim();
+
+    if (trimmedSearchTerm) {
+      const normalizedQuery = removeAccents(trimmedSearchTerm.toLowerCase());
+      nextCourses = nextCourses.filter((course) => {
+        const normalizedTitle = removeAccents(course.title.toLowerCase());
+        const normalizedCategory = course.category?.name
+          ? removeAccents(course.category.name.toLowerCase())
+          : '';
+        const normalizedModalidad = course.modalidad?.name
+          ? removeAccents(course.modalidad.name.toLowerCase())
+          : '';
+
+        return (
+          normalizedTitle.includes(normalizedQuery) ||
+          normalizedCategory.includes(normalizedQuery) ||
+          normalizedModalidad.includes(normalizedQuery)
+        );
+      });
+    }
+
+    return nextCourses;
+  }, [categoryValue, courses, searchTermValue]);
+
+  const sortedCourses = useMemo(
+    () => sortCourses(filteredCourses, sortValue),
+    [filteredCourses, sortValue]
+  );
+
+  const calculatedTotalPages = Math.max(
+    1,
+    Math.ceil(sortedCourses.length / ITEMS_PER_PAGE)
+  );
+
+  const paginatedCourses = useMemo(() => {
+    const safePage = Math.min(Math.max(pageValue, 1), calculatedTotalPages);
+    const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
+    return sortedCourses.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [calculatedTotalPages, pageValue, sortedCourses]);
+
+  const processedCourses = useMemo(
+    () =>
+      paginatedCourses.map((course) => {
+        // Handle image URL and blur data
+        let imageUrl =
+          'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
         if (course.coverImageKey && course.coverImageKey !== 'NULL') {
           imageUrl =
             `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`.trimEnd();
-          const blur = await getImagePlaceholder(imageUrl);
-          blurDataURL = blur ?? undefined; // <-- Asegura que nunca sea null
         }
-      } catch (error) {
-        console.error('Error fetching image from AWS S3:', error);
-        blurDataURL = undefined;
-      }
 
-      // Check enrollment status
-      let isEnrolled = false;
-      try {
-        isEnrolled = userId ? await isUserEnrolled(course.id, userId) : false;
-      } catch (error) {
-        console.error('Error checking enrollment status:', error);
-      }
-
-      // Obtener próxima clase en vivo desde classMeetings si ya viene del back
-      let nextLiveClassDate: string | null = null;
-      if (
-        (course as Course & { classMeetings?: ClassMeeting[] }).classMeetings &&
-        Array.isArray(
-          (course as Course & { classMeetings?: ClassMeeting[] }).classMeetings
-        )
-      ) {
-        nextLiveClassDate = getNextLiveClassDateFromMeetings(course);
-      } else {
-        // fallback: fetch from API (solo si no viene del back)
-        try {
-          const res = await fetch(
-            `${process.env.NEXT_PUBLIC_BASE_URL ?? ''}/api/estudiantes/classMeetings/by-course?courseId=${course.id}`,
-            { next: { revalidate: 300 } }
-          );
-          if (res.ok) {
-            const meetings = (await res.json()) as ClassMeeting[];
-            const now = new Date();
-            const nextMeeting = meetings
-              .filter(
-                (m) =>
-                  m.startDateTime &&
-                  !m.video_key &&
-                  new Date(m.startDateTime) > now
-              )
-              .sort(
-                (a, b) =>
-                  new Date(a.startDateTime!).getTime() -
-                  new Date(b.startDateTime!).getTime()
-              )[0];
-            nextLiveClassDate = nextMeeting?.startDateTime ?? null;
-          }
-        } catch {
-          nextLiveClassDate = null;
+        // Obtener próxima clase en vivo desde classMeetings si ya viene del back
+        let nextLiveClassDate: string | null = null;
+        if (
+          (course as Course & { classMeetings?: ClassMeeting[] })
+            .classMeetings &&
+          Array.isArray(
+            (course as Course & { classMeetings?: ClassMeeting[] })
+              .classMeetings
+          )
+        ) {
+          nextLiveClassDate = getNextLiveClassDateFromMeetings(course);
         }
-      }
 
-      return { course, imageUrl, blurDataURL, isEnrolled, nextLiveClassDate };
-    })
+        return { course, imageUrl, nextLiveClassDate };
+      }),
+    [paginatedCourses]
   );
 
   const getCourseTypeLabel = (course: Course) => {
@@ -448,7 +497,7 @@ export default async function StudentListCourses({
   };
 
   // Modifica getCourseTypeLabel para separar tipo principal y badges "Incluido en"
-  const getCourseTypeLabelMobile = (course: Course) => {
+  const _getCourseTypeLabelMobile = (course: Course) => {
     const userPlanType = user?.publicMetadata?.planType as
       | 'none'
       | 'Pro'
@@ -672,8 +721,8 @@ export default async function StudentListCourses({
     <div id="courses-list-section">
       <div
         className="
-          mt-8 mb-3 flex justify-start px-8
-          sm:mb-3
+          mt-8 mb-3 flex flex-col gap-4 px-8
+          sm:mb-3 sm:flex-row sm:items-center sm:justify-between
           lg:px-26
         "
       >
@@ -688,6 +737,13 @@ export default async function StudentListCourses({
             Cursos Artie
           </GradientText>
         </div>
+        <CourseSortControl
+          value={sortValue}
+          onSortChange={(nextSort) => {
+            setSortValue(nextSort);
+            setPageValue(1);
+          }}
+        />
       </div>
       <div
         className="
@@ -696,203 +752,200 @@ export default async function StudentListCourses({
           lg:grid-cols-4 lg:px-26
         "
       >
-        {processedCourses.map(
-          ({
-            course,
-            imageUrl,
-            blurDataURL,
-            isEnrolled,
-            nextLiveClassDate,
-          }) => {
-            const cardContent = (
-              <Card
-                className={`
+        {processedCourses.map(({ course, imageUrl, nextLiveClassDate }) => {
+          const hasLiveClass = Boolean(nextLiveClassDate);
+          const categoryLabel = course.category?.name ?? 'Sin categoría';
+          const modalidadLabel = course.modalidad?.name ?? 'Asistida Virtual';
+          const nivelLabel = course.nivel?.name ?? 'Sin nivel';
+
+          const cardContent = (
+            <div
+              className={`
                   artiefy-course-card zoom-in relative flex h-full flex-col
-                  gap-4 overflow-hidden rounded-2xl border-0 bg-[#061C37] p-4
-                  text-foreground shadow-md transition-all duration-300
+                  overflow-hidden rounded-2xl border border-border/50 bg-card
+                  text-foreground transition-all duration-300
                   ${
                     course.isActive
                       ? `
                         cursor-pointer
-                        hover:-translate-y-1 hover:border-primary
-                        hover:shadow-xl
+                        hover:-translate-y-1 hover:border-primary/30
+                        hover:shadow-[0_8px_32px_hsl(var(--primary)/0.15)]
                       `
                       : 'cursor-not-allowed'
                   }
                 `}
-              >
-                <div className="relative -mx-4 -mt-4 overflow-hidden">
-                  <AspectRatio ratio={16 / 9}>
-                    <div className="relative size-full">
-                      <Image
-                        src={imageUrl}
-                        alt={course.title || 'Imagen del curso'}
-                        className="object-cover"
-                        fill
-                        blurDataURL={blurDataURL}
-                        placeholder={blurDataURL ? 'blur' : 'empty'}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        quality={75}
-                      />
-                      <div
-                        className="
-                          pointer-events-none absolute inset-0 bg-gradient-to-t
-                          from-[#061C37] via-[#061C37]/60 to-transparent
-                        "
-                      />
-                    </div>
-                  </AspectRatio>
+            >
+              <div className="relative h-40 overflow-hidden">
+                <Image
+                  src={imageUrl}
+                  alt={course.title || 'Imagen del curso'}
+                  className="
+                      size-full object-cover transition-transform duration-500
+                      group-hover:scale-110
+                    "
+                  fill
+                  placeholder="empty"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  quality={75}
+                />
+                <div
+                  className="
+                      absolute inset-0 bg-gradient-to-t from-card via-card/20
+                      to-transparent
+                    "
+                />
+                <span
+                  className="
+                      absolute bottom-3 left-3 rounded-full border
+                      border-primary/30 bg-primary/20 px-3 py-1 text-[11px]
+                      font-semibold text-primary backdrop-blur-sm
+                    "
+                >
+                  {categoryLabel}
+                </span>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-2 p-4">
+                <h3
+                  className="
+                      line-clamp-2 text-base leading-snug font-bold
+                      text-foreground transition-colors duration-200
+                      group-hover:text-primary
+                    "
+                >
+                  {course.title}
+                </h3>
+
+                <div className="flex items-center justify-between gap-2">
+                  <p className="min-w-0 truncate text-xs text-muted-foreground">
+                    Por{' '}
+                    <span className="font-medium text-foreground/80">
+                      {course.instructorName ?? 'Educador'}
+                    </span>
+                  </p>
+                  <div className="flex shrink-0 items-center">
+                    {getCourseTypeLabel(course)}
+                  </div>
                 </div>
 
-                <div className="flex h-full flex-1 flex-col gap-3">
-                  <h3
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
                     className="
-                      line-clamp-2 text-base leading-snug font-semibold
-                      text-white
-                      md:text-lg
-                    "
+                        rounded-full border border-accent/20 bg-accent/10 px-2.5
+                        py-0.5 text-[10px] font-medium text-accent
+                      "
                   >
-                    {course.title}
-                  </h3>
-
-                  <div
+                    {modalidadLabel}
+                  </span>
+                  <span
                     className="
-                      flex flex-wrap items-center justify-between gap-2
-                      sm:flex-row
-                    "
+                        rounded-full border border-white/10 bg-white/8 px-2.5
+                        py-0.5 text-[10px] font-medium text-foreground/90
+                      "
                   >
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-xs text-[#94A3B8]">
-                        Por:{' '}
-                        <span className="font-medium text-primary">
-                          {course.instructorName ?? 'Educador'}
-                        </span>
-                      </p>
-                      {isEnrolled && (
-                        <div
-                          className="
-                            flex items-center gap-1 rounded-full border
-                            border-green-500/30 bg-green-500/20 px-2 py-0.5
-                            text-green-400
-                          "
-                        >
-                          <CheckCircleIcon className="size-3" />
-                          <span className="text-[10px] font-medium">
-                            Inscrito
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                    {nivelLabel}
+                  </span>
+                </div>
 
-                    <div className="flex items-center text-sm">
-                      <div
-                        className="
-                          hidden
-                          sm:block
-                        "
-                      >
-                        {getCourseTypeLabel(course)}
-                      </div>
-                      <div
-                        className="
-                          block
-                          sm:hidden
-                        "
-                      >
-                        {getCourseTypeLabelMobile(course)}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <span className="chip chip-modalidad">
-                      {course.modalidad?.name ?? 'Asistida Virtual'}
-                    </span>
-                    {course.scheduleOption?.name || course.horario ? (
-                      <span className="chip chip-horario">
-                        {course.scheduleOption?.name || course.horario}
-                      </span>
-                    ) : null}
-                    {course.spaceOption?.name || course.espacios ? (
-                      <span className="chip chip-espacios">
-                        {course.spaceOption?.name || course.espacios}
-                      </span>
-                    ) : null}
-                    <span className="chip chip-categoria">
-                      {course.category?.name ?? 'Sin categoría'}
-                    </span>
-                  </div>
-
-                  <p
-                    className="
-                      mt-3 flex items-center gap-1.5 text-xs text-[#94A3B8]
+                <div
+                  className="
+                      mt-auto flex items-center justify-between pt-2 text-xs
+                      text-muted-foreground
                     "
-                  >
-                    Empieza:{' '}
-                    {nextLiveClassDate ? (
+                >
+                  {hasLiveClass && nextLiveClassDate ? (
+                    <span className="flex items-center gap-1">
                       <span
                         className="
-                          animate-pulse font-medium text-primary
-                          drop-shadow-[0_0_8px_rgba(58,244,239,0.6)]
-                        "
+                            relative mr-0.5 flex size-2 items-center
+                            justify-center
+                          "
                       >
-                        {formatSpanishDate(nextLiveClassDate)}
+                        <span
+                          className="
+                              absolute inline-flex size-3 animate-ping
+                              rounded-full bg-red-500/45 blur-[1px]
+                            "
+                        />
+                        <span
+                          className="
+                              absolute inline-flex size-2.5 animate-pulse
+                              rounded-full bg-red-500/50
+                            "
+                        />
+                        <span
+                          className="
+                              relative inline-flex size-2 rounded-full
+                              bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.9)]
+                            "
+                        />
                       </span>
-                    ) : course.modalidad &&
-                      String(course.modalidad?.name)
-                        .toLowerCase()
-                        .includes('presencial') ? (
-                      <span className="text-gray-100">Clases Presenciales</span>
-                    ) : (
-                      <span className="text-gray-100">Clases Virtuales</span>
-                    )}
-                  </p>
+                      <CalendarDays className="size-3.5 text-primary/60" />
+                      <span className="font-medium text-foreground/85">
+                        {formatShortSpanishDate(nextLiveClassDate)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
+                  <span
+                    className="
+                        flex items-center gap-1 font-semibold
+                        text-[hsl(45,100%,60%)]
+                      "
+                  >
+                    <FaStar className="size-3.5 fill-[hsl(45,100%,60%)]" />
+                    {(course.rating ?? 0).toFixed(1)}
+                  </span>
                 </div>
-              </Card>
-            );
+              </div>
+            </div>
+          );
 
-            const cardWrapperClass =
-              'block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2';
+          const cardWrapperClass =
+            'block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2';
 
-            return (
-              <div key={course.id} className="relative">
-                {course.isActive ? (
-                  <Link
-                    href={`/estudiantes/cursos/${course.id}`}
-                    aria-label={`Ver detalles del curso ${course.title}`}
-                    className={`
+          return (
+            <div key={course.id} className="relative">
+              {course.isActive ? (
+                <Link
+                  href={`/estudiantes/cursos/${course.id}`}
+                  aria-label={`Ver detalles del curso ${course.title}`}
+                  className={`
                       group
                       ${cardWrapperClass}
                     `}
-                  >
-                    {cardContent}
-                  </Link>
-                ) : (
-                  <div className="group relative h-full rounded-2xl opacity-80">
-                    {cardContent}
-                    <div
-                      className="
+                >
+                  {cardContent}
+                </Link>
+              ) : (
+                <div className="group relative h-full rounded-2xl opacity-80">
+                  {cardContent}
+                  <div
+                    className="
                         pointer-events-none absolute inset-0 flex items-center
                         justify-center rounded-2xl bg-black/40 text-lg
                         font-semibold
                       "
-                    >
-                      Muy pronto
-                    </div>
+                  >
+                    Muy pronto
                   </div>
-                )}
-              </div>
-            );
-          }
-        )}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
       <StudentPagination
-        totalPages={totalPages}
-        currentPage={currentPage}
-        totalCourses={totalCourses}
+        totalPages={calculatedTotalPages}
+        currentPage={Math.min(pageValue, calculatedTotalPages)}
+        totalCourses={sortedCourses.length}
         route="/estudiantes"
-        category={category}
-        searchTerm={searchTerm}
+        category={categoryValue ?? undefined}
+        searchTerm={searchTermValue || undefined}
+        sort={sortValue}
+        itemsPerPage={ITEMS_PER_PAGE}
+        onPageChange={setPageValue}
       />
     </div>
   );

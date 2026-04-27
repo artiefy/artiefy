@@ -12,6 +12,7 @@ import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/g
 import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
 import { getAllPrograms } from '~/server/actions/estudiantes/programs/getAllPrograms';
 
+import type { CourseSortValue } from '~/components/estudiantes/layout/studentdashboard/CourseSortControl';
 import type { Category, Course, Program } from '~/types';
 
 interface SearchParams {
@@ -19,10 +20,12 @@ interface SearchParams {
   query?: string;
   page?: string;
   view?: string;
+  sort?: CourseSortValue;
 }
 
 interface APIResponse {
   courses: Course[];
+  allCourses: Course[];
   programs: Program[];
   categories: Category[];
   featuredCategories: Category[];
@@ -84,13 +87,10 @@ async function fetchData(
   const totalFilteredCourses = filteredCourses.length;
   const totalPages = Math.ceil(totalFilteredCourses / ITEMS_PER_PAGE);
   const page = Number(params?.page ?? '1');
-  const paginatedCourses = filteredCourses.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  );
 
   return {
-    courses: paginatedCourses,
+    courses: filteredCourses,
+    allCourses,
     programs: allPrograms, // Ensure programs are included
     categories: allCategories,
     featuredCategories,
@@ -103,18 +103,21 @@ async function fetchData(
   };
 }
 
-async function fetchAllCourses(): Promise<Course[]> {
-  return await getAllCourses();
-}
-
 interface PageProps {
   searchParams?:
-    | { category?: string; query?: string; page?: string; view?: string }
+    | {
+        category?: string;
+        query?: string;
+        page?: string;
+        view?: string;
+        sort?: CourseSortValue;
+      }
     | Promise<{
         category?: string;
         query?: string;
         page?: string;
         view?: string;
+        sort?: CourseSortValue;
       }>;
 }
 
@@ -128,11 +131,11 @@ export default async function Page({ searchParams }: PageProps) {
     query: params?.query,
     page: params?.page,
     view: params?.view,
+    sort: params?.sort,
   };
 
   try {
     const data = await fetchData(parsedParams);
-    const allCourses = await fetchAllCourses();
     const view = parsedParams.view;
 
     return (
@@ -143,7 +146,7 @@ export default async function Page({ searchParams }: PageProps) {
         >
           <Header />
           <StudentDetails
-            initialCourses={allCourses}
+            initialCourses={data.allCourses}
             initialPrograms={data.programs}
           />
           {!view && (
@@ -155,17 +158,21 @@ export default async function Page({ searchParams }: PageProps) {
               <CourseListWrapper>
                 <Suspense
                   fallback={
-                    <div className="
+                    <div
+                      className="
                       my-8 grid grid-cols-1 gap-6 px-8
                       sm:grid-cols-2
                       lg:grid-cols-4 lg:px-20
-                    ">
+                    "
+                    >
                       {Array.from({ length: 12 }).map((_, i) => (
                         <div key={i} className="group relative p-4">
-                          <Skeleton className="
+                          <Skeleton
+                            className="
                             relative h-40 w-full
                             md:h-56
-                          " />
+                          "
+                          />
                           <div className="mt-3 flex flex-col space-y-2">
                             <Skeleton className="h-6 w-3/4" />
                             <Skeleton className="h-4 w-1/2" />
@@ -179,12 +186,13 @@ export default async function Page({ searchParams }: PageProps) {
                   }
                 >
                   <StudentListCourses
-                    courses={data.courses}
+                    courses={data.allCourses}
                     currentPage={data.page}
                     totalPages={data.totalPages}
                     totalCourses={data.total}
                     category={data.categoryId?.toString()}
                     searchTerm={data.searchTerm}
+                    sort={parsedParams.sort ?? 'random'}
                   />
                 </Suspense>
               </CourseListWrapper>

@@ -9,11 +9,11 @@ import { and, eq } from 'drizzle-orm';
 import { CertificationStudent } from '~/components/estudiantes/layout/certification/CertificationStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
-import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
+import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { getProgramById } from '~/server/actions/estudiantes/programs/getProgramById';
 import { db } from '~/server/db';
-import { certificates } from '~/server/db/schema';
+import { certificates, users } from '~/server/db/schema';
 
 import type { Course } from '~/types';
 
@@ -59,55 +59,30 @@ export default async function ProgramCertificatePage({ params }: PageProps) {
     const program = await getProgramById(programaId);
     if (!program) notFound();
 
-    // Obtener materias asociadas al programa
-    const programMaterias = program.materias ?? [];
+    const programCourseIds = Array.from(
+      new Set(
+        (program.materias ?? [])
+          .map((materia) => materia.courseid)
+          .filter((courseId): courseId is number => Number.isFinite(courseId))
+      )
+    );
 
-    // Obtener notas de materias del usuario
-    const gradesRecords = await db.query.materiaGrades.findMany({
-      where: (mg) => eq(mg.userId, userId),
-    });
-
-    // Para materias que están vinculadas a cursos, verificar tambien que las lecciones del curso estén completas
-    let allPassed = true;
-    const grades: number[] = [];
-
-    for (const m of programMaterias) {
-      const g = gradesRecords.find((gr) => gr.materiaId === m.id);
-      const grade = g?.grade ?? 0;
-
-      // Si la materia está asociada a un curso, verificar lecciones completadas
-      if (m.courseid) {
-        const course = await getCourseById(m.courseid, userId);
-        if (!course) {
-          allPassed = false;
-          break;
-        }
-        const allLessonsCompleted = course.lessons?.every(
-          (l) => l.porcentajecompletado === 100
-        );
-        if (!allLessonsCompleted) {
-          allPassed = false;
-          break;
-        }
-      }
-
-      if (grade < 3) {
-        allPassed = false;
-        break;
-      }
-
-      grades.push(grade);
+    if (programCourseIds.length === 0) {
+      notFound();
     }
 
-    const programAverage =
-      grades.length > 0
-        ? Number((grades.reduce((a, b) => a + b, 0) / grades.length).toFixed(2))
-        : 0;
+    const enrolledCourses = await getEnrolledCourses(userId);
+    const enrolledCoursesMap = new Map(
+      enrolledCourses.map((course) => [course.id, course.progress ?? 0])
+    );
 
-    if (allPassed && programAverage >= 3) {
-      // Obtener nombre del usuario
+    const allProgramCoursesCompleted = programCourseIds.every(
+      (courseId) => (enrolledCoursesMap.get(courseId) ?? 0) >= 100
+    );
+
+    if (allProgramCoursesCompleted) {
       const userData = await db.query.users.findFirst({
-        where: (u) => eq(u.id, userId),
+        where: eq(users.id, userId),
       });
       const studentName = userData?.name ?? '';
 
@@ -117,7 +92,7 @@ export default async function ProgramCertificatePage({ params }: PageProps) {
         .values({
           userId,
           programaId,
-          grade: programAverage,
+          grade: 5,
           createdAt: new Date(),
           studentName,
         })

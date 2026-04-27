@@ -16,6 +16,8 @@ import {
   PaginationPrevious,
 } from '~/components/estudiantes/ui/pagination';
 
+import type { CourseSortValue } from '~/components/estudiantes/layout/studentdashboard/CourseSortControl';
+
 interface PaginationContainerProps {
   totalPages: number;
   currentPage: number;
@@ -23,7 +25,9 @@ interface PaginationContainerProps {
   route?: string;
   category?: string;
   searchTerm?: string;
+  sort?: CourseSortValue;
   itemsPerPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
 const StudentPagination = ({
@@ -33,7 +37,9 @@ const StudentPagination = ({
   route = '/estudiantes',
   category,
   searchTerm,
+  sort,
   itemsPerPage = 9,
+  onPageChange,
 }: PaginationContainerProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -54,21 +60,31 @@ const StudentPagination = ({
 
       // Add optional parameters if present
       if (category) params.append('category', category);
-      if (searchTerm) params.append('searchTerm', searchTerm);
+      if (searchTerm) params.append('query', searchTerm);
+      if (sort && sort !== 'random') params.append('sort', sort);
 
       const queryString = params.toString();
       return queryString ? `${route}?${queryString}` : route;
     },
-    [category, route, searchTerm]
+    [category, route, searchTerm, sort]
   );
 
   const handlePageChange = useCallback(
     (page: number) => {
+      if (page < 1 || page > totalPages) return;
+
+      if (onPageChange) {
+        const newUrl = buildUrl(page);
+        onPageChange(page);
+        window.history.pushState(null, '', newUrl);
+        return;
+      }
+
       start();
       const newUrl = buildUrl(page);
       router.push(newUrl, { scroll: false });
     },
-    [buildUrl, router, start]
+    [buildUrl, onPageChange, router, start, totalPages]
   );
 
   // Calculate pagination range
@@ -83,9 +99,11 @@ const StudentPagination = ({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="
+    <div
+      className="
       div-pagination flex flex-col items-center justify-between space-y-4 py-8
-    ">
+    "
+    >
       <p className="text-sm text-gray-600">
         Mostrando {startItem}-{endItem} de {totalCourses} cursos
       </p>
@@ -97,9 +115,7 @@ const StudentPagination = ({
               className={`
                 cursor-pointer
                 active:scale-95
-                ${
-                currentPage === 1 ? 'pointer-events-none opacity-50' : ''
-              }
+                ${currentPage === 1 ? 'pointer-events-none opacity-50' : ''}
               `}
               aria-disabled={currentPage === 1}
             />
@@ -147,10 +163,10 @@ const StudentPagination = ({
                 cursor-pointer
                 active:scale-95
                 ${
-                currentPage === totalPages
-                  ? 'pointer-events-none opacity-50'
-                  : ''
-              }
+                  currentPage === totalPages
+                    ? 'pointer-events-none opacity-50'
+                    : ''
+                }
               `}
               aria-disabled={currentPage === totalPages}
             />
