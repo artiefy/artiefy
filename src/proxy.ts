@@ -34,6 +34,10 @@ function isDashboardPath(pathname: string): boolean {
   return pathname.startsWith('/dashboard');
 }
 
+function isPublicDashboardPath(pathname: string): boolean {
+  return pathname === '/dashboard/formulario';
+}
+
 function isProtectedStudentPath(pathname: string): boolean {
   return /^\/estudiantes\/clases\/[^/]+\/?$/.test(pathname);
 }
@@ -101,7 +105,7 @@ export default clerkMiddleware(async (auth, req) => {
     const role = getUserRole(sessionClaims?.metadata?.role);
     const privilegedDashboardRoute = getPrivilegedDashboardRoute(role);
 
-    if (isPublicContentPath(pathname)) {
+    if (isPublicContentPath(pathname) || isPublicDashboardPath(pathname)) {
       return NextResponse.next();
     }
 
