@@ -2,8 +2,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { ArrowLeft, ExternalLink } from 'lucide-react';
-
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { getCollaboratorPublicDetails } from '~/components/estudiantes/proyectos/projectSocialData';
@@ -41,7 +39,20 @@ export default async function ColaboradorDetallePage({
               hover:text-foreground
             `}
           >
-            <ArrowLeft className="size-4" />
+            <svg
+              className="size-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
             Volver a proyectos
           </Link>
 
@@ -142,7 +153,21 @@ export default async function ColaboradorDetallePage({
                           `}
                         >
                           Ver detalle
-                          <ExternalLink className="size-3" />
+                          <svg
+                            className="size-3"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                          >
+                            <path d="M15 3h6v6" />
+                            <path d="M10 14 21 3" />
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                          </svg>
                         </Link>
                       </div>
                     </div>

@@ -32,7 +32,11 @@ Mantener y evolucionar esta app (backend + frontend) usando:
    2.2 Mantener stack fijo del proyecto: no proponer ni introducir migraciones a otros frameworks (Vue/Angular/Svelte/Laravel/Django/Rails, etc.) salvo pedido explícito del usuario.
 3. Preservar arquitectura y convenciones del proyecto salvo petición explícita de refactor.
 4. Hacer cambios incrementales y mantener la app ejecutable en cada iteración.
-5. Ejecutar validaciones completas (`lint`, `typecheck`, `build`) solo tras cambios importantes (multiarchivo, cambios estructurales, refactors, dependencias, lógica crítica o before-merge). En cambios pequeños y acotados (por ejemplo 1 archivo/UI puntual), no correr `lint` y `typecheck` completos por defecto.
+5. No ejecutar validaciones pesadas por defecto en cada reparación, creación o modificación de código. Evitar `npm run build`, `npm run typecheck`, `npm run lint` y validaciones equivalentes salvo que el usuario lo pida explícitamente o que el cambio sea claramente de alto riesgo.
+   5.1 En cambios pequeños o acotados (1-3 archivos, UI puntual, textos, estilos, ajustes simples), hacer el cambio solicitado y cerrar sin correr validaciones completas.
+   5.2 Si se necesita verificar algo en un cambio pequeño, preferir una inspección puntual del archivo o una validación mínima y rápida, no comandos globales del proyecto.
+   5.3 Ejecutar `lint`, `typecheck` o `build` solo en cambios importantes: refactors grandes, dependencias, configuración de build, rutas críticas de auth/roles/permisos, lógica de datos sensible, migraciones, o cuando el usuario diga explícitamente "valida", "ejecuta build", "corre typecheck", "corre lint" o equivalente.
+   5.4 Antes de lanzar una validación pesada, avisar brevemente qué comando se va a ejecutar y por qué aporta señal real.
 6. Si un skill general incluye ejemplos de otras tecnologías, tratarlos solo como referencia metodológica; la implementación final debe quedar en el stack objetivo de este proyecto.
 
 ## Modo no técnico (prompt simple)
@@ -181,7 +185,7 @@ Ruta: `.agents/skills`
 
 ## Definición de listo
 
-Para cambios grandes (varios archivos o impacto alto):
+Para cambios grandes (varios archivos o impacto alto), y solo cuando el usuario lo pida o el riesgo lo justifique:
 
 - Código compila
 - `npm run lint` pasa
@@ -192,5 +196,6 @@ Para cambios grandes (varios archivos o impacto alto):
 Para cambios pequeños (acotados):
 
 - El cambio funciona y no rompe el flujo afectado
-- Ejecutar validación puntual solo si aporta señal (sin requerir `lint`/`typecheck` completos en cada solicitud)
-- Si el cambio toca comportamiento visible en navegador, preferir una verificación puntual con `playwright-cli`
+- No ejecutar `npm run build`, `npm run typecheck` ni `npm run lint` por defecto
+- Ejecutar validación puntual solo si aporta señal clara y es rápida
+- Si el cambio toca comportamiento visible en navegador, sugerir verificación puntual solo cuando sea necesaria o cuando el usuario la pida

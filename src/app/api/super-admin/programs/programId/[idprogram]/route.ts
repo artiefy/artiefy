@@ -1,3 +1,5 @@
+import { NextResponse } from 'next/server';
+
 import { and, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -10,43 +12,40 @@ import {
 } from '~/server/db/schema';
 
 import type { Program } from '~/types';
-import type { NextApiRequest, NextApiResponse } from 'next';
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ idprogram: string }> }
 ) {
-  console.log('Request method:', req.method); // Debugging log
-  if (req.method === 'GET') {
-    const { idprogram } = req.query;
-    if (!idprogram) {
-      return res.status(400).json({ message: 'Program ID is required' });
-    }
+  const { idprogram } = await params;
 
-    console.log('Fetching program by ID:', idprogram); // Debugging log
-    const program = await getProgramById(idprogram as string);
-    if (program) {
-      res.status(200).json(program);
-    } else {
-      res.status(404).json({ message: 'Program not found' });
-    }
-  } else if (req.method === 'POST' && req.url?.includes('isUserEnrolled')) {
-    const { programId, userId } = req.body as {
-      programId: number;
-      userId: string;
-    };
-    console.log('Checking if user is enrolled:', { programId, userId }); // Debugging log
-    const isEnrolled = await isUserEnrolledInProgram(programId, userId);
-    return res.status(200).json({ enrolled: isEnrolled });
-  } else {
-    res.setHeader('Allow', ['GET', 'POST']);
-    return res
-      .status(405)
-      .json({ message: `Method ${req.method} not allowed` });
+  if (!idprogram) {
+    return NextResponse.json(
+      { message: 'Program ID is required' },
+      { status: 400 }
+    );
   }
+
+  const program = await getProgramById(idprogram);
+
+  if (!program) {
+    return NextResponse.json({ message: 'Program not found' }, { status: 404 });
+  }
+
+  return NextResponse.json(program);
 }
 
-export const getProgramById = async (id: string): Promise<Program | null> => {
+export async function POST(request: Request) {
+  const { programId, userId } = (await request.json()) as {
+    programId: number;
+    userId: string;
+  };
+  const isEnrolled = await isUserEnrolledInProgram(programId, userId);
+
+  return NextResponse.json({ enrolled: isEnrolled });
+}
+
+const getProgramById = async (id: string): Promise<Program | null> => {
   try {
     console.log('Querying program by ID:', id);
     // Get program basic data
@@ -119,7 +118,7 @@ export const getProgramById = async (id: string): Promise<Program | null> => {
   }
 };
 
-export async function isUserEnrolledInProgram(
+async function isUserEnrolledInProgram(
   programId: number,
   userId: string
 ): Promise<boolean> {

@@ -6,7 +6,6 @@ import Script from 'next/script';
 
 import { esMX } from '@clerk/localizations';
 import { ClerkProvider } from '@clerk/nextjs';
-import { ui } from '@clerk/ui';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
@@ -27,6 +26,7 @@ import Providers from './providers';
 import type { Metadata } from 'next';
 
 import '~/styles/globals.css';
+import '~/styles/loading.css';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -135,7 +135,6 @@ export default function RootLayout({
           localization={esMX}
           signInUrl="/sign-in"
           signUpUrl="/sign-up"
-          ui={ui}
         >
           {/* Meta Pixel noscript fallback */}
           <noscript>
