@@ -90,11 +90,7 @@ const webAppSchema = {
     price: '0',
     priceCurrency: 'EUR',
   },
-  featureList: [
-    'Feature 1',
-    'Feature 2',
-    'Feature 3',
-  ],
+  featureList: ['Feature 1', 'Feature 2', 'Feature 3'],
 };
 ```
 

@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 
 import { eq } from 'drizzle-orm';
 
+import { createTicket } from '~/models/educatorsModels/ticketsModels';
 import { db } from '~/server/db';
 import { waMessages } from '~/server/db/schema';
+import { sendWhatsAppMessage } from '~/server/whatsapp/send-message';
 
 import { inbox, pushInbox } from '../_inbox';
 
@@ -112,8 +114,11 @@ interface WaWebhookBody {
 
 function toMs(ts?: string): number {
   if (!ts) return Date.now();
-  if (/^\d+$/.test(ts))
+
+  if (/^\d+$/.test(ts)) {
     return ts.length === 10 ? Number(ts) * 1000 : Number(ts);
+  }
+
   return Date.now();
 }
 
@@ -161,7 +166,6 @@ async function saveMessage({
       msgType,
       body,
       tsMs,
-      // Nuevos campos para medios
       mediaId,
       mediaType,
       fileName,
@@ -169,6 +173,129 @@ async function saveMessage({
     });
   } catch (e) {
     console.error('[WA][DB] Error guardando mensaje:', e);
+  }
+}
+
+async function sendInitialSupportTemplate({
+  waId,
+  name,
+}: {
+  waId: string;
+  name: string;
+}) {
+  return sendWhatsAppMessage({
+    to: waId,
+    forceTemplate: true,
+    templateName: 'inicio_soporte',
+    languageCode: 'es_ES',
+    variables: [name || 'Usuario'],
+    session: 'soporte',
+  });
+}
+
+async function handleEscalation({
+  waId,
+  name,
+  text,
+}: {
+  waId: string;
+  name: string;
+  text: string;
+}) {
+  try {
+    await createTicket({
+      comments: text,
+      description: `Ticket creado desde WhatsApp
+
+Cliente: ${name}
+WhatsApp: ${waId}
+
+Mensaje:
+${text}`,
+      coverImageKey: '',
+      email: `${waId}@whatsapp.local`,
+      userId: `whatsapp_${waId}`,
+    });
+
+    await sendWhatsAppMessage({
+      to: waId,
+      forceTemplate: true,
+      templateName: 'escalamiento_humano',
+      languageCode: 'es_ES',
+      variables: [name || 'Usuario'],
+      session: 'soporte',
+    });
+  } catch (error) {
+    console.error('[WA][BOT] Error escalando a humano:', error);
+
+    await sendWhatsAppMessage({
+      to: waId,
+      text: 'Tuvimos un problema creando tu solicitud. Por favor intenta nuevamente escribiendo "asesor".',
+      session: 'soporte',
+    }).catch((sendError) => {
+      console.error('[WA][BOT] Error enviando fallback:', sendError);
+    });
+  }
+}
+
+async function handleIncomingMessage({
+  waId,
+  name,
+  text,
+}: {
+  waId: string;
+  name: string;
+  text: string;
+}) {
+  try {
+    const normalized = text.trim().toLowerCase();
+
+    if (!normalized) {
+      return sendInitialSupportTemplate({ waId, name });
+    }
+
+    if (
+      normalized.includes('asesor') ||
+      normalized.includes('humano') ||
+      normalized.includes('ayuda') ||
+      normalized.includes('agente')
+    ) {
+      return handleEscalation({ waId, name, text });
+    }
+
+    if (normalized === '1') {
+      return sendWhatsAppMessage({
+        to: waId,
+        text: `Selecciona una opción de gestión financiera:
+
+1. Estado de cuenta
+2. Problema con pago
+3. Renovación
+4. Hablar con asesor`,
+        session: 'soporte',
+      });
+    }
+
+    if (normalized === '2') {
+      return sendWhatsAppMessage({
+        to: waId,
+        text: `Selecciona una opción de soporte técnico:
+
+1. Error en plataforma
+2. No puedo acceder
+3. Fallo de sistema
+4. Hablar con asesor`,
+        session: 'soporte',
+      });
+    }
+
+    if (normalized === '4') {
+      return handleEscalation({ waId, name, text });
+    }
+
+    return sendInitialSupportTemplate({ waId, name });
+  } catch (error) {
+    console.error('[WA][BOT] Error manejando mensaje:', error);
   }
 }
 
@@ -184,6 +311,7 @@ export function GET(req: NextRequest) {
     console.log('✅ Webhook verificado');
     return new NextResponse(challenge ?? '', { status: 200 });
   }
+
   console.warn('❌ Verificación fallida', { mode, token });
   return NextResponse.json({ error: 'verification failed' }, { status: 403 });
 }
@@ -199,10 +327,11 @@ export async function POST(req: NextRequest) {
         const contacts = v?.contacts ?? [];
 
         const messages = Array.isArray(v?.messages)
-          ? (v!.messages as WaMessage[])
+          ? (v.messages as WaMessage[])
           : [];
+
         const statuses = Array.isArray(v?.statuses)
-          ? (v!.statuses as WaStatus[])
+          ? (v.statuses as WaStatus[])
           : [];
 
         for (const m of messages) {
@@ -216,64 +345,75 @@ export async function POST(req: NextRequest) {
             case 'text':
               text = m.text?.body ?? '';
               break;
+
             case 'image':
               mediaId = m.image?.id ?? '';
               mediaType = m.image?.mime_type ?? 'image/jpeg';
               text = m.image?.caption ?? 'Imagen recibida';
               break;
+
             case 'audio':
               mediaId = m.audio?.id ?? '';
               mediaType = m.audio?.mime_type ?? 'audio/ogg';
               text = 'Audio recibido';
               break;
+
             case 'video':
               mediaId = m.video?.id ?? '';
               mediaType = m.video?.mime_type ?? 'video/mp4';
               text = m.video?.caption ?? 'Video recibido';
               break;
+
             case 'document':
               mediaId = m.document?.id ?? '';
               mediaType = m.document?.mime_type ?? 'application/octet-stream';
               fileName = m.document?.filename ?? 'documento';
               text = m.document?.caption ?? `Documento: ${fileName}`;
               break;
+
             case 'button':
               text = m.button?.text ?? m.button?.payload ?? 'Botón presionado';
               break;
+
             case 'interactive': {
               const br = m.interactive?.button_reply;
               const lr = m.interactive?.list_reply;
-              text = br?.title
-                ? `Botón: ${br.title}`
-                : lr?.title
-                  ? `Lista: ${lr.title}`
-                  : 'Mensaje interactivo';
+
+              text =
+                br?.title ??
+                br?.id ??
+                lr?.title ??
+                lr?.id ??
+                'Mensaje interactivo';
+
               break;
             }
+
             default:
               text = 'Mensaje recibido';
           }
 
-          // Push a inbox inmediato
+          const contactName = contacts?.[0]?.profile?.name ?? 'Usuario';
+
           pushInbox({
             id: m.id,
             direction: 'inbound',
             timestamp: tsMs,
             from: m.from,
-            name: contacts?.[0]?.profile?.name ?? null,
+            name: contactName,
             type: m.type,
             text,
             mediaId,
             mediaType,
             fileName,
             raw: m,
+            session: 'soporte',
           });
 
-          // Guarda en BD
           await saveMessage({
             metaMessageId: m.id,
             waid: m.from,
-            name: contacts?.[0]?.profile?.name ?? null,
+            name: contactName,
             direction: 'inbound',
             msgType: m.type,
             body: text,
@@ -283,12 +423,23 @@ export async function POST(req: NextRequest) {
             fileName,
             raw: m,
           });
+
+          if (
+            m.type === 'text' ||
+            m.type === 'button' ||
+            m.type === 'interactive'
+          ) {
+            await handleIncomingMessage({
+              waId: m.from,
+              name: contactName,
+              text,
+            });
+          }
         }
 
         for (const st of statuses) {
           const tsMs = toMs(st.timestamp);
 
-          // 🔍 Log completo del status para debugging
           if (st.status === 'failed') {
             console.error(
               '❌ [WA-WEBHOOK] Mensaje fallido:',
@@ -309,6 +460,7 @@ export async function POST(req: NextRequest) {
             type: 'status',
             text: `Status: ${st.status ?? 'unknown'}`,
             raw: st,
+            session: 'soporte',
           });
 
           await saveMessage({

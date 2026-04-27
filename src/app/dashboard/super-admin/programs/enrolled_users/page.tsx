@@ -198,11 +198,11 @@ interface Student {
   carteraStatus?: 'activo' | 'inactivo' | 'no verificado';
   enrollmentStatus?:
     | 'Nuevo'
+    | 'Estudiante'
     | 'Graduando'
     | 'Egresado'
     | 'Aplaza'
-    | 'Retirado'
-    | 'Estudiante';
+    | 'Retirado';
   userInscriptionDetails?: Record<string, unknown>;
 }
 
@@ -395,11 +395,11 @@ const allColumns: Column[] = [
     type: 'select',
     options: [
       'Nuevo',
+      'Estudiante',
       'Graduando',
       'Egresado',
       'Aplaza',
       'Retirado',
-      'Estudiante',
     ],
   },
   {
@@ -1605,16 +1605,15 @@ export default function EnrolledUsersPage() {
   const enrollmentStatusOptions = useMemo(
     () => [
       'Nuevo',
+      'Estudiante',
       'Graduando',
       'Egresado',
       'Aplaza',
       'Retirado',
-      'Estudiante',
     ],
     []
   );
 
-  // Contar estudiantes por estado de inscripción
   const enrollmentStatusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     enrollmentStatusOptions.forEach((status) => {
@@ -2669,11 +2668,11 @@ export default function EnrolledUsersPage() {
 
           const validEnrollmentStatuses = [
             'Nuevo',
+            'Estudiante',
             'Graduando',
             'Egresado',
             'Aplaza',
             'Retirado',
-            'Estudiante',
           ];
           const trimmedEnrollmentStatus = (s.enrollmentStatus ?? '')
             .toString()
@@ -2683,11 +2682,11 @@ export default function EnrolledUsersPage() {
           )
             ? (trimmedEnrollmentStatus as
                 | 'Nuevo'
+                | 'Estudiante'
                 | 'Graduando'
                 | 'Egresado'
                 | 'Aplaza'
-                | 'Retirado'
-                | 'Estudiante')
+                | 'Retirado')
             : 'Nuevo';
 
           const obj: Student = {
@@ -3616,9 +3615,9 @@ export default function EnrolledUsersPage() {
                 value: students.filter((s) => s.isNew).length,
                 color: 'text-cyan-400',
               },
-            ].map(({ label, value, color }) => (
+            ].map(({ label, value, color }, i) => (
               <div
-                key={label}
+                key={`${label}-${i}`}
                 className="
                   flex items-center gap-2 rounded-xl border border-white/10
                   bg-white/5 px-3 py-1.5
@@ -3664,7 +3663,7 @@ export default function EnrolledUsersPage() {
                 ] as { label: string; onClick: () => void }[]
               ).map(({ label, onClick }, i) => (
                 <button
-                  key={label}
+                  key={`${label}-${i}`}
                   onClick={onClick}
                   className={`
                     bg-white/5 px-4 py-2.5 text-sm font-medium text-gray-200
@@ -4063,8 +4062,6 @@ export default function EnrolledUsersPage() {
             { key: 'Activo', label: 'Activo', color: 'emerald' },
             { key: 'Inactivo', label: 'Inactivo', color: 'red' },
             { key: 'Pendiente', label: 'Pendiente', color: 'amber' },
-            { key: 'Suspendido', label: 'Suspendido', color: 'orange' },
-            { key: 'Cancelado', label: 'Cancelado', color: 'gray' },
             ...enrollmentStatusOptions
               .filter(
                 (s) =>
@@ -7718,17 +7715,26 @@ export default function EnrolledUsersPage() {
                         <Image
                           src="/artiefy-logo.png"
                           alt="Artiefy"
-                          width={120}
-                          height={36}
-                          className="h-9 w-auto object-contain"
-                          priority
+                          width="120"
+                          height="36"
+                          style={{
+                            height: '2.25rem',
+                            width: 'auto',
+                            objectFit: 'contain',
+                          }}
+                          loading="eager"
                         />
                         <Image
                           src="/logo-ponao.png"
                           alt="PONAO"
-                          width={120}
-                          height={36}
-                          className="h-9 w-auto object-contain"
+                          width="120"
+                          height="36"
+                          style={{
+                            height: '2.25rem',
+                            width: 'auto',
+                            objectFit: 'contain',
+                          }}
+                          loading="eager"
                         />
                       </div>
                       <div className="text-right">
@@ -8067,6 +8073,152 @@ export default function EnrolledUsersPage() {
                   "
                 >
                   Imprimir / Guardar PDF
+                </button>
+
+                <button
+                  onClick={async () => {
+                    const el = document.getElementById('printable-invoice');
+                    if (!el) return;
+
+                    // Temporarily show the element for capture
+                    el.classList.remove('hidden');
+                    el.style.position = 'fixed';
+                    el.style.top = '-9999px';
+                    el.style.left = '0';
+                    el.style.zIndex = '-1';
+
+                    // Inject a style override to neutralize lab() colors
+                    const overrideStyle = document.createElement('style');
+                    overrideStyle.id = '__h2c_override';
+                    overrideStyle.textContent = `
+    * {
+      color: black !important;
+      background-color: white !important;
+      border-color: black !important;
+      outline-color: transparent !important;
+      box-shadow: none !important;
+      text-shadow: none !important;
+      -webkit-text-fill-color: black !important;
+    }
+  `;
+                    document.head.appendChild(overrideStyle);
+
+                    try {
+                      const html2canvas = (await import('html2canvas')).default;
+
+                      const canvas = await html2canvas(el, {
+                        background: '#ffffff',
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: false,
+                        logging: false,
+                        onclone: (
+                          _clonedWindow: Window,
+                          clonedDoc: Document
+                        ) => {
+                          Array.from(clonedDoc.styleSheets).forEach(
+                            (sheet: CSSStyleSheet) => {
+                              try {
+                                const rules = Array.from(sheet.cssRules);
+                                for (let i = rules.length - 1; i >= 0; i--) {
+                                  const rule = rules[i] as CSSRule;
+                                  const text = rule.cssText ?? '';
+                                  if (
+                                    /\blab\(|\boklch\(|\bcolor-mix\(|\blch\(|\boklab\(/.test(
+                                      text
+                                    )
+                                  ) {
+                                    sheet.deleteRule(i);
+                                  }
+                                }
+                              } catch {
+                                // Cross-origin stylesheets throw on cssRules access — ignore
+                              }
+                            }
+                          );
+
+                          const allEls = clonedDoc.querySelectorAll('*');
+                          allEls.forEach((node: Element) => {
+                            if (node instanceof HTMLElement) {
+                              node.style.setProperty(
+                                'color',
+                                'black',
+                                'important'
+                              );
+                              node.style.setProperty(
+                                'background-color',
+                                'white',
+                                'important'
+                              );
+                              node.style.setProperty(
+                                'border-color',
+                                '#000000',
+                                'important'
+                              );
+                              node.style.setProperty(
+                                'box-shadow',
+                                'none',
+                                'important'
+                              );
+                              node.style.setProperty(
+                                'text-shadow',
+                                'none',
+                                'important'
+                              );
+                              node.style.setProperty(
+                                '-webkit-text-fill-color',
+                                'black',
+                                'important'
+                              );
+                            }
+                          });
+                        },
+                      } as Parameters<typeof html2canvas>[1]);
+
+                      canvas.toBlob(async (blob: Blob | null) => {
+                        if (!blob) return;
+                        let copied = false;
+                        try {
+                          await navigator.clipboard.write([
+                            new window.ClipboardItem({ 'image/png': blob }),
+                          ]);
+                          copied = true;
+                        } catch (err) {
+                          console.error('Error al copiar imagen:', err);
+                        }
+                        setInfoDialogTitle('Factura copiada');
+                        setInfoDialogMessage(
+                          copied
+                            ? 'Factura copiada al portapapeles. Ahora puedes pegarla en cualquier chat, correo o documento.'
+                            : 'Factura generada como imagen. Si no puedes pegarla, intenta actualizar tu navegador o usa la función de imprimir/guardar PDF.'
+                        );
+                        setInfoDialogOpen(true);
+                      }, 'image/png');
+                    } catch (err) {
+                      console.error('Error en html2canvas:', err);
+                      setInfoDialogTitle('No se pudo copiar');
+                      setInfoDialogMessage(
+                        'No se pudo copiar la imagen. Intenta actualizar tu navegador o usa la función de imprimir/guardar PDF.'
+                      );
+                      setInfoDialogOpen(true);
+                    } finally {
+                      // Always restore
+                      el.classList.add('hidden');
+                      el.style.position = '';
+                      el.style.top = '';
+                      el.style.left = '';
+                      el.style.zIndex = '';
+                      document.getElementById('__h2c_override')?.remove();
+                    }
+                  }}
+                  className="
+                    rounded bg-blue-600 px-4 py-2 font-semibold text-white
+                    hover:bg-blue-700
+                    dark:bg-blue-500
+                    dark:hover:bg-blue-600
+                  "
+                >
+                  Copiar imagen
                 </button>
 
                 <button

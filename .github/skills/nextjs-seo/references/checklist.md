@@ -80,14 +80,14 @@
 
 ## Audit Tools
 
-| Tool | Purpose | URL |
-|------|---------|-----|
-| Google Search Console | Indexing, errors | search.google.com/search-console |
-| PageSpeed Insights | Core Web Vitals | pagespeed.web.dev |
-| Rich Results Test | Structured data | search.google.com/test/rich-results |
-| Lighthouse | Overall audit | Chrome DevTools |
-| Mobile-Friendly Test | Mobile usability | search.google.com/test/mobile-friendly |
-| Ahrefs/Semrush | Backlinks, rankings | ahrefs.com / semrush.com |
+| Tool                  | Purpose             | URL                                    |
+| --------------------- | ------------------- | -------------------------------------- |
+| Google Search Console | Indexing, errors    | search.google.com/search-console       |
+| PageSpeed Insights    | Core Web Vitals     | pagespeed.web.dev                      |
+| Rich Results Test     | Structured data     | search.google.com/test/rich-results    |
+| Lighthouse            | Overall audit       | Chrome DevTools                        |
+| Mobile-Friendly Test  | Mobile usability    | search.google.com/test/mobile-friendly |
+| Ahrefs/Semrush        | Backlinks, rankings | ahrefs.com / semrush.com               |
 
 ## Quick Commands
 

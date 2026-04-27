@@ -506,63 +506,62 @@ undefinedts
     \*/
     browserName?: 'chromium' | 'firefox' | 'webkit';
 
+    /\*\*
+    - Keep the browser profile in memory, do not save it to disk.
+      \*/
+      isolated?: boolean;
 
-    /**
-     * Keep the browser profile in memory, do not save it to disk.
-     */
-    isolated?: boolean;
+    /\*\*
+    - Path to a user data directory for browser profile persistence.
+    - Temporary directory is created by default.
+      \*/
+      userDataDir?: string;
 
-    /**
-     * Path to a user data directory for browser profile persistence.
-     * Temporary directory is created by default.
-     */
-    userDataDir?: string;
+    /\*\*
+    - Launch options passed to
+    - @see https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context
+    -
+    - This is useful for settings options like `channel`, `headless`, `executablePath`, etc.
+      \*/
+      launchOptions?: playwright.LaunchOptions;
 
-    /**
-     * Launch options passed to
-     * @see https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context
-     *
-     * This is useful for settings options like `channel`, `headless`, `executablePath`, etc.
-     */
-    launchOptions?: playwright.LaunchOptions;
+    /\*\*
+    - Context options for the browser context.
+    -
+    - This is useful for settings options like `viewport`.
+      \*/
+      contextOptions?: playwright.BrowserContextOptions;
 
-    /**
-     * Context options for the browser context.
-     *
-     * This is useful for settings options like `viewport`.
-     */
-    contextOptions?: playwright.BrowserContextOptions;
+    /\*\*
+    - Chrome DevTools Protocol endpoint to connect to an existing browser instance in case of Chromium family browsers.
+      \*/
+      cdpEndpoint?: string;
 
-    /**
-     * Chrome DevTools Protocol endpoint to connect to an existing browser instance in case of Chromium family browsers.
-     */
-    cdpEndpoint?: string;
+    /\*\*
+    - CDP headers to send with the connect request.
+      \*/
+      cdpHeaders?: Record<string, string>;
 
-    /**
-     * CDP headers to send with the connect request.
-     */
-    cdpHeaders?: Record<string, string>;
+    /\*\*
+    - Timeout in milliseconds for connecting to CDP endpoint. Defaults to 30000 (30 seconds). Pass 0 to disable timeout.
+      \*/
+      cdpTimeout?: number;
 
-    /**
-     * Timeout in milliseconds for connecting to CDP endpoint. Defaults to 30000 (30 seconds). Pass 0 to disable timeout.
-     */
-    cdpTimeout?: number;
+    /\*\*
+    - Remote endpoint to connect to an existing Playwright server.
+      \*/
+      remoteEndpoint?: string;
 
-    /**
-     * Remote endpoint to connect to an existing Playwright server.
-     */
-    remoteEndpoint?: string;
+    /\*\*
+    - Paths to TypeScript files to add as initialization scripts for Playwright page.
+      \*/
+      initPage?: string[];
 
-    /**
-     * Paths to TypeScript files to add as initialization scripts for Playwright page.
-     */
-    initPage?: string[];
-
-    /**
-     * Paths to JavaScript files to add as initialization scripts.
-     * The scripts will be evaluated in every page before any of the page's scripts.
-     */
-    initScript?: string[];
+    /\*\*
+    - Paths to JavaScript files to add as initialization scripts.
+    - The scripts will be evaluated in every page before any of the page's scripts.
+      \*/
+      initScript?: string[];
 
 },
 

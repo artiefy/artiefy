@@ -29,6 +29,7 @@ npx add-skill kumbajirajkumar123/nextjs-seo-optimizer
 ### Manual Installation
 
 #### For Claude Code
+
 ```bash
 # Global installation
 git clone https://github.com/kumbajirajkumar123/nextjs-seo-optimizer.git ~/.claude/skills/nextjs-seo-optimizer
@@ -38,11 +39,13 @@ git clone https://github.com/kumbajirajkumar123/nextjs-seo-optimizer.git .claude
 ```
 
 #### For Cursor
+
 ```bash
 git clone https://github.com/kumbajirajkumar123/nextjs-seo-optimizer.git ~/.cursor/skills/nextjs-seo-optimizer
 ```
 
 #### For Claude.ai (Web Interface)
+
 1. Download the latest [release](https://github.com/rajendraprasadn/nextjs-seo-optimizer/releases)
 2. Go to Settings → Features → Skills
 3. Upload the `.skill` file
@@ -50,6 +53,7 @@ git clone https://github.com/kumbajirajkumar123/nextjs-seo-optimizer.git ~/.curs
 ## 📚 Features
 
 ### Metadata Implementation
+
 - Static metadata for fixed pages
 - Dynamic metadata with `generateMetadata`
 - Open Graph tags for social sharing
@@ -58,6 +62,7 @@ git clone https://github.com/kumbajirajkumar123/nextjs-seo-optimizer.git ~/.curs
 - Canonical URL management
 
 ### Technical SEO
+
 - Dynamic sitemap generation
 - next-sitemap integration guide
 - Robots.txt configuration
@@ -65,6 +70,7 @@ git clone https://github.com/kumbajirajkumar123/nextjs-seo-optimizer.git ~/.curs
 - Multi-sitemap support for large sites
 
 ### Structured Data
+
 - Organization schema
 - Article/BlogPosting schema
 - Product schema with offers
@@ -73,6 +79,7 @@ git clone https://github.com/kumbajirajkumar123/nextjs-seo-optimizer.git ~/.curs
 - Rich results validation
 
 ### Performance
+
 - Image optimization with next/image
 - Font optimization with next/font
 - Code splitting strategies
@@ -81,6 +88,7 @@ git clone https://github.com/kumbajirajkumar123/nextjs-seo-optimizer.git ~/.curs
 - Caching strategies
 
 ### Validation
+
 - Automated SEO checker script
 - Sitemap validation
 - Robots.txt verification
@@ -92,6 +100,7 @@ git clone https://github.com/kumbajirajkumar123/nextjs-seo-optimizer.git ~/.curs
 Once installed, your AI assistant will automatically use this skill when you ask SEO-related questions:
 
 ### Basic Setup
+
 ```
 "Set up SEO for my Next.js blog"
 "Add metadata to my homepage"
@@ -99,6 +108,7 @@ Once installed, your AI assistant will automatically use this skill when you ask
 ```
 
 ### E-commerce
+
 ```
 "Add product schema to my product pages"
 "Optimize my e-commerce site for Google Shopping"
@@ -106,6 +116,7 @@ Once installed, your AI assistant will automatically use this skill when you ask
 ```
 
 ### Blog/Content
+
 ```
 "Add article schema to my blog posts"
 "Optimize my blog for search engines"
@@ -113,6 +124,7 @@ Once installed, your AI assistant will automatically use this skill when you ask
 ```
 
 ### Auditing
+
 ```
 "Audit my Next.js site for SEO issues"
 "Check if my metadata is properly configured"
@@ -140,6 +152,7 @@ node scripts/validate-seo.js --url=http://localhost:3000
 ```
 
 **Checks:**
+
 - ✅ Sitemap accessibility and validity
 - ✅ robots.txt configuration
 - ✅ Metadata implementation
@@ -160,6 +173,7 @@ node scripts/validate-seo.js --url=http://localhost:3000
 Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Ways to contribute:**
+
 - Report bugs or SEO issues
 - Suggest new patterns or schemas
 - Improve documentation
@@ -168,15 +182,16 @@ Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines
 
 ## 📊 Compatibility
 
-| Next.js Version | Support Level |
-|----------------|---------------|
-| 15.x | ✅ Full support |
-| 14.x | ✅ Full support |
-| 13.x | ✅ Full support |
-| 12.x | ⚠️ Pages Router only |
-| < 12 | ❌ Not supported |
+| Next.js Version | Support Level        |
+| --------------- | -------------------- |
+| 15.x            | ✅ Full support      |
+| 14.x            | ✅ Full support      |
+| 13.x            | ✅ Full support      |
+| 12.x            | ⚠️ Pages Router only |
+| < 12            | ❌ Not supported     |
 
 **AI Assistants:**
+
 - ✅ Claude Code
 - ✅ Cursor
 - ✅ OpenCode
@@ -203,6 +218,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 📧 Contact
 
 Created by **Rajendra Prasad N**
+
 - Portfolio: [Your Portfolio URL]
 - LinkedIn: [Your LinkedIn]
 - Twitter: [@YourHandle]
