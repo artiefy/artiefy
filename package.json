@@ -201,6 +201,7 @@
     "typescript-eslint": "8.59.1"
   },
   "overrides": {
+    "@aws-sdk/xml-builder": "3.972.18",
     "esbuild": "^0.27.3"
   },
   "ct3aMetadata": {
