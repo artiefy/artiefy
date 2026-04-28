@@ -5,6 +5,25 @@
   "devCommand": "next dev",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD ./",
   "installCommand": "npm install --legacy-peer-deps",
+  "regions": ["iad1"],
+  "functions": {
+    "src/app/api/upload/route.ts": {
+      "maxDuration": 60,
+      "regions": ["iad1"]
+    },
+    "src/app/api/video/upload/route.ts": {
+      "maxDuration": 60,
+      "regions": ["iad1"]
+    },
+    "src/app/api/cron/check-subscriptions/route.ts": {
+      "maxDuration": 60,
+      "regions": ["iad1"]
+    },
+    "src/app/api/cron/whatsapp/route.ts": {
+      "maxDuration": 60,
+      "regions": ["iad1"]
+    }
+  },
   "trailingSlash": false,
   "crons": [
     {
@@ -53,6 +72,10 @@
         {
           "key": "Permissions-Policy",
           "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=63072000; includeSubDomains; preload"
         }
       ]
     },

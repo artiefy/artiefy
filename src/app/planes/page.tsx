@@ -189,10 +189,13 @@ const PlansPage: React.FC = () => {
                       className="
                         mx-auto mb-4 flex size-14 items-center justify-center
                         rounded-2xl border border-primary/25 bg-primary/10
-                        text-[#0d2744]
+                        text-primary shadow-[0_0_18px_hsl(var(--primary)/0.12)]
                       "
                     >
-                      {createElement(PlanIcon, { className: 'h-6 w-6' })}
+                      {createElement(PlanIcon, {
+                        className:
+                          'h-6 w-6 drop-shadow-[0_0_8px_hsl(var(--primary)/0.45)]',
+                      })}
                     </div>
                     <h3 className="font-display text-2xl font-bold text-white">
                       {plan.name}
@@ -414,18 +417,19 @@ const PlansPage: React.FC = () => {
                             ${
                               isSelected
                                 ? `
-                                  bg-primary/15 text-[#0d2744] ring-1
+                                  bg-primary/15 text-primary ring-1
                                   ring-primary/40
                                 `
                                 : `
-                                  bg-muted/50 text-[#0d2744] ring-1
+                                  bg-primary/10 text-primary ring-1
                                   ring-border/40
                                 `
                             }
                           `}
                         >
                           {createElement(PlanIcon, {
-                            className: 'h-4.5 w-4.5',
+                            className:
+                              'h-4.5 w-4.5 drop-shadow-[0_0_6px_hsl(var(--primary)/0.4)]',
                           })}
                         </div>
                         <span

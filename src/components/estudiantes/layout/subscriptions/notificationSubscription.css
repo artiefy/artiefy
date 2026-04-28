@@ -165,11 +165,13 @@
 }
 
 .artiefy-subscription-root .subscription-plan-icon.is-pro {
-  color: rgb(12 39 68);
+  color: hsl(var(--primary));
+  filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.45));
 }
 
 .artiefy-subscription-root .subscription-plan-icon.is-premium {
-  color: rgb(12 39 68);
+  color: hsl(var(--primary));
+  filter: drop-shadow(0 0 6px hsl(var(--primary) / 0.45));
 }
 
 .artiefy-subscription-root .subscription-plan-icon.is-expired.is-pro {
