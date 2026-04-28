@@ -19,7 +19,33 @@ const MAX_VIDEO_SIZE = 10 * 1024 * 1024 * 1024; // 10 GB
 const MAX_FILE_SIZE = 25 * 1024 * 1024 * 1024; // 25 GB
 const MULTIPART_PART_SIZE = 100 * 1024 * 1024; // 100 MB
 
-const client = new S3Client({ region: process.env.AWS_REGION });
+function getS3Config() {
+  const requiredEnv = {
+    AWS_BUCKET_NAME: process.env.AWS_BUCKET_NAME,
+    AWS_REGION: process.env.AWS_REGION,
+    AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
+  };
+
+  const missingEnv = Object.entries(requiredEnv)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+
+  if (missingEnv.length > 0) {
+    throw new Error(`Faltan variables AWS: ${missingEnv.join(', ')}`);
+  }
+
+  return {
+    bucket: requiredEnv.AWS_BUCKET_NAME!,
+    client: new S3Client({
+      region: requiredEnv.AWS_REGION!,
+      credentials: {
+        accessKeyId: requiredEnv.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: requiredEnv.AWS_SECRET_ACCESS_KEY!,
+      },
+    }),
+  };
+}
 
 function sanitizeFileName(fileName: string): string {
   const ext = fileName.split('.').pop() ?? '';
@@ -36,6 +62,7 @@ function sanitizeFileName(fileName: string): string {
 
 export async function POST(request: Request) {
   try {
+    const { bucket, client } = getS3Config();
     let body;
     try {
       body = await request.json();
@@ -76,7 +103,7 @@ export async function POST(request: Request) {
       }
 
       const command = new UploadPartCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: bucket,
         Key: key,
         UploadId: uploadId,
         PartNumber: partNumber,
@@ -101,7 +128,7 @@ export async function POST(request: Request) {
 
       await client.send(
         new CompleteMultipartUploadCommand({
-          Bucket: process.env.AWS_BUCKET_NAME,
+          Bucket: bucket,
           Key: key,
           UploadId: uploadId,
           MultipartUpload: {
@@ -127,7 +154,7 @@ export async function POST(request: Request) {
 
       await client.send(
         new AbortMultipartUploadCommand({
-          Bucket: process.env.AWS_BUCKET_NAME,
+          Bucket: bucket,
           Key: key,
           UploadId: uploadId,
         })
@@ -145,10 +172,6 @@ export async function POST(request: Request) {
         { error: 'Se requieren contentType, fileSize y fileName' },
         { status: 400 }
       );
-    }
-
-    if (!process.env.AWS_BUCKET_NAME) {
-      throw new Error('AWS_BUCKET_NAME no está definido');
     }
 
     console.log('📦 Iniciando carga...');
@@ -215,7 +238,7 @@ export async function POST(request: Request) {
     // Generar presigned POST, PUT o multipart
     if (fileSize <= MAX_SIMPLE_UPLOAD_SIZE) {
       const { url, fields } = await createPresignedPost(client, {
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: bucket,
         Key: finalKey,
         Conditions: [
           ['content-length-range', 0, MAX_SIMPLE_UPLOAD_SIZE],
@@ -238,7 +261,7 @@ export async function POST(request: Request) {
       });
     } else if (fileSize <= MAX_PUT_UPLOAD_SIZE) {
       const command = new PutObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: bucket,
         Key: finalKey,
         ContentType: contentType,
         ContentLength: fileSize,
@@ -260,7 +283,7 @@ export async function POST(request: Request) {
     } else {
       const initResponse = await client.send(
         new CreateMultipartUploadCommand({
-          Bucket: process.env.AWS_BUCKET_NAME,
+          Bucket: bucket,
           Key: finalKey,
           ContentType: contentType,
           ACL: 'public-read',
@@ -292,6 +315,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const { bucket, client } = getS3Config();
     const body = (await request.json()) as { key: string };
     const { key } = body;
 
@@ -302,13 +326,9 @@ export async function DELETE(request: Request) {
       );
     }
 
-    if (!process.env.AWS_BUCKET_NAME) {
-      throw new Error('AWS_BUCKET_NAME no está definido');
-    }
-
     await client.send(
       new DeleteObjectCommand({
-        Bucket: process.env.AWS_BUCKET_NAME,
+        Bucket: bucket,
         Key: key,
       })
     );
