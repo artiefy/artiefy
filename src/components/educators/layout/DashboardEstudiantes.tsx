@@ -596,10 +596,11 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
       });
 
       parametroMap.forEach((param, parametroId) => {
-        const exists = allActivities.some(
+        const activitiesForParam = allActivities.filter(
           (act) => act.parametroId === parametroId
         );
-        if (!exists) {
+
+        if (activitiesForParam.length === 0) {
           allActivities.push({
             id: -parametroId,
             name: 'Sin actividad',
@@ -608,11 +609,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
             parametroPeso: param.parametroPeso,
             actividadPeso: 0,
           });
+          return;
         }
-      });
 
-      // ✅ NUEVO: agregar botón "Agregar más" para parámetros con porcentaje < 100
-      parametroMap.forEach((param, parametroId) => {
         const totalUsado = porcentajeUsadoPorParametro.get(parametroId) ?? 0;
         if (totalUsado < 100) {
           allActivities.push({
