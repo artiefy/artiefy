@@ -1635,6 +1635,13 @@ export default function AdminDashboard() {
   };
 
   const handleRoleChange = (userId: string, newRole: string) => {
+    // Validar que el rol sea válido
+    const validRoles = ['estudiante', 'educador', 'admin', 'super-admin'];
+    if (!validRoles.includes(newRole)) {
+      showNotification('Rol inválido.', 'error');
+      return;
+    }
+
     setConfirmation({
       isOpen: true,
       title: 'Actualizar Rol',
@@ -1656,6 +1663,7 @@ export default function AdminDashboard() {
             showNotification('Error al actualizar el rol.', 'error');
           } finally {
             setUpdatingUserId(null);
+            setConfirmation(null); // ✅ Cerrar el modal después de confirmar
           }
         })(); // Llamamos la función inmediatamente
       },
@@ -1685,11 +1693,11 @@ export default function AdminDashboard() {
               }),
             });
 
-            // Actualizar los usuarios en el estado local
+            // Actualizar los usuarios en el estado local (usar 'estudiante' como rol por defecto)
             setUsers(
               users.map((user) =>
                 selectedUsers.includes(user.id)
-                  ? { ...user, role: 'sin-role' }
+                  ? { ...user, role: 'estudiante' }
                   : user
               )
             );
@@ -1852,7 +1860,7 @@ export default function AdminDashboard() {
           ? userData.permissions
           : [],
         subscriptionEndDate: userData.subscriptionEndDate ?? null,
-        role: userData.role ?? 'sin-role',
+        role: userData.role ?? 'estudiante',
         status: userData.status ?? 'sin-status',
       });
 
@@ -2132,9 +2140,9 @@ export default function AdminDashboard() {
                 selectedUsers.length === 0
                   ? 'cursor-not-allowed border border-gray-600 text-gray-500'
                   : `
-                    border border-green-500/20 bg-green-500/10 text-green-500
-                    hover:bg-green-500/20
-                  `
+                      border border-green-500/20 bg-green-500/10 text-green-500
+                      hover:bg-green-500/20
+                    `
               }
             `}
             disabled={selectedUsers.length === 0}
@@ -2167,9 +2175,9 @@ export default function AdminDashboard() {
                 selectedUsers.length === 0
                   ? 'cursor-not-allowed border border-gray-600 text-gray-500'
                   : `
-                    border border-red-500/20 bg-red-500/10 text-red-500
-                    hover:bg-red-500/20
-                  `
+                      border border-red-500/20 bg-red-500/10 text-red-500
+                      hover:bg-red-500/20
+                    `
               }
             `}
             disabled={selectedUsers.length === 0}
@@ -2202,9 +2210,10 @@ export default function AdminDashboard() {
                 selectedUsers.length === 0
                   ? 'cursor-not-allowed border border-gray-600 text-gray-500'
                   : `
-                    border border-yellow-500/20 bg-yellow-500/10 text-yellow-500
-                    hover:bg-yellow-500/20
-                  `
+                      border border-yellow-500/20 bg-yellow-500/10
+                      text-yellow-500
+                      hover:bg-yellow-500/20
+                    `
               }
             `}
             disabled={selectedUsers.length === 0}
@@ -2238,9 +2247,9 @@ export default function AdminDashboard() {
                 selectedUsers.length === 0
                   ? 'cursor-not-allowed border border-gray-600 text-gray-500'
                   : `
-                    border border-red-500/20 bg-red-500/10 text-red-500
-                    hover:bg-red-500/20
-                  `
+                      border border-red-500/20 bg-red-500/10 text-red-500
+                      hover:bg-red-500/20
+                    `
               }
             `}
             disabled={selectedUsers.length === 0}
@@ -2329,9 +2338,9 @@ export default function AdminDashboard() {
                 selectedUsers.length === 0
                   ? 'cursor-not-allowed border border-gray-600 text-gray-500'
                   : `
-                    border border-blue-500/20 bg-blue-500/10 text-blue-500
-                    hover:bg-blue-500/20
-                  `
+                      border border-blue-500/20 bg-blue-500/10 text-blue-500
+                      hover:bg-blue-500/20
+                    `
               }
             `}
             disabled={selectedUsers.length === 0 || sendingEmails}
@@ -2718,7 +2727,7 @@ export default function AdminDashboard() {
                         "
                       >
                         <select
-                          value={user.role || 'sin-role'}
+                          value={user.role || 'estudiante'}
                           onChange={(e) =>
                             handleRoleChange(user.id, e.target.value)
                           }

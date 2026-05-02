@@ -205,6 +205,13 @@ export default function AdminDashboard() {
   };
 
   const handleRoleChange = (userId: string, newRole: string) => {
+    // Validar que el rol sea válido
+    const validRoles = ['estudiante', 'educador', 'admin', 'super-admin'];
+    if (!validRoles.includes(newRole)) {
+      showNotification('Rol inválido.', 'error');
+      return;
+    }
+
     setConfirmation({
       isOpen: true,
       title: 'Actualizar Rol',
@@ -226,6 +233,7 @@ export default function AdminDashboard() {
             showNotification('Error al actualizar el rol.', 'error');
           } finally {
             setUpdatingUserId(null);
+            setConfirmation(null); // ✅ Cerrar el modal después de confirmar
           }
         })();
       },
@@ -420,7 +428,6 @@ export default function AdminDashboard() {
                 <option value="super-admin">super-admin</option>
                 <option value="educador">Educador</option>
                 <option value="estudiante">Estudiante</option>
-                <option value="sin-role">Sin Rol</option>
               </select>
             </div>
 
@@ -599,7 +606,7 @@ export default function AdminDashboard() {
                         "
                       >
                         <select
-                          value={user.role || 'sin-role'}
+                          value={user.role || 'estudiante'}
                           onChange={(e) =>
                             handleRoleChange(user.id, e.target.value)
                           }
