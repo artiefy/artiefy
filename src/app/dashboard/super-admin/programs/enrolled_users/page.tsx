@@ -100,18 +100,21 @@ const studentSchema = z
     ),
 
     // carteraStatus derivado o desde back (normalizado)
-    carteraStatus: z.preprocess(
-      (v) => {
+    carteraStatus: z
+      .enum(['activo', 'inactivo', 'no verificado'])
+      .optional()
+      .catch(undefined)
+      .transform((v) => {
         if (v == null) return undefined;
-        if (typeof v !== 'string') return undefined;
-        const normalized = v.trim().toLowerCase();
-        // Permitir solo los valores válidos, el resto se convierte en undefined
+        const normalized = v.trim().toLowerCase() as
+          | 'activo'
+          | 'inactivo'
+          | 'no verificado';
         if (!['activo', 'inactivo', 'no verificado'].includes(normalized))
           return undefined;
         return normalized;
-      },
-      z.enum(['activo', 'inactivo', 'no verificado']).optional()
-    ),
+      })
+      .optional(),
     enrollmentStatus: z.string().optional(),
     userInscriptionDetails: z.record(z.string(), z.unknown()).optional(),
   })
