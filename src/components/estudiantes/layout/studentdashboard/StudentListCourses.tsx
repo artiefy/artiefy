@@ -26,6 +26,8 @@ interface CourseListStudentProps {
   currentPage: number;
   totalPages: number;
   totalCourses: number;
+  sectionId?: string;
+  syncWithUrl?: boolean;
   category?: string;
   searchTerm?: string;
   sort?: CourseSortValue;
@@ -86,6 +88,8 @@ function sortCourses(courses: Course[], sort: CourseSortValue): Course[] {
 export default function StudentListCourses({
   courses,
   currentPage,
+  sectionId = 'courses-list-section',
+  syncWithUrl = true,
   category,
   searchTerm,
   sort = 'random',
@@ -100,6 +104,8 @@ export default function StudentListCourses({
   const [searchTermValue, setSearchTermValue] = useState(searchTerm ?? '');
 
   useEffect(() => {
+    if (!syncWithUrl) return;
+
     const nextSort = searchParams?.get('sort');
     const nextPage = Number(searchParams?.get('page') ?? currentPage);
 
@@ -107,7 +113,7 @@ export default function StudentListCourses({
     setPageValue(Number.isFinite(nextPage) && nextPage > 0 ? nextPage : 1);
     setCategoryValue(searchParams?.get('category') ?? category ?? null);
     setSearchTermValue(searchParams?.get('query') ?? searchTerm ?? '');
-  }, [category, currentPage, searchParams, searchTerm, sort]);
+  }, [category, currentPage, searchParams, searchTerm, sort, syncWithUrl]);
 
   function formatShortSpanishDate(dateString: string) {
     const date = new Date(dateString);
@@ -718,7 +724,7 @@ export default function StudentListCourses({
 
   return (
     // Add an ID to this section so we can scroll to it
-    <div id="courses-list-section">
+    <div id={sectionId}>
       <div
         className="
           mt-8 mb-3 flex flex-col gap-4 px-8

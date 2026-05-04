@@ -1,4 +1,5 @@
 import betterTailwindCSS from 'eslint-plugin-better-tailwindcss';
+import drizzle from 'eslint-plugin-drizzle';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
 import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
 import nextTypescript from 'eslint-config-next/typescript';
@@ -27,6 +28,7 @@ export default defineConfig([
       'simple-import-sort': simpleImportSort,
       '@typescript-eslint': typescriptEslint,
       'better-tailwindcss': betterTailwindCSS,
+      drizzle,
     },
     settings: {
       react: {
@@ -93,6 +95,15 @@ export default defineConfig([
       'simple-import-sort/exports': 'off',
       'jsx-a11y/alt-text': 'off',
       'no-undef': 'off',
+      // Drizzle ORM
+      'drizzle/enforce-delete-with-where': [
+        'error',
+        { drizzleObjectName: ['db'] },
+      ],
+      'drizzle/enforce-update-with-where': [
+        'error',
+        { drizzleObjectName: ['db'] },
+      ],
       // Better Tailwind CSS
       'better-tailwindcss/no-unnecessary-whitespace': 'warn',
       'better-tailwindcss/no-duplicate-classes': 'warn',

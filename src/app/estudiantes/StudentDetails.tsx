@@ -9,22 +9,35 @@ import React, {
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import { FaCrown, FaStar } from 'react-icons/fa';
+import {
+  BookOpen,
+  Brain,
+  Briefcase,
+  Camera,
+  ChevronLeft,
+  ChevronRight,
+  Code,
+  MapPin,
+  Music,
+  Palette,
+  PanelsTopLeft,
+  Radio,
+  SlidersHorizontal,
+  Waypoints,
+  Zap,
+} from 'lucide-react';
 import { FaArrowTrendUp } from 'react-icons/fa6';
 import { IoIosArrowBack, IoIosArrowForward } from 'react-icons/io';
-import { IoGiftOutline, IoLibrarySharp } from 'react-icons/io5';
-import { MdFilterAlt } from 'react-icons/md';
+import { IoLibrarySharp } from 'react-icons/io5';
 
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import MyCoursesPreview from '~/components/estudiantes/layout/studentdashboard/MyCoursesPreview';
 import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard/StudentArtieIa';
 import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
+import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
 import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard/StudentProgram';
-import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
-import { Card } from '~/components/estudiantes/ui/card';
 import {
   Carousel,
   type CarouselApi,
@@ -52,6 +65,62 @@ const shufflePrograms = (programs: Program[]) => {
   }
   return arr;
 };
+
+type StudentContentFilter =
+  | 'todos'
+  | 'cursos'
+  | 'programas'
+  | 'live'
+  | 'presencial'
+  | 'hibrida'
+  | 'flow'
+  | 'desarrollo'
+  | 'diseno'
+  | 'ia'
+  | 'negocios'
+  | 'musica'
+  | 'fotografia';
+
+const studentContentFilters: Array<{
+  icon: React.ComponentType<{ className?: string }>;
+  key: StudentContentFilter;
+  label: string;
+}> = [
+  { key: 'todos', label: 'Todos', icon: SlidersHorizontal },
+  { key: 'cursos', label: 'Cursos', icon: BookOpen },
+  { key: 'programas', label: 'Programas', icon: PanelsTopLeft },
+  { key: 'live', label: 'Artiefy Live', icon: Radio },
+  { key: 'presencial', label: 'Presencial', icon: MapPin },
+  { key: 'hibrida', label: 'Híbrida', icon: Waypoints },
+  { key: 'flow', label: 'Artiefy Flow', icon: Zap },
+  { key: 'desarrollo', label: 'Desarrollo', icon: Code },
+  { key: 'diseno', label: 'Diseño', icon: Palette },
+  { key: 'ia', label: 'Inteligencia Artificial', icon: Brain },
+  { key: 'negocios', label: 'Negocios', icon: Briefcase },
+  { key: 'musica', label: 'Música', icon: Music },
+  { key: 'fotografia', label: 'Fotografía', icon: Camera },
+];
+
+const courseOnlyFilters = new Set<StudentContentFilter>([
+  'cursos',
+  'live',
+  'presencial',
+  'hibrida',
+  'flow',
+  'desarrollo',
+  'diseno',
+  'ia',
+  'negocios',
+  'musica',
+  'fotografia',
+]);
+
+function normalizeFilterText(value?: string | null) {
+  return (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
 
 export default function StudentDetails({
   initialCourses,
@@ -82,50 +151,17 @@ export default function StudentDetails({
   const [topCoursesApi, setTopCoursesApi] = useState<CarouselApi>();
   const [programsApi, setProgramsApi] = useState<CarouselApi>();
   const [canScrollPrevTop, setCanScrollPrevTop] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<
-    'todos' | 'cursos' | 'programas'
-  >('todos');
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [pendingFilter, setPendingFilter] = useState<
-    'todos' | 'cursos' | 'programas' | null
-  >(null);
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const [activeFilter, setActiveFilter] =
+    useState<StudentContentFilter>('todos');
+  const [canScrollPrevFilters, setCanScrollPrevFilters] = useState(false);
+  const [canScrollNextFilters, setCanScrollNextFilters] = useState(false);
+  const filterMenuRef = React.useRef<HTMLDivElement>(null);
   const [canScrollPrevPrograms, setCanScrollPrevPrograms] = useState(false);
-  const routerRef = React.useRef(router);
-  const pathnameRef = React.useRef(pathname);
-
-  React.useEffect(() => {
-    routerRef.current = router;
-  }, [router]);
-
-  React.useEffect(() => {
-    pathnameRef.current = pathname;
-  }, [pathname]);
-
-  const spString = React.useMemo(
-    () => searchParams?.toString?.() ?? '',
-    [searchParams]
-  );
-
-  // Sincronizar estado local con query param `view` (permite que la página padre o `page.tsx` reaccione)
-  useEffect(() => {
-    const params = new URLSearchParams(spString);
-    const rawView = params.get('view');
-
-    // No hacer un replace automático para 'todos' — dejamos que la navegación del botón maneje la URL.
-    const view = (rawView as 'todos' | 'cursos' | 'programas') || 'todos';
-    setActiveFilter(view);
-    setPendingFilter(null);
-    setIsNavigating(false);
-    // Depend only on the serialized searchParams string so the deps array size is stable
-  }, [spString]);
 
   // Hide server-rendered sections (categorías/lista) instantly when leaving "todos"
   useEffect(() => {
     const body = document?.body;
-    const shouldHideServerSections = activeFilter !== 'todos' || isNavigating;
+    const shouldHideServerSections = activeFilter !== 'todos';
 
     if (!body) return undefined;
 
@@ -138,11 +174,10 @@ export default function StudentDetails({
     return () => {
       body.removeAttribute('data-hide-server-sections');
     };
-  }, [activeFilter, isNavigating]);
+  }, [activeFilter]);
 
   // Trigger re-entry animation for server sections when returning to "todos"
   useEffect(() => {
-    if (isNavigating) return;
     if (activeFilter !== 'todos') return;
 
     const body = document?.body;
@@ -157,16 +192,11 @@ export default function StudentDetails({
       clearTimeout(timeout);
       body.removeAttribute('data-animate-server-sections');
     };
-  }, [activeFilter, isNavigating]);
+  }, [activeFilter]);
 
-  // Scroll to the relevant section once navigation finishes
+  // Scroll to the relevant section once the client-side filter changes
   useEffect(() => {
-    if (isNavigating) return;
-
-    const targetId =
-      activeFilter === 'cursos' || activeFilter === 'programas'
-        ? 'filters-anchor'
-        : null;
+    const targetId = activeFilter !== 'todos' ? 'filters-anchor' : null;
 
     if (!targetId) return;
 
@@ -180,24 +210,42 @@ export default function StudentDetails({
     }, 80);
 
     return () => clearTimeout(timeout);
-  }, [activeFilter, isNavigating]);
+  }, [activeFilter]);
 
-  const handleFilterClick = (filter: 'todos' | 'cursos' | 'programas') => {
-    // Actualizar el estado local inmediatamente para ocultar/mostrar secciones sin demora
+  const handleFilterClick = (filter: StudentContentFilter) => {
     setActiveFilter(filter);
-    setPendingFilter(filter);
-    setIsNavigating(true);
-
-    const params = new URLSearchParams(searchParams?.toString() || '');
-    if (filter === 'todos') {
-      params.delete('view');
-    } else {
-      params.set('view', filter);
-    }
-    const query = params.toString();
-    // Actualizar la URL después para mantener sincronización con page.tsx
-    router.push(`${pathname}${query ? `?${query}` : ''}`);
   };
+
+  const updateFilterScrollState = useCallback(() => {
+    const el = filterMenuRef.current;
+    if (!el) return;
+
+    setCanScrollPrevFilters(el.scrollLeft > 4);
+    setCanScrollNextFilters(
+      el.scrollLeft + el.clientWidth < el.scrollWidth - 4
+    );
+  }, []);
+
+  const scrollFilters = (direction: 'left' | 'right') => {
+    filterMenuRef.current?.scrollBy({
+      behavior: 'smooth',
+      left: direction === 'left' ? -260 : 260,
+    });
+  };
+
+  useEffect(() => {
+    updateFilterScrollState();
+    const el = filterMenuRef.current;
+    if (!el) return undefined;
+
+    el.addEventListener('scroll', updateFilterScrollState, { passive: true });
+    window.addEventListener('resize', updateFilterScrollState);
+
+    return () => {
+      el.removeEventListener('scroll', updateFilterScrollState);
+      window.removeEventListener('resize', updateFilterScrollState);
+    };
+  }, [updateFilterScrollState]);
 
   // Monitorear estado del carousel de Top Cursos
   useEffect(() => {
@@ -303,6 +351,85 @@ export default function StudentDetails({
   // Replace previous memoized arrays with our new filtered arrays
   const latestFiveCourses = useMemo(() => featuredCourses, [featuredCourses]);
   const latestTenCourses = useMemo(() => topCourses, [topCourses]);
+
+  const filteredMenuCourses = useMemo(() => {
+    if (activeFilter === 'cursos') return courses;
+
+    return courses.filter((course) => {
+      const category = normalizeFilterText(course.category?.name);
+      const title = normalizeFilterText(course.title);
+      const modalidad = normalizeFilterText(course.modalidad?.name);
+      const joinedText = `${category} ${title} ${modalidad}`;
+
+      if (activeFilter === 'live') {
+        const hasLiveClass =
+          Array.isArray(
+            (course as Course & { classMeetings?: unknown[] }).classMeetings
+          ) &&
+          (
+            course as Course & {
+              classMeetings?: Array<{
+                startDateTime?: string;
+                video_key?: string | null;
+              }>;
+            }
+          ).classMeetings!.some(
+            (meeting) =>
+              meeting.startDateTime &&
+              !meeting.video_key &&
+              new Date(meeting.startDateTime) > new Date()
+          );
+
+        return (
+          hasLiveClass ||
+          modalidad.includes('live') ||
+          modalidad.includes('sincron')
+        );
+      }
+
+      if (activeFilter === 'presencial') {
+        return modalidad.includes('presencial');
+      }
+
+      if (activeFilter === 'hibrida') {
+        return modalidad.includes('hibrid');
+      }
+
+      if (activeFilter === 'flow') {
+        return joinedText.includes('flow');
+      }
+
+      if (activeFilter === 'desarrollo') {
+        return joinedText.includes('desarrollo');
+      }
+
+      if (activeFilter === 'diseno') {
+        return joinedText.includes('diseno');
+      }
+
+      if (activeFilter === 'ia') {
+        return (
+          joinedText.includes('inteligencia artificial') ||
+          joinedText.includes('machine learning') ||
+          joinedText.includes(' ia ')
+        );
+      }
+
+      if (activeFilter === 'negocios') {
+        return joinedText.includes('negocio') || joinedText.includes('empresa');
+      }
+
+      if (activeFilter === 'musica') {
+        return joinedText.includes('musica');
+      }
+
+      if (activeFilter === 'fotografia') {
+        return joinedText.includes('fotografia');
+      }
+
+      return true;
+    });
+  }, [activeFilter, courses]);
 
   const handleSearchComplete = useCallback(() => {
     // No cerrar el chatbot automáticamente - dejar que el usuario lo controle
@@ -450,7 +577,15 @@ export default function StudentDetails({
       className={`
         -mb-8 flex min-h-screen flex-col
         sm:mb-0
-        ${activeFilter === 'cursos' || activeFilter === 'programas' ? 'pb-28 sm:pb-40' : ''}`}
+        ${
+          activeFilter !== 'todos'
+            ? `
+          pb-28
+          sm:pb-40
+        `
+            : ''
+        }
+      `}
     >
       <main className="grow">
         <div
@@ -578,129 +713,108 @@ export default function StudentDetails({
             </form>
           </div>
 
-          {/* Filter buttons above Seguir viendo */}
+          {/* Menú dinámico de contenido */}
           <div
             id="filters-anchor"
-            className="
-              animation-delay-200 relative animate-zoom-in pr-0 pl-4
-              sm:px-24
-            "
+            className="animation-delay-200 relative animate-zoom-in"
           >
-            <div
-              className="
-                -mt-6 mb-4 flex w-full flex-wrap justify-center gap-2 pr-4
-                sm:-mt-8 sm:mb-0 sm:justify-start
-              "
-            >
+            <div className="border-y border-border/30 py-4">
               <div
                 className="
-                  flex flex-wrap items-center justify-center gap-1.5
-                  sm:justify-start sm:gap-2
-                  md:gap-3
+                  px-4
+                  sm:px-24
                 "
               >
-                <button
-                  onClick={() => handleFilterClick('todos')}
-                  className={`
-                    rounded-full px-3 py-1.5 text-xs font-medium transition-all
-                    duration-300
-                    sm:px-5 sm:py-2 sm:text-sm
-                    ${
-                      activeFilter === 'todos'
-                        ? 'bg-foreground text-background'
-                        : `
-                          border border-foreground/30 bg-transparent
-                          text-[#94A3B8]
-                          hover:border-foreground hover:text-foreground
-                        `
-                    }
-                  `}
-                  disabled={isNavigating && pendingFilter === 'todos'}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    Todos
-                    {isNavigating && pendingFilter === 'todos' && (
-                      <span
-                        className="filter-button-loader"
-                        aria-label="Cargando"
-                      />
-                    )}
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleFilterClick('cursos')}
-                  className={`
-                    rounded-full px-3 py-1.5 text-xs font-medium transition-all
-                    duration-300
-                    sm:px-5 sm:py-2 sm:text-sm
-                    ${
-                      activeFilter === 'cursos'
-                        ? 'bg-foreground text-background'
-                        : `
-                          border border-foreground/30 bg-transparent
-                          text-[#94A3B8]
-                          hover:border-foreground hover:text-foreground
-                        `
-                    }
-                  `}
-                  disabled={isNavigating && pendingFilter === 'cursos'}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    Cursos
-                    {isNavigating && pendingFilter === 'cursos' && (
-                      <span
-                        className="filter-button-loader"
-                        aria-label="Cargando"
-                      />
-                    )}
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleFilterClick('programas')}
-                  className={`
-                    rounded-full px-3 py-1.5 text-xs font-medium transition-all
-                    duration-300
-                    sm:px-5 sm:py-2 sm:text-sm
-                    ${
-                      activeFilter === 'programas'
-                        ? 'bg-foreground text-background'
-                        : `
-                          border border-foreground/30 bg-transparent
-                          text-[#94A3B8]
-                          hover:border-foreground hover:text-foreground
-                        `
-                    }
-                  `}
-                  disabled={isNavigating && pendingFilter === 'programas'}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    Programas
-                    {isNavigating && pendingFilter === 'programas' && (
-                      <span
-                        className="filter-button-loader"
-                        aria-label="Cargando"
-                      />
-                    )}
-                  </span>
-                </button>
-                <MdFilterAlt
-                  className="text-2xl text-white"
-                  aria-label="Filtro"
-                />
+                <div className="group relative">
+                  <button
+                    type="button"
+                    onClick={() => scrollFilters('left')}
+                    className={`
+                      absolute top-1/2 left-0 z-10 flex size-8 -translate-y-1/2
+                      items-center justify-center rounded-full border
+                      border-border/50 bg-background/90 text-foreground
+                      shadow-lg backdrop-blur-sm transition-all duration-200
+                      hover:bg-card
+                      ${
+                        canScrollPrevFilters
+                          ? 'opacity-100'
+                          : 'pointer-events-none opacity-0'
+                      }
+                    `}
+                    aria-label="Ver filtros anteriores"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </button>
+
+                  <div
+                    ref={filterMenuRef}
+                    className="
+                      flex items-center gap-2 overflow-x-auto px-10 py-2
+                      [scrollbar-width:none]
+                      [&::-webkit-scrollbar]:hidden
+                    "
+                  >
+                    {studentContentFilters.map((filter) => {
+                      const Icon = filter.icon;
+                      const isActive = activeFilter === filter.key;
+
+                      return (
+                        <button
+                          key={filter.key}
+                          type="button"
+                          onClick={() => handleFilterClick(filter.key)}
+                          className={`
+                            flex items-center gap-2 rounded-full border px-4
+                            py-2 text-sm font-medium whitespace-nowrap
+                            transition-all duration-200
+                            ${
+                              isActive
+                                ? `
+                                  border-primary/30 bg-primary/15 text-primary
+                                  shadow-sm shadow-primary/10
+                                `
+                                : `
+                                  border-border/30 bg-card/50
+                                  text-muted-foreground
+                                  hover:border-border/50 hover:bg-card
+                                  hover:text-foreground
+                                `
+                            }
+                          `}
+                        >
+                          <Icon className="size-4" />
+                          {filter.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => scrollFilters('right')}
+                    className={`
+                      absolute top-1/2 right-0 z-10 flex size-8 -translate-y-1/2
+                      items-center justify-center rounded-full border
+                      border-border/50 bg-background/90 text-foreground
+                      shadow-lg backdrop-blur-sm transition-all duration-200
+                      hover:bg-card
+                      ${
+                        canScrollNextFilters
+                          ? 'opacity-100'
+                          : 'pointer-events-none opacity-0'
+                      }
+                    `}
+                    aria-label="Ver más filtros"
+                  >
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
               </div>
             </div>
-            {isNavigating && (
-              <div
-                className="mt-16 flex w-full justify-center"
-                aria-label="Cargando filtros"
-              >
-                <span className="artiefy-filter-loader" />
-              </div>
-            )}
           </div>
 
           {/* Sección: cursos en los que estoy inscritos - vista previa */}
-          {activeFilter === 'todos' && !isNavigating && <MyCoursesPreview />}
+          {activeFilter === 'todos' && <MyCoursesPreview />}
 
           {/* Carousel grande - Featured Courses - TEMPORALMENTE OCULTO 
           <div className="animation-delay-100 animate-zoom-in couses-section relative h-[300px] overflow-hidden px-8 sm:h-[400px] md:h-[500px]">
@@ -835,7 +949,7 @@ export default function StudentDetails({
           FIN Carousel grande - TEMPORALMENTE OCULTO */}
 
           {/* Top Cursos section */}
-          {activeFilter === 'todos' && !isNavigating && (
+          {activeFilter === 'todos' && (
             <div
               className="
                 animation-delay-200 relative animate-zoom-in pr-0 pl-4
@@ -1051,407 +1165,100 @@ export default function StudentDetails({
           )}
 
           {/* Lista completa de cursos - Solo cuando el filtro es 'cursos' */}
-          {activeFilter === 'cursos' && !isNavigating && (
+          {courseOnlyFilters.has(activeFilter) && (
             <div
               id="courses-filter-section"
-              className="
-                animation-delay-250 relative -mt-4 animate-zoom-in px-4
-                sm:-mt-6 sm:px-8
-                lg:px-20
-              "
+              className="animation-delay-250 relative animate-zoom-in"
             >
-              <div
-                className="
-                  relative z-0 grid grid-cols-1 gap-4
-                  sm:grid-cols-2
-                  lg:grid-cols-4
-                "
-              >
-                {courses.length > 0 ? (
-                  courses.map((course) => {
-                    const imageUrl =
-                      course.coverImageKey && course.coverImageKey !== 'NULL'
-                        ? `/api/image-proxy?url=${encodeURIComponent(`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`)}`
-                        : 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
-
-                    const getCourseTypeLabel = () => {
-                      if (course.courseTypes && course.courseTypes.length > 0) {
-                        const hasPurchasable = course.courseTypes.some(
-                          (type) => type.isPurchasableIndividually
-                        );
-                        const hasPremium = course.courseTypes.some(
-                          (type) => type.requiredSubscriptionLevel === 'premium'
-                        );
-                        const hasPro = course.courseTypes.some(
-                          (type) => type.requiredSubscriptionLevel === 'pro'
-                        );
-                        const hasFree = course.courseTypes.some(
-                          (type) =>
-                            type.requiredSubscriptionLevel === 'none' &&
-                            !type.isPurchasableIndividually
-                        );
-
-                        if (hasPurchasable) {
-                          return (
-                            <div
-                              className="
-                                flex items-center gap-1 rounded-full border
-                                border-orange-500/30 bg-orange-500/20 px-2
-                                py-0.5 text-[10px] font-medium text-orange-400
-                              "
-                            >
-                              <FaStar className="size-3" />${' '}
-                              {course.individualPrice
-                                ? course.individualPrice.toLocaleString('es-CO')
-                                : 'Comprar'}
-                            </div>
-                          );
-                        }
-                        if (hasPremium) {
-                          return (
-                            <div
-                              className="
-                                flex items-center gap-1 rounded-full border
-                                border-amber-500/30 bg-amber-500/20 px-2 py-0.5
-                                text-[10px] font-medium text-amber-400
-                              "
-                            >
-                              <FaCrown className="size-3" />
-                              Premium
-                            </div>
-                          );
-                        }
-                        if (hasPro) {
-                          return (
-                            <div
-                              className="
-                                flex items-center gap-1 rounded-full border
-                                border-blue-500/30 bg-blue-500/20 px-2 py-0.5
-                                text-[10px] font-medium text-blue-400
-                              "
-                            >
-                              <FaStar className="size-3" />
-                              Pro
-                            </div>
-                          );
-                        }
-                        if (hasFree) {
-                          return (
-                            <div
-                              className="
-                                flex items-center gap-1 rounded-full border
-                                border-emerald-500/30 bg-emerald-500/20 px-2
-                                py-0.5 text-[10px] font-medium text-emerald-400
-                              "
-                            >
-                              <IoGiftOutline className="size-3" />
-                              Gratuito
-                            </div>
-                          );
-                        }
-                      }
-                      return null;
-                    };
-
-                    return (
-                      <div key={course.id} className="relative">
-                        {course.isActive ? (
-                          <Link
-                            href={`/estudiantes/cursos/${course.id}`}
-                            aria-label={`Ver detalles del curso ${course.title}`}
-                            className="
-                              group block h-full rounded-2xl
-                              focus-visible:ring-2 focus-visible:ring-primary/70
-                              focus-visible:ring-offset-2
-                              focus-visible:outline-none
-                            "
-                          >
-                            <Card
-                              className="
-                                artiefy-course-card zoom-in relative flex h-full
-                                flex-col gap-4 overflow-hidden rounded-2xl
-                                border-0 bg-[#061C37] p-4 text-foreground
-                                shadow-md transition-all duration-300
-                                hover:-translate-y-1 hover:cursor-pointer
-                                hover:border-primary hover:shadow-xl
-                              "
-                            >
-                              <div className="relative -mx-4 -mt-4 overflow-hidden">
-                                <AspectRatio ratio={16 / 9}>
-                                  <div className="relative size-full">
-                                    <Image
-                                      src={imageUrl}
-                                      alt={course.title || 'Imagen del curso'}
-                                      className="object-cover"
-                                      fill
-                                      placeholder="blur"
-                                      blurDataURL={blurDataURL}
-                                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                      quality={75}
-                                    />
-                                    <div
-                                      className="
-                                        pointer-events-none absolute inset-0
-                                        bg-gradient-to-t from-[#061C37]
-                                        via-[#061C37]/60 to-transparent
-                                      "
-                                    />
-                                  </div>
-                                </AspectRatio>
-                              </div>
-
-                              <div className="flex h-full flex-1 flex-col gap-3">
-                                <h3
-                                  className="
-                                    line-clamp-2 text-base leading-snug
-                                    font-semibold text-white
-                                    md:text-lg
-                                  "
-                                >
-                                  {course.title}
-                                </h3>
-
-                                <div
-                                  className="
-                                    flex flex-wrap items-center justify-between
-                                    gap-2
-                                    sm:flex-row
-                                  "
-                                >
-                                  <div
-                                    className="
-                                      flex flex-wrap items-center gap-2
-                                    "
-                                  >
-                                    <p className="text-xs text-[#94A3B8]">
-                                      Por:{' '}
-                                      <span className="font-medium text-primary">
-                                        {course.instructorName ?? 'Educador'}
-                                      </span>
-                                    </p>
-                                  </div>
-
-                                  <div className="flex items-center text-sm">
-                                    {getCourseTypeLabel()}
-                                  </div>
-                                </div>
-
-                                <div className="mt-2 flex flex-wrap gap-2">
-                                  <span className="chip chip-modalidad">
-                                    {course.modalidad?.name ??
-                                      'Asistida Virtual'}
-                                  </span>
-                                  {course.horario && (
-                                    <span className="chip chip-horario">
-                                      {course.horario}
-                                    </span>
-                                  )}
-                                  {course.espacios && (
-                                    <span className="chip chip-espacios">
-                                      {course.espacios}
-                                    </span>
-                                  )}
-                                  <span className="chip chip-categoria">
-                                    {course.category?.name ?? 'Sin categoría'}
-                                  </span>
-                                </div>
-
-                                <p
-                                  className="
-                                    mt-3 flex items-center gap-1.5 text-xs
-                                    text-[#94A3B8]
-                                  "
-                                >
-                                  Empieza:{' '}
-                                  {course.modalidad &&
-                                  String(course.modalidad?.name)
-                                    .toLowerCase()
-                                    .includes('presencial') ? (
-                                    <span className="text-gray-100">
-                                      Clases Presenciales
-                                    </span>
-                                  ) : (
-                                    <span className="text-gray-100">
-                                      Clases Virtuales
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                            </Card>
-                          </Link>
-                        ) : (
-                          <div
-                            className="
-                              group relative h-full rounded-2xl opacity-80
-                            "
-                          >
-                            <Card
-                              className="
-                                artiefy-course-card zoom-in relative flex h-full
-                                cursor-not-allowed flex-col gap-4
-                                overflow-hidden rounded-2xl border-0
-                                bg-[#061C37] p-4 text-foreground shadow-md
-                                transition-all duration-300
-                              "
-                            >
-                              <div className="relative -mx-4 -mt-4 overflow-hidden">
-                                <AspectRatio ratio={16 / 9}>
-                                  <div className="relative size-full">
-                                    <Image
-                                      src={imageUrl}
-                                      alt={course.title || 'Imagen del curso'}
-                                      className="object-cover"
-                                      fill
-                                      placeholder="blur"
-                                      blurDataURL={blurDataURL}
-                                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                      quality={75}
-                                    />
-                                    <div
-                                      className="
-                                        pointer-events-none absolute inset-0
-                                        bg-gradient-to-t from-[#061C37]
-                                        via-[#061C37]/60 to-transparent
-                                      "
-                                    />
-                                  </div>
-                                </AspectRatio>
-                              </div>
-                              <div className="flex h-full flex-1 flex-col gap-3">
-                                <h3
-                                  className="
-                                    line-clamp-2 text-base leading-snug
-                                    font-semibold text-white
-                                    md:text-lg
-                                  "
-                                >
-                                  {course.title}
-                                </h3>
-                              </div>
-                            </Card>
-                            <div
-                              className="
-                                pointer-events-none absolute inset-0 flex
-                                items-center justify-center rounded-2xl
-                                bg-black/40 text-lg font-semibold
-                              "
-                            >
-                              Muy pronto
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                ) : (
-                  <div
-                    className="
-                      col-span-full flex h-56 items-center justify-center
-                    "
-                  >
-                    <p className="text-lg text-gray-500">
-                      No hay cursos disponibles
-                    </p>
-                  </div>
+              <StudentListCourses
+                key={activeFilter}
+                courses={filteredMenuCourses}
+                currentPage={1}
+                totalPages={Math.max(
+                  1,
+                  Math.ceil(filteredMenuCourses.length / 12)
                 )}
-              </div>
+                totalCourses={filteredMenuCourses.length}
+                sectionId="client-courses-list-section"
+                syncWithUrl={false}
+                sort="random"
+              />
             </div>
           )}
 
           {/* Programas section */}
-          {!isNavigating &&
-            (activeFilter === 'todos' || activeFilter === 'programas') && (
+          {(activeFilter === 'todos' || activeFilter === 'programas') && (
+            <div
+              id="programas-section"
+              className={`
+                animation-delay-300 relative animate-zoom-in
+                ${
+                  activeFilter === 'programas'
+                    ? `
+                      -mt-2
+                      sm:-mt-4
+                    `
+                    : `
+                      -mt-8
+                      sm:-mt-10
+                    `
+                }
+                pr-0 pl-4
+                sm:px-24
+              `}
+            >
               <div
-                id="programas-section"
-                className={`
-                  animation-delay-300 relative animate-zoom-in
-                  ${
-                    activeFilter === 'programas'
-                      ? `
-                        -mt-2
-                        sm:-mt-4
-                      `
-                      : `
-                        -mt-8
-                        sm:-mt-10
-                      `
-                  }
-                  pr-0 pl-4
-                  sm:px-24
-                `}
+                className="
+                  flex justify-start pr-4
+                  sm:pr-0
+                "
               >
-                <div
-                  className="
-                    flex justify-start pr-4
-                    sm:pr-0
-                  "
-                >
-                  <div className="-mb-5 flex items-center gap-2">
-                    <IoLibrarySharp className="text-xl text-white" />
-                    <StudentGradientText
-                      className="
-                        text-2xl
-                        sm:text-3xl
-                      "
-                    >
-                      Programas
-                    </StudentGradientText>
-                  </div>
+                <div className="-mb-5 flex items-center gap-2">
+                  <IoLibrarySharp className="text-xl text-white" />
+                  <StudentGradientText
+                    className="
+                      text-2xl
+                      sm:text-3xl
+                    "
+                  >
+                    Programas
+                  </StudentGradientText>
                 </div>
-                {activeFilter === 'todos' ? (
-                  // Carousel para vista 'todos'
-                  <div className="group/carousel relative">
-                    <Carousel className="w-full" setApi={setProgramsApi}>
-                      <CarouselContent className="my-6 gap-x-2">
-                        {sortedPrograms.map((program) => (
-                          <CarouselItem
-                            key={program.id}
-                            className="
-                              basis-[85%]
-                              sm:basis-1/2
-                              lg:basis-[30%]
-                            "
-                          >
-                            <StudentProgram program={program} />
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                      <CarouselPrevious />
-                      <CarouselNext />
-                    </Carousel>
-
-                    {/* Flechas funcionales solo en móvil */}
-                    {sortedPrograms.length > 0 && (
-                      <>
-                        {canScrollPrevPrograms && (
-                          <button
-                            onClick={() => programsApi?.scrollPrev()}
-                            className="
-                              pointer-events-auto absolute top-1/2 left-2
-                              -translate-y-1/2
-                              sm:hidden
-                            "
-                            aria-label="Anterior"
-                          >
-                            <div
-                              className="
-                                carousel-mobile-arrow flex size-10 items-center
-                                justify-center rounded-full bg-black/40
-                                backdrop-blur-sm
-                              "
-                            >
-                              <IoIosArrowBack className="text-2xl text-white" />
-                            </div>
-                          </button>
-                        )}
-                        <button
-                          onClick={() => programsApi?.scrollNext()}
+              </div>
+              {activeFilter === 'todos' ? (
+                // Carousel para vista 'todos'
+                <div className="group/carousel relative">
+                  <Carousel className="w-full" setApi={setProgramsApi}>
+                    <CarouselContent className="my-6 gap-x-2">
+                      {sortedPrograms.map((program) => (
+                        <CarouselItem
+                          key={program.id}
                           className="
-                            pointer-events-auto absolute top-1/2 right-2
+                            basis-[85%]
+                            sm:basis-1/2
+                            lg:basis-[30%]
+                          "
+                        >
+                          <StudentProgram program={program} />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                  </Carousel>
+
+                  {/* Flechas funcionales solo en móvil */}
+                  {sortedPrograms.length > 0 && (
+                    <>
+                      {canScrollPrevPrograms && (
+                        <button
+                          onClick={() => programsApi?.scrollPrev()}
+                          className="
+                            pointer-events-auto absolute top-1/2 left-2
                             -translate-y-1/2
                             sm:hidden
                           "
-                          aria-label="Siguiente"
+                          aria-label="Anterior"
                         >
                           <div
                             className="
@@ -1460,30 +1267,50 @@ export default function StudentDetails({
                               backdrop-blur-sm
                             "
                           >
-                            <IoIosArrowForward className="text-2xl text-white" />
+                            <IoIosArrowBack className="text-2xl text-white" />
                           </div>
                         </button>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  // Grid para vista 'programas' (sin carousel)
-                  <div
-                    className="
-                      my-6 grid gap-4 pr-4
-                      sm:grid-cols-2 sm:pr-0
-                      lg:grid-cols-4
-                    "
-                  >
-                    {sortedPrograms.map((program) => (
-                      <div key={program.id}>
-                        <StudentProgram program={program} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+                      )}
+                      <button
+                        onClick={() => programsApi?.scrollNext()}
+                        className="
+                          pointer-events-auto absolute top-1/2 right-2
+                          -translate-y-1/2
+                          sm:hidden
+                        "
+                        aria-label="Siguiente"
+                      >
+                        <div
+                          className="
+                            carousel-mobile-arrow flex size-10 items-center
+                            justify-center rounded-full bg-black/40
+                            backdrop-blur-sm
+                          "
+                        >
+                          <IoIosArrowForward className="text-2xl text-white" />
+                        </div>
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : (
+                // Grid para vista 'programas' (sin carousel)
+                <div
+                  className="
+                    my-6 grid gap-4 pr-4
+                    sm:grid-cols-2 sm:pr-0
+                    lg:grid-cols-4
+                  "
+                >
+                  {sortedPrograms.map((program) => (
+                    <div key={program.id}>
+                      <StudentProgram program={program} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Categorías de cursos */}
           {/* <StudentCategories allCategories={allCategories} featuredCategories={featuredCategories} /> */}
