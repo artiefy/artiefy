@@ -57,6 +57,16 @@ import '~/styles/ia.css';
 import '~/styles/searchBar.css';
 import '~/styles/uiverse-button.css';
 
+type StudentListCoursesWithClientProps = React.ComponentProps<
+  typeof StudentListCourses
+> & {
+  sectionId?: string;
+  syncWithUrl?: boolean;
+};
+
+const ClientFilteredStudentListCourses =
+  StudentListCourses as React.ComponentType<StudentListCoursesWithClientProps>;
+
 const shufflePrograms = (programs: Program[]) => {
   const arr = [...programs];
   for (let i = arr.length - 1; i > 0; i -= 1) {
@@ -580,9 +590,9 @@ export default function StudentDetails({
         ${
           activeFilter !== 'todos'
             ? `
-          pb-28
-          sm:pb-40
-        `
+              pb-28
+              sm:pb-40
+            `
             : ''
         }
       `}
@@ -1170,7 +1180,7 @@ export default function StudentDetails({
               id="courses-filter-section"
               className="animation-delay-250 relative animate-zoom-in"
             >
-              <StudentListCourses
+              <ClientFilteredStudentListCourses
                 key={activeFilter}
                 courses={filteredMenuCourses}
                 currentPage={1}
