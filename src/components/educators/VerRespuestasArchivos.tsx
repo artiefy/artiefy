@@ -29,7 +29,7 @@ const ITEMS_PER_PAGE = 6;
 type PaginatedGridProps = {
   items: [string, RespuestaArchivo][];
   emptyMsg: string;
-  renderItem: (item: [string, RespuestaArchivo]) => JSX.Element;
+  renderItem: (item: [string, RespuestaArchivo]) => React.ReactNode;
 };
 
 function PaginatedGrid({ items, emptyMsg, renderItem }: PaginatedGridProps) {
