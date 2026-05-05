@@ -349,9 +349,9 @@ export default function VerRespuestasArchivos({
         {/* Header: nombre + badge */}
         <div
           className="
-          flex flex-col gap-3
-          sm:flex-row sm:items-start sm:justify-between
-        "
+            flex flex-col gap-3
+            sm:flex-row sm:items-start sm:justify-between
+          "
         >
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-base font-semibold text-white">
@@ -441,9 +441,9 @@ export default function VerRespuestasArchivos({
         {/* Calificación + acciones en fila compacta */}
         <div
           className="
-          flex flex-col gap-2
-          md:flex-row md:items-end
-        "
+            flex flex-col gap-2
+            md:flex-row md:items-end
+          "
         >
           <div className="flex-1">
             <label className="mb-1 block text-xs font-medium text-slate-400">
