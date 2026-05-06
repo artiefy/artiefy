@@ -9,15 +9,6 @@ const starParticles = [
   { left: '42%', top: '86%', delay: '1.45s', duration: '1.7s' },
 ];
 
-const exhaustParticles = [
-  { left: '-9px', delay: '0s' },
-  { left: '-2px', delay: '0.15s' },
-  { left: '7px', delay: '0.3s' },
-  { left: '0px', delay: '0.45s' },
-  { left: '-6px', delay: '0.6s' },
-  { left: '10px', delay: '0.75s' },
-];
-
 export default function Loading() {
   return (
     <main className="loading-page" aria-live="polite" aria-busy="true">
@@ -196,27 +187,9 @@ export default function Loading() {
               </g>
             </svg>
           </div>
-
-          <div className="loading-exhaust">
-            {exhaustParticles.map((particle, index) => (
-              <span
-                key={index}
-                style={{
-                  animationDelay: particle.delay,
-                  left: particle.left,
-                }}
-              />
-            ))}
-          </div>
         </div>
 
         <p className="loading-message">Cargando...</p>
-
-        <div className="loading-bounce-dots" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
       </section>
     </main>
   );
