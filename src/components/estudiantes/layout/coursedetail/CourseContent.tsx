@@ -2126,9 +2126,9 @@ export function CourseContent({
           </h2>
           <div
             className="
-            flex items-start gap-4
-            sm:gap-6
-          "
+              flex items-start gap-4
+              sm:gap-6
+            "
           >
             {instructorProfileImageUrl && (
               <div className="shrink-0">
