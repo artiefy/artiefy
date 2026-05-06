@@ -24,6 +24,78 @@ interface RespuestaArchivo {
   comment?: string;
 }
 
+const ITEMS_PER_PAGE = 6;
+
+type PaginatedGridProps = {
+  items: [string, RespuestaArchivo][];
+  emptyMsg: string;
+  renderItem: (item: [string, RespuestaArchivo]) => React.ReactNode;
+};
+
+function PaginatedGrid({ items, emptyMsg, renderItem }: PaginatedGridProps) {
+  const [page, setPage] = useState(0);
+  const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
+  const paginated = items.slice(
+    page * ITEMS_PER_PAGE,
+    (page + 1) * ITEMS_PER_PAGE
+  );
+
+  if (items.length === 0) {
+    return (
+      <p className="py-8 text-center text-sm text-slate-400">{emptyMsg}</p>
+    );
+  }
+
+  return (
+    <>
+      <div
+        className="
+          grid gap-4
+          md:grid-cols-2
+          xl:grid-cols-3
+        "
+      >
+        {paginated.map(renderItem)}
+      </div>
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page === 0}
+            onClick={() => setPage((p) => p - 1)}
+            className="
+              h-8 rounded-lg border-slate-700 bg-slate-800 text-xs
+              text-slate-300
+              hover:bg-slate-700
+              disabled:opacity-40
+            "
+          >
+            Anterior
+          </Button>
+          <span className="px-2 text-xs text-slate-400">
+            {page + 1} / {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage((p) => p + 1)}
+            className="
+              h-8 rounded-lg border-slate-700 bg-slate-800 text-xs
+              text-slate-300
+              hover:bg-slate-700
+              disabled:opacity-40
+            "
+          >
+            Siguiente
+          </Button>
+        </div>
+      )}
+    </>
+  );
+}
+
 /**
  * Componente para ver y calificar las respuestas de los estudiantes en una actividad.
  *
@@ -59,41 +131,28 @@ export default function VerRespuestasArchivos({
           respuestas: Record<string, RespuestaArchivo>;
         };
 
-        if (silent) {
-          // Solo actualizar respuestas sin tocar grades/comments que el usuario esté editando
-          setRespuestas(data.respuestas);
-          // Solo agregar grades/comments para entries NUEVAS que no existían antes
-          setGrades((prev) => {
-            const updated = { ...prev };
-            Object.entries(data.respuestas).forEach(([key, respuesta]) => {
-              if (!(key in updated)) {
-                updated[key] =
-                  respuesta.grade !== null ? respuesta.grade.toString() : '';
-              }
-            });
-            return updated;
-          });
-          setComments((prev) => {
-            const updated = { ...prev };
-            Object.entries(data.respuestas).forEach(([key, respuesta]) => {
-              if (!(key in updated)) {
-                updated[key] = respuesta.comment ?? '';
-              }
-            });
-            return updated;
-          });
-        } else {
-          const initialGrades: Record<string, string> = {};
-          const initialComments: Record<string, string> = {};
+        setRespuestas(data.respuestas);
+
+        setGrades((prev) => {
+          const updated = { ...prev };
           Object.entries(data.respuestas).forEach(([key, respuesta]) => {
-            initialGrades[key] =
-              respuesta.grade !== null ? respuesta.grade.toString() : '';
-            initialComments[key] = respuesta.comment ?? '';
+            if (!(key in updated)) {
+              updated[key] =
+                respuesta.grade !== null ? respuesta.grade.toString() : '';
+            }
           });
-          setRespuestas(data.respuestas);
-          setGrades(initialGrades);
-          setComments(initialComments);
-        }
+          return updated;
+        });
+
+        setComments((prev) => {
+          const updated = { ...prev };
+          Object.entries(data.respuestas).forEach(([key, respuesta]) => {
+            if (!(key in updated)) {
+              updated[key] = respuesta.comment ?? '';
+            }
+          });
+          return updated;
+        });
       } catch (error) {
         if (!silent) {
           console.error('Error al cargar respuestas:', error);
@@ -110,8 +169,6 @@ export default function VerRespuestasArchivos({
 
   useEffect(() => {
     void fetchRespuestas();
-    const interval = setInterval(() => void fetchRespuestas(true), 1000);
-    return () => clearInterval(interval);
   }, [fetchRespuestas]);
 
   /**
@@ -190,13 +247,12 @@ export default function VerRespuestasArchivos({
    * @param {string} value - El valor de la calificación.
    */
   const handleGradeChange = (key: string, value: string) => {
-    // Validar que el valor sea un número o vacío
-    if (
-      value === '' ||
-      (!isNaN(Number(value)) && Number(value) >= 0 && Number(value) <= 5)
-    ) {
-      setGrades((prev) => ({ ...prev, [key]: value }));
-    }
+    // Permitir cualquier entrada para mejor UX en móvil
+    setGrades((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleCommentChange = (key: string, value: string) => {
+    setComments((prev) => ({ ...prev, [key]: value }));
   };
 
   /**
@@ -266,7 +322,6 @@ export default function VerRespuestasArchivos({
 
   if (loading) return <div>Cargando respuestas...</div>;
 
-  const ITEMS_PER_PAGE = 6;
   const entries = Object.entries(respuestas).filter(([, r]) => {
     if (!searchFilter.trim()) return true;
     const term = searchFilter.toLowerCase();
@@ -292,7 +347,12 @@ export default function VerRespuestasArchivos({
     >
       <CardContent className="space-y-4 p-5">
         {/* Header: nombre + badge */}
-        <div className="flex items-start justify-between gap-3">
+        <div
+          className="
+            flex flex-col gap-3
+            sm:flex-row sm:items-start sm:justify-between
+          "
+        >
           <div className="min-w-0 flex-1">
             <h3 className="truncate text-base font-semibold text-white">
               {respuesta.userName && respuesta.userName !== 'user'
@@ -368,12 +428,7 @@ export default function VerRespuestasArchivos({
               focus:outline-none
             "
             value={comments[key] ?? ''}
-            onChange={(e) =>
-              setComments((prev) => ({
-                ...prev,
-                [key]: e.target.value,
-              }))
-            }
+            onChange={(e) => handleCommentChange(key, e.target.value)}
             placeholder="Escribe un comentario..."
           />
         </div>
@@ -384,16 +439,19 @@ export default function VerRespuestasArchivos({
         )}
 
         {/* Calificación + acciones en fila compacta */}
-        <div className="flex items-end gap-2">
+        <div
+          className="
+            flex flex-col gap-2
+            md:flex-row md:items-end
+          "
+        >
           <div className="flex-1">
             <label className="mb-1 block text-xs font-medium text-slate-400">
               Nota (0-5)
             </label>
             <Input
-              type="number"
-              min="0"
-              max="5"
-              step="0.1"
+              type="text"
+              inputMode="decimal"
               placeholder="0-5"
               className="
                 h-9 w-full rounded-lg border-slate-700/40 bg-slate-800/60
@@ -456,76 +514,6 @@ export default function VerRespuestasArchivos({
     </Card>
   );
 
-  const PaginatedGrid = ({
-    items,
-    emptyMsg,
-  }: {
-    items: [string, RespuestaArchivo][];
-    emptyMsg: string;
-  }) => {
-    const [page, setPage] = useState(0);
-    const totalPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-    const paginated = items.slice(
-      page * ITEMS_PER_PAGE,
-      (page + 1) * ITEMS_PER_PAGE
-    );
-
-    if (items.length === 0) {
-      return (
-        <p className="py-8 text-center text-sm text-slate-400">{emptyMsg}</p>
-      );
-    }
-
-    return (
-      <>
-        <div
-          className="
-            grid gap-4
-            md:grid-cols-2
-            xl:grid-cols-3
-          "
-        >
-          {paginated.map(renderCard)}
-        </div>
-        {totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
-              className="
-                h-8 rounded-lg border-slate-700 bg-slate-800 text-xs
-                text-slate-300
-                hover:bg-slate-700
-                disabled:opacity-40
-              "
-            >
-              Anterior
-            </Button>
-            <span className="px-2 text-xs text-slate-400">
-              {page + 1} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= totalPages - 1}
-              onClick={() => setPage((p) => p + 1)}
-              className="
-                h-8 rounded-lg border-slate-700 bg-slate-800 text-xs
-                text-slate-300
-                hover:bg-slate-700
-                disabled:opacity-40
-              "
-            >
-              Siguiente
-            </Button>
-          </div>
-        )}
-      </>
-    );
-  };
-
   return (
     <div>
       <h2 className="my-2 ml-4 text-xl font-semibold text-blue-600">
@@ -557,12 +545,14 @@ export default function VerRespuestasArchivos({
           <PaginatedGrid
             items={pendientes}
             emptyMsg="No hay respuestas pendientes por calificar"
+            renderItem={renderCard}
           />
         </TabsContent>
         <TabsContent value="calificadas">
           <PaginatedGrid
             items={calificadas}
             emptyMsg="No hay respuestas calificadas aún"
+            renderItem={renderCard}
           />
         </TabsContent>
       </Tabs>
