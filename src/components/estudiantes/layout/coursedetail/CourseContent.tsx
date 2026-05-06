@@ -788,7 +788,16 @@ export function CourseContent({
 
   const recordedMeetings: ClassMeeting[] = useMemo(() => {
     return Array.isArray(classMeetings)
-      ? classMeetings.filter((meeting) => !!meeting.video_key)
+      ? classMeetings
+          .filter((meeting) => !!meeting.video_key)
+          .sort((a, b) => {
+            const aStart = toSafeDate(a.startDateTime);
+            const bStart = toSafeDate(b.startDateTime);
+            if (!aStart && !bStart) return 0;
+            if (!aStart) return 1;
+            if (!bStart) return -1;
+            return bStart.getTime() - aStart.getTime();
+          })
       : [];
   }, [classMeetings]);
 
