@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -214,6 +215,22 @@ const isLessonFullyCompleted = (lesson: Lesson) => {
 
 const getLessonDisplayProgress = (lesson: Lesson) =>
   isLessonFullyCompleted(lesson) ? 100 : 0;
+
+const getOptionalText = (value?: string | null) => {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+};
+
+const getProfileImageUrl = (key?: string | null) => {
+  const trimmedKey = getOptionalText(key);
+  if (!trimmedKey) return null;
+  if (/^https?:\/\//i.test(trimmedKey)) return trimmedKey;
+
+  const baseUrl = process.env.NEXT_PUBLIC_AWS_S3_URL?.replace(/\/$/, '');
+  if (!baseUrl) return null;
+
+  return `${baseUrl}/${trimmedKey.replace(/^\//, '')}`;
+};
 
 export function CourseContent({
   course,
@@ -820,6 +837,15 @@ export function CourseContent({
 
   const recordedSectionTopMargin =
     upcomingMeetings.length === 0 ? 'mt-1' : 'mt-3';
+
+  const instructorProfesion = getOptionalText(course.instructorProfesion);
+  const instructorDescripcion = getOptionalText(course.instructorDescripcion);
+  const instructorProfileImageUrl = getProfileImageUrl(
+    course.instructorProfileImageKey
+  );
+  const shouldShowEducatorInfo = Boolean(
+    instructorProfesion || instructorDescripcion || instructorProfileImageUrl
+  );
 
   // Identificar la próxima clase en vivo (la más cercana en tiempo)
   const nextMeetingId = useMemo(() => {
@@ -2086,6 +2112,56 @@ export function CourseContent({
             )}
           </div>
         </div>
+      )}
+
+      {viewMode !== 'recorded' && shouldShowEducatorInfo && (
+        <section className="mt-6 rounded-2xl border border-border bg-card p-6 md:p-8">
+          <h2
+            className="
+              font-display mb-6 text-xl font-bold text-foreground
+              md:text-2xl
+            "
+          >
+            Sobre el educador
+          </h2>
+          <div
+            className="
+            flex items-start gap-4
+            sm:gap-6
+          "
+          >
+            {instructorProfileImageUrl && (
+              <div className="shrink-0">
+                <Image
+                  src={instructorProfileImageUrl}
+                  alt={course.instructorName ?? 'Educador del curso'}
+                  width={80}
+                  height={80}
+                  className="
+                    size-16 rounded-xl border-2 border-primary/20 object-cover
+                    sm:size-20
+                  "
+                  quality={70}
+                />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-semibold text-foreground">
+                {course.instructorName ?? 'Educador del curso'}
+              </h3>
+              {instructorProfesion && (
+                <p className="mt-0.5 text-sm font-medium text-primary">
+                  {instructorProfesion}
+                </p>
+              )}
+              {instructorDescripcion && (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {instructorDescripcion}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
       )}
 
       {/* MODAL para reproducir clase grabada */}

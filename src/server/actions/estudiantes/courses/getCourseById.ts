@@ -27,6 +27,9 @@ interface CourseDetailQueryResult {
   categoryid: number;
   instructor: string;
   instructorName: string | null;
+  instructorProfesion: string | null;
+  instructorDescripcion: string | null;
+  instructorProfileImageKey: string | null;
   createdAt: Date;
   updatedAt: Date;
   creatorId: string;
@@ -77,6 +80,9 @@ export async function getCourseById(
         categoryid: courses.categoryid,
         instructor: courses.instructor,
         instructorName: users.name,
+        instructorProfesion: users.profesion,
+        instructorDescripcion: users.descripcion,
+        instructorProfileImageKey: users.profileImageKey,
         createdAt: courses.createdAt,
         updatedAt: courses.updatedAt,
         creatorId: courses.creatorId,
@@ -306,6 +312,9 @@ export async function getCourseById(
       isActive: Boolean(course.isActive), // Also ensure isActive is always boolean
       instructor: courseData.instructor,
       instructorName: courseData.instructorName ?? 'Instructor no encontrado',
+      instructorProfesion: courseData.instructorProfesion,
+      instructorDescripcion: courseData.instructorDescripcion,
+      instructorProfileImageKey: courseData.instructorProfileImageKey,
       courseTypeId: courseData.courseTypeId ?? 0, // Ensure courseTypeId is always a number
       scheduleOptionId: courseData.scheduleOptionId,
       spaceOptionId: courseData.spaceOptionId,
