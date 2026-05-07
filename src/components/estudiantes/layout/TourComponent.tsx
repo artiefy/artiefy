@@ -130,9 +130,9 @@ export const TourComponent = () => {
               ${
                 isDesktop
                   ? `
-                gap-2 p-2.5
-                sm:text-sm
-              `
+                    gap-2 p-2.5
+                    sm:text-sm
+                  `
                   : 'size-12 p-0'
               }
             `}
@@ -148,9 +148,9 @@ export const TourComponent = () => {
               <>
                 <span
                   className="
-                  hidden font-medium tracking-wide
-                  sm:inline
-                "
+                    hidden font-medium tracking-wide
+                    sm:inline
+                  "
                 >
                   Tour por la Aplicación
                 </span>
