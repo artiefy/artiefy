@@ -13,6 +13,7 @@ export async function getAllPrograms(): Promise<Program[]> {
       with: {
         category: true,
         certificationType: true,
+        typeProgram: true,
         creator: true,
         materias: {
           with: {
@@ -140,6 +141,13 @@ export async function getAllPrograms(): Promise<Program[]> {
                 description: program.certificationType.description,
               }
             : undefined,
+          idTypesPrograms: program.idTypesPrograms,
+          typeProgram: program.typeProgram
+            ? {
+                id: program.typeProgram.id,
+                type: program.typeProgram.type,
+              }
+            : null,
           materias: materiasWithInstructorName as MateriaWithCourse[],
         };
       })

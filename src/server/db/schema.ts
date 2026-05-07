@@ -229,7 +229,7 @@ export const courses = pgTable('courses', {
   certificationTypeId: integer('certification_type_id')
     .references(() => certificationTypes.id)
     .default(sql`NULL`),
-  visibility: boolean('visibility').default(true).notNull(), // 👈 agregar esto
+  visibility: boolean('visibility').default(true),
   idTypesCourses: integer('id_types_courses').references(() => typesCourses.id),
 });
 
@@ -799,6 +799,10 @@ export const programasRelations = relations(programas, ({ one, many }) => ({
     fields: [programas.certificationTypeId],
     references: [certificationTypes.id],
   }),
+  typeProgram: one(typesPrograms, {
+    fields: [programas.idTypesPrograms],
+    references: [typesPrograms.id],
+  }),
   materias: many(materias),
 }));
 
@@ -852,6 +856,10 @@ export const coursesRelations = relations(courses, ({ many, one }) => ({
   spaceOption: one(spaceOptions, {
     fields: [courses.spaceOptionId],
     references: [spaceOptions.id],
+  }),
+  typeCourse: one(typesCourses, {
+    fields: [courses.idTypesCourses],
+    references: [typesCourses.id],
   }),
 }));
 

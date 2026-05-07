@@ -71,13 +71,15 @@ function sortCourses(courses: Course[], sort: CourseSortValue): Course[] {
 
   if (sort === 'category') {
     return [...courses].sort((a, b) => {
-      const categoryCompare = (a.category?.name ?? '').localeCompare(
-        b.category?.name ?? '',
-        'es',
-        { sensitivity: 'base' }
-      );
+      const typeCompare = (
+        a.typeCourse?.type ??
+        a.category?.name ??
+        ''
+      ).localeCompare(b.typeCourse?.type ?? b.category?.name ?? '', 'es', {
+        sensitivity: 'base',
+      });
 
-      if (categoryCompare !== 0) return categoryCompare;
+      if (typeCompare !== 0) return typeCompare;
 
       return a.title.localeCompare(b.title, 'es', { sensitivity: 'base' });
     });
@@ -169,11 +171,15 @@ export default function StudentListCourses({
         const normalizedModalidad = course.modalidad?.name
           ? removeAccents(course.modalidad.name.toLowerCase())
           : '';
+        const normalizedTypeCourse = course.typeCourse?.type
+          ? removeAccents(course.typeCourse.type.toLowerCase())
+          : '';
 
         return (
           normalizedTitle.includes(normalizedQuery) ||
           normalizedCategory.includes(normalizedQuery) ||
-          normalizedModalidad.includes(normalizedQuery)
+          normalizedModalidad.includes(normalizedQuery) ||
+          normalizedTypeCourse.includes(normalizedQuery)
         );
       });
     }
@@ -789,10 +795,13 @@ export default function StudentListCourses({
       >
         {processedCourses.map(({ course, imageUrl, nextLiveClassDate }) => {
           const hasLiveClass = Boolean(nextLiveClassDate);
-          const hasRealComments = (commentCountsByCourseId[course.id] ?? 0) > 0;
-          const categoryLabel = course.category?.name ?? 'Sin categoría';
+          const courseRating = course.rating ?? 0;
+          const hasRealRating =
+            (commentCountsByCourseId[course.id] ?? 0) > 0 && courseRating > 0;
+          const typeCourseLabel = course.typeCourse?.type?.trim();
           const modalidadLabel = course.modalidad?.name ?? 'Asistida Virtual';
           const nivelLabel = course.nivel?.name ?? 'Sin nivel';
+          const categoryLabel = course.category?.name?.trim();
 
           const cardContent = (
             <div
@@ -811,7 +820,7 @@ export default function StudentListCourses({
                 }
               `}
             >
-              <div className="relative h-40 overflow-hidden">
+              <div className="relative h-40 overflow-hidden bg-card">
                 <Image
                   src={imageUrl}
                   alt={course.title || 'Imagen del curso'}
@@ -826,19 +835,27 @@ export default function StudentListCourses({
                 />
                 <div
                   className="
-                    absolute inset-0 bg-gradient-to-t from-card via-card/20
-                    to-transparent
+                    absolute top-0 right-0 bottom-[-8px] left-0 bg-gradient-to-t
+                    from-card via-card/70 to-transparent
                   "
                 />
-                <span
+                <div
                   className="
-                    absolute bottom-3 left-3 rounded-full border
-                    border-primary/30 bg-primary/20 px-3 py-1 text-[11px]
-                    font-semibold text-primary backdrop-blur-sm
+                    pointer-events-none absolute right-0 bottom-[-1px] left-0
+                    h-4 bg-gradient-to-t from-card via-card/95 to-transparent
                   "
-                >
-                  {categoryLabel}
-                </span>
+                />
+                {typeCourseLabel && (
+                  <span
+                    className="
+                      absolute bottom-3 left-3 rounded-full border
+                      border-primary/30 bg-primary/20 px-3 py-1 text-[11px]
+                      font-semibold text-primary backdrop-blur-sm
+                    "
+                  >
+                    {typeCourseLabel}
+                  </span>
+                )}
               </div>
 
               <div className="flex flex-1 flex-col gap-2 p-4">
@@ -883,6 +900,19 @@ export default function StudentListCourses({
                   </span>
                 </div>
 
+                {categoryLabel && (
+                  <div className="flex">
+                    <span
+                      className="
+                        rounded-full border border-cyan-400/20 bg-cyan-400/10
+                        px-2.5 py-0.5 text-[10px] font-medium text-cyan-300
+                      "
+                    >
+                      {categoryLabel}
+                    </span>
+                  </div>
+                )}
+
                 <div
                   className="
                     mt-auto flex items-center justify-between pt-2 text-xs
@@ -924,7 +954,7 @@ export default function StudentListCourses({
                   ) : (
                     <span aria-hidden="true" />
                   )}
-                  {hasRealComments ? (
+                  {hasRealRating ? (
                     <span
                       className="
                         flex items-center gap-1 font-semibold
@@ -932,7 +962,7 @@ export default function StudentListCourses({
                       "
                     >
                       <FaStar className="size-3.5 fill-[hsl(45,100%,60%)]" />
-                      {(course.rating ?? 0).toFixed(1)}
+                      {courseRating.toFixed(1)}
                     </span>
                   ) : (
                     <span aria-hidden="true" />

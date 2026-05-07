@@ -44,6 +44,7 @@ import {
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type GradesApiResponse } from '~/lib/utils2';
+import { getCourseCommentCounts } from '~/server/actions/estudiantes/comment/courseCommentActions';
 import { isUserEnrolledInProgram } from '~/server/actions/estudiantes/programs/enrollInProgram';
 import generateUsername from '~/utils/generateUsername';
 import { createProductFromCourse } from '~/utils/paygateway/products';
@@ -149,6 +150,30 @@ export function CourseHeader({
   const [isEnrollClicked, setIsEnrollClicked] = useState(false);
   const [programToastShown, setProgramToastShown] = useState(false);
   const [localIsEnrolled, setLocalIsEnrolled] = useState(isEnrolled);
+  const [realRatingCommentCount, setRealRatingCommentCount] = useState(0);
+  const showCourseRating =
+    (course.rating ?? 0) > 0 && realRatingCommentCount > 0;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadRatingCommentCount = async () => {
+      try {
+        const counts = await getCourseCommentCounts([course.id]);
+        if (isMounted) {
+          setRealRatingCommentCount(counts[course.id] ?? 0);
+        }
+      } catch {
+        if (isMounted) setRealRatingCommentCount(0);
+      }
+    };
+
+    void loadRatingCommentCount();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [course.id]);
 
   // Determina si el curso es comprable individualmente (tipo compra)
   const isPurchasable =
@@ -1899,35 +1924,37 @@ export function CourseHeader({
                   {totalStudents === 1 ? 'Estudiante' : 'Estudiantes'}
                 </span>
               </div>
-              <div
-                className="
-                  flex items-center
-                  sm:-mt-1
-                "
-              >
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <StarIcon
-                    key={index}
-                    className={`
-                      size-4
-                      sm:size-5
-                      ${
-                        index < Math.floor(course.rating ?? 0)
-                          ? 'text-yellow-400'
-                          : 'text-gray-300'
-                      }
-                    `}
-                  />
-                ))}
-                <span
+              {showCourseRating && (
+                <div
                   className="
-                    ml-2 text-base font-semibold text-yellow-400
-                    sm:text-lg
+                    flex items-center
+                    sm:-mt-1
                   "
                 >
-                  {course.rating?.toFixed(1)}
-                </span>
-              </div>
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <StarIcon
+                      key={index}
+                      className={`
+                        size-4
+                        sm:size-5
+                        ${
+                          index < Math.floor(course.rating ?? 0)
+                            ? 'text-yellow-400'
+                            : 'text-gray-300'
+                        }
+                      `}
+                    />
+                  ))}
+                  <span
+                    className="
+                      ml-2 text-base font-semibold text-yellow-400
+                      sm:text-lg
+                    "
+                  >
+                    {course.rating?.toFixed(1)}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           {/* Course type and instructor info */}

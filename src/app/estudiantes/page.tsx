@@ -74,12 +74,16 @@ async function fetchData(
       const normalizedModalidad = course.modalidad?.name
         ? removeAccents(course.modalidad.name.toLowerCase())
         : '';
+      const normalizedTypeCourse = course.typeCourse?.type
+        ? removeAccents(course.typeCourse.type.toLowerCase())
+        : '';
 
       // Solo buscar en título, categoría y modalidad
       return (
         normalizedTitle.includes(normalizedQuery) ||
         normalizedCategory.includes(normalizedQuery) ||
-        normalizedModalidad.includes(normalizedQuery)
+        normalizedModalidad.includes(normalizedQuery) ||
+        normalizedTypeCourse.includes(normalizedQuery)
       );
     });
   }

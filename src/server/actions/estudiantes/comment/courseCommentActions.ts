@@ -114,7 +114,14 @@ export async function getCourseCommentCounts(
     const entries = await Promise.all(
       uniqueCourseIds.map(async (courseId) => {
         const keys = await redis.keys(`comment:*:${courseId}:*`);
-        return [courseId, keys.length] as const;
+        const commentsWithRating = await Promise.all(
+          keys.map(async (key) => {
+            const rating = await redis.hget<number | string>(key, 'rating');
+            return Number(rating) > 0;
+          })
+        );
+
+        return [courseId, commentsWithRating.filter(Boolean).length] as const;
       })
     );
 

@@ -83,10 +83,14 @@ export default function CourseSearchPreview({
                 <span className="text-sm font-semibold text-white">
                   {course.title}
                 </span>
-                <span className="text-xs text-gray-300">
-                  {course.category?.name ?? 'Sin categoría'} |{' '}
-                  {course.modalidad?.name ?? 'Sin modalidad'}
-                </span>
+                {(course.typeCourse?.type?.trim() ||
+                  course.modalidad?.name?.trim()) && (
+                  <span className="text-xs text-gray-300">
+                    {[course.typeCourse?.type, course.modalidad?.name]
+                      .filter(Boolean)
+                      .join(' | ')}
+                  </span>
+                )}
               </div>
             </div>
           ))}
@@ -138,10 +142,11 @@ export default function CourseSearchPreview({
                 <span className="text-sm font-semibold text-white">
                   {program.title}
                 </span>
-                <span className="text-xs text-gray-300">
-                  {program.category?.name ?? 'Sin categoría'} | Rating:{' '}
-                  {(program.rating ?? 0).toFixed(1)}
-                </span>
+                {program.typeProgram?.type?.trim() && (
+                  <span className="text-xs text-gray-300">
+                    {program.typeProgram.type}
+                  </span>
+                )}
               </div>
             </div>
           ))}

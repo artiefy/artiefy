@@ -1,6 +1,6 @@
 'use server';
 
-import { desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -13,6 +13,7 @@ import {
   nivel,
   scheduleOptions,
   spaceOptions,
+  typesCourses,
   users,
 } from '~/server/db/schema';
 
@@ -71,6 +72,10 @@ const baseCoursesQuery = {
   spaceOptionIsActive: spaceOptions.isActive,
   spaceOptionCreatedAt: spaceOptions.createdAt,
   spaceOptionUpdatedAt: spaceOptions.updatedAt,
+  visibility: courses.visibility,
+  idTypesCourses: courses.idTypesCourses,
+  typeCourseId: typesCourses.id,
+  typeCourseType: typesCourses.type,
 };
 
 export async function getAllCourses(): Promise<Course[]> {
@@ -89,7 +94,13 @@ export async function getAllCourses(): Promise<Course[]> {
         eq(courses.scheduleOptionId, scheduleOptions.id)
       )
       .leftJoin(spaceOptions, eq(courses.spaceOptionId, spaceOptions.id))
-      .where(eq(courses.requiresProgram, false))
+      .leftJoin(typesCourses, eq(courses.idTypesCourses, typesCourses.id))
+      .where(
+        and(
+          eq(courses.requiresProgram, false),
+          or(isNull(courses.visibility), eq(courses.visibility, true))
+        )
+      )
       .orderBy(desc(courses.createdAt))
       .limit(100);
 
@@ -240,6 +251,14 @@ export async function getAllCourses(): Promise<Course[]> {
             updatedAt: course.spaceOptionUpdatedAt ?? new Date(),
           }
         : null,
+      visibility: course.visibility,
+      idTypesCourses: course.idTypesCourses,
+      typeCourse: course.typeCourseId
+        ? {
+            id: course.typeCourseId,
+            type: course.typeCourseType ?? '',
+          }
+        : null,
       // Añadir classMeetings para que esté disponible en el front
       classMeetings: classMeetingsMap[course.id] ?? [],
     }));
@@ -281,7 +300,12 @@ export async function getAllActiveCourses(limit = 5): Promise<BasicCourse[]> {
     })
     .from(courses)
     .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-    .where(or(eq(courses.isActive, true), isNull(courses.isActive)))
+    .where(
+      and(
+        or(eq(courses.isActive, true), isNull(courses.isActive)),
+        or(isNull(courses.visibility), eq(courses.visibility, true))
+      )
+    )
     .orderBy(sql`${courses.updatedAt} DESC`)
     .limit(Math.min(Math.max(limit, 1), 50));
 

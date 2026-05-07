@@ -367,9 +367,10 @@ export default function StudentDetails({
 
     return courses.filter((course) => {
       const category = normalizeFilterText(course.category?.name);
+      const typeCourse = normalizeFilterText(course.typeCourse?.type);
       const title = normalizeFilterText(course.title);
       const modalidad = normalizeFilterText(course.modalidad?.name);
-      const joinedText = `${category} ${title} ${modalidad}`;
+      const joinedText = `${category} ${typeCourse} ${title} ${modalidad}`;
 
       if (activeFilter === 'live') {
         const hasLiveClass =
@@ -897,9 +898,11 @@ export default function StudentDetails({
                         <h2 className="mb-2 line-clamp-3 text-3xl font-semibold sm:mb-4 sm:text-4xl" title={course.title}>
                           {course.title}
                         </h2>
-                        <Badge variant="outline" className="border-primary text-primary mb-2">
-                          {course.category?.name ?? 'Sin categoría'}
-                        </Badge>
+                        {course.typeCourse?.type?.trim() && (
+                          <Badge variant="outline" className="border-primary text-primary mb-2">
+                            {course.typeCourse.type}
+                          </Badge>
+                        )}
                         <p className="mb-2 line-clamp-2 text-sm sm:text-base" title={course.description ?? ''}>
                           {truncateDescription(course.description ?? '', 150)}
                         </p>
