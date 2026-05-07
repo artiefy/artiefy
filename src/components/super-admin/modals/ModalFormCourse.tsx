@@ -56,7 +56,8 @@ interface CourseFormProps {
     parametros: ParametroForm[],
     horario: number | null,
     espacios: number | null,
-    certificationTypeId: number | null
+    certificationTypeId: number | null,
+    idTypesCoursesParam: number | null
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -103,6 +104,8 @@ interface CourseFormProps {
     name: string;
     description: string | null;
   }[];
+  idTypesCourses: number | null;
+  setIdTypesCourses: (val: number | null) => void;
   userRole?: string;
 }
 
@@ -181,6 +184,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   setCertificationTypeId,
   certificationTypes = [],
   userRole,
+  idTypesCourses,
+  setIdTypesCourses,
 }) => {
   const [file, setFile] = useState<File | null>(null as File | null); // Estado para el archivo
   const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
@@ -242,6 +247,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       certificationTypes
     );
   const [isLoadingCertifications, setIsLoadingCertifications] = useState(true);
+
+  // ✅ New state for types courses
+  const [typesCourses, setTypesCourses] = useState<
+    { id: number; type: string }[]
+  >([]);
 
   // 🐛 Debug log para ver qué instructors recibe el modal
   console.log('🎨 Modal recibió instructors prop:', instructors);
@@ -904,7 +914,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         parametros,
         selectedScheduleId ? Number(selectedScheduleId) : null,
         selectedSpaceId ? Number(selectedSpaceId) : null,
-        localCertificationTypeId
+        localCertificationTypeId,
+        idTypesCourses
       );
 
       console.log('📤 Enviando al onSubmitAction:', {
@@ -1299,6 +1310,26 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     }
   }, [editingCourseId, espacios, spaceOptions]);
 
+  // ✅ Efecto para cargar types courses
+  useEffect(() => {
+    const fetchTypesCourses = async () => {
+      const res = await fetch('/api/super-admin/types-courses');
+      if (res.ok) {
+        const data = (await res.json()) as { id: number; type: string }[];
+        setTypesCourses(data);
+      }
+    };
+    void fetchTypesCourses();
+  }, []);
+
+  // ✅ Efecto para sincronizar idTypesCourses cuando se edita un curso
+  useEffect(() => {
+    if (editingCourseId && idTypesCourses !== null) {
+      // idTypesCourses ya viene como prop sincronizado
+      console.log('📋 [SYNC TYPE COURSE] idTypesCourses prop:', idTypesCourses);
+    }
+  }, [editingCourseId, idTypesCourses]);
+
   // Render la vista
   return (
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
@@ -1597,6 +1628,36 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                     {localCertificationTypes.map((type) => (
                       <option key={type.id} value={type.id}>
                         {type.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="w-full">
+                  <label
+                    className="
+                    text-sm font-medium text-primary
+                    md:text-lg
+                  "
+                  >
+                    Modalidad del Curso{' '}
+                  </label>
+                  <select
+                    className="
+                      mt-1 w-full rounded border bg-background p-2 text-sm
+                      text-white
+                      md:text-base
+                    "
+                    value={idTypesCourses ?? ''}
+                    onChange={(e) =>
+                      setIdTypesCourses(
+                        e.target.value ? Number(e.target.value) : null
+                      )
+                    }
+                  >
+                    <option value="">Seleccionar tipo de curso</option>
+                    {typesCourses.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.type}
                       </option>
                     ))}
                   </select>

@@ -7995,8 +7995,8 @@ export default function EnrolledUsersPage() {
                   {/* Tabla de pagos solo con información, sin inputs */}
                   <table
                     className="
-                        mb-6 w-full border-collapse border border-black text-sm
-                      "
+                      mb-6 w-full border-collapse border border-black text-sm
+                    "
                     style={{ pageBreakAfter: 'always', marginBottom: '0' }}
                   >
                     <thead>
@@ -8292,9 +8292,9 @@ export default function EnrolledUsersPage() {
                   {/* Pie de página opcional */}
                   <div
                     className="
-                        mt-8 border-t border-black pt-4 text-center text-xs
-                        text-black
-                      "
+                      mt-8 border-t border-black pt-4 text-center text-xs
+                      text-black
+                    "
                   >
                     <p>
                       Este documento es un comprobante de los pagos registrados

@@ -58,6 +58,8 @@ interface PutRequestBody {
   spaceOptionId?: number | null;
   espacios?: number | null;
   certificationTypeId?: number | null;
+  visibility?: boolean; // ← agrega esto
+  idTypesCourses?: number | null; // ← y esto si tampoco está
 }
 
 interface CreatedCourse {
@@ -531,6 +533,9 @@ export async function PUT(
       scheduleOptionId: data.scheduleOptionId ?? data.horario ?? null,
       spaceOptionId: data.spaceOptionId ?? data.espacios ?? null,
       certificationTypeId: data.certificationTypeId ?? null,
+      visibility:
+        typeof data.visibility === 'boolean' ? data.visibility : undefined,
+      idTypesCourses: data.idTypesCourses ?? null,
     };
 
     console.log(
