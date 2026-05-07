@@ -155,6 +155,8 @@ export function NotificationSubscription() {
   }
 
   const PlanIcon = notificationCopy.isPremium ? FaCrown : FaStar;
+  const shouldUseWarningColor =
+    notification.severity !== 'expired' && notification.daysLeft <= 2;
 
   return (
     <>
@@ -165,7 +167,7 @@ export function NotificationSubscription() {
         ref={rootRef}
         className={`
           artiefy-subscription-root
-          severity-${notification.severity}
+          severity-${shouldUseWarningColor ? 'warning' : notification.severity}
         `}
         role="alert"
       >

@@ -23,6 +23,9 @@ export interface BaseCourse {
   categoryid: number;
   instructor: string;
   instructorName?: string;
+  instructorProfesion?: string | null;
+  instructorDescripcion?: string | null;
+  instructorProfileImageKey?: string | null;
   createdAt: string | number | Date;
   updatedAt: string | number | Date;
   creatorId: string;

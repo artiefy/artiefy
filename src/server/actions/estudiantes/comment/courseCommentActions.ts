@@ -106,6 +106,25 @@ export async function getCommentsByCourseId(
   }
 }
 
+export async function getCourseCommentCounts(
+  courseIds: number[]
+): Promise<Record<number, number>> {
+  try {
+    const uniqueCourseIds = [...new Set(courseIds)].filter(Number.isFinite);
+    const entries = await Promise.all(
+      uniqueCourseIds.map(async (courseId) => {
+        const keys = await redis.keys(`comment:*:${courseId}:*`);
+        return [courseId, keys.length] as const;
+      })
+    );
+
+    return Object.fromEntries(entries);
+  } catch (error: unknown) {
+    console.error('Error al obtener conteos de comentarios:', error);
+    return {};
+  }
+}
+
 export async function editComment(
   commentId: string,
   content: string,

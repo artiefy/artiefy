@@ -202,7 +202,10 @@ export function CourseActivities({
     () => sortLessons(lessonsState),
     [lessonsState]
   );
-  const lastLessonId = sortedLessonsState.at(-1)?.id;
+  const lastLessonId = sortedLessonsState[sortedLessonsState.length - 1]?.id;
+  const selectedLastActivityId =
+    selectedLesson?.activities?.[(selectedLesson.activities?.length ?? 0) - 1]
+      ?.id;
 
   const openActivityModal = async (activity: Activity, lesson: Lesson) => {
     if (!userId) return;
@@ -537,7 +540,7 @@ export function CourseActivities({
           courseId={courseId}
           isLastActivity={
             lastLessonId === selectedLesson.id &&
-            selectedLesson.activities?.at(-1)?.id === selectedActivity.id
+            selectedLastActivityId === selectedActivity.id
           }
           onViewHistoryAction={() => {}}
           onActivityCompleteAction={async () => {
@@ -545,7 +548,7 @@ export function CourseActivities({
             await completeActivity(selectedActivity.id, userId);
           }}
           isLastActivityInLesson={
-            selectedLesson.activities?.at(-1)?.id === selectedActivity.id
+            selectedLastActivityId === selectedActivity.id
           }
         />
       )}

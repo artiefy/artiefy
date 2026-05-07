@@ -14,6 +14,7 @@ import { IoGiftOutline } from 'react-icons/io5';
 
 import CourseSortControl from '~/components/estudiantes/layout/studentdashboard/CourseSortControl';
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
+import { getCourseCommentCounts } from '~/server/actions/estudiantes/comment/courseCommentActions';
 
 import StudentPagination from './StudentPagination';
 
@@ -26,6 +27,8 @@ interface CourseListStudentProps {
   currentPage: number;
   totalPages: number;
   totalCourses: number;
+  sectionId?: string;
+  syncWithUrl?: boolean;
   category?: string;
   searchTerm?: string;
   sort?: CourseSortValue;
@@ -86,6 +89,8 @@ function sortCourses(courses: Course[], sort: CourseSortValue): Course[] {
 export default function StudentListCourses({
   courses,
   currentPage,
+  sectionId = 'courses-list-section',
+  syncWithUrl = true,
   category,
   searchTerm,
   sort = 'random',
@@ -98,8 +103,13 @@ export default function StudentListCourses({
     category ?? null
   );
   const [searchTermValue, setSearchTermValue] = useState(searchTerm ?? '');
+  const [commentCountsByCourseId, setCommentCountsByCourseId] = useState<
+    Record<number, number>
+  >({});
 
   useEffect(() => {
+    if (!syncWithUrl) return;
+
     const nextSort = searchParams?.get('sort');
     const nextPage = Number(searchParams?.get('page') ?? currentPage);
 
@@ -107,7 +117,7 @@ export default function StudentListCourses({
     setPageValue(Number.isFinite(nextPage) && nextPage > 0 ? nextPage : 1);
     setCategoryValue(searchParams?.get('category') ?? category ?? null);
     setSearchTermValue(searchParams?.get('query') ?? searchTerm ?? '');
-  }, [category, currentPage, searchParams, searchTerm, sort]);
+  }, [category, currentPage, searchParams, searchTerm, sort, syncWithUrl]);
 
   function formatShortSpanishDate(dateString: string) {
     const date = new Date(dateString);
@@ -215,6 +225,31 @@ export default function StudentListCourses({
       }),
     [paginatedCourses]
   );
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadCommentCounts = async () => {
+      const courseIds = paginatedCourses.map((course) => course.id);
+
+      if (courseIds.length === 0) {
+        setCommentCountsByCourseId({});
+        return;
+      }
+
+      const counts = await getCourseCommentCounts(courseIds);
+
+      if (isMounted) {
+        setCommentCountsByCourseId(counts);
+      }
+    };
+
+    void loadCommentCounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [paginatedCourses]);
 
   const getCourseTypeLabel = (course: Course) => {
     const userPlanType = user?.publicMetadata?.planType as
@@ -718,7 +753,7 @@ export default function StudentListCourses({
 
   return (
     // Add an ID to this section so we can scroll to it
-    <div id="courses-list-section">
+    <div id={sectionId}>
       <div
         className="
           mt-8 mb-3 flex flex-col gap-4 px-8
@@ -754,6 +789,7 @@ export default function StudentListCourses({
       >
         {processedCourses.map(({ course, imageUrl, nextLiveClassDate }) => {
           const hasLiveClass = Boolean(nextLiveClassDate);
+          const hasRealComments = (commentCountsByCourseId[course.id] ?? 0) > 0;
           const categoryLabel = course.category?.name ?? 'Sin categoría';
           const modalidadLabel = course.modalidad?.name ?? 'Asistida Virtual';
           const nivelLabel = course.nivel?.name ?? 'Sin nivel';
@@ -888,15 +924,19 @@ export default function StudentListCourses({
                   ) : (
                     <span aria-hidden="true" />
                   )}
-                  <span
-                    className="
-                      flex items-center gap-1 font-semibold
-                      text-[hsl(45,100%,60%)]
-                    "
-                  >
-                    <FaStar className="size-3.5 fill-[hsl(45,100%,60%)]" />
-                    {(course.rating ?? 0).toFixed(1)}
-                  </span>
+                  {hasRealComments ? (
+                    <span
+                      className="
+                        flex items-center gap-1 font-semibold
+                        text-[hsl(45,100%,60%)]
+                      "
+                    >
+                      <FaStar className="size-3.5 fill-[hsl(45,100%,60%)]" />
+                      {(course.rating ?? 0).toFixed(1)}
+                    </span>
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
                 </div>
               </div>
             </div>
