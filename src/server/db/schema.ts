@@ -229,6 +229,8 @@ export const courses = pgTable('courses', {
   certificationTypeId: integer('certification_type_id')
     .references(() => certificationTypes.id)
     .default(sql`NULL`),
+  visibility: boolean('visibility').default(true).notNull(), // 👈 agregar esto
+  idTypesCourses: integer('id_types_courses').references(() => typesCourses.id),
 });
 
 // Tabla de tipos de certificación
@@ -685,6 +687,9 @@ export const programas = pgTable('programas', {
   certificationTypeId: integer('certification_type_id')
     .references(() => certificationTypes.id)
     .default(sql`NULL`),
+  idTypesPrograms: integer('id_types_programs').references(
+    () => typesPrograms.id
+  ),
 });
 
 // Tabla de materias
@@ -2132,3 +2137,13 @@ export const embeddingProcessingLogRelations = relations(
     }),
   })
 );
+
+export const typesCourses = pgTable('types_courses', {
+  id: serial('id').primaryKey(),
+  type: varchar('type', { length: 255 }).notNull(),
+});
+
+export const typesPrograms = pgTable('types_programs', {
+  id: serial('id').primaryKey(),
+  type: varchar('type', { length: 255 }).notNull(),
+});

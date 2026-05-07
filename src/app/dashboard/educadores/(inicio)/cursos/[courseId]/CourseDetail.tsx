@@ -423,6 +423,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [certificationTypeName, setCertificationTypeName] = useState<
     string | null
   >(null);
+  const [idTypesCourses, setIdTypesCourses] = useState<number | null>(null);
 
   // Estado para el scroll y la tarjeta mini sticky
   const [showStickyCard, setShowStickyCard] = useState(false);
@@ -5724,6 +5725,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 );
               }}
               certificationTypes={[]}
+              idTypesCourses={idTypesCourses}
+              setIdTypesCourses={setIdTypesCourses}
             />
           )}
 

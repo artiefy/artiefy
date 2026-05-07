@@ -81,7 +81,8 @@ export default function Page() {
   const [editCoverVideoCourseKey, setEditCoverVideoCourseKey] = useState<
     string | null
   >(null);
-
+  const [idTypesCourses, setIdTypesCourses] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(true);
   // ✅ Obtener cursos, totales y categorías con lazy loading
   useEffect(() => {
     async function fetchData() {
@@ -220,9 +221,15 @@ export default function Page() {
       description: string;
       porcentaje: number;
       numberOfActivities: number;
-    }[]
+    }[],
+    horario: number | null,
+    espacios: number | null,
+    certificationTypeId: number | null,
+    idTypesCoursesParam: number | null
   ) => {
     if (!user) return;
+    console.log('📦 isActive recibido:', isActive);
+    console.log('📦 idTypesCourses recibido:', idTypesCourses);
     void individualPrice;
     void parametros;
     // Validar que haya al menos un parámetro si addParametros es true
@@ -236,9 +243,12 @@ export default function Page() {
     try {
       setUploading(true);
       if (file) {
+        console.log('📦 idTypesCourses al enviar POST:', idTypesCourses);
+        console.log('📦 visibility al enviar POST:', isActive);
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+
           body: JSON.stringify({
             contentType: file.type,
             fileSize: file.size,
@@ -306,6 +316,8 @@ export default function Page() {
           instructors: editingCourse?.instructors ?? [],
           creatorId: editingCourse?.creatorId ?? user.id,
           createdAt: editingCourse?.createdAt ?? new Date().toISOString(),
+          idTypesCourses: idTypesCoursesParam,
+          visibility: isActive, // ← agrega esto
         } as CourseData);
 
         responseData = { id: Number(id) }; // Como es una actualización, el ID ya es conocido
@@ -327,6 +339,8 @@ export default function Page() {
             courseTypeId,
             isActive,
             individualPrice,
+            idTypesCourses: idTypesCoursesParam,
+            visibility: isActive,
           }),
         });
 
@@ -397,9 +411,10 @@ export default function Page() {
       }))
     );
   };
-
   // Función para abrir el modal de creación de cursos
   const handleCreateCourse = () => {
+    setIdTypesCourses(null); // ← agrega esto
+    setIsActive(true);
     setEditingCourse({
       id: 0,
       title: '',
@@ -767,10 +782,6 @@ export default function Page() {
               prev ? { ...prev, courseTypeId: courseTypeId[0] ?? 0 } : null
             )
           }
-          isActive={true}
-          setIsActive={(isActive: boolean) =>
-            console.log('Is Active set to:', isActive)
-          }
           instructors={editingCourse?.instructors ?? []}
           setInstructors={(instructors: string[]) =>
             setEditingCourse((prev) => (prev ? { ...prev, instructors } : null))
@@ -789,6 +800,10 @@ export default function Page() {
           certificationTypeId={null}
           setCertificationTypeId={() => undefined}
           certificationTypes={[]}
+          idTypesCourses={idTypesCourses}
+          setIdTypesCourses={setIdTypesCourses}
+          isActive={isActive}
+          setIsActive={setIsActive}
         />
       )}
     </div>

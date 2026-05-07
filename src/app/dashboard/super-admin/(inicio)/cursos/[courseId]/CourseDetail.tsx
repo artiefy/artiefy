@@ -91,6 +91,7 @@ interface Course {
   espacios?: number | null;
   certificationTypeId?: number | null;
   certificationTypeName?: string;
+  idTypesCourses?: number | null;
   scheduleOptionId?: number | null;
   scheduleOptionName?: string;
   spaceOptionId?: number | null;
@@ -1232,7 +1233,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     }[],
     horario: number | null,
     espacios: number | null,
-    certificationTypeId: number | null
+    certificationTypeId: number | null,
+    idTypesCourses?: number | null
   ): Promise<void> => {
     try {
       setIsUpdating(true);
@@ -5793,7 +5795,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             parametros,
             horario,
             espacios,
-            certificationTypeId
+            certificationTypeId,
+            idTypesCourses
           ) =>
             handleUpdateCourse(
               id,
@@ -5815,7 +5818,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               parametros,
               horario,
               espacios,
-              certificationTypeId
+              certificationTypeId,
+              idTypesCourses
             )
           }
           editingCourseId={course.id}
@@ -5865,6 +5869,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             );
           }}
           certificationTypes={certificationTypes}
+          idTypesCourses={course.idTypesCourses ?? null}
+          setIdTypesCourses={(id) => {
+            setCourse((prev) =>
+              prev ? { ...prev, idTypesCourses: id } : null
+            );
+          }}
         />
       )}
 

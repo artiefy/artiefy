@@ -236,6 +236,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   const [certificationTypeName, setCertificationTypeName] = useState<
     string | null
   >(null);
+  const [idTypesCourses, setIdTypesCourses] = useState<number | null>(null);
 
   // Función para obtener el curso y los parámetros
   const fetchCourse = useCallback(async () => {
@@ -1414,6 +1415,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         certificationTypeId={null}
         setCertificationTypeId={() => undefined}
         certificationTypes={[]}
+        idTypesCourses={idTypesCourses}
+        setIdTypesCourses={setIdTypesCourses}
       />
     </div>
   );

@@ -480,7 +480,6 @@ const allColumns: Column[] = [
   },
 
   // 🔽 AHORA todo desde users.* (ocultas por defecto para no romper layouts)
-  { id: 'document', label: 'Documento', defaultVisible: false, type: 'text' },
   {
     id: 'modalidad',
     label: 'Modalidad',
@@ -488,52 +487,17 @@ const allColumns: Column[] = [
     type: 'select',
     options: ['virtual', 'presencial', 'híbrida'],
   },
-  {
-    id: 'inscripcionValor',
-    label: 'Inscripción (valor)',
-    defaultVisible: false,
-    type: 'text',
-  },
-  {
-    id: 'paymentMethod',
-    label: 'Método pago inscripción',
-    defaultVisible: false,
-    type: 'text',
-  },
-  {
-    id: 'cuota1Fecha',
-    label: 'Cuota 1 (fecha)',
-    defaultVisible: false,
-    type: 'date',
-  },
-  {
-    id: 'cuota1Metodo',
-    label: 'Cuota 1 (método)',
-    defaultVisible: false,
-    type: 'text',
-  },
-  {
-    id: 'cuota1Valor',
-    label: 'Cuota 1 (valor)',
-    defaultVisible: false,
-    type: 'text',
-  },
-  {
-    id: 'valorPrograma',
-    label: 'Valor Programa',
-    defaultVisible: false,
-    type: 'text',
-  },
 
+  // ✅ Identificación (solo estos dos, eliminados los campos siempre null)
   {
     id: 'identificacionTipo',
-    label: 'Identificación (tipo)',
+    label: 'Tipo de documento',
     defaultVisible: false,
     type: 'text',
   },
   {
     id: 'identificacionNumero',
-    label: 'Identificación (número)',
+    label: 'Número de documento',
     defaultVisible: false,
     type: 'text',
   },
@@ -868,7 +832,7 @@ export default function EnrolledUsersPage() {
 
   // Opción 3: La más simple - usar parámetros de ventana específicos
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
     // Crear ventana con parámetros específicos para que aparezca al frente
     const printWindow = window.open(
       '',
@@ -876,7 +840,7 @@ export default function EnrolledUsersPage() {
       'width=800,height=600,scrollbars=yes,resizable=yes,toolbar=no,location=no,status=no,menubar=no,top=50,left=50'
     );
 
-    const printContent = generatePrintableHTML();
+    const printContent = await generatePrintableHTML();
 
     if (!printWindow) {
       alert('No se pudo abrir la ventana de impresión.');
@@ -899,7 +863,32 @@ export default function EnrolledUsersPage() {
   };
 
   // Esta es la función generatePrintableHTML que también necesitas:
-  const generatePrintableHTML = () => {
+  const getBase64FromUrl = async (url: string): Promise<string> => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error(`Error loading base64 from ${url}:`, error);
+      return '';
+    }
+  };
+
+  const generatePrintableHTML = async () => {
+    // Obtener logos en base64
+    let logo1Base64 = '';
+    let logo2Base64 = '';
+    try {
+      logo1Base64 = await getBase64FromUrl('/artiefy-logo.png');
+      logo2Base64 = await getBase64FromUrl('/logo-ponao.png');
+    } catch (error) {
+      console.error('Error loading logos:', error);
+    }
+
     return `
     <!DOCTYPE html>
     <html lang="es">
@@ -908,175 +897,146 @@ export default function EnrolledUsersPage() {
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Factura de Matrícula - ${currentUser?.name}</title>
       <style>
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          color: black !important;
-          background: white !important;
+        @page { margin: 15mm 15mm 15mm 15mm; }
+        * { box-sizing: border-box; }
+        body { 
+          font-family: Arial, sans-serif; 
+          font-size: 11px; 
+          margin: 0; 
+          padding: 15px; 
+          color: black;
+          background: white;
+          line-height: 1.3;
         }
-        
-        body {
-          font-family: Arial, sans-serif;
-          padding: 20px;
-          background: white !important;
-          color: black !important;
+        table { 
+          width: 100%; 
+          border-collapse: collapse; 
+          table-layout: fixed; 
+          font-size: 10.5px; 
+          margin-top: 12px; 
+          line-height: 1.2;
         }
-        
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 30px;
+        th { 
+          border: 1px solid black; 
+          padding: 4px 6px; 
+          background: #f0f0f0; 
+          font-weight: bold; 
+          word-break: break-word; 
+          text-align: left; 
+          vertical-align: top;
+          font-size: 10.5px;
+        }
+        td { 
+          border: 1px solid black; 
+          padding: 4px 6px; 
+          word-break: break-word; 
+          vertical-align: top; 
+          color: black;
+          font-size: 10.5px;
+        }
+        .header-container {
+          display: flex; 
+          justify-content: space-between; 
+          align-items: flex-start; 
+          margin-bottom: 12px; 
+          padding-bottom: 8px; 
           border-bottom: 2px solid black;
-          padding-bottom: 15px;
         }
-        
-        .logos {
-          display: flex;
-          gap: 20px;
-          align-items: center;
+        .header-logo { 
+          display: flex; 
+          align-items: center; 
+          gap: 8px; 
+          margin-bottom: 0; 
         }
-        
-        .title {
+        .header-logo img { 
+          height: 50px; 
+          width: auto; 
+          object-fit: contain; 
+          max-width: 160px; 
+          display: block; 
+        }
+        .header-title {
           text-align: right;
         }
-        
-        .title h1 {
-          font-size: 16px;
-          font-weight: bold;
-          color: black !important;
-          margin-bottom: 5px;
-        }
-        
-        .title p {
-          font-size: 12px;
-          color: black !important;
-        }
-        
-        .info-section {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 30px;
-          margin-bottom: 30px;
-          font-size: 13px;
-        }
-        
-        .info-section p {
-          margin-bottom: 6px;
-          color: black !important;
-        }
-        
-        .info-section strong {
-          color: black !important;
-        }
-        
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 20px;
-          font-size: 12px;
-        }
-        
-        th, td {
-          border: 1px solid black !important;
-          padding: 6px;
-          text-align: left;
-          background: white !important;
-          color: black !important;
-        }
-        
-        th {
-          font-weight: bold;
-          background: white !important;
-          color: black !important;
-        }
-        
-        .text-right {
-          text-align: right;
-        }
-        
-        .text-center {
-          text-align: center;
-        }
-        
-        .totals {
-          border-top: 2px solid black;
-          padding-top: 15px;
-          margin-top: 20px;
-          font-size: 14px;
-        }
-        
-        .total-row {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 8px;
-        }
-        
-        .total-row.final {
-          font-weight: bold;
-          font-size: 16px;
-          border-top: 1px solid black;
-          padding-top: 8px;
-        }
-        
-        .footer {
-          margin-top: 30px;
-          text-align: center;
+        .header-title p {
           font-size: 11px;
-          border-top: 1px solid black;
-          padding-top: 10px;
+          margin: 2px 0;
+          color: black;
         }
-        
-        @page {
-          margin: 0.5in;
-          size: A4;
+        .header-title h2 {
+          font-size: 15px;
+          margin: 6px 0;
+          color: black;
+          font-weight: bold;
         }
-        
-        @media print {
-          body { margin: 0; padding: 10px; }
-          .header { page-break-after: avoid; }
-          table { page-break-inside: avoid; }
+        .info-grid { 
+          display: grid; 
+          grid-template-columns: 1fr 1fr; 
+          gap: 2px 24px; 
+          margin: 10px 0; 
+          font-size: 11px; 
+        }
+        .info-grid p {
+          margin: 3px 0;
+          color: black;
+        }
+        .totales { 
+          display: grid; 
+          grid-template-columns: 1fr 1fr; 
+          gap: 4px; 
+          margin-top: 14px; 
+          padding-top: 8px; 
+          border-top: 2px solid black; 
+          font-size: 12px; 
+        }
+        .totales p { 
+          margin: 3px 0; 
+          color: black;
+        }
+        .footer { 
+          margin-top: 16px; 
+          font-size: 10px; 
+          color: #555; 
+          border-top: 1px solid #ccc; 
+          padding-top: 6px;
+          text-align: center;
         }
       </style>
     </head>
     <body>
-      <div class="header">
-        <div class="logos">
-          <strong>ARTIEFY - PONAO</strong>
+      <div class="header-container">
+        <div class="header-logo">
+          ${logo1Base64 ? `<img src="${logo1Base64}" alt="Artiefy" />` : '<div style="font-weight:bold; font-size:12px;">ARTIEFY</div>'}
+          ${logo2Base64 ? `<img src="${logo2Base64}" alt="PONAO" />` : '<div style="font-weight:bold; font-size:12px;">PONAO</div>'}
         </div>
-        <div class="title">
+        <div class="header-title">
           <p>POLITÉCNICO NACIONAL DE ARTES Y OFICIOS</p>
-          <h1>FACTURA PAGO DE MATRÍCULA</h1>
+          <h2>FACTURA PAGO DE MATRÍCULA</h2>
         </div>
       </div>
       
-      <div class="info-section">
-        <div>
-          <p><strong>NOMBRE ESTUDIANTE:</strong> ${currentUser?.name ?? '-'}</p>
-          <p><strong>CC:</strong> ${currentUser?.document ?? currentUser?.id ?? '-'}</p>
-          <p><strong>CELULAR:</strong> ${currentUser?.phone ?? '-'}</p>
-          <p><strong>PROGRAMA:</strong> ${userPrograms?.[0]?.title ?? '—'}</p>
-          <p><strong>FECHA:</strong> ${new Date().toLocaleDateString('es-CO')}</p>
-        </div>
-        <div>
-          <p><strong>DIRECCIÓN:</strong> ${currentUser?.address ?? '-'}</p>
-          <p><strong>CIUDAD:</strong> ${currentUser?.city ?? '-'}</p>
-          <p><strong>EMAIL:</strong> ${currentUser?.email ?? '-'}</p>
-          <p><strong>ESTADO:</strong> ${currentUser?.carteraStatus === 'activo' ? 'Al día' : 'En cartera'}</p>
-          <p><strong>FIN SUSCRIPCIÓN:</strong> ${currentUser?.subscriptionEndDate ? new Date(currentUser.subscriptionEndDate).toLocaleDateString('es-CO') : '-'}</p>
-        </div>
+      <div class="info-grid">
+        <p><strong>NOMBRE ESTUDIANTE:</strong> ${currentUser?.name ?? '-'}</p>
+        <p><strong>CC:</strong> ${currentUser?.document ?? '-'}</p>
+        <p><strong>CELULAR:</strong> ${currentUser?.phone ?? '-'}</p>
+        <p><strong>EMAIL:</strong> ${currentUser?.email ?? '-'}</p>
+        <p><strong>PROGRAMA:</strong> ${userPrograms?.[0]?.title ?? '-'}</p>
+        <p><strong>FECHA:</strong> ${new Date().toLocaleDateString('es-CO')}</p>
+        <p><strong>DIRECCIÓN:</strong> ${currentUser?.address ?? '-'}</p>
+        <p><strong>CIUDAD:</strong> ${currentUser?.city ?? '-'}</p>
+        <p><strong>ESTADO:</strong> ${currentUser?.carteraStatus === 'activo' ? 'Al día' : 'En cartera'}</p>
+        <p><strong>FIN SUSCRIPCIÓN:</strong> ${currentUser?.subscriptionEndDate ? new Date(currentUser.subscriptionEndDate).toLocaleDateString('es-CO') : '-'}</p>
       </div>
       
       <table>
         <thead>
           <tr>
-            <th>PRODUCTO</th>
-            <th class="text-center">N° PAGO</th>
-            <th>FECHA PROGRAMADA</th>
-            <th>FECHA REAL DE PAGO</th>
-            <th>MÉTODO DE PAGO</th>
-            <th class="text-right">VALOR</th>
+            <th style="width: 25%;">PRODUCTO</th>
+            <th style="width: 8%; text-align:center;">N° PAGO</th>
+            <th style="width: 18%;">FECHA PROGRAMADA</th>
+            <th style="width: 18%;">FECHA REAL DE PAGO</th>
+            <th style="width: 18%;">MÉTODO DE PAGO</th>
+            <th style="width: 13%; text-align:right;">VALOR</th>
           </tr>
         </thead>
         <tbody>
@@ -1084,24 +1044,15 @@ export default function EnrolledUsersPage() {
         </tbody>
       </table>
       
-      <div class="totals">
-        <div class="total-row">
-          <span>PLAN / VALOR PROGRAMA:</span>
-          <span>${formatCOP(price)}</span>
-        </div>
-        <div class="total-row">
-          <span>VALOR PAGADO:</span>
-          <span>${formatCOP(carteraInfo?.totalPagado ?? 0)}</span>
-        </div>
-        <div class="total-row final">
-          <span>DEUDA RESTANTE:</span>
-          <span>${formatCOP(carteraInfo?.deuda ?? 0)}</span>
-        </div>
+      <div class="totales">
+        <p><strong>PLAN / VALOR PROGRAMA:</strong> ${formatCOP(price)}</p>
+        <p><strong>VALOR PAGADO:</strong> ${formatCOP(carteraInfo?.totalPagado ?? 0)}</p>
+        <p style="grid-column: 1 / 2;"><strong>DEUDA RESTANTE:</strong> <span style="font-weight: bold; font-size: 13px;">${formatCOP(carteraInfo?.deuda ?? 0)}</span></p>
       </div>
       
       <div class="footer">
-        <p>Este documento es un comprobante de los pagos registrados</p>
-        <p>Fecha de impresión: ${new Date().toLocaleString('es-CO')}</p>
+        <p style="margin: 2px 0;">Este documento es un comprobante de los pagos registrados</p>
+        <p style="margin: 2px 0;">Fecha de impresión: ${new Date().toLocaleString('es-CO')}</p>
       </div>
     </body>
     </html>
@@ -1118,25 +1069,25 @@ export default function EnrolledUsersPage() {
         typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
 
       rows += `
-      <tr>
-        <td>${row.concepto ?? `Cuota ${cuotaNum}`}</td>
-        <td class="text-center">${row.nro_pago ?? row.nroPago ?? cuotaNum}</td>
-        <td class="border border-black px-3 py-2 text-black">
+      <tr style="background:white;">
+        <td style="border:1px solid black; padding:6px; color:black; overflow:hidden; word-break:break-word;">${row.concepto ?? `Cuota ${cuotaNum}`}</td>
+        <td style="border:1px solid black; padding:6px; color:black; text-align:center; overflow:hidden; word-break:break-word;">${row.nro_pago ?? row.nroPago ?? cuotaNum}</td>
+        <td style="border:1px solid black; padding:6px; color:black; overflow:hidden; word-break:break-word;">
           ${
             row.fechaPrograma
               ? new Date(row.fechaPrograma).toLocaleDateString('es-CO')
               : '-'
           }
         </td>
-        <td class="border border-black px-3 py-2 text-black">
+        <td style="border:1px solid black; padding:6px; color:black; overflow:hidden; word-break:break-word;">
           ${
             row.fechaRealPago
               ? new Date(row.fechaRealPago).toLocaleDateString('es-CO')
               : '-'
           }
         </td>
-        <td>${row.metodo ?? '-'}</td>
-        <td class="text-right">${formatCOP(valor)}</td>
+        <td style="border:1px solid black; padding:6px; color:black; overflow:hidden; word-break:break-word;">${row.metodo ?? '-'}</td>
+        <td style="border:1px solid black; padding:6px; color:black; text-align:right; overflow:hidden; word-break:break-word;">${formatCOP(valor)}</td>
       </tr>
     `;
     }
@@ -1154,25 +1105,25 @@ export default function EnrolledUsersPage() {
         typeof row.valor === 'number' ? row.valor : Number(row.valor ?? 0);
 
       rows += `
-      <tr>
-        <td style="font-weight: bold;">${row.concepto ?? label}</td>
-        <td class="text-center">${idxBase + 1}</td>
-          <td class="border border-black px-3 py-2 text-black">
+      <tr style="background:white;">
+        <td style="border:1px solid black; padding:6px; font-weight:bold; color:black; overflow:hidden; word-break:break-word;">${row.concepto ?? label}</td>
+        <td style="border:1px solid black; padding:6px; color:black; text-align:center; overflow:hidden; word-break:break-word;">${idxBase + 1}</td>
+          <td style="border:1px solid black; padding:6px; color:black; overflow:hidden; word-break:break-word;">
             ${
               row.fechaPrograma
                 ? new Date(row.fechaPrograma).toLocaleDateString('es-CO')
                 : '-'
             }
           </td>
-          <td class="border border-black px-3 py-2 text-black">
+          <td style="border:1px solid black; padding:6px; color:black; overflow:hidden; word-break:break-word;">
             ${
               row.fechaRealPago
                 ? new Date(row.fechaRealPago).toLocaleDateString('es-CO')
                 : '-'
             }
           </td>
-          <td>${row.metodo ?? '-'}</td>
-          <td class="text-right">${formatCOP(valor)}</td>
+          <td style="border:1px solid black; padding:6px; color:black; overflow:hidden; word-break:break-word;">${row.metodo ?? '-'}</td>
+          <td style="border:1px solid black; padding:6px; color:black; text-align:right; overflow:hidden; word-break:break-word;">${formatCOP(valor)}</td>
       </tr>
     `;
     });
@@ -7913,356 +7864,444 @@ export default function EnrolledUsersPage() {
                     pointer-events-none hidden
                     print:block
                   "
+                  style={{
+                    backgroundColor: 'white',
+                    padding: '40px 48px',
+                    color: 'black',
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: '12px',
+                    lineHeight: '1.4',
+                    position: 'relative',
+                    overflow: 'visible',
+                    minWidth: '794px',
+                    maxWidth: '900px',
+                  }}
                 >
-                  <div className="bg-white p-8 text-black">
-                    {/* Cabecera */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      marginBottom: '16px',
+                      paddingBottom: '12px',
+                      borderBottom: '2px solid black',
+                    }}
+                  >
                     <div
-                      className="
-                        mb-6 flex items-center justify-between border-b
-                        border-black pb-4
-                      "
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                      }}
                     >
-                      <div className="flex items-center gap-4">
-                        <Image
-                          src="/artiefy-logo.png"
-                          alt="Artiefy"
-                          width="120"
-                          height="36"
-                          style={{
-                            height: '2.25rem',
-                            width: 'auto',
-                            objectFit: 'contain',
-                          }}
-                          loading="eager"
-                        />
-                        <Image
-                          src="/logo-ponao.png"
-                          alt="PONAO"
-                          width="120"
-                          height="36"
-                          style={{
-                            height: '2.25rem',
-                            width: 'auto',
-                            objectFit: 'contain',
-                          }}
-                          loading="eager"
-                        />
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className="
-                            text-xs font-semibold tracking-wide text-black
-                          "
-                        >
-                          POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
-                        </p>
-                        <h3 className="text-lg font-bold text-black">
-                          FACTURA PAGO DE MATRÍCULA
-                        </h3>
-                      </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/artiefy-logo.png"
+                        alt="Artiefy"
+                        style={{
+                          height: '56px',
+                          width: 'auto',
+                          objectFit: 'contain',
+                          display: 'block',
+                          maxWidth: '180px',
+                        }}
+                      />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/logo-ponao.png"
+                        alt="PONAO"
+                        style={{
+                          height: '56px',
+                          width: 'auto',
+                          objectFit: 'contain',
+                          display: 'block',
+                          maxWidth: '180px',
+                        }}
+                      />
                     </div>
-
-                    {/* Info estudiante */}
-                    <div className="mb-6 grid grid-cols-2 gap-6 text-sm">
-                      <div className="space-y-2">
-                        <p className="text-black">
-                          <strong>NOMBRE ESTUDIANTE:</strong>{' '}
-                          {currentUser?.name ?? '-'}
-                        </p>
-                        <p className="text-black">
-                          <strong>CC:</strong>{' '}
-                          {currentUser?.document ?? currentUser?.id ?? '-'}
-                        </p>
-                        <p className="text-black">
-                          <strong>CELULAR:</strong> {currentUser?.phone ?? '-'}
-                        </p>
-                        <p className="text-black">
-                          <strong>PROGRAMA:</strong>{' '}
-                          {userPrograms?.[0]?.title ?? '—'}
-                        </p>
-                        <p className="text-black">
-                          <strong>FECHA:</strong>{' '}
-                          {new Date().toISOString().split('T')[0]}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-black">
-                          <strong>DIRECCIÓN:</strong>{' '}
-                          {currentUser?.address ?? '-'}
-                        </p>
-                        <p className="text-black">
-                          <strong>CIUDAD:</strong> {currentUser?.city ?? '-'}
-                        </p>
-                        <p className="text-black">
-                          <strong>EMAIL:</strong> {currentUser?.email ?? '-'}
-                        </p>
-                        <p className="text-black">
-                          <strong>ESTADO:</strong> {estadoCarteraUI}
-                        </p>
-                        <p className="text-black">
-                          <strong>FIN SUSCRIPCIÓN:</strong>{' '}
-                          {currentUser?.subscriptionEndDate
-                            ? new Date(currentUser.subscriptionEndDate)
-                                .toISOString()
-                                .split('T')[0]
-                            : '-'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Tabla de pagos solo con información, sin inputs */}
-                    <table
-                      className="
-                        mb-6 w-full border-collapse border border-black text-sm
-                      "
-                    >
-                      <thead>
-                        <tr className="bg-white">
-                          <th
-                            className="
-                              border border-black px-3 py-2 text-left font-bold
-                              text-black
-                            "
-                          >
-                            PRODUCTO
-                          </th>
-                          <th
-                            className="
-                              border border-black px-3 py-2 text-center
-                              font-bold text-black
-                            "
-                          >
-                            N° PAGO
-                          </th>
-                          <th
-                            className="
-                              border border-black px-3 py-2 text-left font-bold
-                              text-black
-                            "
-                          >
-                            FECHA PROGRAMADA
-                          </th>
-                          <th
-                            className="
-                              border border-black px-3 py-2 text-left font-bold
-                              text-black
-                            "
-                          >
-                            FECHA REAL DE PAGO
-                          </th>
-                          <th
-                            className="
-                              border border-black px-3 py-2 text-left font-bold
-                              text-black
-                            "
-                          >
-                            MÉTODO DE PAGO
-                          </th>
-                          <th
-                            className="
-                              border border-black px-3 py-2 text-right font-bold
-                              text-black
-                            "
-                          >
-                            VALOR
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {/* Primero las 12 cuotas */}
-                        {Array.from({ length: 12 }, (_, idx) => {
-                          const cuotaNum = idx + 1;
-                          const row = editablePagos[idx] ?? {};
-                          const valor =
-                            typeof row.valor === 'number'
-                              ? row.valor
-                              : Number(row.valor ?? 0);
-
-                          return (
-                            <tr
-                              key={`print-cuota-${cuotaNum}`}
-                              className="bg-white"
-                            >
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-black
-                                "
-                              >
-                                {row.concepto ?? `Cuota ${cuotaNum}`}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-center
-                                  text-black
-                                "
-                              >
-                                {row.nro_pago ?? row.nroPago ?? cuotaNum}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-black
-                                "
-                              >
-                                {row.fechaPrograma
-                                  ? new Date(
-                                      row.fechaPrograma
-                                    ).toLocaleDateString('es-CO')
-                                  : '-'}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-black
-                                "
-                              >
-                                {row.fechaRealPago
-                                  ? new Date(
-                                      row.fechaRealPago as string | Date
-                                    ).toLocaleDateString('es-CO')
-                                  : '-'}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-black
-                                "
-                              >
-                                {row.metodo ?? '-'}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-right
-                                  text-black
-                                "
-                              >
-                                {formatCOP(valor)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-
-                        {/* Luego los conceptos especiales */}
-                        {[
-                          { label: 'PÓLIZA Y CARNET', idxBase: 12 },
-                          { label: 'UNIFORME', idxBase: 13 },
-                          { label: 'DERECHOS DE GRADO', idxBase: 14 },
-                        ].map(({ label, idxBase }) => {
-                          const row = editablePagos[idxBase] ?? {};
-                          const valor =
-                            typeof row.valor === 'number'
-                              ? row.valor
-                              : Number(row.valor ?? 0);
-
-                          return (
-                            <tr
-                              key={`print-especial-${idxBase}`}
-                              className="bg-white"
-                            >
-                              <td
-                                className="
-                                  border border-black px-3 py-2 font-semibold
-                                  text-black
-                                "
-                              >
-                                {row.concepto ?? label}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-center
-                                  text-black
-                                "
-                              >
-                                {idxBase + 1}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-black
-                                "
-                              >
-                                {row.fechaPrograma
-                                  ? new Date(
-                                      row.fechaPrograma as string | Date
-                                    ).toLocaleDateString('es-CO')
-                                  : '-'}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-black
-                                "
-                              >
-                                {row.fechaRealPago
-                                  ? new Date(
-                                      row.fechaRealPago as string | Date
-                                    ).toLocaleDateString('es-CO')
-                                  : '-'}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-black
-                                "
-                              >
-                                {row.metodo ?? '-'}
-                              </td>
-                              <td
-                                className="
-                                  border border-black px-3 py-2 text-right
-                                  text-black
-                                "
-                              >
-                                {formatCOP(valor)}
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-
-                    {/* Totales */}
-                    <div className="space-y-3 border-t border-black pt-4">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-black">
-                          PLAN / VALOR PROGRAMA:
-                        </span>
-                        <span className="font-semibold text-black">
-                          {formatCOP(price)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-black">
-                          VALOR PAGADO:
-                        </span>
-                        <span className="font-semibold text-black">
-                          {formatCOP(carteraInfo?.totalPagado ?? 0)}
-                        </span>
-                      </div>
-                      <div
-                        className="
-                          flex items-center justify-between border-t
-                          border-black pt-2
-                        "
+                    <div style={{ textAlign: 'right' }}>
+                      <p
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: '600',
+                          color: 'black',
+                          margin: '0 0 4px 0',
+                        }}
                       >
-                        <span className="text-lg font-bold text-black">
-                          DEUDA RESTANTE:
-                        </span>
-                        <span className="text-lg font-bold text-black">
-                          {formatCOP(carteraInfo?.deuda ?? 0)}
-                        </span>
-                      </div>
+                        POLITÉCNICO NACIONAL DE ARTES Y OFICIOS
+                      </p>
+                      <h3
+                        style={{
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          color: 'black',
+                          margin: '0',
+                        }}
+                      >
+                        FACTURA PAGO DE MATRÍCULA
+                      </h3>
                     </div>
+                  </div>
 
-                    {/* Pie de página opcional */}
-                    <div
-                      className="
-                        mt-8 border-t border-black pt-4 text-center text-xs
-                        text-black
-                      "
-                    >
-                      <p>
-                        Este documento es un comprobante de los pagos
-                        registrados
-                      </p>
-                      <p>
-                        Fecha de impresión: {new Date().toLocaleString('es-CO')}
-                      </p>
-                    </div>
+                  {/* Info estudiante */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '2px 20px',
+                      marginBottom: '10px',
+                      fontSize: '12px',
+                    }}
+                  >
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>NOMBRE:</strong> {currentUser?.name}
+                    </p>
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>CC:</strong> {currentUser?.document ?? '-'}
+                    </p>
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>CELULAR:</strong> {currentUser?.phone ?? '-'}
+                    </p>
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>EMAIL:</strong> {currentUser?.email ?? '-'}
+                    </p>
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>PROGRAMA:</strong>{' '}
+                      {userPrograms?.[0]?.title ?? '-'}
+                    </p>
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>FECHA:</strong>{' '}
+                      {new Date().toISOString().split('T')[0]}
+                    </p>
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>DIRECCIÓN:</strong> {currentUser?.address ?? '-'}
+                    </p>
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>CIUDAD:</strong> {currentUser?.city ?? '-'}
+                    </p>
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>ESTADO:</strong> {estadoCarteraUI}
+                    </p>
+                    <p style={{ margin: '2px 0' }}>
+                      <strong>FIN SUSCRIPCIÓN:</strong>
+                      {currentUser?.subscriptionEndDate
+                        ? new Date(currentUser.subscriptionEndDate)
+                            .toISOString()
+                            .split('T')[0]
+                        : '-'}
+                    </p>
+                  </div>
+
+                  {/* Tabla de pagos solo con información, sin inputs */}
+                  <table
+                    className="
+                      mb-6 w-full border-collapse border border-black text-sm
+                    "
+                    style={{ pageBreakAfter: 'always', marginBottom: '0' }}
+                  >
+                    <thead>
+                      <tr className="bg-white">
+                        <th
+                          style={{
+                            border: '1px solid black',
+                            padding: '3px 5px',
+                            textAlign: 'left',
+                            fontWeight: 'bold',
+                            color: 'black',
+                            fontSize: '10px',
+                          }}
+                        >
+                          PRODUCTO
+                        </th>
+                        <th
+                          style={{
+                            border: '1px solid black',
+                            padding: '3px 5px',
+                            textAlign: 'center',
+                            fontWeight: 'bold',
+                            color: 'black',
+                            fontSize: '10px',
+                          }}
+                        >
+                          N° PAGO
+                        </th>
+                        <th
+                          style={{
+                            border: '1px solid black',
+                            padding: '3px 5px',
+                            textAlign: 'left',
+                            fontWeight: 'bold',
+                            color: 'black',
+                            fontSize: '10px',
+                          }}
+                        >
+                          FECHA PROGRAMADA
+                        </th>
+                        <th
+                          style={{
+                            border: '1px solid black',
+                            padding: '3px 5px',
+                            textAlign: 'left',
+                            fontWeight: 'bold',
+                            color: 'black',
+                            fontSize: '10px',
+                          }}
+                        >
+                          FECHA REAL DE PAGO
+                        </th>
+                        <th
+                          style={{
+                            border: '1px solid black',
+                            padding: '3px 5px',
+                            textAlign: 'left',
+                            fontWeight: 'bold',
+                            color: 'black',
+                            fontSize: '10px',
+                          }}
+                        >
+                          MÉTODO DE PAGO
+                        </th>
+                        <th
+                          style={{
+                            border: '1px solid black',
+                            padding: '3px 5px',
+                            textAlign: 'right',
+                            fontWeight: 'bold',
+                            color: 'black',
+                            fontSize: '10px',
+                          }}
+                        >
+                          VALOR
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Primero las 12 cuotas */}
+                      {Array.from({ length: 12 }, (_, idx) => {
+                        const cuotaNum = idx + 1;
+                        const row = editablePagos[idx] ?? {};
+                        const valor =
+                          typeof row.valor === 'number'
+                            ? row.valor
+                            : Number(row.valor ?? 0);
+
+                        return (
+                          <tr
+                            key={`print-cuota-${cuotaNum}`}
+                            className="bg-white"
+                          >
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {row.concepto ?? `Cuota ${cuotaNum}`}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                textAlign: 'center',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {row.nro_pago ?? row.nroPago ?? cuotaNum}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {row.fechaPrograma
+                                ? new Date(
+                                    row.fechaPrograma
+                                  ).toLocaleDateString('es-CO')
+                                : '-'}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {row.fechaRealPago
+                                ? new Date(
+                                    row.fechaRealPago as string | Date
+                                  ).toLocaleDateString('es-CO')
+                                : '-'}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {row.metodo ?? '-'}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                textAlign: 'right',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {formatCOP(valor)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {/* Luego los conceptos especiales */}
+                      {[
+                        { label: 'PÓLIZA Y CARNET', idxBase: 12 },
+                        { label: 'UNIFORME', idxBase: 13 },
+                        { label: 'DERECHOS DE GRADO', idxBase: 14 },
+                      ].map(({ label, idxBase }) => {
+                        const row = editablePagos[idxBase] ?? {};
+                        const valor =
+                          typeof row.valor === 'number'
+                            ? row.valor
+                            : Number(row.valor ?? 0);
+
+                        return (
+                          <tr
+                            key={`print-especial-${idxBase}`}
+                            className="bg-white"
+                          >
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                fontWeight: 'bold',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {row.concepto ?? label}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                textAlign: 'center',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {idxBase + 1}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {row.fechaPrograma
+                                ? new Date(
+                                    row.fechaPrograma as string | Date
+                                  ).toLocaleDateString('es-CO')
+                                : '-'}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {row.fechaRealPago
+                                ? new Date(
+                                    row.fechaRealPago as string | Date
+                                  ).toLocaleDateString('es-CO')
+                                : '-'}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {row.metodo ?? '-'}
+                            </td>
+                            <td
+                              style={{
+                                border: '1px solid black',
+                                padding: '3px 5px',
+                                textAlign: 'right',
+                                color: 'black',
+                                fontSize: '10px',
+                              }}
+                            >
+                              {formatCOP(valor)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+
+                  {/* Totales */}
+                  <div
+                    style={{
+                      marginTop: '20px',
+                      paddingTop: '12px',
+                      borderTop: '2px solid black',
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '6px',
+                      fontSize: '13px',
+                      backgroundColor: 'white',
+                      position: 'relative',
+                      zIndex: 10,
+                      clear: 'both',
+                    }}
+                  >
+                    <p style={{ margin: '3px 0' }}>
+                      <strong>PLAN / VALOR PROGRAMA:</strong> {formatCOP(price)}
+                    </p>
+                    <p style={{ margin: '3px 0' }}>
+                      <strong>VALOR PAGADO:</strong>{' '}
+                      {formatCOP(carteraInfo?.totalPagado ?? 0)}
+                    </p>
+                    <p style={{ margin: '3px 0', gridColumn: '1 / 2' }}>
+                      <strong>DEUDA RESTANTE:</strong>{' '}
+                      <span style={{ fontWeight: 'bold', fontSize: '15px' }}>
+                        {formatCOP(carteraInfo?.deuda ?? 0)}
+                      </span>
+                    </p>
+                  </div>
+
+                  {/* Pie de página opcional */}
+                  <div
+                    className="
+                      mt-8 border-t border-black pt-4 text-center text-xs
+                      text-black
+                    "
+                  >
+                    <p>
+                      Este documento es un comprobante de los pagos registrados
+                    </p>
+                    <p>
+                      Fecha de impresión: {new Date().toLocaleString('es-CO')}
+                    </p>
                   </div>
                 </div>
               </div>

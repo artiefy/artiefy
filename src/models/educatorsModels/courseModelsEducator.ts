@@ -478,6 +478,7 @@ export const updateCourse = async (
     scheduleOptionId?: number | null;
     spaceOptionId?: number | null;
     certificationTypeId?: number | null;
+    idTypesCourses?: number | null;
   }
 ) => {
   try {

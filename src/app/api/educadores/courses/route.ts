@@ -128,6 +128,8 @@ export async function POST(request: NextRequest) {
       horario?: number | null;
       espacios?: number | null;
       certificationTypeId?: number | null;
+      idTypesCourses?: number | null;
+      visibility?: boolean;
     };
 
     const {
@@ -146,6 +148,8 @@ export async function POST(request: NextRequest) {
       horario = null,
       espacios = null,
       certificationTypeId = null,
+      idTypesCourses = null,
+      visibility = true, // ← agrega esto
     } = body;
 
     // Normalizar instructors: priorizar array, luego instructorId singular, sino usar userId
@@ -185,7 +189,7 @@ export async function POST(request: NextRequest) {
       nivelid,
       instructor: instructors[0] ?? userId, // Primer instructor por compatibilidad
       creatorId: userId,
-      isActive: true,
+      isActive: visibility ?? true,
       createdAt: new Date(),
       updatedAt: new Date(),
       courseTypeId: normalizedTypes.length > 0 ? normalizedTypes[0] : null, // ✅ Guarda el primero
@@ -193,6 +197,8 @@ export async function POST(request: NextRequest) {
       scheduleOptionId: horario ?? null,
       spaceOptionId: espacios ?? null,
       certificationTypeId: certificationTypeId ?? null,
+      idTypesCourses: idTypesCourses ?? null,
+      visibility: visibility ?? true, // ← agrega esto
     };
 
     const createdCourse = await db
@@ -284,6 +290,7 @@ export async function PUT(request: NextRequest) {
       individualPrice?: number | null;
       horario?: number | null;
       espacios?: number | null;
+      idTypesCourses?: number | null;
     };
 
     const {
@@ -300,6 +307,7 @@ export async function PUT(request: NextRequest) {
       individualPrice = null,
       horario = null,
       espacios = null,
+      idTypesCourses = null,
     } = body;
     const normalizedTypes = Array.isArray(courseTypeId)
       ? courseTypeId
@@ -325,6 +333,7 @@ export async function PUT(request: NextRequest) {
       individualPrice,
       scheduleOptionId: horario ?? undefined,
       spaceOptionId: espacios ?? undefined,
+      idTypesCourses: idTypesCourses ?? null,
     });
 
     // Manejar las materias

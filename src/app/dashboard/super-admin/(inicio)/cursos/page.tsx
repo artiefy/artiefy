@@ -24,7 +24,9 @@ type ExtendedCourseData = CourseData & {
   scheduleOptionId?: number | null;
   spaceOptionId?: number | null;
   certificationTypeId?: number | null;
-  instructor?: string; // Legacy field for compatibility
+  instructor?: string;
+  idTypesCourses?: number | null;
+  visibility?: boolean; // Legacy field for compatibility
   instructors?: string[]; // ✅ Array de IDs de instructores
 };
 
@@ -106,6 +108,8 @@ export default function Page() {
   const [certificationTypeId, setCertificationTypeId] = useState<number | null>(
     null
   );
+  const [idTypesCourses, setIdTypesCourses] = useState<number | null>(null);
+
   const [certificationTypes, setCertificationTypes] = useState<
     { id: number; name: string; description: string | null }[]
   >([]);
@@ -268,7 +272,8 @@ export default function Page() {
     }[],
     horario: number | null,
     espacios: number | null,
-    certificationTypeId: number | null
+    certificationTypeId: number | null,
+    idTypesCourses: number | null
   ) => {
     console.log('🧪 Enviando datos a updateCourse:', {
       id: Number(id),
@@ -338,6 +343,7 @@ export default function Page() {
           horario,
           espacios,
           certificationTypeId,
+          idTypesCourses,
           instructors,
         });
 
@@ -358,7 +364,9 @@ export default function Page() {
           scheduleOptionId: horario ?? null,
           spaceOptionId: espacios ?? null,
           certificationTypeId: certificationTypeId ?? null,
+          visibility: isActive,
           courseTypeId: finalCourseTypeId,
+          idTypesCourses: idTypesCourses ?? null,
         } as unknown as CourseData;
 
         console.log(
@@ -408,6 +416,8 @@ export default function Page() {
             horario,
             espacios,
             certificationTypeId,
+            idTypesCourses: idTypesCourses ?? null,
+            visibility: isActive,
           }),
         });
 
@@ -434,7 +444,7 @@ export default function Page() {
         }
       }
 
-      if (response instanceof Response && response.ok && responseData) {
+      if (responseData) {
         toast.success(id ? 'Curso actualizado' : 'Curso creado', {
           description: id
             ? 'El curso se actualizó con éxito'
@@ -505,6 +515,8 @@ export default function Page() {
 
   // Función para abrir el modal de creación de cursos
   const handleCreateCourse = () => {
+    setIdTypesCourses(null); // ← agrega esto
+    setIsActive(true);
     setEditingCourse({
       id: 0,
       title: '',
@@ -817,6 +829,10 @@ export default function Page() {
                 '👥 Instructores que se setearán en editingCourse:',
                 extendedCourse.instructors
               );
+              console.log(
+                '👁️ visibility del curso cargado:',
+                extendedCourse.visibility
+              );
               setEditingCourse(extendedCourse);
               setCourseTypeId(fullCourseData.courseTypeIds ?? []);
               setCertificationTypeId(certTypeId);
@@ -926,12 +942,14 @@ export default function Page() {
               setCourseTypeId(newTypeId);
             }}
             isActive={
-              editingCourse ? (editingCourse.isActive ?? true) : isActive
+              editingCourse ? (editingCourse.visibility ?? true) : isActive
             }
             setIsActive={(newActive: boolean) => {
               if (editingCourse) {
                 setEditingCourse((prev) =>
-                  prev ? { ...prev, isActive: newActive } : null
+                  prev
+                    ? { ...prev, visibility: newActive, isActive: newActive }
+                    : null
                 );
               } else {
                 setIsActive(newActive);
@@ -1010,6 +1028,16 @@ export default function Page() {
               }
             }}
             certificationTypes={certificationTypes}
+            idTypesCourses={editingCourse?.idTypesCourses ?? idTypesCourses}
+            setIdTypesCourses={(val: number | null) => {
+              if (editingCourse) {
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, idTypesCourses: val } : null
+                );
+              } else {
+                setIdTypesCourses(val);
+              }
+            }}
           />
         </>
       )}

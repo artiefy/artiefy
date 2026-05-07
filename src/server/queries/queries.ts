@@ -728,6 +728,8 @@ export interface CourseData {
   certificationTypeId?: number | null; // 🔹 Add certificationTypeId as an optional property
   scheduleOptionId?: number | null; // 🔹 Add scheduleOptionId for horario
   spaceOptionId?: number | null; // 🔹 Add spaceOptionId for espacios
+  idTypesCourses?: number | null;
+  visibility?: boolean;
 }
 
 export interface Materia {
@@ -775,6 +777,7 @@ export async function getCourses(
           coverVideoCourseKey: courses.coverVideoCourseKey,
           scheduleOptionId: courses.scheduleOptionId,
           spaceOptionId: courses.spaceOptionId,
+          idTypesCourses: courses.idTypesCourses,
         })
         .from(courses)
         .orderBy(desc(courses.createdAt))
@@ -974,6 +977,8 @@ export async function updateCourse(courseId: number, courseData: CourseData) {
       scheduleOptionId: courseData.scheduleOptionId ?? null,
       spaceOptionId: courseData.spaceOptionId ?? null,
       certificationTypeId: courseData.certificationTypeId ?? null,
+      visibility: courseData.visibility ?? true,
+      idTypesCourses: courseData.idTypesCourses ?? null,
     };
 
     console.log('📤 updateData.scheduleOptionId:', updateData.scheduleOptionId);
