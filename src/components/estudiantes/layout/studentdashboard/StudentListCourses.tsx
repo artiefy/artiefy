@@ -855,8 +855,8 @@ export default function StudentListCourses({
 
               <div
                 className="
-                relative z-10 -mt-px flex flex-1 flex-col gap-2 bg-card p-4
-              "
+                  relative z-10 -mt-px flex flex-1 flex-col gap-2 bg-card p-4
+                "
               >
                 <h3
                   className="
