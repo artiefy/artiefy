@@ -806,9 +806,9 @@ export default function StudentListCourses({
           const cardContent = (
             <div
               className={`
-                artiefy-course-card zoom-in relative flex h-full flex-col
-                overflow-hidden rounded-2xl border border-border/50 bg-card
-                text-foreground transition-all duration-300
+                artiefy-course-card zoom-in relative isolate flex h-full
+                flex-col overflow-hidden rounded-2xl border border-border/50
+                bg-card text-foreground transition-all duration-300
                 ${
                   course.isActive
                     ? `
@@ -825,7 +825,8 @@ export default function StudentListCourses({
                   src={imageUrl}
                   alt={course.title || 'Imagen del curso'}
                   className="
-                    size-full object-cover transition-transform duration-500
+                    size-full transform-gpu object-cover transition-transform
+                    duration-500
                     group-hover:scale-110
                   "
                   fill
@@ -835,14 +836,8 @@ export default function StudentListCourses({
                 />
                 <div
                   className="
-                    absolute top-0 right-0 bottom-[-8px] left-0 bg-gradient-to-t
-                    from-card via-card/70 to-transparent
-                  "
-                />
-                <div
-                  className="
-                    pointer-events-none absolute right-0 bottom-[-1px] left-0
-                    h-4 bg-gradient-to-t from-card via-card/95 to-transparent
+                    pointer-events-none absolute inset-x-0 top-0 bottom-0
+                    bg-gradient-to-t from-card via-card/70 to-transparent
                   "
                 />
                 {typeCourseLabel && (
@@ -858,7 +853,11 @@ export default function StudentListCourses({
                 )}
               </div>
 
-              <div className="flex flex-1 flex-col gap-2 p-4">
+              <div
+                className="
+                relative z-10 -mt-px flex flex-1 flex-col gap-2 bg-card p-4
+              "
+              >
                 <h3
                   className="
                     line-clamp-2 text-base leading-snug font-bold
@@ -973,7 +972,7 @@ export default function StudentListCourses({
           );
 
           const cardWrapperClass =
-            'block h-full rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2';
+            'block h-full rounded-2xl no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70 focus-visible:ring-offset-2 hover:no-underline';
 
           return (
             <div key={course.id} className="relative">

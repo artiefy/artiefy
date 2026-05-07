@@ -251,7 +251,7 @@ export async function getAllCourses(): Promise<Course[]> {
             updatedAt: course.spaceOptionUpdatedAt ?? new Date(),
           }
         : null,
-      visibility: course.visibility,
+      visibility: course.visibility ?? true,
       idTypesCourses: course.idTypesCourses,
       typeCourse: course.typeCourseId
         ? {
