@@ -1,10 +1,70 @@
 {
   "version": 1,
   "skills": {
+    "accessibility": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "bffe3d08cfe92ebad63699f74ce29e35c19850ebfbf474c1463183cfe34d6a09"
+    },
+    "bash-defensive-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "autoskills-registry",
+      "computedHash": "1f566c2d9c3b50a784b05d08f6b08ebfeb31f038e4d4173f2d488484edb058a6"
+    },
+    "clerk": {
+      "source": "clerk/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "fb1a2d626fa0506151f7fb635ef32727dc0552872b020588aeb1709d4bd2418d"
+    },
+    "clerk-backend-api": {
+      "source": "clerk/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "9fbc43a070268e24851697445a6e940065ef71bc02ba96cf27c8ec80aaf27da6"
+    },
+    "clerk-custom-ui": {
+      "source": "clerk/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "5f73332b05fd88c5f9b3c56dd92370a12a850059fba34ec0605e4506afaddc96"
+    },
+    "clerk-nextjs-patterns": {
+      "source": "clerk/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "69c34e157c9f0c4a231a6ece2e599f74b31a008005745ffcc9eb5a625e807698"
+    },
+    "clerk-orgs": {
+      "source": "clerk/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "079f9d185fab81265e15c5310a87a96e320fa482d17551cbc64027b5f8505060"
+    },
+    "clerk-react-patterns": {
+      "source": "clerk/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "456206a8bb6f71bb66225fd41844eb9c7f2ee00d58e2d4f39505dea40a8df4a4"
+    },
+    "clerk-setup": {
+      "source": "clerk/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "13ea4e20447ff8e72d8d43d87c043e2c7430379cb73fb4dbd488401b85d8c2a3"
+    },
+    "clerk-testing": {
+      "source": "clerk/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "889a8f63d333dbb09b81608d1dc240f1e32b12dd8e8a8f1e3e72323c69b41f60"
+    },
+    "clerk-webhooks": {
+      "source": "clerk/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "c766d7b021907e6b8f1e567b30d5a5d70fc313626ab0ce7a9c10fc31bf71aae7"
+    },
     "competitive-analysis": {
       "source": "mverab/eGEOagents",
       "sourceType": "github",
       "computedHash": "022fbe382e905baef8ed94caea024097b93b72d980eed34d924a9c6a545eddfb"
+    },
+    "composition-patterns": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "c124390cc3441844903ada94cb5820b23d922f2d0ad34e01e029e410197c8a32"
     },
     "content-scoring": {
       "source": "mverab/eGEOagents",
@@ -13,13 +73,38 @@
     },
     "deploy-to-vercel": {
       "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "computedHash": "d2b5bcc7c09fdb649129ffc7dd7b647ec1b155736974b974292675afd588cb39"
+      "sourceType": "autoskills-registry",
+      "computedHash": "698dfb0ec0cf3e8d97c3f181e13b37b3b8fbc872a4b031d812adb4193f66035e"
+    },
+    "drizzle": {
+      "source": "bobmatnyc/claude-mpm-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "ee38c0b7737febd7409d84e613099a0f276e215e0bbda418b2593786ea8a4754"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "82fb11a63fb1e35ee2469516ed02d54695f783115b1540c0e783197af4240a3a"
+    },
+    "neon-postgres": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "afa90370212ed99bb472c8d64ca6a5169e3608a6c0d3e570565e7997b1dc81b2"
     },
     "next-best-practices": {
       "source": "vercel-labs/next-skills",
-      "sourceType": "github",
-      "computedHash": "515ba75178bd44875812d9a560bdf14651f86709f89cf1d4f209638e879807f3"
+      "sourceType": "autoskills-registry",
+      "computedHash": "22d9bba45864c4ae8acca9f6430290634343b7de91005d090e0ba201bdbbb5da"
+    },
+    "next-cache-components": {
+      "source": "vercel-labs/next-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "82a02f95879e9adf1a5a89f9ca2f51813e41ff3bab3c723cc8905f5a926bdd30"
+    },
+    "next-upgrade": {
+      "source": "vercel-labs/next-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "265833561c41038b4a626585b46186cff859b7f9b2254ae6b88d01648790a7b4"
     },
     "nextjs-seo": {
       "source": "laguagu/claude-code-nextjs-skills",
@@ -31,10 +116,100 @@
       "sourceType": "github",
       "computedHash": "debb6a6d992a035fee55cf6a74cf00deac53a7aed3572938ecfd8ce3b89caa63"
     },
+    "nodejs-backend-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "autoskills-registry",
+      "computedHash": "710a5e6f83c46e8f6c43356df55c143a7375c4414559a581654ce51709138c55"
+    },
+    "nodejs-best-practices": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "7361ab02fb6b09913e3bdd9cf61c629ed6c17de9485e6a781054e5d437ccfc29"
+    },
+    "react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "502eb06700e2c3cb1bd7f710860528f72281320bd5171a2087b05a090b573dc1"
+    },
     "schema-generator": {
       "source": "mverab/eGEOagents",
       "sourceType": "github",
       "computedHash": "04cbb39f6dabec5b91aa70ee16b1b348038299177ab0548dac0b5073061f221f"
+    },
+    "seo": {
+      "source": "addyosmani/web-quality-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "c184da724d1c61ad077f27418ea8e7e88fd54bcdf98165e18be7e4681cbd5e20"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "autoskills-registry",
+      "computedHash": "3e8ca56eb3af0f18b9cca3ae002f2b52f5dd23bceb286dd7403e18ae2fb38d08"
+    },
+    "tailwind-css-patterns": {
+      "source": "giuseppe-trisciuoglio/developer-kit",
+      "sourceType": "autoskills-registry",
+      "computedHash": "8fd534b64b3f305ade80c207e2f9ba4338d5e409e355af9f724c36764b6709c1"
+    },
+    "tailwind-v4-shadcn": {
+      "source": "secondsky/claude-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "551eb86a35cbf35747cc1a58059ed7e73aacdf03d2fd2e12f63208ea2c0a4ae9"
+    },
+    "threejs-animation": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "b3b6365653ff318a55181814db0e779ceb097c0c07d8f1442c836a9cfc9e93f4"
+    },
+    "threejs-fundamentals": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "4bebfd12aefa07b80874b556a45013f717553a69070fcafe51c37a7eb2ae55b0"
+    },
+    "threejs-geometry": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "9fd3b2b040e297ba391da0e1d916c8567e63bb6f4b45ef757065bc5042f272b7"
+    },
+    "threejs-interaction": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "e4ee9b39dcf4f9f596d0bfd39f730547078089f7dfdfac8a6a5cf07e8ee238be"
+    },
+    "threejs-lighting": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "d341fa3200c4866cf6bbe21b76171f793d4b2813897862f83c9eeed0b5d33b86"
+    },
+    "threejs-loaders": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "e1ea488e282566fba0be2e25997ae1e09b150c4b1ce0db4bda3dd68be6ebae21"
+    },
+    "threejs-materials": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "0a87c2d46accaea38397f27c7ecde359673a5c34748be15c117f8468ec4b8c2b"
+    },
+    "threejs-postprocessing": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "1474dd9d0cf9e9953812cdf6194d55135dfe1352b948f3c23a355bf9d096c998"
+    },
+    "threejs-shaders": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "6aa9d9d7da431e6f90a8726e44cba19a6202237d0cfeb7638e388573602fd511"
+    },
+    "threejs-textures": {
+      "source": "cloudai-x/threejs-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "05f489c5a53847693b19248409e9ac790e73acdfd8e22bf46c0613b2b19ed74e"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "autoskills-registry",
+      "computedHash": "5ca0e177c6aaaba1889255691224daafdb7d71f317cc70bede1590d3907ded42"
     },
     "validation-doctor": {
       "source": "mverab/eGEOagents",
@@ -60,6 +235,11 @@
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
       "computedHash": "a6a44d5498f7e8f68289902f3dedfc6f38ae0cee1e96527c80724cf27f727c2a"
+    },
+    "zod": {
+      "source": "pproenca/dot-skills",
+      "sourceType": "autoskills-registry",
+      "computedHash": "aa8a97195b07763d37494b511f48be90979fd6826c031956c831cfc58f6a24b8"
     }
   }
 }
