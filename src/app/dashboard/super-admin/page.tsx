@@ -691,12 +691,22 @@ export default function AdminDashboard() {
     }
   }, [isValidCourseArray]);
 
-  // 1️⃣ Filtrar usuarios
+  // Agrega esta función arriba del componente
+  const normalize = (str: string) =>
+    str
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase();
+
+  // Y cambia el filtro por esto:
   const filteredUsers = users.filter(
     (user) =>
       (searchQuery === '' ||
-        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        normalize(user.firstName).includes(normalize(searchQuery)) ||
+        normalize(user.lastName).includes(normalize(searchQuery)) ||
+        normalize(`${user.firstName} ${user.lastName}`).includes(
+          normalize(searchQuery)
+        ) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
       (roleFilter ? user.role === roleFilter : true) &&
       (statusFilter ? user.status === statusFilter : true)
