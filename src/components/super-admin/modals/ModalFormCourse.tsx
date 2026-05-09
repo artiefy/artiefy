@@ -1635,9 +1635,9 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                 <div className="w-full">
                   <label
                     className="
-                    text-sm font-medium text-primary
-                    md:text-lg
-                  "
+                      text-sm font-medium text-primary
+                      md:text-lg
+                    "
                   >
                     Modalidad del Curso{' '}
                   </label>
