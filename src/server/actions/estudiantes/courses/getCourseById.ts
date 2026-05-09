@@ -344,6 +344,7 @@ export async function getCourseById(
             updatedAt: courseData.spaceOptionUpdatedAt ?? new Date(),
           }
         : null,
+      visibility: course.visibility ?? true,
     };
 
     console.log('✅ [getCourseById] courseTypes en transformedCourse:', {

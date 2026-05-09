@@ -149,7 +149,7 @@ export async function POST(request: NextRequest) {
       espacios = null,
       certificationTypeId = null,
       idTypesCourses = null,
-      visibility = true, // ← agrega esto
+      visibility = true,
     } = body;
 
     // Normalizar instructors: priorizar array, luego instructorId singular, sino usar userId
@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
       nivelid,
       instructor: instructors[0] ?? userId, // Primer instructor por compatibilidad
       creatorId: userId,
-      isActive: visibility ?? true,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
       courseTypeId: normalizedTypes.length > 0 ? normalizedTypes[0] : null, // ✅ Guarda el primero
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
       spaceOptionId: espacios ?? null,
       certificationTypeId: certificationTypeId ?? null,
       idTypesCourses: idTypesCourses ?? null,
-      visibility: visibility ?? true, // ← agrega esto
+      visibility: visibility ?? true,
     };
 
     const createdCourse = await db

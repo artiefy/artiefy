@@ -19,6 +19,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
   const totalHours = program.totalHours ?? 0;
   const rating = program.rating ?? 0;
   const hasCourses = coursesCount > 0;
+  const typeProgramLabel = program.typeProgram?.type;
   const programImage =
     program.coverImageKey && program.coverImageKey !== 'NULL'
       ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
@@ -48,8 +49,8 @@ export function StudentProgram({ program }: StudenProgramProps) {
         />
         <div
           className="
-            absolute inset-0 bg-gradient-to-t from-card via-card/20
-            to-transparent
+            absolute top-0 right-0 bottom-[-2px] left-0 bg-gradient-to-t
+            from-card via-card/70 to-transparent
           "
         />
 
@@ -66,7 +67,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
           )}
         </div>
 
-        {program.certificationType && (
+        {typeProgramLabel && (
           <span
             className="
               absolute bottom-3 left-3 rounded-full border border-primary/30
@@ -74,7 +75,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
               backdrop-blur-sm
             "
           >
-            {program.certificationType.name}
+            {typeProgramLabel}
           </span>
         )}
       </div>

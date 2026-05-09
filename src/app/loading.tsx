@@ -1,21 +1,9 @@
 const starParticles = [
   { left: '12%', top: '28%', delay: '0s', duration: '1.2s' },
   { left: '68%', top: '20%', delay: '0.25s', duration: '1.6s' },
-  { left: '26%', top: '72%', delay: '0.45s', duration: '1.35s' },
   { left: '82%', top: '62%', delay: '0.7s', duration: '1.8s' },
   { left: '48%', top: '36%', delay: '0.9s', duration: '1.45s' },
   { left: '18%', top: '52%', delay: '1.1s', duration: '1.55s' },
-  { left: '74%', top: '82%', delay: '1.3s', duration: '1.25s' },
-  { left: '42%', top: '86%', delay: '1.45s', duration: '1.7s' },
-];
-
-const exhaustParticles = [
-  { left: '-9px', delay: '0s' },
-  { left: '-2px', delay: '0.15s' },
-  { left: '7px', delay: '0.3s' },
-  { left: '0px', delay: '0.45s' },
-  { left: '-6px', delay: '0.6s' },
-  { left: '10px', delay: '0.75s' },
 ];
 
 export default function Loading() {
@@ -196,27 +184,9 @@ export default function Loading() {
               </g>
             </svg>
           </div>
-
-          <div className="loading-exhaust">
-            {exhaustParticles.map((particle, index) => (
-              <span
-                key={index}
-                style={{
-                  animationDelay: particle.delay,
-                  left: particle.left,
-                }}
-              />
-            ))}
-          </div>
         </div>
 
         <p className="loading-message">Cargando...</p>
-
-        <div className="loading-bounce-dots" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
       </section>
     </main>
   );

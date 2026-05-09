@@ -11,9 +11,8 @@ import '~/styles/tourButtonAnimations.css';
 
 export const TourComponent = () => {
   const { showExtras } = useExtras();
-  const [isDesktop, setIsDesktop] = useState(
-    () => typeof window !== 'undefined' && window.innerWidth > 768
-  );
+  const [isMounted, setIsMounted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [showAnim, setShowAnim] = useState(false);
@@ -24,7 +23,8 @@ export const TourComponent = () => {
   const hideButton = isChatOpen || isProjectModalOpen;
 
   useEffect(() => {
-    // Solo se ejecuta en el cliente: actualizar on resize (no establecer sincronamente)
+    setIsMounted(true);
+    setIsDesktop(window.innerWidth > 768);
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -94,6 +94,8 @@ export const TourComponent = () => {
 
   // Mostrar siempre en móvil, solo icono; en desktop, botón completo
 
+  if (!isMounted) return null;
+
   return (
     <>
       {!hideButton && (isDesktop ? showAnim : true) && (
@@ -125,10 +127,14 @@ export const TourComponent = () => {
               text-white shadow-md transition-all duration-300 ease-in-out
               hover:scale-105 hover:from-emerald-500 hover:to-green-600
               hover:shadow-[0_0_20px_#00c951]
-              ${isDesktop ? `
-                gap-2 p-2.5
-                sm:text-sm
-              ` : 'size-12 p-0'}
+              ${
+                isDesktop
+                  ? `
+                    gap-2 p-2.5
+                    sm:text-sm
+                  `
+                  : 'size-12 p-0'
+              }
             `}
             aria-label="Tour por la Aplicación"
           >
@@ -140,10 +146,12 @@ export const TourComponent = () => {
             />
             {isDesktop && (
               <>
-                <span className="
-                  hidden font-medium tracking-wide
-                  sm:inline
-                ">
+                <span
+                  className="
+                    hidden font-medium tracking-wide
+                    sm:inline
+                  "
+                >
                   Tour por la Aplicación
                 </span>
                 {/* Triángulo tipo burbuja. Si el botón está en la izquierda, mostrar triángulo apuntando a la derecha */}

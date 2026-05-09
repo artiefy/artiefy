@@ -1,9 +1,16 @@
 'use server';
 
-import { eq, or, sql } from 'drizzle-orm';
+import { auth } from '@clerk/nextjs/server';
+import { and, eq, isNull, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { categories, courses, modalidades } from '~/server/db/schema';
+import {
+  categories,
+  courses,
+  enrollments,
+  modalidades,
+  typesCourses,
+} from '~/server/db/schema';
 
 import type { Course } from '~/types';
 
@@ -20,6 +27,22 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
   const searchPattern = `%${normalizedQuery}%`;
   const normalizeColumn = (column: unknown) =>
     sql`translate(lower(${column}), ${accentFrom}, ${accentTo})`;
+  const { userId } = await auth();
+  const publicVisibilityCondition = or(
+    isNull(courses.visibility),
+    eq(courses.visibility, true)
+  );
+  const visibilityCondition = userId
+    ? or(
+        publicVisibilityCondition,
+        sql`exists (
+          select 1
+          from ${enrollments}
+          where ${enrollments.userId} = ${userId}
+            and ${enrollments.courseId} = ${courses.id}
+        )`
+      )
+    : publicVisibilityCondition;
 
   // Buscar en título, categoría y modalidad
   const results = await db
@@ -34,15 +57,23 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
       isActive: courses.isActive,
       categoryName: categories.name,
       modalidadName: modalidades.name,
+      idTypesCourses: courses.idTypesCourses,
+      typeCourseId: typesCourses.id,
+      typeCourseType: typesCourses.type,
     })
     .from(courses)
     .leftJoin(categories, eq(courses.categoryid, categories.id))
     .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+    .leftJoin(typesCourses, eq(courses.idTypesCourses, typesCourses.id))
     .where(
-      or(
-        sql`${normalizeColumn(courses.title)} ilike ${searchPattern}`,
-        sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
-        sql`${normalizeColumn(modalidades.name)} ilike ${searchPattern}`
+      and(
+        visibilityCondition,
+        or(
+          sql`${normalizeColumn(courses.title)} ilike ${searchPattern}`,
+          sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
+          sql`${normalizeColumn(modalidades.name)} ilike ${searchPattern}`,
+          sql`${normalizeColumn(typesCourses.type)} ilike ${searchPattern}`
+        )
       )
     )
     .limit(8);
@@ -71,6 +102,13 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
       is_featured: false,
     },
     modalidad: { id: course.modalidadesid, name: course.modalidadName ?? '' },
+    idTypesCourses: course.idTypesCourses,
+    typeCourse: course.typeCourseId
+      ? {
+          id: course.typeCourseId,
+          type: course.typeCourseType ?? '',
+        }
+      : null,
     nivel: { name: '' },
     enrollments: [],
     creator: undefined,

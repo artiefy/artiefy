@@ -77,6 +77,7 @@ export async function getLessonById(
       lessons: transformedLessons,
       enrollments: courseEnrollments,
       isActive: lesson.course.isActive ?? false,
+      visibility: lesson.course.visibility ?? true,
       requiresProgram: false,
       isFree: courseTypeRelations.some(
         (ct) => ct.courseType?.requiredSubscriptionLevel === 'none'

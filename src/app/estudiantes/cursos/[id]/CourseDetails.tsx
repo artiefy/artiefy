@@ -1463,8 +1463,7 @@ export default function CourseDetails({
                               "
                               style={{
                                 background:
-                                  'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
-                                willChange: 'transform',
+                                  'linear-gradient(to bottom, rgba(6, 28, 55, 0) 0%, rgba(6, 28, 55, 0.12) 30%, rgba(6, 28, 55, 0.38) 52%, rgba(6, 28, 55, 0.72) 72%, rgba(6, 28, 55, 0.92) 88%, #061c37 100%)',
                               }}
                             />
                           )}
@@ -2141,8 +2140,7 @@ export default function CourseDetails({
                                         "
                                         style={{
                                           background:
-                                            'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
-                                          willChange: 'transform',
+                                            'linear-gradient(to bottom, rgba(6, 28, 55, 0) 0%, rgba(6, 28, 55, 0.12) 30%, rgba(6, 28, 55, 0.38) 52%, rgba(6, 28, 55, 0.72) 72%, rgba(6, 28, 55, 0.92) 88%, #061c37 100%)',
                                         }}
                                       />
                                     </>
@@ -2866,8 +2864,7 @@ export default function CourseDetails({
                                   "
                                   style={{
                                     background:
-                                      'linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(6, 28, 55, 0.1) 35%, rgba(6, 28, 55, 0.3) 50%, rgba(6, 28, 55, 0.6) 65%, rgba(6, 28, 55, 0.85) 80%, rgba(6, 28, 55, 0.95) 90%, #061c37 100%)',
-                                    willChange: 'transform',
+                                      'linear-gradient(to bottom, rgba(6, 28, 55, 0) 0%, rgba(6, 28, 55, 0.12) 30%, rgba(6, 28, 55, 0.38) 52%, rgba(6, 28, 55, 0.72) 72%, rgba(6, 28, 55, 0.92) 88%, #061c37 100%)',
                                   }}
                                 />
                               )}

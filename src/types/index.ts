@@ -62,6 +62,11 @@ export interface CourseType {
   metaPixelId?: string | null; // Pixel Meta/Facebook dinámico por plan
 }
 
+export interface CatalogType {
+  id: number;
+  type: string;
+}
+
 export interface ScheduleOption {
   id: number;
   name: string;
@@ -109,6 +114,9 @@ export interface Course extends BaseCourse {
   spaceOptionId?: number | null;
   scheduleOption?: ScheduleOption | null;
   spaceOption?: SpaceOption | null;
+  visibility?: boolean;
+  idTypesCourses?: number | null;
+  typeCourse?: CatalogType | null;
 }
 
 // Add new interface for course materias
@@ -402,6 +410,8 @@ export interface Program {
     name: string;
     description?: string | null;
   };
+  idTypesPrograms?: number | null;
+  typeProgram?: CatalogType | null;
   totalHours?: number;
   coursesCount?: number;
   creator?: User;

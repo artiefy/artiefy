@@ -136,9 +136,12 @@ export async function POST(req: Request) {
         .leftJoin(categories, sql`${courses.categoryid} = ${categories.id}`)
         .where(
           sql`
-            ${courses.title} ILIKE ${pattern}
-            OR ${courses.description} ILIKE ${pattern}
-            OR ${categories.name} ILIKE ${pattern}
+            (${courses.visibility} IS NULL OR ${courses.visibility} = true)
+            AND (
+              ${courses.title} ILIKE ${pattern}
+              OR ${courses.description} ILIKE ${pattern}
+              OR ${categories.name} ILIKE ${pattern}
+            )
           `
         )
         .orderBy(
@@ -174,7 +177,9 @@ export async function POST(req: Request) {
           .from(courses)
           .leftJoin(categories, sql`${courses.categoryid} = ${categories.id}`)
           .where(
-            ids.length > 0 ? sql`${courses.id} NOT IN (${ids})` : undefined
+            ids.length > 0
+              ? sql`(${courses.visibility} IS NULL OR ${courses.visibility} = true) AND ${courses.id} NOT IN (${ids})`
+              : sql`${courses.visibility} IS NULL OR ${courses.visibility} = true`
           )
           .orderBy(sql`${courses.updatedAt} DESC`)
           .limit(limit - results.length);
@@ -204,6 +209,9 @@ export async function POST(req: Request) {
         })
         .from(courses)
         .leftJoin(categories, sql`${courses.categoryid} = ${categories.id}`)
+        .where(
+          sql`${courses.visibility} IS NULL OR ${courses.visibility} = true`
+        )
         .orderBy(sql`${courses.updatedAt} DESC`)
         .limit(limit);
 

@@ -1085,6 +1085,22 @@ export function Header({
                 })}
               </ul>
             </nav>
+            <Show when="signed-in">
+              <div className="mt-10 flex justify-center">
+                <Link
+                  href="/estudiantes/myaccount"
+                  className="
+                    inline-flex items-center gap-2 rounded-xl border
+                    border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm
+                    font-semibold text-cyan-700 transition-colors
+                    active:scale-95
+                  "
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Mi Aprendizaje
+                </Link>
+              </div>
+            </Show>
             <div className="div-auth mt-14 flex items-center justify-center">
               <Suspense
                 fallback={
