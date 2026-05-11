@@ -1873,6 +1873,22 @@ export default function CourseDetails({
                           {course.title}
                         </h1>
 
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className="
+                              inline-flex items-center gap-1.5 rounded-full
+                              border border-cyan-400/30 bg-cyan-400/10 px-3
+                              py-1.5 text-xs font-semibold text-cyan-300
+                            "
+                          >
+                            <FaChalkboardUser className="size-3" />
+                            Educador
+                          </span>
+                          <span className="text-sm font-medium text-foreground/90">
+                            {course.instructorName || 'Artiefy Academy'}
+                          </span>
+                        </div>
+
                         {/* Rating y estudiantes */}
                         <div className="flex flex-wrap items-center gap-4 text-sm">
                           <div className="flex items-center gap-1.5">

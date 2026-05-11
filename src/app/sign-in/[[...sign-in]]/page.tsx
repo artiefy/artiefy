@@ -546,24 +546,24 @@ export default function SignInPage() {
           <div className="mt-4 max-w-xl">
             <p
               className="
-              text-sm font-semibold tracking-[0.28em] text-cyan-200 uppercase
-            "
+                text-sm font-semibold tracking-[0.28em] text-cyan-200 uppercase
+              "
             >
               Plataforma Artiefy
             </p>
             <h1
               className="
-              mt-3 text-3xl font-black tracking-tight text-white
-              sm:text-5xl
-            "
+                mt-3 text-3xl font-black tracking-tight text-white
+                sm:text-5xl
+              "
             >
               Entra a tus cursos y proyectos sin pasos extra.
             </h1>
             <p
               className="
-              mt-4 text-sm leading-6 text-white/70
-              sm:text-base
-            "
+                mt-4 text-sm leading-6 text-white/70
+                sm:text-base
+              "
             >
               Correo y contraseña aparecen juntos. Si Clerk pide un código, la
               causa es una regla de seguridad de la instancia, no el diseño del
@@ -584,8 +584,9 @@ export default function SignInPage() {
             <div>
               <p
                 className="
-                text-xs font-semibold tracking-[0.22em] text-cyan-200 uppercase
-              "
+                  text-xs font-semibold tracking-[0.22em] text-cyan-200
+                  uppercase
+                "
               >
                 Acceso seguro
               </p>
@@ -600,9 +601,9 @@ export default function SignInPage() {
             {errors && (
               <ul
                 className="
-                space-y-2 rounded-lg border border-rose-400/25 bg-rose-500/10
-                p-3
-              "
+                  space-y-2 rounded-lg border border-rose-400/25 bg-rose-500/10
+                  p-3
+                "
               >
                 {errors.map((el, index) => (
                   <li key={index} className="text-sm leading-5 text-rose-100">
@@ -722,9 +723,9 @@ export default function SignInPage() {
 
                 <div
                   className="
-                  grid gap-3
-                  sm:grid-cols-[1fr_auto]
-                "
+                    grid gap-3
+                    sm:grid-cols-[1fr_auto]
+                  "
                 >
                   <button
                     type="submit"
@@ -773,9 +774,9 @@ export default function SignInPage() {
 
                 <div
                   className="
-                  grid gap-3
-                  sm:grid-cols-[1fr_auto]
-                "
+                    grid gap-3
+                    sm:grid-cols-[1fr_auto]
+                  "
                 >
                   <button
                     type="submit"
@@ -802,9 +803,9 @@ export default function SignInPage() {
             {secondFactor && (
               <p
                 className="
-                rounded-lg border border-amber-300/25 bg-amber-300/10 p-3
-                text-sm leading-5 text-amber-100
-              "
+                  rounded-lg border border-amber-300/25 bg-amber-300/10 p-3
+                  text-sm leading-5 text-amber-100
+                "
               >
                 Clerk exige verificación adicional para esta cuenta. Esa regla
                 se cambia en el Dashboard de Clerk.
@@ -814,8 +815,9 @@ export default function SignInPage() {
             <div className="space-y-4 border-t border-white/10 pt-5 text-center">
               <p
                 className="
-                text-xs font-semibold tracking-[0.18em] text-white/50 uppercase
-              "
+                  text-xs font-semibold tracking-[0.18em] text-white/50
+                  uppercase
+                "
               >
                 O ingresa con
               </p>
