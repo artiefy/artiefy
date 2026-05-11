@@ -640,7 +640,7 @@ export function Header({
                                     text-sm font-medium text-foreground
                                   "
                                 >
-                                  Mi Aprendizaje
+                                  Mis Cursos
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   Cursos y programas inscritos
@@ -777,7 +777,7 @@ export function Header({
                                 hover:bg-primary/10
                               "
                             >
-                              Ver todo mi aprendizaje
+                              Ver todos mis cursos
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 width="24"
@@ -1097,7 +1097,7 @@ export function Header({
                   "
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Mi Aprendizaje
+                  Mis Cursos
                 </Link>
               </div>
             </Show>
