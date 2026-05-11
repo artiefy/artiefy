@@ -260,9 +260,7 @@ export default function CourseDetails({
   const [viewMode, setViewMode] = useState<'live' | 'recorded'>('live');
   const [activePill, setActivePill] = useState<NavKey>('curso');
   const [projectsCount, setProjectsCount] = useState<number>(0);
-  const [showMobileStartBar, setShowMobileStartBar] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
-  const mobileStartCardRef = useRef<HTMLDivElement>(null);
   const enrollmentRequestInFlight = useRef(false);
   const autoEnrollTriggeredRef = useRef(false);
   const autoEnrollForcePlansRef = useRef(false);
@@ -280,58 +278,6 @@ export default function CourseDetails({
       window.history.replaceState({}, '', `${url.pathname}${url.search}`);
     }
   }, [searchParams]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || isEnrolled) {
-      setShowMobileStartBar(false);
-      return;
-    }
-
-    const target = mobileStartCardRef.current;
-    if (!target) return;
-
-    const mobileQuery = window.matchMedia('(max-width: 639px)');
-    let observer: IntersectionObserver | null = null;
-
-    const setupObserver = () => {
-      observer?.disconnect();
-
-      if (!mobileQuery.matches) {
-        setShowMobileStartBar(false);
-        return;
-      }
-
-      observer = new IntersectionObserver(
-        ([entry]) => {
-          setShowMobileStartBar(!entry.isIntersecting);
-        },
-        { threshold: 0.08 }
-      );
-
-      observer.observe(target);
-    };
-
-    setupObserver();
-
-    const handleViewportChange = () => {
-      setupObserver();
-    };
-
-    if (typeof mobileQuery.addEventListener === 'function') {
-      mobileQuery.addEventListener('change', handleViewportChange);
-    } else {
-      mobileQuery.addListener(handleViewportChange);
-    }
-
-    return () => {
-      observer?.disconnect();
-      if (typeof mobileQuery.removeEventListener === 'function') {
-        mobileQuery.removeEventListener('change', handleViewportChange);
-      } else {
-        mobileQuery.removeListener(handleViewportChange);
-      }
-    };
-  }, [isEnrolled]);
 
   const getModalidadIcon = (modalidadName?: string) => {
     if (!modalidadName) return <MdOutlineVideocam className="size-3" />;
@@ -1362,18 +1308,21 @@ export default function CourseDetails({
     <>
       <div className="min-h-screen bg-background">
         <main
-          className="
+          className={`
             mx-auto -mt-6 max-w-7xl px-4 py-2
             sm:-mt-0
             md:px-6 md:py-8
             lg:px-8
-          "
-          style={{
-            paddingBottom:
-              !isEnrolled && showMobileStartBar
-                ? 'calc(6.5rem + env(safe-area-inset-bottom, 0px))'
-                : undefined,
-          }}
+            ${
+              !isEnrolled
+                ? `
+                  pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))]
+                  md:pb-[calc(7rem+env(safe-area-inset-bottom,0px))]
+                  lg:pb-8
+                `
+                : ''
+            }
+          `}
         >
           <CourseBreadcrumb title={course.title} programInfo={programInfo} />
           <div
@@ -1411,7 +1360,7 @@ export default function CourseDetails({
                 `}
               >
                 {/* Mini tarjeta estática para móviles: mismo contenido y estilo que el CTA lateral de escritorio */}
-                <div className="lg:hidden" ref={mobileStartCardRef}>
+                <div className="lg:hidden">
                   <div
                     className="
                       relative overflow-hidden rounded-2xl border border-border
@@ -3093,13 +3042,13 @@ export default function CourseDetails({
         </main>
       </div>
 
-      {!isEnrolled && showMobileStartBar && (
+      {!isEnrolled && (
         <div
           className="
             fixed inset-x-0 bottom-0 z-[1100] border-t border-[#1d283a]
             bg-[#061c37f2] px-4 pt-2
             pb-[calc(env(safe-area-inset-bottom,0px)+0.65rem)] backdrop-blur-md
-            sm:hidden
+            lg:hidden
           "
         >
           <div className="mx-auto flex max-w-7xl items-center gap-3">
