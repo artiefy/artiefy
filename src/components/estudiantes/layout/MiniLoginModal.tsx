@@ -434,21 +434,12 @@ export default function MiniLoginModal({
           },
         ]);
       } else if (signIn.status === 'needs_client_trust') {
-        const emailCodeFactor = signIn.supportedSecondFactors.find(
-          (factor) => factor.strategy === 'email_code'
-        );
-        if (emailCodeFactor) {
-          const sendCodeResult = await signIn.mfa.sendEmailCode();
-          if (sendCodeResult.error) {
-            setErrors(toClerkApiErrors(sendCodeResult.error));
-            return;
-          }
-        }
         setErrors([
           {
             code: 'needs_client_trust',
-            message: 'Verifica tu cuenta para continuar.',
-            longMessage: 'Verifica tu cuenta para continuar.',
+            message: 'Clerk requiere verificar este dispositivo.',
+            longMessage:
+              'Clerk está pidiendo un código porque Client Trust protege los inicios de sesión con contraseña desde dispositivos nuevos. Revísalo en el Dashboard de Clerk; si tu instancia no permite quitarlo, usa OAuth o completa la verificación.',
             meta: {},
           },
         ]);

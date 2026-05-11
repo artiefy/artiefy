@@ -250,19 +250,26 @@ export default function SignInPage() {
         router.replace(redirectUrl);
       } else if (signIn.status === 'needs_second_factor') {
         setSecondFactor(true);
-        setErrors(undefined);
+        setErrors([
+          {
+            code: 'needs_second_factor',
+            message: 'Tu cuenta requiere verificación adicional.',
+            longMessage:
+              'Tu cuenta tiene verificación adicional activa en Clerk. Desactiva MFA para esa cuenta si no quieres pedir código al iniciar sesión.',
+            meta: {},
+          },
+        ]);
       } else if (signIn.status === 'needs_client_trust') {
-        const emailCodeFactor = signIn.supportedSecondFactors.find(
-          (factor) => factor.strategy === 'email_code'
-        );
-        if (emailCodeFactor) {
-          const sendCodeResult = await signIn.mfa.sendEmailCode();
-          if (sendCodeResult.error) {
-            setErrors(toClerkApiErrors(sendCodeResult.error));
-            return;
-          }
-        }
-        setSecondFactor(true);
+        setSecondFactor(false);
+        setErrors([
+          {
+            code: 'needs_client_trust',
+            message: 'Clerk requiere verificar este dispositivo.',
+            longMessage:
+              'Clerk está pidiendo un código porque Client Trust protege los inicios de sesión con contraseña desde dispositivos nuevos. Revísalo en el Dashboard de Clerk; si tu instancia no permite quitarlo, usa OAuth o completa la verificación.',
+            meta: {},
+          },
+        ]);
       } else {
         setErrors([
           {
@@ -354,13 +361,26 @@ export default function SignInPage() {
         router.replace(redirectUrl);
       } else if (signIn.status === 'needs_second_factor') {
         setSecondFactor(true);
+        setErrors([
+          {
+            code: 'needs_second_factor',
+            message: 'Tu cuenta requiere verificación adicional.',
+            longMessage:
+              'Tu cuenta tiene verificación adicional activa en Clerk. Desactiva MFA para esa cuenta si no quieres pedir código al iniciar sesión.',
+            meta: {},
+          },
+        ]);
       } else if (signIn.status === 'needs_client_trust') {
-        const sendCodeResult = await signIn.mfa.sendEmailCode();
-        if (sendCodeResult.error) {
-          setErrors(toClerkApiErrors(sendCodeResult.error));
-          return;
-        }
-        setSecondFactor(true);
+        setSecondFactor(false);
+        setErrors([
+          {
+            code: 'needs_client_trust',
+            message: 'Clerk requiere verificar este dispositivo.',
+            longMessage:
+              'Clerk está pidiendo un código porque Client Trust protege los inicios de sesión con contraseña desde dispositivos nuevos. Revísalo en el Dashboard de Clerk; si tu instancia no permite quitarlo, usa OAuth o completa la verificación.',
+            meta: {},
+          },
+        ]);
       } else {
         setErrors([
           {
@@ -379,21 +399,109 @@ export default function SignInPage() {
   };
 
   const emailError = errors?.some(
-    (error) => error.code === 'form_identifier_not_found'
+    (error) =>
+      error.code === 'form_identifier_not_found' ||
+      (error.code === 'form_param_missing' &&
+        error.meta?.paramName === 'identifier') ||
+      (error.code === 'form_param_format_invalid' &&
+        error.meta?.paramName === 'identifier')
   );
   const passwordError = errors?.some(
-    (error) => error.code === 'form_password_incorrect'
+    (error) =>
+      error.code === 'form_password_incorrect' ||
+      (error.code === 'form_param_missing' &&
+        error.meta?.paramName === 'password')
   );
+
+  const inputClassName = (hasError?: boolean) => `
+    h-12 w-full rounded-lg border bg-white/10 px-4 text-sm text-white
+    placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]
+    outline-none transition
+    ${
+      hasError
+        ? 'border-rose-400/80 focus:border-rose-300 focus:ring-2 focus:ring-rose-400/25'
+        : 'border-white/15 hover:border-white/30 focus:border-cyan-300/80 focus:ring-2 focus:ring-cyan-300/25'
+    }
+  `;
+
+  const primaryButtonClassName = `
+    inline-flex h-12 w-full items-center justify-center rounded-lg
+    bg-cyan-300 px-5 text-sm font-bold tracking-[0.08em] text-slate-950
+    uppercase shadow-[0_18px_45px_rgba(103,232,249,0.28)]
+    transition hover:bg-cyan-200 focus-visible:outline-none
+    focus-visible:ring-2 focus-visible:ring-cyan-200
+    focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950
+    active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60
+  `;
+
+  const secondaryButtonClassName = `
+    inline-flex h-11 items-center justify-center rounded-lg border
+    border-white/15 px-4 text-sm font-semibold text-white/85 transition
+    hover:border-white/30 hover:bg-white/10 focus-visible:outline-none
+    focus-visible:ring-2 focus-visible:ring-cyan-300/40
+    disabled:cursor-not-allowed disabled:opacity-60
+  `;
+
+  const oauthButtonClassName = `
+    inline-flex size-12 items-center justify-center rounded-lg border
+    border-white/15 bg-white/10 text-white transition hover:border-white/30
+    hover:bg-white/15 focus-visible:outline-none
+    focus-visible:ring-2 focus-visible:ring-cyan-300/40
+    active:scale-95 disabled:cursor-not-allowed disabled:opacity-60
+  `;
+
+  const linkButtonClassName = `
+    text-sm font-semibold text-cyan-200 underline-offset-4 transition
+    hover:text-white hover:underline focus-visible:outline-none
+    focus-visible:ring-2 focus-visible:ring-cyan-300/40
+  `;
+
+  const getErrorMessage = (error: ClerkAPIError) => {
+    if (error.code === 'form_password_incorrect') {
+      return 'Contraseña incorrecta. Inténtalo de nuevo o usa otro método.';
+    }
+    if (error.code === 'form_identifier_not_found') {
+      return 'No se pudo encontrar tu cuenta.';
+    }
+    return error.longMessage;
+  };
+
+  const showForgotPassword = () => {
+    setErrors(undefined);
+    setCode('');
+    setPassword('');
+    setSuccessfulCreation(false);
+    setIsForgotPassword(true);
+  };
+
+  const showSignIn = () => {
+    setErrors(undefined);
+    setCode('');
+    setPassword('');
+    setSuccessfulCreation(false);
+    setIsForgotPassword(false);
+  };
+
+  const signUpQuery = [
+    searchParams?.get('redirect_url')
+      ? `redirect_url=${encodeURIComponent(searchParams.get('redirect_url')!)}`
+      : '',
+    planId ? `plan_id=${planId}` : '',
+  ]
+    .filter(Boolean)
+    .join('&');
+
+  const signUpHref = `/sign-up${signUpQuery ? `?${signUpQuery}` : ''}`;
+  const isBusy = isSubmitting || fetchStatus === 'fetching';
 
   return (
     <div
       className="
-        relative flex min-h-screen flex-col items-center justify-center px-4
+        relative min-h-screen overflow-hidden bg-slate-950 px-4 py-8 text-white
         sm:px-6
         lg:px-8
       "
     >
-      {/* Imagen de fondo */}
       <Image
         src="/login-fondo.webp"
         alt="Fondo de inicio de sesión"
@@ -405,26 +513,26 @@ export default function SignInPage() {
           objectFit: 'cover',
         }}
       />
-
-      {/* Contenedor principal */}
       <div
         className="
-          relative z-10 flex w-full flex-col items-center justify-center
-          lg:flex-row lg:items-start lg:justify-between
+          pointer-events-none absolute inset-0 z-0
+          bg-[radial-gradient(circle_at_20%_20%,rgba(103,232,249,0.24),transparent_28%),linear-gradient(90deg,rgba(2,6,23,0.88),rgba(2,6,23,0.42)_48%,rgba(2,6,23,0.92))]
+        "
+      />
+      <main
+        className="
+          relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-7xl
+          flex-col items-center justify-center gap-8
+          lg:grid lg:grid-cols-[1fr_430px] lg:gap-12
         "
       >
-        {/* Contenedor del logo */}
         <div
           className="
-            mb-8 w-full max-w-3/4
-            max-md:mt-10
-            md:max-w-2/4
-            md:max-xl:mt-0
-            lg:mb-0 lg:ml-30 lg:max-w-[700px] lg:self-center
-            lg:max-xl:ml-5
+            flex w-full max-w-2xl flex-col items-center text-center
+            lg:items-start lg:text-left
           "
         >
-          <AspectRatio ratio={16 / 9} className="relative size-full">
+          <AspectRatio ratio={16 / 9} className="relative w-full max-w-xl">
             <Image
               src="/logo-login.webp"
               alt="Logo de Artiefy"
@@ -435,358 +543,335 @@ export default function SignInPage() {
               quality={100}
             />
           </AspectRatio>
+          <div className="mt-4 max-w-xl">
+            <p
+              className="
+              text-sm font-semibold tracking-[0.28em] text-cyan-200 uppercase
+            "
+            >
+              Plataforma Artiefy
+            </p>
+            <h1
+              className="
+              mt-3 text-3xl font-black tracking-tight text-white
+              sm:text-5xl
+            "
+            >
+              Entra a tus cursos y proyectos sin pasos extra.
+            </h1>
+            <p
+              className="
+              mt-4 text-sm leading-6 text-white/70
+              sm:text-base
+            "
+            >
+              Correo y contraseña aparecen juntos. Si Clerk pide un código, la
+              causa es una regla de seguridad de la instancia, no el diseño del
+              formulario.
+            </p>
+          </div>
         </div>
 
-        {/* Formulario de inicio de sesión */}
         <div
           className="
-            -mt-20 w-full max-w-md
-            sm:-mt-16
-            md:-mt-12
-            lg:mt-0 lg:mr-15 lg:w-1/2 lg:max-w-[400px]
-            xl:max-w-[500px]
+            w-full max-w-[430px] rounded-lg border border-white/15
+            bg-slate-950/75 p-6 shadow-[0_28px_90px_rgba(0,0,0,0.5)]
+            backdrop-blur-xl
+            sm:p-8
           "
         >
-          <div
-            className="
-              mx-auto w-full max-w-sm space-y-10 rounded-2xl px-8 py-10
-              sm:max-w-md
-            "
-          >
-            <div className="mb-6 text-center">
-              <h2
+          <div className="space-y-6">
+            <div>
+              <p
                 className="
-                  xs:text-2xl
-                  text-3xl font-bold
-                "
+                text-xs font-semibold tracking-[0.22em] text-cyan-200 uppercase
+              "
               >
-                INICIAR SESIÓN
+                Acceso seguro
+              </p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
+                Iniciar sesión
               </h2>
+              <p className="mt-2 text-sm leading-6 text-white/70">
+                Usa tu correo y contraseña en un solo paso.
+              </p>
             </div>
+
             {errors && (
-              <ul>
+              <ul
+                className="
+                space-y-2 rounded-lg border border-rose-400/25 bg-rose-500/10
+                p-3
+              "
+              >
                 {errors.map((el, index) => (
-                  <li key={index} className="-my-4 text-sm text-rose-400">
-                    {el.code === 'form_password_incorrect'
-                      ? 'Contraseña incorrecta. Inténtalo de nuevo o usa otro método.'
-                      : el.code === 'form_identifier_not_found'
-                        ? 'No se pudo encontrar tu cuenta.'
-                        : el.longMessage}
+                  <li key={index} className="text-sm leading-5 text-rose-100">
+                    {getErrorMessage(el)}
                   </li>
                 ))}
               </ul>
             )}
+
             {!successfulCreation && !isForgotPassword ? (
-              <form onSubmit={handleSubmit}>
-                <div className="flex justify-center">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="email"
+                    className="
+                      text-xs font-semibold tracking-[0.16em] text-white/70
+                      uppercase
+                    "
+                  >
+                    Correo electrónico
+                  </label>
                   <input
                     onChange={(e) => setEmail(e.target.value)}
                     id="email"
                     name="email"
                     type="email"
                     value={email}
-                    placeholder="Correo Electrónico"
+                    placeholder="tu@correo.com"
+                    autoComplete="email"
                     required
-                    className={`
-                      w-full rounded-none bg-transparent px-4 py-2.5 text-sm
-                      ring-1 outline-hidden ring-inset
-                      sm:w-[250px]
-                      md:w-[300px]
-                      lg:w-[330px]
-                      xl:w-[350px]
-                      ${emailError ? 'ring-rose-400' : 'ring-white/20'}
-                      0
-                      focus:shadow-[0_0_
-                      6 px_0]
-                      focus:shadow-emera
-                      l d-500/20
-                      hover:ring-white/3
-                      focus:ring-[1.5px] focus:ring-primary
-                      data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400
-                    `}
+                    className={inputClassName(emailError)}
                   />
                 </div>
-                <div className="mt-4 flex justify-center">
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="password"
+                    className="
+                      text-xs font-semibold tracking-[0.16em] text-white/70
+                      uppercase
+                    "
+                  >
+                    Contraseña
+                  </label>
                   <input
                     onChange={(e) => setPassword(e.target.value)}
                     id="password"
                     name="password"
                     type="password"
                     value={password}
-                    placeholder="Contraseña"
+                    placeholder="Tu contraseña"
+                    autoComplete="current-password"
                     required
-                    className={`
-                      w-full rounded-none bg-transparent px-4 py-2.5 text-sm
-                      ring-1 outline-hidden ring-inset
-                      sm:w-[250px]
-                      md:w-[300px]
-                      lg:w-[330px]
-                      xl:w-[350px]
-                      ${passwordError ? 'ring-rose-400' : 'ring-white/20'}
-                      0
-                      focus:shadow-[0_0_
-                      6 px_0]
-                      focus:shadow-emera
-                      l d-500/20
-                      hover:ring-white/3
-                      focus:ring-[1.5px] focus:ring-primary
-                      data-invalid:shadow-rose-400/20 data-invalid:ring-rose-400
-                    `}
+                    className={inputClassName(passwordError)}
                   />
                 </div>
-                <div className="mt-6 flex justify-center">
-                  <button
-                    type="submit"
-                    className="
-                      group relative inline-flex h-[44px] min-w-[195px]
-                      items-center justify-center px-4 text-center text-[13px]
-                      font-bold tracking-[0.08em] text-primary/80 italic
-                      transition
-                      focus-visible:outline-[1.5px]
-                      focus-visible:outline-offset-2
-                      focus-visible:outline-primary
-                      active:scale-95
-                      disabled:cursor-not-allowed disabled:opacity-60
-                    "
-                    disabled={isSubmitting}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="
-                        pointer-events-none absolute inset-0 -skew-x-[18deg]
-                        border border-white/20 bg-transparent transition-colors
-                        duration-200
-                        group-hover:border-white/30 group-hover:bg-white/10
-                      "
-                    />
-                    <div
-                      className="
-                        relative flex w-full skew-x-[18deg] items-center
-                        justify-center gap-3
-                      "
-                    >
-                      {isSubmitting ? (
-                        <Icons.spinner className="textmsizery size-5" />
-                      ) : (
-                        <span
-                          className="
-                            inline-flex -skew-x-[8deg] items-center gap-2.5
-                          "
-                        >
-                          <span>COMIENZA YA</span>
-                          <span className="text-[1.2em] leading-none">→</span>
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                </div>
+
+                <button
+                  type="submit"
+                  className={primaryButtonClassName}
+                  disabled={isBusy}
+                >
+                  {isBusy ? (
+                    <Icons.spinner className="size-5" />
+                  ) : (
+                    <span>Entrar ahora</span>
+                  )}
+                </button>
               </form>
             ) : successfulCreation ? (
-              <form onSubmit={handleResetPassword}>
-                <div>
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="new-password"
+                    className="
+                      text-xs font-semibold tracking-[0.16em] text-white/70
+                      uppercase
+                    "
+                  >
+                    Nueva contraseña
+                  </label>
                   <input
                     onChange={(e) => setPassword(e.target.value)}
                     id="new-password"
                     name="new-password"
                     type="password"
                     value={password}
-                    placeholder="Nueva Contraseña"
+                    placeholder="Nueva contraseña"
+                    autoComplete="new-password"
                     required
-                    className="
-                      rounded-non e ring-white/ 2 0
-                      focus:shadow-[0_0_
-                      6 px_0]
-                      focus:shadow-emera
-                      l d-500/20 w-full bg-transparent px-4 py-2.5 text-sm
-                      ring-1 outline-hidden ring-inset
-                      hover:ring-white/3
-                      focus:ring-[1.5px] focus:ring-primary
-                    "
+                    className={inputClassName(passwordError)}
                   />
                 </div>
-                <div className="mt-4">
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="reset-code"
+                    className="
+                      text-xs font-semibold tracking-[0.16em] text-white/70
+                      uppercase
+                    "
+                  >
+                    Código de restablecimiento
+                  </label>
                   <input
                     onChange={(e) => setCode(e.target.value)}
                     id="reset-code"
                     name="reset-code"
                     type="text"
                     value={code}
-                    placeholder="Código de Restablecimiento"
+                    placeholder="Código enviado a tu correo"
+                    autoComplete="one-time-code"
                     required
-                    className="
-                      rounded-non e ring-white/ 2 0
-                      focus:shadow-[0_0_
-                      6 px_0]
-                      focus:shadow-emera
-                      l d-500/20 w-full bg-transparent px-4 py-2.5 text-sm
-                      ring-1 outline-hidden ring-inset
-                      hover:ring-white/3
-                      focus:ring-[1.5px] focus:ring-primary
-                    "
+                    className={inputClassName()}
                   />
                 </div>
-                <div className="mt-6 flex justify-center">
+
+                <div
+                  className="
+                  grid gap-3
+                  sm:grid-cols-[1fr_auto]
+                "
+                >
                   <button
                     type="submit"
-                    className="
-                      py-2. 5 f o nt-medium ring-primar y focu s
-                      -visible:outline-
-                      [ 1.5px]
-                      focus-visible:outline-
-                      ffset-2 z inc-950 active : rounded-none px-3.5 text-center
-                      text-sm text-primary/70 italic shadow-sm ring-1 ring-inset
-                      hover:bg-white/30
-                      active:scale-95
-                    "
-                    style={{ width: '150px' }}
-                    disabled={isSubmitting}
+                    className={primaryButtonClassName}
+                    disabled={isBusy}
                   >
-                    <div className="flex w-full items-center justify-center">
-                      {isSubmitting ? (
-                        <Icons.spinner className="text-sizery size-5" />
-                      ) : (
-                        <span className="inline-block font-bold">
-                          RESTABLECER
-                        </span>
-                      )}
-                    </div>
+                    {isBusy ? (
+                      <Icons.spinner className="size-5" />
+                    ) : (
+                      <span>Restablecer</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className={secondaryButtonClassName}
+                    onClick={showSignIn}
+                  >
+                    Volver
                   </button>
                 </div>
               </form>
             ) : (
-              <form onSubmit={handleForgotPassword}>
-                <div>
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="forgot-email"
+                    className="
+                      text-xs font-semibold tracking-[0.16em] text-white/70
+                      uppercase
+                    "
+                  >
+                    Correo electrónico
+                  </label>
                   <input
                     onChange={(e) => setEmail(e.target.value)}
                     id="forgot-email"
                     name="forgot-email"
                     type="email"
                     value={email}
-                    placeholder="Correo Electrónico"
+                    placeholder="tu@correo.com"
+                    autoComplete="email"
                     required
-                    className="
-                      rounded-non e ring-white/ 2 0
-                      focus:shadow-[0_0_
-                      6 px_0]
-                      focus:shadow-emera
-                      l d-500/20 w-full bg-transparent px-4 py-2.5 text-sm
-                      ring-1 outline-hidden ring-inset
-                      hover:ring-white/3
-                      focus:ring-[1.5px] focus:ring-primary
-                    "
+                    className={inputClassName(emailError)}
                   />
                 </div>
-                <div className="mt-6 flex justify-center">
+
+                <div
+                  className="
+                  grid gap-3
+                  sm:grid-cols-[1fr_auto]
+                "
+                >
                   <button
                     type="submit"
-                    className="
-                      py-2. 5 f o nt-medium ring-primar y focu s
-                      -visible:outline-
-                      [ 1.5px]
-                      focus-visible:outline-
-                      ffset-2 z inc-950 active : rounded-none px-3.5 text-center
-                      text-sm text-primary/70 italic shadow-sm ring-1 ring-inset
-                      hover:bg-white/30
-                      active:scale-95
-                    "
-                    style={{ width: '150px' }}
-                    disabled={isSubmitting}
+                    className={primaryButtonClassName}
+                    disabled={isBusy}
                   >
-                    <div className="flex w-full items-center justify-center">
-                      {isSubmitting ? (
-                        <Icons.spinner className="text-sizeri size-5" />
-                      ) : (
-                        <span className="inline-block font-bold">
-                          ENVIAR CÓDIGO
-                        </span>
-                      )}
-                    </div>
+                    {isBusy ? (
+                      <Icons.spinner className="size-5" />
+                    ) : (
+                      <span>Enviar código</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className={secondaryButtonClassName}
+                    onClick={showSignIn}
+                  >
+                    Volver
                   </button>
                 </div>
               </form>
             )}
+
             {secondFactor && (
-              <p>2FA es requerido, pero esta interfaz no lo maneja.</p>
+              <p
+                className="
+                rounded-lg border border-amber-300/25 bg-amber-300/10 p-3
+                text-sm leading-5 text-amber-100
+              "
+              >
+                Clerk exige verificación adicional para esta cuenta. Esa regla
+                se cambia en el Dashboard de Clerk.
+              </p>
             )}
-            <div className="mt-4 text-center">
-              <p>O ingresa con tu cuenta:</p>
-              <div className="mt-2 flex justify-center space-x-4">
-                <div
+
+            <div className="space-y-4 border-t border-white/10 pt-5 text-center">
+              <p
+                className="
+                text-xs font-semibold tracking-[0.18em] text-white/50 uppercase
+              "
+              >
+                O ingresa con
+              </p>
+              <div className="flex justify-center gap-3">
+                <button
+                  type="button"
                   onClick={() => signInWith('oauth_google')}
-                  className="
-                    flex cursor-pointer items-center justify-center rounded-md
-                    bg-transparent p-2
-                    active:scale-95
-                  "
+                  className={oauthButtonClassName}
+                  disabled={Boolean(loadingProvider)}
+                  aria-label="Iniciar sesión con Google"
                 >
                   {loadingProvider === 'oauth_google' ? (
-                    <Icons.spinner className="texsize-pr size-10" />
+                    <Icons.spinner className="size-5" />
                   ) : (
                     <Icons.google />
                   )}
-                </div>
-                <div
+                </button>
+                <button
+                  type="button"
                   onClick={() => signInWith('oauth_github')}
-                  className="
-                    flex cursor-pointer items-center justify-center rounded-md
-                    bg-transparent p-2
-                    active:scale-95
-                  "
+                  className={oauthButtonClassName}
+                  disabled={Boolean(loadingProvider)}
+                  aria-label="Iniciar sesión con GitHub"
                 >
                   {loadingProvider === 'oauth_github' ? (
-                    <Icons.spinner className="texsize-pr size-10" />
+                    <Icons.spinner className="size-5" />
                   ) : (
                     <Icons.gitHub />
                   )}
-                </div>
-                <div
+                </button>
+                <button
+                  type="button"
                   onClick={() => signInWith('oauth_facebook')}
-                  className="
-                    flex cursor-pointer items-center justify-center rounded-md
-                    bg-transparent p-2
-                    active:scale-95
-                  "
+                  className={oauthButtonClassName}
+                  disabled={Boolean(loadingProvider)}
+                  aria-label="Iniciar sesión con Facebook"
                 >
                   {loadingProvider === 'oauth_facebook' ? (
-                    <Icons.spinner className="teisizeary size-10" />
+                    <Icons.spinner className="size-5" />
                   ) : (
                     <Icons.facebook />
                   )}
-                </div>
+                </button>
               </div>
-              <div className="mt-6 text-sm">
-                <Link
-                  href={`/sign-up${
-                    searchParams?.get('redirect_url') || planId
-                      ? `?${[
-                          searchParams?.get('redirect_url')
-                            ? `redirect_url=${encodeURIComponent(searchParams.get('redirect_url')!)}`
-                            : '',
-                          planId ? `plan_id=${planId}` : '',
-                        ]
-                          .filter(Boolean)
-                          .join('&')}`
-                      : ''
-                  }`}
-                  className="
-                    decora tion-primary underlin e-offset-4 font-medium
-                    text-primary outline-hidden
-                    hover:text-secondary hover:underline
-                    focus-visible:underline
-                  "
-                >
-                  ¿Aun no tienes cuenta? Registrate Aquí
-                </Link>
-              </div>
-              <div className="mt-6 text-sm">
+
+              <div className="space-y-3 text-sm">
+                <p className="text-white/60">
+                  ¿Aún no tienes cuenta?{' '}
+                  <Link href={signUpHref} className={linkButtonClassName}>
+                    Regístrate aquí
+                  </Link>
+                </p>
                 <button
-                  onClick={() => setIsForgotPassword(true)}
-                  className="
-                    decora tion-primary underlin e-offset-4 font-medium
-                    text-primary outline-hidden
-                    hover:text-secondary hover:underline
-                    focus-visible:underline
-                  "
+                  type="button"
+                  onClick={showForgotPassword}
+                  className={linkButtonClassName}
                 >
                   ¿Olvidaste tu contraseña?
                 </button>
@@ -794,7 +879,7 @@ export default function SignInPage() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

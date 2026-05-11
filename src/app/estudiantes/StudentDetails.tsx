@@ -76,26 +76,30 @@ const shufflePrograms = (programs: Program[]) => {
   return arr;
 };
 
-type StudentContentFilter =
+type StaticStudentContentFilter =
   | 'todos'
   | 'cursos'
   | 'programas'
   | 'live'
   | 'presencial'
   | 'hibrida'
-  | 'flow'
-  | 'desarrollo'
-  | 'diseno'
-  | 'ia'
-  | 'negocios'
-  | 'musica'
-  | 'fotografia';
+  | 'flow';
 
-const studentContentFilters: Array<{
+const CATEGORY_FILTER_PREFIX = 'category:' as const;
+
+type CategoryStudentContentFilter = `${typeof CATEGORY_FILTER_PREFIX}${number}`;
+
+type StudentContentFilter =
+  | StaticStudentContentFilter
+  | CategoryStudentContentFilter;
+
+type StudentContentFilterItem = {
   icon: React.ComponentType<{ className?: string }>;
   key: StudentContentFilter;
   label: string;
-}> = [
+};
+
+const staticStudentContentFilters: StudentContentFilterItem[] = [
   { key: 'todos', label: 'Todos', icon: SlidersHorizontal },
   { key: 'cursos', label: 'Cursos', icon: BookOpen },
   { key: 'programas', label: 'Programas', icon: PanelsTopLeft },
@@ -103,26 +107,14 @@ const studentContentFilters: Array<{
   { key: 'presencial', label: 'Presencial', icon: MapPin },
   { key: 'hibrida', label: 'Híbrida', icon: Waypoints },
   { key: 'flow', label: 'Artiefy Flow', icon: Zap },
-  { key: 'desarrollo', label: 'Desarrollo', icon: Code },
-  { key: 'diseno', label: 'Diseño', icon: Palette },
-  { key: 'ia', label: 'Inteligencia Artificial', icon: Brain },
-  { key: 'negocios', label: 'Negocios', icon: Briefcase },
-  { key: 'musica', label: 'Música', icon: Music },
-  { key: 'fotografia', label: 'Fotografía', icon: Camera },
 ];
 
-const courseOnlyFilters = new Set<StudentContentFilter>([
+const courseOnlyStaticFilters = new Set<StaticStudentContentFilter>([
   'cursos',
   'live',
   'presencial',
   'hibrida',
   'flow',
-  'desarrollo',
-  'diseno',
-  'ia',
-  'negocios',
-  'musica',
-  'fotografia',
 ]);
 
 function normalizeFilterText(value?: string | null) {
@@ -130,6 +122,42 @@ function normalizeFilterText(value?: string | null) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase();
+}
+
+function isCategoryFilter(
+  filter: StudentContentFilter
+): filter is CategoryStudentContentFilter {
+  return filter.startsWith(CATEGORY_FILTER_PREFIX);
+}
+
+function getCategoryFilterKey(
+  categoryId: number
+): CategoryStudentContentFilter {
+  return `${CATEGORY_FILTER_PREFIX}${categoryId}`;
+}
+
+function getCategoryIdFromFilter(filter: CategoryStudentContentFilter) {
+  return Number(filter.slice(CATEGORY_FILTER_PREFIX.length));
+}
+
+function isCourseOnlyFilter(filter: StudentContentFilter) {
+  if (isCategoryFilter(filter)) return true;
+
+  return courseOnlyStaticFilters.has(filter);
+}
+
+function getCategoryIcon(categoryName: string) {
+  const normalizedCategory = normalizeFilterText(categoryName);
+
+  if (normalizedCategory.includes('desarrollo')) return Code;
+  if (normalizedCategory.includes('diseno')) return Palette;
+  if (normalizedCategory.includes('negocio')) return Briefcase;
+  if (normalizedCategory.includes('musica')) return Music;
+  if (normalizedCategory.includes('fotografia')) return Camera;
+  if (normalizedCategory.includes('inteligencia artificial')) return Brain;
+  if (/\bia\b/.test(normalizedCategory)) return Brain;
+
+  return BookOpen;
 }
 
 export default function StudentDetails({
@@ -362,8 +390,46 @@ export default function StudentDetails({
   const latestFiveCourses = useMemo(() => featuredCourses, [featuredCourses]);
   const latestTenCourses = useMemo(() => topCourses, [topCourses]);
 
+  const studentContentFilters = useMemo<StudentContentFilterItem[]>(() => {
+    const categoriesById = new Map<number, string>();
+
+    courses.forEach((course) => {
+      const categoryId = course.category?.id ?? course.categoryid;
+      const categoryName = course.category?.name?.trim();
+
+      if (!categoryName || !Number.isFinite(categoryId)) return;
+      if (categoriesById.has(categoryId)) return;
+
+      categoriesById.set(categoryId, categoryName);
+    });
+
+    const categoryFilters = Array.from(
+      categoriesById,
+      ([categoryId, label]) => ({
+        icon: getCategoryIcon(label),
+        key: getCategoryFilterKey(categoryId),
+        label,
+      })
+    ).sort((a, b) =>
+      a.label.localeCompare(b.label, 'es', { sensitivity: 'base' })
+    );
+
+    return [...staticStudentContentFilters, ...categoryFilters];
+  }, [courses]);
+
   const filteredMenuCourses = useMemo(() => {
     if (activeFilter === 'cursos') return courses;
+
+    if (isCategoryFilter(activeFilter)) {
+      const categoryId = getCategoryIdFromFilter(activeFilter);
+
+      if (!Number.isFinite(categoryId)) return [];
+
+      return courses.filter(
+        (course) =>
+          course.categoryid === categoryId || course.category?.id === categoryId
+      );
+    }
 
     return courses.filter((course) => {
       const category = normalizeFilterText(course.category?.name);
@@ -408,34 +474,6 @@ export default function StudentDetails({
 
       if (activeFilter === 'flow') {
         return joinedText.includes('flow');
-      }
-
-      if (activeFilter === 'desarrollo') {
-        return joinedText.includes('desarrollo');
-      }
-
-      if (activeFilter === 'diseno') {
-        return joinedText.includes('diseno');
-      }
-
-      if (activeFilter === 'ia') {
-        return (
-          joinedText.includes('inteligencia artificial') ||
-          joinedText.includes('machine learning') ||
-          joinedText.includes(' ia ')
-        );
-      }
-
-      if (activeFilter === 'negocios') {
-        return joinedText.includes('negocio') || joinedText.includes('empresa');
-      }
-
-      if (activeFilter === 'musica') {
-        return joinedText.includes('musica');
-      }
-
-      if (activeFilter === 'fotografia') {
-        return joinedText.includes('fotografia');
       }
 
       return true;
@@ -1178,7 +1216,7 @@ export default function StudentDetails({
           )}
 
           {/* Lista completa de cursos - Solo cuando el filtro es 'cursos' */}
-          {courseOnlyFilters.has(activeFilter) && (
+          {isCourseOnlyFilter(activeFilter) && (
             <div
               id="courses-filter-section"
               className="animation-delay-250 relative animate-zoom-in"
