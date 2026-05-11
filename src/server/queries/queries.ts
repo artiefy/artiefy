@@ -321,12 +321,20 @@ export async function getAdminUsers(query?: string) {
         ? (u.publicMetadata.role as string).trim().toLowerCase()
         : 'estudiante';
 
-    const status =
+    const rawStatus =
       typeof u.publicMetadata?.subscriptionStatus === 'string'
         ? (u.publicMetadata.subscriptionStatus as string)
         : typeof u.publicMetadata?.status === 'string'
           ? (u.publicMetadata.status as string)
           : 'activo';
+
+    const statusMap: Record<string, string> = {
+      active: 'activo',
+      inactive: 'inactivo',
+      suspended: 'suspendido',
+    };
+
+    const status = statusMap[rawStatus.toLowerCase()] ?? rawStatus;
 
     return {
       id: u.id,
