@@ -3471,6 +3471,10 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
               <ResizableBox
                 width={isDesktop ? dimensions.width : mobileBoxWidth}
                 height={isDesktop ? dimensions.height : mobileBoxHeight}
+                axis={isDesktop ? 'both' : 'none'}
+                handleSize={[20, 20]}
+                lockAspectRatio={false}
+                transformScale={1}
                 onResize={handleResize}
                 minConstraints={
                   isDesktop
