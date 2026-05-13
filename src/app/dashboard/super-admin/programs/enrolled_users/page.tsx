@@ -379,7 +379,19 @@ const allColumns: Column[] = [
   // Básicos
   { id: 'name', label: 'Nombre', defaultVisible: true, type: 'text' },
   { id: 'email', label: 'Correo', defaultVisible: true, type: 'text' },
-  { id: 'phone', label: 'Teléfono', defaultVisible: false, type: 'text' },
+  { id: 'phone', label: 'Teléfono', defaultVisible: true, type: 'text' },
+  {
+    id: 'identificacionTipo',
+    label: 'Tipo de documento',
+    defaultVisible: true,
+    type: 'text',
+  },
+  {
+    id: 'identificacionNumero',
+    label: 'Número de documento',
+    defaultVisible: true,
+    type: 'text',
+  },
   { id: 'address', label: 'Dirección', defaultVisible: false, type: 'text' },
   { id: 'country', label: 'País', defaultVisible: false, type: 'text' },
   { id: 'city', label: 'Ciudad', defaultVisible: false, type: 'text' },
@@ -489,18 +501,7 @@ const allColumns: Column[] = [
   },
 
   // ✅ Identificación (solo estos dos, eliminados los campos siempre null)
-  {
-    id: 'identificacionTipo',
-    label: 'Tipo de documento',
-    defaultVisible: false,
-    type: 'text',
-  },
-  {
-    id: 'identificacionNumero',
-    label: 'Número de documento',
-    defaultVisible: false,
-    type: 'text',
-  },
+
   {
     id: 'nivelEducacion',
     label: 'Nivel educación',
