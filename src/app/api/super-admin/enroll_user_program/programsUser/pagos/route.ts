@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { clerkClient } from '@clerk/nextjs/server';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, desc, eq, isNull } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { pagos, users } from '~/server/db/schema';
@@ -439,8 +439,29 @@ export async function POST(req: Request) {
     const cutoffDay = firstDate.getDate(); // 1
 
     // Fecha del último pago
-    const lastPaymentDate = new Date(fechaPrograma);
+    // Fecha del último pago (el más reciente en BD, no el del body)
+    const lastPayment = await db
+      .select()
+      .from(pagos)
+      .where(
+        and(
+          eq(pagos.userId, userId),
+          programId === null
+            ? isNull(pagos.programaId)
+            : eq(pagos.programaId, programId)
+        )
+      )
+      .orderBy(desc(pagos.fechaPrograma))
+      .limit(1);
 
+    if (lastPayment.length === 0) {
+      return NextResponse.json(
+        { error: 'No existe ningún pago registrado para calcular la fecha' },
+        { status: 400 }
+      );
+    }
+
+    const lastPaymentDate = new Date(lastPayment[0].fechaPrograma);
     // Calcular fecha fin en el mes del pago
     let subscriptionEndDate = new Date(
       lastPaymentDate.getFullYear(),

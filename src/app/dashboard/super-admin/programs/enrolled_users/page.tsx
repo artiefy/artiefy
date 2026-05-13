@@ -6375,7 +6375,6 @@ export default function EnrolledUsersPage() {
                     {currentUser.document ?? currentUser.id ?? '-'}
                   </p>
                 </div>
-                \n{' '}
                 <div className="rounded-lg bg-green-50 p-2.5 dark:bg-green-900/20">
                   <p
                     className="
