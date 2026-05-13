@@ -126,6 +126,7 @@ export async function GET(req: Request) {
         joinUrl: mt.joinUrl ?? null, // ✅ Asegurar que joinUrl está mapeado
         video_key: chosen?.videoKey ?? mt.video_key ?? null,
         videoUrl: chosen?.videoUrl ?? null,
+        videoUrlExt: mt.videoUrlExt ?? null, // 👈 agregar esto
       };
     });
 

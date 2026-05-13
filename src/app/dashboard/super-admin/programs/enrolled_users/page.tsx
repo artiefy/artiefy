@@ -379,7 +379,19 @@ const allColumns: Column[] = [
   // Básicos
   { id: 'name', label: 'Nombre', defaultVisible: true, type: 'text' },
   { id: 'email', label: 'Correo', defaultVisible: true, type: 'text' },
-  { id: 'phone', label: 'Teléfono', defaultVisible: false, type: 'text' },
+  { id: 'phone', label: 'Teléfono', defaultVisible: true, type: 'text' },
+  {
+    id: 'identificacionTipo',
+    label: 'Tipo de documento',
+    defaultVisible: true,
+    type: 'text',
+  },
+  {
+    id: 'identificacionNumero',
+    label: 'Número de documento',
+    defaultVisible: true,
+    type: 'text',
+  },
   { id: 'address', label: 'Dirección', defaultVisible: false, type: 'text' },
   { id: 'country', label: 'País', defaultVisible: false, type: 'text' },
   { id: 'city', label: 'Ciudad', defaultVisible: false, type: 'text' },
@@ -489,18 +501,7 @@ const allColumns: Column[] = [
   },
 
   // ✅ Identificación (solo estos dos, eliminados los campos siempre null)
-  {
-    id: 'identificacionTipo',
-    label: 'Tipo de documento',
-    defaultVisible: false,
-    type: 'text',
-  },
-  {
-    id: 'identificacionNumero',
-    label: 'Número de documento',
-    defaultVisible: false,
-    type: 'text',
-  },
+
   {
     id: 'nivelEducacion',
     label: 'Nivel educación',
@@ -6374,7 +6375,6 @@ export default function EnrolledUsersPage() {
                     {currentUser.document ?? currentUser.id ?? '-'}
                   </p>
                 </div>
-                \n{' '}
                 <div className="rounded-lg bg-green-50 p-2.5 dark:bg-green-900/20">
                   <p
                     className="
@@ -7875,6 +7875,8 @@ export default function EnrolledUsersPage() {
                     overflow: 'visible',
                     minWidth: '794px',
                     maxWidth: '900px',
+                    width: '100%',
+                    boxSizing: 'border-box',
                   }}
                 >
                   <div
@@ -7997,7 +7999,12 @@ export default function EnrolledUsersPage() {
                     className="
                       mb-6 w-full border-collapse border border-black text-sm
                     "
-                    style={{ pageBreakAfter: 'always', marginBottom: '0' }}
+                    style={{
+                      pageBreakAfter: 'always',
+                      marginBottom: '0',
+                      width: '100%',
+                      tableLayout: 'fixed',
+                    }}
                   >
                     <thead>
                       <tr className="bg-white">
@@ -8268,6 +8275,7 @@ export default function EnrolledUsersPage() {
                       gridTemplateColumns: '1fr 1fr',
                       gap: '6px',
                       fontSize: '13px',
+                      width: '100%',
                       backgroundColor: 'white',
                       position: 'relative',
                       zIndex: 10,

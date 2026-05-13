@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
-import { and, eq, SQL } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import {
   createActivity,
@@ -120,7 +120,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Primero obtener todas las lecciones del curso
+    // En GET de /api/educadores/actividades/route.ts
+    // Reemplaza la parte que arma las condiciones:
+
+    const lessonId = searchParams.get('lessonId');
+
     const courseLessons = await db
       .select()
       .from(lessons)
@@ -128,22 +132,28 @@ export async function GET(request: NextRequest) {
 
     const lessonIds = courseLessons.map((lesson) => lesson.id);
 
-    // Construir las condiciones de la consulta
-    const conditions: SQL[] = [];
-
-    if (lessonIds.length > 0) {
-      conditions.push(eq(activities.lessonsId, lessonIds[0]));
+    if (lessonIds.length === 0) {
+      return NextResponse.json([]);
     }
 
-    if (parametroId) {
-      conditions.push(eq(activities.parametroId, parseInt(parametroId)));
-    }
+    // Si viene lessonId específico, filtrar solo esa
+    const targetLessonIds = lessonId
+      ? [parseInt(lessonId)].filter((id) => lessonIds.includes(id))
+      : lessonIds;
 
-    // Realizar la consulta con las condiciones
+    const { inArray } = await import('drizzle-orm');
+
     const actividades = await db
       .select()
       .from(activities)
-      .where(and(...conditions));
+      .where(
+        and(
+          inArray(activities.lessonsId, targetLessonIds),
+          ...(parametroId
+            ? [eq(activities.parametroId, parseInt(parametroId))]
+            : [])
+        )
+      );
 
     return NextResponse.json(actividades);
   } catch (error) {

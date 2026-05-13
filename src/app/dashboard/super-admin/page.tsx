@@ -1,6 +1,7 @@
 'use client';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 
@@ -16,7 +17,6 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import SunEditor from 'suneditor-react';
 
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal';
@@ -28,12 +28,11 @@ import BulkUploadUsersV2 from './components/BulkUploadUsersV2';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { InfoDialog } from './components/InfoDialog';
 
-import 'suneditor/dist/css/suneditor.min.css';
-
 interface User {
   id: string;
   firstName: string;
   lastName: string;
+  username?: string;
   email: string;
   role: string;
   status: string;
@@ -43,8 +42,9 @@ interface User {
   permissions?: string[]; // 👈 AGREGA ESTO
   subscriptionEndDate?: string | null;
 }
+const SunEditor = dynamic(() => import('suneditor-react'), { ssr: false });
 
-// (Removed unused `CourseBrief` type — use `Course` where needed)
+//(Removed unused `CourseBrief` type — use `Course` where needed)
 
 type ConfirmationState = {
   isOpen: boolean;
@@ -137,6 +137,9 @@ interface RawUser {
   primaryPhoneNumber?: { phoneNumber?: unknown } | null;
   telefono?: unknown;
   permissions?: unknown;
+  username?: unknown;
+  handle?: unknown;
+  userName?: unknown;
 }
 
 // Helpers para leer tipos seguros
@@ -707,7 +710,9 @@ export default function AdminDashboard() {
         normalize(`${user.firstName} ${user.lastName}`).includes(
           normalize(searchQuery)
         ) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())) &&
+        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ??
+          false)) &&
       (roleFilter ? user.role === roleFilter : true) &&
       (statusFilter ? user.status === statusFilter : true)
   );
@@ -1402,6 +1407,10 @@ export default function AdminDashboard() {
       if (!Array.isArray(rawData)) throw new Error('Datos inválidos recibidos');
 
       const rawList: RawUser[] = rawData as RawUser[];
+      console.log(
+        '🔍 DEBUG - Primer usuario raw:',
+        JSON.stringify(rawList[0], null, 2)
+      ); // 👈 TEMPORAL
 
       const data: User[] = rawList.map((item) => {
         const id = String(item.id ?? '');
@@ -1444,11 +1453,15 @@ export default function AdminDashboard() {
           : undefined;
 
         const permissions = asStringArray(item.permissions);
-
+        const username =
+          asString((item as { username?: unknown }).username) ??
+          asString((item as { handle?: unknown }).handle) ??
+          undefined;
         return {
           id,
           firstName: firstName || 'Sin nombre',
           lastName: lastName || 'Sin apellido',
+          username,
           email,
           role,
           status,
@@ -2508,7 +2521,7 @@ export default function AdminDashboard() {
             >
               <input
                 type="text"
-                placeholder="Buscar por nombre o correo..."
+                placeholder="Buscar por nombre, correo o username..." // 👈
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="
@@ -2591,18 +2604,18 @@ export default function AdminDashboard() {
                 <span>usuarios</span>
               </div>
 
-              <table className="min-w-full table-auto border-collapse">
+              <table
+                className="
+                  min-w-full table-auto border-collapse overflow-hidden
+                  rounded-xl border border-[#1a2a35] bg-[#0a0f14]
+                "
+              >
                 <thead>
-                  <tr
-                    className="
-                      border-b border-gray-700 bg-gradient-to-r from-[#3AF4EF]
-                      via-[#00BDD8] to-[#01142B] text-white
-                    "
-                  >
+                  <tr className="border-b border-[#00BDD8] bg-[#0d1a22]">
                     <th
                       className="
-                        w-12 px-2 py-3
-                        sm:px-4 sm:py-4
+                        w-10 p-3 text-center
+                        sm:px-4
                       "
                     >
                       <input
@@ -2615,60 +2628,61 @@ export default function AdminDashboard() {
                               : []
                           )
                         }
-                        className="rounded border-white/20"
+                        className="rounded border-white/20 accent-cyan-400"
                       />
                     </th>
                     <th
                       className="
-                        px-2 py-3 text-left text-xs font-medium
-                        whitespace-nowrap
-                        sm:px-4 sm:py-4 sm:text-sm
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
                       "
                     >
                       Usuario
                     </th>
                     <th
                       className="
-                        px-2 py-3 text-left text-xs font-medium
-                        whitespace-nowrap
-                        sm:px-4 sm:py-4 sm:text-sm
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
                       "
                     >
                       Rol
                     </th>
                     <th
                       className="
-                        px-2 py-3 text-left text-xs font-medium
-                        whitespace-nowrap
-                        sm:px-4 sm:py-4 sm:text-sm
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
                       "
                     >
                       Estado
                     </th>
                     <th
                       className="
-                        px-2 py-3 text-right text-xs font-medium
-                        whitespace-nowrap
-                        sm:px-4 sm:py-4 sm:text-sm
+                        p-3 text-right text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
                       "
                     >
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-700/50">
+                <tbody>
                   {currentUsers.map((user) => (
                     <tr
                       key={user.id}
                       className="
-                        group transition-colors
-                        hover:bg-gray-700/50
+                        border-b border-[#111c24] transition-colors
+                        last:border-0
+                        hover:bg-[#0d1e28]
                       "
                     >
                       <td
                         className="
-                          px-2 py-3
-                          sm:px-4 sm:py-4
+                          p-3 text-center
+                          sm:p-4
                         "
                       >
                         <input
@@ -2677,62 +2691,51 @@ export default function AdminDashboard() {
                           onChange={() =>
                             handleUserSelection(user.id, user.email)
                           }
-                          className="rounded border-gray-600"
+                          className="rounded border-gray-600 accent-cyan-400"
                         />
                       </td>
                       <td
                         className="
-                          px-2 py-3
-                          sm:px-4 sm:py-4
+                          p-3
+                          sm:p-4
                         "
                       >
-                        <div
-                          className="
-                            flex items-center gap-2
-                            sm:gap-3
-                          "
-                        >
+                        <div className="flex items-center gap-3">
                           <div
                             className="
-                              size-8 rounded-full bg-primary/10 p-1
-                              sm:size-10 sm:p-2
+                              flex size-8 shrink-0 items-center justify-center
+                              rounded-md border border-[#00BDD8]/20 bg-[#0d2830]
+                              text-[11px] font-semibold text-[#00BDD8]
+                              sm:size-9
                             "
                           >
-                            <span
-                              className="
-                                flex size-full items-center justify-center
-                                text-xs font-semibold text-primary
-                                sm:text-sm
-                              "
-                            >
-                              {user.firstName[0]}
-                              {user.lastName[0]}
-                            </span>
+                            {user.firstName[0]}
+                            {user.lastName[0]}
                           </div>
                           <div>
                             <div
                               className="
-                                text-xs font-medium text-white
+                                text-xs font-medium text-[#e8f4f8]
                                 sm:text-sm
                               "
                             >
                               {user.firstName} {user.lastName}
                             </div>
-                            <div
-                              className="
-                                text-xs text-gray-400
-                                sm:text-sm
-                              "
-                            >
+                            <div className="text-[11px] text-[#4a7080]">
                               {user.email}
                             </div>
+                            {user.username && ( // 👈 nuevo
+                              <div className="text-[10px] text-[#00BDD8]/60">
+                                @{user.username}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
                       <td
                         className="
-                          px-2 py-3
-                          sm:px-4 sm:py-4
+                          p-3
+                          sm:p-4
                         "
                       >
                         <select
@@ -2741,49 +2744,58 @@ export default function AdminDashboard() {
                             handleRoleChange(user.id, e.target.value)
                           }
                           className="
-                            w-full rounded-md border border-gray-600
-                            bg-gray-700/50 px-2 py-1 text-xs text-white
-                            transition-colors
-                            hover:bg-gray-700
-                            sm:px-3 sm:text-sm
+                            rounded-md border border-[#1a2f3a] bg-[#080e13] px-2
+                            py-1.5 text-[11px] text-[#7ab8cc] transition-colors
+                            hover:border-[#00BDD8]/40
+                            focus:outline-none
+                            sm:text-xs
                           "
                         >
                           <option value="sin-role">Sin Rol</option>
                           <option value="admin">Admin</option>
-                          <option value="super-admin">super-admin</option>
+                          <option value="super-admin">Super Admin</option>
                           <option value="educador">Educador</option>
                           <option value="estudiante">Estudiante</option>
                         </select>
                       </td>
                       <td
                         className="
-                          px-2 py-3
-                          sm:px-4 sm:py-4
+                          p-3
+                          sm:p-4
                         "
                       >
-                        <div
+                        <span
                           className={`
-                            inline-flex items-center rounded-full px-2 py-1
-                            text-xs font-medium
+                            inline-flex items-center gap-1.5 rounded px-2.5 py-1
+                            text-[10px] font-semibold tracking-[0.08em]
+                            uppercase
                             ${
                               user.status === 'activo'
-                                ? 'bg-green-500/10 text-green-500'
+                                ? `
+                                  border border-[#00e676]/20 bg-[#0a2a1a]
+                                  text-[#00e676]
+                                `
                                 : user.status === 'inactivo'
-                                  ? 'bg-red-500/10 text-red-500'
-                                  : 'bg-yellow-500/10 text-yellow-500'
+                                  ? `
+                                    border border-[#ff5252]/20 bg-[#2a0a0a]
+                                    text-[#ff5252]
+                                  `
+                                  : `
+                                    border border-[#ffab40]/20 bg-[#2a1a00]
+                                    text-[#ffab40]
+                                  `
                             }
                           `}
                         >
-                          <div
+                          <span
                             className={`
-                              mr-1 size-1.5 rounded-full
-                              sm:size-2
+                              size-1.5 rounded-full
                               ${
                                 user.status === 'activo'
-                                  ? 'bg-green-500'
+                                  ? 'bg-[#00e676]'
                                   : user.status === 'inactivo'
-                                    ? 'bg-red-500'
-                                    : 'bg-yellow-500'
+                                    ? 'bg-[#ff5252]'
+                                    : 'bg-[#ffab40]'
                               }
                             `}
                           />
@@ -2795,37 +2807,27 @@ export default function AdminDashboard() {
                           >
                             {user.status}
                           </span>
-                          <span
-                            className="
-                              inline
-                              sm:hidden
-                            "
-                          >
+                          <span className="sm:hidden">
                             {user.status === 'activo'
                               ? 'A'
                               : user.status === 'inactivo'
                                 ? 'I'
                                 : 'S'}
                           </span>
-                        </div>
+                        </span>
                       </td>
                       <td
                         className="
-                          px-2 py-3
-                          sm:px-4 sm:py-4
+                          p-3
+                          sm:p-4
                         "
                       >
-                        <div
-                          className="
-                            flex items-center justify-end gap-1
-                            sm:gap-2
-                          "
-                        >
+                        <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => handleViewUser(user)}
                             className="
-                              rounded-md p-1
-                              hover:bg-gray-700
+                              rounded-md p-1.5 text-[#3a6070] transition-colors
+                              hover:bg-[#0d2030] hover:text-[#00BDD8]
                             "
                             title="Ver detalles"
                           >
@@ -2839,8 +2841,8 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => handleEditUser(user)}
                             className="
-                              rounded-md p-1
-                              hover:bg-gray-700
+                              rounded-md p-1.5 text-[#3a6070] transition-colors
+                              hover:bg-[#0d2030] hover:text-[#00BDD8]
                             "
                             title="Editar"
                           >
@@ -2854,8 +2856,8 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => handleDeleteUser(user.id)}
                             className="
-                              rounded-md p-1
-                              hover:bg-red-500/10 hover:text-red-500
+                              rounded-md p-1.5 text-[#3a6070] transition-colors
+                              hover:bg-[#2a0a0a] hover:text-[#ff5252]
                             "
                             title="Eliminar"
                           >

@@ -519,10 +519,17 @@ export const updateCourse = async (
     // 🧼 Elimina courseTypeId del objeto updateData (no se guarda directamente)
     const { courseTypeId, ...rest } = updateData;
 
-    // 🧹 Limpia valores undefined
     const cleanedData = Object.fromEntries(
       Object.entries(rest).filter(([_, v]) => v !== undefined)
     );
+    // Luego forzar visibility explícitamente:
+    if ('visibility' in rest) {
+      cleanedData.visibility = rest.visibility as
+        | string
+        | number
+        | boolean
+        | null;
+    }
 
     console.log('📝 [updateCourse] cleanedData (sin undefined):', cleanedData);
 

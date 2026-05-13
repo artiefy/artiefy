@@ -157,6 +157,7 @@ export async function GET(request: Request) {
     // 🔹 Lo manejaremos desde el frontend.
     const usersWithTime = users.map((user) => ({
       ...user,
+      username: (user as { username?: string }).username ?? null,
       timeSpent: 0, // El frontend lo llenará
     }));
 
@@ -290,12 +291,11 @@ export async function POST(request: Request) {
     console.log('✅ Usuario guardado en la BD correctamente');
     // 🔹 Enviar correo con credenciales
 
-    // 4. Preparar usuario seguro para la respuesta
     const safeUser = {
       id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
-      username: user.username ?? 'usuario',
+      username: user.username ?? null, // ← solo uno
       email: user.emailAddresses.find(
         (addr) => addr.id === user.primaryEmailAddressId
       )?.emailAddress,
@@ -365,7 +365,11 @@ export async function POST(request: Request) {
       }
     }
 
-    await sendWelcomeEmail(email, safeUser.username, generatedPassword);
+    await sendWelcomeEmail(
+      email,
+      safeUser.username ?? 'usuario',
+      generatedPassword
+    );
 
     return NextResponse.json({
       user: safeUser,

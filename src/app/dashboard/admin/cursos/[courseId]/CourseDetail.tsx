@@ -449,6 +449,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         subjects: subjects.length ? subjects : currentSubjects,
         individualPrice,
         parametros,
+        // ✅ Agregar campos faltantes (aunque admin no los use, para compatibilidad con el API)
+        horario: null,
+        espacios: null,
+        certificationTypeId: null,
+        idTypesCourses: null,
       };
 
       console.log('🚀 Payload final de actualización:', payload);

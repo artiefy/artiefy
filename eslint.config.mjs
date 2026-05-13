@@ -110,20 +110,7 @@ export default defineConfig([
       'better-tailwindcss/enforce-shorthand-classes': 'warn',
       // Mantener wrapping de Tailwind con saltos de línea y grupos "normal",
       // pero compatible con formatters al guardar (Prettier + ESLint).
-      'better-tailwindcss/enforce-consistent-line-wrapping': [
-        'warn',
-        {
-          printWidth: 80,
-          classesPerLine: 0,
-          group: 'newLine',
-          preferSingleLine: false,
-          // Mantiene la sangría multilínea estándar del proyecto.
-          indent: 2,
-          lineBreakStyle: 'unix',
-          // Recomendado por el plugin cuando convive con Prettier/Biome.
-          strictness: 'loose',
-        },
-      ],
+      'better-tailwindcss/enforce-consistent-line-wrapping': 'off',
       'react/display-name': 'off',
     },
   },

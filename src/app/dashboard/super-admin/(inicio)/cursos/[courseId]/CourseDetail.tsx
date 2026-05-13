@@ -135,6 +135,7 @@ type UIMeeting = ScheduledMeeting & {
   video_key?: string;
   video_key_2?: string; // ✅ nuevo
   videoUrl2?: string; // ✅ nuevo opcional
+  videoUrlExt?: string;
 };
 
 // Add these interfaces after the existing interfaces
@@ -477,6 +478,26 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // --- Proyectos de estudiantes ---
   const [studentProjects, setStudentProjects] = useState<StudentProject[]>([]);
+  // --- Actividades del curso ---
+  interface CourseActivity {
+    id: number;
+    name: string;
+    description?: string | null;
+    typeid: number;
+    lessonsId: number;
+    revisada: boolean;
+    parametroId?: number | null;
+    porcentaje?: number | null;
+    fechaMaximaEntrega?: string | null;
+    // enriquecido en el frontend
+    lessonTitle?: string;
+    lessonOrderIndex?: number;
+  }
+
+  const [courseActivities, setCourseActivities] = useState<CourseActivity[]>(
+    []
+  );
+  const [loadingActivities, setLoadingActivities] = useState(false);
   const [loadingProjects, setLoadingProjects] = useState(false);
   // Estado para el modal de proyecto seleccionado
   const [selectedProject, setSelectedProject] = useState<StudentProject | null>(
@@ -519,6 +540,48 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setReplyingToPostId(allPostIds);
     }
   }, [posts, fetchPostReplies]);
+  useEffect(() => {
+    if (!courseIdNumber) return;
+    setLoadingActivities(true);
+
+    (async () => {
+      try {
+        // Traer lecciones
+        const lessonsRes = await fetch(
+          `/api/super-admin/lessons?courseId=${courseIdNumber}`
+        );
+        if (!lessonsRes.ok) return;
+        const lessonsData = (await lessonsRes.json()) as {
+          id: number;
+          title: string;
+          orderIndex: number;
+        }[];
+
+        // Traer actividades de cada lección individualmente
+        const allActivities: CourseActivity[] = [];
+        for (const lesson of lessonsData) {
+          const actRes = await fetch(
+            `/api/educadores/actividades?courseId=${courseIdNumber}&lessonId=${lesson.id}`
+          );
+          if (!actRes.ok) continue;
+          const acts = (await actRes.json()) as CourseActivity[];
+          // filtrar por lessonsId por si el backend no filtra bien
+          const filtered = acts.filter((a) => a.lessonsId === lesson.id);
+          filtered.forEach((a) => {
+            a.lessonTitle = lesson.title;
+            a.lessonOrderIndex = lesson.orderIndex;
+          });
+          allActivities.push(...filtered);
+        }
+
+        setCourseActivities(allActivities);
+      } catch (e) {
+        console.error('Error cargando actividades del curso:', e);
+      } finally {
+        setLoadingActivities(false);
+      }
+    })();
+  }, [courseIdNumber]);
 
   // Función para crear respuesta a un post
   const handleCreateReply = async (postId: number) => {
@@ -706,10 +769,10 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           : [];
 
         // Helpers locales (evitan usar ensureUIMeeting y "any")
-        const getStr = (obj: Record<string, unknown>, key: string) => {
-          const v = obj[key];
-          return typeof v === 'string' && v.trim() ? (v as string) : undefined;
-        };
+        //const getStr = (obj: Record<string, unknown>, key: string) => {
+        // const v = obj[key];
+        //  return typeof v === 'string' && v.trim() ? (v as string) : undefined;
+        //};
         const toIsoDate = (v: unknown): string | undefined => {
           if (typeof v === 'string' && v.trim()) return v; // ya viene ISO/legible
           if (v instanceof Date) return v.toISOString();
@@ -736,19 +799,24 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         const toUIMeeting = (raw: unknown): UIMeeting => {
           const r = (raw ?? {}) as Record<string, unknown>;
 
-          const meetingId =
-            getStr(r, 'meeting_id') ?? getStr(r, 'meetingId') ?? '';
+          const str = (key: string): string | undefined => {
+            const v = r[key];
+            return typeof v === 'string' && v.trim() ? v : undefined;
+          };
+
+          const meetingId = str('meeting_id') ?? str('meetingId') ?? '';
 
           return {
-            id: Number(r.id) || 0, // ✅ Usar el id real de BD, no parseInt(meetingId)
-            meetingId: meetingId,
-            joinUrl: getStr(r, 'join_url') ?? getStr(r, 'joinUrl'),
-            recordingContentUrl: getStr(r, 'recordingContentUrl'),
-            video_key: getStr(r, 'video_key') ?? getStr(r, 'videoKey'),
-            video_key_2: getStr(r, 'video_key_2') ?? getStr(r, 'videoKey2'),
-            videoUrl: getStr(r, 'videoUrl'),
-            videoUrl2: getStr(r, 'videoUrl2'),
-            title: typeof r.title === 'string' ? (r.title as string) : '',
+            id: Number(r.id) || 0,
+            meetingId,
+            joinUrl: str('join_url') ?? str('joinUrl'),
+            recordingContentUrl: str('recordingContentUrl'),
+            video_key: str('video_key') ?? str('videoKey'),
+            video_key_2: str('video_key_2') ?? str('videoKey2'),
+            videoUrl: str('videoUrl'),
+            videoUrl2: str('videoUrl2'),
+            videoUrlExt: str('video_url_ext') ?? str('videoUrlExt'), // ✅ fix
+            title: typeof r.title === 'string' ? r.title : '',
             startDateTime: toIsoDate(r.startDateTime) ?? '',
             endDateTime: toIsoDate(r.endDateTime) ?? '',
             weekNumber: Number(r.weekNumber ?? 0),
@@ -1312,6 +1380,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         horario,
         espacios,
         certificationTypeId,
+        idTypesCourses, // ✅ Agregar el campo idTypesCourses
       };
 
       console.log('🚀 Payload final de actualización:', payload);
@@ -1979,9 +2048,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     const video_key = str('video_key') ?? str('videoKey');
     const videoUrlFromApi = str('videoUrl');
+    const videoUrlExt = str('video_url_ext') ?? str('videoUrlExt');
+
     const finalVideoUrl = video_key
       ? `${awsBase}/video_clase/${video_key}`
-      : videoUrlFromApi;
+      : (videoUrlExt ?? videoUrlFromApi); // 👈 prioriza videoUrlExt
     const video_key_2 = str('video_key_2') ?? str('videoKey2');
     const finalVideoUrl2 = video_key_2
       ? `${awsBase}/video_clase/${video_key_2}`
@@ -1994,6 +2065,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       recordingContentUrl: undefined,
       video_key,
       videoUrl: finalVideoUrl,
+      videoUrlExt,
       title: str('title') ?? '',
       startDateTime: str('startDateTime') ?? '',
       endDateTime: str('endDateTime') ?? '',
@@ -3101,24 +3173,25 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       ${
                         activeTab === 'actividades'
                           ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
+          bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]
+          ring-1 ring-cyan-400/40
+        `
                           : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
+          text-white/80
+          hover:bg-white/5 hover:text-white
+        `
                       }
                     `}
                   >
                     Actividades{' '}
                     <span
                       className="
-                        ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                        text-xs font-bold text-slate-950
-                      "
-                    ></span>
+                      ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                      text-xs font-bold text-slate-950
+                    "
+                    >
+                      {courseActivities.length}
+                    </span>
                   </button>
 
                   <button
@@ -5635,21 +5708,212 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
                   </div>
                 )}
-                {/* Actividades Tab */}
+
                 {activeTab === 'actividades' && (
                   <div className="animate-in fade-in duration-500">
                     <h2 className="mb-6 text-2xl font-bold text-white">
-                      Actividades
+                      Actividades del curso
                     </h2>
-                    <div
-                      className="
-                        rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6
+
+                    {loadingActivities ? (
+                      <div className="flex items-center gap-3 text-white/60">
+                        <div
+                          className="
+                          size-5 animate-spin rounded-full border-2
+                          border-cyan-500 border-t-transparent
+                        "
+                        />
+                        Cargando actividades...
+                      </div>
+                    ) : courseActivities.length === 0 ? (
+                      <div
+                        className="
+                        rounded-xl border border-dashed border-white/20
+                        bg-slate-800/30 p-8 text-center
                       "
-                    >
-                      <p className="text-white/60">
-                        Aquí irán las actividades del curso...
-                      </p>
-                    </div>
+                      >
+                        <p className="text-white/60">
+                          No hay actividades registradas en este curso.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {Object.entries(
+                          courseActivities.reduce<
+                            Record<string, CourseActivity[]>
+                          >((acc, act) => {
+                            const key = `${act.lessonOrderIndex ?? 0}-${act.lessonsId}`;
+
+                            if (!acc[key]) {
+                              acc[key] = [];
+                            }
+
+                            acc[key].push(act);
+
+                            return acc;
+                          }, {})
+                        )
+                          .sort(([a], [b]) => {
+                            const [ai] = a.split('-').map(Number);
+                            const [bi] = b.split('-').map(Number);
+
+                            return (ai ?? 0) - (bi ?? 0);
+                          })
+                          .map(([key, acts]) => {
+                            const first = acts[0]!;
+
+                            return (
+                              <div
+                                key={key}
+                                className="
+                                  rounded-2xl border border-gray-700
+                                  bg-[#111827] p-5 shadow-md
+                                "
+                              >
+                                <div className="mb-4 flex items-center gap-3">
+                                  <span
+                                    className="
+                                    flex size-8 items-center justify-center
+                                    rounded-full bg-cyan-500/20 text-sm
+                                    font-bold text-cyan-400
+                                  "
+                                  >
+                                    {first.lessonOrderIndex ?? '?'}
+                                  </span>
+
+                                  <h3 className="text-lg font-semibold text-white">
+                                    {first.lessonTitle ?? 'Sin título'}
+                                  </h3>
+
+                                  <span className="ml-auto text-xs text-gray-500">
+                                    {acts.length} actividad
+                                    {acts.length !== 1 ? 'es' : ''}
+                                  </span>
+                                </div>
+
+                                <ul className="space-y-3">
+                                  {acts.map((act) => (
+                                    <li
+                                      key={act.id}
+                                      className="
+                                        flex flex-col gap-3 rounded-xl border
+                                        border-gray-600 bg-slate-800/60 p-4
+                                        sm:flex-row sm:items-center
+                                        sm:justify-between
+                                      "
+                                    >
+                                      <div className="flex-1">
+                                        <div
+                                          className="
+                                          flex flex-wrap items-center gap-2
+                                        "
+                                        >
+                                          <span className="font-semibold text-white">
+                                            {act.name}
+                                          </span>
+
+                                          {act.revisada ? (
+                                            <span
+                                              className="
+                                              rounded-full bg-green-500/20 px-2
+                                              py-0.5 text-xs font-semibold
+                                              text-green-400
+                                            "
+                                            >
+                                              Calificable
+                                            </span>
+                                          ) : (
+                                            <span
+                                              className="
+                                              rounded-full bg-gray-600/40 px-2
+                                              py-0.5 text-xs text-gray-400
+                                            "
+                                            >
+                                              No calificable
+                                            </span>
+                                          )}
+
+                                          {act.revisada &&
+                                            act.porcentaje != null &&
+                                            act.porcentaje > 0 && (
+                                              <span
+                                                className="
+                                                rounded-full bg-cyan-500/20 px-2
+                                                py-0.5 text-xs text-cyan-400
+                                              "
+                                              >
+                                                {act.porcentaje}%
+                                              </span>
+                                            )}
+
+                                          {act.fechaMaximaEntrega && (
+                                            <span
+                                              className="
+                                              rounded-full bg-yellow-500/20 px-2
+                                              py-0.5 text-xs text-yellow-400
+                                            "
+                                            >
+                                              📅{' '}
+                                              {new Date(
+                                                act.fechaMaximaEntrega
+                                              ).toLocaleDateString('es-CO', {
+                                                day: '2-digit',
+                                                month: 'short',
+                                                year: 'numeric',
+                                              })}
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        {act.description && (
+                                          <p
+                                            className="
+                                            mt-2 line-clamp-2 text-sm
+                                            text-gray-400
+                                          "
+                                          >
+                                            {act.description}
+                                          </p>
+                                        )}
+                                      </div>
+
+                                      <div
+                                        className="
+                                        flex shrink-0 flex-wrap gap-2
+                                      "
+                                      >
+                                        <a
+                                          href={`/dashboard/super-admin/cursos/${courseIdNumber}/${act.lessonsId}/actividades/${act.id}`}
+                                          className="
+                                            rounded-lg bg-blue-600 px-3 py-1.5
+                                            text-sm font-semibold text-white
+                                            transition
+                                            hover:bg-blue-500
+                                          "
+                                        >
+                                          👁 Ver
+                                        </a>
+
+                                        <a
+                                          href={`/dashboard/super-admin/cursos/${courseIdNumber}/${act.lessonsId}/actividades/crear?lessonId=${act.lessonsId}&activityId=${act.id}`}
+                                          className="
+                                            rounded-lg border border-cyan-600
+                                            px-3 py-1.5 text-sm font-semibold
+                                            text-cyan-400 transition
+                                            hover:bg-cyan-600 hover:text-white
+                                          "
+                                        >
+                                          ✏️ Editar
+                                        </a>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
                   </div>
                 )}
 
