@@ -814,16 +814,17 @@ body.no-chrome {
   }
 }
 
-/* Override campanita: SOLO contorno (stroke) negro en móviles */
+/* Override campanita: mantener el contorno azul en móviles */
 @media (max-width: 768px) {
-  .campana-header svg,
-  .campana-header svg * {
-    stroke: #000 !important;
+  .campana-header .notification-icon,
+  .campana-header .notification-icon * {
+    color: #22c4d3 !important;
+    fill: none !important;
+    stroke: #22c4d3 !important;
   }
-  .campana-header [role='button'] * {
-    color: #000 !important;
-    fill: #000 !important;
-    stroke: #000 !important;
+
+  .campana-header .notification-button {
+    color: #22c4d3 !important;
   }
 
   /* Asegurar que el popover del UserButton de Clerk quede encima del header en mobile */

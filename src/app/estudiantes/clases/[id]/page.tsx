@@ -1,9 +1,9 @@
 import { Suspense } from 'react';
 
 import { type Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
@@ -18,6 +18,7 @@ import { sortLessons } from '~/utils/lessonSorting';
 import LessonDetails from './LessonDetails';
 
 import type { LessonWithProgress } from '~/types';
+import type { CourseType } from '~/types';
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -25,6 +26,20 @@ export const metadata: Metadata = {
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+
+const parseSubscriptionDate = (dateString: string | null | undefined) => {
+  if (!dateString) return null;
+  const isoDate = new Date(dateString);
+  if (!Number.isNaN(isoDate.getTime())) return isoDate;
+
+  const matchSlash = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(dateString);
+  if (matchSlash) {
+    const [, year, month, day] = matchSlash;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  return null;
+};
 
 interface PageProps {
   params: Promise<{
@@ -80,6 +95,44 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
     if (!course) {
       console.log('Curso no encontrado');
       return notFound();
+    }
+
+    const user = await currentUser();
+    const metadata = user?.publicMetadata as
+      | {
+          subscriptionStatus?: string;
+          subscriptionEndDate?: string;
+        }
+      | undefined;
+    const courseTypes: CourseType[] = [
+      ...(course.courseType ? [course.courseType] : []),
+      ...(Array.isArray(course.courseTypes) ? course.courseTypes : []),
+    ];
+    const requiresSubscription =
+      courseTypes.length === 0
+        ? course.requiresSubscription === true
+        : courseTypes.some(
+            (type) => (type.requiredSubscriptionLevel ?? 'none') !== 'none'
+          );
+    const hasPermanentEnrollment = Array.isArray(course.enrollments)
+      ? course.enrollments.some(
+          (enrollment) => enrollment.userId === userId && enrollment.isPermanent
+        )
+      : false;
+    const subscriptionEndDate = parseSubscriptionDate(
+      metadata?.subscriptionEndDate
+    );
+    const hasActiveSubscription =
+      metadata?.subscriptionStatus === 'active' &&
+      subscriptionEndDate !== null &&
+      subscriptionEndDate > new Date();
+
+    if (
+      requiresSubscription &&
+      !hasPermanentEnrollment &&
+      !hasActiveSubscription
+    ) {
+      redirect('/planes');
     }
 
     // Obtener progreso real de todas las lecciones del curso

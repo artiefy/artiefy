@@ -160,6 +160,7 @@ export async function getCourseById(
           },
         },
         courseType: true, // Add this relation
+        typeCourse: true,
       },
     });
 
@@ -308,6 +309,13 @@ export async function getCourseById(
         isPurchasableIndividually: ct.courseType.isPurchasableIndividually,
         price: ct.courseType.price,
       })),
+      idTypesCourses: course.idTypesCourses ?? null,
+      typeCourse: course.typeCourse
+        ? {
+            id: course.typeCourse.id,
+            type: course.typeCourse.type,
+          }
+        : null,
       requiresProgram: Boolean(course.requiresProgram), // Ensure it's always boolean
       isActive: Boolean(course.isActive), // Also ensure isActive is always boolean
       instructor: courseData.instructor,

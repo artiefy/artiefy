@@ -88,11 +88,61 @@ export function ProgramHeader({
   const [isLoadingLive, setIsLoadingLive] = useState(false);
   // Agregar estado para controlar renderizado después de hidratación
   const [isClient, setIsClient] = useState(false);
+  const [showMobileEnrollBar, setShowMobileEnrollBar] = useState(false);
 
   // Establecer isClient en true después del primer renderizado (solo en cliente)
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || isEnrolled) {
+      setShowMobileEnrollBar(false);
+      return;
+    }
+
+    const updateMobileEnrollBar = () => {
+      setShowMobileEnrollBar(window.scrollY > 120);
+    };
+
+    updateMobileEnrollBar();
+    window.addEventListener('scroll', updateMobileEnrollBar, {
+      passive: true,
+    });
+    window.addEventListener('resize', updateMobileEnrollBar);
+
+    return () => {
+      window.removeEventListener('scroll', updateMobileEnrollBar);
+      window.removeEventListener('resize', updateMobileEnrollBar);
+    };
+  }, [isEnrolled]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const isVisible = !isEnrolled && showMobileEnrollBar;
+    document.documentElement.classList.toggle(
+      'mobile-bottom-cta-visible',
+      isVisible
+    );
+    document.documentElement.dataset.mobileBottomCtaVisible = String(isVisible);
+    window.dispatchEvent(
+      new CustomEvent('mobile-bottom-cta-visibility-change', {
+        detail: { visible: isVisible },
+      })
+    );
+
+    return () => {
+      if (!isVisible) return;
+      document.documentElement.classList.remove('mobile-bottom-cta-visible');
+      document.documentElement.dataset.mobileBottomCtaVisible = 'false';
+      window.dispatchEvent(
+        new CustomEvent('mobile-bottom-cta-visibility-change', {
+          detail: { visible: false },
+        })
+      );
+    };
+  }, [isEnrolled, showMobileEnrollBar]);
 
   useEffect(() => {
     let isActive = true;
@@ -242,6 +292,7 @@ export function ProgramHeader({
   const coverImageUrl = program.coverImageKey
     ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${program.coverImageKey}`
     : 'https://placehold.co/1200x675/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+  const programTypeLabel = program.typeProgram?.type?.trim();
   const _getCategoryName = (program: Program) => {
     return program.category?.name ?? 'Sin categoría';
   };
@@ -807,6 +858,18 @@ export function ProgramHeader({
                     >
                       {program.category?.name ?? 'Sin categoría'}
                     </div>
+                    {programTypeLabel && (
+                      <div
+                        className="
+                          inline-flex items-center rounded-full border
+                          border-cyan-300/30 bg-cyan-300/15 px-2.5 py-0.5
+                          text-xs font-medium text-cyan-200 transition-colors
+                          hover:bg-cyan-300/25
+                        "
+                      >
+                        {programTypeLabel}
+                      </div>
+                    )}
                   </div>
                   <h1
                     className="
@@ -1565,6 +1628,50 @@ export function ProgramHeader({
         programId={program.id}
         materias={program.materias ?? []}
       />
+      {!isEnrolled && showMobileEnrollBar && (
+        <div
+          className="
+            fixed inset-x-0 bottom-0 z-[900] border-t border-[#1d283a]
+            bg-[#061c37f2] px-4 pt-2
+            pb-[calc(env(safe-area-inset-bottom,0px)+0.65rem)] backdrop-blur-md
+            lg:hidden
+          "
+        >
+          <div
+            className="
+            mx-auto flex max-w-7xl items-center justify-between gap-3
+          "
+          >
+            <p
+              className="
+                min-w-0 flex-1 truncate text-sm font-semibold text-white
+              "
+            >
+              {program.title}
+            </p>
+            <button
+              type="button"
+              onClick={isSignedIn ? handleEnrollClick : handleSignInRedirect}
+              disabled={isEnrolling || isCheckingEnrollment}
+              className="
+                inline-flex h-10 shrink-0 items-center justify-center gap-2
+                rounded-full px-4 text-sm font-semibold whitespace-nowrap
+                ring-offset-background transition-all
+                hover:shadow-lg hover:shadow-primary/20
+                focus-visible:ring-2 focus-visible:ring-ring
+                focus-visible:ring-offset-2 focus-visible:outline-none
+                disabled:pointer-events-none disabled:opacity-50
+              "
+              style={{
+                color: '#080C16',
+                backgroundColor: '#22c4d3e6',
+              }}
+            >
+              {isEnrolling ? 'Inscribiendo…' : 'Inscribirme al programa'}
+            </button>
+          </div>
+        </div>
+      )}
       {isCertModalOpen && (
         <div
           className="

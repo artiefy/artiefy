@@ -17,6 +17,10 @@
   border: 2px solid #60a5fa;
 }
 
+:root.mobile-bottom-cta-visible .ticket-button {
+  bottom: 190px;
+}
+
 /* Update tooltip styles */
 .ticket-button::before {
   content: 'Soporte Artiefy';
@@ -79,6 +83,10 @@
   z-index: 1000;
   width: 400px;
   height: 500px;
+}
+
+:root.mobile-bottom-cta-visible .chat-support-container {
+  bottom: 210px;
 }
 
 .support-chat {

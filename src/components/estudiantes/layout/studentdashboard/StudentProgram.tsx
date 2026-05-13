@@ -33,7 +33,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
 
   const cardContent = (
     <>
-      <div className="relative h-40 overflow-hidden">
+      <div className="relative h-40 overflow-hidden bg-card">
         <Image
           src={programImage}
           alt={program.title}
@@ -49,8 +49,8 @@ export function StudentProgram({ program }: StudenProgramProps) {
         />
         <div
           className="
-            absolute top-0 right-0 bottom-[-2px] left-0 bg-gradient-to-t
-            from-card via-card/70 to-transparent
+            pointer-events-none absolute inset-x-0 top-0 bottom-0
+            bg-gradient-to-t from-card via-card/70 to-transparent
           "
         />
 
@@ -80,7 +80,7 @@ export function StudentProgram({ program }: StudenProgramProps) {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
+      <div className="relative z-10 -mt-px flex flex-1 flex-col gap-2 bg-card p-4">
         <h3
           className="
             line-clamp-2 text-base leading-snug font-bold text-foreground

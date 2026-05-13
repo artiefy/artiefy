@@ -14,6 +14,8 @@ export const TourComponent = () => {
   const [isMounted, setIsMounted] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isMobileBottomCtaVisible, setIsMobileBottomCtaVisible] =
+    useState(false);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [showAnim, setShowAnim] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
@@ -28,6 +30,36 @@ export const TourComponent = () => {
     const handleResize = () => setIsDesktop(window.innerWidth > 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const syncMobileBottomCta = () => {
+      setIsMobileBottomCtaVisible(
+        document.documentElement.dataset.mobileBottomCtaVisible === 'true'
+      );
+    };
+    const handleMobileBottomCtaChange = (
+      event: Event | CustomEvent<{ visible?: boolean }>
+    ) => {
+      if ('detail' in event && typeof event.detail?.visible === 'boolean') {
+        setIsMobileBottomCtaVisible(event.detail.visible);
+        return;
+      }
+      syncMobileBottomCta();
+    };
+
+    syncMobileBottomCta();
+    window.addEventListener(
+      'mobile-bottom-cta-visibility-change',
+      handleMobileBottomCtaChange
+    );
+
+    return () => {
+      window.removeEventListener(
+        'mobile-bottom-cta-visibility-change',
+        handleMobileBottomCtaChange
+      );
+    };
   }, []);
 
   // Lógica de animación/desmontaje igual que soporte
@@ -96,13 +128,28 @@ export const TourComponent = () => {
 
   if (!isMounted) return null;
 
+  const floatingBottomClass = isMobileBottomCtaVisible
+    ? 'bottom-22'
+    : 'bottom-9';
+
   return (
     <>
       {!hideButton && (isDesktop ? showAnim : true) && (
         <div
           className={`
             fixed z-50 translate-x-0
-            ${isDesktop ? (isClassRoute ? 'bottom-9 left-24' : 'right-22 bottom-9') : isClassRoute ? 'bottom-9 left-24' : 'right-22 bottom-9'}`}
+            ${
+              isClassRoute
+                ? `
+              left-24
+              ${floatingBottomClass}
+            `
+                : `
+              right-22
+              ${floatingBottomClass}
+            `
+            }
+          `}
           onMouseEnter={() =>
             window.dispatchEvent(new Event('extras-hover-enter'))
           }

@@ -763,11 +763,11 @@ export default function StudentListCourses({
       <div
         className="
           mt-8 mb-3 flex flex-col gap-4 px-8
-          sm:mb-3 sm:flex-row sm:items-center sm:justify-between
+          sm:mb-3 sm:flex-row sm:items-center sm:gap-6
           lg:px-26
         "
       >
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <HiLibrary className="text-xl text-white" />
           <GradientText
             className="
@@ -778,13 +778,21 @@ export default function StudentListCourses({
             Cursos Artie
           </GradientText>
         </div>
-        <CourseSortControl
-          value={sortValue}
-          onSortChange={(nextSort: CourseSortValue) => {
-            setSortValue(nextSort);
-            setPageValue(1);
-          }}
-        />
+        <div
+          className="
+            w-full
+            sm:ml-auto sm:w-[320px]
+            lg:w-[360px]
+          "
+        >
+          <CourseSortControl
+            value={sortValue}
+            onSortChange={(nextSort: CourseSortValue) => {
+              setSortValue(nextSort);
+              setPageValue(1);
+            }}
+          />
+        </div>
       </div>
       <div
         className="

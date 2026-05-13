@@ -357,7 +357,7 @@ export function NotificationHeader() {
         className={`
           group notification-button relative ml-2 rounded-full p-2
           transition-colors
-          hover:bg-gray-800
+          hover:bg-white/10
           md:hover:bg-primary
           ${isAnimating ? 'active' : ''}
         `}
@@ -380,9 +380,12 @@ export function NotificationHeader() {
           <>
             <BellRing
               className="
-                size-6 text-primary transition-colors
-                group-hover:text-background
+                notification-icon size-6 text-[#22C4D3] transition-colors
+                md:group-hover:text-background
               "
+              color="#22C4D3"
+              stroke="#22C4D3"
+              style={{ color: '#22C4D3', stroke: '#22C4D3' }}
             />
             <span
               className="
@@ -396,9 +399,12 @@ export function NotificationHeader() {
         ) : (
           <Bell
             className="
-              size-6 text-primary transition-colors
-              group-hover:text-background
+              notification-icon size-6 text-[#22C4D3] transition-colors
+              md:group-hover:text-background
             "
+            color="#22C4D3"
+            stroke="#22C4D3"
+            style={{ color: '#22C4D3', stroke: '#22C4D3' }}
           />
         )}
       </button>
@@ -408,10 +414,6 @@ export function NotificationHeader() {
           notification-options
           ${isOpen ? 'show' : ''}
         `}
-        style={{
-          maxHeight: '350px',
-          overflowY: 'auto',
-        }}
       >
         {uniqueNotifications.length > 0 ? (
           uniqueNotifications.map((notification) => (

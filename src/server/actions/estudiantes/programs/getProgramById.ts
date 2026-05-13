@@ -29,6 +29,10 @@ interface ProgramQueryResult {
     description: string | null;
     is_featured: boolean | null;
   };
+  typeProgram?: {
+    id: number;
+    type: string;
+  } | null;
   materias: {
     id: number;
     title: string;
@@ -131,6 +135,7 @@ export const getProgramById = async (
       with: {
         category: true,
         certificationType: true,
+        typeProgram: true,
         materias: {
           orderBy: (materias, { asc }) => [asc(materias.id)],
           with: {
@@ -327,6 +332,13 @@ export const getProgramById = async (
       id: program.id.toString(),
       rating: program.rating ?? 0,
       category: transformedCategory,
+      idTypesPrograms: program.typeProgram?.id ?? null,
+      typeProgram: program.typeProgram
+        ? {
+            id: program.typeProgram.id,
+            type: program.typeProgram.type,
+          }
+        : null,
       materias: transformedMaterias,
     };
   } catch (error) {

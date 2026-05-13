@@ -45,6 +45,8 @@ import { useMediaQuery } from '~/utils/useMediaQuery';
 
 import '~/styles/arrowactivity.css';
 
+const SUBSCRIPTION_REQUIRED_TOAST_ID = 'lesson-subscription-required';
+
 // Add interface for API response
 interface GradeSummaryResponse {
   finalGrade: number;
@@ -560,37 +562,6 @@ export default function LessonDetails({
     }
   };
 
-  // Keep subscription check but remove the loading UI
-  useEffect(() => {
-    if (!user || course.courseType?.requiredSubscriptionLevel === 'none') {
-      return;
-    }
-
-    const metadata = user.publicMetadata as {
-      planType?: string;
-      subscriptionStatus?: string;
-      subscriptionEndDate?: string;
-    };
-
-    if (!metadata.subscriptionStatus || !metadata.subscriptionEndDate) {
-      toast.error('Se requiere una suscripción activa para ver las clases');
-      void router.push('/planes');
-      return;
-    }
-
-    const isActive = metadata.subscriptionStatus === 'active';
-    const endDate = new Date(metadata.subscriptionEndDate);
-    const isValid = endDate > new Date();
-
-    if (!isActive || !isValid) {
-      toast.error('Se requiere una suscripción activa para ver las clases');
-      void router.push('/planes');
-    }
-  }, [user, course.courseType?.requiredSubscriptionLevel, router]);
-
-  // Add safety check for lesson
-  // (Mover el return al final para no romper el orden de hooks)
-
   // Helper para parsear fechas en formato yyyy/MM/dd y yyyy-MM-dd
   const parseSubscriptionDate = (dateString: string | null): Date | null => {
     if (!dateString) return null;
@@ -662,7 +633,9 @@ export default function LessonDetails({
         (e) => e.userId === user.id && e.isPermanent
       );
       if (!hasIndividualEnrollment) {
-        toast.error('Debes comprar este curso para acceder a las clases.');
+        toast.error('Debes comprar este curso para acceder a las clases.', {
+          id: SUBSCRIPTION_REQUIRED_TOAST_ID,
+        });
         void router.push(`/estudiantes/cursos/${course.id}`);
       }
       return;
@@ -671,7 +644,9 @@ export default function LessonDetails({
     // Si es de suscripción (pro/premium), verificar suscripción activa y fecha
     if (isSubscription) {
       if (!metadata.subscriptionStatus || !metadata.subscriptionEndDate) {
-        toast.error('Se requiere una suscripción activa para ver las clases');
+        toast.error('Se requiere una suscripción activa para ver las clases', {
+          id: SUBSCRIPTION_REQUIRED_TOAST_ID,
+        });
         void router.push('/planes');
         return;
       }
@@ -679,7 +654,9 @@ export default function LessonDetails({
       const endDate = parseSubscriptionDate(metadata.subscriptionEndDate);
       const isValid = endDate ? endDate > new Date() : false;
       if (!isActive || !isValid) {
-        toast.error('Se requiere una suscripción activa para ver las clases');
+        toast.error('Se requiere una suscripción activa para ver las clases', {
+          id: SUBSCRIPTION_REQUIRED_TOAST_ID,
+        });
         void router.push('/planes');
       }
     }
@@ -843,6 +820,44 @@ export default function LessonDetails({
   const sortedLessons = sortLessons(lessonsState);
   const currentLessonIndex = sortedLessons.findIndex((l) => l.id === lesson.id);
   const totalLessons = sortedLessons.length;
+  const lessonMetadata = user?.publicMetadata as
+    | {
+        planType?: string;
+        subscriptionStatus?: string;
+        subscriptionEndDate?: string;
+      }
+    | undefined;
+  const lessonSubscriptionEndDate = parseSubscriptionDate(
+    lessonMetadata?.subscriptionEndDate ?? null
+  );
+  const lessonHasActiveSubscription =
+    lessonMetadata?.subscriptionStatus === 'active' &&
+    lessonSubscriptionEndDate !== null &&
+    lessonSubscriptionEndDate > new Date();
+  const lessonCourseTypes: CourseType[] = [
+    ...(course.courseType ? [course.courseType] : []),
+    ...(Array.isArray(course.courseTypes) ? course.courseTypes : []),
+  ];
+  const lessonRequiresSubscription =
+    lessonCourseTypes.length === 0
+      ? course.requiresSubscription === true
+      : lessonCourseTypes.some(
+          (type) => (type.requiredSubscriptionLevel ?? 'none') !== 'none'
+        );
+  const hasPermanentEnrollment = Array.isArray(course.enrollments)
+    ? (
+        course.enrollments as Array<{
+          userId?: string;
+          isPermanent?: boolean | null;
+        }>
+      ).some(
+        (enrollment) => enrollment.userId === userId && enrollment.isPermanent
+      )
+    : false;
+  const isSubscriptionAccessBlocked =
+    lessonRequiresSubscription &&
+    !hasPermanentEnrollment &&
+    !lessonHasActiveSubscription;
 
   return (
     <div
@@ -891,7 +906,7 @@ export default function LessonDetails({
       {/* Main Layout - sin espacios */}
       <div className="flex flex-1 gap-0">
         {/* Left Sidebar - LessonCards */}
-        {!isMobile && isSidebarOpen && (
+        {!isSubscriptionAccessBlocked && !isMobile && isSidebarOpen && (
           <aside
             className="
               hide-scrollbar sticky top-[calc(4rem-0.75rem)] z-[50]
@@ -915,103 +930,142 @@ export default function LessonDetails({
 
         {/* Main Content Area */}
         <main className="flex min-w-0 flex-1 flex-col overflow-y-auto p-0">
-          {/* Video Player Section */}
-          <div className="w-full">
-            <LessonPlayer
-              lesson={lesson}
-              progress={progress}
-              handleVideoEnd={handleVideoEnd}
-              handleProgressUpdate={handleProgressUpdate}
-              onTimeUpdate={handleTimeUpdate}
-            />
-          </div>
-
-          {/* Content Tabs Navigation */}
-          <div
-            className={`
-              w-full px-4
-              ${
-                lesson.coverVideoKey === 'none'
-                  ? `
-                    mt-12
-                    md:mt-6
-                  `
-                  : ''
-              }
-            `}
-          >
-            <LessonContentTabs
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              transcriptionCount={transcription.length}
-              resourcesCount={resourcesCount}
-              activitiesCount={activities.length}
-            />
-
-            {/* Tab Content */}
+          {isSubscriptionAccessBlocked ? (
             <div
-              className="mt-2 rounded-xl border border-border p-4"
-              style={{ backgroundColor: '#061c37cc' }}
+              className="
+              flex min-h-[calc(100vh-12rem)] items-center justify-center px-4
+              py-10
+            "
             >
-              {activeTab === 'transcription' && (
-                <LessonTranscription
-                  transcription={transcription}
-                  isLoading={isLoadingTranscription}
-                  currentTime={currentTime}
-                />
-              )}
-
-              {activeTab === 'resources' && (
-                <LessonResource
-                  lessonId={lesson.id}
-                  onCountChange={setResourcesCount}
-                />
-              )}
-
-              {activeTab === 'activities' && (
-                <LessonActivities
-                  activities={activities}
-                  isVideoCompleted={
-                    lesson.coverVideoKey === 'none' ? true : isVideoCompleted
-                  }
-                  isActivityCompleted={isActivityCompleted}
-                  handleActivityCompletion={handleActivityCompletion}
-                  userId={userId}
-                  courseId={lesson.courseId}
-                  lessonId={lesson.id}
-                  isLastLesson={isLastLesson(lessonsState, lesson.id)}
-                  isLastActivity={isLastActivity(
-                    lessonsState,
-                    activities,
-                    lesson
-                  )}
-                  lessons={lessonsState}
-                  activityModalId={activityModalId}
-                  lessonCoverVideoKey={lesson.coverVideoKey}
-                />
-              )}
-
-              {activeTab === 'grades' && (
-                <div>
-                  <LessonGrades
-                    finalGrade={gradeSummary?.finalGrade ?? null}
-                    isLoading={isGradesLoading}
-                  />
-                  <LessonGradeHistoryInline gradeSummary={gradeSummary} />
-                </div>
-              )}
+              <div
+                className="
+                  w-full max-w-2xl rounded-2xl border border-red-500 bg-red-50
+                  p-6 text-red-600 shadow-xl
+                "
+              >
+                <h2 className="mb-3 text-2xl font-bold">
+                  ¡Tu suscripción ha expirado!
+                </h2>
+                <p className="mb-5 text-base">
+                  Para ver los videos, recursos, actividades y comentarios de
+                  esta clase, necesitas renovar tu suscripción.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => router.push('/planes')}
+                  className="
+                    rounded-full bg-red-500 px-5 py-2.5 text-sm font-semibold
+                    text-white transition
+                    hover:bg-red-600
+                  "
+                >
+                  Renovar suscripción
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <>
+              {/* Video Player Section */}
+              <div className="w-full">
+                <LessonPlayer
+                  lesson={lesson}
+                  progress={progress}
+                  handleVideoEnd={handleVideoEnd}
+                  handleProgressUpdate={handleProgressUpdate}
+                  onTimeUpdate={handleTimeUpdate}
+                />
+              </div>
 
-          {/* Comments Section */}
-          <div className="mt-4 w-full px-4 pb-4">
-            <LessonComments lessonId={lesson.id} />
-          </div>
+              {/* Content Tabs Navigation */}
+              <div
+                className={`
+                  w-full px-4
+                  ${
+                    lesson.coverVideoKey === 'none'
+                      ? `
+                        mt-12
+                        md:mt-6
+                      `
+                      : ''
+                  }
+                `}
+              >
+                <LessonContentTabs
+                  activeTab={activeTab}
+                  onTabChange={setActiveTab}
+                  transcriptionCount={transcription.length}
+                  resourcesCount={resourcesCount}
+                  activitiesCount={activities.length}
+                />
+
+                {/* Tab Content */}
+                <div
+                  className="mt-2 rounded-xl border border-border p-4"
+                  style={{ backgroundColor: '#061c37cc' }}
+                >
+                  {activeTab === 'transcription' && (
+                    <LessonTranscription
+                      transcription={transcription}
+                      isLoading={isLoadingTranscription}
+                      currentTime={currentTime}
+                    />
+                  )}
+
+                  {activeTab === 'resources' && (
+                    <LessonResource
+                      lessonId={lesson.id}
+                      onCountChange={setResourcesCount}
+                    />
+                  )}
+
+                  {activeTab === 'activities' && (
+                    <LessonActivities
+                      activities={activities}
+                      isVideoCompleted={
+                        lesson.coverVideoKey === 'none'
+                          ? true
+                          : isVideoCompleted
+                      }
+                      isActivityCompleted={isActivityCompleted}
+                      handleActivityCompletion={handleActivityCompletion}
+                      userId={userId}
+                      courseId={lesson.courseId}
+                      lessonId={lesson.id}
+                      isLastLesson={isLastLesson(lessonsState, lesson.id)}
+                      isLastActivity={isLastActivity(
+                        lessonsState,
+                        activities,
+                        lesson
+                      )}
+                      lessons={lessonsState}
+                      activityModalId={activityModalId}
+                      lessonCoverVideoKey={lesson.coverVideoKey}
+                    />
+                  )}
+
+                  {activeTab === 'grades' && (
+                    <div>
+                      <LessonGrades
+                        finalGrade={gradeSummary?.finalGrade ?? null}
+                        isLoading={isGradesLoading}
+                      />
+                      <LessonGradeHistoryInline gradeSummary={gradeSummary} />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Comments Section */}
+              <div className="mt-4 w-full px-4 pb-4">
+                <LessonComments lessonId={lesson.id} />
+              </div>
+            </>
+          )}
         </main>
       </div>
 
       {/* Mobile Drawer Overlay */}
-      {isMobile && isMobileDrawerOpen && (
+      {!isSubscriptionAccessBlocked && isMobile && isMobileDrawerOpen && (
         <>
           {/* Backdrop */}
           <div
@@ -1079,7 +1133,7 @@ export default function LessonDetails({
       )}
 
       {/* Modal de actividad montado directamente en LessonDetails */}
-      {selectedActivityForModal && (
+      {!isSubscriptionAccessBlocked && selectedActivityForModal && (
         <LessonActivityModal
           isOpen={isActivityModalOpen}
           onCloseAction={handleActivityModalClose}
@@ -1110,24 +1164,26 @@ export default function LessonDetails({
       )}
 
       {/* Next Lesson Modal */}
-      <NextLessonModal
-        nextLesson={(() => {
-          const sortedLessons = sortLessons(lessonsState);
-          const currentIndex = sortedLessons.findIndex(
-            (l) => l.id === lesson.id
-          );
-          const nextLesson =
-            currentIndex >= 0 ? sortedLessons[currentIndex + 1] : null;
-          return nextLesson
-            ? {
-                id: nextLesson.id,
-                title: nextLesson.title,
-                isLocked: nextLesson.isLocked,
-              }
-            : null;
-        })()}
-        courseId={lesson.courseId}
-      />
+      {!isSubscriptionAccessBlocked && (
+        <NextLessonModal
+          nextLesson={(() => {
+            const sortedLessons = sortLessons(lessonsState);
+            const currentIndex = sortedLessons.findIndex(
+              (l) => l.id === lesson.id
+            );
+            const nextLesson =
+              currentIndex >= 0 ? sortedLessons[currentIndex + 1] : null;
+            return nextLesson
+              ? {
+                  id: nextLesson.id,
+                  title: nextLesson.title,
+                  isLocked: nextLesson.isLocked,
+                }
+              : null;
+          })()}
+          courseId={lesson.courseId}
+        />
+      )}
 
       {/* Chatbot Button and Modal */}
       <StudentChatbot isAlwaysVisible={true} />

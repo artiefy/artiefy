@@ -19,6 +19,12 @@ Before any Next.js work, find and read the relevant doc in `node_modules/next/di
 - If no skill applies, follow the rules in this file and the existing project patterns.
 - Local route/component guidelines override generic rules when there is a conflict.
 
+## Command Restrictions
+
+- Do not run ESLint checks, TypeScript checks, or production builds unless the user explicitly asks for them.
+- This includes commands such as `eslint`, `npx eslint`, `npm run lint`, `tsc`, `npm run typecheck`, `npm run check`, and `npm run build`.
+- If verification is useful but not explicitly requested, mention the recommended command in the final response instead of running it.
+
 ## Available Skills
 
 Use these skills for detailed patterns on-demand. Skills live in `.agents/skills/` and are tracked by `skills-lock.json`.

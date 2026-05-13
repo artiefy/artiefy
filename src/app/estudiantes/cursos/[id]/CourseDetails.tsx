@@ -10,13 +10,15 @@ import { AiFillFire, AiOutlineCalendar } from 'react-icons/ai';
 import {
   FaCheck,
   FaCheckCircle,
+  FaComments,
   FaCrown,
   FaLock,
+  FaProjectDiagram,
   FaStar,
   FaTimes,
 } from 'react-icons/fa';
 import { FaBuildingUser, FaChalkboardUser, FaUserClock } from 'react-icons/fa6';
-import { IoPlayOutline } from 'react-icons/io5';
+import { IoDocumentTextOutline, IoPlayOutline } from 'react-icons/io5';
 import { MdOutlineVideocam } from 'react-icons/md';
 import { RiEqualizer2Line } from 'react-icons/ri';
 import { toast } from 'sonner';
@@ -48,6 +50,7 @@ import { sortLessons } from '~/utils/lessonSorting';
 import { createProductFromCourse } from '~/utils/paygateway/products';
 
 import type { ClassMeeting, Course, Lesson } from '~/types';
+import type { ReactNode } from 'react';
 
 type UserMetadata = {
   planType?: 'none' | 'Pro' | 'Premium';
@@ -260,6 +263,7 @@ export default function CourseDetails({
   const [viewMode, setViewMode] = useState<'live' | 'recorded'>('live');
   const [activePill, setActivePill] = useState<NavKey>('curso');
   const [projectsCount, setProjectsCount] = useState<number>(0);
+  const [showMobileStartBar, setShowMobileStartBar] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const enrollmentRequestInFlight = useRef(false);
   const autoEnrollTriggeredRef = useRef(false);
@@ -559,42 +563,79 @@ export default function CourseDetails({
 
     return result;
   }, [unseenCounts, lastSeenCounts, isEnrolled]);
-  const navItems: Array<{ key: NavKey; label: string; helper?: string }> = [
+  const navItems: Array<{
+    key: NavKey;
+    label: string;
+    helper?: string;
+    icon: ReactNode;
+  }> = [
     {
       key: 'curso',
       label: 'Curso',
       helper: undefined,
+      icon: <MdOutlineVideocam className="size-4" />,
     },
     {
       key: 'grabadas',
       label: 'Clases grabadas',
       helper: undefined,
-    },
-    {
-      key: 'proyectos',
-      label: 'Proyectos',
-      helper: undefined,
-    },
-    {
-      key: 'recursos',
-      label: 'Recursos',
-      helper: undefined,
+      icon: <IoPlayOutline className="size-4" />,
     },
     {
       key: 'actividades',
       label: 'Actividades',
       helper: undefined,
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="size-4"
+        >
+          <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+          <path d="M12 11h4" />
+          <path d="M12 16h4" />
+          <path d="M8 11h.01" />
+          <path d="M8 16h.01" />
+        </svg>
+      ),
     },
-    { key: 'foro', label: 'Foro', helper: undefined },
     {
       key: 'resultados',
       label: 'Resultados',
       helper: undefined,
+      icon: <RiEqualizer2Line className="size-4" />,
+    },
+    {
+      key: 'proyectos',
+      label: 'Proyectos',
+      helper: undefined,
+      icon: <FaProjectDiagram className="size-4" />,
+    },
+    {
+      key: 'recursos',
+      label: 'Recursos',
+      helper: undefined,
+      icon: <IoDocumentTextOutline className="size-4" />,
+    },
+    {
+      key: 'foro',
+      label: 'Foro',
+      helper: undefined,
+      icon: <FaComments className="size-4" />,
     },
     {
       key: 'certificacion',
       label: 'Certificación',
       helper: undefined,
+      icon: <FaCrown className="size-4" />,
     },
   ];
 
@@ -637,6 +678,53 @@ export default function CourseDetails({
     if (key === 'grabadas') setViewMode('recorded');
     else setViewMode('live');
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || isEnrolled) {
+      setShowMobileStartBar(false);
+      return;
+    }
+
+    const updateMobileStartBar = () => {
+      setShowMobileStartBar(window.scrollY > 120);
+    };
+
+    updateMobileStartBar();
+    window.addEventListener('scroll', updateMobileStartBar, { passive: true });
+    window.addEventListener('resize', updateMobileStartBar);
+
+    return () => {
+      window.removeEventListener('scroll', updateMobileStartBar);
+      window.removeEventListener('resize', updateMobileStartBar);
+    };
+  }, [isEnrolled]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const isVisible = !isEnrolled && showMobileStartBar;
+    document.documentElement.classList.toggle(
+      'mobile-bottom-cta-visible',
+      isVisible
+    );
+    document.documentElement.dataset.mobileBottomCtaVisible = String(isVisible);
+    window.dispatchEvent(
+      new CustomEvent('mobile-bottom-cta-visibility-change', {
+        detail: { visible: isVisible },
+      })
+    );
+
+    return () => {
+      if (!isVisible) return;
+      document.documentElement.classList.remove('mobile-bottom-cta-visible');
+      document.documentElement.dataset.mobileBottomCtaVisible = 'false';
+      window.dispatchEvent(
+        new CustomEvent('mobile-bottom-cta-visibility-change', {
+          detail: { visible: false },
+        })
+      );
+    };
+  }, [isEnrolled, showMobileStartBar]);
 
   const handleCertificateClick = () => {
     if (!isCertificateUnlocked) {
@@ -1283,6 +1371,37 @@ export default function CourseDetails({
     );
   };
 
+  const renderSubscriptionExpiredNotice = () => (
+    <div
+      className="
+        rounded-xl border border-red-500 bg-red-50 p-5 text-red-600
+        md:p-6
+      "
+    >
+      <h3 className="mb-2 text-xl font-bold">¡Tu suscripción ha expirado!</h3>
+      <p
+        className="
+        mb-5 text-sm
+        md:text-base
+      "
+      >
+        Para seguir disfrutando de todo el contenido premium y continuar tu
+        aprendizaje, necesitas renovar tu suscripción.
+      </p>
+      <button
+        type="button"
+        onClick={() => router.push('/planes')}
+        className="
+          rounded-lg bg-red-500 px-5 py-2.5 text-sm font-semibold text-white
+          transition
+          hover:bg-red-600
+        "
+      >
+        Renovar Suscripción Ahora
+      </button>
+    </div>
+  );
+
   if (isLoading) {
     return <CourseDetailsSkeleton />;
   }
@@ -1303,6 +1422,12 @@ export default function CourseDetails({
     );
   };
 
+  const hasCourseOpinions = commentsCount > 0;
+  const shouldShowStudentCount =
+    typeof totalStudents === 'number' && totalStudents > 15;
+  const courseTypeLabel = course.typeCourse?.type?.trim();
+  const courseCategoryLabel = course.category?.name?.trim();
+
   // --- NUEVO LAYOUT VISUAL ---
   return (
     <>
@@ -1314,7 +1439,7 @@ export default function CourseDetails({
             md:px-6 md:py-8
             lg:px-8
             ${
-              !isEnrolled
+              !isEnrolled && showMobileStartBar
                 ? `
                   pb-[calc(6.5rem+env(safe-area-inset-bottom,0px))]
                   md:pb-[calc(7rem+env(safe-area-inset-bottom,0px))]
@@ -1791,8 +1916,8 @@ export default function CourseDetails({
                     >
                       {/* Columna izquierda: toda la info del curso */}
                       <div className="flex-1 space-y-4">
-                        {/* Categoria encima del título */}
-                        {course.category?.name && (
+                        {/* Tipo del curso encima del título */}
+                        {courseTypeLabel && (
                           <div
                             className="
                               mb-1 inline-flex items-center gap-2 rounded-full
@@ -1807,7 +1932,7 @@ export default function CourseDetails({
                               className="text-xs font-medium"
                               style={{ color: '#22C4D3' }}
                             >
-                              {course.category.name}
+                              {courseTypeLabel}
                             </span>
                           </div>
                         )}
@@ -1822,30 +1947,66 @@ export default function CourseDetails({
                           {course.title}
                         </h1>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span
-                            className="
-                              inline-flex items-center gap-1.5 rounded-full
-                              border border-cyan-400/30 bg-cyan-400/10 px-3
-                              py-1.5 text-xs font-semibold text-cyan-300
-                            "
-                          >
-                            <FaChalkboardUser className="size-3" />
-                            Educador
-                          </span>
-                          <span className="text-sm font-medium text-foreground/90">
-                            {course.instructorName || 'Artiefy Academy'}
-                          </span>
-                        </div>
-
                         {/* Rating y estudiantes */}
-                        <div className="flex flex-wrap items-center gap-4 text-sm">
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex">
-                              {/* Estrellas fijas para ejemplo visual */}
-                              {[...Array(4)].map((_, i) => (
+                        {(hasCourseOpinions || shouldShowStudentCount) && (
+                          <div
+                            className="
+                            flex flex-wrap items-center gap-4 text-sm
+                          "
+                          >
+                            {hasCourseOpinions && (
+                              <div className="flex items-center gap-1.5">
+                                <div className="flex">
+                                  {[...Array(4)].map((_, i) => (
+                                    <svg
+                                      key={i}
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="
+                                        lucide lucide-star size-4 fill-amber-400
+                                        text-amber-400
+                                      "
+                                    >
+                                      <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
+                                    </svg>
+                                  ))}
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="
+                                      lucide lucide-star size-4
+                                      fill-amber-400/50 text-amber-400
+                                    "
+                                  >
+                                    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
+                                  </svg>
+                                </div>
+                                <span className="text-[#94A3B8]">
+                                  ({commentsCount} opiniones)
+                                </span>
+                              </div>
+                            )}
+                            {shouldShowStudentCount && (
+                              <div
+                                className="
+                                flex items-center gap-1.5 text-[#94A3B8]
+                              "
+                              >
                                 <svg
-                                  key={i}
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
                                   height="24"
@@ -1855,57 +2016,18 @@ export default function CourseDetails({
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="
-                                    lucide lucide-star size-4 fill-amber-400
-                                    text-amber-400
-                                  "
+                                  className="lucide lucide-users size-4"
                                 >
-                                  <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
+                                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                  <circle cx="9" cy="7" r="4"></circle>
+                                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                                 </svg>
-                              ))}
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="
-                                  lucide lucide-star size-4 fill-amber-400/50
-                                  text-amber-400
-                                "
-                              >
-                                <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
-                              </svg>
-                            </div>
-                            <span className="text-[#94A3B8]">
-                              ({commentsCount ?? 0} opiniones)
-                            </span>
+                                <span>{totalStudents} estudiantes</span>
+                              </div>
+                            )}
                           </div>
-                          <div className="flex items-center gap-1.5 text-[#94A3B8]">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="lucide lucide-users size-4"
-                            >
-                              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                              <circle cx="9" cy="7" r="4"></circle>
-                              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                            </svg>
-                            <span>{totalStudents ?? 0} estudiantes</span>
-                          </div>
-                        </div>
+                        )}
 
                         {/* Badges de clases y duración */}
                         <div className="flex flex-wrap gap-2">
@@ -1961,6 +2083,18 @@ export default function CourseDetails({
                             </svg>
                             40h contenido
                           </span>
+                          {courseCategoryLabel && (
+                            <span
+                              className="
+                                inline-flex items-center gap-1.5 rounded-full
+                                border border-primary/40 px-3 py-1.5 text-xs
+                                font-medium text-foreground
+                              "
+                            >
+                              <RiEqualizer2Line className="size-3.5 text-primary" />
+                              {courseCategoryLabel}
+                            </span>
+                          )}
                         </div>
 
                         {/* Nivel, modalidad y horario */}
@@ -1997,6 +2131,17 @@ export default function CourseDetails({
                                 : course.modalidad.name}
                             </span>
                           )}
+                          <span
+                            style={{ backgroundColor: '#1A2333' }}
+                            className="
+                              inline-flex items-center gap-1.5 rounded-full px-3
+                              py-1.5 text-xs font-medium text-foreground
+                            "
+                          >
+                            <FaChalkboardUser className="size-3" />
+                            Educador:{' '}
+                            {course.instructorName || 'Artiefy Academy'}
+                          </span>
                           {course.scheduleOption?.name || course.horario ? (
                             <span
                               style={{ backgroundColor: '#1A2333' }}
@@ -2320,6 +2465,7 @@ export default function CourseDetails({
                                   }
                                 `}
                               >
+                                <span className="shrink-0">{item.icon}</span>
                                 <span>{item.label}</span>
                                 {showBadge && (
                                   <span
@@ -2383,9 +2529,9 @@ export default function CourseDetails({
                         <div
                           ref={carouselRef}
                           className="
-                            relative flex min-w-0 flex-1 gap-2 overflow-x-auto
-                            px-2 py-1.5 [-ms-overflow-style:none]
-                            [scrollbar-width:none]
+                            relative flex min-w-0 flex-1 [scrollbar-width:none] gap-2
+                            overflow-x-auto px-2 py-1.5
+                            [-ms-overflow-style:none]
                             md:px-3
                             [&::-webkit-scrollbar]:hidden
                           "
@@ -2402,8 +2548,10 @@ export default function CourseDetails({
                                 onClick={() => handlePillClick(item.key)}
                                 className={`
                                   flex shrink-0 items-center gap-2 rounded-full
-                                  border px-[20px] py-[10px] text-sm
-                                  font-semibold transition-all
+                                  border py-[10px] text-sm font-semibold
+                                  transition-all
+                                  ${isActive ? 'px-[18px]' : 'px-[12px]'}
+                                  sm:px-[20px]
                                   ${
                                     isActive
                                       ? `
@@ -2419,8 +2567,17 @@ export default function CourseDetails({
                                   }
                                 `}
                                 style={{ scrollSnapAlign: 'start' }}
+                                aria-label={item.label}
                               >
-                                <span>{item.label}</span>
+                                <span className="shrink-0">{item.icon}</span>
+                                <span
+                                  className={`
+                                    ${isActive ? 'inline' : 'hidden'}
+                                    sm:inline
+                                  `}
+                                >
+                                  {item.label}
+                                </span>
                                 {showBadge && (
                                   <span
                                     className="
@@ -2500,13 +2657,17 @@ export default function CourseDetails({
                           renderAccessGuard('proyectos')
                         )
                       ) : activePill === 'recursos' ? (
-                        isEnrolled ? (
+                        isEnrolled && !isSubscriptionActive ? (
+                          renderSubscriptionExpiredNotice()
+                        ) : isEnrolled ? (
                           <ResourcesSection courseId={course.id} />
                         ) : (
                           renderAccessGuard('recursos')
                         )
                       ) : activePill === 'actividades' ? (
-                        isEnrolled ? (
+                        isEnrolled && !isSubscriptionActive ? (
+                          renderSubscriptionExpiredNotice()
+                        ) : isEnrolled ? (
                           <CourseActivities
                             lessons={lessonsWithActivities}
                             isEnrolled={isEnrolled}
@@ -2532,7 +2693,9 @@ export default function CourseDetails({
                           renderAccessGuard('grabadas')
                         )
                       ) : activePill === 'certificacion' ? (
-                        isEnrolled ? (
+                        isEnrolled && !isSubscriptionActive ? (
+                          renderSubscriptionExpiredNotice()
+                        ) : isEnrolled ? (
                           <div
                             className="
                               rounded-2xl border border-border bg-card p-6
@@ -2712,13 +2875,17 @@ export default function CourseDetails({
                           renderAccessGuard('certificacion')
                         )
                       ) : activePill === 'foro' ? (
-                        isEnrolled ? (
+                        isEnrolled && !isSubscriptionActive ? (
+                          renderSubscriptionExpiredNotice()
+                        ) : isEnrolled ? (
                           <CourseForum courseId={course.id} />
                         ) : (
                           renderAccessGuard('foro')
                         )
                       ) : activePill === 'resultados' ? (
-                        isEnrolled ? (
+                        isEnrolled && !isSubscriptionActive ? (
+                          renderSubscriptionExpiredNotice()
+                        ) : isEnrolled ? (
                           <LessonGradeHistoryInline
                             gradeSummary={gradeSummary}
                           />
@@ -3042,16 +3209,20 @@ export default function CourseDetails({
         </main>
       </div>
 
-      {!isEnrolled && (
+      {!isEnrolled && showMobileStartBar && (
         <div
           className="
-            fixed inset-x-0 bottom-0 z-[1100] border-t border-[#1d283a]
+            fixed inset-x-0 bottom-0 z-[900] border-t border-[#1d283a]
             bg-[#061c37f2] px-4 pt-2
             pb-[calc(env(safe-area-inset-bottom,0px)+0.65rem)] backdrop-blur-md
             lg:hidden
           "
         >
-          <div className="mx-auto flex max-w-7xl items-center gap-3">
+          <div
+            className="
+            mx-auto flex max-w-7xl items-center justify-between gap-3
+          "
+          >
             <p
               className="
                 min-w-0 flex-1 truncate text-sm font-semibold text-white

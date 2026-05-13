@@ -217,6 +217,8 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
 
   const [isHovered, setIsHovered] = useState(false);
   const [isSupportChatVisible, setIsSupportChatVisible] = useState(false);
+  const [isMobileBottomCtaVisible, setIsMobileBottomCtaVisible] =
+    useState(false);
 
   const { show, hide, showExtras } = useExtras();
   const [extrasHovered, setExtrasHovered] = useState(false);
@@ -225,6 +227,35 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const ANIMATION_DURATION = 350; // ms (coincide con otros componentes)
   const hideTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const syncMobileBottomCta = () => {
+      setIsMobileBottomCtaVisible(
+        document.documentElement.dataset.mobileBottomCtaVisible === 'true'
+      );
+    };
+    const handleMobileBottomCtaChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ visible?: boolean }>;
+      if (typeof customEvent.detail?.visible === 'boolean') {
+        setIsMobileBottomCtaVisible(customEvent.detail.visible);
+        return;
+      }
+      syncMobileBottomCta();
+    };
+
+    syncMobileBottomCta();
+    window.addEventListener(
+      'mobile-bottom-cta-visibility-change',
+      handleMobileBottomCtaChange
+    );
+
+    return () => {
+      window.removeEventListener(
+        'mobile-bottom-cta-visibility-change',
+        handleMobileBottomCtaChange
+      );
+    };
+  }, []);
 
   // Sincronizar animación de entrada/salida con el estado global showExtras
   useEffect(() => {
@@ -3096,13 +3127,19 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     : { zIndex: floatingButtonsZIndex };
   const shouldRenderSupportButton =
     !isDesktop || ((showExtras || isHovered || extrasHovered) && showAnim);
+  const mainFloatingBottomClass = isMobileBottomCtaVisible
+    ? 'bottom-22'
+    : 'bottom-6';
+  const supportFloatingBottomClass = isMobileBottomCtaVisible
+    ? 'bottom-40'
+    : 'bottom-26';
   const supportButtonWrapperClass = isDesktop
     ? _safePathname.startsWith('/estudiantes/clases/')
-      ? 'animate-in fade-in-0 slide-in-from-bottom-2 fixed left-7 bottom-26 duration-200 sm:left-7'
-      : 'animate-in fade-in-0 slide-in-from-bottom-2 fixed right-4 bottom-26 duration-200 sm:right-4'
+      ? `animate-in fade-in-0 slide-in-from-bottom-2 fixed left-7 ${supportFloatingBottomClass} duration-200 sm:left-7`
+      : `animate-in fade-in-0 slide-in-from-bottom-2 fixed right-4 ${supportFloatingBottomClass} duration-200 sm:right-4`
     : _safePathname.startsWith('/estudiantes/clases/')
-      ? 'fixed left-8.5 bottom-26'
-      : 'fixed right-6 bottom-26';
+      ? `fixed left-8.5 ${supportFloatingBottomClass}`
+      : `fixed right-6 ${supportFloatingBottomClass}`;
   const supportButtonStyle: React.CSSProperties = {
     zIndex: floatingButtonsZIndex,
     pointerEvents: shouldLowerFloatingButtons ? 'none' : undefined,
@@ -3131,12 +3168,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   // en la ruta de una clase individual (/estudiantes/clases/:id)
   const floatingMainWrapperClass =
     isDesktop && _safePathname.startsWith('/estudiantes/clases/')
-      ? 'fixed left-6 bottom-6'
+      ? `fixed left-6 ${mainFloatingBottomClass}`
       : isDesktop
-        ? 'fixed right-4 bottom-6'
+        ? `fixed right-4 ${mainFloatingBottomClass}`
         : _safePathname.startsWith('/estudiantes/clases/')
-          ? 'fixed left-6 bottom-6'
-          : 'fixed right-4 bottom-6';
+          ? `fixed left-6 ${mainFloatingBottomClass}`
+          : `fixed right-4 ${mainFloatingBottomClass}`;
 
   function handleDeleteHistory(
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>

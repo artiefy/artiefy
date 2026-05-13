@@ -65,12 +65,11 @@ export default function CourseSortControl({
       <SelectTrigger
         aria-label="Ordenar cursos"
         className="
-          h-auto w-fit min-w-[224px] gap-3 rounded-2xl border border-border/50
+          h-auto w-full min-w-0 gap-3 rounded-2xl border border-border/50
           bg-card/80 px-5 py-3 text-sm text-foreground
           shadow-[0_8px_30px_rgba(0,0,0,0.12)] backdrop-blur-sm
           hover:border-primary/30
           focus:ring-primary/30
-          sm:min-w-[246px]
         "
       >
         <span className="flex min-w-0 flex-1 items-center gap-2.5">
@@ -85,9 +84,9 @@ export default function CourseSortControl({
       <SelectContent
         align="end"
         className="
-          z-[120] w-[248px] rounded-xl border border-primary/20 bg-[#061C37] p-1
+          z-[120] w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)]
+          min-w-[260px] rounded-xl border border-primary/20 bg-[#061C37] p-1
           text-foreground shadow-[0_16px_40px_rgba(0,0,0,0.35)]
-          sm:w-[260px]
         "
       >
         {SORT_OPTIONS.map((option) => (

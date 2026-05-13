@@ -8,7 +8,17 @@ import { usePathname } from 'next/navigation';
 import { Show, useAuth, useUser } from '@clerk/nextjs';
 import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
-import { Search, X } from 'lucide-react';
+import {
+  BookOpen,
+  CreditCard,
+  FolderKanban,
+  GraduationCap,
+  Home,
+  MapPin,
+  PanelsTopLeft,
+  Search,
+  X,
+} from 'lucide-react';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 import useSWR from 'swr';
@@ -56,6 +66,23 @@ export function Header({
     { href: '/proyectos', label: 'Proyectos' },
     { href: '/comunidad', label: 'Espacios' },
     { href: '/planes', label: 'Planes' },
+  ];
+  const mobileNavItems = [
+    { href: '/', label: 'Inicio', icon: Home },
+    { href: '/estudiantes', label: 'Cursos', icon: BookOpen },
+    {
+      href: '/estudiantes#programas-section',
+      label: 'Programas',
+      icon: PanelsTopLeft,
+    },
+    { href: '/proyectos', label: 'Proyectos', icon: FolderKanban },
+    { href: '/comunidad', label: 'Espacios', icon: MapPin },
+    { href: '/planes', label: 'Planes', icon: CreditCard },
+    {
+      href: '/estudiantes/myaccount',
+      label: 'Mis Cursos',
+      icon: GraduationCap,
+    },
   ];
 
   const planType = user?.publicMetadata?.planType as string | undefined;
@@ -834,67 +861,65 @@ export function Header({
 
         <div
           className="
-            relative flex h-16 w-full items-center justify-between
+            relative flex h-16 w-full items-center justify-between bg-[#01152d]
+            px-7
             md:hidden
           "
         >
+          <button
+            type="button"
+            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
+            className="
+              text-white transition
+              hover:text-primary
+            "
+            onClick={() => {
+              setMobileMenuOpen((prev) => {
+                const next = !prev;
+                if (next) setShowMobileSearch(false);
+                return next;
+              });
+            }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="4" x2="20" y1="7" y2="7" />
+              <line x1="4" x2="20" y1="12" y2="12" />
+              <line x1="4" x2="20" y1="17" y2="17" />
+            </svg>
+          </button>
+
           <Link
             href="/"
             aria-label="Ir al inicio"
-            className="flex shrink-0 items-center"
+            className="
+              absolute left-1/2 flex size-9 -translate-x-1/2 items-center
+              justify-center
+            "
           >
-            <div className="relative h-10 w-28">
-              <Image
-                src="/artiefy-logo.png"
-                alt="Logo Artiefy"
-                fill
-                priority
-                className="object-contain"
-                sizes="112px"
-              />
-            </div>
+            <Image
+              src="/artiefy-icon.png"
+              alt="Artiefy"
+              width={36}
+              height={36}
+              priority
+              className="size-9 object-contain"
+            />
           </Link>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              aria-label="Buscar"
-              className="
-                rounded-full p-1 text-white transition
-                hover:text-orange-500
-              "
-              onClick={() => {
-                setShowMobileSearch((prev) => !prev);
-                setMobileMenuOpen(false);
-              }}
-            >
-              <Search className="size-5" />
-            </button>
-            <button
-              type="button"
-              aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-menu"
-              className="
-                hamburger flex items-center justify-center
-                md:size-12
-              "
-              data-open={mobileMenuOpen ? 'true' : 'false'}
-              onClick={() => {
-                setMobileMenuOpen((prev) => {
-                  const next = !prev;
-                  if (next) setShowMobileSearch(false);
-                  return next;
-                });
-              }}
-            >
-              <svg viewBox="0 0 32 32">
-                <path
-                  className="line line-top-bottom"
-                  d="M27 10 13 10C10.8 10 9 8.2 9 6 9 3.5 10.8 2 13 2 15.2 2 17 3.8 17 6L17 26C17 28.2 18.8 30 21 30 23.2 30 25 28.2 25 26 25 23.8 23.2 22 21 22L7 22"
-                />
-                <path className="line" d="M7 16 27 16" />
-              </svg>
-            </button>
+
+          <div className="campana-header mobile-notification-shell relative">
+            <NotificationHeader />
           </div>
         </div>
       </div>
@@ -979,91 +1004,125 @@ export function Header({
           md:hidden
         "
       >
-        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+        <div className="fixed inset-0 bg-black/55" aria-hidden="true" />
         <DialogPanel
           id="mobile-menu"
           className="
-            fixed inset-y-0 right-0 z-[99999] flex h-full min-h-[100dvh] w-[80%]
-            max-w-sm flex-col overflow-hidden bg-white p-4
-            pb-[calc(env(safe-area-inset-bottom)+0.75rem)] shadow-xl
+            fixed inset-y-0 left-0 z-[99999] flex h-full min-h-[100dvh] w-[80%]
+            max-w-sm flex-col overflow-hidden bg-[#01152d] p-7
+            pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl
           "
         >
-          <div
-            className="
-              relative mt-3 mb-2 flex w-full items-center justify-center
-            "
-          >
-            <div className="mx-auto mt-16 w-fit">
-              <Link href="/">
-                <div className="relative h-10 w-36">
-                  <Image
-                    src="/artiefy-logo2.png"
-                    alt="Logo Artiefy Mobile"
-                    fill
-                    unoptimized
-                    className="object-contain"
-                    sizes="144px"
-                  />
-                </div>
-              </Link>
-            </div>
+          <div className="mb-8 flex w-full items-center justify-between">
+            <Link
+              href="/"
+              className="flex items-center gap-3"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Image
+                src="/artiefy-icon.png"
+                alt="Artiefy"
+                width={36}
+                height={36}
+                className="size-9 object-contain"
+              />
+              <span className="text-xl font-bold text-primary">Artiefy</span>
+            </Link>
             <button
               onClick={() => setMobileMenuOpen(false)}
               className="
-                absolute top-3 right-3 rounded-full text-gray-600 transition-all
-                duration-200
-                hover:bg-gray-100
+                rounded-full p-1 text-slate-300 transition
+                hover:bg-white/10 hover:text-white
                 focus:outline-none
-                active:bg-gray-200
+                focus-visible:ring-2 focus-visible:ring-primary
               "
               aria-label="Close menu"
             >
-              <XMarkIconSolid className="size-8" />
+              <XMarkIconSolid className="size-5" />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto overscroll-contain pb-12">
-            <nav className="mt-4 pt-4">
-              <ul className="space-y-6">
-                {navItems.map((item) => {
+          <div className="mb-8">
+            <div className="relative">
+              <Search
+                className="
+                  absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400
+                "
+              />
+              <input
+                type="search"
+                placeholder="Buscar"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    handleSearch();
+                    setMobileMenuOpen(false);
+                  }
+                }}
+                className="
+                  h-12 w-full rounded-xl border border-white/5 bg-white/7 pr-4
+                  pl-12 text-sm text-white outline-none
+                  placeholder:text-slate-400
+                  focus:border-primary/50 focus:ring-2 focus:ring-primary/20
+                "
+              />
+            </div>
+            {showPreview &&
+              (previewCourses.length > 0 || previewPrograms.length > 0) && (
+                <div className="mt-3 max-h-[42dvh] overflow-y-auto rounded-xl">
+                  <Suspense fallback={null}>
+                    <CourseSearchPreview
+                      courses={previewCourses}
+                      programs={previewPrograms}
+                      onSelectCourse={(courseId: number) => {
+                        setMobileMenuOpen(false);
+                        window.location.href = `/estudiantes/cursos/${courseId}`;
+                      }}
+                      onSelectProgram={(programId: string | number) => {
+                        setMobileMenuOpen(false);
+                        window.location.href = `/estudiantes/programas/${programId}`;
+                      }}
+                    />
+                  </Suspense>
+                </div>
+              )}
+          </div>
+          <div className="flex-1 overflow-y-auto overscroll-contain pb-8">
+            <nav>
+              <ul className="space-y-3">
+                {mobileNavItems.map((item) => {
                   const isActive =
                     pathname === item.href ||
-                    (item.href !== '/' && pathname.startsWith(item.href));
-                  const activeClass = isActive
-                    ? 'text-orange-500 after:block after:h-0.5 after:bg-orange-500 after:w-full after:mx-auto after:mt-1 after:rounded-full'
-                    : '';
-                  if (item.label === 'Proyectos') {
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={`
-                            mx-auto block w-fit text-lg transition-colors
-                            active:scale-95
-                            ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <span className="relative">{item.label}</span>
-                        </Link>
-                      </li>
-                    );
-                  }
+                    (item.href !== '/' &&
+                      !item.href.includes('#') &&
+                      pathname.startsWith(item.href));
+                  const Icon = item.icon;
                   if (item.label === 'Espacios') {
                     return (
                       <li key={item.href}>
                         <button
                           type="button"
                           className={`
-                            mx-auto block w-fit cursor-pointer border-0
-                            bg-transparent text-left text-lg transition-colors
+                            flex w-full items-center gap-4 rounded-xl px-4 py-3
+                            text-left text-base font-semibold transition
                             outline-none
                             active:scale-95
-                            ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
+                            ${
+                              isActive
+                                ? 'bg-primary/12 text-primary'
+                                : `
+                                  text-slate-400
+                                  hover:bg-white/7 hover:text-white
+                                `
+                            }
+                          `}
                           onClick={(e) => {
                             setMobileMenuOpen(false);
                             handleEspaciosClick(e);
                           }}
                         >
-                          <span className="relative">{item.label}</span>
+                          <Icon className="size-5 shrink-0" />
+                          <span>{item.label}</span>
                         </button>
                       </li>
                     );
@@ -1073,45 +1132,52 @@ export function Header({
                       <Link
                         href={item.href}
                         className={`
-                          mx-auto block w-fit text-lg transition-colors
+                          flex w-full items-center gap-4 rounded-xl px-4 py-3
+                          text-base font-semibold transition
                           active:scale-95
-                          ${isActive ? activeClass : 'text-gray-900 hover:text-orange-500'}`}
+                          ${
+                            isActive
+                              ? 'bg-primary/12 text-primary'
+                              : `
+                                text-slate-400
+                                hover:bg-white/7 hover:text-white
+                              `
+                          }
+                        `}
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        <span className="relative">{item.label}</span>
+                        <Icon className="size-5 shrink-0" />
+                        <span>{item.label}</span>
                       </Link>
                     </li>
                   );
                 })}
               </ul>
             </nav>
-            <Show when="signed-in">
-              <div className="mt-10 flex justify-center">
-                <Link
-                  href="/estudiantes/myaccount"
-                  className="
-                    inline-flex items-center gap-2 rounded-xl border
-                    border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm
-                    font-semibold text-cyan-700 transition-colors
-                    active:scale-95
-                  "
-                  onClick={() => setMobileMenuOpen(false)}
+          </div>
+          <div className="border-t border-white/8 pt-7">
+            {isSignedIn ? (
+              <div className="flex items-center justify-center">
+                <Suspense
+                  fallback={<Icons.spinner className="size-5 text-primary" />}
                 >
-                  Mis Cursos
-                </Link>
+                  <UserButtonWrapper />
+                </Suspense>
               </div>
-            </Show>
-            <div className="div-auth mt-14 flex items-center justify-center">
-              <Suspense
-                fallback={
-                  <div className="flex min-w-[180px] items-center justify-start">
-                    <Icons.spinner className="size-5 text-background" />
-                  </div>
-                }
+            ) : (
+              <button
+                type="button"
+                onClick={handleOpenLoginModal}
+                className="
+                  flex h-12 w-full items-center justify-center rounded-xl
+                  bg-primary text-sm font-semibold text-[#01152d] transition
+                  hover:bg-primary/90
+                  active:scale-95
+                "
               >
-                {renderAuthButton('mobileMenu')}
-              </Suspense>
-            </div>
+                Acceder
+              </button>
+            )}
           </div>
         </DialogPanel>
       </Dialog>

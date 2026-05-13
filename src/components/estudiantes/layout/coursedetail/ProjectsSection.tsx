@@ -43,6 +43,7 @@ export function ProjectsSection({
     Record<number, number>
   >({});
   const selectedProjectId = selectedProject?.id;
+  const canCreateProject = isEnrolled && isSubscriptionActive;
 
   // Cargar proyectos al montar el componente
   useEffect(() => {
@@ -146,6 +147,10 @@ export function ProjectsSection({
   const handleCreateProject = async () => {
     if (!isEnrolled) {
       toast.error('Debes estar inscrito en el curso para crear proyectos');
+      return;
+    }
+    if (!isSubscriptionActive) {
+      toast.error('Tu suscripción ha expirado. Renueva para crear proyectos.');
       return;
     }
     setModalProject(null);
@@ -322,6 +327,22 @@ export function ProjectsSection({
     return (
       <>
         <div className="space-y-6">
+          {!isSubscriptionActive && (
+            <div
+              className="
+                rounded-xl border border-red-500 bg-red-50 p-5 text-red-600
+              "
+            >
+              <h3 className="mb-2 text-lg font-bold">
+                ¡Tu suscripción ha expirado!
+              </h3>
+              <p className="text-sm">
+                Para crear nuevos proyectos prácticos, necesitas renovar tu
+                suscripción.
+              </p>
+            </div>
+          )}
+
           {/* Botón volver */}
           <button
             onClick={handleBackToList}
@@ -410,10 +431,12 @@ export function ProjectsSection({
     <>
       <div className="space-y-6">
         {/* Header con título e icono */}
-        <div className="
+        <div
+          className="
           flex flex-col items-start justify-between gap-4
           sm:flex-row
-        ">
+        "
+        >
           <div className="flex items-start gap-4">
             <div
               className="flex size-10 items-center justify-center rounded-xl"
@@ -434,7 +457,7 @@ export function ProjectsSection({
           {/* Botón Crear Proyecto */}
           <button
             onClick={handleCreateProject}
-            disabled={!isEnrolled || _isCreating}
+            disabled={!canCreateProject || _isCreating}
             style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
             className="
               inline-flex h-10 w-full items-center justify-center gap-2
@@ -453,12 +476,30 @@ export function ProjectsSection({
           </button>
         </div>
 
+        {!isSubscriptionActive && (
+          <div
+            className="
+              rounded-xl border border-red-500 bg-red-50 p-5 text-red-600
+            "
+          >
+            <h3 className="mb-2 text-lg font-bold">
+              ¡Tu suscripción ha expirado!
+            </h3>
+            <p className="text-sm">
+              Para crear proyectos y continuar con tus prácticas, necesitas
+              renovar tu suscripción.
+            </p>
+          </div>
+        )}
+
         {/* Lista de proyectos */}
         {projects.length > 0 ? (
-          <div className="
+          <div
+            className="
             grid gap-4
             sm:grid-cols-2
-          ">
+          "
+          >
             {projects.map((project) => {
               // Calcula el estado del proyecto de forma más rigurosa
               const hasName = !!(project.name && project.name.trim());
@@ -542,23 +583,27 @@ export function ProjectsSection({
                 >
                   {/* Header con título y estado */}
                   <div className="mb-3 flex items-start justify-between">
-                    <h3 className="
+                    <h3
+                      className="
                       flex-1 pr-3 font-semibold text-foreground
                       transition-colors
                       group-hover:text-[#22c4d3]
-                    ">
+                    "
+                    >
                       {project.name}
                     </h3>
                     {/* Badge de estado: Completado o En progreso */}
                     {isProjectComplete ? (
-                      <div className="
+                      <div
+                        className="
                         inline-flex items-center rounded-full border
                         border-green-500/30 bg-green-500/20 px-2.5 py-0.5
                         text-xs font-semibold text-green-400 transition-colors
                         hover:bg-primary/80
                         focus:ring-2 focus:ring-ring focus:ring-offset-2
                         focus:outline-none
-                      ">
+                      "
+                      >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           width="24"
@@ -577,13 +622,15 @@ export function ProjectsSection({
                         Completado
                       </div>
                     ) : (
-                      <div className="
+                      <div
+                        className="
                         inline-flex items-center rounded-full border
                         border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs
                         font-semibold text-blue-400 transition-colors
                         focus:ring-2 focus:ring-ring focus:ring-offset-2
                         focus:outline-none
-                      ">
+                      "
+                      >
                         <Clock className="mr-1 size-3" />
                         En progreso
                       </div>
@@ -627,10 +674,12 @@ export function ProjectsSection({
                   </div>
 
                   {/* Footer con fecha y botón entrar */}
-                  <div className="
+                  <div
+                    className="
                     flex items-center justify-between border-t border-border/50
                     pt-3 text-xs text-muted-foreground
-                  ">
+                  "
+                  >
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-1.5">
                         <Users className="size-3.5" />
@@ -668,10 +717,12 @@ export function ProjectsSection({
             "
             style={{ backgroundColor: 'rgba(6, 28, 55, 0.3)' }}
           >
-            <div className="
+            <div
+              className="
               mb-4 flex size-16 items-center justify-center rounded-full
               bg-muted/50
-            ">
+            "
+            >
               <FaFolderOpen className="size-8 text-black" />
             </div>
             <h3 className="mb-2 text-lg font-semibold text-slate-100">
@@ -685,7 +736,7 @@ export function ProjectsSection({
             {isEnrolled && (
               <button
                 onClick={handleCreateProject}
-                disabled={_isCreating}
+                disabled={!canCreateProject || _isCreating}
                 style={{ backgroundColor: '#22c4d3', color: '#080c16' }}
                 className="
                   inline-flex h-10 w-full items-center justify-center gap-2

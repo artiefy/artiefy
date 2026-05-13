@@ -62,29 +62,6 @@ const LessonContentTabs = ({
       count: undefined, // Quitar número de transcripción
     },
     {
-      id: 'resources' as const,
-      label: 'Recursos',
-      icon: (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="size-4"
-        >
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="7 10 12 15 17 10" />
-          <line x1="12" x2="12" y1="15" y2="3" />
-        </svg>
-      ),
-      count: resourcesCount > 0 ? resourcesCount : undefined,
-    },
-    {
       id: 'activities' as const,
       label: 'Actividades',
       icon: (
@@ -135,6 +112,29 @@ const LessonContentTabs = ({
         </svg>
       ),
     },
+    {
+      id: 'resources' as const,
+      label: 'Recursos',
+      icon: (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="size-4"
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" x2="12" y1="15" y2="3" />
+        </svg>
+      ),
+      count: resourcesCount > 0 ? resourcesCount : undefined,
+    },
   ];
 
   return (
@@ -174,8 +174,8 @@ const LessonContentTabs = ({
         <div
           ref={navRef}
           className="
-            relative flex w-full gap-2 overflow-x-auto px-2 py-1.5
-            [-ms-overflow-style:none] [scrollbar-width:none]
+            relative flex w-full [scrollbar-width:none] gap-2 overflow-x-auto px-2
+            py-1.5 [-ms-overflow-style:none]
             [&::-webkit-scrollbar]:hidden
           "
           style={{ scrollSnapType: 'x mandatory' }}
@@ -185,8 +185,9 @@ const LessonContentTabs = ({
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
               className={`
-                flex shrink-0 items-center gap-2 rounded-full border px-[20px]
-                py-[10px] text-sm font-semibold whitespace-nowrap transition-all
+                flex shrink-0 items-center gap-2 rounded-full border py-[10px]
+                text-sm font-semibold whitespace-nowrap transition-all
+                ${activeTab === tab.id ? 'px-[18px]' : 'px-[12px]'}
                 ${
                   activeTab === tab.id
                     ? 'border-[hsl(217,33%,17%)] bg-[#061c37] text-white'
@@ -198,9 +199,12 @@ const LessonContentTabs = ({
                 }
               `}
               style={{ scrollSnapAlign: 'start' }}
+              aria-label={tab.label}
             >
               {tab.icon}
-              {tab.label}
+              <span className={activeTab === tab.id ? 'inline' : 'hidden'}>
+                {tab.label}
+              </span>
               {tab.count !== undefined && (
                 <span
                   className="

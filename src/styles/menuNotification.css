@@ -28,6 +28,7 @@
   right: 0;
   top: 100%;
   min-width: 320px;
+  max-height: 350px;
   transform: translateY(10px);
   background-color: rgba(1, 20, 43, 0.95);
   backdrop-filter: blur(8px);
@@ -37,6 +38,7 @@
   visibility: hidden;
   transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
   margin-top: 8px;
+  overflow-y: auto;
   z-index: 100;
 }
 
@@ -90,26 +92,55 @@
 }
 
 @media (max-width: 768px) {
+  .notification-button,
+  .notification-button svg,
+  .notification-button .notification-icon {
+    color: #22c4d3 !important;
+    stroke: #22c4d3 !important;
+  }
+
+  .notification-button:hover svg,
+  .notification-button:hover .notification-icon {
+    color: #22c4d3 !important;
+    stroke: #22c4d3 !important;
+  }
+
   .notification-menu {
     position: static;
   }
 
   .notification-options {
     position: fixed;
-    bottom: auto;
-    top: auto;
-    right: 16px;
-    left: 16px;
+    top: calc(var(--subscription-banner-height, 0px) + 4.5rem);
+    right: 14px;
+    left: 14px;
     min-width: unset;
-    width: calc(100% - 32px);
+    width: calc(100% - 28px);
     margin-top: 0;
-    transform: translateY(-120%);
-    max-height: 80vh;
-    overflow-y: auto;
+    transform: translateY(-10px) scale(0.98);
+    max-height: min(68dvh, 430px);
+    border: 1px solid rgba(34, 196, 211, 0.22);
+    border-radius: 18px;
+    background: rgba(1, 20, 43, 0.98);
+    box-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.42),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    z-index: 100000;
   }
 
   .notification-options.show {
-    transform: translateY(-120%);
+    transform: translateY(0) scale(1);
+  }
+
+  .mobile-notification-shell .notification-button {
+    color: #22c4d3 !important;
+    margin-left: 0;
+  }
+
+  .mobile-notification-shell .notification-button svg,
+  .mobile-notification-shell .notification-button .notification-icon {
+    color: #22c4d3 !important;
+    stroke: #22c4d3 !important;
   }
 
   .mobile-notification-button {
@@ -124,11 +155,37 @@
     color: #3af4ef;
   }
 
-  /* Cambia el color del texto de las notificaciones en móvil a color claro */
-  .notification-options .notification-item,
-  .notification-options .notification-title,
-  .notification-options .notification-description,
-  .notification-options .notification-time {
+  .notification-item {
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px;
+  }
+
+  .notification-title {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .notification-description {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.35;
+  }
+
+  .notification-time {
+    margin-top: 6px;
+    font-size: 10px;
+  }
+
+  .notification-options .notification-title {
     color: #3af4ef !important;
+  }
+
+  .notification-options .notification-description {
+    color: #a3a3a3 !important;
+  }
+
+  .notification-options .notification-time {
+    color: #6f7f91 !important;
   }
 }
