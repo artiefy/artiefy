@@ -1,6 +1,7 @@
 'use client';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 
@@ -16,7 +17,6 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import SunEditor from 'suneditor-react';
 
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal';
@@ -27,8 +27,6 @@ import BulkUploadUsers from './components/BulkUploadUsers';
 import BulkUploadUsersV2 from './components/BulkUploadUsersV2';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { InfoDialog } from './components/InfoDialog';
-
-import 'suneditor/dist/css/suneditor.min.css';
 
 interface User {
   id: string;
@@ -174,7 +172,10 @@ export default function AdminDashboard() {
   } | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
-
+  const SunEditor = dynamic(() => import('suneditor-react'), { ssr: false });
+  useEffect(() => {
+    void import('suneditor/dist/css/suneditor.min.css');
+  }, []);
   const [editValues, setEditValues] = useState<{
     firstName: string;
     lastName: string;
