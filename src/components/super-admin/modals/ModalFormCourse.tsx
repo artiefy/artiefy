@@ -260,6 +260,18 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     number | null
   >(certificationTypeId);
 
+  // ✅ Estados locales para sincronizar props (evitan re-renders sin actualizar)
+  const [localCategoryid, setLocalCategoryid] = useState<number>(categoryid);
+  const [localModalidadesid, setLocalModalidadesid] =
+    useState<number>(modalidadesid);
+  const [localNivelid, setLocalNivelid] = useState<number>(nivelid);
+  const [localIsActive, setLocalIsActive] = useState<boolean>(isActive);
+
+  // ✅ Estado local para idTypesCourses (sincronizado con prop)
+  const [localIdTypesCourses, setLocalIdTypesCourses] = useState<number | null>(
+    idTypesCourses ?? null
+  );
+
   // 🆕 Estados para parámetros y plantillas existentes
   const [existingParametros, setExistingParametros] = useState<
     {
@@ -899,15 +911,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         title,
         description,
         file,
-        categoryid,
-        modalidadesid,
-        nivelid,
+        localCategoryid, // ✅ usar estado local
+        localModalidadesid, // ✅ usar estado local
+        localNivelid, // ✅ usar estado local
         rating,
         addParametros,
         finalCoverImageKey,
         finalUploadedFileName,
         courseTypeId,
-        isActive,
+        localIsActive, // ✅ usar estado local
         subjects,
         finalVideoKey,
         individualPrice,
@@ -915,7 +927,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         selectedScheduleId ? Number(selectedScheduleId) : null,
         selectedSpaceId ? Number(selectedSpaceId) : null,
         localCertificationTypeId,
-        idTypesCourses
+        localIdTypesCourses // ✅ usar estado local en lugar del prop
       );
 
       console.log('📤 Enviando al onSubmitAction:', {
@@ -1066,11 +1078,15 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setTitle(title);
       setDescription(description);
       setCategoryid(categoryid);
+      setLocalCategoryid(categoryid); // ✅ sincronizar estado local
       setModalidadesid(modalidadesid);
+      setLocalModalidadesid(modalidadesid); // ✅ sincronizar estado local
       setNivelid(nivelid);
+      setLocalNivelid(nivelid); // ✅ sincronizar estado local
       setCoverImage(coverImageKey ?? null);
       setCourseTypeId(courseTypeId ?? null);
       setIsActive(isActive);
+      setLocalIsActive(isActive); // ✅ sincronizar estado local
       setIndividualPrice(individualPrice ?? null);
       setCoverVideoCourseKey(coverVideoCourseKey ?? null);
     }
@@ -1113,17 +1129,23 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setTitle('');
       setDescription('');
       setCategoryid(0);
+      setLocalCategoryid(0); // ✅ también reiniciar estado local
       setModalidadesid(0);
+      setLocalModalidadesid(0); // ✅ también reiniciar estado local
       setNivelid(0);
+      setLocalNivelid(0); // ✅ también reiniciar estado local
       setCoverImage('');
       setRating(NaN);
       setParametrosAction([]);
       setIndividualPrice(null);
       setCourseTypeId([]); // ✅ FIXED
       setIsActive(true);
+      setLocalIsActive(true); // ✅ también reiniciar estado local
       setHorario(null);
       setEspacios(null);
       setCertificationTypeId(null);
+      setLocalCertificationTypeId(null); // ✅ también reiniciar estado local
+      setLocalIdTypesCourses(null); // ✅ también reiniciar estado local
     }
   }, [isOpen, editingCourseId]);
 
@@ -1322,10 +1344,36 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
     void fetchTypesCourses();
   }, []);
 
+  // ✅ Efecto para sincronizar todos los campos locales cuando cambian los props
+  useEffect(() => {
+    setLocalCategoryid(categoryid);
+    setLocalModalidadesid(modalidadesid);
+    setLocalNivelid(nivelid);
+    setLocalIsActive(isActive);
+    setLocalIdTypesCourses(idTypesCourses ?? null);
+    setLocalCertificationTypeId(certificationTypeId);
+    if (editingCourseId) {
+      console.log('📋 [SYNC COURSE FIELDS] Sincronizando para edición:', {
+        categoryid,
+        modalidadesid,
+        nivelid,
+        isActive,
+      });
+    }
+  }, [
+    editingCourseId,
+    categoryid,
+    modalidadesid,
+    nivelid,
+    isActive,
+    idTypesCourses,
+    certificationTypeId,
+  ]);
+
   // ✅ Efecto para sincronizar idTypesCourses cuando se edita un curso
   useEffect(() => {
+    setLocalIdTypesCourses(idTypesCourses ?? null);
     if (editingCourseId && idTypesCourses !== null) {
-      // idTypesCourses ya viene como prop sincronizado
       console.log('📋 [SYNC TYPE COURSE] idTypesCourses prop:', idTypesCourses);
     }
   }, [editingCourseId, idTypesCourses]);
@@ -1466,8 +1514,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       text-white
                       md:text-base
                     "
-                    value={nivelid}
-                    onChange={(e) => setNivelid(Number(e.target.value))}
+                    value={localNivelid}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setLocalNivelid(val); // ✅ estado local
+                      setNivelid(val); // ✅ sincronizar con padre
+                    }}
                   >
                     {niveles.map((nivel) => (
                       <option key={nivel.id} value={nivel.id}>
@@ -1496,8 +1548,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       text-white
                       md:text-base
                     "
-                    value={modalidadesid}
-                    onChange={(e) => setModalidadesid(Number(e.target.value))}
+                    value={localModalidadesid}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setLocalModalidadesid(val); // ✅ estado local
+                      setModalidadesid(val); // ✅ sincronizar con padre
+                    }}
                   >
                     {modalidades.map((modalidad) => (
                       <option key={modalidad.id} value={modalidad.id}>
@@ -1526,8 +1582,12 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       text-white
                       md:text-base
                     "
-                    value={categoryid}
-                    onChange={(e) => setCategoryid(Number(e.target.value))}
+                    value={localCategoryid}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setLocalCategoryid(val); // ✅ estado local
+                      setCategoryid(val); // ✅ sincronizar con padre
+                    }}
                   >
                     {categories.map((category) => (
                       <option key={category.id} value={category.id}>
@@ -1647,12 +1707,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                       text-white
                       md:text-base
                     "
-                    value={idTypesCourses ?? ''}
-                    onChange={(e) =>
-                      setIdTypesCourses(
-                        e.target.value ? Number(e.target.value) : null
-                      )
-                    }
+                    value={localIdTypesCourses ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value
+                        ? Number(e.target.value)
+                        : null;
+                      setLocalIdTypesCourses(val); // actualiza estado local
+                      setIdTypesCourses(val); // también actualiza el padre
+                    }}
                   >
                     <option value="">Seleccionar tipo de curso</option>
                     {typesCourses.map((t) => (
@@ -1710,11 +1772,14 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                         md:text-lg
                       "
                     >
-                      Estado del Curso
+                      Visibilidad del Curso
                     </label>
                     <ActiveDropdown
-                      isActive={isActive}
-                      setIsActive={setIsActive}
+                      isActive={localIsActive}
+                      setIsActive={(val) => {
+                        setLocalIsActive(val); // ✅ estado local
+                        setIsActive(val); // ✅ sincronizar con padre
+                      }}
                     />
                   </div>
                 </>

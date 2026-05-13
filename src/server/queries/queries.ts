@@ -249,6 +249,7 @@ export async function getAdminUsers(query?: string) {
     id: string;
     firstName?: string;
     lastName?: string;
+    username?: string | null;
     emailAddresses: { emailAddress: string; id: string }[];
     primaryEmailAddressId?: string;
     phoneNumbers?: { id: string; phoneNumber: string }[];
@@ -268,6 +269,7 @@ export async function getAdminUsers(query?: string) {
         id: u.id,
         firstName: u.firstName ?? undefined,
         lastName: u.lastName ?? undefined,
+        username: u.username ?? null,
         emailAddresses: u.emailAddresses.map((e) => ({
           id: e.id,
           emailAddress: e.emailAddress,
@@ -345,7 +347,8 @@ export async function getAdminUsers(query?: string) {
           ?.emailAddress ?? '',
       role,
       status,
-      phone, // 👈 ahora viene desde la BD si existe
+      phone,
+      username: u.username ?? null,
     };
   });
 

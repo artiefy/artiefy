@@ -7875,6 +7875,8 @@ export default function EnrolledUsersPage() {
                     overflow: 'visible',
                     minWidth: '794px',
                     maxWidth: '900px',
+                    width: '100%',
+                    boxSizing: 'border-box',
                   }}
                 >
                   <div
@@ -7997,7 +7999,12 @@ export default function EnrolledUsersPage() {
                     className="
                       mb-6 w-full border-collapse border border-black text-sm
                     "
-                    style={{ pageBreakAfter: 'always', marginBottom: '0' }}
+                    style={{
+                      pageBreakAfter: 'always',
+                      marginBottom: '0',
+                      width: '100%',
+                      tableLayout: 'fixed',
+                    }}
                   >
                     <thead>
                       <tr className="bg-white">
@@ -8268,6 +8275,7 @@ export default function EnrolledUsersPage() {
                       gridTemplateColumns: '1fr 1fr',
                       gap: '6px',
                       fontSize: '13px',
+                      width: '100%',
                       backgroundColor: 'white',
                       position: 'relative',
                       zIndex: 10,

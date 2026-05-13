@@ -1512,6 +1512,7 @@ export const classMeetings = pgTable('class_meetings', {
   meetingId: varchar('meeting_id', { length: 255 }).notNull(),
   video_key: varchar('video_key', { length: 255 }),
   video_key_2: varchar('video_key_2', { length: 255 }),
+  videoUrlExt: text('video_url_ext'),
   progress: integer('progress'),
 });
 export const comercials = pgTable('comercials', {

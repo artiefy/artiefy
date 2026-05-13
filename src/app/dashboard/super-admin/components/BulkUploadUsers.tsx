@@ -292,8 +292,8 @@ const BulkUploadUsers = ({
       <button
         onClick={() => setModalIsOpen(true)}
         className="
-          flex items-center gap-2 rounded-md bg-[#00BDD8] px-6 py-2 text-white
-          transition
+          flex items-center gap-2 rounded-md bg-[#00BDD8] px-6 py-2
+          text-background transition
           hover:scale-105
         "
       >

@@ -136,6 +136,7 @@ type UIMeeting = ScheduledMeeting & {
   video_key?: string;
   video_key_2?: string; // ✅ nuevo
   videoUrl2?: string; // ✅ nuevo opcional
+  videoUrlExt?: string;
 };
 
 // Add these interfaces after the existing interfaces
@@ -427,6 +428,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Estado para el scroll y la tarjeta mini sticky
   const [showStickyCard, setShowStickyCard] = useState(false);
+  void showStickyCard;
 
   // Ref para el contenedor de tabs con scroll horizontal
   const tabsRef = useRef<HTMLDivElement>(null);
@@ -1189,7 +1191,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     }[],
     horario: number | null,
     espacios: number | null,
-    certificationTypeId: number | null
+    certificationTypeId: number | null,
+    idTypesCourses?: number | null // ✅ Agregar parámetro
   ): Promise<void> => {
     try {
       setIsUpdating(true);
@@ -1272,6 +1275,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         horario,
         espacios,
         certificationTypeId,
+        idTypesCourses, // ✅ Agregar el campo idTypesCourses
       };
 
       console.log('🚀 Payload final de actualización:', payload);
@@ -1916,9 +1920,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     const video_key = str('video_key') ?? str('videoKey');
     const videoUrlFromApi = str('videoUrl');
+    const videoUrlExt = str('video_url_ext') ?? str('videoUrlExt');
+
     const finalVideoUrl = video_key
       ? `${awsBase}/video_clase/${video_key}`
-      : videoUrlFromApi;
+      : (videoUrlExt ?? videoUrlFromApi);
     const video_key_2 = str('video_key_2') ?? str('videoKey2');
     const finalVideoUrl2 = video_key_2
       ? `${awsBase}/video_clase/${video_key_2}`
@@ -1931,6 +1937,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       recordingContentUrl: undefined,
       video_key,
       videoUrl: finalVideoUrl,
+      videoUrlExt,
       title: str('title') ?? '',
       startDateTime: str('startDateTime') ?? '',
       endDateTime: str('endDateTime') ?? '',
@@ -2048,19 +2055,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         />
       </div>
 
-      {/* Tarjeta Mini Sticky - Premium Glass (FUERA del padding para fixed) */}
+      {/* Tarjeta Mini Sticky - Premium Glass (FUERA del padding para fixed) 
       {showStickyCard && course && (
         <div
           className="
-            surface-glass animate-slideInDown fixed inset-x-0 top-4 z-[99999]
+            surface-glass animate-slideInDown fixed inset-x-0 top-4 z-50
             flex max-w-full items-center justify-between gap-4 px-2 py-3
             shadow-lg
             md:top-6 md:px-4 md:py-3
           "
         >
-          {/* Mini Imagen y Info */}
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            {/* Mini Imagen - Premium */}
             <div className="card-premium relative size-20 flex-shrink-0">
               <Image
                 src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
@@ -2072,7 +2077,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               />
             </div>
 
-            {/* Información compacta */}
             <div className="min-w-0 flex-1">
               <h3
                 className="
@@ -2103,7 +2107,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
           </div>
 
-          {/* Botones de acción */}
           <div className="flex flex-shrink-0 gap-2">
             <Button
               onClick={() => {
@@ -2127,11 +2130,21 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             >
               ↑
             </Button>
+            <Button
+              onClick={() => setShowStickyCard(false)}
+              className="
+                px-2 py-2 bg-red-500/60 hover:bg-red-600
+                text-white rounded-lg transition-all duration-300
+              "
+              title="Cerrar"
+            >
+              ✕
+            </Button>
           </div>
         </div>
       )}
+        */}
 
-      {/* Contenedor con padding interno */}
       <div
         className="
           relative z-20 flex justify-center px-2 py-4
@@ -2174,7 +2187,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </BreadcrumbList>
           </Breadcrumb>
           <div className="relative w-full">
-            {/* Glow Background Effect */}
             <div
               className="
                 absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400
@@ -2272,7 +2284,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   md:grid-cols-2
                 "
               >
-                {/* Left Column - Information */}
                 <div
                   className="
                     animate-in fade-in slide-in-from-left-8 order-1 space-y-6
@@ -2288,7 +2299,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     Información del Curso
                   </h2>
 
-                  {/* Grid de información rápida */}
                   <div
                     className="
                       grid grid-cols-1 gap-4
@@ -2396,7 +2406,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </div>
                   </div>
 
-                  {/* Descripción */}
                   <div
                     className="
                       rounded-xl border border-cyan-500/30 bg-white/5 p-5
@@ -2417,7 +2426,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     </p>
                   </div>
 
-                  {/* Educador */}
                   <div
                     className="
                       rounded-xl border-2 border-cyan-500/40 bg-cyan-500/10 p-6
@@ -2443,14 +2451,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     />
                   </div>
                 </div>
-                {/* Right Column - Cover Image */}
                 <div
                   className="
                     animate-slideInRight order-2 flex w-full flex-col space-y-6
                     md:order-2
                   "
                 >
-                  {/* Image Container - Premium Glass */}
                   <div
                     className="
                       card-premium group relative aspect-video w-full

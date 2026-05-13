@@ -534,7 +534,11 @@ export async function PUT(
       spaceOptionId: data.spaceOptionId ?? data.espacios ?? null,
       certificationTypeId: data.certificationTypeId ?? null,
       visibility:
-        typeof data.visibility === 'boolean' ? data.visibility : undefined,
+        typeof data.visibility === 'boolean'
+          ? data.visibility
+          : typeof data.isActive === 'boolean'
+            ? data.isActive
+            : undefined,
       idTypesCourses: data.idTypesCourses ?? null,
     };
 
