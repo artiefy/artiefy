@@ -42,8 +42,9 @@ interface User {
   permissions?: string[]; // 👈 AGREGA ESTO
   subscriptionEndDate?: string | null;
 }
+const SunEditor = dynamic(() => import('suneditor-react'), { ssr: false });
 
-// (Removed unused `CourseBrief` type — use `Course` where needed)
+//(Removed unused `CourseBrief` type — use `Course` where needed)
 
 type ConfirmationState = {
   isOpen: boolean;
@@ -172,10 +173,7 @@ export default function AdminDashboard() {
   } | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [programs, setPrograms] = useState<{ id: string; title: string }[]>([]);
-  const SunEditor = dynamic(() => import('suneditor-react'), { ssr: false });
-  useEffect(() => {
-    void import('suneditor/dist/css/suneditor.min.css');
-  }, []);
+
   const [editValues, setEditValues] = useState<{
     firstName: string;
     lastName: string;
