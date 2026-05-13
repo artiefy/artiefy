@@ -141,13 +141,13 @@ export const TourComponent = () => {
             ${
               isClassRoute
                 ? `
-              left-24
-              ${floatingBottomClass}
-            `
+                  left-24
+                  ${floatingBottomClass}
+                `
                 : `
-              right-22
-              ${floatingBottomClass}
-            `
+                  right-22
+                  ${floatingBottomClass}
+                `
             }
           `}
           onMouseEnter={() =>

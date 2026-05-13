@@ -933,9 +933,9 @@ export default function LessonDetails({
           {isSubscriptionAccessBlocked ? (
             <div
               className="
-              flex min-h-[calc(100vh-12rem)] items-center justify-center px-4
-              py-10
-            "
+                flex min-h-[calc(100vh-12rem)] items-center justify-center px-4
+                py-10
+              "
             >
               <div
                 className="

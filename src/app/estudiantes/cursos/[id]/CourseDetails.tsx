@@ -1381,9 +1381,9 @@ export default function CourseDetails({
       <h3 className="mb-2 text-xl font-bold">¡Tu suscripción ha expirado!</h3>
       <p
         className="
-        mb-5 text-sm
-        md:text-base
-      "
+          mb-5 text-sm
+          md:text-base
+        "
       >
         Para seguir disfrutando de todo el contenido premium y continuar tu
         aprendizaje, necesitas renovar tu suscripción.
@@ -1951,8 +1951,8 @@ export default function CourseDetails({
                         {(hasCourseOpinions || shouldShowStudentCount) && (
                           <div
                             className="
-                            flex flex-wrap items-center gap-4 text-sm
-                          "
+                              flex flex-wrap items-center gap-4 text-sm
+                            "
                           >
                             {hasCourseOpinions && (
                               <div className="flex items-center gap-1.5">
@@ -2003,8 +2003,8 @@ export default function CourseDetails({
                             {shouldShowStudentCount && (
                               <div
                                 className="
-                                flex items-center gap-1.5 text-[#94A3B8]
-                              "
+                                  flex items-center gap-1.5 text-[#94A3B8]
+                                "
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
@@ -2529,8 +2529,8 @@ export default function CourseDetails({
                         <div
                           ref={carouselRef}
                           className="
-                            relative flex min-w-0 flex-1 [scrollbar-width:none] gap-2
-                            overflow-x-auto px-2 py-1.5
+                            relative flex min-w-0 flex-1 [scrollbar-width:none]
+                            gap-2 overflow-x-auto px-2 py-1.5
                             [-ms-overflow-style:none]
                             md:px-3
                             [&::-webkit-scrollbar]:hidden
@@ -3220,8 +3220,8 @@ export default function CourseDetails({
         >
           <div
             className="
-            mx-auto flex max-w-7xl items-center justify-between gap-3
-          "
+              mx-auto flex max-w-7xl items-center justify-between gap-3
+            "
           >
             <p
               className="

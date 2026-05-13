@@ -1639,8 +1639,8 @@ export function ProgramHeader({
         >
           <div
             className="
-            mx-auto flex max-w-7xl items-center justify-between gap-3
-          "
+              mx-auto flex max-w-7xl items-center justify-between gap-3
+            "
           >
             <p
               className="

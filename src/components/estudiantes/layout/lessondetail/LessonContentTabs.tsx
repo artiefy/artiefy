@@ -174,8 +174,8 @@ const LessonContentTabs = ({
         <div
           ref={navRef}
           className="
-            relative flex w-full [scrollbar-width:none] gap-2 overflow-x-auto px-2
-            py-1.5 [-ms-overflow-style:none]
+            relative flex w-full [scrollbar-width:none] gap-2 overflow-x-auto
+            px-2 py-1.5 [-ms-overflow-style:none]
             [&::-webkit-scrollbar]:hidden
           "
           style={{ scrollSnapType: 'x mandatory' }}

@@ -433,9 +433,9 @@ export function ProjectsSection({
         {/* Header con título e icono */}
         <div
           className="
-          flex flex-col items-start justify-between gap-4
-          sm:flex-row
-        "
+            flex flex-col items-start justify-between gap-4
+            sm:flex-row
+          "
         >
           <div className="flex items-start gap-4">
             <div
@@ -496,9 +496,9 @@ export function ProjectsSection({
         {projects.length > 0 ? (
           <div
             className="
-            grid gap-4
-            sm:grid-cols-2
-          "
+              grid gap-4
+              sm:grid-cols-2
+            "
           >
             {projects.map((project) => {
               // Calcula el estado del proyecto de forma más rigurosa
@@ -585,10 +585,10 @@ export function ProjectsSection({
                   <div className="mb-3 flex items-start justify-between">
                     <h3
                       className="
-                      flex-1 pr-3 font-semibold text-foreground
-                      transition-colors
-                      group-hover:text-[#22c4d3]
-                    "
+                        flex-1 pr-3 font-semibold text-foreground
+                        transition-colors
+                        group-hover:text-[#22c4d3]
+                      "
                     >
                       {project.name}
                     </h3>
@@ -596,13 +596,13 @@ export function ProjectsSection({
                     {isProjectComplete ? (
                       <div
                         className="
-                        inline-flex items-center rounded-full border
-                        border-green-500/30 bg-green-500/20 px-2.5 py-0.5
-                        text-xs font-semibold text-green-400 transition-colors
-                        hover:bg-primary/80
-                        focus:ring-2 focus:ring-ring focus:ring-offset-2
-                        focus:outline-none
-                      "
+                          inline-flex items-center rounded-full border
+                          border-green-500/30 bg-green-500/20 px-2.5 py-0.5
+                          text-xs font-semibold text-green-400 transition-colors
+                          hover:bg-primary/80
+                          focus:ring-2 focus:ring-ring focus:ring-offset-2
+                          focus:outline-none
+                        "
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -624,12 +624,12 @@ export function ProjectsSection({
                     ) : (
                       <div
                         className="
-                        inline-flex items-center rounded-full border
-                        border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5 text-xs
-                        font-semibold text-blue-400 transition-colors
-                        focus:ring-2 focus:ring-ring focus:ring-offset-2
-                        focus:outline-none
-                      "
+                          inline-flex items-center rounded-full border
+                          border-blue-500/30 bg-blue-500/20 px-2.5 py-0.5
+                          text-xs font-semibold text-blue-400 transition-colors
+                          focus:ring-2 focus:ring-ring focus:ring-offset-2
+                          focus:outline-none
+                        "
                       >
                         <Clock className="mr-1 size-3" />
                         En progreso
@@ -676,9 +676,9 @@ export function ProjectsSection({
                   {/* Footer con fecha y botón entrar */}
                   <div
                     className="
-                    flex items-center justify-between border-t border-border/50
-                    pt-3 text-xs text-muted-foreground
-                  "
+                      flex items-center justify-between border-t
+                      border-border/50 pt-3 text-xs text-muted-foreground
+                    "
                   >
                     <div className="flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-1.5">
@@ -719,9 +719,9 @@ export function ProjectsSection({
           >
             <div
               className="
-              mb-4 flex size-16 items-center justify-center rounded-full
-              bg-muted/50
-            "
+                mb-4 flex size-16 items-center justify-center rounded-full
+                bg-muted/50
+              "
             >
               <FaFolderOpen className="size-8 text-black" />
             </div>
