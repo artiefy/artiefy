@@ -119,7 +119,7 @@ export default defineConfig([
           preferSingleLine: false,
           // Mantiene la sangría multilínea estándar del proyecto.
           indent: 2,
-          lineBreakStyle: 'unix',
+          lineBreakStyle: 'windows',
           // Recomendado por el plugin cuando convive con Prettier/Biome.
           strictness: 'loose',
         },
