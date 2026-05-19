@@ -128,20 +128,33 @@ export function ProjectsRightRail({
                   `}
                 >
                   <div className="mb-2 flex items-center gap-2">
-                    <Image
-                      src={
-                        collaborator.imageUrl ??
-                        `https://i.pravatar.cc/150?u=${collaborator.userId}`
-                      }
-                      alt={collaborator.name}
-                      width={28}
-                      height={28}
-                      className={`
-                        size-7 rounded-full ring-2 ring-emerald-500/20
-                        transition-all
-                        group-hover:ring-emerald-500/40
-                      `}
-                    />
+                    {collaborator.imageUrl ? (
+                      <Image
+                        src={collaborator.imageUrl}
+                        alt={collaborator.name}
+                        width={28}
+                        height={28}
+                        className={`
+                          size-7 rounded-full ring-2 ring-emerald-500/20
+                          transition-all
+                          group-hover:ring-emerald-500/40
+                        `}
+                      />
+                    ) : (
+                      <span
+                        aria-hidden="true"
+                        className={`
+                          flex size-7 shrink-0 items-center justify-center
+                          rounded-full bg-emerald-500/15 text-xs font-semibold
+                          text-emerald-200 ring-2 ring-emerald-500/20
+                          transition-all
+                          group-hover:ring-emerald-500/40
+                        `}
+                      >
+                        {collaborator.name.trim().charAt(0).toUpperCase() ||
+                          'U'}
+                      </span>
+                    )}
                     <span className="text-xs font-medium text-muted-foreground">
                       {collaborator.name}
                     </span>
