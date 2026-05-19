@@ -51,6 +51,10 @@ const getInitial = (value: string) =>
 
 interface ProjectFeedCardProps {
   item: ProjectSocialItem;
+  initialSaved?: boolean;
+  initialFollowed?: boolean;
+  onSavedChange?: (projectId: number, saved: boolean) => void;
+  onFollowedChange?: (projectId: number, followed: boolean) => void;
 }
 
 interface ProjectCommentItem {
@@ -75,7 +79,13 @@ interface InteractionState {
   followed: boolean;
 }
 
-export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
+export function ProjectFeedCard({
+  item,
+  initialSaved = false,
+  initialFollowed = false,
+  onSavedChange,
+  onFollowedChange,
+}: ProjectFeedCardProps) {
   const { user } = useUser();
   const [interactions, setInteractions] = useState<InteractionState>({
     likes: item.likes,
@@ -83,9 +93,9 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
     saves: item.saves,
     shares: 0,
     liked: false,
-    saved: false,
+    saved: initialSaved,
     shared: false,
-    followed: false,
+    followed: initialFollowed,
   });
   const [isLiking, setIsLiking] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -144,7 +154,7 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
     };
 
     void fetchInteractions();
-  }, [item.id]);
+  }, [item.id, onFollowedChange, onSavedChange]);
 
   const fetchComments = async () => {
     try {
@@ -223,6 +233,7 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
         saved: data.action === 'saved',
         saves: data.count,
       }));
+      onSavedChange?.(item.id, data.action === 'saved');
     } catch (error) {
       console.error('Error alternando guardado', error);
     } finally {
@@ -438,6 +449,7 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
         ...prev,
         followed: data.followed,
       }));
+      onFollowedChange?.(item.id, data.followed);
     } catch (error) {
       console.error('Error alternando seguimiento', error);
     } finally {
@@ -566,7 +578,7 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
                 interactions.followed ? 'Dejar de seguir' : 'Seguir proyecto'
               }
               className={`
-                rounded-lg p-2 transition-all
+                group/follow relative rounded-lg p-2 transition-all
                 ${
                   interactions.followed
                     ? 'bg-primary/15 text-primary'
@@ -579,6 +591,17 @@ export function ProjectFeedCard({ item }: ProjectFeedCardProps) {
               ) : (
                 <UserPlus className="size-4" />
               )}
+              <span
+                className="
+                  pointer-events-none absolute right-0 bottom-full mb-2
+                  rounded-md border border-border/60 bg-card px-2 py-1 text-xs
+                  font-semibold text-foreground opacity-0 shadow-lg
+                  shadow-black/20 transition-opacity
+                  group-hover/follow:opacity-100
+                "
+              >
+                {interactions.followed ? 'Siguiendo' : 'Seguir'}
+              </span>
             </button>
 
             <div className="relative">
