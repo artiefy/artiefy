@@ -6,9 +6,11 @@ import { and, eq, inArray } from 'drizzle-orm';
 import { db } from '~/server/db';
 import {
   projectComments,
+  projectFollows,
   projectLikes,
   projects,
   projectSaves,
+  projectShares,
 } from '~/server/db/schema';
 
 const respond = (data: unknown, status = 200) =>
@@ -20,7 +22,13 @@ export async function GET(req: NextRequest) {
     const projectIdsParam = searchParams.get('projectIds');
 
     if (!projectIdsParam) {
-      return respond({ counts: {}, likedIds: [], savedIds: [] });
+      return respond({
+        counts: {},
+        likedIds: [],
+        savedIds: [],
+        sharedIds: [],
+        followedIds: [],
+      });
     }
 
     const projectIds = projectIdsParam
@@ -29,7 +37,13 @@ export async function GET(req: NextRequest) {
       .filter((id) => Number.isFinite(id));
 
     if (projectIds.length === 0) {
-      return respond({ counts: {}, likedIds: [], savedIds: [] });
+      return respond({
+        counts: {},
+        likedIds: [],
+        savedIds: [],
+        sharedIds: [],
+        followedIds: [],
+      });
     }
 
     const validProjects = await db
@@ -39,10 +53,16 @@ export async function GET(req: NextRequest) {
 
     const validProjectIds = validProjects.map((project) => project.id);
     if (validProjectIds.length === 0) {
-      return respond({ counts: {}, likedIds: [], savedIds: [] });
+      return respond({
+        counts: {},
+        likedIds: [],
+        savedIds: [],
+        sharedIds: [],
+        followedIds: [],
+      });
     }
 
-    const [likesRows, savesRows, commentsRows] = await Promise.all([
+    const [likesRows, savesRows, sharesRows, commentsRows] = await Promise.all([
       db
         .select({
           projectId: projectLikes.projectId,
@@ -58,6 +78,13 @@ export async function GET(req: NextRequest) {
         .from(projectSaves)
         .where(inArray(projectSaves.projectId, validProjectIds)),
       db
+        .select({
+          projectId: projectShares.projectId,
+          userId: projectShares.userId,
+        })
+        .from(projectShares)
+        .where(inArray(projectShares.projectId, validProjectIds)),
+      db
         .select({ projectId: projectComments.projectId })
         .from(projectComments)
         .where(inArray(projectComments.projectId, validProjectIds)),
@@ -65,7 +92,7 @@ export async function GET(req: NextRequest) {
 
     const counts: Record<
       number,
-      { likes: number; comments: number; saves: number }
+      { likes: number; comments: number; saves: number; shares: number }
     > = {};
 
     validProjectIds.forEach((projectId) => {
@@ -73,6 +100,7 @@ export async function GET(req: NextRequest) {
         likes: 0,
         comments: 0,
         saves: 0,
+        shares: 0,
       };
     });
 
@@ -84,6 +112,11 @@ export async function GET(req: NextRequest) {
     savesRows.forEach((row) => {
       if (!counts[row.projectId]) return;
       counts[row.projectId].saves += 1;
+    });
+
+    sharesRows.forEach((row) => {
+      if (!counts[row.projectId]) return;
+      counts[row.projectId].shares += 1;
     });
 
     commentsRows.forEach((row) => {
@@ -104,10 +137,12 @@ export async function GET(req: NextRequest) {
         counts,
         likedIds: [],
         savedIds: [],
+        sharedIds: [],
+        followedIds: [],
       });
     }
 
-    const [likedRows, savedRows] = await Promise.all([
+    const [likedRows, savedRows, sharedRows, followedRows] = await Promise.all([
       db
         .select({ projectId: projectLikes.projectId })
         .from(projectLikes)
@@ -126,12 +161,32 @@ export async function GET(req: NextRequest) {
             eq(projectSaves.userId, currentUserId)
           )
         ),
+      db
+        .select({ projectId: projectShares.projectId })
+        .from(projectShares)
+        .where(
+          and(
+            inArray(projectShares.projectId, validProjectIds),
+            eq(projectShares.userId, currentUserId)
+          )
+        ),
+      db
+        .select({ projectId: projectFollows.projectId })
+        .from(projectFollows)
+        .where(
+          and(
+            inArray(projectFollows.projectId, validProjectIds),
+            eq(projectFollows.userId, currentUserId)
+          )
+        ),
     ]);
 
     return respond({
       counts,
       likedIds: likedRows.map((row) => row.projectId),
       savedIds: savedRows.map((row) => row.projectId),
+      sharedIds: sharedRows.map((row) => row.projectId),
+      followedIds: followedRows.map((row) => row.projectId),
     });
   } catch (error) {
     console.error('Error GET /api/projects/interactions', error);

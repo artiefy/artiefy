@@ -1,10 +1,22 @@
-import { Compass, FolderKanban, Plus, Users } from 'lucide-react';
+import {
+  Bookmark,
+  Compass,
+  FolderKanban,
+  Plus,
+  UserCheck,
+  Users,
+} from 'lucide-react';
 
-export type SocialView = 'explorar' | 'mis' | 'colabs';
+export type SocialView =
+  | 'explorar'
+  | 'mis'
+  | 'colabs'
+  | 'favoritos'
+  | 'seguidos';
 
 interface ProjectsLeftRailProps {
-  total: number;
-  collaborators: number;
+  favorites: number;
+  following: number;
   activeView: SocialView;
   onChangeView: (view: SocialView) => void;
   onCreateProject?: () => void;
@@ -14,11 +26,13 @@ const railItems = [
   { key: 'explorar', label: 'Explorar', icon: Compass },
   { key: 'mis', label: 'Mis proyectos', icon: FolderKanban },
   { key: 'colabs', label: 'Colaboraciones', icon: Users },
+  { key: 'favoritos', label: 'Favoritos', icon: Bookmark },
+  { key: 'seguidos', label: 'Proyectos que sigo', icon: UserCheck },
 ] as const;
 
 export function ProjectsLeftRail({
-  total,
-  collaborators,
+  favorites,
+  following,
   activeView,
   onChangeView,
   onCreateProject,
@@ -111,16 +125,28 @@ export function ProjectsLeftRail({
         <div className="rounded-xl border border-border/50 bg-[#1A2333]/30 p-4">
           <p className="mb-2 text-xs text-muted-foreground">Tu actividad</p>
           <div className="grid grid-cols-2 gap-3 text-center">
-            <div>
-              <p className="text-lg font-bold text-foreground">{total}</p>
-              <p className="text-xs text-muted-foreground">Proyectos</p>
-            </div>
-            <div>
-              <p className="text-lg font-bold text-foreground">
-                {collaborators}
-              </p>
-              <p className="text-xs text-muted-foreground">Colabs</p>
-            </div>
+            <button
+              type="button"
+              onClick={() => onChangeView('favoritos')}
+              className="
+                rounded-lg p-2 transition-colors
+                hover:bg-[#1A2333]/60
+              "
+            >
+              <p className="text-lg font-bold text-foreground">{favorites}</p>
+              <p className="text-xs text-muted-foreground">Favoritos</p>
+            </button>
+            <button
+              type="button"
+              onClick={() => onChangeView('seguidos')}
+              className="
+                rounded-lg p-2 transition-colors
+                hover:bg-[#1A2333]/60
+              "
+            >
+              <p className="text-lg font-bold text-foreground">{following}</p>
+              <p className="text-xs text-muted-foreground">Seguidos</p>
+            </button>
           </div>
         </div>
       </div>

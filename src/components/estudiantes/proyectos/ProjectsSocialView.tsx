@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { Search, SlidersHorizontal } from 'lucide-react';
 
@@ -73,16 +73,88 @@ export function ProjectsSocialView({
   const [localMyItems, setLocalMyItems] = useState(myItems);
   const [localCollaborationItems, setLocalCollaborationItems] =
     useState(collaborationItems);
+  const [favoriteProjectIds, setFavoriteProjectIds] = useState<Set<number>>(
+    () => new Set()
+  );
+  const [followedProjectIds, setFollowedProjectIds] = useState<Set<number>>(
+    () => new Set()
+  );
 
   const [editingProject, setEditingProject] =
     useState<ProjectSocialItem | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
+  const allVisibleItems = useMemo(() => {
+    const itemMap = new Map<number, ProjectSocialItem>();
+    [...localExploreItems, ...localMyItems, ...localCollaborationItems].forEach(
+      (item) => {
+        itemMap.set(item.id, item);
+      }
+    );
+    return Array.from(itemMap.values());
+  }, [localCollaborationItems, localExploreItems, localMyItems]);
+
+  useEffect(() => {
+    if (allVisibleItems.length === 0) {
+      setFavoriteProjectIds(new Set());
+      setFollowedProjectIds(new Set());
+      return;
+    }
+
+    const controller = new AbortController();
+    const fetchUserProjectActivity = async () => {
+      try {
+        const projectIds = allVisibleItems.map((item) => item.id).join(',');
+        const res = await fetch(
+          `/api/projects/interactions?projectIds=${projectIds}`,
+          { signal: controller.signal }
+        );
+        if (!res.ok) return;
+
+        const data = (await res.json()) as {
+          savedIds?: number[];
+          followedIds?: number[];
+        };
+        setFavoriteProjectIds(new Set(data.savedIds ?? []));
+        setFollowedProjectIds(new Set(data.followedIds ?? []));
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+        console.error('Error cargando actividad de proyectos', error);
+      }
+    };
+
+    void fetchUserProjectActivity();
+    return () => {
+      controller.abort();
+    };
+  }, [allVisibleItems]);
+
+  const favoriteItems = useMemo(
+    () => allVisibleItems.filter((item) => favoriteProjectIds.has(item.id)),
+    [allVisibleItems, favoriteProjectIds]
+  );
+
+  const followedItems = useMemo(
+    () => allVisibleItems.filter((item) => followedProjectIds.has(item.id)),
+    [allVisibleItems, followedProjectIds]
+  );
+
   const activeItems = useMemo(() => {
     if (activeView === 'mis') return localMyItems;
     if (activeView === 'colabs') return localCollaborationItems;
+    if (activeView === 'favoritos') return favoriteItems;
+    if (activeView === 'seguidos') return followedItems;
     return localExploreItems;
-  }, [activeView, localCollaborationItems, localExploreItems, localMyItems]);
+  }, [
+    activeView,
+    favoriteItems,
+    followedItems,
+    localCollaborationItems,
+    localExploreItems,
+    localMyItems,
+  ]);
 
   const filteredItems = useMemo(() => {
     return activeItems.filter((item) => {
@@ -103,14 +175,46 @@ export function ProjectsSocialView({
     });
   }, [activeItems, activeStage, needsCollaboratorsFilter, query]);
 
-  const collaboratorsCount = localCollaborationItems.length;
-
   const currentSectionTitle =
     activeView === 'mis'
       ? `Mis proyectos (${filteredItems.length})`
       : activeView === 'colabs'
         ? `Mis colaboraciones (${filteredItems.length})`
-        : '';
+        : activeView === 'favoritos'
+          ? `Favoritos (${filteredItems.length})`
+          : activeView === 'seguidos'
+            ? `Proyectos que sigo (${filteredItems.length})`
+            : '';
+
+  const handleFavoriteChange = useCallback(
+    (projectId: number, saved: boolean) => {
+      setFavoriteProjectIds((prev) => {
+        const next = new Set(prev);
+        if (saved) {
+          next.add(projectId);
+        } else {
+          next.delete(projectId);
+        }
+        return next;
+      });
+    },
+    []
+  );
+
+  const handleFollowChange = useCallback(
+    (projectId: number, followed: boolean) => {
+      setFollowedProjectIds((prev) => {
+        const next = new Set(prev);
+        if (followed) {
+          next.add(projectId);
+        } else {
+          next.delete(projectId);
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   const handleEditProject = (item: ProjectSocialItem) => {
     setEditingProject(item);
@@ -244,8 +348,8 @@ export function ProjectsSocialView({
 
           <div className="flex gap-6">
             <ProjectsLeftRail
-              total={localMyItems.length}
-              collaborators={collaboratorsCount}
+              favorites={favoriteProjectIds.size}
+              following={followedProjectIds.size}
               activeView={activeView}
               onChangeView={setActiveView}
             />
@@ -367,8 +471,17 @@ export function ProjectsSocialView({
 
                 {filteredItems.length > 0 ? (
                   filteredItems.map((item) =>
-                    activeView === 'explorar' ? (
-                      <ProjectFeedCard key={item.id} item={item} />
+                    activeView === 'explorar' ||
+                    activeView === 'favoritos' ||
+                    activeView === 'seguidos' ? (
+                      <ProjectFeedCard
+                        key={item.id}
+                        item={item}
+                        initialSaved={favoriteProjectIds.has(item.id)}
+                        initialFollowed={followedProjectIds.has(item.id)}
+                        onSavedChange={handleFavoriteChange}
+                        onFollowedChange={handleFollowChange}
+                      />
                     ) : (
                       <ProjectWorkspaceCard
                         key={item.id}

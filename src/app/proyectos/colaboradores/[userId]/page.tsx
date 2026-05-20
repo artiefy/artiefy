@@ -58,16 +58,27 @@ export default async function ColaboradorDetallePage({
 
           <section className="mt-6 rounded-2xl border border-border/50 bg-card/60 p-5">
             <div className="flex items-center gap-3">
-              <Image
-                src={
-                  details.collaborator.imageUrl ??
-                  `https://i.pravatar.cc/150?u=${details.collaborator.userId}`
-                }
-                alt={details.collaborator.name}
-                width={56}
-                height={56}
-                className="size-14 rounded-full ring-2 ring-primary/30"
-              />
+              {details.collaborator.imageUrl ? (
+                <Image
+                  src={details.collaborator.imageUrl}
+                  alt={details.collaborator.name}
+                  width={56}
+                  height={56}
+                  className="size-14 rounded-full ring-2 ring-primary/30"
+                />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="
+                    flex size-14 shrink-0 items-center justify-center
+                    rounded-full bg-primary/15 text-lg font-semibold
+                    text-primary ring-2 ring-primary/30
+                  "
+                >
+                  {details.collaborator.name.trim().charAt(0).toUpperCase() ||
+                    'U'}
+                </span>
+              )}
               <div>
                 <h1 className="text-xl font-bold text-foreground">
                   {details.collaborator.name}

@@ -86,6 +86,12 @@
       "sourceType": "autoskills-registry",
       "computedHash": "82fb11a63fb1e35ee2469516ed02d54695f783115b1540c0e783197af4240a3a"
     },
+    "n8n-workflow-patterns": {
+      "source": "czlonkowski/n8n-skills",
+      "sourceType": "github",
+      "skillPath": "skills/n8n-workflow-patterns/SKILL.md",
+      "computedHash": "cf28d3c39ca33cc380e065e5c31dbd7dd83cc8d154b1bf1797353cee6b84db47"
+    },
     "neon-postgres": {
       "source": "neondatabase/agent-skills",
       "sourceType": "autoskills-registry",

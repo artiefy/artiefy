@@ -157,6 +157,44 @@ export const projectSaves = pgTable(
   ]
 );
 
+export const projectFollows = pgTable(
+  'project_follows',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .references(() => projects.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('uniq_project_follow').on(table.projectId, table.userId),
+    index('project_follows_project_idx').on(table.projectId),
+    index('project_follows_user_idx').on(table.userId),
+  ]
+);
+
+export const projectShares = pgTable(
+  'project_shares',
+  {
+    id: serial('id').primaryKey(),
+    projectId: integer('project_id')
+      .references(() => projects.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('uniq_project_share').on(table.projectId, table.userId),
+    index('project_shares_project_idx').on(table.projectId),
+    index('project_shares_user_idx').on(table.userId),
+  ]
+);
+
 export const projectComments = pgTable(
   'project_comments',
   {
@@ -926,6 +964,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   projectsTaken: many(projectsTaken),
   projectLikes: many(projectLikes),
   projectSaves: many(projectSaves),
+  projectFollows: many(projectFollows),
+  projectShares: many(projectShares),
   projectComments: many(projectComments),
   userLessonsProgress: many(userLessonsProgress),
   userActivitiesProgress: many(userActivitiesProgress),
@@ -1035,6 +1075,8 @@ export const projectsRelations = relations(projects, ({ one, many }) => ({
   projectsTaken: many(projectsTaken),
   projectLikes: many(projectLikes),
   projectSaves: many(projectSaves),
+  projectFollows: many(projectFollows),
+  projectShares: many(projectShares),
   projectComments: many(projectComments),
   specificObjectives: many(specificObjectives),
   addedSections: many(projectAddedSections),
@@ -1069,6 +1111,28 @@ export const projectSavesRelations = relations(projectSaves, ({ one }) => ({
   }),
   user: one(users, {
     fields: [projectSaves.userId],
+    references: [users.id],
+  }),
+}));
+
+export const projectFollowsRelations = relations(projectFollows, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectFollows.projectId],
+    references: [projects.id],
+  }),
+  user: one(users, {
+    fields: [projectFollows.userId],
+    references: [users.id],
+  }),
+}));
+
+export const projectSharesRelations = relations(projectShares, ({ one }) => ({
+  project: one(projects, {
+    fields: [projectShares.projectId],
+    references: [projects.id],
+  }),
+  user: one(users, {
+    fields: [projectShares.userId],
     references: [users.id],
   }),
 }));
