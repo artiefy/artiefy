@@ -107,37 +107,42 @@ export const ModalScheduleMeeting = ({
   };
 
   const handleSubmit = async () => {
-    setFormError(null); // Limpiar error previo
-    setIsLoading(true); // Activar carga
+    setFormError(null);
+    setIsLoading(true); // ← se activa aquí
 
-    // Validaciones
     if (!title.trim()) {
       setFormError('Debes ingresar un título general.');
+      setIsLoading(false); // ← falta esto
       return;
     }
 
     if (!date) {
       setFormError('Debes seleccionar una fecha de inicio.');
+      setIsLoading(false);
       return;
     }
 
     if (!time) {
       setFormError('Debes seleccionar una hora de inicio.');
+      setIsLoading(false);
       return;
     }
 
     if (duration < 15) {
       setFormError('La duración mínima debe ser de 15 minutos.');
+      setIsLoading(false);
       return;
     }
 
     if (repeatCount < 1) {
       setFormError('Debes ingresar al menos 1 semana de repetición.');
+      setIsLoading(false);
       return;
     }
 
     if (selectedDays.length === 0) {
       setFormError('Debes seleccionar al menos un día de la semana.');
+      setIsLoading(false);
       return;
     }
 
@@ -149,9 +154,9 @@ export const ModalScheduleMeeting = ({
       setFormError(
         `Faltan títulos para los siguientes días: ${missingTitleDays.join(', ')}`
       );
+      setIsLoading(false);
       return;
     }
-
     try {
       const startDateTime = `${date}T${time}`;
 
@@ -200,9 +205,11 @@ export const ModalScheduleMeeting = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="
+      <DialogContent
+        className="
         z-[9999] max-h-screen w-full max-w-screen-sm overflow-y-auto p-4
-      ">
+      "
+      >
         <DialogHeader>
           <DialogTitle>Agendar clases en Teams</DialogTitle>
         </DialogHeader>
@@ -214,7 +221,7 @@ export const ModalScheduleMeeting = ({
             </label>
             <input
               className="
-                bg-background w-full rounded border border-gray-500 p-2
+                w-full rounded border border-gray-500 bg-background p-2
                 text-white
               "
               placeholder="Ej. Matemáticas Avanzadas"
@@ -231,7 +238,7 @@ export const ModalScheduleMeeting = ({
             <input
               type="date"
               className="
-                bg-background w-full rounded border border-gray-500 p-2
+                w-full rounded border border-gray-500 bg-background p-2
                 text-white
               "
               value={date}
@@ -247,7 +254,7 @@ export const ModalScheduleMeeting = ({
             <input
               type="time"
               className="
-                bg-background w-full rounded border border-gray-500 p-2
+                w-full rounded border border-gray-500 bg-background p-2
                 text-white
               "
               value={time}
@@ -265,7 +272,7 @@ export const ModalScheduleMeeting = ({
               min={15}
               step={15}
               className="
-                bg-background w-full rounded border border-gray-500 p-2
+                w-full rounded border border-gray-500 bg-background p-2
                 text-white
               "
               value={duration}
@@ -283,7 +290,7 @@ export const ModalScheduleMeeting = ({
               min={1}
               max={50}
               className="
-                bg-background w-full rounded border border-gray-500 p-2
+                w-full rounded border border-gray-500 bg-background p-2
                 text-white
               "
               value={repeatCount}
@@ -315,12 +322,12 @@ export const ModalScheduleMeeting = ({
                   className={`
                     rounded border px-3 py-1 text-sm
                     ${
-                    selectedDays.includes(day)
-                      ? day === firstDayOfWeek
-                        ? 'cursor-not-allowed bg-gray-400 text-white'
-                        : 'bg-white text-black'
-                      : 'border-gray-500 bg-transparent text-white'
-                  }
+                      selectedDays.includes(day)
+                        ? day === firstDayOfWeek
+                          ? 'cursor-not-allowed bg-gray-400 text-white'
+                          : 'bg-white text-black'
+                        : 'border-gray-500 bg-transparent text-white'
+                    }
                   `}
                   onClick={() => toggleDay(day)}
                 >
@@ -347,7 +354,7 @@ export const ModalScheduleMeeting = ({
                 <input
                   placeholder={`Título para ${day}`}
                   className="
-                    bg-background w-full rounded border border-gray-500 p-2
+                    w-full rounded border border-gray-500 bg-background p-2
                     text-white
                   "
                   value={customTitles[index] || ''}
@@ -367,7 +374,7 @@ export const ModalScheduleMeeting = ({
               type="email"
               placeholder="email@ejemplo.com"
               className="
-                bg-background w-full rounded border border-gray-500 p-2
+                w-full rounded border border-gray-500 bg-background p-2
                 text-white
               "
               value={coHostEmail}
@@ -380,10 +387,12 @@ export const ModalScheduleMeeting = ({
           </div>
         </div>
         {formError && (
-          <div className="
+          <div
+            className="
             rounded border border-red-500 bg-red-100 px-4 py-2 text-sm
             text-red-800
-          ">
+          "
+          >
             {formError}
           </div>
         )}
