@@ -12,7 +12,7 @@ Before any Next.js code change, inspect the project first, then read the relevan
 
 # Repository Guidelines
 
-This is a Next.js 16 App Router app with React 19, TypeScript, Tailwind CSS 4, Clerk, Drizzle ORM, Oxlint/Oxfmt/Ultracite, Lefthook, Vitest, and Playwright.
+This is Artiefy, a Next.js 16 App Router app with React 19, TypeScript, Tailwind CSS 4, Clerk, Drizzle ORM, Neon Postgres, AWS S3, Upstash Redis, OpenAI, n8n integrations, PayU payments, next-video, Plaiceholder, shadcn/Radix UI, ESLint 10, Prettier, Husky, and lint-staged.
 
 ## Skill Use
 
@@ -68,60 +68,70 @@ Auto-invoke map:
 
 ## Project Map
 
-| Area       | Location                                |
-| ---------- | --------------------------------------- |
-| App Router | `src/app/`                              |
-| Components | `src/components/`                       |
-| Auth       | `src/app/[locale]/(auth)/`, `src/libs/` |
-| Database   | `src/models/`, `migrations/`            |
-| Styles     | `src/styles/global.css`                 |
-| i18n       | `src/locales/`, `src/libs/I18n.ts`      |
-| Tests      | `src/**/*.test.*`, `tests/`             |
+| Area           | Location                                     |
+| -------------- | -------------------------------------------- |
+| App Router     | `src/app/`                                   |
+| API routes     | `src/app/api/`                               |
+| Dashboards     | `src/app/dashboard/`                         |
+| Student pages  | `src/app/estudiantes/`                       |
+| Components     | `src/components/`                            |
+| Server actions | `src/server/actions/`                        |
+| Server queries | `src/server/queries/`                        |
+| Database       | `src/server/db/`, `drizzle/`, `migrations/`  |
+| Env config     | `src/env.ts`                                 |
+| Styles         | `src/styles/globals.css`, `src/styles/*.css` |
+| Static assets  | `public/`, `videos/`                         |
+| Scripts        | `scripts/`                                   |
+| Docs           | `Docs/`, `.next-docs/`                       |
 
 ## Commands
 
-Use Node.js 22+ when possible.
+Use Node.js 24.x and npm 11.x when possible.
 
 ```bash
 npm install
 npm run dev
-npm run build-local
+npm run build
+npm run start
+npm run preview
+npm run check
 npm run lint
 npm run lint:fix
-npm run check:types
-npm run check:deps
-npm run check:i18n
-npm run test
-npm run test:e2e
+npm run typecheck
+npm run format:check
+npm run format:write
 npm run db:generate
 npm run db:migrate
+npm run db:push
 npm run db:studio
+npm run embeddings:regen
 ```
 
 ## Code Rules
 
 - Keep changes scoped; do not reformat unrelated files.
 - Use strict TypeScript; avoid `any` unless isolated and justified.
-- Use absolute imports via `@/` unless importing from the same directory.
+- Use absolute imports via `~/` unless importing from the same directory.
 - Default exports are allowed for Next.js pages/layouts; prefer named exports elsewhere.
-- Locale pages use `props: { params: Promise<{ locale: string }> }`, then `await props.params`, then `setRequestLocale(locale)`.
-- Dashboard pages sit behind auth; define dashboard metadata in layout when possible.
-- Never hard-code user-visible strings in localized pages. Use `getTranslations` on the server and `useTranslations` on the client.
-- Use Tailwind CSS 4 utility classes and tokens from `src/styles/global.css`.
+- App Router dynamic pages in this project use normal route params such as `[id]`, `[courseId]`, and catch-all Clerk auth routes; do not add locale routing unless the feature explicitly introduces it.
+- Dashboard pages sit behind Clerk auth and role-based access; preserve existing role checks for `super-admin`, `admin`, `educadores`, and students.
+- User-visible text is currently Spanish-first and not wired to next-intl; keep copy consistent with nearby UI unless an i18n layer is added deliberately.
+- Use Tailwind CSS 4 utility classes and existing CSS from `src/styles/globals.css` and focused `src/styles/*.css` files.
 - Reuse shared components before creating new ones.
 - Avoid unnecessary `useEffect`.
 - Do not add `useMemo` or `useCallback` unless there is a measured or documented reason.
 - Use `React.ReactNode`, not imported `ReactNode`.
-- Validate env vars through the project env layer; do not read `process.env` directly in app code unless in existing config/bootstrap patterns.
+- Validate server env vars through `src/env.ts`; avoid direct `process.env` reads in new app/server code unless matching an existing bootstrap/config pattern or using `NEXT_PUBLIC_*` in client-facing code.
+- Keep database changes in Drizzle schema/migrations and use `drizzle-kit` commands from `package.json`.
+- For S3 uploads, PayU, n8n, OpenAI, Upstash, ESP32, Socket.IO, and Microsoft Teams integrations, follow the existing helpers and route patterns before adding new integration code.
 
 ## Tests And PRs
 
-- Unit/component tests: `*.test.ts` or `*.test.tsx`, close to implementation.
-- Integration tests: `*.spec.ts`.
-- Playwright E2E tests: `*.e2e.ts` in `tests/`.
+- No dedicated test runner script is currently configured in `package.json`; use `npm run check`, `npm run lint`, and `npm run typecheck` as the baseline verification.
+- If adding tests, add or reuse the required test runner configuration in the same change and keep test files close to implementation.
 - Avoid mocking unless necessary.
 - Conventional commits: `type: short specific summary` with `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`.
-- Before PRs: run relevant checks, include screenshots for visible UI changes, avoid unrelated churn.
+- Before PRs: run relevant checks, include screenshots for visible UI changes, and avoid unrelated churn.
 
 ## Responses
 
