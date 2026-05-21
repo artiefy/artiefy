@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 
-// Validar variables de entorno
 jiti('./src/env.ts');
 
 /** @type {import('next').NextConfig} */
@@ -18,7 +17,7 @@ const nextConfig = {
   expireTime: 3600,
   experimental: {
     serverActions: {
-      bodySizeLimit: '100mb', // Aumentar límite para videos y archivos grandes en App Router
+      bodySizeLimit: '100mb',
       allowedOrigins: [
         'https://artiefy.com',
         'https://accounts.artiefy.com',
@@ -33,7 +32,6 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 14400,
-    // Nueva sintaxis remotePatterns Next.js 16 (usa new URL)
     remotePatterns: [
       new URL('https://s3.us-east-2.amazonaws.com/artiefy-upload/**'),
       new URL('https://artiefy-upload.s3.us-east-2.amazonaws.com/**'),
@@ -46,9 +44,9 @@ const nextConfig = {
       { pathname: '/api/image-proxy', search: '?url=*' },
       { pathname: '/**' },
     ],
-    qualities: [100, 75, 85], // Agregar 85 para evitar warnings de imágenes
-    maximumRedirects: 3, // Explicit default in v16 for security
-    dangerouslyAllowLocalIP: false, // Default security restriction in v16
+    qualities: [100, 75, 85],
+    maximumRedirects: 3,
+    dangerouslyAllowLocalIP: false,
   },
 };
 

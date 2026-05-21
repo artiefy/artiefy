@@ -1,7 +1,6 @@
 'use client';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 
@@ -20,6 +19,7 @@ import {
 
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal';
+import SunEditorCDN from '~/components/SunEditorCDN';
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
 import { deleteUser, setRoleWrapper } from '~/server/queries/queries';
 
@@ -42,7 +42,6 @@ interface User {
   permissions?: string[]; // 👈 AGREGA ESTO
   subscriptionEndDate?: string | null;
 }
-const SunEditor = dynamic(() => import('suneditor-react'), { ssr: false });
 
 //(Removed unused `CourseBrief` type — use `Course` where needed)
 
@@ -4235,19 +4234,10 @@ export default function AdminDashboard() {
             />
 
             {/* 📌 Editor de texto con SunEditor */}
-            <SunEditor
-              setContents={message}
+            <SunEditorCDN
+              value={message}
               onChange={(content) => setMessage(content)}
-              setOptions={{
-                height: '200',
-                buttonList: [
-                  ['bold', 'italic', 'underline', 'strike'],
-                  ['fontSize', 'fontColor', 'hiliteColor'],
-                  ['align', 'list', 'table'],
-                  ['link', 'image', 'video'],
-                  ['removeFormat'],
-                ],
-              }}
+              height="200"
             />
 
             {/* 📌 Adjuntar archivos con vista previa */}

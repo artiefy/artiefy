@@ -2973,7 +2973,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                 <div
                   ref={tabsRef}
                   className="
-                    scrollbar-none flex gap-2 overflow-x-auto scroll-smooth px-8
+                    flex scrollbar-none gap-2 overflow-x-auto scroll-smooth px-8
                     py-2
                     md:gap-3
                     lg:gap-4
@@ -6031,7 +6031,22 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         onClose={() => setIsMeetingModalOpen(false)}
         onMeetingsCreated={() => {
           setIsMeetingModalOpen(false);
-          fetchCourse(); // 🔄 vuelve a traer el curso con los meetings desde backend
+          void fetchCourse();
+          // Refrescar meetings desde by-course
+          fetch(
+            `/api/super-admin/teams/recordings/by-course?courseId=${courseIdNumber}`,
+            { cache: 'no-store' }
+          )
+            .then((res) => res.json())
+            .then((body) => {
+              const rawMeetings = Array.isArray(
+                (body as { meetings?: unknown }).meetings
+              )
+                ? (body as { meetings: unknown[] }).meetings
+                : [];
+              setPopulatedMeetings(rawMeetings.map(ensureUIMeeting));
+            })
+            .catch(console.error);
         }}
         courseId={courseIdNumber} // <-- aquí lo pasas
       />

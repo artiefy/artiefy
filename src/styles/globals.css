@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import 'suneditor/dist/css/suneditor.min.css';
 
 @custom-variant dark (&:is(.dark *));
 
