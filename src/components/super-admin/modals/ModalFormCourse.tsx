@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 
 import ActiveDropdown from '~/components/educators/layout/ActiveDropdown';
 import CourseTypeDropdown from '~/components/educators/layout/TypesCourseDropdown';
+import VisibilityDropdown from '~/components/educators/layout/VisibilityDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
@@ -57,7 +58,8 @@ interface CourseFormProps {
     horario: number | null,
     espacios: number | null,
     certificationTypeId: number | null,
-    idTypesCoursesParam: number | null
+    idTypesCoursesParam: number | null,
+    visibility: boolean
   ) => Promise<void>;
   uploading: boolean;
   editingCourseId: number | null;
@@ -107,6 +109,8 @@ interface CourseFormProps {
   idTypesCourses: number | null;
   setIdTypesCourses: (val: number | null) => void;
   userRole?: string;
+  visibility: boolean;
+  setVisibility: (val: boolean) => void;
 }
 
 // Interfaz para los niveles
@@ -186,6 +190,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   userRole,
   idTypesCourses,
   setIdTypesCourses,
+  visibility,
+  setVisibility,
 }) => {
   const [file, setFile] = useState<File | null>(null as File | null); // Estado para el archivo
   const [fileName, setFileName] = useState<string | null>(null); // Estado para el nombre del archivo
@@ -270,6 +276,11 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
   // ✅ Estado local para idTypesCourses (sincronizado con prop)
   const [localIdTypesCourses, setLocalIdTypesCourses] = useState<number | null>(
     idTypesCourses ?? null
+  );
+
+  // ✅ Estado local para visibility (sincronizado con prop)
+  const [localVisibility, setLocalVisibility] = useState<boolean>(
+    visibility ?? true
   );
 
   // 🆕 Estados para parámetros y plantillas existentes
@@ -927,7 +938,8 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
         selectedScheduleId ? Number(selectedScheduleId) : null,
         selectedSpaceId ? Number(selectedSpaceId) : null,
         localCertificationTypeId,
-        localIdTypesCourses // ✅ usar estado local en lugar del prop
+        localIdTypesCourses, // ✅ usar estado local en lugar del prop
+        localVisibility // ✅ agregar visibility
       );
 
       console.log('📤 Enviando al onSubmitAction:', {
@@ -1146,6 +1158,7 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setCertificationTypeId(null);
       setLocalCertificationTypeId(null); // ✅ también reiniciar estado local
       setLocalIdTypesCourses(null); // ✅ también reiniciar estado local
+      setLocalVisibility(true); // ✅ también reiniciar estado local de visibility
     }
   }, [isOpen, editingCourseId]);
 
@@ -1175,6 +1188,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       setCoverImage(null);
     }
   }, [editingCourseId, coverImageKey]);
+
+  // ✅ Efecto para sincronizar visibility cuando se abre el modal para editar
+  useEffect(() => {
+    if (editingCourseId && isOpen) {
+      setLocalVisibility(visibility ?? true);
+    }
+  }, [editingCourseId, isOpen, visibility]);
 
   // Modificar useEffect para manejar los parámetros
   useEffect(() => {
@@ -1255,6 +1275,13 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
       }
     }
   }, [editingCourseId, isOpen]);
+
+  // ✅ Efecto para sincronizar visibility cuando se abre el modal para editar
+  useEffect(() => {
+    if (editingCourseId && isOpen) {
+      setLocalVisibility(visibility ?? true);
+    }
+  }, [editingCourseId, isOpen, visibility]);
 
   // ✅ Efecto para cargar el horario (scheduleOptionId) cuando se edita un curso
   useEffect(() => {
@@ -1772,13 +1799,25 @@ const ModalFormCourse: React.FC<CourseFormProps> = ({
                         md:text-lg
                       "
                     >
-                      Visibilidad del Curso
+                      Visibilidad
+                    </label>
+                    <VisibilityDropdown
+                      visibility={localVisibility}
+                      setVisibility={(val) => {
+                        setLocalVisibility(val);
+                        setVisibility(val);
+                      }}
+                    />
+                  </div>
+                  <div className="w-full">
+                    <label className="text-sm font-medium text-primary md:text-lg">
+                      Estado
                     </label>
                     <ActiveDropdown
                       isActive={localIsActive}
                       setIsActive={(val) => {
-                        setLocalIsActive(val); // ✅ estado local
-                        setIsActive(val); // ✅ sincronizar con padre
+                        setLocalIsActive(val);
+                        setIsActive(val);
                       }}
                     />
                   </div>
