@@ -71,6 +71,18 @@
       "sourceType": "github",
       "computedHash": "87b5d51ea01c1d39d4085a0ab6a4737df1b22b3a371721eb958176cda0575843"
     },
+    "context7-cli": {
+      "source": "upstash/context7",
+      "sourceType": "github",
+      "skillPath": "skills/context7-cli/SKILL.md",
+      "computedHash": "6077b3c638fb7efb31d9b2c815436650de4aef73e7b671edec2f1c63f6a1e105"
+    },
+    "context7-mcp": {
+      "source": "upstash/context7",
+      "sourceType": "github",
+      "skillPath": "skills/context7-mcp/SKILL.md",
+      "computedHash": "6b02383f86f87e81a722b3b6c6d6e06efa5c72f23bc87bb02599e3d499ca2c58"
+    },
     "deploy-to-vercel": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "autoskills-registry",
@@ -146,6 +158,12 @@
       "source": "addyosmani/web-quality-skills",
       "sourceType": "autoskills-registry",
       "computedHash": "c184da724d1c61ad077f27418ea8e7e88fd54bcdf98165e18be7e4681cbd5e20"
+    },
+    "seo-audit": {
+      "source": "coreyhaines31/marketingskills",
+      "sourceType": "github",
+      "skillPath": "skills/seo-audit/SKILL.md",
+      "computedHash": "f2dc52130189068981f21e1c0bdc4471ac7cd9b08d8a1320604411aa0f950385"
     },
     "shadcn": {
       "source": "shadcn/ui",
