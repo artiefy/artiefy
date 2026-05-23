@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { Show, useAuth, useUser } from '@clerk/nextjs';
-import { Dialog, DialogPanel } from '@headlessui/react';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 import {
   BookOpen,
@@ -410,68 +409,103 @@ export function Header({
     setMobileMenuOpen(false);
   };
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [mobileMenuOpen]);
+
   return (
     <nav
       className="
-        sticky z-[100] mb-8 w-full border-b bg-[#01152d] backdrop-blur-md
+        sticky z-[100] mb-8 w-full border-b bg-[#01152d]
         sm:mb-8
       "
       style={{ top: 'var(--subscription-banner-height, 0px)' }}
     >
-      <Dialog
-        open={showEspaciosModal}
-        onClose={() => setShowEspaciosModal(false)}
-        className="fixed inset-0 z-[100] flex items-center justify-center"
-      >
-        <div className="fixed inset-0" aria-hidden="true" />
-        <DialogPanel
-          className="
-            relative mx-auto flex w-full max-w-md flex-col items-center
-            rounded-2xl bg-white p-8 shadow-2xl
-          "
+      {showEspaciosModal ? (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="espacios-modal-title"
         >
-          <span
-            className="
-              mb-4 flex size-16 items-center justify-center rounded-full
-              bg-gradient-to-tr from-primary to-blue-400 shadow-lg
-            "
-          >
-            <svg
-              className="size-10 text-white"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.5}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
-              />
-            </svg>
-          </span>
-          <h2 className="mb-2 text-center text-2xl font-bold text-secondary">
-            ¡Disponible muy pronto!
-          </h2>
-          <p className="mb-4 text-center text-gray-600">
-            La sección de{' '}
-            <span className="font-semibold text-secondary">Espacios</span>{' '}
-            estará habilitada próximamente.
-            <br />
-            ¡Gracias por tu interés!
-          </p>
           <button
-            className="
-              mt-2 rounded bg-secondary px-6 py-2 font-semibold text-white
-              shadow transition
-              hover:bg-blue-700
-            "
+            type="button"
+            className="fixed inset-0 cursor-default bg-black/30"
+            aria-label="Cerrar modal"
             onClick={() => setShowEspaciosModal(false)}
+          />
+          <div
+            className="
+              relative mx-auto flex w-full max-w-md flex-col items-center
+              rounded-2xl bg-white p-8 shadow-2xl
+            "
           >
-            Cerrar
-          </button>
-        </DialogPanel>
-      </Dialog>
+            <span
+              className="
+                mb-4 flex size-16 items-center justify-center rounded-full
+                bg-gradient-to-tr from-primary to-blue-400 shadow-lg
+              "
+            >
+              <svg
+                className="size-10 text-white"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
+                />
+              </svg>
+            </span>
+            <h2
+              id="espacios-modal-title"
+              className="mb-2 text-center text-2xl font-bold text-secondary"
+            >
+              ¡Disponible muy pronto!
+            </h2>
+            <p className="mb-4 text-center text-gray-600">
+              La sección de{' '}
+              <span className="font-semibold text-secondary">Espacios</span>{' '}
+              estará habilitada próximamente.
+              <br />
+              ¡Gracias por tu interés!
+            </p>
+            <button
+              className="
+                mt-2 rounded bg-secondary px-6 py-2 font-semibold text-white
+                shadow transition
+                hover:bg-blue-700
+              "
+              onClick={() => setShowEspaciosModal(false)}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div
         className="
           container mx-auto flex h-16 max-w-7xl items-center justify-between
@@ -1005,120 +1039,130 @@ export function Header({
           </form>
         </div>
       )}
-      <Dialog
-        as="div"
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        className="
-          fixed inset-0 z-[99999]
-          md:hidden
-        "
-      >
-        <div className="fixed inset-0 bg-black/55" aria-hidden="true" />
-        <DialogPanel
-          id="mobile-menu"
+      {mobileMenuOpen ? (
+        <div
           className="
-            fixed inset-y-0 left-0 z-[99999] flex h-full min-h-[100dvh]
-            w-[min(86vw,22rem)] flex-col overflow-hidden bg-[#01152d] px-6
-            pt-[calc(env(safe-area-inset-top)+1.5rem)] shadow-2xl
-            sm:w-[80%] sm:max-w-sm sm:px-7
+            fixed inset-0 z-[99999]
+            md:hidden
           "
         >
-          <div className="mb-6 flex w-full items-center justify-between">
-            <Link
-              href="/"
-              className="flex items-center gap-3"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <Image
-                src="/artiefy-icon.png"
-                alt="Artiefy"
-                width={36}
-                height={36}
-                className="size-9 object-contain"
-              />
-              <span className="text-xl font-bold text-primary">Artiefy</span>
-            </Link>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="
+          <button
+            type="button"
+            className="
+              fixed inset-0 cursor-default appearance-none border-0 bg-black/55
+              p-0
+            "
+            aria-label="Cerrar menú"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <aside
+            id="mobile-menu"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menú principal"
+            tabIndex={-1}
+            className="
+              fixed inset-y-0 left-0 z-[99999] flex h-screen max-h-screen
+              w-[min(86vw,22rem)] flex-col overflow-hidden bg-[#01152d] px-6
+              pt-[calc(env(safe-area-inset-top)+1.5rem)] shadow-2xl
+              sm:w-[80%] sm:max-w-sm sm:px-7
+            "
+          >
+            <div className="mb-6 flex w-full items-center justify-between">
+              <Link
+                href="/"
+                className="flex items-center gap-3"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <Image
+                  src="/artiefy-icon.png"
+                  alt="Artiefy"
+                  width={36}
+                  height={36}
+                  className="size-9 object-contain"
+                />
+                <span className="text-xl font-bold text-primary">Artiefy</span>
+              </Link>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="
                 rounded-full p-1 text-slate-300 transition
                 hover:bg-white/10 hover:text-white
                 focus:outline-none
                 focus-visible:ring-2 focus-visible:ring-primary
               "
-              aria-label="Close menu"
-            >
-              <XMarkIconSolid className="size-5" />
-            </button>
-          </div>
-          <div className="mb-6">
-            <div className="relative">
-              <Search
-                className="
+                aria-label="Close menu"
+              >
+                <XMarkIconSolid className="size-5" />
+              </button>
+            </div>
+            <div className="mb-6">
+              <div className="relative">
+                <Search
+                  className="
                   absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400
                 "
-              />
-              <input
-                type="search"
-                placeholder="Buscar"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    handleSearch();
-                    setMobileMenuOpen(false);
-                  }
-                }}
-                className="
+                />
+                <input
+                  type="search"
+                  placeholder="Buscar"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      handleSearch();
+                      setMobileMenuOpen(false);
+                    }
+                  }}
+                  className="
                   h-12 w-full rounded-xl border border-white/5 bg-white/7 pr-4
                   pl-12 text-sm text-white outline-none
                   placeholder:text-slate-400
                   focus:border-primary/50 focus:ring-2 focus:ring-primary/20
                 "
-              />
+                />
+              </div>
+              {showPreview &&
+                (previewCourses.length > 0 || previewPrograms.length > 0) && (
+                  <div className="mt-3 max-h-[42dvh] overflow-y-auto rounded-xl">
+                    <Suspense fallback={null}>
+                      <CourseSearchPreview
+                        courses={previewCourses}
+                        programs={previewPrograms}
+                        onSelectCourse={(courseId: number) => {
+                          setMobileMenuOpen(false);
+                          window.location.href = `/estudiantes/cursos/${courseId}`;
+                        }}
+                        onSelectProgram={(programId: string | number) => {
+                          setMobileMenuOpen(false);
+                          window.location.href = `/estudiantes/programas/${programId}`;
+                        }}
+                      />
+                    </Suspense>
+                  </div>
+                )}
             </div>
-            {showPreview &&
-              (previewCourses.length > 0 || previewPrograms.length > 0) && (
-                <div className="mt-3 max-h-[42dvh] overflow-y-auto rounded-xl">
-                  <Suspense fallback={null}>
-                    <CourseSearchPreview
-                      courses={previewCourses}
-                      programs={previewPrograms}
-                      onSelectCourse={(courseId: number) => {
-                        setMobileMenuOpen(false);
-                        window.location.href = `/estudiantes/cursos/${courseId}`;
-                      }}
-                      onSelectProgram={(programId: string | number) => {
-                        setMobileMenuOpen(false);
-                        window.location.href = `/estudiantes/programas/${programId}`;
-                      }}
-                    />
-                  </Suspense>
-                </div>
-              )}
-          </div>
-          <div
-            className="
+            <div
+              className="
               min-h-0 flex-1 overflow-y-auto overscroll-contain
               pb-[clamp(1rem,3dvh,1.75rem)]
             "
-          >
-            <nav>
-              <ul className="space-y-2.5">
-                {visibleMobileNavItems.map((item) => {
-                  const isActive =
-                    pathname === item.href ||
-                    (item.href !== '/' &&
-                      !item.href.includes('#') &&
-                      pathname.startsWith(item.href));
-                  const Icon = item.icon;
-                  if (item.label === 'Espacios') {
-                    return (
-                      <li key={item.href}>
-                        <button
-                          type="button"
-                          className={`
+            >
+              <nav>
+                <ul className="space-y-2.5">
+                  {visibleMobileNavItems.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== '/' &&
+                        !item.href.includes('#') &&
+                        pathname.startsWith(item.href));
+                    const Icon = item.icon;
+                    if (item.label === 'Espacios') {
+                      return (
+                        <li key={item.href}>
+                          <button
+                            type="button"
+                            className={`
                             flex w-full items-center gap-4 rounded-xl px-4
                             py-2.5
                             text-left text-base font-semibold transition
@@ -1133,22 +1177,22 @@ export function Header({
                                 `
                             }
                           `}
-                          onClick={(e) => {
-                            setMobileMenuOpen(false);
-                            handleEspaciosClick(e);
-                          }}
-                        >
-                          <Icon className="size-5 shrink-0" />
-                          <span>{item.label}</span>
-                        </button>
-                      </li>
-                    );
-                  }
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className={`
+                            onClick={(e) => {
+                              setMobileMenuOpen(false);
+                              handleEspaciosClick(e);
+                            }}
+                          >
+                            <Icon className="size-5 shrink-0" />
+                            <span>{item.label}</span>
+                          </button>
+                        </li>
+                      );
+                    }
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          className={`
                           flex w-full items-center gap-4 rounded-xl px-4
                           py-2.5
                           text-base font-semibold transition
@@ -1162,48 +1206,49 @@ export function Header({
                               `
                           }
                         `}
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        <Icon className="size-5 shrink-0" />
-                        <span>{item.label}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
-          </div>
-          <div
-            className="
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          <Icon className="size-5 shrink-0" />
+                          <span>{item.label}</span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </nav>
+            </div>
+            <div
+              className="
               shrink-0 border-t border-white/8 pt-4
               pb-[calc(env(safe-area-inset-bottom)+1.25rem)]
             "
-          >
-            {isSignedIn ? (
-              <div className="flex min-h-12 items-center justify-center">
-                <Suspense
-                  fallback={<Icons.spinner className="size-5 text-primary" />}
-                >
-                  <UserButtonWrapper />
-                </Suspense>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={handleOpenLoginModal}
-                className="
+            >
+              {isSignedIn ? (
+                <div className="flex min-h-12 items-center justify-center">
+                  <Suspense
+                    fallback={<Icons.spinner className="size-5 text-primary" />}
+                  >
+                    <UserButtonWrapper />
+                  </Suspense>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleOpenLoginModal}
+                  className="
                   flex h-12 w-full items-center justify-center rounded-xl
                   bg-primary text-sm font-semibold text-[#01152d] transition
                   hover:bg-primary/90
                   active:scale-95
                 "
-              >
-                Acceder
-              </button>
-            )}
-          </div>
-        </DialogPanel>
-      </Dialog>
+                >
+                  Acceder
+                </button>
+              )}
+            </div>
+          </aside>
+        </div>
+      ) : null}
 
       <MiniLoginModal
         isOpen={showLoginModal}

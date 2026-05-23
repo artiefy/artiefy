@@ -50,3 +50,177 @@ Image proxy error: PermanentRedirect: The bucket you are attempting to access mu
   RequestId: 'Q9PQ7Q0FTPJQ887K',
   HostId: 'JNOTf4P9cL6uJeCR22g7SYDDe5gE/b9CJwBfajRQWGHxYKcDQAKpE2O7M/Q7sT/yG38K9mwQa4U/RhyrRi51AWqH4OAlXCOc'
 }
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".cl-userButton-root .cl-userButtonOuterIdentifier"
+  - CSS ".cl-userButton-root .cl-userButtonBox"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarImage"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarBox img"
+  - CSS ".cl-userButton-root img[data-part="userButtonAvatarImage"]"
+  (+5 more)
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".cl-userButton-root .cl-userButtonOuterIdentifier"
+  - CSS ".cl-userButton-root .cl-userButtonBox"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarImage"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarBox img"
+  - CSS ".cl-userButton-root img[data-part="userButtonAvatarImage"]"
+  (+5 more)
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".cl-userButton-root .cl-userButtonOuterIdentifier"
+  - CSS ".cl-userButton-root .cl-userButtonBox"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarImage"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarBox img"
+  - CSS ".cl-userButton-root img[data-part="userButtonAvatarImage"]"
+  (+5 more)
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".cl-userButton-root .cl-userButtonOuterIdentifier"
+  - CSS ".cl-userButton-root .cl-userButtonBox"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarImage"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarBox img"
+  - CSS ".cl-userButton-root img[data-part="userButtonAvatarImage"]"
+  (+5 more)
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".cl-userButton-root .cl-userButtonOuterIdentifier"
+  - CSS ".cl-userButton-root .cl-userButtonBox"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarImage"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarBox img"
+  - CSS ".cl-userButton-root img[data-part="userButtonAvatarImage"]"
+  (+5 more)
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Image with src "/artiefy-logo.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".cl-userButton-root .cl-userButtonOuterIdentifier"
+  - CSS ".cl-userButton-root .cl-userButtonBox"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarImage"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarBox img"
+  - CSS ".cl-userButton-root img[data-part="userButtonAvatarImage"]"
+  (+5 more)
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Image with src "/artiefy-logo.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".cl-userButton-root .cl-userButtonOuterIdentifier"
+  - CSS ".cl-userButton-root .cl-userButtonBox"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarImage"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarBox img"
+  - CSS ".cl-userButton-root img[data-part="userButtonAvatarImage"]"
+  (+5 more)
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".cl-userButton-root .cl-userButtonOuterIdentifier"
+  - CSS ".cl-userButton-root .cl-userButtonBox"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarImage"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarBox img"
+  - CSS ".cl-userButton-root img[data-part="userButtonAvatarImage"]"
+  (+5 more)
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Image with src "/artiefy-logo.png" has either width or height modified, but not the other. If you use CSS to change the size of your image, also include the styles 'width: "auto"' or 'height: "auto"' to maintain the aspect ratio. (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
+[browser] Clerk: Structural CSS detected that may break on updates.
+
+Found:
+  - CSS ".cl-userButton-root .cl-userButtonOuterIdentifier"
+  - CSS ".cl-userButton-root .cl-userButtonBox"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarImage"
+  - CSS ".cl-userButton-root .cl-userButtonAvatarBox img"
+  - CSS ".cl-userButton-root img[data-part="userButtonAvatarImage"]"
+  (+5 more)
+
+These selectors depend on the internal DOM structure of Clerk's components, which may change when Clerk deploys component updates.
+To prevent breaking changes, install @clerk/ui and pass it to ClerkProvider:
+
+  import { ui } from '@clerk/ui'
+  <ClerkProvider ui={ui}>
+
+Learn more: https://clerk.com/docs/reference/components/versioning
+(code=structural_css_pin_clerk_ui) (file://C:/Users/Usuario/Documents/DOC JOSE/DEV/artiefy/.next/dev/static/chunks/node_modules_next_dist_115brz8._.js:2477:13)
