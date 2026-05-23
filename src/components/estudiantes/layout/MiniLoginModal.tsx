@@ -49,6 +49,15 @@ const toClerkApiErrors = (error: unknown): ClerkAPIError[] => {
   ];
 };
 
+const TRANSIENT_OAUTH_ERROR_CODES = new Set([
+  'oauth_timeout',
+  'oauth_error',
+  'oauth_in_progress',
+]);
+
+const hasTransientOAuthError = (errors?: ClerkAPIError[]) =>
+  errors?.some((error) => TRANSIENT_OAUTH_ERROR_CODES.has(error.code)) ?? false;
+
 const STAR_DECORATIONS = [
   { left: '8%', top: '12%', animationDelay: '0.1s', animationDuration: '1.9s' },
   {
@@ -223,6 +232,7 @@ export default function MiniLoginModal({
   );
   const [isSwitchingToSignUp, setIsSwitchingToSignUp] = useState(false);
   const hasHandledAuthRef = useRef(false);
+  const oauthStartedAtRef = useRef(0);
   const normalizedInitialEmail = useMemo(
     () => (isOpen && initialEmail ? initialEmail.trim().toLowerCase() : ''),
     [initialEmail, isOpen]
@@ -241,10 +251,16 @@ export default function MiniLoginModal({
   }, [initialError, isOpen]);
   const effectiveErrors = errors ?? initialOauthError;
 
-  const resetTransientState = useCallback(() => {
+  const resetTransientState = useCallback((clearOauthErrors = false) => {
     hasHandledAuthRef.current = false;
+    oauthStartedAtRef.current = 0;
     setIsSwitchingToSignUp(false);
     setLoadingProvider(null);
+    if (clearOauthErrors) {
+      setErrors((currentErrors) =>
+        hasTransientOAuthError(currentErrors) ? undefined : currentErrors
+      );
+    }
   }, []);
 
   const handleModalClose = useCallback(() => {
@@ -301,7 +317,7 @@ export default function MiniLoginModal({
           code: 'oauth_timeout',
           message: 'No se pudo abrir OAuth. Inténtalo nuevamente.',
           longMessage:
-            'No se pudo abrir OAuth. Borra la caché de la pestaña si el problema continúa.',
+            'No se pudo abrir OAuth. Inténtalo nuevamente con el mismo proveedor.',
           meta: {},
         },
       ]);
@@ -309,6 +325,33 @@ export default function MiniLoginModal({
 
     return () => window.clearTimeout(timeoutId);
   }, [loadingProvider]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted || oauthStartedAtRef.current > 0) {
+        resetTransientState(true);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        oauthStartedAtRef.current > 0
+      ) {
+        resetTransientState(true);
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isOpen, resetTransientState]);
 
   const switchToSignUp = (strategy?: OAuthStrategy) => {
     if (!onSwitchToSignUp) return false;
@@ -354,6 +397,7 @@ export default function MiniLoginModal({
     try {
       setErrors(undefined);
       setLoadingProvider(strategy);
+      oauthStartedAtRef.current = Date.now();
       window.dispatchEvent(new CustomEvent('mini-auth:oauth-signin-start'));
       if (typeof window !== 'undefined') {
         try {
@@ -373,10 +417,12 @@ export default function MiniLoginModal({
       });
 
       if (error) {
+        oauthStartedAtRef.current = 0;
         setLoadingProvider(null);
         setErrors(toClerkApiErrors(error));
       }
     } catch (err) {
+      oauthStartedAtRef.current = 0;
       setLoadingProvider(null);
       setErrors(toClerkApiErrors(err));
     }

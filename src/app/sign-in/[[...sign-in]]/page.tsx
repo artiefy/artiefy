@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -51,6 +51,15 @@ const toClerkApiErrors = (error: unknown): ClerkAPIError[] => {
   ];
 };
 
+const TRANSIENT_OAUTH_ERROR_CODES = new Set([
+  'oauth_timeout',
+  'oauth_error',
+  'oauth_in_progress',
+]);
+
+const hasTransientOAuthError = (errors?: ClerkAPIError[]) =>
+  errors?.some((error) => TRANSIENT_OAUTH_ERROR_CODES.has(error.code)) ?? false;
+
 export default function SignInPage() {
   const { isLoaded, isSignedIn } = useAuth();
   const { signIn, fetchStatus } = useSignIn();
@@ -67,6 +76,7 @@ export default function SignInPage() {
   );
   const router = useRouter();
   const searchParams = useSearchParams();
+  const oauthStartedAtRef = useRef(0);
 
   // Extraer email de los parámetros de búsqueda para pre-rellenar
   useEffect(() => {
@@ -191,7 +201,7 @@ export default function SignInPage() {
           code: 'oauth_timeout',
           message: 'No se pudo abrir OAuth. Inténtalo nuevamente.',
           longMessage:
-            'No se pudo abrir OAuth. Borra la caché de la pestaña si el problema continúa.',
+            'No se pudo abrir OAuth. Inténtalo nuevamente con el mismo proveedor.',
           meta: {},
         },
       ]);
@@ -199,6 +209,39 @@ export default function SignInPage() {
 
     return () => window.clearTimeout(timeoutId);
   }, [loadingProvider]);
+
+  const clearTransientOAuthState = useCallback(() => {
+    oauthStartedAtRef.current = 0;
+    setLoadingProvider(null);
+    setErrors((currentErrors) =>
+      hasTransientOAuthError(currentErrors) ? undefined : currentErrors
+    );
+  }, []);
+
+  useEffect(() => {
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (event.persisted || oauthStartedAtRef.current > 0) {
+        clearTransientOAuthState();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        oauthStartedAtRef.current > 0
+      ) {
+        clearTransientOAuthState();
+      }
+    };
+
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [clearTransientOAuthState]);
 
   // Login con OAuth (Google, Facebook, etc.)
   const signInWith = useCallback(
@@ -218,6 +261,8 @@ export default function SignInPage() {
       );
 
       try {
+        setErrors(undefined);
+        oauthStartedAtRef.current = Date.now();
         setLoadingProvider(strategy);
         const { error } = await signIn.sso({
           strategy,
@@ -229,10 +274,12 @@ export default function SignInPage() {
         });
 
         if (error) {
+          oauthStartedAtRef.current = 0;
           setLoadingProvider(null);
           setErrors(toClerkApiErrors(error));
         }
       } catch (err) {
+        oauthStartedAtRef.current = 0;
         setLoadingProvider(null);
         console.error('❌ Error en OAuth:', err);
         setErrors(toClerkApiErrors(err));
