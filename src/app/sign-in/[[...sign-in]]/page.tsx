@@ -480,46 +480,41 @@ export default function SignInPage() {
   );
 
   const inputClassName = (hasError?: boolean) => `
-    h-12 w-full rounded-lg border bg-white/10 px-4 text-sm text-white
-    placeholder:text-white/50 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]
-    outline-none transition
+    w-full rounded-none bg-transparent px-4 py-2.5 text-sm text-white
+    placeholder:text-white/55 ring-1 outline-hidden ring-inset transition
+    sm:w-[250px] md:w-[300px] lg:w-[330px] xl:w-[350px]
     ${
       hasError
-        ? 'border-rose-400/80 focus:border-rose-300 focus:ring-2 focus:ring-rose-400/25'
-        : 'border-white/15 hover:border-white/30 focus:border-cyan-300/80 focus:ring-2 focus:ring-cyan-300/25'
+        ? 'ring-rose-400 focus:ring-rose-400'
+        : 'ring-white/20 hover:ring-white/30 focus:ring-[1.5px] focus:ring-primary'
     }
   `;
 
   const primaryButtonClassName = `
-    inline-flex h-12 w-full items-center justify-center rounded-lg
-    bg-cyan-300 px-5 text-sm font-bold tracking-[0.08em] text-slate-950
-    uppercase shadow-[0_18px_45px_rgba(103,232,249,0.28)]
-    transition hover:bg-cyan-200 focus-visible:outline-none
-    focus-visible:ring-2 focus-visible:ring-cyan-200
-    focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950
-    active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60
-  `;
-
-  const secondaryButtonClassName = `
-    inline-flex h-11 items-center justify-center rounded-lg border
-    border-white/15 px-4 text-sm font-semibold text-white/85 transition
-    hover:border-white/30 hover:bg-white/10 focus-visible:outline-none
-    focus-visible:ring-2 focus-visible:ring-cyan-300/40
+    group relative inline-flex h-[44px] min-w-[195px] items-center
+    justify-center px-4 text-center text-[13px] font-bold tracking-[0.08em]
+    text-primary/80 italic transition focus-visible:outline-[1.5px]
+    focus-visible:outline-offset-2 focus-visible:outline-primary active:scale-95
     disabled:cursor-not-allowed disabled:opacity-60
   `;
 
+  const secondaryButtonClassName = `
+    inline-flex h-10 items-center justify-center px-4 text-sm font-bold
+    text-primary/70 italic ring-1 ring-white/20 transition hover:bg-white/10
+    focus-visible:outline-[1.5px] focus-visible:outline-offset-2
+    focus-visible:outline-primary active:scale-95 disabled:opacity-60
+  `;
+
   const oauthButtonClassName = `
-    inline-flex size-12 items-center justify-center rounded-lg border
-    border-white/15 bg-white/10 text-white transition hover:border-white/30
-    hover:bg-white/15 focus-visible:outline-none
-    focus-visible:ring-2 focus-visible:ring-cyan-300/40
-    active:scale-95 disabled:cursor-not-allowed disabled:opacity-60
+    inline-flex size-12 items-center justify-center rounded-md bg-transparent p-2
+    transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60
+    focus-visible:outline-[1.5px] focus-visible:outline-offset-2
+    focus-visible:outline-primary
   `;
 
   const linkButtonClassName = `
-    text-sm font-semibold text-cyan-200 underline-offset-4 transition
-    hover:text-white hover:underline focus-visible:outline-none
-    focus-visible:ring-2 focus-visible:ring-cyan-300/40
+    font-medium text-primary underline-offset-4 outline-hidden transition
+    hover:text-secondary hover:underline focus-visible:underline
   `;
 
   const getErrorMessage = (error: ClerkAPIError) => {
@@ -566,7 +561,8 @@ export default function SignInPage() {
   return (
     <div
       className="
-        relative min-h-screen overflow-hidden bg-slate-950 px-4 py-8 text-white
+        relative flex min-h-screen flex-col items-center justify-center
+        overflow-hidden px-4 text-white
         sm:px-6
         lg:px-8
       "
@@ -582,26 +578,24 @@ export default function SignInPage() {
           objectFit: 'cover',
         }}
       />
+
       <div
         className="
-          pointer-events-none absolute inset-0 z-0
-          bg-[radial-gradient(circle_at_20%_20%,rgba(103,232,249,0.24),transparent_28%),linear-gradient(90deg,rgba(2,6,23,0.88),rgba(2,6,23,0.42)_48%,rgba(2,6,23,0.92))]
-        "
-      />
-      <main
-        className="
-          relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-7xl
-          flex-col items-center justify-center gap-8
-          lg:grid lg:grid-cols-[1fr_430px] lg:gap-12
+          relative z-10 flex w-full flex-col items-center justify-center
+          lg:flex-row lg:items-start lg:justify-between
         "
       >
         <div
           className="
-            flex w-full max-w-2xl flex-col items-center text-center
-            lg:items-start lg:text-left
+            mb-8 w-full max-w-3/4
+            max-md:mt-10
+            md:max-w-2/4
+            md:max-xl:mt-0
+            lg:mb-0 lg:ml-30 lg:max-w-[700px] lg:self-center
+            lg:max-xl:ml-5
           "
         >
-          <AspectRatio ratio={16 / 9} className="relative w-full max-w-xl">
+          <AspectRatio ratio={16 / 9} className="relative size-full">
             <Image
               src="/logo-login.webp"
               alt="Logo de Artiefy"
@@ -612,70 +606,31 @@ export default function SignInPage() {
               quality={100}
             />
           </AspectRatio>
-          <div className="mt-4 max-w-xl">
-            <p
-              className="
-                text-sm font-semibold tracking-[0.28em] text-cyan-200 uppercase
-              "
-            >
-              Plataforma Artiefy
-            </p>
-            <h1
-              className="
-                mt-3 text-3xl font-black tracking-tight text-white
-                sm:text-5xl
-              "
-            >
-              Entra a tus cursos y proyectos sin pasos extra.
-            </h1>
-            <p
-              className="
-                mt-4 text-sm leading-6 text-white/70
-                sm:text-base
-              "
-            >
-              Correo y contraseña aparecen juntos. Si Clerk pide un código, la
-              causa es una regla de seguridad de la instancia, no el diseño del
-              formulario.
-            </p>
-          </div>
         </div>
 
         <div
           className="
-            w-full max-w-[430px] rounded-lg border border-white/15
-            bg-slate-950/75 p-6 shadow-[0_28px_90px_rgba(0,0,0,0.5)]
-            backdrop-blur-xl
-            sm:p-8
+            -mt-20 w-full max-w-md
+            sm:-mt-16
+            md:-mt-12
+            lg:mt-0 lg:mr-15 lg:w-1/2 lg:max-w-[400px]
+            xl:max-w-[500px]
           "
         >
-          <div className="space-y-6">
-            <div>
-              <p
-                className="
-                  text-xs font-semibold tracking-[0.22em] text-cyan-200
-                  uppercase
-                "
-              >
-                Acceso seguro
-              </p>
-              <h2 className="mt-2 text-2xl font-black tracking-tight text-white">
-                Iniciar sesión
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-white/70">
-                Usa tu correo y contraseña en un solo paso.
-              </p>
+          <div
+            className="
+              mx-auto w-full max-w-sm space-y-10 rounded-2xl px-8 py-10
+              sm:max-w-md
+            "
+          >
+            <div className="mb-6 text-center">
+              <h2 className="text-3xl font-bold">INICIAR SESIÓN</h2>
             </div>
 
             {errors && (
-              <ul
-                className="
-                  space-y-2 rounded-lg border border-rose-400/25 bg-rose-500/10
-                  p-3
-                "
-              >
+              <ul>
                 {errors.map((el, index) => (
-                  <li key={index} className="text-sm leading-5 text-rose-100">
+                  <li key={index} className="-my-4 text-sm text-rose-400">
                     {getErrorMessage(el)}
                   </li>
                 ))}
@@ -683,15 +638,9 @@ export default function SignInPage() {
             )}
 
             {!successfulCreation && !isForgotPassword ? (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="email"
-                    className="
-                      text-xs font-semibold tracking-[0.16em] text-white/70
-                      uppercase
-                    "
-                  >
+              <form onSubmit={handleSubmit}>
+                <div className="flex justify-center">
+                  <label htmlFor="email" className="sr-only">
                     Correo electrónico
                   </label>
                   <input
@@ -700,21 +649,15 @@ export default function SignInPage() {
                     name="email"
                     type="email"
                     value={email}
-                    placeholder="tu@correo.com"
+                    placeholder="Correo Electrónico"
                     autoComplete="email"
                     required
                     className={inputClassName(emailError)}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label
-                    htmlFor="password"
-                    className="
-                      text-xs font-semibold tracking-[0.16em] text-white/70
-                      uppercase
-                    "
-                  >
+                <div className="mt-4 flex justify-center">
+                  <label htmlFor="password" className="sr-only">
                     Contraseña
                   </label>
                   <input
@@ -723,35 +666,54 @@ export default function SignInPage() {
                     name="password"
                     type="password"
                     value={password}
-                    placeholder="Tu contraseña"
+                    placeholder="Contraseña"
                     autoComplete="current-password"
                     required
                     className={inputClassName(passwordError)}
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  className={primaryButtonClassName}
-                  disabled={isBusy}
-                >
-                  {isBusy ? (
-                    <Icons.spinner className="size-5" />
-                  ) : (
-                    <span>Entrar ahora</span>
-                  )}
-                </button>
+                <div className="mt-6 flex justify-center">
+                  <button
+                    type="submit"
+                    className={primaryButtonClassName}
+                    disabled={isBusy}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="
+                        pointer-events-none absolute inset-0 -skew-x-[18deg]
+                        border border-white/20 bg-transparent transition-colors
+                        duration-200 group-hover:border-white/30
+                        group-hover:bg-white/10
+                      "
+                    />
+                    <span
+                      className="
+                        relative flex w-full skew-x-[18deg] items-center
+                        justify-center gap-3
+                      "
+                    >
+                      {isBusy ? (
+                        <Icons.spinner className="size-5" />
+                      ) : (
+                        <span
+                          className="
+                            inline-flex -skew-x-[8deg] items-center gap-2.5
+                          "
+                        >
+                          <span>COMIENZA YA</span>
+                          <span className="text-[1.2em] leading-none">→</span>
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                </div>
               </form>
             ) : successfulCreation ? (
-              <form onSubmit={handleResetPassword} className="space-y-4">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="new-password"
-                    className="
-                      text-xs font-semibold tracking-[0.16em] text-white/70
-                      uppercase
-                    "
-                  >
+              <form onSubmit={handleResetPassword}>
+                <div className="flex justify-center">
+                  <label htmlFor="new-password" className="sr-only">
                     Nueva contraseña
                   </label>
                   <input
@@ -767,14 +729,8 @@ export default function SignInPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label
-                    htmlFor="reset-code"
-                    className="
-                      text-xs font-semibold tracking-[0.16em] text-white/70
-                      uppercase
-                    "
-                  >
+                <div className="mt-4 flex justify-center">
+                  <label htmlFor="reset-code" className="sr-only">
                     Código de restablecimiento
                   </label>
                   <input
@@ -790,12 +746,7 @@ export default function SignInPage() {
                   />
                 </div>
 
-                <div
-                  className="
-                    grid gap-3
-                    sm:grid-cols-[1fr_auto]
-                  "
-                >
+                <div className="mt-6 flex justify-center gap-3">
                   <button
                     type="submit"
                     className={primaryButtonClassName}
@@ -804,7 +755,7 @@ export default function SignInPage() {
                     {isBusy ? (
                       <Icons.spinner className="size-5" />
                     ) : (
-                      <span>Restablecer</span>
+                      <span>RESTABLECER</span>
                     )}
                   </button>
                   <button
@@ -817,15 +768,9 @@ export default function SignInPage() {
                 </div>
               </form>
             ) : (
-              <form onSubmit={handleForgotPassword} className="space-y-4">
-                <div className="space-y-2">
-                  <label
-                    htmlFor="forgot-email"
-                    className="
-                      text-xs font-semibold tracking-[0.16em] text-white/70
-                      uppercase
-                    "
-                  >
+              <form onSubmit={handleForgotPassword}>
+                <div className="flex justify-center">
+                  <label htmlFor="forgot-email" className="sr-only">
                     Correo electrónico
                   </label>
                   <input
@@ -834,19 +779,14 @@ export default function SignInPage() {
                     name="forgot-email"
                     type="email"
                     value={email}
-                    placeholder="tu@correo.com"
+                    placeholder="Correo Electrónico"
                     autoComplete="email"
                     required
                     className={inputClassName(emailError)}
                   />
                 </div>
 
-                <div
-                  className="
-                    grid gap-3
-                    sm:grid-cols-[1fr_auto]
-                  "
-                >
+                <div className="mt-6 flex justify-center gap-3">
                   <button
                     type="submit"
                     className={primaryButtonClassName}
@@ -855,7 +795,7 @@ export default function SignInPage() {
                     {isBusy ? (
                       <Icons.spinner className="size-5" />
                     ) : (
-                      <span>Enviar código</span>
+                      <span>ENVIAR CÓDIGO</span>
                     )}
                   </button>
                   <button
@@ -870,27 +810,14 @@ export default function SignInPage() {
             )}
 
             {secondFactor && (
-              <p
-                className="
-                  rounded-lg border border-amber-300/25 bg-amber-300/10 p-3
-                  text-sm leading-5 text-amber-100
-                "
-              >
-                Clerk exige verificación adicional para esta cuenta. Esa regla
-                se cambia en el Dashboard de Clerk.
+              <p className="text-center text-sm text-amber-200">
+                2FA es requerido, pero esta interfaz no lo maneja.
               </p>
             )}
 
-            <div className="space-y-4 border-t border-white/10 pt-5 text-center">
-              <p
-                className="
-                  text-xs font-semibold tracking-[0.18em] text-white/50
-                  uppercase
-                "
-              >
-                O ingresa con
-              </p>
-              <div className="flex justify-center gap-3">
+            <div className="mt-4 text-center">
+              <p>O ingresa con tu cuenta:</p>
+              <div className="mt-2 flex justify-center space-x-4">
                 <button
                   type="button"
                   onClick={() => signInWith('oauth_google')}
@@ -932,13 +859,12 @@ export default function SignInPage() {
                 </button>
               </div>
 
-              <div className="space-y-3 text-sm">
-                <p className="text-white/60">
-                  ¿Aún no tienes cuenta?{' '}
-                  <Link href={signUpHref} className={linkButtonClassName}>
-                    Regístrate aquí
-                  </Link>
-                </p>
+              <div className="mt-6 text-sm">
+                <Link href={signUpHref} className={linkButtonClassName}>
+                  ¿Aun no tienes cuenta? Registrate Aquí
+                </Link>
+              </div>
+              <div className="mt-6 text-sm">
                 <button
                   type="button"
                   onClick={showForgotPassword}
@@ -950,7 +876,7 @@ export default function SignInPage() {
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

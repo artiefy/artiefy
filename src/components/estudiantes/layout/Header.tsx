@@ -58,6 +58,9 @@ export function Header({
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
   const pathname = usePathname();
+  const desktopSignInHref = `/sign-in?redirect_url=${encodeURIComponent(
+    pathname || '/'
+  )}`;
   const isSignedIn = Boolean(user);
 
   const navItems = [
@@ -107,7 +110,7 @@ export function Header({
   };
   const hasActiveStudentAccess = isSignedIn && !isPlanExpired();
   const visibleMobileNavItems = mobileNavItems.filter(
-    (item) => item.href !== '/estudiantes/myaccount' || hasActiveStudentAccess
+    (item) => item.href !== '/estudiantes/myaccount' || isSignedIn
   );
 
   const getPlanBadgeConfig = (type?: string) => {
@@ -243,6 +246,7 @@ export function Header({
             <Show when="signed-out">
               <div className="flex items-center">
                 <Button
+                  asChild
                   className="
                     ml-2 hidden h-9 items-center justify-center gap-2 rounded-md
                     bg-primary px-3 text-sm font-medium whitespace-nowrap
@@ -250,10 +254,8 @@ export function Header({
                     hover:bg-primary/90
                     md:inline-flex
                   "
-                  type="button"
-                  onClick={handleOpenLoginModal}
                 >
-                  Acceder
+                  <Link href={desktopSignInHref}>Acceder</Link>
                 </Button>
 
                 <Button
@@ -1016,12 +1018,13 @@ export function Header({
         <DialogPanel
           id="mobile-menu"
           className="
-            fixed inset-y-0 left-0 z-[99999] flex h-full min-h-[100dvh] w-[80%]
-            max-w-sm flex-col overflow-hidden bg-[#01152d] p-7
-            pb-[calc(env(safe-area-inset-bottom)+1rem)] shadow-2xl
+            fixed inset-y-0 left-0 z-[99999] flex h-full min-h-[100dvh]
+            w-[min(86vw,22rem)] flex-col overflow-hidden bg-[#01152d] px-6
+            pt-[calc(env(safe-area-inset-top)+1.5rem)] shadow-2xl
+            sm:w-[80%] sm:max-w-sm sm:px-7
           "
         >
-          <div className="mb-8 flex w-full items-center justify-between">
+          <div className="mb-6 flex w-full items-center justify-between">
             <Link
               href="/"
               className="flex items-center gap-3"
@@ -1049,7 +1052,7 @@ export function Header({
               <XMarkIconSolid className="size-5" />
             </button>
           </div>
-          <div className="mb-8">
+          <div className="mb-6">
             <div className="relative">
               <Search
                 className="
@@ -1095,9 +1098,14 @@ export function Header({
                 </div>
               )}
           </div>
-          <div className="flex-1 overflow-y-auto overscroll-contain pb-8">
+          <div
+            className="
+              min-h-0 flex-1 overflow-y-auto overscroll-contain
+              pb-[clamp(1rem,3dvh,1.75rem)]
+            "
+          >
             <nav>
-              <ul className="space-y-3">
+              <ul className="space-y-2.5">
                 {visibleMobileNavItems.map((item) => {
                   const isActive =
                     pathname === item.href ||
@@ -1111,7 +1119,8 @@ export function Header({
                         <button
                           type="button"
                           className={`
-                            flex w-full items-center gap-4 rounded-xl px-4 py-3
+                            flex w-full items-center gap-4 rounded-xl px-4
+                            py-2.5
                             text-left text-base font-semibold transition
                             outline-none
                             active:scale-95
@@ -1140,7 +1149,8 @@ export function Header({
                       <Link
                         href={item.href}
                         className={`
-                          flex w-full items-center gap-4 rounded-xl px-4 py-3
+                          flex w-full items-center gap-4 rounded-xl px-4
+                          py-2.5
                           text-base font-semibold transition
                           active:scale-95
                           ${
@@ -1163,9 +1173,14 @@ export function Header({
               </ul>
             </nav>
           </div>
-          <div className="border-t border-white/8 pt-7">
+          <div
+            className="
+              shrink-0 border-t border-white/8 pt-4
+              pb-[calc(env(safe-area-inset-bottom)+1.25rem)]
+            "
+          >
             {isSignedIn ? (
-              <div className="flex items-center justify-center">
+              <div className="flex min-h-12 items-center justify-center">
                 <Suspense
                   fallback={<Icons.spinner className="size-5 text-primary" />}
                 >
