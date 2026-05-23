@@ -109,7 +109,7 @@ export default function Page() {
     null
   );
   const [idTypesCourses, setIdTypesCourses] = useState<number | null>(null);
-
+  const [visibility, setVisibility] = useState<boolean>(true);
   const [certificationTypes, setCertificationTypes] = useState<
     { id: number; name: string; description: string | null }[]
   >([]);
@@ -273,7 +273,8 @@ export default function Page() {
     horario: number | null,
     espacios: number | null,
     certificationTypeId: number | null,
-    idTypesCourses: number | null
+    idTypesCourses: number | null,
+    visibility: boolean
   ) => {
     console.log('🧪 Enviando datos a updateCourse:', {
       id: Number(id),
@@ -364,7 +365,7 @@ export default function Page() {
           scheduleOptionId: horario ?? null,
           spaceOptionId: espacios ?? null,
           certificationTypeId: certificationTypeId ?? null,
-          visibility: isActive,
+          visibility: visibility,
           courseTypeId: finalCourseTypeId,
           idTypesCourses: idTypesCourses ?? null,
         } as unknown as CourseData;
@@ -417,7 +418,7 @@ export default function Page() {
             espacios,
             certificationTypeId,
             idTypesCourses: idTypesCourses ?? null,
-            visibility: isActive,
+            visibility: visibility,
           }),
         });
 
@@ -515,7 +516,8 @@ export default function Page() {
 
   // Función para abrir el modal de creación de cursos
   const handleCreateCourse = () => {
-    setIdTypesCourses(null); // ← agrega esto
+    setIdTypesCourses(null);
+    setIsActive(true); // ← agrega esto
     setIsActive(true);
     setEditingCourse({
       id: 0,
@@ -842,6 +844,7 @@ export default function Page() {
               setEspacios(
                 (fullCourseData.spaceOptionId ?? null) as number | null
               );
+              setVisibility(fullCourseData.visibility ?? true);
               setIsModalOpen(true);
             } catch (error) {
               console.error('❌ Error loading course:', error);
@@ -1036,6 +1039,18 @@ export default function Page() {
                 );
               } else {
                 setIdTypesCourses(val);
+              }
+            }}
+            visibility={
+              editingCourse ? (editingCourse.visibility ?? true) : visibility
+            }
+            setVisibility={(val) => {
+              if (editingCourse) {
+                setEditingCourse((prev) =>
+                  prev ? { ...prev, visibility: val } : null
+                );
+              } else {
+                setVisibility(val);
               }
             }}
           />

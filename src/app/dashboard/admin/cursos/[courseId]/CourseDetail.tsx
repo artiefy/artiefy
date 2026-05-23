@@ -53,6 +53,7 @@ interface Course {
   courseTypeId?: number | null; // ✅ Agrega esto
   courseTypeName?: string;
   isActive: boolean;
+  visibility?: boolean;
   instructorName: string;
   instructorProfesion?: string;
   instructorDescripcion?: string;
@@ -203,6 +204,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   };
 
   const [isActive, setIsActive] = useState<boolean>(true);
+  const [editVisibility, setEditVisibility] = useState<boolean>(true);
 
   const [editParametros, setEditParametros] = useState<
     {
@@ -373,7 +375,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       porcentaje: number;
       numberOfActivities: number;
     }[],
-    courseTypeName?: string // Add the new argument, optional if not always present
+    courseTypeName?: string, // Add the new argument, optional if not always present
+    visibility?: boolean
   ): Promise<void> => {
     try {
       setIsUpdating(true);
@@ -454,6 +457,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         espacios: null,
         certificationTypeId: null,
         idTypesCourses: null,
+        visibility,
       };
 
       console.log('🚀 Payload final de actualización:', payload);
@@ -586,6 +590,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           : []
     );
     setIsActive(course.isActive ?? true);
+    setEditVisibility(course.visibility ?? true);
     setCurrentInstructors([course.instructor]);
     setCurrentSubjects(materias.map((materia) => ({ id: materia.id })));
     setIsModalOpen(true);
@@ -1359,7 +1364,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           subjects,
           coverVideoCourseKey,
           individualPrice,
-          parametros
+          parametros,
+          _horario,
+          _espacios,
+          _certificationTypeId,
+          _idTypesCourses,
+          visibility
         ) =>
           handleUpdateCourse(
             id,
@@ -1378,7 +1388,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             subjects,
             coverVideoCourseKey,
             individualPrice,
-            parametros
+            parametros,
+            undefined,
+            visibility
           )
         }
         editingCourseId={course.id}
@@ -1422,6 +1434,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         certificationTypes={[]}
         idTypesCourses={idTypesCourses}
         setIdTypesCourses={setIdTypesCourses}
+        visibility={editVisibility}
+        setVisibility={(val) => {
+          setIsActive(val);
+          setEditVisibility(val);
+        }}
       />
     </div>
   );

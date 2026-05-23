@@ -79,6 +79,7 @@ interface Course {
   courseTypeId?: number | null; // ✅ Agrega esto
   courseTypeName?: string;
   isActive: boolean;
+  visibility?: boolean;
   instructorName: string;
   instructorProfesion?: string;
   instructorDescripcion?: string;
@@ -368,6 +369,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   };
 
   const [isActive, setIsActive] = useState<boolean>(true);
+  const [editVisibility, setEditVisibility] = useState<boolean>(true);
 
   // Estados para los tabs desplegables
   const [activeTab, setActiveTab] = useState<string>('lecciones');
@@ -431,7 +433,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
   // Estado para el scroll y la tarjeta mini sticky
   const [showStickyCard, setShowStickyCard] = useState(false);
-
+  void showStickyCard;
   // Ref para el contenedor de tabs con scroll horizontal
   const tabsRef = useRef<HTMLDivElement>(null);
 
@@ -1302,7 +1304,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     horario: number | null,
     espacios: number | null,
     certificationTypeId: number | null,
-    idTypesCourses?: number | null
+    idTypesCourses?: number | null,
+    visibility?: boolean
   ): Promise<void> => {
     try {
       setIsUpdating(true);
@@ -1381,6 +1384,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         espacios,
         certificationTypeId,
         idTypesCourses, // ✅ Agregar el campo idTypesCourses
+        visibility,
       };
 
       console.log('🚀 Payload final de actualización:', payload);
@@ -1517,6 +1521,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
 
     setCourseTypeId(newCourseTypeIds);
     setIsActive(course.isActive ?? true);
+    setEditVisibility(course.visibility ?? true);
 
     // ✅ Cargar instructors desde courseInstructors, con fallback a instructor singular
     const instructorsToLoad =
@@ -2186,7 +2191,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         />
       </div>
 
-      {/* Tarjeta Mini Sticky - Premium Glass */}
+      {/* Tarjeta Mini Sticky - Premium Glass
       {showStickyCard && course && (
         <div
           className="
@@ -2196,9 +2201,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             md:top-6 md:px-4 md:py-3
           "
         >
-          {/* Mini Imagen y Info */}
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            {/* Mini Imagen - Premium */}
             <div className="card-premium relative size-20 flex-shrink-0">
               <Image
                 src={`${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${course.coverImageKey}`}
@@ -2210,7 +2213,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               />
             </div>
 
-            {/* Información compacta */}
             <div className="min-w-0 flex-1">
               <h3
                 className="
@@ -2241,7 +2243,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             </div>
           </div>
 
-          {/* Botones de acción */}
           <div className="flex flex-shrink-0 gap-2">
             <Button
               onClick={() => {
@@ -2268,6 +2269,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           </div>
         </div>
       )}
+         */}
 
       <Breadcrumb className="animate-slideInDown relative z-10 mb-8">
         <BreadcrumbList className="flex flex-wrap gap-2">
@@ -6075,7 +6077,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             horario,
             espacios,
             certificationTypeId,
-            idTypesCourses
+            idTypesCourses,
+            visibility
           ) =>
             handleUpdateCourse(
               id,
@@ -6098,7 +6101,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
               horario,
               espacios,
               certificationTypeId,
-              idTypesCourses
+              idTypesCourses,
+              visibility
             )
           }
           editingCourseId={course.id}
@@ -6153,6 +6157,11 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             setCourse((prev) =>
               prev ? { ...prev, idTypesCourses: id } : null
             );
+          }}
+          visibility={editVisibility}
+          setVisibility={(val) => {
+            setIsActive(val);
+            setEditVisibility(val);
           }}
         />
       )}

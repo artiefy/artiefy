@@ -82,6 +82,7 @@ export default function Page() {
     string | null
   >(null);
   const [idTypesCourses, setIdTypesCourses] = useState<number | null>(null);
+  const [visibility, setVisibility] = useState<boolean>(true);
   const [isActive, setIsActive] = useState<boolean>(true);
   // ✅ Obtener cursos, totales y categorías con lazy loading
   useEffect(() => {
@@ -211,7 +212,7 @@ export default function Page() {
     coverImageKey: string,
     fileName: string,
     courseTypeId: number[],
-    isActive: boolean,
+    visibility: boolean,
     subjects: { id: number }[],
     coverVideoCourseKey: string | null,
     individualPrice: number | null,
@@ -228,7 +229,7 @@ export default function Page() {
     idTypesCoursesParam: number | null
   ) => {
     if (!user) return;
-    console.log('📦 isActive recibido:', isActive);
+    console.log('📦 visibility recibido:', visibility);
     console.log('📦 idTypesCourses recibido:', idTypesCourses);
     void individualPrice;
     void parametros;
@@ -244,7 +245,7 @@ export default function Page() {
       setUploading(true);
       if (file) {
         console.log('📦 idTypesCourses al enviar POST:', idTypesCourses);
-        console.log('📦 visibility al enviar POST:', isActive);
+        console.log('📦 visibility al enviar POST:', visibility);
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -317,7 +318,7 @@ export default function Page() {
           creatorId: editingCourse?.creatorId ?? user.id,
           createdAt: editingCourse?.createdAt ?? new Date().toISOString(),
           idTypesCourses: idTypesCoursesParam,
-          visibility: isActive, // ← agrega esto
+          visibility: visibility, // ← agrega esto
         } as CourseData);
 
         responseData = { id: Number(id) }; // Como es una actualización, el ID ya es conocido
@@ -337,10 +338,9 @@ export default function Page() {
             instructorIds: editingCourse?.instructors ?? [], // Array de IDs de instructores
             subjects,
             courseTypeId,
-            isActive,
+            visibility,
             individualPrice,
             idTypesCourses: idTypesCoursesParam,
-            visibility: isActive,
           }),
         });
 
@@ -414,7 +414,7 @@ export default function Page() {
   // Función para abrir el modal de creación de cursos
   const handleCreateCourse = () => {
     setIdTypesCourses(null); // ← agrega esto
-    setIsActive(true);
+    setVisibility(true);
     setEditingCourse({
       id: 0,
       title: '',
@@ -802,6 +802,8 @@ export default function Page() {
           certificationTypes={[]}
           idTypesCourses={idTypesCourses}
           setIdTypesCourses={setIdTypesCourses}
+          visibility={visibility}
+          setVisibility={setVisibility}
           isActive={isActive}
           setIsActive={setIsActive}
         />
