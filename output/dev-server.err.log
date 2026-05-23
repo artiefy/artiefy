@@ -1,0 +1,52 @@
+Image proxy error: PermanentRedirect: The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.
+    at async getObjectFromS3 (src\app\api\image-proxy\route.ts:95:20)
+    at async GET (src\app\api\image-proxy\route.ts:238:20)
+  93 |   }
+  94 |
+> 95 |   const response = await s3Client.send(
+     |                    ^
+  96 |     new GetObjectCommand({
+  97 |       Bucket: BUCKET,
+  98 |       Key: key, {
+  '$fault': 'client',
+  '$retryable': undefined,
+  '$metadata': {
+    httpStatusCode: 301,
+    requestId: 'ZN92RP76VC9F11RH',
+    extendedRequestId: '/WYTlEok2cGPyVtR9UGWqWpg9g4GnBEYNA0fmwukvIPtA+bZW7KlXgcTXn79PRzDFPBgV9M8+C4=',
+    cfId: undefined,
+    attempts: 1,
+    totalRetryDelay: 0
+  },
+  Code: 'PermanentRedirect',
+  Endpoint: 'artiefy-upload.s3.us-east-2.amazonaws.com',
+  Bucket: 'artiefy-upload',
+  RequestId: 'ZN92RP76VC9F11RH',
+  HostId: '/WYTlEok2cGPyVtR9UGWqWpg9g4GnBEYNA0fmwukvIPtA+bZW7KlXgcTXn79PRzDFPBgV9M8+C4='
+}
+Image proxy error: PermanentRedirect: The bucket you are attempting to access must be addressed using the specified endpoint. Please send all future requests to this endpoint.
+    at async getObjectFromS3 (src\app\api\image-proxy\route.ts:95:20)
+    at async GET (src\app\api\image-proxy\route.ts:238:20)
+  93 |   }
+  94 |
+> 95 |   const response = await s3Client.send(
+     |                    ^
+  96 |     new GetObjectCommand({
+  97 |       Bucket: BUCKET,
+  98 |       Key: key, {
+  '$fault': 'client',
+  '$retryable': undefined,
+  '$metadata': {
+    httpStatusCode: 301,
+    requestId: 'Q9PQ7Q0FTPJQ887K',
+    extendedRequestId: 'JNOTf4P9cL6uJeCR22g7SYDDe5gE/b9CJwBfajRQWGHxYKcDQAKpE2O7M/Q7sT/yG38K9mwQa4U/RhyrRi51AWqH4OAlXCOc',
+    cfId: undefined,
+    attempts: 1,
+    totalRetryDelay: 0
+  },
+  Code: 'PermanentRedirect',
+  Endpoint: 'artiefy-upload.s3.us-east-2.amazonaws.com',
+  Bucket: 'artiefy-upload',
+  RequestId: 'Q9PQ7Q0FTPJQ887K',
+  HostId: 'JNOTf4P9cL6uJeCR22g7SYDDe5gE/b9CJwBfajRQWGHxYKcDQAKpE2O7M/Q7sT/yG38K9mwQa4U/RhyrRi51AWqH4OAlXCOc'
+}

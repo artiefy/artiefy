@@ -1,0 +1,20 @@
+
+> artiefy@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.6 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.137.40.131:3000
+- Environments: .env
+✓ Ready in 511ms
+Creating turbopack project {
+  dir: 'C:\\Users\\Usuario\\Documents\\DOC JOSE\\DEV\\artiefy',
+  testMode: true
+}
+- Experiments (use with caution):
+  · serverActions
+
+ GET /api/image-proxy?url=https%3A%2F%2Fs3.us-east-2.amazonaws.com%2Fartiefy-upload%2Fuploads%2Fanatomia-1761285422120-23ae57ce-17a6-47ee-b052-97f8e6e1c7a1.png 200 in 7.0s (next.js: 68ms, proxy.ts: 224ms, application-code: 6.8s)
+ GET /api/image-proxy?url=https%3A%2F%2Fs3.us-east-2.amazonaws.com%2Fartiefy-upload%2Fuploads%2Fanatomia-1761285422120-23ae57ce-17a6-47ee-b052-97f8e6e1c7a1.png 200 in 5.3s (next.js: 13ms, proxy.ts: 31ms, application-code: 5.3s)
+ GET /sign-in/sso-callback 200 in 1424ms (next.js: 994ms, proxy.ts: 30ms, application-code: 400ms)
+ GET /sign-up/continue 200 in 1236ms (next.js: 1145ms, proxy.ts: 22ms, application-code: 68ms)

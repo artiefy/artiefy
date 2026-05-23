@@ -922,9 +922,13 @@ export function Header({
             />
           </Link>
 
-          <div className="campana-header mobile-notification-shell relative">
-            <NotificationHeader />
-          </div>
+          {hasActiveStudentAccess ? (
+            <div className="campana-header mobile-notification-shell relative">
+              <NotificationHeader />
+            </div>
+          ) : (
+            <div className="size-10" aria-hidden="true" />
+          )}
         </div>
       </div>
       {showMobileSearch && (
