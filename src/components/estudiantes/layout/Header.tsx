@@ -105,6 +105,10 @@ export function Header({
     }
     return false;
   };
+  const hasActiveStudentAccess = isSignedIn && !isPlanExpired();
+  const visibleMobileNavItems = mobileNavItems.filter(
+    (item) => item.href !== '/estudiantes/myaccount' || hasActiveStudentAccess
+  );
 
   const getPlanBadgeConfig = (type?: string) => {
     if (!type) return null;
@@ -572,7 +576,7 @@ export function Header({
 
                 return (
                   <li key={item.href}>
-                    {item.label === 'Cursos' ? (
+                    {item.label === 'Cursos' && hasActiveStudentAccess ? (
                       <div className="group relative">
                         <Link
                           href={item.href}
@@ -1090,7 +1094,7 @@ export function Header({
           <div className="flex-1 overflow-y-auto overscroll-contain pb-8">
             <nav>
               <ul className="space-y-3">
-                {mobileNavItems.map((item) => {
+                {visibleMobileNavItems.map((item) => {
                   const isActive =
                     pathname === item.href ||
                     (item.href !== '/' &&

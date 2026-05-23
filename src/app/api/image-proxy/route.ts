@@ -1,9 +1,109 @@
 import { NextResponse } from 'next/server';
 
+import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
 
 const TIMEOUT = 10000; // Reducido a 10 segundos
 const MAX_RETRIES = 2;
+const REGION = process.env.AWS_REGION ?? 'us-east-2';
+const BUCKET = process.env.AWS_BUCKET_NAME ?? process.env.AWS_S3_BUCKET ?? '';
+const PUBLIC_S3_BASE_URL =
+  process.env.NEXT_PUBLIC_AWS_S3_URL ??
+  (BUCKET ? `https://s3.${REGION}.amazonaws.com/${BUCKET}` : '');
+
+const s3Client = new S3Client({
+  region: REGION,
+  credentials:
+    process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+      ? {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        }
+      : undefined,
+});
+
+function getAllowedS3Origins(): Set<string> {
+  const origins = new Set<string>([
+    `https://s3.${REGION}.amazonaws.com`,
+    `https://${BUCKET}.s3.${REGION}.amazonaws.com`,
+  ]);
+
+  if (PUBLIC_S3_BASE_URL) {
+    try {
+      origins.add(new URL(PUBLIC_S3_BASE_URL).origin);
+    } catch {
+      // ignore invalid optional env value
+    }
+  }
+
+  return origins;
+}
+
+function getS3KeyFromUrl(url: URL): string | null {
+  if (!BUCKET) return null;
+
+  const virtualHostedHost = `${BUCKET}.s3.${REGION}.amazonaws.com`;
+  if (url.hostname === virtualHostedHost) {
+    return decodeURIComponent(url.pathname.replace(/^\/+/, ''));
+  }
+
+  if (url.hostname === `s3.${REGION}.amazonaws.com`) {
+    const parts = url.pathname.split('/').filter(Boolean);
+    if (parts[0] !== BUCKET) return null;
+    return decodeURIComponent(parts.slice(1).join('/'));
+  }
+
+  if (PUBLIC_S3_BASE_URL) {
+    try {
+      const baseUrl = new URL(PUBLIC_S3_BASE_URL);
+      if (url.origin === baseUrl.origin) {
+        const basePath = baseUrl.pathname.replace(/\/+$/, '');
+        if (basePath && !url.pathname.startsWith(`${basePath}/`)) return null;
+        const keyPath = basePath
+          ? url.pathname.slice(basePath.length)
+          : url.pathname;
+        return decodeURIComponent(keyPath.replace(/^\/+/, ''));
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function validateImageUrl(imageUrl: string): URL | null {
+  try {
+    const url = new URL(imageUrl);
+    if (url.protocol !== 'https:') return null;
+    if (!getAllowedS3Origins().has(url.origin)) return null;
+    if (!getS3KeyFromUrl(url)) return null;
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+async function getObjectFromS3(key: string): Promise<ArrayBuffer> {
+  if (!BUCKET) {
+    throw new Error('AWS bucket is not configured');
+  }
+
+  const response = await s3Client.send(
+    new GetObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+    })
+  );
+
+  const byteArray = await response.Body?.transformToByteArray();
+  if (!byteArray) {
+    throw new Error('Empty S3 object body');
+  }
+
+  const copy = new Uint8Array(byteArray);
+  return copy.buffer as ArrayBuffer;
+}
 
 async function fetchWithTimeout(
   url: string,
@@ -74,15 +174,30 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Missing image URL' }, { status: 400 });
     }
 
-    if (!imageUrl.includes('s3.us-east-2.amazonaws.com')) {
+    const parsedImageUrl = validateImageUrl(imageUrl);
+    if (!parsedImageUrl) {
       return NextResponse.json(
         { error: 'Invalid image source' },
         { status: 403 }
       );
     }
 
-    const response = await fetchWithTimeout(imageUrl);
-    const buffer = await response.arrayBuffer();
+    let buffer: ArrayBuffer;
+    try {
+      const response = await fetchWithTimeout(parsedImageUrl.toString());
+      buffer = await response.arrayBuffer();
+    } catch (error) {
+      const key = getS3KeyFromUrl(parsedImageUrl);
+      if (
+        key &&
+        error instanceof Error &&
+        error.message.includes('status: 403')
+      ) {
+        buffer = await getObjectFromS3(key);
+      } else {
+        throw error;
+      }
+    }
 
     // Siempre optimizar imágenes
     const optimizedBuffer = await optimizeImageBuffer(buffer);

@@ -181,6 +181,25 @@ export default function SignInPage() {
     }
   }, [isSignedIn, router, redirectUrl]);
 
+  useEffect(() => {
+    if (!loadingProvider) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setLoadingProvider(null);
+      setErrors([
+        {
+          code: 'oauth_timeout',
+          message: 'No se pudo abrir OAuth. Inténtalo nuevamente.',
+          longMessage:
+            'No se pudo abrir OAuth. Borra la caché de la pestaña si el problema continúa.',
+          meta: {},
+        },
+      ]);
+    }, 15000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loadingProvider]);
+
   // Login con OAuth (Google, Facebook, etc.)
   const signInWith = useCallback(
     async (strategy: OAuthStrategy) => {
@@ -462,6 +481,9 @@ export default function SignInPage() {
     }
     if (error.code === 'form_identifier_not_found') {
       return 'No se pudo encontrar tu cuenta.';
+    }
+    if (error.code === 'oauth_timeout') {
+      return 'No se pudo abrir OAuth. Inténtalo nuevamente.';
     }
     return error.longMessage;
   };

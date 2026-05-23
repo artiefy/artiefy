@@ -38,12 +38,37 @@ function isPublicDashboardPath(pathname: string): boolean {
   return pathname === '/dashboard/formulario';
 }
 
+function isPublicAppPath(pathname: string): boolean {
+  return (
+    pathname === '/' ||
+    pathname === '/estudiantes' ||
+    pathname.startsWith('/estudiantes/cursos/') ||
+    pathname.startsWith('/estudiantes/programas/') ||
+    pathname === '/proyectos' ||
+    pathname.startsWith('/proyectos/') ||
+    pathname === '/comunidad' ||
+    pathname === '/planes' ||
+    pathname.startsWith('/agradecimiento-curso/') ||
+    pathname.startsWith('/sign-in') ||
+    pathname.startsWith('/sign-up') ||
+    pathname === '/error'
+  );
+}
+
 function isProtectedStudentPath(pathname: string): boolean {
-  return /^\/estudiantes\/clases\/[^/]+\/?$/.test(pathname);
+  return (
+    /^\/estudiantes\/clases\/[^/]+\/?$/.test(pathname) ||
+    pathname === '/estudiantes/myaccount' ||
+    pathname.startsWith('/estudiantes/myaccount/')
+  );
 }
 
 function isPublicContentPath(pathname: string): boolean {
   return /^\/(cursos|programas)(\/.*)?$/.test(pathname);
+}
+
+function isPublicApiPath(pathname: string): boolean {
+  return pathname === '/api/image-proxy';
 }
 
 const envPartyCandidates = [
@@ -88,7 +113,31 @@ export default clerkMiddleware(async (auth, req) => {
   try {
     const pathname = getPathname(req);
 
-    if (whatsAppWebhookPaths.has(pathname)) {
+    if (pathname === '/') {
+      try {
+        const { userId, sessionClaims } = await auth();
+        const role = getUserRole(sessionClaims?.metadata?.role);
+        const privilegedDashboardRoute = getPrivilegedDashboardRoute(role);
+
+        if (userId && privilegedDashboardRoute) {
+          return NextResponse.redirect(
+            new URL(privilegedDashboardRoute, req.url)
+          );
+        }
+      } catch {
+        return NextResponse.next();
+      }
+
+      return NextResponse.next();
+    }
+
+    if (
+      whatsAppWebhookPaths.has(pathname) ||
+      isPublicApiPath(pathname) ||
+      isPublicAppPath(pathname) ||
+      isPublicContentPath(pathname) ||
+      isPublicDashboardPath(pathname)
+    ) {
       return NextResponse.next();
     }
 
@@ -103,15 +152,6 @@ export default clerkMiddleware(async (auth, req) => {
 
     const { userId, sessionClaims } = await auth();
     const role = getUserRole(sessionClaims?.metadata?.role);
-    const privilegedDashboardRoute = getPrivilegedDashboardRoute(role);
-
-    if (isPublicContentPath(pathname) || isPublicDashboardPath(pathname)) {
-      return NextResponse.next();
-    }
-
-    if (pathname === '/' && userId && privilegedDashboardRoute) {
-      return NextResponse.redirect(new URL(privilegedDashboardRoute, req.url));
-    }
 
     if (isProtectedStudentPath(pathname) || isDashboardPath(pathname)) {
       if (!userId) {

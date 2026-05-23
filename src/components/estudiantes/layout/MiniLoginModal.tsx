@@ -291,6 +291,25 @@ export default function MiniLoginModal({
     };
   }, [isOpen, resetTransientState]);
 
+  useEffect(() => {
+    if (!loadingProvider) return;
+
+    const timeoutId = window.setTimeout(() => {
+      setLoadingProvider(null);
+      setErrors([
+        {
+          code: 'oauth_timeout',
+          message: 'No se pudo abrir OAuth. Inténtalo nuevamente.',
+          longMessage:
+            'No se pudo abrir OAuth. Borra la caché de la pestaña si el problema continúa.',
+          meta: {},
+        },
+      ]);
+    }, 15000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loadingProvider]);
+
   const switchToSignUp = (strategy?: OAuthStrategy) => {
     if (!onSwitchToSignUp) return false;
     setErrors(undefined);
@@ -602,6 +621,9 @@ export default function MiniLoginModal({
     }
     if (error.code === 'oauth_in_progress') {
       return 'Ya hay un inicio de sesión OAuth en progreso. Completa esa ventana primero.';
+    }
+    if (error.code === 'oauth_timeout') {
+      return 'No se pudo abrir OAuth. Inténtalo nuevamente.';
     }
     if (error.code === 'invalid_strategy') {
       return 'La contraseña es incorrecta. Inténtalo de nuevo.';
