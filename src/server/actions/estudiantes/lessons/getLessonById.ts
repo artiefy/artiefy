@@ -1,17 +1,19 @@
 'use server';
 
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
   courseCourseTypes,
-  enrollments,
   lessons,
   userActivitiesProgress,
   userLessonsProgress,
 } from '~/server/db/schema';
 
 import type { Activity, Course, Lesson } from '~/types';
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : String(error);
 
 export async function getLessonById(
   lessonId: number,
@@ -35,37 +37,52 @@ export async function getLessonById(
     if (!lesson) return null;
 
     // Fetch all course types for this course
-    const courseTypeRelations = await db.query.courseCourseTypes.findMany({
-      where: eq(courseCourseTypes.courseId, lesson.course.id),
-      with: {
-        courseType: true,
-      },
-    });
+    let courseTypeRelations: Array<{
+      courseType: { requiredSubscriptionLevel: string | null } | null;
+    }> = [];
+    try {
+      courseTypeRelations = await db.query.courseCourseTypes.findMany({
+        where: eq(courseCourseTypes.courseId, lesson.course.id),
+        with: {
+          courseType: true,
+        },
+      });
+    } catch (error) {
+      console.warn(
+        'No se pudieron cargar los tipos de curso de la lección:',
+        getErrorMessage(error)
+      );
+    }
 
-    // Get enrollments count for the course
-    const courseEnrollments = await db.query.enrollments.findMany({
-      where: eq(enrollments.courseId, lesson.course.id),
-    });
+    const courseEnrollments = lesson.course.enrollments ?? [];
 
     // Get progress for all lessons in the course
-    const lessonsProgress = await db.query.userLessonsProgress.findMany({
-      where: eq(userLessonsProgress.userId, userId),
-    });
+    let lessonsProgress: Array<typeof userLessonsProgress.$inferSelect> = [];
+    try {
+      lessonsProgress = await db.query.userLessonsProgress.findMany({
+        where: eq(userLessonsProgress.userId, userId),
+      });
+    } catch (error) {
+      console.warn(
+        'No se pudo cargar el progreso de las lecciones:',
+        getErrorMessage(error)
+      );
+    }
+
+    const lessonsProgressByLessonId = new Map(
+      lessonsProgress.map((progress) => [progress.lessonId, progress])
+    );
 
     // Transform course lessons with progress data
     const transformedLessons: Lesson[] = lesson.course.lessons.map((l) => ({
       ...l,
-      porcentajecompletado:
-        lessonsProgress.find((p) => p.lessonId === l.id)?.progress ?? 0,
-      userProgress:
-        lessonsProgress.find((p) => p.lessonId === l.id)?.progress ?? 0,
+      porcentajecompletado: lessonsProgressByLessonId.get(l.id)?.progress ?? 0,
+      userProgress: lessonsProgressByLessonId.get(l.id)?.progress ?? 0,
       lastPositionSeconds:
-        lessonsProgress.find((p) => p.lessonId === l.id)?.lastPositionSeconds ??
-        0,
-      isCompleted:
-        lessonsProgress.find((p) => p.lessonId === l.id)?.isCompleted ?? false,
+        lessonsProgressByLessonId.get(l.id)?.lastPositionSeconds ?? 0,
+      isCompleted: lessonsProgressByLessonId.get(l.id)?.isCompleted ?? false,
       isLocked: false,
-      isNew: lessonsProgress.find((p) => p.lessonId === l.id)?.isNew ?? true,
+      isNew: lessonsProgressByLessonId.get(l.id)?.isNew ?? true,
       resourceNames: l.resourceNames ? l.resourceNames.split(',') : [],
     }));
 
@@ -95,17 +112,22 @@ export async function getLessonById(
           : undefined,
     };
 
-    const lessonProgress = await db.query.userLessonsProgress.findFirst({
-      where: and(
-        eq(userLessonsProgress.userId, userId),
-        eq(userLessonsProgress.lessonId, lessonId)
-      ),
-    });
+    const lessonProgress = lessonsProgressByLessonId.get(lessonId);
 
-    const userActivitiesProgressData =
-      await db.query.userActivitiesProgress.findMany({
-        where: eq(userActivitiesProgress.userId, userId),
-      });
+    let userActivitiesProgressData: Array<
+      typeof userActivitiesProgress.$inferSelect
+    > = [];
+    try {
+      userActivitiesProgressData =
+        await db.query.userActivitiesProgress.findMany({
+          where: eq(userActivitiesProgress.userId, userId),
+        });
+    } catch (error) {
+      console.warn(
+        'No se pudo cargar el progreso de las actividades:',
+        getErrorMessage(error)
+      );
+    }
 
     const transformedLesson: Lesson = {
       ...lesson,

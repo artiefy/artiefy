@@ -168,16 +168,6 @@ export default function LessonDetails({
   const [selectedActivityForModal, setSelectedActivityForModal] =
     useState<Activity | null>(null);
 
-  // Move course active check to the top
-  useEffect(() => {
-    if (course.isActive === false) {
-      toast.error('Curso no disponible', {
-        description: 'Este curso no está disponible actualmente.',
-      });
-      router.push('/estudiantes');
-    }
-  }, [course.isActive, router]);
-
   useEffect(() => {
     if (!isInitialized.current) {
       setProgress(lesson?.porcentajecompletado ?? 0);

@@ -44,7 +44,7 @@ const nextConfig = {
       { pathname: '/api/image-proxy', search: '?url=*' },
       { pathname: '/**' },
     ],
-    qualities: [100, 75, 85],
+    qualities: [70, 75, 85, 100],
     maximumRedirects: 3,
     dangerouslyAllowLocalIP: false,
   },

@@ -3121,7 +3121,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   const shouldLowerFloatingButtons =
     isSupportChatVisible ||
     (isOpen && (activeSection === 'tickets' || chatMode.type === 'ticket'));
-  const floatingButtonsZIndex = shouldLowerFloatingButtons ? 40 : 100001;
+  const floatingButtonsZIndex = !isDesktop
+    ? 80
+    : shouldLowerFloatingButtons
+      ? 40
+      : 100001;
   const floatingButtonStyle: React.CSSProperties = shouldLowerFloatingButtons
     ? { zIndex: floatingButtonsZIndex, pointerEvents: 'none', opacity: 0.5 }
     : { zIndex: floatingButtonsZIndex };
@@ -3174,6 +3178,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         : _safePathname.startsWith('/estudiantes/clases/')
           ? `fixed left-6 ${mainFloatingBottomClass}`
           : `fixed right-4 ${mainFloatingBottomClass}`;
+  const floatingRootZIndex = !isDesktop
+    ? 80
+    : shouldLowerFloatingButtons
+      ? 40
+      : 99999;
 
   function handleDeleteHistory(
     event?: React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -3261,7 +3270,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
             ${className ?? ''}
             fixed
           `}
-          style={{ zIndex: shouldLowerFloatingButtons ? 40 : 99999 }}
+          style={{ zIndex: floatingRootZIndex }}
         >
           {isAlwaysVisible && !isProjectModalOpen && (
             <div

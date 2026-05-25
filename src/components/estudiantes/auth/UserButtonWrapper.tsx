@@ -80,14 +80,14 @@ export function UserButtonWrapper() {
     };
   };
 
-  const renderPlanBadge = () => {
-    if (isMobile) return null;
+  const renderPlanBadge = ({ compact = false }: { compact?: boolean } = {}) => {
     if (!planType || isExpired) return null;
     const config = getPlanBadgeConfig(planType);
     if (!config) return null;
     const Icon = config.icon;
-    const baseClasses =
-      'ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium';
+    const baseClasses = compact
+      ? 'ml-2 inline-flex size-7 items-center justify-center rounded-full border text-[12px] shadow-sm'
+      : 'ml-2 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium';
     const stateClasses = isExpired
       ? 'border-gray-500/30 bg-gray-500/20 text-gray-300'
       : config.classes;
@@ -107,10 +107,14 @@ export function UserButtonWrapper() {
         }
       >
         {Icon ? <Icon className="size-3" /> : null}
-        {config.label}
+        {compact ? null : config.label}
       </span>
     );
   };
+
+  const activePlanConfig =
+    !isExpired && planType ? getPlanBadgeConfig(planType) : null;
+  const ActivePlanIcon = activePlanConfig?.icon;
 
   // Estado para los detalles de suscripción y si la página está abierta
   const [subscriptionDetails, setSubscriptionDetails] = useState<{
@@ -182,6 +186,20 @@ export function UserButtonWrapper() {
         }}
       >
         <UserButton.MenuItems>
+          {activePlanConfig ? (
+            <UserButton.Action
+              label={`Plan ${activePlanConfig.label}`}
+              labelIcon={
+                ActivePlanIcon ? (
+                  <ActivePlanIcon className="size-4" />
+                ) : (
+                  <FaRegCalendarAlt className="size-4" />
+                )
+              }
+              open="subscription-details"
+            />
+          ) : null}
+          <UserButton.Action label="manageAccount" />
           <UserButton.Link
             label="Mis Cursos"
             labelIcon={<UserCircleIcon className="size-4" />}
@@ -197,6 +215,7 @@ export function UserButtonWrapper() {
             labelIcon={<FolderIcon className="size-4" />}
             href="/proyectos/MisProyectos"
           />
+          <UserButton.Action label="signOut" />
         </UserButton.MenuItems>
         {/* Página personalizada dentro del modal de administrar cuenta */}
         <UserButton.UserProfilePage
@@ -212,7 +231,7 @@ export function UserButtonWrapper() {
         </UserButton.UserProfilePage>
       </UserButton>
       {/* Badge de planType */}
-      {renderPlanBadge()}
+      {renderPlanBadge({ compact: isMobile })}
     </div>
   );
 }
@@ -249,9 +268,11 @@ function SubscriptionDetailsPage({
 
   return (
     <div className="flex flex-col items-center justify-center px-2 py-4">
-      <h3 className="
+      <h3
+        className="
         mb-4 text-center text-xl font-extrabold whitespace-nowrap text-gray-900
-      ">
+      "
+      >
         Detalles de Suscripción
       </h3>
       <div className="mb-6 flex flex-col items-center">
@@ -296,10 +317,12 @@ function SubscriptionDetailsPage({
         <div className="text-center text-gray-500">Cargando...</div>
       ) : details ? (
         // Tarjeta más ancha, horizontal, sin saltos de línea
-        <div className="
+        <div
+          className="
           flex w-full max-w-2xl min-w-[350px] flex-row items-center gap-8
           overflow-x-auto rounded-lg bg-gray-800 p-4 whitespace-nowrap shadow
-        ">
+        "
+        >
           <div className="flex w-1/3 flex-col items-start gap-2">
             <span className="font-semibold text-gray-300">Plan:</span>
             <span className="font-semibold text-gray-300">
