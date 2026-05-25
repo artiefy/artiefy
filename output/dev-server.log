@@ -18,3 +18,282 @@ Creating turbopack project {
  GET /api/image-proxy?url=https%3A%2F%2Fs3.us-east-2.amazonaws.com%2Fartiefy-upload%2Fuploads%2Fanatomia-1761285422120-23ae57ce-17a6-47ee-b052-97f8e6e1c7a1.png 200 in 5.3s (next.js: 13ms, proxy.ts: 31ms, application-code: 5.3s)
  GET /sign-in/sso-callback 200 in 1424ms (next.js: 994ms, proxy.ts: 30ms, application-code: 400ms)
  GET /sign-up/continue 200 in 1236ms (next.js: 1145ms, proxy.ts: 22ms, application-code: 68ms)
+Datos: false false undefined false false
+ GET / 200 in 1697ms (next.js: 489ms, proxy.ts: 41ms, application-code: 1167ms)
+✅ Redirect URL detectada: /estudiantes
+ GET /sign-in 200 in 3.6s (next.js: 3.3s, proxy.ts: 29ms, application-code: 200ms)
+✅ Redirect URL detectada: /estudiantes
+ GET /sign-in 200 in 261ms (next.js: 66ms, proxy.ts: 37ms, application-code: 158ms)
+✅ Redirect URL detectada: /estudiantes
+✓ Compiled in 1800ms
+ GET /sign-in 200 in 2.8s (next.js: 1011ms, proxy.ts: 92ms, application-code: 1730ms)
+✓ Compiled in 260ms
+ GET /sign-in 200 in 246ms (next.js: 112ms, proxy.ts: 70ms, application-code: 64ms)
+✓ Compiled in 213ms
+ GET /sign-in 200 in 232ms (next.js: 114ms, proxy.ts: 67ms, application-code: 51ms)
+✓ Compiled in 700ms
+ GET /sign-in 200 in 1922ms (next.js: 232ms, proxy.ts: 1449ms, application-code: 241ms)
+ GET /sign-in 200 in 257ms (next.js: 19ms, proxy.ts: 12ms, application-code: 226ms)
+ GET /sign-in 200 in 200ms (next.js: 50ms, proxy.ts: 24ms, application-code: 127ms)
+ GET /sign-in 200 in 204ms (next.js: 28ms, proxy.ts: 22ms, application-code: 154ms)
+ GET /sign-in 200 in 203ms (next.js: 72ms, proxy.ts: 26ms, application-code: 105ms)
+ GET /sign-in 200 in 203ms (next.js: 92ms, proxy.ts: 27ms, application-code: 84ms)
+ GET /sign-in 200 in 222ms (next.js: 18ms, proxy.ts: 106ms, application-code: 98ms)
+ GET /sign-in 200 in 186ms (next.js: 21ms, proxy.ts: 7ms, application-code: 158ms)
+ GET /sign-in 200 in 176ms (next.js: 24ms, proxy.ts: 38ms, application-code: 113ms)
+ GET /sign-in 200 in 176ms (next.js: 43ms, proxy.ts: 44ms, application-code: 89ms)
+ GET /sign-in 200 in 172ms (next.js: 81ms, proxy.ts: 46ms, application-code: 45ms)
+ GET /sign-in 200 in 173ms (next.js: 65ms, proxy.ts: 43ms, application-code: 65ms)
+✓ Compiled in 2.7s
+ GET /sign-in 200 in 670ms (next.js: 320ms, proxy.ts: 215ms, application-code: 136ms)
+✓ Compiled in 3.1s
+ GET /sign-in 200 in 766ms (next.js: 444ms, proxy.ts: 187ms, application-code: 136ms)
+ GET /sign-in 200 in 874ms (next.js: 325ms, proxy.ts: 147ms, application-code: 401ms)
+ GET /sign-in 200 in 346ms (next.js: 23ms, proxy.ts: 32ms, application-code: 291ms)
+ GET /sign-in 200 in 228ms (next.js: 26ms, proxy.ts: 18ms, application-code: 184ms)
+ GET /sign-in 200 in 228ms (next.js: 82ms, proxy.ts: 23ms, application-code: 123ms)
+Datos: false false undefined false false
+ GET / 200 in 5.1s (next.js: 1180ms, proxy.ts: 35ms, application-code: 3.9s)
+✓ Compiled in 545ms
+ GET / 200 in 1007ms (next.js: 386ms, proxy.ts: 258ms, application-code: 362ms)
+ GET / 200 in 258ms (next.js: 7ms, proxy.ts: 15ms, application-code: 236ms)
+ GET / 200 in 130ms (next.js: 10ms, proxy.ts: 18ms, application-code: 102ms)
+ GET / 200 in 129ms (next.js: 51ms, proxy.ts: 19ms, application-code: 59ms)
+✓ Compiled in 838ms
+ GET / 200 in 767ms (next.js: 305ms, proxy.ts: 147ms, application-code: 316ms)
+ GET / 200 in 199ms (next.js: 5ms, proxy.ts: 32ms, application-code: 161ms)
+ GET / 200 in 121ms (next.js: 7ms, proxy.ts: 18ms, application-code: 96ms)
+ GET / 200 in 120ms (next.js: 39ms, proxy.ts: 18ms, application-code: 63ms)
+Datos: false false undefined false false
+ GET / 200 in 762ms (next.js: 5ms, proxy.ts: 13ms, application-code: 744ms)
+Datos: false false undefined false false
+ GET / 200 in 397ms (next.js: 14ms, proxy.ts: 40ms, application-code: 343ms)
+ GET /sign-in/sso-callback 200 in 3.1s (next.js: 1078ms, proxy.ts: 39ms, application-code: 1971ms)
+ GET /sign-up/continue 200 in 1774ms (next.js: 1395ms, proxy.ts: 117ms, application-code: 262ms)
+ GET /sign-up/continue/SignUp_clerk_catchall_check_1779557159546 200 in 1601ms (next.js: 51ms, proxy.ts: 68ms, application-code: 1482ms)
+Datos: false false undefined false false
+ GET / 200 in 300ms (next.js: 50ms, proxy.ts: 53ms, application-code: 197ms)
+Datos: false false undefined false false
+ GET / 200 in 329ms (next.js: 15ms, proxy.ts: 28ms, application-code: 286ms)
+📌 Buscando anuncios para usuario: user_3B42Z0fEOH7euyvGriZecTpIHnN
+📌 Cursos del usuario: [
+  {
+    id: 4835,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 577,
+    enrolledAt: 2026-03-30T16:01:40.934Z,
+    completed: false,
+    isPermanent: false
+  },
+  {
+    id: 5195,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 602,
+    enrolledAt: 2026-05-13T07:51:22.380Z,
+    completed: false,
+    isPermanent: false
+  }
+]
+ POST / 200 in 2.7s (next.js: 483ms, proxy.ts: 1235ms, application-code: 995ms)
+  └─ ƒ getNotifications("user_3B42Z0fEOH7euyvGriZecTpIHnN", {"limit":1000}) in 409ms src/server/actions/estudiantes/notifications/getNotifications.ts
+ POST / 200 in 219ms (next.js: 24ms, proxy.ts: 36ms, application-code: 159ms)
+  └─ ƒ getUnreadCount("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 113ms src/server/actions/estudiantes/notifications/getNotifications.ts
+ GET /api/super-admin/anuncios/view-anuncio 200 in 3.1s (next.js: 1592ms, proxy.ts: 77ms, application-code: 1425ms)
+ POST / 200 in 252ms (next.js: 12ms, proxy.ts: 54ms, application-code: 186ms)
+  └─ ƒ checkProjectActivitiesDueForUser("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 143ms src/server/actions/estudiantes/projects/checkProjectActivitiesDue.ts
+ GET /api/enrolled-courses 200 in 3.5s (next.js: 1047ms, proxy.ts: 46ms, application-code: 2.4s)
+ POST / 200 in 202ms (next.js: 17ms, proxy.ts: 54ms, application-code: 131ms)
+  └─ ƒ checkProjectActivitiesDueForUser("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 100ms src/server/actions/estudiantes/projects/checkProjectActivitiesDue.ts
+ POST / 200 in 246ms (next.js: 25ms, proxy.ts: 48ms, application-code: 173ms)
+  └─ ƒ checkProjectActivitiesDueForUser("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 120ms src/server/actions/estudiantes/projects/checkProjectActivitiesDue.ts
+ POST / 200 in 447ms (next.js: 22ms, proxy.ts: 56ms, application-code: 369ms)
+  └─ ƒ getNotifications("user_3B42Z0fEOH7euyvGriZecTpIHnN", {"limit":1000}) in 322ms src/server/actions/estudiantes/notifications/getNotifications.ts
+ POST / 200 in 222ms (next.js: 18ms, proxy.ts: 37ms, application-code: 167ms)
+  └─ ƒ getUnreadCount("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 122ms src/server/actions/estudiantes/notifications/getNotifications.ts
+ POST / 200 in 430ms (next.js: 23ms, proxy.ts: 56ms, application-code: 351ms)
+  └─ ƒ getNotifications("user_3B42Z0fEOH7euyvGriZecTpIHnN", {"limit":1000}) in 316ms src/server/actions/estudiantes/notifications/getNotifications.ts
+ POST / 200 in 207ms (next.js: 18ms, proxy.ts: 43ms, application-code: 146ms)
+  └─ ƒ getUnreadCount("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 111ms src/server/actions/estudiantes/notifications/getNotifications.ts
+📌 Buscando anuncios para usuario: user_3B42Z0fEOH7euyvGriZecTpIHnN
+📌 Cursos del usuario: [
+  {
+    id: 4835,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 577,
+    enrolledAt: 2026-03-30T16:01:40.934Z,
+    completed: false,
+    isPermanent: false
+  },
+  {
+    id: 5195,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 602,
+    enrolledAt: 2026-05-13T07:51:22.380Z,
+    completed: false,
+    isPermanent: false
+  }
+]
+ GET /api/super-admin/anuncios/view-anuncio 200 in 1670ms (next.js: 22ms, proxy.ts: 765ms, application-code: 884ms)
+ POST / 200 in 365ms (next.js: 15ms, proxy.ts: 43ms, application-code: 307ms)
+  └─ ƒ getNotifications("user_3B42Z0fEOH7euyvGriZecTpIHnN", {"limit":1000}) in 282ms src/server/actions/estudiantes/notifications/getNotifications.ts
+ POST / 200 in 194ms (next.js: 25ms, proxy.ts: 39ms, application-code: 129ms)
+  └─ ƒ getUnreadCount("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 96ms src/server/actions/estudiantes/notifications/getNotifications.ts
+📌 Buscando anuncios para usuario: user_3B42Z0fEOH7euyvGriZecTpIHnN
+📌 Cursos del usuario: [
+  {
+    id: 4835,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 577,
+    enrolledAt: 2026-03-30T16:01:40.934Z,
+    completed: false,
+    isPermanent: false
+  },
+  {
+    id: 5195,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 602,
+    enrolledAt: 2026-05-13T07:51:22.380Z,
+    completed: false,
+    isPermanent: false
+  }
+]
+ GET /api/super-admin/anuncios/view-anuncio 200 in 663ms (next.js: 6ms, proxy.ts: 23ms, application-code: 634ms)
+ POST / 200 in 378ms (next.js: 15ms, proxy.ts: 27ms, application-code: 335ms)
+  └─ ƒ getNotifications("user_3B42Z0fEOH7euyvGriZecTpIHnN", {"limit":1000}) in 316ms src/server/actions/estudiantes/notifications/getNotifications.ts
+ POST / 200 in 156ms (next.js: 8ms, proxy.ts: 27ms, application-code: 120ms)
+  └─ ƒ getUnreadCount("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 104ms src/server/actions/estudiantes/notifications/getNotifications.ts
+📌 Buscando anuncios para usuario: user_3B42Z0fEOH7euyvGriZecTpIHnN
+📌 Cursos del usuario: [
+  {
+    id: 4835,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 577,
+    enrolledAt: 2026-03-30T16:01:40.934Z,
+    completed: false,
+    isPermanent: false
+  },
+  {
+    id: 5195,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 602,
+    enrolledAt: 2026-05-13T07:51:22.380Z,
+    completed: false,
+    isPermanent: false
+  }
+]
+ GET /api/super-admin/anuncios/view-anuncio 200 in 758ms (next.js: 7ms, proxy.ts: 30ms, application-code: 720ms)
+✓ Compiled in 963ms
+ GET / 200 in 1643ms (next.js: 458ms, proxy.ts: 753ms, application-code: 432ms)
+ GET / 200 in 324ms (next.js: 78ms, proxy.ts: 91ms, application-code: 155ms)
+ GET / 200 in 116ms (next.js: 8ms, proxy.ts: 17ms, application-code: 91ms)
+ GET / 200 in 116ms (next.js: 37ms, proxy.ts: 18ms, application-code: 61ms)
+ POST / 200 in 829ms (next.js: 80ms, proxy.ts: 26ms, application-code: 724ms)
+  └─ ƒ checkProjectActivitiesDueForUser("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 639ms src/server/actions/estudiantes/projects/checkProjectActivitiesDue.ts
+ POST / 200 in 165ms (next.js: 5ms, proxy.ts: 42ms, application-code: 117ms)
+  └─ ƒ checkProjectActivitiesDueForUser("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 105ms src/server/actions/estudiantes/projects/checkProjectActivitiesDue.ts
+ POST / 200 in 156ms (next.js: 10ms, proxy.ts: 26ms, application-code: 119ms)
+  └─ ƒ checkProjectActivitiesDueForUser("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 104ms src/server/actions/estudiantes/projects/checkProjectActivitiesDue.ts
+ POST / 200 in 163ms (next.js: 6ms, proxy.ts: 22ms, application-code: 135ms)
+  └─ ƒ getNotifications("user_3B42Z0fEOH7euyvGriZecTpIHnN", {"limit":1000}) in 110ms src/server/actions/estudiantes/notifications/getNotifications.ts
+ POST / 200 in 177ms (next.js: 7ms, proxy.ts: 48ms, application-code: 122ms)
+  └─ ƒ getUnreadCount("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 106ms src/server/actions/estudiantes/notifications/getNotifications.ts
+✓ Compiled in 849ms
+ GET / 200 in 1301ms (next.js: 422ms, proxy.ts: 406ms, application-code: 473ms)
+ GET / 200 in 398ms (next.js: 10ms, proxy.ts: 22ms, application-code: 367ms)
+ GET / 200 in 197ms (next.js: 61ms, proxy.ts: 33ms, application-code: 103ms)
+ GET / 200 in 202ms (next.js: 12ms, proxy.ts: 32ms, application-code: 159ms)
+✓ Compiled in 1476ms
+ GET / 200 in 1599ms (next.js: 474ms, proxy.ts: 742ms, application-code: 382ms)
+ GET / 200 in 244ms (next.js: 8ms, proxy.ts: 20ms, application-code: 216ms)
+ GET / 200 in 151ms (next.js: 56ms, proxy.ts: 31ms, application-code: 64ms)
+ GET / 200 in 155ms (next.js: 13ms, proxy.ts: 30ms, application-code: 112ms)
+✓ Compiled in 1616ms
+ GET / 200 in 1075ms (next.js: 391ms, proxy.ts: 599ms, application-code: 84ms)
+ GET / 200 in 381ms (next.js: 6ms, proxy.ts: 11ms, application-code: 363ms)
+ GET / 200 in 405ms (next.js: 4ms, proxy.ts: 12ms, application-code: 389ms)
+ GET / 200 in 344ms (next.js: 15ms, proxy.ts: 30ms, application-code: 300ms)
+ GET / 200 in 342ms (next.js: 84ms, proxy.ts: 33ms, application-code: 226ms)
+ GET / 200 in 342ms (next.js: 118ms, proxy.ts: 34ms, application-code: 190ms)
+ GET / 200 in 348ms (next.js: 48ms, proxy.ts: 30ms, application-code: 270ms)
+ GET / 200 in 389ms (next.js: 8ms, proxy.ts: 19ms, application-code: 362ms)
+ GET / 200 in 399ms (next.js: 18ms, proxy.ts: 12ms, application-code: 368ms)
+ GET / 200 in 392ms (next.js: 16ms, proxy.ts: 86ms, application-code: 290ms)
+ GET / 200 in 392ms (next.js: 50ms, proxy.ts: 88ms, application-code: 254ms)
+ GET / 200 in 338ms (next.js: 82ms, proxy.ts: 34ms, application-code: 222ms)
+ GET / 200 in 340ms (next.js: 111ms, proxy.ts: 32ms, application-code: 196ms)
+ GET / 200 in 454ms (next.js: 8ms, proxy.ts: 17ms, application-code: 429ms)
+ GET / 200 in 416ms (next.js: 25ms, proxy.ts: 24ms, application-code: 367ms)
+ GET / 200 in 398ms (next.js: 22ms, proxy.ts: 99ms, application-code: 277ms)
+ GET / 200 in 385ms (next.js: 158ms, proxy.ts: 99ms, application-code: 128ms)
+ GET / 200 in 393ms (next.js: 102ms, proxy.ts: 99ms, application-code: 191ms)
+ GET / 200 in 400ms (next.js: 68ms, proxy.ts: 101ms, application-code: 231ms)
+✓ Compiled in 494ms
+📌 Buscando anuncios para usuario: user_3B42Z0fEOH7euyvGriZecTpIHnN
+ GET / 200 in 1680ms (next.js: 770ms, proxy.ts: 552ms, application-code: 358ms)
+ GET / 200 in 176ms (next.js: 8ms, proxy.ts: 17ms, application-code: 152ms)
+📌 Cursos del usuario: [
+  {
+    id: 4835,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 577,
+    enrolledAt: 2026-03-30T16:01:40.934Z,
+    completed: false,
+    isPermanent: false
+  },
+  {
+    id: 5195,
+    userId: 'user_3B42Z0fEOH7euyvGriZecTpIHnN',
+    courseId: 602,
+    enrolledAt: 2026-05-13T07:51:22.380Z,
+    completed: false,
+    isPermanent: false
+  }
+]
+ POST / 200 in 2.0s (next.js: 844ms, proxy.ts: 546ms, application-code: 613ms)
+  └─ ƒ checkProjectActivitiesDueForUser("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 520ms src/server/actions/estudiantes/projects/checkProjectActivitiesDue.ts
+ POST / 200 in 248ms (next.js: 6ms, proxy.ts: 30ms, application-code: 212ms)
+  └─ ƒ checkProjectActivitiesDueForUser("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 184ms src/server/actions/estudiantes/projects/checkProjectActivitiesDue.ts
+ GET /api/super-admin/anuncios/view-anuncio 200 in 2.4s (next.js: 245ms, proxy.ts: 537ms, application-code: 1642ms)
+ POST / 200 in 222ms (next.js: 8ms, proxy.ts: 31ms, application-code: 183ms)
+  └─ ƒ checkProjectActivitiesDueForUser("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 169ms src/server/actions/estudiantes/projects/checkProjectActivitiesDue.ts
+ POST / 200 in 327ms (next.js: 7ms, proxy.ts: 95ms, application-code: 225ms)
+  └─ ƒ getNotifications("user_3B42Z0fEOH7euyvGriZecTpIHnN", {"limit":1000}) in 205ms src/server/actions/estudiantes/notifications/getNotifications.ts
+ GET / 200 in 360ms (next.js: 15ms, proxy.ts: 33ms, application-code: 312ms)
+ GET / 200 in 304ms (next.js: 5ms, proxy.ts: 29ms, application-code: 270ms)
+ GET / 200 in 234ms (next.js: 11ms, proxy.ts: 20ms, application-code: 202ms)
+ GET / 200 in 234ms (next.js: 42ms, proxy.ts: 22ms, application-code: 170ms)
+ GET / 200 in 234ms (next.js: 91ms, proxy.ts: 23ms, application-code: 120ms)
+ GET / 200 in 71ms (next.js: 5ms, proxy.ts: 13ms, application-code: 53ms)
+ POST / 200 in 218ms (next.js: 17ms, proxy.ts: 45ms, application-code: 156ms)
+  └─ ƒ getUnreadCount("user_3B42Z0fEOH7euyvGriZecTpIHnN") in 132ms src/server/actions/estudiantes/notifications/getNotifications.ts
+✓ Compiled in 474ms
+ GET / 200 in 1790ms (next.js: 445ms, proxy.ts: 924ms, application-code: 421ms)
+ GET / 200 in 367ms (next.js: 6ms, proxy.ts: 14ms, application-code: 347ms)
+ GET / 200 in 289ms (next.js: 14ms, proxy.ts: 27ms, application-code: 248ms)
+ GET / 200 in 290ms (next.js: 46ms, proxy.ts: 29ms, application-code: 215ms)
+ GET / 200 in 291ms (next.js: 77ms, proxy.ts: 31ms, application-code: 183ms)
+ GET / 200 in 293ms (next.js: 118ms, proxy.ts: 32ms, application-code: 143ms)
+ GET / 200 in 164ms (next.js: 7ms, proxy.ts: 13ms, application-code: 144ms)
+ GET / 200 in 107ms (next.js: 8ms, proxy.ts: 14ms, application-code: 86ms)
+ GET / 200 in 919ms (next.js: 325ms, proxy.ts: 398ms, application-code: 196ms)
+ GET / 200 in 184ms (next.js: 5ms, proxy.ts: 13ms, application-code: 167ms)
+ GET / 200 in 129ms (next.js: 46ms, proxy.ts: 17ms, application-code: 65ms)
+ GET / 200 in 131ms (next.js: 8ms, proxy.ts: 16ms, application-code: 107ms)
+✓ Compiled in 792ms
+ GET / 200 in 1402ms (next.js: 467ms, proxy.ts: 586ms, application-code: 348ms)
+ GET / 200 in 300ms (next.js: 5ms, proxy.ts: 13ms, application-code: 282ms)
+ GET / 200 in 300ms (next.js: 12ms, proxy.ts: 24ms, application-code: 264ms)
+ GET / 200 in 300ms (next.js: 41ms, proxy.ts: 24ms, application-code: 235ms)
+ GET / 200 in 301ms (next.js: 81ms, proxy.ts: 27ms, application-code: 193ms)
+ GET / 200 in 305ms (next.js: 117ms, proxy.ts: 28ms, application-code: 160ms)
+ GET / 200 in 128ms (next.js: 12ms, proxy.ts: 18ms, application-code: 98ms)
+ GET / 200 in 60ms (next.js: 5ms, proxy.ts: 15ms, application-code: 40ms)
+✓ Compiled in 799ms
+ GET / 200 in 2.8s (next.js: 992ms, proxy.ts: 1240ms, application-code: 563ms)
+ GET / 200 in 446ms (next.js: 8ms, proxy.ts: 20ms, application-code: 418ms)
+ GET / 200 in 381ms (next.js: 73ms, proxy.ts: 59ms, application-code: 248ms)
+ GET / 200 in 388ms (next.js: 23ms, proxy.ts: 57ms, application-code: 308ms)
+ GET / 200 in 385ms (next.js: 122ms, proxy.ts: 60ms, application-code: 203ms)
+ GET / 200 in 376ms (next.js: 184ms, proxy.ts: 57ms, application-code: 135ms)
+ GET / 200 in 178ms (next.js: 23ms, proxy.ts: 36ms, application-code: 120ms)
+ GET / 200 in 174ms (next.js: 74ms, proxy.ts: 37ms, application-code: 63ms)
