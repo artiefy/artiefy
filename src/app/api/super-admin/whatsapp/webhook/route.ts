@@ -186,8 +186,7 @@ async function saveMessage({
 async function forwardToN8n(body: WaWebhookBody): Promise<void> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
-
+    const timeout = setTimeout(() => controller.abort(), 30_000);
     const res = await fetch(N8N_WHATSAPP_WEBHOOK, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
