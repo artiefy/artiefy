@@ -2,10 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { eq } from 'drizzle-orm';
 
-import { createTicket } from '~/models/educatorsModels/ticketsModels';
 import { db } from '~/server/db';
 import { waMessages } from '~/server/db/schema';
-import { sendWhatsAppMessage } from '~/server/whatsapp/send-message';
 
 import { inbox, pushInbox } from '../_inbox';
 
@@ -13,6 +11,11 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN ?? '';
+
+// URL del webhook de n8n — usa la variable de entorno o el fallback de producción
+const N8N_WHATSAPP_WEBHOOK =
+  process.env.N8N_WHATSAPP_WEBHOOK_URL ??
+  `${process.env.N8N_BASE_URL ?? 'https://n8n.srv1000134.hstgr.cloud'}/webhook/whatsapp-artiefy`;
 
 type WaMessage =
   | {
@@ -114,11 +117,9 @@ interface WaWebhookBody {
 
 function toMs(ts?: string): number {
   if (!ts) return Date.now();
-
   if (/^\d+$/.test(ts)) {
     return ts.length === 10 ? Number(ts) * 1000 : Number(ts);
   }
-
   return Date.now();
 }
 
@@ -176,126 +177,36 @@ async function saveMessage({
   }
 }
 
-async function sendInitialSupportTemplate({
-  waId,
-  name,
-}: {
-  waId: string;
-  name: string;
-}) {
-  return sendWhatsAppMessage({
-    to: waId,
-    forceTemplate: true,
-    templateName: 'inicio_soporte',
-    languageCode: 'es_ES',
-    variables: [name || 'Usuario'],
-    session: 'soporte',
-  });
-}
-
-async function handleEscalation({
-  waId,
-  name,
-  text,
-}: {
-  waId: string;
-  name: string;
-  text: string;
-}) {
+/**
+ * Reenvía el payload completo de Meta al webhook de n8n.
+ * n8n es ahora el responsable de decidir qué responder al usuario.
+ * Se hace fire-and-forget con un timeout de 10 s para no bloquear
+ * el 200 OK que Meta espera en menos de 20 s.
+ */
+async function forwardToN8n(body: WaWebhookBody): Promise<void> {
   try {
-    await createTicket({
-      comments: text,
-      description: `Ticket creado desde WhatsApp
-
-Cliente: ${name}
-WhatsApp: ${waId}
-
-Mensaje:
-${text}`,
-      coverImageKey: '',
-      email: `${waId}@whatsapp.local`,
-      userId: `whatsapp_${waId}`,
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30_000);
+    const res = await fetch(N8N_WHATSAPP_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
     });
 
-    await sendWhatsAppMessage({
-      to: waId,
-      forceTemplate: true,
-      templateName: 'escalamiento_humano',
-      languageCode: 'es_ES',
-      variables: [name || 'Usuario'],
-      session: 'soporte',
-    });
-  } catch (error) {
-    console.error('[WA][BOT] Error escalando a humano:', error);
+    clearTimeout(timeout);
 
-    await sendWhatsAppMessage({
-      to: waId,
-      text: 'Tuvimos un problema creando tu solicitud. Por favor intenta nuevamente escribiendo "asesor".',
-      session: 'soporte',
-    }).catch((sendError) => {
-      console.error('[WA][BOT] Error enviando fallback:', sendError);
-    });
-  }
-}
-
-async function handleIncomingMessage({
-  waId,
-  name,
-  text,
-}: {
-  waId: string;
-  name: string;
-  text: string;
-}) {
-  try {
-    const normalized = text.trim().toLowerCase();
-
-    if (!normalized) {
-      return sendInitialSupportTemplate({ waId, name });
+    if (!res.ok) {
+      console.error(
+        `[WA][N8N] Webhook respondió ${res.status}:`,
+        await res.text().catch(() => '')
+      );
+    } else {
+      console.log('[WA][N8N] Payload reenviado OK →', N8N_WHATSAPP_WEBHOOK);
     }
-
-    if (
-      normalized.includes('asesor') ||
-      normalized.includes('humano') ||
-      normalized.includes('ayuda') ||
-      normalized.includes('agente')
-    ) {
-      return handleEscalation({ waId, name, text });
-    }
-
-    if (normalized === '1') {
-      return sendWhatsAppMessage({
-        to: waId,
-        text: `Selecciona una opción de gestión financiera:
-
-1. Estado de cuenta
-2. Problema con pago
-3. Renovación
-4. Hablar con asesor`,
-        session: 'soporte',
-      });
-    }
-
-    if (normalized === '2') {
-      return sendWhatsAppMessage({
-        to: waId,
-        text: `Selecciona una opción de soporte técnico:
-
-1. Error en plataforma
-2. No puedo acceder
-3. Fallo de sistema
-4. Hablar con asesor`,
-        session: 'soporte',
-      });
-    }
-
-    if (normalized === '4') {
-      return handleEscalation({ waId, name, text });
-    }
-
-    return sendInitialSupportTemplate({ waId, name });
-  } catch (error) {
-    console.error('[WA][BOT] Error manejando mensaje:', error);
+  } catch (err) {
+    // No lanzamos — Meta ya recibió el 200 OK
+    console.error('[WA][N8N] Error reenviando a n8n:', err);
   }
 }
 
@@ -345,50 +256,41 @@ export async function POST(req: NextRequest) {
             case 'text':
               text = m.text?.body ?? '';
               break;
-
             case 'image':
               mediaId = m.image?.id ?? '';
               mediaType = m.image?.mime_type ?? 'image/jpeg';
               text = m.image?.caption ?? 'Imagen recibida';
               break;
-
             case 'audio':
               mediaId = m.audio?.id ?? '';
               mediaType = m.audio?.mime_type ?? 'audio/ogg';
               text = 'Audio recibido';
               break;
-
             case 'video':
               mediaId = m.video?.id ?? '';
               mediaType = m.video?.mime_type ?? 'video/mp4';
               text = m.video?.caption ?? 'Video recibido';
               break;
-
             case 'document':
               mediaId = m.document?.id ?? '';
               mediaType = m.document?.mime_type ?? 'application/octet-stream';
               fileName = m.document?.filename ?? 'documento';
               text = m.document?.caption ?? `Documento: ${fileName}`;
               break;
-
             case 'button':
               text = m.button?.text ?? m.button?.payload ?? 'Botón presionado';
               break;
-
             case 'interactive': {
               const br = m.interactive?.button_reply;
               const lr = m.interactive?.list_reply;
-
               text =
                 br?.title ??
                 br?.id ??
                 lr?.title ??
                 lr?.id ??
                 'Mensaje interactivo';
-
               break;
             }
-
             default:
               text = 'Mensaje recibido';
           }
@@ -423,18 +325,6 @@ export async function POST(req: NextRequest) {
             fileName,
             raw: m,
           });
-
-          if (
-            m.type === 'text' ||
-            m.type === 'button' ||
-            m.type === 'interactive'
-          ) {
-            await handleIncomingMessage({
-              waId: m.from,
-              name: contactName,
-              text,
-            });
-          }
         }
 
         for (const st of statuses) {
@@ -478,6 +368,11 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error('[WA-WEBHOOK][ERROR]', e);
   }
+
+  // ── Reenviar payload completo a n8n (fire-and-forget) ──────────────────────
+  // n8n se encarga de toda la lógica de respuesta automática (IlenIA).
+  // El 200 OK a Meta se envía de inmediato; n8n procesa en paralelo.
+  void forwardToN8n(body);
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }
