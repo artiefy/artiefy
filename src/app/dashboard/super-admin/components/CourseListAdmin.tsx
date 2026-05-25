@@ -51,27 +51,33 @@ export default function CourseListAdmin({
   console.log('Courses received in CourseListAdmin:', courses);
 
   return (
-    <div className="
+    <div
+      className="
       grid grid-cols-1 gap-4 px-8
       sm:grid-cols-2
       lg:grid-cols-3 lg:px-5
-    ">
+    "
+    >
       {courses.map((course) => {
         console.log('Rendering course:', course);
         return (
           <div key={course.id} className="group relative">
-            <div className="
+            <div
+              className="
               absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
               from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur
               transition duration-500
               group-hover:opacity-100
-            " />
-            <Card className="
+            "
+            />
+            <Card
+              className="
               zoom-in relative flex h-full flex-col justify-between
               overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white
               transition-transform duration-300 ease-in-out
               hover:scale-[1.02]
-            ">
+            "
+            >
               <CardHeader>
                 <AspectRatio ratio={16 / 9}>
                   <div className="relative size-full">
@@ -127,16 +133,32 @@ export default function CourseListAdmin({
                   Descripcion: {course.description}
                 </p>
               </CardContent>
-              <CardFooter className="
+              <CardFooter
+                className="
                 flex flex-col items-start justify-between space-y-2 px-2
-              ">
-                <div className="flex w-full justify-between">
-                  <p className="text-sm font-bold text-gray-300 italic">
-                    Educador:{' '}
-                    <span className="font-bold italic">
-                      {course.instructorName ?? 'Sin instructor asignado'}
+              "
+              >
+                <div className="flex w-full items-center justify-between">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="text-sm font-bold text-gray-300 italic">
+                      Educadores:
                     </span>
-                  </p>
+                    {course.instructorName &&
+                    course.instructorName !== 'Sin instructor asignado' ? (
+                      course.instructorName.split(', ').map((name, i) => (
+                        <span
+                          key={i}
+                          className="rounded-full bg-primary/20 px-2 py-0.5 text-xs font-bold text-primary"
+                        >
+                          {name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="text-sm text-gray-400 italic">
+                        Sin instructor asignado
+                      </span>
+                    )}
+                  </div>
                   <p className="text-sm font-bold text-red-500">
                     {course.modalidadesid}
                   </p>
@@ -162,12 +184,14 @@ export default function CourseListAdmin({
                     "
                   >
                     <span className="relative z-10 font-bold">Editar</span>
-                    <div className="
+                    <div
+                      className="
                       absolute inset-0 flex w-full
                       [transform:skew(-13deg)_translateX(-100%)] justify-center
                       group-hover/button:[transform:skew(-13deg)_translateX(100%)]
                       group-hover/button:duration-1000
-                    ">
+                    "
+                    >
                       <div className="relative h-full w-10 bg-white/30" />
                     </div>
                   </button>
@@ -181,31 +205,41 @@ export default function CourseListAdmin({
                         active:scale-95
                       "
                     >
-                      <p className="
+                      <p
+                        className="
                         text-xs font-bold
                         sm:text-sm
-                      ">Ver</p>
+                      "
+                      >
+                        Ver
+                      </p>
                       <ArrowRightIcon className="size-4 animate-bounce-right sm:size-5" />
-                      <div className="
+                      <div
+                        className="
                         absolute inset-0 flex w-full
                         [transform:skew(-13deg)_translateX(-100%)]
                         justify-center
                         group-hover/button:[transform:skew(-13deg)_translateX(100%)]
                         group-hover/button:duration-1000
-                      ">
+                      "
+                      >
                         <div className="relative h-full w-10 bg-white/30" />
                       </div>
                     </Link>
                   </Button>
                   <div className="flex items-center">
-                    <StarIcon className="
+                    <StarIcon
+                      className="
                       size-4 text-yellow-500
                       sm:size-5
-                    " />
-                    <span className="
+                    "
+                    />
+                    <span
+                      className="
                       ml-1 text-xs font-bold text-yellow-500
                       sm:text-sm
-                    ">
+                    "
+                    >
                       {(course.rating ?? 0).toFixed(1)}
                     </span>
                   </div>

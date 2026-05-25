@@ -10,6 +10,7 @@ import {
   certificates,
   chat_messages,
   conversations,
+  courseInstructors,
   courses,
   coursesTaken,
   emailLogs,
@@ -798,62 +799,41 @@ export async function getCourses(
       db.select({ count: sql`count(*)` }).from(courses),
     ]);
 
-    // Get instructors info from Clerk
-    const clerk = await clerkClient();
-    console.log('Fetching instructor info for courses:', coursesData);
-
-    const instructorsInfo = await Promise.all(
+    // Get materias and programas for each course with instructor names from many-to-many table
+    const coursesWithRelations = await Promise.all(
       coursesData.map(async (course) => {
-        if (!course.instructor) {
-          return { id: '', name: 'Sin instructor asignado' };
-        }
+        // 1. Obtener todos los instructores desde courseInstructors
+        const courseInstructorResults = await db
+          .select({
+            instructorId: courseInstructors.instructorId,
+            name: users.name,
+          })
+          .from(courseInstructors)
+          .leftJoin(users, eq(courseInstructors.instructorId, users.id))
+          .where(eq(courseInstructors.courseId, course.id));
 
-        try {
-          // First try to get from users table
+        // 2. Si no hay en courseInstructors, fallback al campo legacy
+        let instructorName = 'Sin instructor asignado';
+        let instructorsArray: string[] = [];
+
+        if (courseInstructorResults.length > 0) {
+          instructorsArray = courseInstructorResults.map((r) => r.instructorId);
+          instructorName = courseInstructorResults
+            .map((r) => r.name ?? r.instructorId)
+            .join(', ');
+        } else if (course.instructor) {
+          // Fallback al campo legacy
           const dbUser = await db
             .select()
             .from(users)
             .where(eq(users.id, course.instructor))
             .limit(1);
 
-          if (dbUser?.[0]?.name) {
-            return { id: course.instructor, name: dbUser[0].name };
-          }
-
-          // If not in DB, try Clerk
-          try {
-            const user = await clerk.users.getUser(course.instructor);
-            const name =
-              `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
-            return {
-              id: course.instructor,
-              name: name || course.instructor, // Fallback to instructor ID if no name
-            };
-          } catch (_) {
-            // If Clerk fails, use the instructor field directly
-            return {
-              id: course.instructor,
-              name: course.instructor, // Use the instructor field as is
-            };
-          }
-        } catch (error) {
-          console.error(
-            `Error fetching instructor for course ${course.id}:`,
-            error
-          );
-          return { id: course.instructor, name: course.instructor };
+          instructorName = dbUser?.[0]?.name ?? course.instructor;
+          instructorsArray = [course.instructor];
         }
-      })
-    );
 
-    // Create lookup for instructor names
-    const instructorNames = Object.fromEntries(
-      instructorsInfo.map((info) => [info.id, info.name])
-    );
-
-    // Get materias and programas for each course with instructor names
-    const coursesWithRelations = await Promise.all(
-      coursesData.map(async (course) => {
+        // 3. Obtener programas asociados
         const materiaResults = await db
           .select({
             materiaId: materias.id,
@@ -878,9 +858,8 @@ export async function getCourses(
           categoryName:
             categoryNameCache[course.categoryid] ?? 'Unknown Category',
           programas: uniquePrograms,
-          instructorName:
-            instructorNames[course.instructor] || course.instructor,
-          instructors: [course.instructor], // Add instructors array for compatibility
+          instructorName, // "Juan Pérez, María García, ..."
+          instructors: instructorsArray, // ["id1", "id2", ...]
         };
       })
     );
