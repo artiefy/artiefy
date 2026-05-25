@@ -201,10 +201,6 @@
     "typescript-eslint": "8.59.4"
   },
   "overrides": {
-    "@aws-sdk/xml-builder": "3.972.22",
-    "next": {
-      "postcss": "8.5.10"
-    },
     "esbuild": "^0.27.3"
   },
   "ct3aMetadata": {
@@ -214,5 +210,5 @@
     "node": "24.x",
     "npm": "11.x"
   },
-  "packageManager": "npm@11.14.1"
+  "packageManager": "npm@11.15.0"
 }

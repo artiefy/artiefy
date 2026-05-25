@@ -77,11 +77,3 @@ dist/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
-
-# public assets (uncomment if you want to ignore NAVIDAD folder)
-# public/NAVIDAD/
-
-# scripts output (add if you generate temp files)
-# scripts/output/
-# next-agents-md
-.next-docs/
