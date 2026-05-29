@@ -1,0 +1,82 @@
+# Asset Descriptions
+
+One line per file. Read this instead of opening every image individually.
+
+- animacin-y-visualizacin-3d-combinada-cal.jpg — 61KB, animacin y visualizacin 3d combinada cal
+- artie-ia.svg — 4KB, artie ia
+- artiefy.jpg — 762KB, artiefy
+- artstica-ciclo-iv.jpg — 187KB, artstica ciclo iv
+- bachillerato-ciclo-iii.jpg — 808KB, bachillerato ciclo iii
+- bachillerato-ciclo-iv.jpg — 611KB, bachillerato ciclo iv
+- bachillerato-ciclo-v.jpg — 740KB, bachillerato ciclo v
+- bachillerato-ciclo-vi.jpg — 558KB, bachillerato ciclo vi
+- ciencias-naturales-ciclo-vi.jpg — 140KB, ciencias naturales ciclo vi
+- construccin-y-mantenimiento-de-drones.jpg — 78KB, construccin y mantenimiento de drones
+- curso-de-primeros-auxilios-presencial-ca.jpg — 264KB, curso de primeros auxilios presencial ca
+- curso-de-qumica-cosmtica-presencial-cali.jpg — 319KB, curso de qumica cosmtica presencial cali
+- desarrollo-de-competencias-en-investigac.jpg — 646KB, desarrollo de competencias en investigac
+- despliegue-y-mantenimiento-de-aplicacion.jpg — 286KB, despliegue y mantenimiento de aplicacion
+- diseo-avanzado-y-simulacin-de-sistemas-f.jpg — 28KB, diseo avanzado y simulacin de sistemas f
+- estadstica-y-matemticas-aplicadas.jpg — 365KB, estadstica y matemticas aplicadas
+- favicon.ico — 3KB, "Logo de Artiefy", above fold
+- fundamentos-del-desarrollo-frontend.jpg — 471KB, fundamentos del desarrollo frontend
+- image.jpg — 660KB, "Artiefy", above fold
+- ingls-ciclo-vi.jpg — 509KB, ingls ciclo vi
+- logo-artiefy.svg — 2KB, logo artiefy
+- machine-learning-con-nfasis-en-visin-art.jpg — 26KB, machine learning con nfasis en visin art
+- matemticas-ciclo-iii.jpg — 144KB, matemticas ciclo iii
+- og-image.jpg — 418KB, "Artiefy", above fold
+- programacin-frontend-semana.jpg — 25KB, programacin frontend semana
+- programacion-backend-y-bases-de-datos.jpg — 26KB, programacion backend y bases de datos
+- tcnico-auxiliar-en-seguridad-y-salud-en-.jpg — 51KB, tcnico auxiliar en seguridad y salud en
+- tcnico-en-auxiliar-de-educacin-de-la-pri.jpg — 66KB, tcnico en auxiliar de educacin de la pri
+- tcnico-en-diseo-grafico-marketing-digita.jpg — 43KB, tcnico en diseo grafico marketing digita
+- tcnico-en-instalacin-y-mantenimiento-de-.jpg — 55KB, tcnico en instalacin y mantenimiento de
+- tcnico-laboral-en-auxiliar-administrativ.jpg — 67KB, tcnico laboral en auxiliar administrativ
+- tcnico-laboral-en-auxiliar-de-veterinari.jpg — 60KB, tcnico laboral en auxiliar de veterinari
+- tcnico-laboral-en-auxiliar-en-administra.jpg — 128KB, tcnico laboral en auxiliar en administra
+- tcnico-laboral-en-cosmetologa-y-esttica-.jpg — 768KB, tcnico laboral en cosmetologa y esttica
+- tcnico-laboral-en-gstor-comunitario-y-so.jpg — 59KB, tcnico laboral en gstor comunitario y so
+- tcnico-laboral-en-ingles-comunicativo.jpg — 423KB, tcnico laboral en ingles comunicativo
+- tcnico-laboral-en-mantenimiento-y-repara.jpg — 39KB, tcnico laboral en mantenimiento y repara
+- tcnico-laboral-en-programacin-de-softwar.jpg — 133KB, tcnico laboral en programacin de softwar
+- svgs/buscar.svg — icon: Buscar
+- svgs/icon-1.svg — icon: icon 1
+- svgs/lucide-arrow-left.svg — icon: lucide-arrow-left
+- svgs/lucide-book-open-10.svg — icon: lucide-book-open
+- svgs/lucide-book-open-11.svg — icon: lucide-book-open
+- svgs/lucide-book-open-12.svg — icon: lucide-book-open
+- svgs/lucide-book-open-2.svg — icon: lucide-book-open
+- svgs/lucide-book-open-3.svg — icon: lucide-book-open
+- svgs/lucide-book-open-4.svg — icon: lucide-book-open
+- svgs/lucide-book-open-5.svg — icon: lucide-book-open
+- svgs/lucide-book-open-6.svg — icon: lucide-book-open
+- svgs/lucide-book-open-7.svg — icon: lucide-book-open
+- svgs/lucide-book-open-8.svg — icon: lucide-book-open
+- svgs/lucide-book-open-9.svg — icon: lucide-book-open
+- svgs/lucide-book-open.svg — icon: lucide-book-open
+- svgs/lucide-brain.svg — icon: lucide-brain
+- svgs/lucide-chevron-left.svg — icon: lucide-chevron-left
+- svgs/lucide-chevron-right.svg — icon: lucide-chevron-left
+- svgs/lucide-code-2.svg — icon: lucide-code
+- svgs/lucide-code-3.svg — icon: lucide-code
+- svgs/lucide-code-4.svg — icon: lucide-code
+- svgs/lucide-code.svg — icon: lucide-code
+- svgs/lucide-map-pin.svg — icon: lucide-map-pin
+- svgs/lucide-palette.svg — icon: lucide-palette
+- svgs/lucide-panels-top-left.svg — icon: lucide-panels-top-left
+- svgs/lucide-radio.svg — icon: lucide-radio
+- svgs/lucide-search.svg — icon: lucide-search
+- svgs/lucide-sliders-horizontal.svg — icon: lucide-sliders-horizontal
+- svgs/lucide-waypoints.svg — icon: lucide-waypoints
+- svgs/lucide-zap.svg — icon: lucide-zap
+- fonts/02046ca7e906ed9f-s.1602kxq-59i~c.woff2 — font file
+- fonts/0797a9ffe47acb65-s.045uve1.n0xw5.woff2 — font file
+- fonts/248e1dc0efc99276-s.0ft7o6kv5bp14.woff2 — font file
+- fonts/2b402d8aebffd579-s.0dskwooysu3cf.woff2 — font file
+- fonts/44fac91e6f2d2b1b-s.0f~sf101j6mzi.woff2 — font file
+- fonts/6bbcb5b36acd717c-s.0oz2cuf9udaui.woff2 — font file
+- fonts/7c2c7251ac640798-s.0ci7sidzj82wz.woff2 — font file
+- fonts/8298327da6d5bcce-s.132ro2ak-rvxq.woff2 — font file
+- fonts/a88409fdd7dc121c-s.0ir_pxtv760h..woff2 — font file
+- fonts/e8f2fbee2754df70-s.0fzkl03jw-sdz.woff2 — font file

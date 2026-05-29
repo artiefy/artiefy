@@ -145,7 +145,7 @@ export default async function Page({ searchParams }: PageProps) {
     return (
       <>
         <div
-          className="flex min-h-screen flex-col"
+          className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden"
           style={{ isolation: 'isolate', zIndex: 1 }}
         >
           <Header />

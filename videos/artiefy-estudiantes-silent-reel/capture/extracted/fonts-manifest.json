@@ -1,0 +1,147 @@
+{
+  "files": [
+    {
+      "file": "02046ca7e906ed9f-s.1602kxq-59i~c.woff2",
+      "family": "Merriweather Light 18pt",
+      "rawFamily": "Merriweather Light 18pt",
+      "subfamily": "Regular",
+      "postscript": "MerriweatherLight18pt-Regular",
+      "weight": 300,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    },
+    {
+      "file": "0797a9ffe47acb65-s.045uve1.n0xw5.woff2",
+      "family": "Merriweather Light 18pt",
+      "rawFamily": "Merriweather Light 18pt",
+      "subfamily": "Regular",
+      "postscript": "MerriweatherLight18pt-Regular",
+      "weight": 300,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    },
+    {
+      "file": "248e1dc0efc99276-s.0ft7o6kv5bp14.woff2",
+      "family": "Merriweather Light 18pt",
+      "rawFamily": "Merriweather Light 18pt",
+      "subfamily": "Regular",
+      "postscript": "MerriweatherLight18pt-Regular",
+      "weight": 300,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    },
+    {
+      "file": "2b402d8aebffd579-s.0dskwooysu3cf.woff2",
+      "family": "Montserrat",
+      "rawFamily": "Montserrat Thin",
+      "subfamily": "Regular",
+      "postscript": "Montserrat-Thin",
+      "weight": 100,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    },
+    {
+      "file": "44fac91e6f2d2b1b-s.0f~sf101j6mzi.woff2",
+      "family": "Montserrat",
+      "rawFamily": "Montserrat Thin",
+      "subfamily": "Regular",
+      "postscript": "Montserrat-Thin",
+      "weight": 100,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    },
+    {
+      "file": "6bbcb5b36acd717c-s.0oz2cuf9udaui.woff2",
+      "family": "Merriweather Light 18pt",
+      "rawFamily": "Merriweather Light 18pt",
+      "subfamily": "Regular",
+      "postscript": "MerriweatherLight18pt-Regular",
+      "weight": 300,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    },
+    {
+      "file": "7c2c7251ac640798-s.0ci7sidzj82wz.woff2",
+      "family": "Merriweather Light 18pt",
+      "rawFamily": "Merriweather Light 18pt",
+      "subfamily": "Regular",
+      "postscript": "MerriweatherLight18pt-Regular",
+      "weight": 300,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    },
+    {
+      "file": "8298327da6d5bcce-s.132ro2ak-rvxq.woff2",
+      "family": "Montserrat",
+      "rawFamily": "Montserrat Thin",
+      "subfamily": "Regular",
+      "postscript": "Montserrat-Thin",
+      "weight": 100,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    },
+    {
+      "file": "a88409fdd7dc121c-s.0ir_pxtv760h..woff2",
+      "family": "Montserrat",
+      "rawFamily": "Montserrat Thin",
+      "subfamily": "Regular",
+      "postscript": "Montserrat-Thin",
+      "weight": 100,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    },
+    {
+      "file": "e8f2fbee2754df70-s.0fzkl03jw-sdz.woff2",
+      "family": "Montserrat",
+      "rawFamily": "Montserrat Thin",
+      "subfamily": "Regular",
+      "postscript": "Montserrat-Thin",
+      "weight": 100,
+      "style": "normal",
+      "variationAxes": ["wght"],
+      "identified": true
+    }
+  ],
+  "families": [
+    {
+      "family": "Merriweather Light 18pt",
+      "weights": [300],
+      "variable": true,
+      "fileCount": 5,
+      "files": [
+        "02046ca7e906ed9f-s.1602kxq-59i~c.woff2",
+        "0797a9ffe47acb65-s.045uve1.n0xw5.woff2",
+        "248e1dc0efc99276-s.0ft7o6kv5bp14.woff2",
+        "6bbcb5b36acd717c-s.0oz2cuf9udaui.woff2",
+        "7c2c7251ac640798-s.0ci7sidzj82wz.woff2"
+      ]
+    },
+    {
+      "family": "Montserrat",
+      "weights": [100],
+      "variable": true,
+      "fileCount": 5,
+      "files": [
+        "2b402d8aebffd579-s.0dskwooysu3cf.woff2",
+        "44fac91e6f2d2b1b-s.0f~sf101j6mzi.woff2",
+        "8298327da6d5bcce-s.132ro2ak-rvxq.woff2",
+        "a88409fdd7dc121c-s.0ir_pxtv760h..woff2",
+        "e8f2fbee2754df70-s.0fzkl03jw-sdz.woff2"
+      ]
+    }
+  ],
+  "unidentified": [],
+  "meta": {
+    "generatedAt": "2026-05-25T21:46:36.070Z",
+    "tool": "fontkit"
+  }
+}

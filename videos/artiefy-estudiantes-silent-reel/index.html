@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Artiefy Estudiantes Silent Reel</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      @font-face {
+        font-family: 'Montserrat';
+        src: url('capture/assets/fonts/2b402d8aebffd579-s.0dskwooysu3cf.woff2')
+          format('woff2');
+        font-weight: 100 900;
+        font-display: block;
+      }
+
+      :root {
+        --bg: #01142b;
+        --nav: #01152d;
+        --card: #061c37;
+        --panel: #1d283a;
+        --cyan: #22c4d3;
+        --cyan-2: #00d3f2;
+        --teal: #00bba7;
+        --white: #ffffff;
+        --soft: #f8fafc;
+        --muted: #94a3b8;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: var(--bg);
+        font-family: 'Montserrat', ui-sans-serif, system-ui, sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        color: var(--white);
+        background:
+          radial-gradient(
+            circle at 10% 84%,
+            rgba(0, 187, 167, 0.42),
+            transparent 30%
+          ),
+          radial-gradient(
+            circle at 82% 12%,
+            rgba(34, 196, 211, 0.3),
+            transparent 28%
+          ),
+          linear-gradient(180deg, #01152d 0%, #01142b 48%, #000a16 100%);
+      }
+
+      .mesh,
+      .grain {
+        position: absolute;
+        inset: -100px;
+        pointer-events: none;
+      }
+
+      .mesh {
+        opacity: 0.44;
+        background-image:
+          linear-gradient(
+            35deg,
+            transparent 0 48%,
+            rgba(34, 196, 211, 0.24) 49% 50%,
+            transparent 51%
+          ),
+          linear-gradient(
+            138deg,
+            transparent 0 46%,
+            rgba(0, 211, 242, 0.18) 47% 48%,
+            transparent 49%
+          ),
+          radial-gradient(
+            circle,
+            rgba(34, 196, 211, 0.52) 0 3px,
+            transparent 4px
+          );
+        background-size:
+          360px 360px,
+          430px 430px,
+          156px 156px;
+        filter: drop-shadow(0 0 12px rgba(34, 196, 211, 0.32));
+      }
+
+      .grain {
+        inset: 0;
+        opacity: 0.12;
+        background-image:
+          radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.14) 0 1px,
+            transparent 2px
+          ),
+          radial-gradient(
+            circle,
+            rgba(255, 255, 255, 0.1) 0 1px,
+            transparent 2px
+          );
+        background-size:
+          53px 53px,
+          73px 73px;
+      }
+
+      .scene {
+        position: absolute;
+        inset: 0;
+        width: 1080px;
+        height: 1920px;
+        padding: 104px 70px;
+        opacity: 0;
+        overflow: hidden;
+      }
+
+      #s1 {
+        opacity: 1;
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--cyan);
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .logo {
+        width: 240px;
+        filter: drop-shadow(0 0 20px rgba(34, 196, 211, 0.28));
+      }
+
+      .headline {
+        width: 930px;
+        margin: 36px 0 0;
+        color: var(--white);
+        font-size: 76px;
+        font-weight: 900;
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .headline .accent,
+      .accent {
+        color: var(--cyan);
+      }
+
+      .browser {
+        position: relative;
+        overflow: hidden;
+        border: 2px solid rgba(34, 196, 211, 0.24);
+        border-radius: 34px;
+        background: var(--nav);
+        box-shadow:
+          0 44px 120px rgba(0, 0, 0, 0.52),
+          0 0 64px rgba(34, 196, 211, 0.16);
+      }
+
+      .browser::before {
+        content: '';
+        position: absolute;
+        z-index: 5;
+        inset: 0 0 auto 0;
+        height: 64px;
+        background: rgba(1, 21, 45, 0.92);
+        border-bottom: 1px solid rgba(34, 196, 211, 0.2);
+      }
+
+      .browser::after {
+        content: '';
+        position: absolute;
+        z-index: 6;
+        top: 25px;
+        left: 28px;
+        width: 13px;
+        height: 13px;
+        border-radius: 999px;
+        background: var(--cyan);
+        box-shadow:
+          26px 0 rgba(34, 196, 211, 0.5),
+          52px 0 rgba(34, 196, 211, 0.25);
+      }
+
+      .browser img,
+      .tour-strip img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .hero-browser {
+        width: 940px;
+        height: 960px;
+        margin: 94px auto 0;
+      }
+
+      .hero-browser img {
+        width: 1510px;
+        max-width: none;
+        transform: translate(-285px, 68px);
+      }
+
+      .tour-browser {
+        width: 940px;
+        height: 1260px;
+        margin: 82px auto 0;
+      }
+
+      .tour-strip {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 64px;
+        width: 100%;
+      }
+
+      .tour-strip img {
+        width: 940px;
+      }
+
+      .focus-ring {
+        position: absolute;
+        border: 3px solid rgba(34, 196, 211, 0.72);
+        border-radius: 24px;
+        box-shadow: 0 0 34px rgba(34, 196, 211, 0.42);
+        opacity: 0;
+        pointer-events: none;
+        z-index: 8;
+      }
+
+      .card-grid {
+        position: relative;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 76px;
+      }
+
+      .course-card {
+        overflow: hidden;
+        min-height: 355px;
+        border: 1px solid rgba(34, 196, 211, 0.22);
+        border-radius: 28px;
+        background: rgba(6, 28, 55, 0.78);
+        box-shadow: 0 28px 80px rgba(0, 0, 0, 0.34);
+      }
+
+      .course-card.feature {
+        grid-column: span 2;
+        min-height: 445px;
+      }
+
+      .course-card img {
+        display: block;
+        width: 100%;
+        height: 210px;
+        object-fit: cover;
+      }
+
+      .course-card.feature img {
+        height: 280px;
+      }
+
+      .course-body {
+        padding: 22px 24px 26px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        height: 32px;
+        padding: 0 14px;
+        border: 1px solid rgba(34, 196, 211, 0.38);
+        border-radius: 999px;
+        color: var(--cyan);
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .course-title {
+        margin-top: 14px;
+        color: var(--soft);
+        font-size: 29px;
+        font-weight: 850;
+        line-height: 1.08;
+      }
+
+      .course-meta {
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 20px;
+        font-weight: 650;
+      }
+
+      .list-browser {
+        width: 940px;
+        height: 1160px;
+        margin: 88px auto 0;
+      }
+
+      .list-browser img {
+        width: 1510px;
+        max-width: none;
+        transform: translate(-280px, 64px);
+      }
+
+      .cta-scene {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding-bottom: 150px;
+      }
+
+      .mark {
+        width: 172px;
+        height: 172px;
+        border-radius: 42px;
+        background: #ffffff;
+        padding: 12px;
+        box-shadow: 0 30px 90px rgba(0, 0, 0, 0.42);
+      }
+
+      .url {
+        margin-top: 68px;
+        color: #ffffff;
+        font-size: 74px;
+        font-weight: 900;
+        line-height: 1.05;
+      }
+
+      .silent-note {
+        margin-top: 30px;
+        color: var(--muted);
+        font-size: 24px;
+        font-weight: 750;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .corner {
+        position: absolute;
+        width: 92px;
+        height: 92px;
+        border-color: rgba(34, 196, 211, 0.42);
+        border-style: solid;
+        pointer-events: none;
+      }
+
+      .corner.tl {
+        top: 74px;
+        left: 48px;
+        border-width: 2px 0 0 2px;
+      }
+
+      .corner.br {
+        right: 48px;
+        bottom: 74px;
+        border-width: 0 2px 2px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-width="1080"
+      data-height="1920"
+      data-start="0"
+      data-duration="28"
+    >
+      <div class="mesh" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+
+      <section id="s1" class="scene">
+        <div class="corner tl"></div>
+        <div class="corner br"></div>
+        <div class="meta">
+          <img class="logo" src="scene-assets/logo.svg" alt="Artiefy" />
+          <span>/ estudiantes</span>
+        </div>
+        <h1 class="headline">
+          Explora cursos destacados en <span class="accent">Artiefy</span>
+        </h1>
+        <div class="browser hero-browser" data-layout-allow-overflow>
+          <img
+            src="scene-assets/scroll-top.png"
+            alt="Página de estudiantes Artiefy"
+          />
+          <div
+            class="focus-ring"
+            id="hero-focus"
+            style="left: 70px; top: 475px; width: 790px; height: 238px"
+          ></div>
+        </div>
+      </section>
+
+      <section id="s2" class="scene">
+        <div class="meta">
+          <span>Scroll premium</span>
+          <span>Top cursos · Programas · Cursos</span>
+        </div>
+        <h2 class="headline">Aprende a tu <span class="accent">ritmo</span></h2>
+        <div class="browser tour-browser" data-layout-allow-overflow>
+          <div class="tour-strip">
+            <img
+              src="scene-assets/scroll-top-tour.png"
+              alt="Inicio estudiantes"
+            />
+            <img
+              src="scene-assets/scroll-programas.png"
+              alt="Programas Artiefy"
+            />
+            <img src="scene-assets/scroll-cursos.png" alt="Cursos Artie" />
+            <img
+              src="scene-assets/scroll-footer.png"
+              alt="Footer estudiantes"
+            />
+          </div>
+          <div
+            class="focus-ring"
+            id="scroll-focus"
+            style="left: 56px; top: 770px; width: 820px; height: 300px"
+          ></div>
+        </div>
+      </section>
+
+      <section id="s3" class="scene">
+        <div class="meta">
+          <span>Tarjetas reales</span>
+          <span>Artiefy</span>
+        </div>
+        <h2 class="headline">
+          Cursos diseñados para impulsar tu
+          <span class="accent">creatividad</span>
+        </h2>
+        <div class="card-grid">
+          <article class="course-card feature">
+            <img
+              src="scene-assets/course-frontend.jpg"
+              alt="Programación Frontend Semana"
+            />
+            <div class="course-body">
+              <span class="badge">Desarrollo Web</span>
+              <div class="course-title">Programación Frontend Semana</div>
+              <div class="course-meta">Top curso · proyectos reales</div>
+            </div>
+          </article>
+          <article class="course-card">
+            <img src="scene-assets/course-ml.jpg" alt="Machine Learning" />
+            <div class="course-body">
+              <span class="badge">IA</span>
+              <div class="course-title">Machine Learning</div>
+            </div>
+          </article>
+          <article class="course-card">
+            <img
+              src="scene-assets/course-auxilios.jpg"
+              alt="Primeros Auxilios"
+            />
+            <div class="course-body">
+              <span class="badge">Ciencias</span>
+              <div class="course-title">Primeros Auxilios</div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="s4" class="scene">
+        <div class="meta">
+          <span>Listados organizados</span>
+          <span>100 cursos</span>
+        </div>
+        <h2 class="headline">
+          Encuentra el curso ideal para <span class="accent">ti</span>
+        </h2>
+        <div class="browser list-browser" data-layout-allow-overflow>
+          <img
+            src="scene-assets/scroll-cursos-list.png"
+            alt="Listado de cursos Artiefy"
+          />
+          <div
+            class="focus-ring"
+            id="list-focus"
+            style="left: 64px; top: 190px; width: 808px; height: 374px"
+          ></div>
+        </div>
+      </section>
+
+      <section id="s5" class="scene cta-scene">
+        <img class="mark" src="scene-assets/mark.jpg" alt="Artiefy" />
+        <img class="logo" src="scene-assets/logo-cta.svg" alt="Artiefy" />
+        <div class="url">Visita <span class="accent">artiefy.com</span></div>
+        <div class="silent-note">Explora cursos y programas</div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      gsap.set(['#s2', '#s3', '#s4', '#s5'], { opacity: 0 });
+      gsap.set('#s1', { opacity: 1 });
+      gsap.set('.mesh', { scale: 1.08, x: -45, y: -30 });
+
+      tl.to('.mesh', { x: 44, y: 36, scale: 1, duration: 28, ease: 'none' }, 0);
+
+      function cut(fromId, toId, at) {
+        tl.to(
+          fromId,
+          {
+            opacity: 0,
+            filter: 'blur(18px)',
+            duration: 0.42,
+            ease: 'power2.in',
+          },
+          at - 0.22
+        );
+        tl.set(fromId, { filter: 'blur(0px)' }, at + 0.24);
+        tl.fromTo(
+          toId,
+          { opacity: 0, filter: 'blur(18px)' },
+          { opacity: 1, filter: 'blur(0px)', duration: 0.56, ease: 'expo.out' },
+          at
+        );
+      }
+
+      tl.fromTo(
+        '#s1 .logo',
+        { opacity: 0, x: -38 },
+        { opacity: 1, x: 0, duration: 0.55 },
+        0.2
+      )
+        .fromTo(
+          '#s1 .meta span',
+          { opacity: 0, x: 38 },
+          { opacity: 1, x: 0, duration: 0.5 },
+          0.35
+        )
+        .fromTo(
+          '#s1 .headline',
+          { opacity: 0, y: 56 },
+          { opacity: 1, y: 0, duration: 0.74, ease: 'expo.out' },
+          0.55
+        )
+        .fromTo(
+          '#s1 .hero-browser',
+          { opacity: 0, y: 78, scale: 0.93 },
+          { opacity: 1, y: 0, scale: 1, duration: 1.0 },
+          1.05
+        )
+        .to(
+          '#s1 .hero-browser img',
+          { scale: 1.045, duration: 3.65, ease: 'none' },
+          1.2
+        )
+        .to('#hero-focus', { opacity: 1, duration: 0.35 }, 2.2)
+        .to('#hero-focus', { opacity: 0, duration: 0.45 }, 4.2);
+
+      cut('#s1', '#s2', 5.0);
+      tl.fromTo(
+        '#s2 .meta',
+        { opacity: 0, y: -24 },
+        { opacity: 1, y: 0, duration: 0.45 },
+        5.2
+      )
+        .fromTo(
+          '#s2 .headline',
+          { opacity: 0, x: -52 },
+          { opacity: 1, x: 0, duration: 0.62, ease: 'expo.out' },
+          5.45
+        )
+        .fromTo(
+          '#s2 .tour-browser',
+          { opacity: 0, y: 65, scale: 0.95 },
+          { opacity: 1, y: 0, scale: 1, duration: 0.75 },
+          5.9
+        )
+        .to(
+          '#s2 .tour-strip',
+          { y: -900, duration: 6.6, ease: 'sine.inOut' },
+          6.15
+        )
+        .to('#scroll-focus', { opacity: 1, duration: 0.35 }, 7.4)
+        .to(
+          '#scroll-focus',
+          { y: -230, duration: 2.5, ease: 'sine.inOut' },
+          7.6
+        )
+        .to('#scroll-focus', { opacity: 0, duration: 0.35 }, 11.25);
+
+      cut('#s2', '#s3', 13.0);
+      tl.fromTo(
+        '#s3 .meta',
+        { opacity: 0, y: -24 },
+        { opacity: 1, y: 0, duration: 0.42 },
+        13.22
+      )
+        .fromTo(
+          '#s3 .headline',
+          { opacity: 0, y: 48 },
+          { opacity: 1, y: 0, duration: 0.65, ease: 'expo.out' },
+          13.45
+        )
+        .fromTo(
+          '.course-card',
+          { opacity: 0, y: 74, scale: 0.94 },
+          {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            stagger: 0.18,
+            duration: 0.72,
+            ease: 'power4.out',
+          },
+          14.05
+        )
+        .to(
+          '.course-card.feature',
+          {
+            scale: 1.025,
+            duration: 2.4,
+            yoyo: true,
+            repeat: 1,
+            ease: 'sine.inOut',
+          },
+          15.1
+        )
+        .to(
+          '.course-card:nth-of-type(2)',
+          { y: -16, duration: 1.4, yoyo: true, repeat: 1, ease: 'sine.inOut' },
+          16.2
+        )
+        .to(
+          '.course-card:nth-of-type(3)',
+          { y: -16, duration: 1.4, yoyo: true, repeat: 1, ease: 'sine.inOut' },
+          16.45
+        );
+
+      cut('#s3', '#s4', 20.0);
+      tl.fromTo(
+        '#s4 .meta',
+        { opacity: 0, y: -22 },
+        { opacity: 1, y: 0, duration: 0.4 },
+        20.2
+      )
+        .fromTo(
+          '#s4 .headline',
+          { opacity: 0, x: -52 },
+          { opacity: 1, x: 0, duration: 0.6, ease: 'expo.out' },
+          20.4
+        )
+        .fromTo(
+          '#s4 .list-browser',
+          { opacity: 0, x: 80, scale: 0.94 },
+          { opacity: 1, x: 0, scale: 1, duration: 0.75 },
+          20.85
+        )
+        .to(
+          '#s4 .list-browser img',
+          { y: -245, duration: 3.3, ease: 'sine.inOut' },
+          21.05
+        )
+        .to('#list-focus', { opacity: 1, duration: 0.35 }, 21.45)
+        .to('#list-focus', { y: 318, duration: 2.0, ease: 'sine.inOut' }, 21.8)
+        .to('#list-focus', { opacity: 0, duration: 0.3 }, 24.2);
+
+      cut('#s4', '#s5', 25.0);
+      tl.fromTo(
+        '#s5 .mark',
+        { opacity: 0, scale: 0.76 },
+        { opacity: 1, scale: 1, duration: 0.55, ease: 'back.out(1.35)' },
+        25.22
+      )
+        .fromTo(
+          '#s5 .logo',
+          { opacity: 0, y: 28 },
+          { opacity: 1, y: 0, duration: 0.48 },
+          25.62
+        )
+        .fromTo(
+          '#s5 .url',
+          { opacity: 0, y: 46 },
+          { opacity: 1, y: 0, duration: 0.62, ease: 'expo.out' },
+          25.98
+        )
+        .fromTo(
+          '#s5 .silent-note',
+          { opacity: 0, y: 26 },
+          { opacity: 1, y: 0, duration: 0.44 },
+          26.45
+        );
+
+      window.__timelines['main'] = tl;
+    </script>
+  </body>
+</html>

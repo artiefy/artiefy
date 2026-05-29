@@ -1,0 +1,135 @@
+{
+  "typography": [
+    {
+      "role": "body",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "18px",
+      "fontWeight": "400",
+      "lineHeight": "28px",
+      "letterSpacing": "normal",
+      "color": "lab(66.3323 -2.05705 -12.7639)",
+      "sampleText": "Tu asistente de IA para encontrar el curso perfecto y comenz"
+    },
+    {
+      "role": "heading",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "700",
+      "lineHeight": "22px",
+      "letterSpacing": "normal",
+      "color": "lab(98.1665 -0.3694 -1.0597)",
+      "sampleText": "Técnico En Diseño Grafico, Marketing Digital y Modelado 3D"
+    },
+    {
+      "role": "link",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "lineHeight": "24px",
+      "letterSpacing": "normal",
+      "color": "lab(72.1452 -36.4042 -19.3839)",
+      "sampleText": ""
+    },
+    {
+      "role": "heading-3",
+      "fontFamily": "ui-sans-serif",
+      "fontSize": "15px",
+      "fontWeight": "600",
+      "lineHeight": "20.625px",
+      "letterSpacing": "normal",
+      "color": "lab(98.1665 -0.3694 -1.0597)",
+      "sampleText": "Programación Frontend Semana"
+    }
+  ],
+  "spacing": {
+    "observed": [4, 8, 12, 16, 22, 24, 48, 64, 96],
+    "baseUnit": 8
+  },
+  "radius": ["10px", "16px", "3.35544e+07px"],
+  "shadows": [
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.750694 -0.111477 -0.0519637 / 0.1) 0px 1px 3px 0px, oklab(0.750694 -0.111477 -0.0519637 / 0.1) 0px 1px 2px -1px",
+      "count": 1
+    },
+    {
+      "value": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.1) 0px 4px 6px -4px",
+      "count": 1
+    }
+  ],
+  "buttons": [
+    {
+      "label": "Todos",
+      "background": "oklab(0.750694 -0.111477 -0.0519637 / 0.15)",
+      "color": "lab(72.1452 -36.4042 -19.3839)",
+      "padding": "8px 16px",
+      "borderRadius": "3.35544e+07px",
+      "border": "1px solid oklab(0.750694 -0.111477 -0.0519637 / 0.3)",
+      "boxShadow": "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, oklab(0.750694 -0.111477 -0.0519637 / 0.1) 0px 1px 3px 0px, oklab(0.750694 -0.111477 -0.0519637 / 0.1) 0px 1px 2px -1px",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "height": "38px"
+    },
+    {
+      "label": "Cursos",
+      "background": "oklab(0.226097 -0.0155322 -0.0579483 / 0.5)",
+      "color": "lab(66.3323 -2.05705 -12.7639)",
+      "padding": "8px 16px",
+      "borderRadius": "3.35544e+07px",
+      "border": "1px solid oklab(0.275498 -0.00641529 -0.036432 / 0.3)",
+      "boxShadow": "none",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "height": "38px"
+    }
+  ],
+  "cards": [
+    {
+      "label": "card",
+      "background": "#000000",
+      "color": "lab(72.1452 -36.4042 -19.3839)",
+      "padding": "0px",
+      "borderRadius": "16px",
+      "border": "0px solid rgb(29, 40, 58)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "224px"
+    },
+    {
+      "label": "card",
+      "background": "lab(9.82747 0.324525 -20.6775)",
+      "color": "lab(72.1452 -36.4042 -19.3839)",
+      "padding": "0px",
+      "borderRadius": "16px",
+      "border": "1px solid oklab(0.275498 -0.00641529 -0.036432 / 0.5)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "386.203px"
+    },
+    {
+      "label": "card",
+      "background": "lab(9.82747 0.324525 -20.6775)",
+      "color": "lab(72.1452 -36.4042 -19.3839)",
+      "padding": "0px",
+      "borderRadius": "0px",
+      "border": "0px solid rgb(29, 40, 58)",
+      "boxShadow": "none",
+      "fontSize": "16px",
+      "fontWeight": "400",
+      "height": "160px"
+    }
+  ],
+  "nav": {
+    "label": "navigation",
+    "background": "#01152D",
+    "color": "lab(72.1452 -36.4042 -19.3839)",
+    "padding": "0px",
+    "borderRadius": "0px",
+    "border": "",
+    "boxShadow": "none",
+    "fontSize": "16px",
+    "fontWeight": "400",
+    "height": "65px"
+  }
+}

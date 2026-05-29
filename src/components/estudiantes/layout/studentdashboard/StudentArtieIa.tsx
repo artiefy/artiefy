@@ -1,17 +1,21 @@
 'use client';
 
-import TrueFocus from '~/components/reactbits/TrueFocus';
+import BlurText from '~/components/reactbits/BlurText';
 
 export const StudentArtieIa = () => {
   return (
-    <div className="flex items-center justify-center py-4">
-      <TrueFocus
-        sentence="Artie IA"
-        blurAmount={5}
-        borderColor="cyan"
-        glowColor="rgba(34, 211, 238, 0.6)"
-        animationDuration={0.5}
-        pauseBetweenAnimations={1}
+    <div className="flex w-full items-center justify-center py-4 text-center">
+      <BlurText
+        text="Artie IA"
+        delay={120}
+        animateBy="letters"
+        direction="top"
+        stepDuration={0.4}
+        className="
+          font-display justify-center text-center text-5xl font-black
+          text-primary drop-shadow-[0_0_18px_rgba(34,211,238,0.45)]
+          sm:text-6xl
+        "
       />
     </div>
   );

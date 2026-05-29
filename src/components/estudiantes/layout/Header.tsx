@@ -901,44 +901,18 @@ export function Header({
 
         <div
           className="
-            relative flex h-16 w-full items-center justify-between bg-[#01152d]
-            px-7
+            fixed top-[var(--subscription-banner-height,0px)] right-0 left-0
+            z-[100000] flex h-16 w-[100dvw] max-w-[100dvw] items-center
+            justify-between overflow-hidden border-b border-[#1d283a]
+            bg-[#01152d] px-5
             md:hidden
           "
         >
-          <button
-            type="button"
-            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={mobileMenuOpen}
-            aria-controls="mobile-menu"
-            className="
-              text-white transition
-              hover:text-primary
-            "
-            onClick={() => {
-              setMobileMenuOpen((prev) => {
-                const next = !prev;
-                if (next) setShowMobileSearch(false);
-                return next;
-              });
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="4" x2="20" y1="7" y2="7" />
-              <line x1="4" x2="20" y1="12" y2="12" />
-              <line x1="4" x2="20" y1="17" y2="17" />
-            </svg>
-          </button>
+          <div className="flex min-w-16 items-center justify-start">
+            <div className="campana-header mobile-notification-shell relative">
+              <NotificationHeader />
+            </div>
+          </div>
 
           <Link
             href="/"
@@ -958,19 +932,71 @@ export function Header({
             />
           </Link>
 
-          {hasActiveStudentAccess ? (
-            <div className="campana-header mobile-notification-shell relative">
-              <NotificationHeader />
-            </div>
-          ) : (
-            <div className="size-10" aria-hidden="true" />
-          )}
+          <div className="flex min-w-16 items-center justify-end gap-3">
+            <button
+              type="button"
+              aria-label={
+                showMobileSearch ? 'Cerrar búsqueda' : 'Abrir búsqueda'
+              }
+              aria-expanded={showMobileSearch}
+              className="
+                inline-flex size-10 items-center justify-center rounded-full
+                text-white transition
+                hover:bg-white/10 hover:text-primary
+                focus-visible:ring-2 focus-visible:ring-primary
+                focus-visible:outline-none
+              "
+              onClick={() => {
+                setShowMobileSearch((prev) => !prev);
+                setMobileMenuOpen(false);
+              }}
+            >
+              <Search className="size-5" />
+            </button>
+            <button
+              type="button"
+              aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
+              className="
+                inline-flex size-10 items-center justify-center rounded-full
+                text-white transition
+                hover:bg-white/10 hover:text-primary
+                focus-visible:ring-2 focus-visible:ring-primary
+                focus-visible:outline-none
+              "
+              onClick={() => {
+                setMobileMenuOpen((prev) => {
+                  const next = !prev;
+                  if (next) setShowMobileSearch(false);
+                  return next;
+                });
+              }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="4" x2="20" y1="7" y2="7" />
+                <line x1="4" x2="20" y1="12" y2="12" />
+                <line x1="4" x2="20" y1="17" y2="17" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
       {showMobileSearch && (
         <div
           className="
-            absolute top-full right-0 left-0 z-50 w-full border-b
+            fixed top-[calc(var(--subscription-banner-height,0px)+4rem)]
+            right-0 left-0 z-[99999] w-[100dvw] max-w-[100dvw] border-b
             border-gray-700 bg-[#01152d] p-4
             md:hidden
           "

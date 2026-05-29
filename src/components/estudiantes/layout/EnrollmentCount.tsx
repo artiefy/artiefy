@@ -9,9 +9,11 @@ import { getProgramEnrollmentCount } from '~/server/actions/estudiantes/programs
 export function EnrollmentCount({
   programId,
   displayMode = 'full',
+  minimumCountToShow,
 }: {
   programId: number;
-  displayMode?: 'full' | 'number-only';
+  displayMode?: 'full' | 'number-only' | 'compact';
+  minimumCountToShow?: number;
 }) {
   const [count, setCount] = useState(0);
 
@@ -28,8 +30,21 @@ export function EnrollmentCount({
     void fetchCount();
   }, [programId]);
 
+  if (typeof minimumCountToShow === 'number' && count <= minimumCountToShow) {
+    return null;
+  }
+
   if (displayMode === 'number-only') {
     return <span>{count}</span>;
+  }
+
+  if (displayMode === 'compact') {
+    return (
+      <span className="flex items-center gap-1 pb-0.5">
+        <Users className="size-3.5 text-primary/60" />
+        {count} estudiantes
+      </span>
+    );
   }
 
   return (
