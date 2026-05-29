@@ -15,7 +15,7 @@ This is Artiefy, a Next.js 16 App Router app with React 19, TypeScript, Tailwind
 Skills live in `.agents/skills/` and are tracked by `skills-lock.json`. Load only the skill required by the task. Do not load skills just in case. If no row matches, use these repo rules and existing code patterns.
 
 Installed skills:
-`accessibility`, `bash-defensive-patterns`, `clerk`, `clerk-backend-api`, `clerk-custom-ui`, `clerk-nextjs-patterns`, `clerk-orgs`, `clerk-react-patterns`, `clerk-setup`, `clerk-testing`, `clerk-webhooks`, `composition-patterns`, `context7-cli`, `context7-mcp`, `deploy-to-vercel`, `drizzle`, `frontend-code-review`, `frontend-design`, `mcp-server-patterns`, `n8n-workflow-patterns`, `neon-postgres`, `next-best-practices`, `next-cache-components`, `next-upgrade`, `nodejs-backend-patterns`, `nodejs-best-practices`, `react-best-practices`, `react-expert`, `react-modernization`, `react-pdf`, `react-web`, `redis-js`, `seo`, `seo-audit`, `shadcn`, `skill-creator`, `skill-installer`, `tailwind-css-patterns`, `tailwind-v4-shadcn`, `threejs-animation`, `threejs-fundamentals`, `threejs-geometry`, `threejs-interaction`, `threejs-lighting`, `threejs-loaders`, `threejs-materials`, `threejs-postprocessing`, `threejs-shaders`, `threejs-textures`, `typescript-advanced-types`, `web-design-guidelines`, `xlsx`, `zod`.
+`accessibility`, `animejs`, `bash-defensive-patterns`, `clerk`, `clerk-backend-api`, `clerk-custom-ui`, `clerk-nextjs-patterns`, `clerk-orgs`, `clerk-react-patterns`, `clerk-setup`, `clerk-testing`, `clerk-webhooks`, `composition-patterns`, `context7-cli`, `context7-mcp`, `contribute-catalog`, `css-animations`, `deploy-to-vercel`, `drizzle`, `frontend-code-review`, `frontend-design`, `gsap`, `hyperframes`, `hyperframes-cli`, `hyperframes-media`, `hyperframes-registry`, `lottie`, `mcp-server-patterns`, `n8n-workflow-patterns`, `neon-postgres`, `next-best-practices`, `next-cache-components`, `next-upgrade`, `nodejs-backend-patterns`, `nodejs-best-practices`, `react-best-practices`, `react-expert`, `react-modernization`, `react-pdf`, `react-web`, `redis-js`, `remotion-to-hyperframes`, `responsive-design`, `seo`, `seo-audit`, `shadcn`, `skill-creator`, `skill-installer`, `tailwind`, `tailwind-css-patterns`, `tailwind-v4-shadcn`, `three`, `threejs-animation`, `threejs-fundamentals`, `threejs-geometry`, `threejs-interaction`, `threejs-lighting`, `threejs-loaders`, `threejs-materials`, `threejs-postprocessing`, `threejs-shaders`, `threejs-textures`, `typegpu`, `typescript-advanced-types`, `waapi`, `web-design-guidelines`, `website-to-hyperframes`, `xlsx`, `zod`.
 
 Auto-invoke map:
 | Task | Skill |
@@ -33,9 +33,25 @@ Auto-invoke map:
 | Component API design, slots, children, compound components, render props | `composition-patterns` |
 | UI layout, visual hierarchy, responsive styling, mockups | `frontend-design` |
 | UI/UX/design-system audit, web interface guideline review, design best-practice review | `web-design-guidelines` |
+| Responsive layouts, mobile/tablet/desktop behavior, fluid typography, container queries, viewport overflow, touch targets | `responsive-design` |
 | Tailwind classes, responsive utilities, colors, hover states, dark mode | `tailwind-css-patterns` |
 | Tailwind CSS v4 with shadcn/ui setup | `tailwind-v4-shadcn` |
 | shadcn/ui components, styling, composition, or debugging | `shadcn` |
+| HyperFrames HTML video composition, title cards, overlays, synced captions, voiceovers, audio-reactive visuals, animated text highlights, or scene transitions | `hyperframes` |
+| HyperFrames CLI commands such as `npx hyperframes`, `init`, `lint`, `inspect`, `preview`, `render`, `doctor`, `browser`, `info`, or `upgrade` | `hyperframes-cli` |
+| HyperFrames asset preprocessing: TTS voiceover, speech transcription, captions from audio/video, background removal, or model selection for Kokoro/Whisper/u2net | `hyperframes-media` |
+| HyperFrames registry blocks/components, `hyperframes add`, installed registry items, `hyperframes.json`, or wiring blocks/components into compositions | `hyperframes-registry` |
+| Convert, port, migrate, translate, or rewrite an existing Remotion React video composition into HyperFrames | `remotion-to-hyperframes` |
+| Capture a website URL and turn it into a HyperFrames video, product tour, promo, social ad, or video content from an existing site | `website-to-hyperframes` |
+| GSAP animations inside HyperFrames compositions, timelines, labels, stagger, easing, or render-safe GSAP motion | `gsap` |
+| Anime.js animations or timelines inside HyperFrames compositions, seek-driven Anime.js, or translating Anime.js examples into HyperFrames | `animejs` |
+| CSS keyframes, animation delays, fill modes, play states, or CSS-only motion that must seek deterministically in HyperFrames | `css-animations` |
+| Web Animations API / WAAPI motion in HyperFrames, `element.animate()`, `currentTime` seeking, `document.getAnimations()`, or `KeyframeEffect` timing | `waapi` |
+| Lottie or dotLottie animations in HyperFrames, `lottie-web`, `.lottie`, `@lottiefiles/dotlottie-web`, or deterministic After Effects exports | `lottie` |
+| Tailwind CSS v4 browser-runtime patterns specifically inside HyperFrames compositions or `hyperframes init --tailwind` projects | `tailwind` |
+| Three.js or WebGL specifically inside HyperFrames compositions, `hf-seek` canvas layers, deterministic WebGL scenes, camera motion, or shader visuals | `three` |
+| TypeGPU, raw WebGPU, WGSL shaders, compute pipelines, liquid glass, particle systems, or GPU canvas layers inside HyperFrames | `typegpu` |
+| Contribute a new public HyperFrames registry block/component upstream to the hyperframes catalog | `contribute-catalog` |
 | Metadata, SEO, sitemap, robots, OG images, JSON-LD | `seo` |
 | SEO audit, technical SEO diagnosis, rankings/traffic drops, crawl/indexing/Core Web Vitals issues | `seo-audit` |
 | Clerk setup | `clerk-setup` |
@@ -83,6 +99,10 @@ Auto-invoke map:
 | Dashboards     | `src/app/dashboard/`                         |
 | Student pages  | `src/app/estudiantes/`                       |
 | Components     | `src/components/`                            |
+| Hooks          | `src/hooks/`                                 |
+| Helpers        | `src/lib/`, `src/utils/`                     |
+| Types          | `src/types/`, `types/`                       |
+| Server code    | `src/server/`                                |
 | Server actions | `src/server/actions/`                        |
 | Server queries | `src/server/queries/`                        |
 | Database       | `src/server/db/`, `drizzle/`, `migrations/`  |
@@ -118,11 +138,16 @@ npm run embeddings:regen
 ## Code Rules
 
 - Keep changes scoped; do not reformat unrelated files.
+- Formatting is 2 spaces, LF endings, UTF-8, semicolons, single quotes, and an
+  80 character print width. Prettier sorts Tailwind classes.
 - Use strict TypeScript; avoid `any` unless isolated and justified.
 - Use absolute imports via `~/` unless importing from the same directory.
 - Default exports are allowed for Next.js pages/layouts; prefer named exports elsewhere.
+- Use PascalCase for React components and camelCase for functions and variables.
+- Keep route-folder names aligned with Next.js conventions.
 - App Router dynamic pages in this project use normal route params such as `[id]`, `[courseId]`, and catch-all Clerk auth routes; do not add locale routing unless the feature explicitly introduces it.
 - Dashboard pages sit behind Clerk auth and role-based access; preserve existing role checks for `super-admin`, `admin`, `educadores`, and students.
+- Keep server-only logic in `src/server` or route handlers.
 - User-visible text is currently Spanish-first and not wired to next-intl; keep copy consistent with nearby UI unless an i18n layer is added deliberately.
 - Use Tailwind CSS 4 utility classes and existing CSS from `src/styles/globals.css` and focused `src/styles/*.css` files.
 - Reuse shared components before creating new ones.
@@ -136,10 +161,18 @@ npm run embeddings:regen
 ## Tests And PRs
 
 - No dedicated test runner script is currently configured in `package.json`; use `npm run check`, `npm run lint`, and `npm run typecheck` as the baseline verification.
-- If adding tests, add or reuse the required test runner configuration in the same change and keep test files close to implementation.
+- Manually verify the affected route or API before submitting changes.
+- If adding tests, add or reuse the required test runner configuration in the same change and keep test files close to implementation or in `test/`; use names such as `course-progress.test.ts`.
 - Avoid mocking unless necessary.
-- Conventional commits: `type: short specific summary` with `feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert`.
-- Before PRs: run relevant checks, include screenshots for visible UI changes, and avoid unrelated churn.
+- Conventional commits: `type: short specific summary` with `feat|fix|docs|style|refactor|perf|test|build|ci|ops|chore|revert`.
+- Husky runs `lint-staged` on commit and `npm run check` on push.
+- Before PRs: run relevant checks, include a clear description, linked issue when relevant, screenshots for visible UI changes, migration notes for database changes, and avoid unrelated churn.
+
+## Security And Configuration
+
+- Do not commit secrets from `.env` or production credentials.
+- Use examples in `src/config` for local setup when present.
+- For auth, payments, S3, Redis, OpenAI, WhatsApp, or database changes, verify environment variables and failure behavior.
 
 ## Responses
 

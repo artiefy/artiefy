@@ -817,17 +817,6 @@ export default function CourseDetails({
   }, [isSignedIn, pendingOpenPayment, courseTypes, course.individualPrice]);
   */
 
-  useEffect(() => {
-    if (initialCourse.isActive === false) {
-      toast.error('Curso no disponible', {
-        description: 'Este curso no está disponible actualmente.',
-        duration: 2000,
-        id: 'course-unavailable',
-      });
-      router.replace('/estudiantes');
-    }
-  }, [initialCourse.isActive, router]);
-
   // Variables reutilizables sobre tipos de curso y suscripción del usuario
   const _hasPurchasable = courseTypes.some((t) => t.isPurchasableIndividually);
   const _hasPremium = courseTypes.some(
@@ -1427,6 +1416,13 @@ export default function CourseDetails({
     typeof totalStudents === 'number' && totalStudents > 15;
   const courseTypeLabel = course.typeCourse?.type?.trim();
   const courseCategoryLabel = course.category?.name?.trim();
+  const mobileCourseTitleLength = course.title.trim().length;
+  const mobileCourseTitleSizeClass =
+    mobileCourseTitleLength > 70
+      ? 'text-xl leading-snug sm:text-2xl'
+      : mobileCourseTitleLength > 42
+        ? 'text-2xl leading-tight sm:text-3xl'
+        : 'text-[1.7rem] leading-tight sm:text-3xl';
 
   // --- NUEVO LAYOUT VISUAL ---
   return (
@@ -1484,6 +1480,32 @@ export default function CourseDetails({
                   ${isEnrolled ? 'lg:grid-cols-1' : 'lg:grid-cols-3'}
                 `}
               >
+                <div className="space-y-3 lg:hidden">
+                  <h1
+                    className={`
+                      font-display max-w-full font-bold text-balance
+                      break-words text-foreground
+                      ${mobileCourseTitleSizeClass}
+                    `}
+                  >
+                    {course.title}
+                  </h1>
+                  {courseTypeLabel && (
+                    <span
+                      className="
+                        inline-flex items-center rounded-full border px-3
+                        py-1.5 text-xs font-semibold tracking-wide uppercase
+                      "
+                      style={{
+                        backgroundColor: '#22c4d31a',
+                        borderColor: '#22C4D333',
+                        color: '#22C4D3',
+                      }}
+                    >
+                      {courseTypeLabel}
+                    </span>
+                  )}
+                </div>
                 {/* Mini tarjeta estática para móviles: mismo contenido y estilo que el CTA lateral de escritorio */}
                 <div className="lg:hidden">
                   <div
@@ -1920,8 +1942,9 @@ export default function CourseDetails({
                         {courseTypeLabel && (
                           <div
                             className="
-                              mb-1 inline-flex items-center gap-2 rounded-full
+                              mb-1 hidden items-center gap-2 rounded-full
                               border px-3 py-1.5
+                              lg:inline-flex
                             "
                             style={{
                               backgroundColor: '#22c4d31a',
@@ -1938,10 +1961,9 @@ export default function CourseDetails({
                         )}
                         <h1
                           className="
-                            font-display text-3xl leading-tight font-bold
+                            font-display hidden text-3xl leading-tight font-bold
                             text-foreground
-                            md:text-4xl
-                            lg:text-5xl
+                            lg:block lg:text-5xl
                           "
                         >
                           {course.title}

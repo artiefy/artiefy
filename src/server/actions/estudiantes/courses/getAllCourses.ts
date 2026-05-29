@@ -141,37 +141,56 @@ export async function getAllCourses(): Promise<Course[]> {
     // --- NUEVO: Obtener classMeetings para todos los cursos ---
     let classMeetingsMap: Record<number, ClassMeeting[]> = {};
     if (allCourseIds.length > 0) {
-      const allMeetings = await db
-        .select()
-        .from(classMeetings)
-        .where(inArray(classMeetings.courseId, allCourseIds));
+      try {
+        const allMeetings = await db
+          .select({
+            id: classMeetings.id,
+            courseId: classMeetings.courseId,
+            title: classMeetings.title,
+            startDateTime: classMeetings.startDateTime,
+            endDateTime: classMeetings.endDateTime,
+            joinUrl: classMeetings.joinUrl,
+            weekNumber: classMeetings.weekNumber,
+            createdAt: classMeetings.createdAt,
+            meetingId: classMeetings.meetingId,
+            video_key: classMeetings.video_key,
+          })
+          .from(classMeetings)
+          .where(inArray(classMeetings.courseId, allCourseIds));
 
-      // Agrupar por courseId
-      classMeetingsMap = {};
-      for (const meeting of allMeetings) {
-        const courseId = meeting.courseId;
-        if (!classMeetingsMap[courseId]) {
-          classMeetingsMap[courseId] = [];
+        // Agrupar por courseId
+        classMeetingsMap = {};
+        for (const meeting of allMeetings) {
+          const courseId = meeting.courseId;
+          if (!classMeetingsMap[courseId]) {
+            classMeetingsMap[courseId] = [];
+          }
+          classMeetingsMap[courseId].push({
+            id: meeting.id,
+            courseId: meeting.courseId,
+            title: meeting.title,
+            startDateTime: meeting.startDateTime
+              ? new Date(meeting.startDateTime).toISOString()
+              : '',
+            endDateTime: meeting.endDateTime
+              ? new Date(meeting.endDateTime).toISOString()
+              : '',
+            joinUrl: meeting.joinUrl ?? null,
+            weekNumber: meeting.weekNumber ?? null,
+            createdAt: meeting.createdAt
+              ? new Date(meeting.createdAt).toISOString()
+              : null,
+            meetingId: meeting.meetingId,
+            video_key: meeting.video_key ?? null,
+            progress: null,
+          });
         }
-        classMeetingsMap[courseId].push({
-          id: meeting.id,
-          courseId: meeting.courseId,
-          title: meeting.title,
-          startDateTime: meeting.startDateTime
-            ? new Date(meeting.startDateTime).toISOString()
-            : '',
-          endDateTime: meeting.endDateTime
-            ? new Date(meeting.endDateTime).toISOString()
-            : '',
-          joinUrl: meeting.joinUrl ?? null,
-          weekNumber: meeting.weekNumber ?? null,
-          createdAt: meeting.createdAt
-            ? new Date(meeting.createdAt).toISOString()
-            : null,
-          meetingId: meeting.meetingId,
-          video_key: meeting.video_key ?? null,
-          progress: meeting.progress ?? null,
-        });
+      } catch (err) {
+        console.warn(
+          'No se pudieron cargar las reuniones de los cursos. Se continúa sin classMeetings:',
+          err instanceof Error ? err.message : err
+        );
+        classMeetingsMap = {};
       }
     }
 
