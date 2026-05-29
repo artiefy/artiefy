@@ -245,11 +245,11 @@ export default function ProjectsPage() {
   }
 
   // ======== Funciones para Asignación ========
-  async function loadTypePhases(typeId: number) {
+  async function loadTypePhases(idTypesPrograms: number) {
     try {
       setMappingLoading(true);
       const res = await fetch(
-        `/api/super-admin/projects/type-phases?projectTypeId=${typeId}`
+        `/api/super-admin/projects/type-phases?projectTypeId=${idTypesPrograms}`
       );
       if (!res.ok) throw new Error('Error al cargar fases del tipo');
       const data = (await res.json()) as ProjectTypePhase[];
@@ -332,10 +332,12 @@ export default function ProjectsPage() {
     <div className="min-h-screen bg-background p-6">
       {/* Encabezado */}
       <div className="mb-8">
-        <header className="
+        <header
+          className="
           flex items-center justify-between rounded-lg bg-[#00BDD8] p-6
           shadow-md
-        ">
+        "
+        >
           <h1 className="text-3xl font-bold text-[#01142B]">
             Gestión de Proyectos
           </h1>
@@ -352,13 +354,13 @@ export default function ProjectsPage() {
           className={`
             px-4 py-3 font-semibold transition-all
             ${
-            activeTab === 'types'
-              ? 'border-b-2 border-[#00BDD8] text-[#00BDD8]'
-              : `
+              activeTab === 'types'
+                ? 'border-b-2 border-[#00BDD8] text-[#00BDD8]'
+                : `
                 text-gray-500
                 hover:text-gray-700
               `
-          }
+            }
           `}
         >
           Tipos de Proyecto
@@ -371,13 +373,13 @@ export default function ProjectsPage() {
           className={`
             px-4 py-3 font-semibold transition-all
             ${
-            activeTab === 'phases'
-              ? 'border-b-2 border-[#00BDD8] text-[#00BDD8]'
-              : `
+              activeTab === 'phases'
+                ? 'border-b-2 border-[#00BDD8] text-[#00BDD8]'
+                : `
                 text-gray-500
                 hover:text-gray-700
               `
-          }
+            }
           `}
         >
           Fases
@@ -390,13 +392,13 @@ export default function ProjectsPage() {
           className={`
             px-4 py-3 font-semibold transition-all
             ${
-            activeTab === 'mapping'
-              ? 'border-b-2 border-[#00BDD8] text-[#00BDD8]'
-              : `
+              activeTab === 'mapping'
+                ? 'border-b-2 border-[#00BDD8] text-[#00BDD8]'
+                : `
                 text-gray-500
                 hover:text-gray-700
               `
-          }
+            }
           `}
         >
           Asignación de Fases
@@ -578,10 +580,10 @@ function TabTypes({
                   className={`
                     rounded-full px-3 py-1 text-xs font-semibold
                     ${
-                    type.isActive
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }
+                      type.isActive
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-700'
+                    }
                   `}
                 >
                   {type.isActive ? 'Activo' : 'Inactivo'}
@@ -655,9 +657,9 @@ function TabTypes({
                 }
                 placeholder="Ej: Capstone"
                 className="
-                  mt-2 w-full text-black rounded-lg border border-gray-300 px-3
-                  py-2
-                  focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+                  mt-2 w-full rounded-lg border border-gray-300 px-3 py-2
+                  text-black
+                  focus:ring-2 focus:ring-[#00BDD8] focus:outline-none
                 "
               />
             </div>
@@ -676,7 +678,7 @@ function TabTypes({
                 placeholder="Opcional"
                 className="
                   mt-2 w-full rounded-lg border border-gray-300 px-3 py-2
-                  focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+                  focus:ring-2 focus:ring-[#00BDD8] focus:outline-none
                 "
                 rows={3}
               />
@@ -777,10 +779,10 @@ function TabPhases({
                   className={`
                     rounded-full px-3 py-1 text-xs font-semibold
                     ${
-                    phase.isActive
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }
+                      phase.isActive
+                        ? 'bg-green-100 text-green-700'
+                        : 'bg-gray-100 text-gray-700'
+                    }
                   `}
                 >
                   {phase.isActive ? 'Activo' : 'Inactivo'}
@@ -853,7 +855,7 @@ function TabPhases({
                 placeholder="Ej: Planificación"
                 className="
                   mt-2 w-full rounded-lg border border-gray-300 px-3 py-2
-                  focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+                  focus:ring-2 focus:ring-[#00BDD8] focus:outline-none
                 "
               />
             </div>
@@ -872,7 +874,7 @@ function TabPhases({
                 placeholder="Opcional"
                 className="
                   mt-2 w-full rounded-lg border border-gray-300 px-3 py-2
-                  focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+                  focus:ring-2 focus:ring-[#00BDD8] focus:outline-none
                 "
                 rows={3}
               />
@@ -902,7 +904,7 @@ interface TabMappingProps {
   ) => void;
   showMappingConfirm: boolean;
   setShowMappingConfirm: (show: boolean) => void;
-  onLoadTypePhases: (typeId: number) => void;
+  onLoadTypePhases: (idTypesPrograms: number) => void;
   onSaveMapping: () => void;
   onAddPhase: (phaseId: number) => void;
   onRemovePhase: (phaseId: number) => void;
@@ -945,13 +947,13 @@ function TabMapping({
           <select
             value={selectedTypeForMapping || ''}
             onChange={(e) => {
-              const typeId = parseInt(e.target.value);
-              setSelectedTypeForMapping(typeId);
-              onLoadTypePhases(typeId);
+              const idTypesPrograms = parseInt(e.target.value);
+              setSelectedTypeForMapping(idTypesPrograms);
+              onLoadTypePhases(idTypesPrograms);
             }}
             className="
               mt-2 w-full rounded-lg border border-gray-300 px-3 py-2
-              focus:outline-none focus:ring-2 focus:ring-[#00BDD8]
+              focus:ring-2 focus:ring-[#00BDD8] focus:outline-none
             "
           >
             <option value="">-- Selecciona --</option>
@@ -1130,10 +1132,12 @@ interface ModalProps {
 
 function Modal({ title, onClose, onSubmit, children }: ModalProps) {
   return (
-    <div className="
+    <div
+      className="
       fixed inset-0 z-50 flex items-center justify-center bg-black/50
       backdrop-blur-sm
-    ">
+    "
+    >
       <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-[#01142B]">{title}</h2>
@@ -1188,10 +1192,12 @@ function ConfirmDeleteModal({
 }: ConfirmDeleteModalProps) {
   const typeLabel = type === 'type' ? 'tipo de proyecto' : 'fase';
   return (
-    <div className="
+    <div
+      className="
       fixed inset-0 z-50 flex items-center justify-center bg-black/50
       backdrop-blur-sm
-    ">
+    "
+    >
       <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
         <h2 className="mb-4 text-xl font-bold text-[#01142B]">
           Confirmar Eliminación

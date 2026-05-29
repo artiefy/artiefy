@@ -182,9 +182,9 @@ export async function POST(request: Request) {
       // �🔄 Insertar tipos de curso en tabla intermedia
       if (Array.isArray(data.courseTypeId)) {
         await db.insert(courseCourseTypes).values(
-          data.courseTypeId.map((typeId) => ({
+          data.courseTypeId.map((idTypesPrograms) => ({
             courseId: newCourse.id,
-            courseTypeId: typeId,
+            courseTypeId: idTypesPrograms,
           }))
         );
       }

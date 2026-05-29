@@ -36,6 +36,11 @@ interface CertificationType {
   isActive: boolean;
 }
 
+interface ProgramType {
+  id: number;
+  type: string;
+}
+
 interface ProgramFormProps {
   onSubmitAction: (
     id: string,
@@ -47,7 +52,8 @@ interface ProgramFormProps {
     coverImageKey: string,
     fileName: string,
     subjectIds: number[],
-    certificationTypeId?: number | null
+    certificationTypeId?: number | null,
+    idTypesPrograms?: number | null
   ) => Promise<void>;
   uploading: boolean;
   editingProgramId: number | null;
@@ -64,6 +70,9 @@ interface ProgramFormProps {
   rating: number;
   setRating: (rating: number) => void;
   subjectIds: number[];
+  idTypesPrograms?: number | null;
+  setTypeId?: (idTypesPrograms: number | null) => void;
+  programTypes?: ProgramType[];
 }
 
 const ModalFormProgram: React.FC<ProgramFormProps> = ({
@@ -82,6 +91,9 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
   setCoverImageKey,
   isOpen,
   onCloseAction,
+  idTypesPrograms: typeIdProp,
+  setTypeId: setTypeIdProp,
+  programTypes = [],
 }) => {
   const { user } = useUser(); // Obtiene el usuario actual
   const [file, setFile] = useState<File | null>(null);
@@ -113,6 +125,9 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
   const [certificationTypes, setCertificationTypes] = useState<
     CertificationType[]
   >([]);
+  const [idTypesPrograms, setTypeId] = useState<number | null>(
+    typeIdProp ?? null
+  );
   void modifiedFields;
   void coverImage;
 
@@ -259,6 +274,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
               coverImageKey,
               subjectIds,
               certificationTypeId,
+              idTypesPrograms,
             }),
           }
         );
@@ -278,7 +294,8 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
         coverImageKey,
         uploadedFileName,
         subjectIds,
-        certificationTypeId
+        certificationTypeId,
+        idTypesPrograms
       );
 
       onCloseAction();
@@ -536,9 +553,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             onChange={(e) => handleFieldChange('title', e.target.value)}
             className={`
               mb-4 w-full rounded border p-2 text-white outline-none
-              ${
-              errors.title ? 'border-red-500' : 'border-primary'
-            }
+              ${errors.title ? 'border-red-500' : 'border-primary'}
             `}
           />
           {errors.title && (
@@ -558,9 +573,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             onChange={(e) => handleFieldChange('description', e.target.value)}
             className={`
               mb-3 h-auto w-full rounded border p-2 text-white outline-none
-              ${
-              errors.description ? 'border-red-500' : 'border-primary'
-            }
+              ${errors.description ? 'border-red-500' : 'border-primary'}
             `}
           />
           {errors.description && (
@@ -568,10 +581,12 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
           )}
 
           {/* Categoría */}
-          <div className="
+          <div
+            className="
             mb-4 grid grid-cols-1 gap-4
             md:grid-cols-2
-          ">
+          "
+          >
             <div className="flex w-full flex-col gap-2">
               <label
                 htmlFor="categoryid"
@@ -623,6 +638,42 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                   : null}
               </select>
             </div>
+          </div>
+
+          {/* Tipo de Programa */}
+          <div className="mb-4 w-full">
+            <label
+              htmlFor="idTypesPrograms"
+              className="text-lg font-medium text-primary"
+            >
+              Tipo de Programa
+            </label>
+            <select
+              id="idTypesPrograms"
+              value={idTypesPrograms ?? ''}
+              onChange={(e) =>
+                setTypeId(e.target.value ? Number(e.target.value) : null)
+              }
+              className="
+                w-full rounded border border-primary p-2 text-white
+                outline-none
+              "
+            >
+              <option value="" className="text-black">
+                Sin tipo
+              </option>
+              {Array.isArray(programTypes)
+                ? programTypes.map((type) => (
+                    <option
+                      key={type.id}
+                      value={type.id}
+                      className="text-black"
+                    >
+                      {type.type}
+                    </option>
+                  ))
+                : null}
+            </select>
           </div>
 
           {/* Materias */}
@@ -687,12 +738,12 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
               p-8
               lg:w-1/2
               ${
-              isDragging
-                ? 'border-blue-500 bg-blue-50'
-                : errors.file
-                  ? 'border-red-500 bg-red-50'
-                  : 'border-gray-300 bg-gray-50'
-            }
+                isDragging
+                  ? 'border-blue-500 bg-blue-50'
+                  : errors.file
+                    ? 'border-red-500 bg-red-50'
+                    : 'border-gray-300 bg-gray-50'
+              }
               transition-all duration-300 ease-in-out
             `}
             onDragOver={handleDragOver}
@@ -730,9 +781,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                   <FiUploadCloud
                     className={`
                       mx-auto size-12
-                      ${
-                      errors.file ? 'text-red-500' : 'text-primary'
-                    }
+                      ${errors.file ? 'text-red-500' : 'text-primary'}
                     `}
                   />
                   <h2 className="mt-4 text-xl font-medium text-gray-700">
@@ -749,9 +798,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                     accept="image/*"
                     className={`
                       hidden
-                      ${
-                      errors.file ? 'bg-red-500' : 'bg-primary'
-                    }
+                      ${errors.file ? 'bg-red-500' : 'bg-primary'}
                     `}
                     onChange={handleFileChange}
                     id="file-upload"
@@ -765,9 +812,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                       hover:opacity-80
                       focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
                       focus:outline-none
-                      ${
-                      errors.file ? 'bg-red-500' : 'bg-primary'
-                    }
+                      ${errors.file ? 'bg-red-500' : 'bg-primary'}
                     `}
                   >
                     Seleccionar Archivo

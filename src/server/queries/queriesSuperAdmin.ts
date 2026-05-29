@@ -511,6 +511,7 @@ export interface ProgramData {
   createdAt: Date | string;
   updatedAt?: Date | string;
   rating?: number | null;
+  idTypesPrograms?: number | null;
 }
 
 // Obtener todos los programas

@@ -296,6 +296,7 @@ export interface Program {
   rating: number | null; // Allow null
   categoryid: number;
   certificationTypeId?: number | null;
+  idTypesPrograms?: number | null;
   creator?: User;
   category?: Category;
   materias?: MateriaWithCourse[];

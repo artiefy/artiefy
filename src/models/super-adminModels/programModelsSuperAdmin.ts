@@ -139,6 +139,7 @@ export const updateProgram = async (
         updatedAt: new Date(),
         rating: programData.rating,
         certificationTypeId: programData.certificationTypeId,
+        idTypesPrograms: programData.idTypesPrograms,
       })
       .where(eq(programas.id, programId))
       .returning();
@@ -169,6 +170,7 @@ interface CreateProgramInput {
   categoryid: number;
   rating: number | null;
   certificationTypeId?: number | null;
+  idTypesPrograms?: number | null;
   creatorId: string;
 }
 
@@ -183,6 +185,7 @@ export async function createProgram(data: CreateProgramInput) {
         categoryid: data.categoryid,
         rating: data.rating,
         certificationTypeId: data.certificationTypeId ?? null,
+        idTypesPrograms: data.idTypesPrograms ?? null,
         creatorId: data.creatorId,
         createdAt: new Date(),
         updatedAt: new Date(),

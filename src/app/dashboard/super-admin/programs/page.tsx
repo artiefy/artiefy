@@ -56,6 +56,7 @@ export interface ProgramModel {
   coverImageKey: string;
   creatorId: string;
   rating: number;
+  idTypesPrograms?: number | null;
 }
 
 export type Program = Partial<ProgramModel>;
@@ -65,6 +66,11 @@ interface Category {
   id: number;
   name: string;
   is_featured: boolean;
+}
+
+interface ProgramType {
+  id: number;
+  type: string;
 }
 
 // Define el modelo de datos de los parámetros de evaluación
@@ -96,6 +102,7 @@ export default function Page() {
   const [totalStudents, setTotalStudents] = useState(0);
   // Update the state definition to use the new interface
   const [categories, setCategories] = useState<Category[]>([]);
+  const [programTypes, setProgramTypes] = useState<ProgramType[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -129,6 +136,7 @@ export default function Page() {
               coverImageKey: program.coverImageKey ?? '',
               creatorId: program.creatorId ?? '',
               rating: program.rating ?? 0,
+              idTypesPrograms: program.idTypesPrograms ?? null,
             })
           )
         );
@@ -152,6 +160,13 @@ export default function Page() {
         // Update the type assertion for categoriesData
         const categoriesData = (await categoriesResponse.json()) as Category[];
         setCategories(categoriesData);
+
+        // Obtener tipos de programas
+        const typesResponse = await fetch('/api/super-admin/types-programs');
+        if (!typesResponse.ok)
+          throw new Error('Error obteniendo tipos de programas');
+        const typesData = (await typesResponse.json()) as ProgramType[];
+        setProgramTypes(typesData);
       } catch (error) {
         console.error('❌ Error cargando datos:', error);
         toast.error('Error al cargar los datos', {
@@ -184,7 +199,8 @@ export default function Page() {
     coverImageKey: string,
     fileName: string,
     subjectIds: number[],
-    certificationTypeId?: number | null
+    certificationTypeId?: number | null,
+    idTypesPrograms?: number | null
   ) => {
     if (!user) return;
     console.log('📤 Enviando programa con subjectIds:', subjectIds);
@@ -192,6 +208,7 @@ export default function Page() {
       '📤 Enviando programa con certificationTypeId:',
       certificationTypeId
     );
+    console.log('📤 Enviando programa con idTypesPrograms:', idTypesPrograms);
 
     try {
       setUploading(true);
@@ -261,6 +278,7 @@ export default function Page() {
             creatorId,
             subjectIds, // ✅ Enviar materias
             certificationTypeId,
+            idTypesPrograms,
           }),
         });
 
@@ -282,6 +300,7 @@ export default function Page() {
             creatorId,
             subjectIds,
             certificationTypeId,
+            idTypesPrograms,
           }),
         });
 
@@ -306,6 +325,7 @@ export default function Page() {
             description: program.description ?? '',
             coverImageKey: program.coverImageKey ?? '',
             rating: program.rating ?? 0,
+            idTypesPrograms: program.idTypesPrograms ?? null,
             createdAt:
               typeof program.createdAt === 'string'
                 ? program.createdAt
@@ -336,6 +356,7 @@ export default function Page() {
       coverImageKey: '',
       creatorId: '',
       rating: 0,
+      idTypesPrograms: null,
     });
     setIsModalOpen(true);
   };
@@ -819,6 +840,13 @@ export default function Page() {
               setEditingProgram((prev) => (prev ? { ...prev, rating } : null))
             }
             subjectIds={[]}
+            idTypesPrograms={editingProgram?.idTypesPrograms ?? null}
+            setTypeId={(idTypesPrograms) =>
+              setEditingProgram((prev) =>
+                prev ? { ...prev, idTypesPrograms } : null
+              )
+            }
+            programTypes={programTypes}
           />
         )}
       </div>

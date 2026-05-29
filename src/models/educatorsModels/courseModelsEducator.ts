@@ -165,12 +165,14 @@ export async function createCourse(data: CreateCourseData) {
 
     // Si hay múltiples tipos, insertamos en tabla intermedia
     if (normalizedTypes.length > 1 && createdCourse?.id) {
-      for (const typeId of normalizedTypes) {
+      for (const idTypesPrograms of normalizedTypes) {
         await db.insert(courseCourseTypes).values({
           courseId: createdCourse.id,
-          courseTypeId: typeId,
+          courseTypeId: idTypesPrograms,
         });
-        console.log(`➡ Asociado tipo ${typeId} al curso ${createdCourse.id}`);
+        console.log(
+          `➡ Asociado tipo ${idTypesPrograms} al curso ${createdCourse.id}`
+        );
       }
     }
 
@@ -524,19 +526,19 @@ export const updateCourse = async (
 
       // Filtra valores null, undefined y 0 (valores inválidos)
       const validTypeIds = updateData.courseTypeId.filter(
-        (typeId) =>
-          typeId !== null &&
-          typeId !== undefined &&
-          typeId !== 0 &&
-          Number.isFinite(typeId)
+        (idTypesPrograms) =>
+          idTypesPrograms !== null &&
+          idTypesPrograms !== undefined &&
+          idTypesPrograms !== 0 &&
+          Number.isFinite(idTypesPrograms)
       );
 
       // Si hay IDs válidos, crea nuevas relaciones
       if (validTypeIds.length > 0) {
         await db.insert(courseCourseTypes).values(
-          validTypeIds.map((typeId) => ({
+          validTypeIds.map((idTypesPrograms) => ({
             courseId,
-            courseTypeId: typeId,
+            courseTypeId: idTypesPrograms,
           }))
         );
         // ✅ Guardar el primer tipo como tipo principal en la tabla courses (legacy)
