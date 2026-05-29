@@ -624,7 +624,7 @@ export default function StudentDetails({
   return (
     <div
       className={`
-        -mb-8 flex min-h-screen flex-col
+        -mb-8 flex min-h-screen w-full max-w-full flex-col overflow-x-hidden
         sm:mb-0
         ${
           activeFilter !== 'todos'
@@ -636,7 +636,7 @@ export default function StudentDetails({
         }
       `}
     >
-      <main className="grow">
+      <main className="w-full max-w-full grow overflow-x-hidden">
         <div
           className="
             flex flex-col space-y-12
@@ -660,21 +660,9 @@ export default function StudentDetails({
                   role="heading"
                   aria-level={1}
                   className="
-                    flex items-center justify-center gap-2
-                    sm:gap-4
+                    flex items-center justify-center text-center
                   "
                 >
-                  <span
-                    className="
-                      search-illuminate-title font-display text-3xl font-bold
-                      text-foreground
-                      sm:text-4xl
-                      md:text-5xl
-                    "
-                  >
-                    Pregúntale a
-                  </span>
-
                   <div className="inline-block">
                     <StudentArtieIa />
                   </div>
@@ -779,11 +767,12 @@ export default function StudentDetails({
                     type="button"
                     onClick={() => scrollFilters('left')}
                     className={`
-                      absolute top-1/2 left-0 z-10 flex size-8 -translate-y-1/2
+                      absolute top-1/2 left-0 z-20 flex size-8 -translate-y-1/2
                       items-center justify-center rounded-full border
                       border-border/50 bg-background/90 text-foreground
                       shadow-lg backdrop-blur-sm transition-all duration-200
                       hover:bg-card
+                      sm:z-10
                       ${
                         canScrollPrevFilters
                           ? 'opacity-100'
@@ -798,8 +787,9 @@ export default function StudentDetails({
                   <div
                     ref={filterMenuRef}
                     className="
-                      flex items-center gap-2 overflow-x-auto px-10 py-2
-                      [scrollbar-width:none]
+                      flex [scrollbar-width:none] items-center gap-2 overflow-x-auto py-2 pr-10
+                      pl-0
+                      sm:px-10
                       [&::-webkit-scrollbar]:hidden
                     "
                   >
@@ -842,11 +832,12 @@ export default function StudentDetails({
                     type="button"
                     onClick={() => scrollFilters('right')}
                     className={`
-                      absolute top-1/2 right-0 z-10 flex size-8 -translate-y-1/2
+                      absolute top-1/2 right-0 z-20 flex size-8 -translate-y-1/2
                       items-center justify-center rounded-full border
                       border-border/50 bg-background/90 text-foreground
                       shadow-lg backdrop-blur-sm transition-all duration-200
                       hover:bg-card
+                      sm:z-10
                       ${
                         canScrollNextFilters
                           ? 'opacity-100'

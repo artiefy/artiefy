@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { StarIcon } from '@heroicons/react/24/solid';
-import { BookOpen, Clock, Users } from 'lucide-react';
+import { BookOpen, Clock } from 'lucide-react';
 
 import { EnrollmentCount } from '~/components/estudiantes/layout/EnrollmentCount';
 import { blurDataURL } from '~/lib/blurDataUrl';
@@ -117,14 +117,11 @@ export function StudentProgram({ program }: StudenProgramProps) {
             text-muted-foreground
           "
         >
-          <span className="flex items-center gap-1 pb-0.5">
-            <Users className="size-3.5 text-primary/60" />
-            <EnrollmentCount
-              programId={parseInt(program.id)}
-              displayMode="number-only"
-            />
-            {' estudiantes'}
-          </span>
+          <EnrollmentCount
+            programId={parseInt(program.id)}
+            displayMode="compact"
+            minimumCountToShow={10}
+          />
 
           <div className="flex flex-col items-end gap-1">
             <div className="flex items-center justify-center">

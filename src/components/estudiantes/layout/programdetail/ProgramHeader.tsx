@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 import * as Tabs from '@radix-ui/react-tabs';
-import { Award, Book, Clock, Crown, Users, Video } from 'lucide-react';
+import { Award, Book, Clock, Crown, Users, Video, Wrench } from 'lucide-react';
 import { FaCheck, FaClock, FaTimes } from 'react-icons/fa';
 import { IoCloseOutline } from 'react-icons/io5';
 import { LiaCertificateSolid } from 'react-icons/lia';
@@ -193,14 +193,24 @@ export function ProgramHeader({
     }, 0);
   }, [courses]);
 
-  const totalContentLabel = useMemo(() => {
-    if (totalContentMinutes <= 0) return '0h';
-    const hours = totalContentMinutes / 60;
+  const formatDurationLabel = useCallback((minutes: number) => {
+    if (minutes <= 0) return '0h';
+    const hours = minutes / 60;
     if (hours >= 1) {
       return Number.isInteger(hours) ? `${hours}h` : `${hours.toFixed(1)}h`;
     }
-    return `${totalContentMinutes} min`;
-  }, [totalContentMinutes]);
+    return `${minutes} min`;
+  }, []);
+
+  const totalContentLabel = useMemo(
+    () => formatDurationLabel(totalContentMinutes),
+    [formatDurationLabel, totalContentMinutes]
+  );
+
+  const practiceContentLabel = useMemo(
+    () => formatDurationLabel(Math.round(totalContentMinutes / 2)),
+    [formatDurationLabel, totalContentMinutes]
+  );
 
   const liveSessionsCount = liveSessions.length;
 
@@ -786,6 +796,7 @@ export function ProgramHeader({
 
   const ratingValue = program.rating?.toFixed(1) ?? '0.0';
   const totalCourses = courses.length;
+  const showEnrollmentCount = enrollmentCount > 10;
 
   return (
     <>
@@ -807,6 +818,119 @@ export function ProgramHeader({
             via-background/95 to-background/80
           "
         />
+        <div
+          className="
+            relative z-10 mb-8 hidden max-w-3xl space-y-6
+            lg:block
+          "
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <div
+              className="
+                inline-flex items-center rounded-full border border-primary/30
+                bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary
+                transition-colors
+                hover:bg-primary/80
+                focus:ring-2 focus:ring-ring focus:ring-offset-2
+                focus:outline-none
+              "
+            >
+              {program.category?.name ?? 'Sin categoría'}
+            </div>
+            {programTypeLabel && (
+              <div
+                className="
+                  inline-flex items-center rounded-full border
+                  border-cyan-300/30 bg-cyan-300/15 px-2.5 py-0.5 text-xs
+                  font-medium text-cyan-200 transition-colors
+                  hover:bg-cyan-300/25
+                "
+              >
+                {programTypeLabel}
+              </div>
+            )}
+          </div>
+          <h1
+            className="
+              font-display text-3xl leading-tight font-bold break-words
+              text-foreground
+              md:text-4xl
+            "
+          >
+            <span className="inline">
+              {program.title}{' '}
+              {isEnrolled && (
+                <CheckCircleIcon
+                  className="
+                    mb-1 ml-1 inline-block size-6 flex-shrink-0 align-middle
+                    text-green-500
+                  "
+                />
+              )}
+            </span>
+          </h1>
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <StarIcon
+                  key={index}
+                  className={`
+                    size-4
+                    ${
+                      index < Math.floor(program.rating ?? 0)
+                        ? 'text-amber-400'
+                        : 'text-amber-400/50'
+                    }
+                  `}
+                />
+              ))}
+              <span className="ml-1 font-semibold text-amber-400">
+                {ratingValue}
+              </span>
+            </div>
+          </div>
+        </div>
+        <div
+          className="
+            relative z-10 mb-4
+            lg:hidden
+          "
+        >
+          <h1
+            className="
+              font-display text-3xl leading-tight font-bold break-words
+              text-foreground
+            "
+          >
+            {program.title}
+          </h1>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div
+              className="
+                inline-flex items-center rounded-full border border-primary/30
+                bg-primary/20 px-2.5 py-0.5 text-xs font-medium text-primary
+                transition-colors
+                hover:bg-primary/80
+                focus:ring-2 focus:ring-ring focus:ring-offset-2
+                focus:outline-none
+              "
+            >
+              {program.category?.name ?? 'Sin categoría'}
+            </div>
+            {programTypeLabel && (
+              <div
+                className="
+                  inline-flex items-center rounded-full border
+                  border-cyan-300/30 bg-cyan-300/15 px-2.5 py-0.5 text-xs
+                  font-medium text-cyan-200 transition-colors
+                  hover:bg-cyan-300/25
+                "
+              >
+                {programTypeLabel}
+              </div>
+            )}
+          </div>
+        </div>
         {/* CTA móvil solo cuando no estás inscrito */}
         {!isEnrolled && (
           <div
@@ -818,6 +942,90 @@ export function ProgramHeader({
             {renderCtaCard()}
           </div>
         )}
+
+        <div
+          className="
+            relative z-10 mb-8 space-y-4
+            lg:hidden
+          "
+        >
+          <div className="flex flex-col items-start gap-2 text-sm">
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <StarIcon
+                  key={index}
+                  className={`
+                    size-4
+                    ${
+                      index < Math.floor(program.rating ?? 0)
+                        ? 'text-amber-400'
+                        : 'text-amber-400/50'
+                    }
+                  `}
+                />
+              ))}
+              <span className="ml-1 font-semibold text-amber-400">
+                {ratingValue}
+              </span>
+            </div>
+            {showEnrollmentCount && (
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <Users className="size-4" />
+                <span>{enrollmentCount} estudiantes</span>
+              </div>
+            )}
+          </div>
+          <div
+            className="grid w-full max-w-3xl grid-cols-4 gap-2"
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
+            }}
+          >
+            <div
+              className="min-w-0 rounded-xl p-2 text-center"
+              style={{ backgroundColor: '#1a23334d' }}
+            >
+              <Book className="mx-auto mb-0.5 size-4 text-primary" />
+              <p className="text-sm font-bold text-foreground">
+                {totalCourses}
+              </p>
+              <p className="text-[10px] text-muted-foreground">Cursos</p>
+            </div>
+            <div
+              className="min-w-0 rounded-xl p-2 text-center"
+              style={{ backgroundColor: '#1a23334d' }}
+            >
+              <Clock className="mx-auto mb-0.5 size-4 text-primary" />
+              <p className="text-sm font-bold text-foreground">
+                {totalContentLabel}
+              </p>
+              <p className="text-[10px] text-muted-foreground">Contenido</p>
+            </div>
+            <div
+              className="min-w-0 rounded-xl p-2 text-center"
+              style={{ backgroundColor: '#1a23334d' }}
+            >
+              <Wrench className="mx-auto mb-0.5 size-4 text-primary" />
+              <p className="text-sm font-bold text-foreground">
+                {practiceContentLabel}
+              </p>
+              <p className="text-[10px] text-muted-foreground">Práctica</p>
+            </div>
+            <div
+              className="min-w-0 rounded-xl p-2 text-center"
+              style={{ backgroundColor: '#1a23334d' }}
+            >
+              <Video className="mx-auto mb-0.5 size-4 text-primary" />
+              <p className="text-sm font-bold text-foreground">
+                {liveSessionsCount}
+              </p>
+              <p className="text-[10px] whitespace-nowrap text-muted-foreground">
+                Clases en vivo
+              </p>
+            </div>
+          </div>
+        </div>
 
         <div
           className={`
@@ -840,77 +1048,11 @@ export function ProgramHeader({
               <div className="flex-1">
                 <div
                   className="
-                    max-w-2xl space-y-6
+                    flex max-w-2xl flex-col gap-6
                     lg:max-w-3xl
                   "
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* Badge de categoría */}
-                    <div
-                      className="
-                        inline-flex items-center rounded-full border
-                        border-primary/30 bg-primary/20 px-2.5 py-0.5 text-xs
-                        font-medium text-primary transition-colors
-                        hover:bg-primary/80
-                        focus:ring-2 focus:ring-ring focus:ring-offset-2
-                        focus:outline-none
-                      "
-                    >
-                      {program.category?.name ?? 'Sin categoría'}
-                    </div>
-                    {programTypeLabel && (
-                      <div
-                        className="
-                          inline-flex items-center rounded-full border
-                          border-cyan-300/30 bg-cyan-300/15 px-2.5 py-0.5
-                          text-xs font-medium text-cyan-200 transition-colors
-                          hover:bg-cyan-300/25
-                        "
-                      >
-                        {programTypeLabel}
-                      </div>
-                    )}
-                  </div>
-                  <h1
-                    className="
-                      font-display text-3xl leading-tight font-bold break-words
-                      text-foreground
-                      md:text-4xl
-                    "
-                  >
-                    <span className="inline">
-                      {program.title}{' '}
-                      {isEnrolled && (
-                        <CheckCircleIcon
-                          className="
-                            mb-1 ml-1 inline-block size-6 flex-shrink-0
-                            align-middle text-green-500
-                          "
-                        />
-                      )}
-                    </span>
-                  </h1>
-                  <div className="flex flex-wrap items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1.5">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <StarIcon
-                          key={index}
-                          className={`
-                            size-4
-                            ${
-                              index < Math.floor(program.rating ?? 0)
-                                ? 'text-amber-400'
-                                : 'text-amber-400/50'
-                            }
-                          `}
-                        />
-                      ))}
-                      <span className="ml-1 font-semibold text-amber-400">
-                        {ratingValue}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="grid max-w-3xl grid-cols-2 gap-3 md:grid-cols-4">
+                  <div className="order-4 hidden max-w-3xl grid-cols-4 gap-3 lg:grid">
                     <div
                       className="
                         flex flex-col items-center justify-center gap-1
@@ -973,8 +1115,8 @@ export function ProgramHeader({
                   {program.certificationType && (
                     <div
                       className="
-                        flex w-fit items-center gap-2 rounded-full bg-muted/50
-                        px-3 py-1.5
+                        order-5 flex w-fit items-center gap-2 rounded-full
+                        bg-muted/50 px-3 py-1.5
                       "
                     >
                       <LiaCertificateSolid className="size-4 text-muted-foreground" />
@@ -986,8 +1128,8 @@ export function ProgramHeader({
 
                   <p
                     className="
-                      text-base leading-relaxed break-words whitespace-pre-wrap
-                      text-muted-foreground
+                      order-6 text-base leading-relaxed break-words
+                      whitespace-pre-wrap text-muted-foreground
                     "
                   >
                     {program.description ?? 'No hay descripción disponible.'}
