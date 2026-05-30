@@ -344,6 +344,10 @@ export const getAllCourses = async () => {
         .from(courseInstructors)
         .leftJoin(users, eq(courseInstructors.instructorId, users.id))
         .where(eq(courseInstructors.courseId, course.id));
+      console.log(
+        '🔍 instructorRows:',
+        JSON.stringify(instructorRows, null, 2)
+      ); // ← agrega esto
 
       const instructorName =
         instructorRows.length > 0

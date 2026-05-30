@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       coverImageKey: z.string().optional(),
       categoryid: z.number(), // Cambiado a number
       rating: z.number().optional(), // Cambiado a number
-      certificationTypeId: z.number().optional(),
+      certificationTypeId: z.number().nullable().optional(),
       idTypesPrograms: z.number().nullable().optional(),
       subjectIds: z.array(z.number()).optional(),
     });

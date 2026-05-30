@@ -150,6 +150,7 @@ export async function POST(request: Request) {
     }
 
     // Enroll in course if courseId is provided
+    const alreadyEnrolledCourse: { userId: string; userName: string }[] = [];
     if (parsedCourseId) {
       const existingEnrollments = await db
         .select({ userId: enrollments.userId })
@@ -163,6 +164,22 @@ export async function POST(request: Request) {
         .execute();
 
       const existingUserIds = new Set(existingEnrollments.map((e) => e.userId));
+
+      // Obtener nombres de los usuarios ya matriculados
+      for (const userId of existingUserIds) {
+        const user = await db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, userId))
+          .execute();
+        if (user.length > 0) {
+          alreadyEnrolledCourse.push({
+            userId,
+            userName: user[0]?.name || 'Sin nombre',
+          });
+        }
+      }
+
       const newUsers = filteredUserIds.filter((id) => !existingUserIds.has(id));
 
       if (newUsers.length > 0) {
@@ -264,6 +281,7 @@ export async function POST(request: Request) {
     }
 
     // Enroll in program if programId is provided
+    const alreadyEnrolledProgram: { userId: string; userName: string }[] = [];
     if (parsedProgramId) {
       const existingProgramEnrollments = await db
         .select({ userId: enrollmentPrograms.userId })
@@ -279,6 +297,22 @@ export async function POST(request: Request) {
       const existingProgramUserIds = new Set(
         existingProgramEnrollments.map((e) => e.userId)
       );
+
+      // Obtener nombres de los usuarios ya matriculados en el programa
+      for (const userId of existingProgramUserIds) {
+        const user = await db
+          .select({ name: users.name })
+          .from(users)
+          .where(eq(users.id, userId))
+          .execute();
+        if (user.length > 0) {
+          alreadyEnrolledProgram.push({
+            userId,
+            userName: user[0]?.name || 'Sin nombre',
+          });
+        }
+      }
+
       const newProgramUsers = filteredUserIds.filter(
         (id) => !existingProgramUserIds.has(id)
       );
@@ -298,6 +332,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: 'Enrollment completed successfully',
+      alreadyEnrolledCourse,
+      alreadyEnrolledProgram,
     });
   } catch (error) {
     console.error('Error in POST /api/enrollments:', error);

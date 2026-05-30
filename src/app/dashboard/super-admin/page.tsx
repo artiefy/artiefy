@@ -16,6 +16,7 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal';
@@ -608,7 +609,7 @@ export default function AdminDashboard() {
               typeof item === 'object' &&
               item !== null &&
               'id' in item &&
-              'courseId' in item &&
+              'courseid' in item &&
               'programaId' in item
           )
         ) {
@@ -631,7 +632,11 @@ export default function AdminDashboard() {
     }
 
     const programIds = materias
-      .filter((m) => m.courseId === selectedCourse)
+      .filter(
+        (m) =>
+          String((m as unknown as { courseid: unknown }).courseid) ===
+          String(selectedCourse)
+      )
       .map((m) => m.programaId);
 
     const uniqueProgramIds = [...new Set(programIds)]; // Eliminar duplicados
@@ -652,13 +657,13 @@ export default function AdminDashboard() {
     }
 
     const courseIds = materias
-      .filter((m) => m.programaId === selectedProgram)
-      .map((m) => m.courseId);
+      .filter((m) => String(m.programaId) === String(selectedProgram))
+      .map((m) => String((m as unknown as { courseid: unknown }).courseid));
 
     const uniqueCourseIds = [...new Set(courseIds)]; // Eliminar duplicados
 
     const relatedCourses = allCourses.filter((c) =>
-      uniqueCourseIds.includes(c.id)
+      uniqueCourseIds.includes(String(c.id))
     );
 
     setCourses(relatedCourses);
@@ -682,7 +687,11 @@ export default function AdminDashboard() {
       const data = rawData.map((c: RawCourseData) => ({
         id: String(c.id),
         title: c.title,
+        coverImageKey: c.coverImageKey ?? null,
+        coverImage: c.coverImage,
         instructor: c.instructorName ?? c.instructor ?? 'Sin instructor',
+        modalidad: c.modalidad,
+        rating: c.rating,
       }));
 
       setCourses(data);
@@ -692,6 +701,10 @@ export default function AdminDashboard() {
       setCourses([]);
     }
   }, [isValidCourseArray]);
+
+  useEffect(() => {
+    void fetchAllCourses();
+  }, [fetchAllCourses]);
 
   // Agrega esta función arriba del componente
   const normalize = (str: string) =>
@@ -819,7 +832,8 @@ export default function AdminDashboard() {
         rawData.map((item: RawCourseData) => ({
           id: String(item.id),
           title: String(item.title),
-          instructor: item.instructor ?? 'Sin instructor',
+          instructor:
+            item.instructorName ?? item.instructor ?? 'Sin instructor',
         }));
       setCourses(data);
     } catch (err) {
@@ -1159,7 +1173,7 @@ export default function AdminDashboard() {
       !newAnuncio.descripcion.trim() ||
       !newAnuncio.imagen
     ) {
-      alert('Todos los campos son obligatorios.');
+      toast.error('Todos los campos son obligatorios.');
       return;
     }
 
@@ -1231,11 +1245,11 @@ export default function AdminDashboard() {
 
       if (!response.ok) throw new Error('Error al guardar el anuncio');
 
-      alert('Anuncio guardado correctamente');
+      toast.success('Anuncio guardado correctamente');
       setShowAnuncioModal(false);
     } catch (error) {
       console.error('❌ Error al guardar anuncio:', error);
-      alert('Error al guardar el anuncio.');
+      toast.error('Error al guardar el anuncio.');
     }
   };
 
@@ -1283,9 +1297,16 @@ export default function AdminDashboard() {
         'message' in rawResult &&
         typeof (rawResult as { message: unknown }).message === 'string'
       ) {
-        const result: { success: boolean; message: string } = rawResult as {
+        const result: {
           success: boolean;
           message: string;
+          alreadyEnrolledCourse?: { userId: string; userName: string }[];
+          alreadyEnrolledProgram?: { userId: string; userName: string }[];
+        } = rawResult as {
+          success: boolean;
+          message: string;
+          alreadyEnrolledCourse?: { userId: string; userName: string }[];
+          alreadyEnrolledProgram?: { userId: string; userName: string }[];
         };
 
         console.log('Enrollment successful:', result);
@@ -1294,7 +1315,7 @@ export default function AdminDashboard() {
         setSelectedCourse(null);
         setSelectedProgram(null);
 
-        // Show success message
+        // Show success message with details about already enrolled students
         const courseName = selectedCourse
           ? courses.find((course) => course.id === selectedCourse)?.title
           : null;
@@ -1302,16 +1323,84 @@ export default function AdminDashboard() {
           ? programs.find((program) => program.id === selectedProgram)?.title
           : null;
 
-        let successMessage = `Se matricularon ${selectedStudents.length} estudiantes`;
-        if (courseName && programName) {
-          successMessage += ` al curso "${courseName}" y al programa "${programName}".`;
-        } else if (courseName) {
-          successMessage += ` al curso "${courseName}".`;
-        } else if (programName) {
-          successMessage += ` al programa "${programName}".`;
+        const newlyEnrolled =
+          selectedStudents.length -
+          ((result.alreadyEnrolledCourse?.length ?? 0) +
+            (result.alreadyEnrolledProgram?.length ?? 0));
+
+        let successMessage = '';
+
+        // Mensaje sobre los matriculados nuevos
+        if (newlyEnrolled > 0) {
+          successMessage = `✅ Se matricularon ${newlyEnrolled} estudiantes`;
+          if (courseName && programName) {
+            successMessage += ` al curso "${courseName}" y al programa "${programName}".`;
+          } else if (courseName) {
+            successMessage += ` al curso "${courseName}".`;
+          } else if (programName) {
+            successMessage += ` al programa "${programName}".`;
+          }
+          successMessage += '\n\n';
         }
 
-        alert(successMessage);
+        // Mensaje sobre los ya matriculados en el curso
+        if (
+          result.alreadyEnrolledCourse &&
+          result.alreadyEnrolledCourse.length > 0
+        ) {
+          const alreadyNames = result.alreadyEnrolledCourse
+            .map((u) => u.userName)
+            .join(', ');
+          successMessage += `⚠️ Los siguientes estudiantes ya estaban matriculados al curso "${courseName}":\n${alreadyNames}\n\n`;
+        }
+
+        // Mensaje sobre los ya matriculados en el programa
+        if (
+          result.alreadyEnrolledProgram &&
+          result.alreadyEnrolledProgram.length > 0
+        ) {
+          const alreadyNames = result.alreadyEnrolledProgram
+            .map((u) => u.userName)
+            .join(', ');
+          successMessage += `⚠️ Los siguientes estudiantes ya estaban matriculados al programa "${programName}":\n${alreadyNames}`;
+        }
+
+        // Show elegant multi-line toast
+        if (
+          result.alreadyEnrolledCourse &&
+          result.alreadyEnrolledCourse.length > 0
+        ) {
+          const alreadyNames = result.alreadyEnrolledCourse
+            .map((u) => u.userName)
+            .join(', ');
+          toast.info(
+            `${result.alreadyEnrolledCourse.length} estudiante(s) ya estaban matriculado(s) en "${courseName}": ${alreadyNames}`
+          );
+          if (newlyEnrolled > 0) {
+            toast.success(
+              `✅ ${newlyEnrolled} estudiante(s) matriculado(s) exitosamente en "${courseName}"`
+            );
+          }
+        } else if (
+          result.alreadyEnrolledProgram &&
+          result.alreadyEnrolledProgram.length > 0
+        ) {
+          const alreadyNames = result.alreadyEnrolledProgram
+            .map((u) => u.userName)
+            .join(', ');
+          toast.info(
+            `${result.alreadyEnrolledProgram.length} estudiante(s) ya estaban matriculado(s) en "${programName}": ${alreadyNames}`
+          );
+          if (newlyEnrolled > 0) {
+            toast.success(
+              `✅ ${newlyEnrolled} estudiante(s) matriculado(s) exitosamente en "${programName}"`
+            );
+          }
+        } else {
+          toast.success(
+            successMessage || '✅ Matrícula completada exitosamente'
+          );
+        }
       } else {
         throw new Error('Invalid response format');
       }
@@ -1929,95 +2018,6 @@ export default function AdminDashboard() {
     };
     void fetchProgramsFromCourse();
   }, [selectedCourse, allPrograms, isValidProgramArray]);
-
-  useEffect(() => {
-    const fetchCoursesFromProgram = async () => {
-      try {
-        const res = await fetch(
-          `/api/super-admin/courses/fromProgram?programId=${selectedProgram}`
-        );
-        if (!res.ok) throw new Error('Error al obtener cursos desde programa');
-
-        const rawData: unknown = await res.json();
-
-        if (!isValidCourseArray(rawData)) {
-          throw new Error('Datos inválidos al obtener cursos desde programa');
-        }
-
-        const data: Course[] = rawData.map((item: RawCourseData) => ({
-          id: String(item.id),
-          title: String(item.title),
-          coverImageKey: item.coverImageKey ?? null,
-          coverImage: item.coverImage,
-          instructor:
-            item.instructorName ?? item.instructor ?? 'Sin instructor',
-          modalidad: item.modalidad,
-          rating: item.rating,
-        }));
-
-        setCourses(data);
-      } catch (error) {
-        console.error('Error cargando cursos desde programa:', error);
-        setCourses([]);
-      }
-    };
-
-    if (selectedProgram) {
-      void fetchCoursesFromProgram(); // ✅ Llama la función async aquí
-    } else {
-      void fetchAllCourses();
-    }
-  }, [
-    selectedCourse,
-    allPrograms,
-    isValidProgramArray,
-    fetchAllCourses,
-    isValidCourseArray,
-    selectedProgram,
-  ]);
-
-  useEffect(() => {
-    if (!selectedProgram) {
-      setCourses([...new Set(allCourses)]); // Eliminar duplicados en cursos
-      return;
-    }
-
-    const loadCourses = async () => {
-      try {
-        const res = await fetch(
-          `/api/super-admin/courses/fromProgram?programId=${selectedProgram}`
-        );
-        if (!res.ok) throw new Error('Error al obtener cursos');
-
-        const rawData: unknown = await res.json();
-        if (
-          !Array.isArray(rawData) ||
-          !rawData.every(
-            (item) =>
-              typeof item === 'object' &&
-              item !== null &&
-              'id' in item &&
-              'title' in item
-          )
-        ) {
-          throw new Error('Datos inválidos recibidos');
-        }
-
-        const data: { id: string; title: string; instructor: string }[] =
-          rawData.map((item: RawCourseData) => ({
-            id: String(item.id),
-            title: String(item.title),
-            instructor: item.instructor ?? 'Sin instructor',
-          }));
-
-        setCourses([...new Set(data)]); // Eliminar duplicados en cursos
-      } catch (err) {
-        console.error('Error al cargar cursos desde programa:', err);
-      }
-    };
-
-    void loadCourses();
-  }, [selectedProgram, allCourses, isValidCourseArray]); // ✅ para cursos
 
   useEffect(() => {
     if (!selectedCourse) {

@@ -8,14 +8,11 @@ import { certificationTypes } from '~/server/db/schema';
 export async function GET() {
   try {
     const result = await db.select().from(certificationTypes);
-    return NextResponse.json({
-      success: true,
-      data: result,
-    });
+    return NextResponse.json(result);
   } catch (error) {
     console.error('❌ Error al obtener tipos de certificación:', error);
     return NextResponse.json(
-      { success: false, error: 'Error al obtener tipos de certificación' },
+      { error: 'Error al obtener tipos de certificación' },
       { status: 500 }
     );
   }
