@@ -165,12 +165,14 @@ export async function createCourse(data: CreateCourseData) {
 
     // Si hay múltiples tipos, insertamos en tabla intermedia
     if (normalizedTypes.length > 1 && createdCourse?.id) {
-      for (const typeId of normalizedTypes) {
+      for (const idTypesPrograms of normalizedTypes) {
         await db.insert(courseCourseTypes).values({
           courseId: createdCourse.id,
-          courseTypeId: typeId,
+          courseTypeId: idTypesPrograms,
         });
-        console.log(`➡ Asociado tipo ${typeId} al curso ${createdCourse.id}`);
+        console.log(
+          `➡ Asociado tipo ${idTypesPrograms} al curso ${createdCourse.id}`
+        );
       }
     }
 
@@ -437,8 +439,12 @@ export const getCourseById = async (courseId: number) => {
 };
 
 // Obtener todos los cursos
+// En courseModelsEducator.ts, reemplaza getAllCourses:
+
 export const getAllCourses = async () => {
-  return db
+  const { courseInstructors } = await import('~/server/db/schema');
+
+  const rawCourses = await db
     .select({
       id: courses.id,
       title: courses.title,
@@ -447,7 +453,7 @@ export const getAllCourses = async () => {
       categoryid: categories.name,
       modalidadesid: modalidades.name,
       nivelid: nivel.name,
-      instructor: courses.instructor, // Changed from instructorId
+      instructor: courses.instructor,
       creatorId: courses.creatorId,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
@@ -457,6 +463,31 @@ export const getAllCourses = async () => {
     .leftJoin(categories, eq(courses.categoryid, categories.id))
     .leftJoin(nivel, eq(courses.nivelid, nivel.id))
     .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id));
+
+  // Enriquecer cada curso con sus instructores de la tabla intermedia
+  return Promise.all(
+    rawCourses.map(async (course) => {
+      const instructorRows = await db
+        .select({
+          instructorId: courseInstructors.instructorId,
+          name: users.name,
+        })
+        .from(courseInstructors)
+        .leftJoin(users, eq(courseInstructors.instructorId, users.id))
+        .where(eq(courseInstructors.courseId, course.id));
+
+      const instructorName =
+        instructorRows.length > 0
+          ? instructorRows.map((r) => r.name ?? r.instructorId).join(', ')
+          : (course.instructor ?? 'Sin instructor');
+
+      return {
+        ...course,
+        instructor: instructorName,
+        instructorName,
+      };
+    })
+  );
 };
 
 // Actualizar un curso
@@ -495,19 +526,19 @@ export const updateCourse = async (
 
       // Filtra valores null, undefined y 0 (valores inválidos)
       const validTypeIds = updateData.courseTypeId.filter(
-        (typeId) =>
-          typeId !== null &&
-          typeId !== undefined &&
-          typeId !== 0 &&
-          Number.isFinite(typeId)
+        (idTypesPrograms) =>
+          idTypesPrograms !== null &&
+          idTypesPrograms !== undefined &&
+          idTypesPrograms !== 0 &&
+          Number.isFinite(idTypesPrograms)
       );
 
       // Si hay IDs válidos, crea nuevas relaciones
       if (validTypeIds.length > 0) {
         await db.insert(courseCourseTypes).values(
-          validTypeIds.map((typeId) => ({
+          validTypeIds.map((idTypesPrograms) => ({
             courseId,
-            courseTypeId: typeId,
+            courseTypeId: idTypesPrograms,
           }))
         );
         // ✅ Guardar el primer tipo como tipo principal en la tabla courses (legacy)

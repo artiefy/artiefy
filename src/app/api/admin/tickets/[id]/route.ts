@@ -289,6 +289,35 @@ export async function PUT(
         content: `Ticket marcado como ${body.estado} por el equipo de soporte.`,
         createdAt: new Date(),
       });
+
+      // 🤖 Si se marca como solucionado, activar IlenIA automáticamente
+      if (body.estado === 'solucionado') {
+        try {
+          const waidMatch = currentTicket.description?.match(/WAID:\s*(\d+)/);
+          const waid = waidMatch?.[1];
+          if (waid) {
+            void fetch(
+              'https://n8n.srv1000134.hstgr.cloud/webhook/whatsapp-artiefy-activar-validacion',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ waid }),
+              }
+            )
+              .then((r) =>
+                console.log(`[IlenIA] Activada para ${waid} → ${r.status}`)
+              )
+              .catch((e) => console.error('[IlenIA] Error activando:', e));
+          } else {
+            console.warn(
+              '[IlenIA] No se encontró WAID en descripción del ticket',
+              ticketId
+            );
+          }
+        } catch (e) {
+          console.error('[IlenIA] Error extrayendo WAID:', e);
+        }
+      }
     }
 
     // Si el estado cambió, notificar al estudiante por email y campanita

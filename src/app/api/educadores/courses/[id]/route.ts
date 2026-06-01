@@ -314,7 +314,7 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
   const courseTypesList = await db
     .select({
-      typeId: courseTypes.id,
+      idTypesPrograms: courseTypes.id,
       typeName: courseTypes.name,
     })
     .from(courseCourseTypes)
@@ -325,9 +325,9 @@ export async function getCourseByIdWithTypes(courseId: number) {
 
   // Mapear a formato compatible: { id, name }
   const formattedCourseTypes = courseTypesList
-    .filter((ct) => ct.typeId !== null)
+    .filter((ct) => ct.idTypesPrograms !== null)
     .map((ct) => ({
-      id: ct.typeId,
+      id: ct.idTypesPrograms,
       name: ct.typeName,
     }));
 

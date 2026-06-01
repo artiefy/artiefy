@@ -49,7 +49,8 @@ export async function POST(req: NextRequest) {
       coverImageKey: z.string().optional(),
       categoryid: z.number(), // Cambiado a number
       rating: z.number().optional(), // Cambiado a number
-      certificationTypeId: z.number().optional(),
+      certificationTypeId: z.number().nullable().optional(),
+      idTypesPrograms: z.number().nullable().optional(),
       subjectIds: z.array(z.number()).optional(),
     });
 
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
       categoryid,
       rating,
       certificationTypeId,
+      idTypesPrograms,
       subjectIds = [],
     } = body;
 
@@ -84,6 +86,7 @@ export async function POST(req: NextRequest) {
       certificationTypeId: certificationTypeId
         ? Number(certificationTypeId)
         : null,
+      idTypesPrograms: idTypesPrograms ? Number(idTypesPrograms) : null,
       creatorId: userId,
     });
     console.log('✅ Programa insertado con ID:', newProgram.id);
@@ -244,6 +247,7 @@ export async function PUT(req: NextRequest) {
       categoryid: z.number(),
       rating: z.number().optional(),
       certificationTypeId: z.number().nullable().optional(),
+      idTypesPrograms: z.number().nullable().optional(),
       subjectIds: z.array(z.number()).optional(),
     });
 
@@ -255,6 +259,7 @@ export async function PUT(req: NextRequest) {
       categoryid,
       rating,
       certificationTypeId,
+      idTypesPrograms,
       subjectIds = [],
     } = body;
 
@@ -268,6 +273,7 @@ export async function PUT(req: NextRequest) {
       certificationTypeId: certificationTypeId
         ? Number(certificationTypeId)
         : null,
+      idTypesPrograms: idTypesPrograms ? Number(idTypesPrograms) : null,
       creatorId: userId,
     });
 

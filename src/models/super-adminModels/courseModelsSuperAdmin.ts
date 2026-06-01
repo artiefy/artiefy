@@ -308,8 +308,12 @@ export const getCourseById = async (courseId: number) => {
   }
 };
 
+// En courseModelsEducator.ts, reemplaza getAllCourses:
+
 export const getAllCourses = async () => {
-  return db
+  const { courseInstructors } = await import('~/server/db/schema');
+
+  const rawCourses = await db
     .select({
       id: courses.id,
       title: courses.title,
@@ -318,17 +322,45 @@ export const getAllCourses = async () => {
       categoryid: categories.name,
       modalidadesid: modalidades.name,
       nivelid: nivel.name,
-      instructor: users.name, // ✅ Ahora trae el NOMBRE del instructor
-      instructorId: courses.instructor, // ✅ Opcional: mantener el ID si lo necesitas
+      instructor: courses.instructor,
       creatorId: courses.creatorId,
       createdAt: courses.createdAt,
       updatedAt: courses.updatedAt,
+      isActive: courses.isActive,
     })
     .from(courses)
     .leftJoin(categories, eq(courses.categoryid, categories.id))
     .leftJoin(nivel, eq(courses.nivelid, nivel.id))
-    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-    .leftJoin(users, eq(courses.instructor, users.id)); // ✅ Agregado el JOIN con users
+    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id));
+
+  // Enriquecer cada curso con sus instructores de la tabla intermedia
+  return Promise.all(
+    rawCourses.map(async (course) => {
+      const instructorRows = await db
+        .select({
+          instructorId: courseInstructors.instructorId,
+          name: users.name,
+        })
+        .from(courseInstructors)
+        .leftJoin(users, eq(courseInstructors.instructorId, users.id))
+        .where(eq(courseInstructors.courseId, course.id));
+      console.log(
+        '🔍 instructorRows:',
+        JSON.stringify(instructorRows, null, 2)
+      ); // ← agrega esto
+
+      const instructorName =
+        instructorRows.length > 0
+          ? instructorRows.map((r) => r.name ?? r.instructorId).join(', ')
+          : (course.instructor ?? 'Sin instructor');
+
+      return {
+        ...course,
+        instructor: instructorName,
+        instructorName,
+      };
+    })
+  );
 };
 
 // Actualizar un curso

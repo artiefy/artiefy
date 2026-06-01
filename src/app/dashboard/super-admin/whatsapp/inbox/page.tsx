@@ -1400,6 +1400,38 @@ export default function WhatsAppInboxPage({
               {selected ?? ''}{' '}
             </div>
           </div>
+          <div className="truncate text-xs text-[#8696A0]">
+            {selected ?? ''}{' '}
+          </div>
+
+          {/* NUEVO - Botón Solucionado */}
+          {selected && (
+            <button
+              onClick={async () => {
+                if (!confirm('¿Marcar como solucionado y activar IlenIA?'))
+                  return;
+                try {
+                  const res = await fetch(
+                    'https://n8n.srv1000134.hstgr.cloud/webhook/whatsapp-artiefy-activar-validacion',
+                    {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ waid: selected }),
+                    }
+                  );
+                  if (res.ok) alert('✅ IlenIA activada');
+                  else alert('❌ Error activando IlenIA');
+                } catch {
+                  alert('❌ No se pudo conectar');
+                }
+              }}
+              className="flex-shrink-0 rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-600"
+            >
+              ✓ Solucionado
+            </button>
+          )}
+
+          <div className="flex items-center gap-1"></div>
 
           <div className="flex items-center gap-1">
             {selected && (

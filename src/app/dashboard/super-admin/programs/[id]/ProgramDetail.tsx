@@ -58,6 +58,7 @@ interface Program {
   updatedAt: string;
   rating: number;
   certificationTypeId?: number | null;
+  idTypesPrograms?: number | null;
 }
 
 export interface CourseModel {
@@ -145,6 +146,10 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
   const [certificationTypes, setCertificationTypes] = useState<
     { id: number; name: string; description: string | null }[]
   >([]);
+  const [programTypes, setProgramTypes] = useState<
+    { id: number; type: string }[]
+  >([]);
+  const [idTypesPrograms, setTypeId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadEducators = async () => {
@@ -181,6 +186,24 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
       }
     };
     void loadCertificationTypes();
+  }, []);
+
+  useEffect(() => {
+    const loadProgramTypes = async () => {
+      try {
+        const response = await fetch('/api/super-admin/types-programs');
+        if (response.ok) {
+          const data = (await response.json()) as {
+            id: number;
+            type: string;
+          }[];
+          setProgramTypes(data);
+        }
+      } catch (error) {
+        console.error('Error al cargar tipos de programas:', error);
+      }
+    };
+    void loadProgramTypes();
   }, []);
 
   const [newCourse, setNewCourse] = useState<CourseData>({
@@ -247,6 +270,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
         setCourses(coursesWithNames);
         setProgram(data);
         setCertificationTypeId(data.certificationTypeId ?? null);
+        setTypeId(data.idTypesPrograms ?? null);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching program:', error);
@@ -837,6 +861,37 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
                 </div>
               )}
 
+              {program.idTypesPrograms && (
+                <div className="space-y-2">
+                  <h2
+                    className={`
+                      text-base font-semibold
+                      sm:text-lg
+                      ${
+                        selectedColor === '#FFFFFF'
+                          ? 'text-black'
+                          : 'text-white'
+                      }
+                    `}
+                  >
+                    Tipo de Programa:
+                  </h2>
+                  <Badge
+                    variant="outline"
+                    className="
+                      ml-1 w-fit border-primary bg-background text-primary
+                      hover:bg-black/60
+                    "
+                  >
+                    {Array.isArray(programTypes)
+                      ? (programTypes.find(
+                          (type) => type.id === program.idTypesPrograms
+                        )?.type ?? 'No especificado')
+                      : 'No especificado'}
+                  </Badge>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <h2
                   className={`
@@ -977,6 +1032,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
             setEditingProgram((prev) => (prev ? { ...prev, rating } : null))
           }
           subjectIds={editSubjects}
+          idTypesPrograms={idTypesPrograms}
+          setTypeId={(typeIdValue) => setTypeId(typeIdValue)}
+          programTypes={programTypes}
         />
       )}
     </div>

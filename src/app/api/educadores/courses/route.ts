@@ -234,10 +234,10 @@ export async function POST(request: NextRequest) {
     }
 
     // 🔥 Insertar SIEMPRE en tabla intermedia courseCourseTypes
-    for (const typeId of normalizedTypes) {
+    for (const idTypesPrograms of normalizedTypes) {
       await db.insert(courseCourseTypes).values({
         courseId: createdCourse.id,
-        courseTypeId: typeId,
+        courseTypeId: idTypesPrograms,
       });
     }
 

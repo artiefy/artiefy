@@ -1742,13 +1742,55 @@ export default function TicketsPage() {
                 </div>
 
                 {/* Close conversation button */}
+                {['en proceso', 'solucionado', 'en revision'].includes(
+                  viewTicket.estado
+                ) && (
+                  <button
+                    onClick={async () => {
+                      const waidMatch =
+                        viewTicket.description.match(/WAID:\s*(\d+)/);
+                      const waid = waidMatch?.[1];
+                      if (!waid) {
+                        alert(
+                          '❌ No se encontró el WAID en la descripción del ticket'
+                        );
+                        return;
+                      }
+                      if (!confirm(`¿Activar IlenIA para el usuario ${waid}?`))
+                        return;
+                      try {
+                        const res = await fetch(
+                          'https://n8n.srv1000134.hstgr.cloud/webhook/whatsapp-artiefy-activar-validacion',
+                          {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ waid }),
+                          }
+                        );
+                        if (res.ok) {
+                          toast.success(
+                            '✅ IlenIA activada — el usuario recibirá la pregunta'
+                          );
+                        } else {
+                          toast.error('❌ Error activando IlenIA');
+                        }
+                      } catch {
+                        toast.error('❌ No se pudo conectar con n8n');
+                      }
+                    }}
+                    className="mt-4 w-full rounded-lg bg-emerald-700 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-600"
+                  >
+                    🤖 Activar IlenIA (caso solucionado)
+                  </button>
+                )}
+
                 <button
                   onClick={() => void handleCloseConversation()}
                   className="
-                    mt-4 w-full rounded-lg border border-gray-600 px-4 py-2
-                    text-sm text-gray-300 transition
-                    hover:bg-gray-800 hover:text-white
-                  "
+    mt-2 w-full rounded-lg border border-gray-600 px-4 py-2
+    text-sm text-gray-300 transition
+    hover:bg-gray-800 hover:text-white
+  "
                 >
                   Cerrar conversación
                 </button>
