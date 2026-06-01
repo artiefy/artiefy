@@ -1118,7 +1118,7 @@ export function Header({
             aria-label="Menú principal"
             tabIndex={-1}
             className="
-              fixed inset-y-0 left-0 z-[99999] flex h-[100svh] max-h-[100svh]
+              fixed inset-y-0 right-0 z-[99999] flex h-[100svh] max-h-[100svh]
               w-[min(86vw,22rem)] flex-col overflow-hidden bg-[#01152d] px-6
               pt-[calc(env(safe-area-inset-top)+1.5rem)] shadow-2xl
               sm:w-[80%] sm:max-w-sm sm:px-7
