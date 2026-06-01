@@ -1272,14 +1272,28 @@ export function Header({
                   })}
                 </ul>
               </nav>
+              {!isSignedIn ? (
+                <button
+                  type="button"
+                  onClick={handleOpenLoginModal}
+                  className="
+                    mt-6 flex h-12 w-full items-center justify-center rounded-xl
+                    bg-primary text-sm font-semibold text-[#01152d] transition
+                    hover:bg-primary/90
+                    active:scale-95
+                  "
+                >
+                  Acceder
+                </button>
+              ) : null}
             </div>
-            <div
-              className="
-              shrink-0 border-t border-white/8 pt-4
-              pb-[calc(env(safe-area-inset-bottom)+1.25rem)]
-            "
-            >
-              {isSignedIn ? (
+            {isSignedIn ? (
+              <div
+                className="
+                  shrink-0 border-t border-white/8 pt-4
+                  pb-[calc(env(safe-area-inset-bottom)+1.25rem)]
+                "
+              >
                 <div className="flex min-h-12 items-center justify-center">
                   <Suspense
                     fallback={<Icons.spinner className="size-5 text-primary" />}
@@ -1287,21 +1301,8 @@ export function Header({
                     <UserButtonWrapper />
                   </Suspense>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleOpenLoginModal}
-                  className="
-                  flex h-12 w-full items-center justify-center rounded-xl
-                  bg-primary text-sm font-semibold text-[#01152d] transition
-                  hover:bg-primary/90
-                  active:scale-95
-                "
-                >
-                  Acceder
-                </button>
-              )}
-            </div>
+              </div>
+            ) : null}
           </aside>
         </div>
       ) : null}
