@@ -15,7 +15,7 @@ This is Artiefy, a Next.js 16 App Router app with React 19, TypeScript, Tailwind
 Skills live in `.agents/skills/` and are tracked by `skills-lock.json`. Load only the skill required by the task. Do not load skills just in case. If no row matches, use these repo rules and existing code patterns.
 
 Installed skills:
-`accessibility`, `animejs`, `bash-defensive-patterns`, `clerk`, `clerk-backend-api`, `clerk-custom-ui`, `clerk-nextjs-patterns`, `clerk-orgs`, `clerk-react-patterns`, `clerk-setup`, `clerk-testing`, `clerk-webhooks`, `composition-patterns`, `context7-cli`, `context7-mcp`, `contribute-catalog`, `css-animations`, `deploy-to-vercel`, `drizzle`, `frontend-code-review`, `frontend-design`, `gsap`, `hyperframes`, `hyperframes-cli`, `hyperframes-media`, `hyperframes-registry`, `lottie`, `mcp-server-patterns`, `n8n-workflow-patterns`, `neon-postgres`, `next-best-practices`, `next-cache-components`, `next-upgrade`, `nodejs-backend-patterns`, `nodejs-best-practices`, `react-best-practices`, `react-expert`, `react-modernization`, `react-pdf`, `react-web`, `redis-js`, `remotion-to-hyperframes`, `responsive-design`, `seo`, `seo-audit`, `shadcn`, `skill-creator`, `skill-installer`, `tailwind`, `tailwind-css-patterns`, `tailwind-v4-shadcn`, `three`, `threejs-animation`, `threejs-fundamentals`, `threejs-geometry`, `threejs-interaction`, `threejs-lighting`, `threejs-loaders`, `threejs-materials`, `threejs-postprocessing`, `threejs-shaders`, `threejs-textures`, `typegpu`, `typescript-advanced-types`, `waapi`, `web-design-guidelines`, `website-to-hyperframes`, `xlsx`, `zod`.
+`accessibility`, `animejs`, `bash-defensive-patterns`, `clerk`, `clerk-backend-api`, `clerk-custom-ui`, `clerk-nextjs-patterns`, `clerk-orgs`, `clerk-react-patterns`, `clerk-setup`, `clerk-testing`, `clerk-webhooks`, `composition-patterns`, `compatibility-testing`, `context7-cli`, `context7-mcp`, `contribute-catalog`, `css-animations`, `deploy-to-vercel`, `drizzle`, `frontend-code-review`, `frontend-design`, `gsap`, `hyperframes`, `hyperframes-cli`, `hyperframes-media`, `hyperframes-registry`, `lottie`, `mcp-server-patterns`, `n8n-workflow-patterns`, `neon-postgres`, `next-best-practices`, `next-cache-components`, `next-upgrade`, `nodejs-backend-patterns`, `nodejs-best-practices`, `playwright-dev`, `react-best-practices`, `react-expert`, `react-modernization`, `react-pdf`, `react-web`, `redis-js`, `remotion-to-hyperframes`, `responsive-design`, `responsive-web-design`, `seo`, `seo-audit`, `shadcn`, `skill-creator`, `skill-installer`, `tailwind`, `tailwind-css-patterns`, `tailwind-v4-shadcn`, `three`, `threejs-animation`, `threejs-fundamentals`, `threejs-geometry`, `threejs-interaction`, `threejs-lighting`, `threejs-loaders`, `threejs-materials`, `threejs-postprocessing`, `threejs-shaders`, `threejs-textures`, `typegpu`, `typescript-advanced-types`, `waapi`, `web-design-guidelines`, `website-to-hyperframes`, `xlsx`, `zod`.
 
 Auto-invoke map:
 | Task | Skill |
@@ -34,6 +34,8 @@ Auto-invoke map:
 | UI layout, visual hierarchy, responsive styling, mockups | `frontend-design` |
 | UI/UX/design-system audit, web interface guideline review, design best-practice review | `web-design-guidelines` |
 | Responsive layouts, mobile/tablet/desktop behavior, fluid typography, container queries, viewport overflow, touch targets | `responsive-design` |
+| Mobile-first layouts, Flexbox/Grid responsive UI, media queries, flexible UI systems, or cross-browser responsive CSS | `responsive-web-design` |
+| Cross-browser, cross-platform, cross-device, browser support, device matrix, or compatibility validation | `compatibility-testing` |
 | Tailwind classes, responsive utilities, colors, hover states, dark mode | `tailwind-css-patterns` |
 | Tailwind CSS v4 with shadcn/ui setup | `tailwind-v4-shadcn` |
 | shadcn/ui components, styling, composition, or debugging | `shadcn` |
@@ -67,6 +69,7 @@ Auto-invoke map:
 | Neon Postgres setup, connection, branching, or database guidance | `neon-postgres` |
 | Upstash Redis SDK, caching, rate limiting, sessions, Redis data structures/search | `redis-js` |
 | Vercel deployment | `deploy-to-vercel` |
+| Developing Playwright itself, adding Playwright APIs, MCP tools, CLI commands, or vendor dependencies | `playwright-dev` |
 | n8n workflow architecture, workflow design, or automation patterns | `n8n-workflow-patterns` |
 | MCP server implementation, tools/resources/prompts, Zod validation, stdio or Streamable HTTP transport | `mcp-server-patterns` |
 | Bash scripts, CI shell scripts, or defensive shell patterns | `bash-defensive-patterns` |
