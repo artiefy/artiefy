@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useAuth, useSignIn } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
+import { Eye, EyeOff } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
@@ -227,6 +228,7 @@ export default function MiniLoginModal({
   const [errors, setErrors] = useState<ClerkAPIError[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
     null
   );
@@ -264,6 +266,7 @@ export default function MiniLoginModal({
   }, []);
 
   const handleModalClose = useCallback(() => {
+    setShowPassword(false);
     resetTransientState();
     onClose();
   }, [onClose, resetTransientState]);
@@ -1020,35 +1023,60 @@ export default function MiniLoginModal({
                 >
                   Contraseña
                 </label>
-                <input
-                  onChange={(e) => setPassword(e.target.value)}
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={password}
-                  placeholder="Contraseña"
-                  required
-                  className={`
-                    flex h-12 w-full rounded-full border border-border/50
-                    bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background
-                    file:border-0 file:bg-transparent file:text-sm
-                    file:font-medium file:text-foreground
-                    placeholder:text-muted-foreground/60
-                    focus:border-primary/50
-                    focus-visible:ring-2 focus-visible:ring-ring
-                    focus-visible:ring-offset-2 focus-visible:outline-none
-                    disabled:cursor-not-allowed disabled:opacity-50
-                    md:text-sm
-                    ${
-                      passwordError
-                        ? `
-                          border-red-300
-                          focus:border-red-500
-                        `
-                        : ''
+                <div className="relative">
+                  <input
+                    onChange={(e) => setPassword(e.target.value)}
+                    id="password"
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    placeholder="Contraseña"
+                    required
+                    className={`
+                      flex h-12 w-full rounded-full border border-border/50
+                      bg-[#1d283a]/80 px-3 py-2 pr-12 text-base
+                      ring-offset-background
+                      file:border-0 file:bg-transparent file:text-sm
+                      file:font-medium file:text-foreground
+                      placeholder:text-muted-foreground/60
+                      focus:border-primary/50
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                      disabled:cursor-not-allowed disabled:opacity-50
+                      md:text-sm
+                      ${
+                        passwordError
+                          ? `
+                            border-red-300
+                            focus:border-red-500
+                          `
+                          : ''
+                      }
+                    `}
+                  />
+                  <button
+                    type="button"
+                    aria-label={
+                      showPassword ? 'Ocultar contraseña' : 'Ver contraseña'
                     }
-                  `}
-                />
+                    aria-pressed={showPassword}
+                    className="
+                      absolute top-1/2 right-3 inline-flex size-8
+                      -translate-y-1/2 items-center justify-center
+                      rounded-full text-muted-foreground transition
+                      hover:bg-white/5 hover:text-primary
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                    "
+                    onClick={() => setShowPassword((current) => !current)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="size-4" aria-hidden="true" />
+                    ) : (
+                      <Eye className="size-4" aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -1174,7 +1202,10 @@ export default function MiniLoginModal({
                       font-medium text-primary transition-colors
                       hover:text-primary/80
                     "
-                    onClick={() => setIsForgotPassword(true)}
+                    onClick={() => {
+                      setShowPassword(false);
+                      setIsForgotPassword(true);
+                    }}
                   >
                     Recuperarla
                   </button>
@@ -1215,27 +1246,52 @@ export default function MiniLoginModal({
                 >
                   Nueva contraseña
                 </label>
-                <input
-                  onChange={(e) => setPassword(e.target.value)}
-                  id="new-password"
-                  name="new-password"
-                  type="password"
-                  value={password}
-                  placeholder="Nueva contraseña"
-                  required
-                  className="
-                    flex h-12 w-full rounded-full border border-border/50
-                    bg-[#1d283a]/80 px-3 py-2 text-base ring-offset-background
-                    file:border-0 file:bg-transparent file:text-sm
-                    file:font-medium file:text-foreground
-                    placeholder:text-muted-foreground/60
-                    focus:border-primary/50
-                    focus-visible:ring-2 focus-visible:ring-ring
-                    focus-visible:ring-offset-2 focus-visible:outline-none
-                    disabled:cursor-not-allowed disabled:opacity-50
-                    md:text-sm
-                  "
-                />
+                <div className="relative">
+                  <input
+                    onChange={(e) => setPassword(e.target.value)}
+                    id="new-password"
+                    name="new-password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    placeholder="Nueva contraseña"
+                    required
+                    className="
+                      flex h-12 w-full rounded-full border border-border/50
+                      bg-[#1d283a]/80 px-3 py-2 pr-12 text-base
+                      ring-offset-background
+                      file:border-0 file:bg-transparent file:text-sm
+                      file:font-medium file:text-foreground
+                      placeholder:text-muted-foreground/60
+                      focus:border-primary/50
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                      disabled:cursor-not-allowed disabled:opacity-50
+                      md:text-sm
+                    "
+                  />
+                  <button
+                    type="button"
+                    aria-label={
+                      showPassword ? 'Ocultar contraseña' : 'Ver contraseña'
+                    }
+                    aria-pressed={showPassword}
+                    className="
+                      absolute top-1/2 right-3 inline-flex size-8
+                      -translate-y-1/2 items-center justify-center
+                      rounded-full text-muted-foreground transition
+                      hover:bg-white/5 hover:text-primary
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                    "
+                    onClick={() => setShowPassword((current) => !current)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="size-4" aria-hidden="true" />
+                    ) : (
+                      <Eye className="size-4" aria-hidden="true" />
+                    )}
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
                 <label
@@ -1298,6 +1354,7 @@ export default function MiniLoginModal({
                     hover:text-primary/80
                   "
                   onClick={() => {
+                    setShowPassword(false);
                     setIsForgotPassword(false);
                     setSuccessfulCreation(false);
                     setErrors(undefined);
@@ -1373,6 +1430,7 @@ export default function MiniLoginModal({
                     hover:text-primary/80
                   "
                   onClick={() => {
+                    setShowPassword(false);
                     setIsForgotPassword(false);
                     setSuccessfulCreation(false);
                     setErrors(undefined);

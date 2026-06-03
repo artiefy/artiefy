@@ -93,6 +93,12 @@ Auto-invoke map:
 | Create/update skills | `skill-creator` |
 | List/install/update skills | `skill-installer` |
 
+## AGENTS.md Sync Workflow
+
+- Keep `Installed skills` and the auto-invoke map aligned with the actual directories in `.agents/skills/`; that folder is the source of truth.
+- When a new local skill appears, read its `SKILL.md` and add the narrowest useful auto-invoke row. If the trigger is unclear, add `PENDIENTE: revisar disparador para <skill>` instead of inventing one.
+- Preserve the generated Next.js docs block and existing repo-specific rules; only edit the sections needed for skills, workflows, or commands discovered in the repo.
+
 ## Project Map
 
 | Area           | Location                                     |

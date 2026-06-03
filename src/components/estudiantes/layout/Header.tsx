@@ -27,6 +27,7 @@ import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { ensureCurrentUserStudentRole, getUserRole } from '~/utils/roles';
 
 import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
@@ -58,6 +59,7 @@ export function Header({
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
   const pathname = usePathname();
+  const userRole = getUserRole(user?.publicMetadata?.role);
   const desktopSignInHref = `/sign-in?redirect_url=${encodeURIComponent(
     pathname || '/'
   )}`;
@@ -95,6 +97,22 @@ export function Header({
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
     | string
     | undefined;
+
+  useEffect(() => {
+    if (!user || userRole) return;
+
+    let isCurrent = true;
+
+    void ensureCurrentUserStudentRole().then((updated) => {
+      if (updated && isCurrent) {
+        void user.reload();
+      }
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [user, userRole]);
 
   const isPlanExpired = () => {
     if (!planType) return false;

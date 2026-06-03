@@ -15,7 +15,6 @@ type BlurTextProps = {
   animationFrom?: Record<string, string | number>;
   animationTo?: Array<Record<string, string | number>>;
   easing?: Easing | Easing[];
-  onAnimationComplete?: () => void;
   stepDuration?: number;
 };
 
@@ -46,7 +45,6 @@ export default function BlurText({
   animationFrom,
   animationTo,
   easing = (time: number) => time,
-  onAnimationComplete,
   stepDuration = 0.35,
 }: BlurTextProps) {
   const elements = animateBy === 'words' ? text.split(' ') : text.split('');
@@ -116,9 +114,6 @@ export default function BlurText({
               inView ? buildKeyframes(fromSnapshot, toSnapshots) : fromSnapshot
             }
             transition={spanTransition}
-            onAnimationComplete={
-              index === elements.length - 1 ? onAnimationComplete : undefined
-            }
             className="inline-block will-change-[transform,filter,opacity]"
           >
             {segment === ' ' ? '\u00A0' : segment}
