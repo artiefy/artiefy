@@ -22,8 +22,6 @@ import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 import useSWR from 'swr';
 
-import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
-import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
@@ -52,8 +50,6 @@ export function Header({
   const [showPreview, setShowPreview] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState(false);
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignUpModal, setShowSignUpModal] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
@@ -437,26 +433,19 @@ export function Header({
   };
 
   const handleOpenLoginModal = () => {
-    setShowSignUpModal(false);
-    setShowLoginModal(true);
     setMobileMenuOpen(false);
+    setShowMobileSearch(false);
+    window.location.href = desktopSignInHref;
   };
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
 
-    const scrollY = window.scrollY;
     const previousHtmlOverflow = document.documentElement.style.overflow;
     const previousBodyOverflow = document.body.style.overflow;
-    const previousBodyPosition = document.body.style.position;
-    const previousBodyTop = document.body.style.top;
-    const previousBodyWidth = document.body.style.width;
 
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
@@ -469,11 +458,7 @@ export function Header({
     return () => {
       document.documentElement.style.overflow = previousHtmlOverflow;
       document.body.style.overflow = previousBodyOverflow;
-      document.body.style.position = previousBodyPosition;
-      document.body.style.top = previousBodyTop;
-      document.body.style.width = previousBodyWidth;
       window.removeEventListener('keydown', handleKeyDown);
-      window.scrollTo(0, scrollY);
     };
   }, [mobileMenuOpen]);
 
@@ -972,7 +957,7 @@ export function Header({
             "
             >
               <Image
-                src="/artiefy-icon.png"
+                src="/artiefy-icon-mobile.png"
                 alt="Artiefy"
                 width={36}
                 height={36}
@@ -1149,7 +1134,7 @@ export function Header({
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Image
-                  src="/artiefy-icon.png"
+                  src="/artiefy-icon-mobile.png"
                   alt="Artiefy"
                   width={36}
                   height={36}
@@ -1324,28 +1309,6 @@ export function Header({
           </aside>
         </div>
       ) : null}
-
-      <MiniLoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onLoginSuccess={() => setShowLoginModal(false)}
-        redirectUrl={pathname || '/'}
-        onSwitchToSignUp={() => {
-          setShowLoginModal(false);
-          setShowSignUpModal(true);
-        }}
-      />
-
-      <MiniSignUpModal
-        isOpen={showSignUpModal}
-        onClose={() => setShowSignUpModal(false)}
-        onSignUpSuccess={() => setShowSignUpModal(false)}
-        redirectUrl={pathname || '/'}
-        onSwitchToLogin={() => {
-          setShowSignUpModal(false);
-          setShowLoginModal(true);
-        }}
-      />
     </nav>
   );
 }
