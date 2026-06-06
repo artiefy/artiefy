@@ -885,9 +885,15 @@ const Page: React.FC = () => {
                         type="datetime-local"
                         value={
                           formData.fechaMaximaEntrega
-                            ? new Date(formData.fechaMaximaEntrega)
-                                .toISOString()
-                                .slice(0, 16)
+                            ? formData.fechaMaximaEntrega.includes('T') &&
+                              !formData.fechaMaximaEntrega.endsWith('Z')
+                              ? formData.fechaMaximaEntrega.slice(0, 16)
+                              : new Date(formData.fechaMaximaEntrega)
+                                  .toLocaleString('sv-SE', {
+                                    timeZone: 'America/Bogota',
+                                  })
+                                  .replace(' ', 'T')
+                                  .slice(0, 16)
                             : ''
                         }
                         className="
