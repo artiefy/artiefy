@@ -206,7 +206,9 @@ async function fetchWithTimeout(
   }
 }
 
-async function optimizeImageBuffer(buffer: ArrayBuffer): Promise<Buffer> {
+async function optimizeImageBuffer(
+  buffer: ArrayBuffer
+): Promise<Buffer | null> {
   try {
     const sharpImage = sharp(Buffer.from(buffer));
     const metadata = await sharpImage.metadata();
@@ -226,7 +228,7 @@ async function optimizeImageBuffer(buffer: ArrayBuffer): Promise<Buffer> {
       .toBuffer();
   } catch (error) {
     console.error('Error optimizing image:', error);
-    return Buffer.from(buffer);
+    return null;
   }
 }
 
@@ -271,8 +273,16 @@ export async function GET(request: Request) {
       }
     }
 
-    // Siempre optimizar imágenes
+    // Siempre optimizar imágenes. Si Sharp no puede decodificar el formato
+    // original, devolver un WebP real de fallback en vez de marcar bytes
+    // originales como image/webp.
     const optimizedBuffer = await optimizeImageBuffer(buffer);
+    if (!optimizedBuffer) {
+      return imageResponse(
+        await getFallbackImageBuffer(),
+        FALLBACK_CACHE_SECONDS
+      );
+    }
 
     return imageResponse(optimizedBuffer, 31536000);
   } catch (error) {

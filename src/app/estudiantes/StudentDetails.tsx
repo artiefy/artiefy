@@ -34,7 +34,6 @@ import { IoLibrarySharp } from 'react-icons/io5';
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import MyCoursesPreview from '~/components/estudiantes/layout/studentdashboard/MyCoursesPreview';
 import { StudentArtieIa } from '~/components/estudiantes/layout/studentdashboard/StudentArtieIa';
-import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import StudentGradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
 import { StudentProgram } from '~/components/estudiantes/layout/studentdashboard/StudentProgram';
@@ -176,9 +175,6 @@ export default function StudentDetails({
     return shufflePrograms(initialPrograms);
   });
   const [_currentSlide, setCurrentSlide] = useState<number>(0);
-  const [chatbotKey, setChatbotKey] = useState<number>(0);
-  const [showChatbot, setShowChatbot] = useState<boolean>(false);
-  const [lastSearchQuery, setLastSearchQuery] = useState<string>('');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchInProgress, setSearchInProgress] = useState<boolean>(false);
@@ -480,12 +476,6 @@ export default function StudentDetails({
     });
   }, [activeFilter, courses]);
 
-  const handleSearchComplete = useCallback(() => {
-    // No cerrar el chatbot automáticamente - dejar que el usuario lo controle
-    console.log('🔚 Búsqueda completada - manteniendo chatbot abierto');
-    // setShowChatbot(false); // Comentado para evitar cierre automático
-  }, []);
-
   const handleSearch = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
@@ -504,10 +494,6 @@ export default function StudentDetails({
       console.log('📤 Disparando evento artiefy-search');
       window.dispatchEvent(searchEvent);
 
-      // Also open chatbot with the search query so the n8n agent continues the flow
-      // Nota: no disparar aquí el evento 'create-new-chat-with-search' para evitar duplicados.
-      // El componente `StudentChatbot` ya reaccionará a `artiefy-search` y gestionará el flujo.
-
       // Clear the search input
       setSearchQuery('');
       setSearchInProgress(false);
@@ -524,9 +510,11 @@ export default function StudentDetails({
 
       console.log('📥 Evento artiefy-search recibido:', query);
 
-      setLastSearchQuery(query);
-      setShowChatbot(true); // Asegurar que esté abierto
-      setChatbotKey((prev) => prev + 1);
+      window.dispatchEvent(
+        new CustomEvent('create-new-chat-with-search', {
+          detail: { query },
+        })
+      );
     };
 
     window.addEventListener(
@@ -534,27 +522,11 @@ export default function StudentDetails({
       handleGlobalSearch as EventListener
     );
 
-    // Listener para forzar apertura del chatbot
-    const handleForceOpenChatbot = () => {
-      console.log('🔓 Forzando apertura del chatbot');
-      setShowChatbot(true);
-    };
-
-    window.addEventListener('force-open-chatbot', handleForceOpenChatbot);
-
-    // Listener para cierre completo del chatbot
-    const handleCloseChatbot = () => {
-      setShowChatbot(false);
-    };
-    window.addEventListener('close-chatbot', handleCloseChatbot);
-
     return () => {
       window.removeEventListener(
         'artiefy-search',
         handleGlobalSearch as EventListener
       );
-      window.removeEventListener('force-open-chatbot', handleForceOpenChatbot);
-      window.removeEventListener('close-chatbot', handleCloseChatbot);
     };
   }, []);
 
@@ -1358,14 +1330,6 @@ export default function StudentDetails({
           {/* <StudentCategories allCategories={allCategories} featuredCategories={featuredCategories} /> */}
         </div>
       </main>
-      <StudentChatbot
-        isAlwaysVisible={true}
-        showChat={showChatbot}
-        key={chatbotKey}
-        className="animation-delay-400 animate-zoom-in"
-        initialSearchQuery={lastSearchQuery}
-        onSearchComplete={handleSearchComplete}
-      />
     </div>
   );
 }

@@ -101,9 +101,16 @@ type CourseGradeSummary = {
   }[];
 };
 
+type RatingSummary = {
+  count: number;
+  average: number;
+};
+
 type EnrollmentStatusResponse = {
   isEnrolled: boolean;
 };
+
+const MIN_DYNAMIC_RATING_COUNT = 5;
 
 const swrFetcher = async <T,>(url: string): Promise<T> => {
   const response = await fetch(url, { cache: 'no-store' });
@@ -112,6 +119,34 @@ const swrFetcher = async <T,>(url: string): Promise<T> => {
   }
   return (await response.json()) as T;
 };
+
+function clampRating(rating: number) {
+  if (!Number.isFinite(rating)) {
+    return 0;
+  }
+
+  return Math.min(5, Math.max(0, rating));
+}
+
+function CourseRatingStars({ rating }: { rating: number }) {
+  return (
+    <div className="flex">
+      {Array.from({ length: 5 }, (_, index) => {
+        const starValue = index + 1;
+        const isActive = starValue <= Math.round(rating);
+
+        return (
+          <FaStar
+            key={starValue}
+            className={`size-4 ${
+              isActive ? 'text-amber-400' : 'text-[#94A3B8]/30'
+            }`}
+          />
+        );
+      })}
+    </div>
+  );
+}
 
 export default function CourseDetails({
   course: initialCourse,
@@ -129,7 +164,12 @@ export default function CourseDetails({
   const [totalStudents, setTotalStudents] = useState(course.totalStudents);
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [isSubscriptionActive, setIsSubscriptionActive] = useState(true);
-  const [commentsCount, setCommentsCount] = useState<number>(0);
+  const [courseRatingSummary, setCourseRatingSummary] = useState<RatingSummary>(
+    {
+      count: 0,
+      average: 0,
+    }
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [_isCheckingEnrollment, setIsCheckingEnrollment] = useState(true);
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
@@ -185,6 +225,9 @@ export default function CourseDetails({
       userMetadata?.subscriptionEndDate,
     ]
   );
+  const handleRatingSummaryChange = useCallback((summary: RatingSummary) => {
+    setCourseRatingSummary(summary);
+  }, []);
   const initialIsEnrolledFromServer = useMemo(() => {
     if (!userId) return false;
     return (
@@ -1384,7 +1427,13 @@ export default function CourseDetails({
     );
   };
 
-  const hasCourseOpinions = commentsCount > 0;
+  const staticCourseRating = clampRating(Number(course.rating ?? 0));
+  const usesDynamicCourseRating =
+    courseRatingSummary.count >= MIN_DYNAMIC_RATING_COUNT;
+  const displayedCourseRating = usesDynamicCourseRating
+    ? clampRating(courseRatingSummary.average)
+    : staticCourseRating;
+  const hasCourseRating = displayedCourseRating > 0;
   const shouldShowStudentCount =
     typeof totalStudents === 'number' && totalStudents > 15;
   const courseTypeLabel = course.typeCourse?.type?.trim();
@@ -1934,55 +1983,22 @@ export default function CourseDetails({
                         </h1>
 
                         {/* Rating y estudiantes */}
-                        {(hasCourseOpinions || shouldShowStudentCount) && (
+                        {(hasCourseRating || shouldShowStudentCount) && (
                           <div
                             className="
                               flex flex-wrap items-center gap-4 text-sm
                             "
                           >
-                            {hasCourseOpinions && (
+                            {hasCourseRating && (
                               <div className="flex items-center gap-1.5">
-                                <div className="flex">
-                                  {[...Array(4)].map((_, i) => (
-                                    <svg
-                                      key={i}
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="24"
-                                      height="24"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      className="
-                                        lucide lucide-star size-4 fill-amber-400
-                                        text-amber-400
-                                      "
-                                    >
-                                      <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
-                                    </svg>
-                                  ))}
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    width="24"
-                                    height="24"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="
-                                      lucide lucide-star size-4
-                                      fill-amber-400/50 text-amber-400
-                                    "
-                                  >
-                                    <path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z"></path>
-                                  </svg>
-                                </div>
+                                <CourseRatingStars
+                                  rating={displayedCourseRating}
+                                />
                                 <span className="text-[#94A3B8]">
-                                  ({commentsCount} opiniones)
+                                  {displayedCourseRating.toFixed(1)}{' '}
+                                  {usesDynamicCourseRating
+                                    ? `(${courseRatingSummary.count} opiniones)`
+                                    : '(rating inicial)'}
                                 </span>
                               </div>
                             )}
@@ -2901,7 +2917,7 @@ export default function CourseDetails({
                           onEnrollmentChange={(enrolled) =>
                             setIsEnrolled(enrolled)
                           }
-                          onCommentsCountChange={(n) => setCommentsCount(n)}
+                          onRatingSummaryChange={handleRatingSummaryChange}
                         />
                       </div>
                     )}

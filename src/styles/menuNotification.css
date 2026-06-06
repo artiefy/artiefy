@@ -67,6 +67,9 @@
 }
 
 .notification-content {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   flex: 1;
 }
 
@@ -110,15 +113,18 @@
   }
 
   .notification-options {
+    box-sizing: border-box;
     position: fixed;
     top: calc(var(--subscription-banner-height, 0px) + 4.5rem);
-    right: 14px;
-    left: 14px;
+    right: max(12px, env(safe-area-inset-right));
+    left: max(12px, env(safe-area-inset-left));
     min-width: unset;
-    width: calc(100% - 28px);
+    width: auto;
+    max-width: calc(100svw - 24px);
     margin-top: 0;
     transform: translateY(-10px) scale(0.98);
     max-height: min(68dvh, 430px);
+    overflow-x: hidden;
     border: 1px solid rgba(34, 196, 211, 0.22);
     border-radius: 18px;
     background: rgba(1, 20, 43, 0.98);

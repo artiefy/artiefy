@@ -2,13 +2,141 @@
 
 import { currentUser } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
+import { eq } from 'drizzle-orm';
+import nodemailer from 'nodemailer';
 
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
+import { db } from '~/server/db';
+import { courses } from '~/server/db/schema';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
+
+const MIN_DYNAMIC_RATING_COUNT = 5;
+const LOW_RATING_THRESHOLD = 3.5;
+const ADMIN_EMAIL = 'direcciongeneral@artiefy.com';
+
+type CourseRatingSummary = {
+  count: number;
+  average: number;
+};
+
+function parseCourseIdFromCommentId(commentId: string) {
+  const courseId = Number(commentId.split(':')[2]);
+  return Number.isFinite(courseId) ? courseId : null;
+}
+
+async function getDynamicCourseRatingSummary(
+  courseId: number
+): Promise<CourseRatingSummary> {
+  const keys = await redis.keys(`comment:*:${courseId}:*`);
+  const ratings = (
+    await Promise.all(
+      keys.map(async (key) => Number(await redis.hget(key, 'rating')))
+    )
+  ).filter((rating) => Number.isFinite(rating) && rating > 0);
+
+  const average =
+    ratings.length > 0
+      ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length
+      : 0;
+
+  return { count: ratings.length, average };
+}
+
+async function sendLowRatingReviewEmail({
+  courseId,
+  courseTitle,
+  ratingSummary,
+}: {
+  courseId: number;
+  courseTitle: string;
+  ratingSummary: CourseRatingSummary;
+}) {
+  if (!process.env.PASS) {
+    console.warn(
+      '[course ratings] No se envió correo: falta PASS en variables de entorno'
+    );
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: ADMIN_EMAIL,
+      pass: process.env.PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from: `"Artiefy" <${ADMIN_EMAIL}>`,
+    to: ADMIN_EMAIL,
+    subject: `Revisar curso con calificación baja: ${courseTitle}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; color: #0f172a;">
+        <h2>Curso ocultado por calificación baja</h2>
+        <p>
+          El curso <strong>${courseTitle}</strong> fue ocultado automáticamente
+          porque su promedio dinámico está por debajo de ${LOW_RATING_THRESHOLD}.
+        </p>
+        <ul>
+          <li><strong>ID del curso:</strong> ${courseId}</li>
+          <li><strong>Promedio:</strong> ${ratingSummary.average.toFixed(2)}</li>
+          <li><strong>Calificaciones:</strong> ${ratingSummary.count}</li>
+        </ul>
+        <p>
+          Revisa comentarios, contenido y experiencia del curso para definir
+          mejoras antes de volver a publicarlo.
+        </p>
+      </div>
+    `,
+  });
+}
+
+async function evaluateCourseVisibilityAfterRatingChange(courseId: number) {
+  try {
+    const ratingSummary = await getDynamicCourseRatingSummary(courseId);
+
+    if (
+      ratingSummary.count < MIN_DYNAMIC_RATING_COUNT ||
+      ratingSummary.average >= LOW_RATING_THRESHOLD
+    ) {
+      return;
+    }
+
+    const [course] = await db
+      .select({
+        id: courses.id,
+        title: courses.title,
+        visibility: courses.visibility,
+      })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .limit(1);
+
+    if (!course || course.visibility === false) {
+      return;
+    }
+
+    await db
+      .update(courses)
+      .set({ visibility: false, updatedAt: new Date() })
+      .where(eq(courses.id, courseId));
+
+    await sendLowRatingReviewEmail({
+      courseId,
+      courseTitle: course.title,
+      ratingSummary,
+    });
+  } catch (error) {
+    console.error(
+      '[course ratings] Error al evaluar visibilidad del curso:',
+      error
+    );
+  }
+}
 
 export async function addComment(
   courseId: number,
@@ -43,6 +171,8 @@ export async function addComment(
       updatedAt: new Date().toISOString(),
       likes: 0, // Inicializar la cantidad de "me gustas" en 0
     });
+
+    await evaluateCourseVisibilityAfterRatingChange(courseId);
 
     return { success: true, message: 'Comentario agregado exitosamente' };
   } catch (error: unknown) {
@@ -159,6 +289,12 @@ export async function editComment(
       updatedAt: new Date().toISOString(),
     });
 
+    const courseId =
+      Number(comment.courseId) || parseCourseIdFromCommentId(commentId);
+    if (courseId) {
+      await evaluateCourseVisibilityAfterRatingChange(courseId);
+    }
+
     return { success: true, message: 'Comentario editado exitosamente' };
   } catch (error: unknown) {
     console.error('Error al editar comentario:', error);
@@ -196,6 +332,12 @@ export async function deleteComment(
     }
 
     await redis.del(commentId);
+
+    const courseId =
+      Number(comment.courseId) || parseCourseIdFromCommentId(commentId);
+    if (courseId) {
+      await evaluateCourseVisibilityAfterRatingChange(courseId);
+    }
 
     return { success: true, message: 'Comentario eliminado exitosamente' };
   } catch (error: unknown) {

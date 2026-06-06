@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth, useSignIn } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
+import { Eye, EyeOff } from 'lucide-react';
 
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
 import { Icons } from '~/components/estudiantes/ui/icons';
@@ -71,6 +72,7 @@ export default function SignInPage() {
   const [errors, setErrors] = useState<ClerkAPIError[]>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<OAuthStrategy | null>(
     null
   );
@@ -490,6 +492,11 @@ export default function SignInPage() {
     }
   `;
 
+  const passwordInputClassName = (hasError?: boolean) => `
+    ${inputClassName(hasError)}
+    pr-12
+  `;
+
   const primaryButtonClassName = `
     group relative inline-flex h-[44px] min-w-[195px] items-center
     justify-center px-4 text-center text-[13px] font-bold tracking-[0.08em]
@@ -534,6 +541,7 @@ export default function SignInPage() {
     setErrors(undefined);
     setCode('');
     setPassword('');
+    setShowPassword(false);
     setSuccessfulCreation(false);
     setIsForgotPassword(true);
   };
@@ -542,6 +550,7 @@ export default function SignInPage() {
     setErrors(undefined);
     setCode('');
     setPassword('');
+    setShowPassword(false);
     setSuccessfulCreation(false);
     setIsForgotPassword(false);
   };
@@ -660,17 +669,41 @@ export default function SignInPage() {
                   <label htmlFor="password" className="sr-only">
                     Contraseña
                   </label>
-                  <input
-                    onChange={(e) => setPassword(e.target.value)}
-                    id="password"
-                    name="password"
-                    type="password"
-                    value={password}
-                    placeholder="Contraseña"
-                    autoComplete="current-password"
-                    required
-                    className={inputClassName(passwordError)}
-                  />
+                  <div className="relative">
+                    <input
+                      onChange={(e) => setPassword(e.target.value)}
+                      id="password"
+                      name="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      placeholder="Contraseña"
+                      autoComplete="current-password"
+                      required
+                      className={passwordInputClassName(passwordError)}
+                    />
+                    <button
+                      type="button"
+                      aria-label={
+                        showPassword ? 'Ocultar contraseña' : 'Ver contraseña'
+                      }
+                      aria-pressed={showPassword}
+                      className="
+                        absolute top-1/2 right-3 inline-flex size-8
+                        -translate-y-1/2 items-center justify-center
+                        text-white/65 transition hover:text-primary
+                        focus-visible:outline-[1.5px]
+                        focus-visible:outline-offset-2
+                        focus-visible:outline-primary
+                      "
+                      onClick={() => setShowPassword((current) => !current)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="size-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="size-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-6 flex justify-center">
@@ -716,17 +749,41 @@ export default function SignInPage() {
                   <label htmlFor="new-password" className="sr-only">
                     Nueva contraseña
                   </label>
-                  <input
-                    onChange={(e) => setPassword(e.target.value)}
-                    id="new-password"
-                    name="new-password"
-                    type="password"
-                    value={password}
-                    placeholder="Nueva contraseña"
-                    autoComplete="new-password"
-                    required
-                    className={inputClassName(passwordError)}
-                  />
+                  <div className="relative">
+                    <input
+                      onChange={(e) => setPassword(e.target.value)}
+                      id="new-password"
+                      name="new-password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      placeholder="Nueva contraseña"
+                      autoComplete="new-password"
+                      required
+                      className={passwordInputClassName(passwordError)}
+                    />
+                    <button
+                      type="button"
+                      aria-label={
+                        showPassword ? 'Ocultar contraseña' : 'Ver contraseña'
+                      }
+                      aria-pressed={showPassword}
+                      className="
+                        absolute top-1/2 right-3 inline-flex size-8
+                        -translate-y-1/2 items-center justify-center
+                        text-white/65 transition hover:text-primary
+                        focus-visible:outline-[1.5px]
+                        focus-visible:outline-offset-2
+                        focus-visible:outline-primary
+                      "
+                      onClick={() => setShowPassword((current) => !current)}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="size-4" aria-hidden="true" />
+                      ) : (
+                        <Eye className="size-4" aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mt-4 flex justify-center">

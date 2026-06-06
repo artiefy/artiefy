@@ -6,7 +6,6 @@ import { notFound } from 'next/navigation';
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
 import { ProgramDetailsSkeleton } from '~/components/estudiantes/layout/programdetail/ProgramDetailsSkeleton';
-import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { getProgramById } from '~/server/actions/estudiantes/programs/getProgramById';
 
 import ProgramDetails from './ProgramDetails';
@@ -109,7 +108,6 @@ export default function Page({ params }: PageProps) {
       <Suspense fallback={<ProgramDetailsSkeleton />}>
         <ProgramContent params={params} />
       </Suspense>
-      <StudentChatbot isAlwaysVisible />
       <Footer />
     </div>
   );

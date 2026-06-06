@@ -27,6 +27,13 @@ export type AppPermissions =
   | 'override_permissions';
 
 declare global {
+  interface UserPublicMetadata {
+    role?: Roles | string | FormDataEntryValue | null;
+    permissions?: AppPermissions[] | string[];
+    isNewUser?: boolean;
+    [key: string]: unknown;
+  }
+
   interface CustomJwtSessionClaims {
     metadata: {
       role?: Roles;

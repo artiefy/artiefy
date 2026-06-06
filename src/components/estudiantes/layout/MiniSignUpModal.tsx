@@ -9,6 +9,7 @@ import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { ensureCurrentUserStudentRole } from '~/utils/roles';
 
 import '../../../styles/mini-login-uiverse.css';
 
@@ -216,15 +217,18 @@ export default function MiniSignUpModal({
 
     if (isSignedIn && !hasHandledAuth) {
       setHasHandledAuth(true);
-      onSignUpSuccess();
-      onClose();
+      void (async () => {
+        await ensureCurrentUserStudentRole();
+        onSignUpSuccess();
+        onClose();
 
-      if (redirectUrl !== '/' && redirectUrl !== '') {
-        const targetUrl = redirectUrl.startsWith('http')
-          ? redirectUrl
-          : `${window.location.origin}${redirectUrl}`;
-        window.location.href = targetUrl;
-      }
+        if (redirectUrl !== '/' && redirectUrl !== '') {
+          const targetUrl = redirectUrl.startsWith('http')
+            ? redirectUrl
+            : `${window.location.origin}${redirectUrl}`;
+          window.location.href = targetUrl;
+        }
+      })();
     }
   }, [
     isSignedIn,

@@ -62,6 +62,12 @@
       "sourceType": "autoskills-registry",
       "computedHash": "c766d7b021907e6b8f1e567b30d5a5d70fc313626ab0ce7a9c10fc31bf71aae7"
     },
+    "compatibility-testing": {
+      "source": "proffesor-for-testing/agentic-qe",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/compatibility-testing/SKILL.md",
+      "computedHash": "0e31a9c3069279f1808f930b1065f8075630dcf6805d78be4bc85f9351c2592f"
+    },
     "competitive-analysis": {
       "source": "mverab/eGEOagents",
       "sourceType": "github",
@@ -198,6 +204,12 @@
       "sourceType": "autoskills-registry",
       "computedHash": "7361ab02fb6b09913e3bdd9cf61c629ed6c17de9485e6a781054e5d437ccfc29"
     },
+    "playwright-dev": {
+      "source": "microsoft/playwright",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/playwright-dev/SKILL.md",
+      "computedHash": "b87ec8cabef862d5da7819f73e1ddb41d622205cbec7cb2b7d339df2727a169e"
+    },
     "react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "autoskills-registry",
@@ -214,6 +226,12 @@
       "sourceType": "github",
       "skillPath": "plugins/ui-design/skills/responsive-design/SKILL.md",
       "computedHash": "794cc7f1b2f79d398135d19ef3fe32c406dde926b9bdf86ee3fe7b939a0be906"
+    },
+    "responsive-web-design": {
+      "source": "secondsky/claude-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/responsive-web-design/skills/responsive-web-design/SKILL.md",
+      "computedHash": "e7b09a592129115d711803a7213b16c0626903eeba18dca10127dd126e062081"
     },
     "schema-generator": {
       "source": "mverab/eGEOagents",

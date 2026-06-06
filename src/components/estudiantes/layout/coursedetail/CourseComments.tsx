@@ -31,6 +31,12 @@ interface CommentProps {
   isEnrolled: boolean;
   onEnrollmentChange?: (enrolled: boolean) => void;
   onCommentsCountChange?: (count: number) => void;
+  onRatingSummaryChange?: (summary: RatingSummary) => void;
+}
+
+interface RatingSummary {
+  count: number;
+  average: number;
 }
 
 interface Comment {
@@ -58,6 +64,7 @@ export default function CourseComments({
   isEnrolled,
   onEnrollmentChange,
   onCommentsCountChange,
+  onRatingSummaryChange,
 }: CommentProps) {
   const [content, setContent] = useState('');
   const [rating, setRating] = useState(0);
@@ -79,14 +86,32 @@ export default function CourseComments({
   const { userId, isSignedIn } = useAuth();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  const publishCommentStats = useCallback(
+    (nextComments: Comment[]) => {
+      const ratings = nextComments
+        .map((comment) => Number(comment.rating))
+        .filter(
+          (commentRating) => Number.isFinite(commentRating) && commentRating > 0
+        );
+      const average =
+        ratings.length > 0
+          ? ratings.reduce((sum, commentRating) => sum + commentRating, 0) /
+            ratings.length
+          : 0;
+
+      onCommentsCountChange?.(nextComments.length);
+      onRatingSummaryChange?.({ count: ratings.length, average });
+    },
+    [onCommentsCountChange, onRatingSummaryChange]
+  );
+
   useEffect(() => {
     const fetchComments = async () => {
       try {
         const response = await getCommentsByCourseId(courseId);
-        setComments(response.comments as Comment[]);
-        onCommentsCountChange?.(
-          Array.isArray(response.comments) ? response.comments.length : 0
-        );
+        const nextComments = response.comments as Comment[];
+        setComments(nextComments);
+        publishCommentStats(nextComments);
 
         // Cargar respuestas para cada comentario
         const repliesData: Record<string, Reply[]> = {};
@@ -105,7 +130,7 @@ export default function CourseComments({
     };
 
     void fetchComments();
-  }, [courseId, onCommentsCountChange]);
+  }, [courseId, publishCommentStats]);
 
   useEffect(() => {
     setLocalIsEnrolled(isEnrolled);
@@ -187,12 +212,9 @@ export default function CourseComments({
         setRating(0);
         setEditMode(null); // Reset edit mode
         const updatedComments = await getCommentsByCourseId(courseId);
-        setComments(updatedComments.comments as Comment[]);
-        onCommentsCountChange?.(
-          Array.isArray(updatedComments.comments)
-            ? updatedComments.comments.length
-            : 0
-        );
+        const nextComments = updatedComments.comments as Comment[];
+        setComments(nextComments);
+        publishCommentStats(nextComments);
       }
     } catch (error) {
       console.error('Error adding/editing comment:', error);
@@ -211,7 +233,7 @@ export default function CourseComments({
           const nextComments = prevComments.filter(
             (comment) => comment.id !== commentId
           );
-          onCommentsCountChange?.(nextComments.length);
+          publishCommentStats(nextComments);
           return nextComments;
         });
       }
@@ -229,12 +251,9 @@ export default function CourseComments({
       setMessage(response.message);
       if (response.success) {
         const updatedComments = await getCommentsByCourseId(courseId);
-        setComments(updatedComments.comments as Comment[]);
-        onCommentsCountChange?.(
-          Array.isArray(updatedComments.comments)
-            ? updatedComments.comments.length
-            : 0
-        );
+        const nextComments = updatedComments.comments as Comment[];
+        setComments(nextComments);
+        publishCommentStats(nextComments);
       }
     } catch (error) {
       console.error('Error liking comment:', error);

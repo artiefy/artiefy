@@ -22,7 +22,6 @@ import LessonResource from '~/components/estudiantes/layout/lessondetail/LessonR
 import LessonTopNavBar from '~/components/estudiantes/layout/lessondetail/LessonTopNavBar';
 import LessonTranscription from '~/components/estudiantes/layout/lessondetail/LessonTranscription';
 import { NextLessonModal } from '~/components/estudiantes/layout/lessondetail/NextLessonModal';
-import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
 import { isUserEnrolled } from '~/server/actions/estudiantes/courses/enrollInCourse';
 import { completeActivity } from '~/server/actions/estudiantes/progress/completeActivity';
 import { updateLessonPlaybackPosition } from '~/server/actions/estudiantes/progress/updateLessonPlaybackPosition';
@@ -1174,9 +1173,6 @@ export default function LessonDetails({
           courseId={lesson.courseId}
         />
       )}
-
-      {/* Chatbot Button and Modal */}
-      <StudentChatbot isAlwaysVisible={true} />
     </div>
   );
 }

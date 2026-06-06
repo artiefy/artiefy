@@ -22,11 +22,10 @@ import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 import useSWR from 'swr';
 
-import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
-import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
+import { ensureCurrentUserStudentRole, getUserRole } from '~/utils/roles';
 
 import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
@@ -51,12 +50,12 @@ export function Header({
   const [showPreview, setShowPreview] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState(false);
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showSignUpModal, setShowSignUpModal] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
   const pathname = usePathname();
+  const userRole = getUserRole(user?.publicMetadata?.role);
   const desktopSignInHref = `/sign-in?redirect_url=${encodeURIComponent(
     pathname || '/'
   )}`;
@@ -94,6 +93,22 @@ export function Header({
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
     | string
     | undefined;
+
+  useEffect(() => {
+    if (!user || userRole) return;
+
+    let isCurrent = true;
+
+    void ensureCurrentUserStudentRole().then((updated) => {
+      if (updated && isCurrent) {
+        void user.reload();
+      }
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [user, userRole]);
 
   const isPlanExpired = () => {
     if (!planType) return false;
@@ -172,6 +187,20 @@ export function Header({
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const updateViewport = () => setIsMobileViewport(mediaQuery.matches);
+
+    updateViewport();
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updateViewport);
+      return () => mediaQuery.removeEventListener('change', updateViewport);
+    }
+
+    mediaQuery.addListener(updateViewport);
+    return () => mediaQuery.removeListener(updateViewport);
   }, []);
 
   // Header visibility on scroll removed — header will remain static in flow
@@ -404,9 +433,9 @@ export function Header({
   };
 
   const handleOpenLoginModal = () => {
-    setShowSignUpModal(false);
-    setShowLoginModal(true);
     setMobileMenuOpen(false);
+    setShowMobileSearch(false);
+    window.location.href = desktopSignInHref;
   };
 
   useEffect(() => {
@@ -513,42 +542,43 @@ export function Header({
           sm:px-6
         "
       >
-        <div className="hidden w-full items-center justify-between gap-12 md:flex">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="
+        {!isMobileViewport ? (
+          <div className="hidden w-full items-center justify-between gap-12 md:flex">
+            {/* Logo */}
+            <Link
+              href="/"
+              className="
               ml-0 flex shrink-0 items-center gap-2
               md:-ml-8
             "
-          >
-            <div className="relative h-8 w-32">
-              <Image
-                src="/artiefy-logo.svg"
-                alt="Logo Artiefy"
-                fill
-                unoptimized
-                className="object-contain"
-                sizes="128px"
-              />
-            </div>
-          </Link>
+            >
+              <div className="relative h-8 w-32">
+                <Image
+                  src="/artiefy-logo.svg"
+                  alt="Logo Artiefy"
+                  fill
+                  unoptimized
+                  className="object-contain"
+                  sizes="128px"
+                />
+              </div>
+            </Link>
 
-          {/* Search Bar - Hidden on mobile */}
-          <form
-            onSubmit={handleSearch}
-            className="
+            {/* Search Bar - Hidden on mobile */}
+            <form
+              onSubmit={handleSearch}
+              className="
               hidden max-w-xl flex-1
               md:block
             "
-          >
-            <div className="relative">
-              <input
-                type="search"
-                placeholder="¡Aprende con IA!"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="
+            >
+              <div className="relative">
+                <input
+                  type="search"
+                  placeholder="¡Aprende con IA!"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="
                   w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3
                   pr-10 pl-4 text-sm text-foreground transition-all
                   placeholder:text-gray-400
@@ -556,67 +586,67 @@ export function Header({
                   focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2
                   focus:ring-[#3AF4EF]/50 focus:outline-none
                 "
-                autoComplete="off"
-              />
-              <Search
-                className="
+                  autoComplete="off"
+                />
+                <Search
+                  className="
                   absolute top-1/2 right-3 size-4 -translate-y-1/2
                   cursor-pointer text-primary/70 transition-colors
                   hover:text-primary
                 "
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (!searchQuery.trim()) return;
-                  handleSearch();
-                }}
-              />
-              {/* Preview de cursos debajo del input */}
-              {showPreview &&
-                (previewCourses.length > 0 || previewPrograms.length > 0) && (
-                  <div className="absolute z-50 w-full">
-                    <Suspense fallback={null}>
-                      <CourseSearchPreview
-                        courses={previewCourses}
-                        programs={previewPrograms}
-                        onSelectCourse={(courseId: number) => {
-                          window.location.href = `/estudiantes/cursos/${courseId}`;
-                        }}
-                        onSelectProgram={(programId: string | number) => {
-                          window.location.href = `/estudiantes/programas/${programId}`;
-                        }}
-                      />
-                    </Suspense>
-                  </div>
-                )}
-            </div>
-          </form>
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (!searchQuery.trim()) return;
+                    handleSearch();
+                  }}
+                />
+                {/* Preview de cursos debajo del input */}
+                {showPreview &&
+                  (previewCourses.length > 0 || previewPrograms.length > 0) && (
+                    <div className="absolute z-50 w-full">
+                      <Suspense fallback={null}>
+                        <CourseSearchPreview
+                          courses={previewCourses}
+                          programs={previewPrograms}
+                          onSelectCourse={(courseId: number) => {
+                            window.location.href = `/estudiantes/cursos/${courseId}`;
+                          }}
+                          onSelectProgram={(programId: string | number) => {
+                            window.location.href = `/estudiantes/programas/${programId}`;
+                          }}
+                        />
+                      </Suspense>
+                    </div>
+                  )}
+              </div>
+            </form>
 
-          {/* Navigation & Auth */}
-          <div
-            className="
+            {/* Navigation & Auth */}
+            <div
+              className="
               mr-0 flex items-center gap-4
               md:-mr-8
             "
-          >
-            {/* Desktop Navigation */}
-            <ul
-              className="
+            >
+              {/* Desktop Navigation */}
+              <ul
+                className="
                 hidden items-center gap-1
                 lg:flex
               "
-            >
-              {navItems.map((item) => {
-                const isActive =
-                  pathname === item.href ||
-                  (item.href !== '/' && pathname.startsWith(item.href));
+              >
+                {navItems.map((item) => {
+                  const isActive =
+                    pathname === item.href ||
+                    (item.href !== '/' && pathname.startsWith(item.href));
 
-                return (
-                  <li key={item.href}>
-                    {item.label === 'Cursos' && hasActiveStudentAccess ? (
-                      <div className="group relative">
-                        <Link
-                          href={item.href}
-                          className={`
+                  return (
+                    <li key={item.href}>
+                      {item.label === 'Cursos' && hasActiveStudentAccess ? (
+                        <div className="group relative">
+                          <Link
+                            href={item.href}
+                            className={`
                             inline-flex items-center gap-1 rounded-lg border
                             px-3 py-2 text-sm font-medium transition-colors
                             focus-visible:outline-none
@@ -636,29 +666,29 @@ export function Header({
                                 `
                             }
                           `}
-                        >
-                          {item.label}
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="
+                          >
+                            {item.label}
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="24"
+                              height="24"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="
                               mt-0.5 size-3.5 transition-transform duration-200
                               group-hover:rotate-180
                             "
-                          >
-                            <path d="m6 9 6 6 6-6" />
-                          </svg>
-                        </Link>
+                            >
+                              <path d="m6 9 6 6 6-6" />
+                            </svg>
+                          </Link>
 
-                        <div
-                          className="
+                          <div
+                            className="
                             invisible absolute top-full left-0 z-50 mt-3
                             w-[360px] rounded-xl border border-border/60
                             bg-[#061c37] p-3 opacity-0 shadow-2xl transition-all
@@ -667,23 +697,187 @@ export function Header({
                             group-focus-within:opacity-100
                             group-hover:visible group-hover:opacity-100
                           "
-                        >
-                          <div className="space-y-1">
-                            <Link
-                              href="/estudiantes/myaccount"
-                              className="
+                          >
+                            <div className="space-y-1">
+                              <Link
+                                href="/estudiantes/myaccount"
+                                className="
                                 group/item flex items-center gap-3 rounded-lg
                                 px-3 py-2.5 transition-colors
                                 hover:bg-primary/10
                               "
-                            >
-                              <div
-                                className="
+                              >
+                                <div
+                                  className="
                                   flex size-8 items-center justify-center
                                   rounded-lg bg-primary/15 transition-colors
                                   group-hover/item:bg-primary/25
                                 "
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="24"
+                                    height="24"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="size-4 text-primary"
+                                  >
+                                    <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+                                    <path d="M22 10v6" />
+                                    <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+                                  </svg>
+                                </div>
+                                <div>
+                                  <p
+                                    className="
+                                    text-sm font-medium text-foreground
+                                  "
+                                  >
+                                    Mis Cursos
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Cursos y programas inscritos
+                                  </p>
+                                </div>
+                              </Link>
+
+                              <div className="mx-2 my-1 h-px bg-border/40" />
+
+                              <p
+                                className="
+                                px-3 pt-1 pb-1.5 text-[10px] font-semibold
+                                tracking-wider text-muted-foreground uppercase
+                              "
                               >
+                                Continuar viendo
+                              </p>
+
+                              {continueCourses.length > 0 ? (
+                                continueCourses.map((course) => {
+                                  const targetLessonId =
+                                    course.lastUnlockedLessonId ??
+                                    course.continueLessonId ??
+                                    course.firstLessonId ??
+                                    null;
+                                  const courseHref = targetLessonId
+                                    ? `/estudiantes/clases/${targetLessonId}`
+                                    : `/estudiantes/cursos/${course.id}`;
+                                  const progress = Math.min(
+                                    Math.max(
+                                      Math.round(course.progress ?? 0),
+                                      0
+                                    ),
+                                    100
+                                  );
+                                  return (
+                                    <Link
+                                      key={course.id}
+                                      href={courseHref}
+                                      className="
+                                      group/item flex items-center gap-3
+                                      rounded-lg px-3 py-2 transition-colors
+                                      hover:bg-secondary/60
+                                    "
+                                    >
+                                      <div
+                                        className="
+                                        size-10 shrink-0 overflow-hidden
+                                        rounded-lg border border-border/30
+                                      "
+                                      >
+                                        <Image
+                                          src={getCourseImageUrl(
+                                            course.coverImageKey
+                                          )}
+                                          alt={course.title ?? 'Curso'}
+                                          width={40}
+                                          height={40}
+                                          className="size-full object-cover"
+                                        />
+                                      </div>
+                                      <div className="min-w-0 flex-1">
+                                        <p
+                                          className="
+                                          truncate text-xs font-medium
+                                          text-foreground
+                                        "
+                                        >
+                                          {course.title ?? 'Curso'}
+                                        </p>
+                                        <div
+                                          className="
+                                          mt-0.5 flex items-center gap-2
+                                        "
+                                        >
+                                          <div
+                                            className="
+                                            h-1 flex-1 overflow-hidden
+                                            rounded-full bg-muted
+                                          "
+                                          >
+                                            <div
+                                              className="
+                                              h-full rounded-full bg-primary
+                                            "
+                                              style={{ width: `${progress}%` }}
+                                            />
+                                          </div>
+                                          <span
+                                            className="
+                                            text-[10px] text-muted-foreground
+                                          "
+                                          >
+                                            {progress}%
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        width="24"
+                                        height="24"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="
+                                        size-3.5 text-primary opacity-0
+                                        transition-opacity
+                                        group-hover/item:opacity-100
+                                      "
+                                      >
+                                        <polygon points="6 3 20 12 6 21 6 3" />
+                                      </svg>
+                                    </Link>
+                                  );
+                                })
+                              ) : (
+                                <div
+                                  className="
+                                  px-3 py-2 text-xs text-muted-foreground
+                                "
+                                >
+                                  Aún no tienes cursos en progreso.
+                                </div>
+                              )}
+
+                              <div className="mx-2 my-1 h-px bg-border/40" />
+
+                              <Link
+                                href="/estudiantes/myaccount"
+                                className="
+                                flex items-center justify-center gap-1.5
+                                rounded-lg px-3 py-2 text-xs font-medium
+                                text-primary transition-colors
+                                hover:bg-primary/10
+                              "
+                              >
+                                Ver todos mis cursos
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   width="24"
@@ -694,179 +888,18 @@ export function Header({
                                   strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeLinejoin="round"
-                                  className="size-4 text-primary"
+                                  className="size-3 -rotate-90"
                                 >
-                                  <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
-                                  <path d="M22 10v6" />
-                                  <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+                                  <path d="m6 9 6 6 6-6" />
                                 </svg>
-                              </div>
-                              <div>
-                                <p
-                                  className="
-                                    text-sm font-medium text-foreground
-                                  "
-                                >
-                                  Mis Cursos
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  Cursos y programas inscritos
-                                </p>
-                              </div>
-                            </Link>
-
-                            <div className="mx-2 my-1 h-px bg-border/40" />
-
-                            <p
-                              className="
-                                px-3 pt-1 pb-1.5 text-[10px] font-semibold
-                                tracking-wider text-muted-foreground uppercase
-                              "
-                            >
-                              Continuar viendo
-                            </p>
-
-                            {continueCourses.length > 0 ? (
-                              continueCourses.map((course) => {
-                                const targetLessonId =
-                                  course.lastUnlockedLessonId ??
-                                  course.continueLessonId ??
-                                  course.firstLessonId ??
-                                  null;
-                                const courseHref = targetLessonId
-                                  ? `/estudiantes/clases/${targetLessonId}`
-                                  : `/estudiantes/cursos/${course.id}`;
-                                const progress = Math.min(
-                                  Math.max(Math.round(course.progress ?? 0), 0),
-                                  100
-                                );
-                                return (
-                                  <Link
-                                    key={course.id}
-                                    href={courseHref}
-                                    className="
-                                      group/item flex items-center gap-3
-                                      rounded-lg px-3 py-2 transition-colors
-                                      hover:bg-secondary/60
-                                    "
-                                  >
-                                    <div
-                                      className="
-                                        size-10 shrink-0 overflow-hidden
-                                        rounded-lg border border-border/30
-                                      "
-                                    >
-                                      <Image
-                                        src={getCourseImageUrl(
-                                          course.coverImageKey
-                                        )}
-                                        alt={course.title ?? 'Curso'}
-                                        width={40}
-                                        height={40}
-                                        className="size-full object-cover"
-                                      />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <p
-                                        className="
-                                          truncate text-xs font-medium
-                                          text-foreground
-                                        "
-                                      >
-                                        {course.title ?? 'Curso'}
-                                      </p>
-                                      <div
-                                        className="
-                                          mt-0.5 flex items-center gap-2
-                                        "
-                                      >
-                                        <div
-                                          className="
-                                            h-1 flex-1 overflow-hidden
-                                            rounded-full bg-muted
-                                          "
-                                        >
-                                          <div
-                                            className="
-                                              h-full rounded-full bg-primary
-                                            "
-                                            style={{ width: `${progress}%` }}
-                                          />
-                                        </div>
-                                        <span
-                                          className="
-                                            text-[10px] text-muted-foreground
-                                          "
-                                        >
-                                          {progress}%
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      width="24"
-                                      height="24"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      className="
-                                        size-3.5 text-primary opacity-0
-                                        transition-opacity
-                                        group-hover/item:opacity-100
-                                      "
-                                    >
-                                      <polygon points="6 3 20 12 6 21 6 3" />
-                                    </svg>
-                                  </Link>
-                                );
-                              })
-                            ) : (
-                              <div
-                                className="
-                                  px-3 py-2 text-xs text-muted-foreground
-                                "
-                              >
-                                Aún no tienes cursos en progreso.
-                              </div>
-                            )}
-
-                            <div className="mx-2 my-1 h-px bg-border/40" />
-
-                            <Link
-                              href="/estudiantes/myaccount"
-                              className="
-                                flex items-center justify-center gap-1.5
-                                rounded-lg px-3 py-2 text-xs font-medium
-                                text-primary transition-colors
-                                hover:bg-primary/10
-                              "
-                            >
-                              Ver todos mis cursos
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="size-3 -rotate-90"
-                              >
-                                <path d="m6 9 6 6 6-6" />
-                              </svg>
-                            </Link>
+                              </Link>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <Link
-                        href={item.href}
-                        className={`
+                      ) : (
+                        <Link
+                          href={item.href}
+                          className={`
                           rounded-lg border px-3 py-2 text-sm font-medium
                           transition-colors
                           focus-visible:outline-none
@@ -885,119 +918,120 @@ export function Header({
                               `
                           }
                         `}
-                      >
-                        {item.label}
-                      </Link>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+                        >
+                          {item.label}
+                        </Link>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
 
-            {/* Auth Button */}
-            {renderAuthButton()}
-          </div>
-        </div>
-
-        <div
-          className="
-            fixed top-[var(--subscription-banner-height,0px)] right-0 left-0
-            z-[100000] flex h-16 w-[100dvw] max-w-[100dvw] items-center
-            justify-between overflow-hidden border-b border-[#1d283a]
-            bg-[#01152d] px-5
-            md:hidden
-          "
-        >
-          <div className="flex min-w-16 items-center justify-start">
-            <div className="campana-header mobile-notification-shell relative">
-              <NotificationHeader />
+              {/* Auth Button */}
+              {renderAuthButton()}
             </div>
           </div>
+        ) : null}
 
-          <Link
-            href="/"
-            aria-label="Ir al inicio"
+        {isMobileViewport ? (
+          <div
             className="
+              fixed inset-x-0 top-[var(--subscription-banner-height,0px)]
+              z-[100000] flex h-16 items-center justify-between overflow-hidden
+              border-b border-[#1d283a] bg-[#01152d] px-5
+              md:hidden
+            "
+          >
+            <div className="flex min-w-16 items-center justify-start">
+              <div className="campana-header mobile-notification-shell relative">
+                <NotificationHeader />
+              </div>
+            </div>
+
+            <Link
+              href="/"
+              aria-label="Ir al inicio"
+              className="
               absolute left-1/2 flex size-9 -translate-x-1/2 items-center
               justify-center
             "
-          >
-            <Image
-              src="/artiefy-icon.png"
-              alt="Artiefy"
-              width={36}
-              height={36}
-              priority
-              className="size-9 object-contain"
-            />
-          </Link>
+            >
+              <Image
+                src="/artiefy-icon-mobile.png"
+                alt="Artiefy"
+                width={36}
+                height={36}
+                priority
+                className="size-9 object-contain"
+              />
+            </Link>
 
-          <div className="flex min-w-16 items-center justify-end gap-3">
-            <button
-              type="button"
-              aria-label={
-                showMobileSearch ? 'Cerrar búsqueda' : 'Abrir búsqueda'
-              }
-              aria-expanded={showMobileSearch}
-              className="
+            <div className="flex min-w-16 items-center justify-end gap-3">
+              <button
+                type="button"
+                aria-label={
+                  showMobileSearch ? 'Cerrar búsqueda' : 'Abrir búsqueda'
+                }
+                aria-expanded={showMobileSearch}
+                className="
                 inline-flex size-10 items-center justify-center rounded-full
                 text-white transition
                 hover:bg-white/10 hover:text-primary
                 focus-visible:ring-2 focus-visible:ring-primary
                 focus-visible:outline-none
               "
-              onClick={() => {
-                setShowMobileSearch((prev) => !prev);
-                setMobileMenuOpen(false);
-              }}
-            >
-              <Search className="size-5" />
-            </button>
-            <button
-              type="button"
-              aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-              aria-expanded={mobileMenuOpen}
-              aria-controls="mobile-menu"
-              className="
-                inline-flex size-10 items-center justify-center rounded-full
-                text-white transition
-                hover:bg-white/10 hover:text-primary
-                focus-visible:ring-2 focus-visible:ring-primary
-                focus-visible:outline-none
-              "
-              onClick={() => {
-                setMobileMenuOpen((prev) => {
-                  const next = !prev;
-                  if (next) setShowMobileSearch(false);
-                  return next;
-                });
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                onClick={() => {
+                  setShowMobileSearch((prev) => !prev);
+                  setMobileMenuOpen(false);
+                }}
               >
-                <line x1="4" x2="20" y1="7" y2="7" />
-                <line x1="4" x2="20" y1="12" y2="12" />
-                <line x1="4" x2="20" y1="17" y2="17" />
-              </svg>
-            </button>
+                <Search className="size-5" />
+              </button>
+              <button
+                type="button"
+                aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                aria-expanded={mobileMenuOpen}
+                aria-controls="mobile-menu"
+                className="
+                inline-flex size-10 items-center justify-center rounded-full
+                text-white transition
+                hover:bg-white/10 hover:text-primary
+                focus-visible:ring-2 focus-visible:ring-primary
+                focus-visible:outline-none
+              "
+                onClick={() => {
+                  setMobileMenuOpen((prev) => {
+                    const next = !prev;
+                    if (next) setShowMobileSearch(false);
+                    return next;
+                  });
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <line x1="4" x2="20" y1="7" y2="7" />
+                  <line x1="4" x2="20" y1="12" y2="12" />
+                  <line x1="4" x2="20" y1="17" y2="17" />
+                </svg>
+              </button>
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
-      {showMobileSearch && (
+      {isMobileViewport && showMobileSearch && (
         <div
           className="
-            fixed top-[calc(var(--subscription-banner-height,0px)+4rem)]
-            right-0 left-0 z-[99999] w-[100dvw] max-w-[100dvw] border-b
-            border-gray-700 bg-[#01152d] p-4
+            fixed inset-x-0
+            top-[calc(var(--subscription-banner-height,0px)+4rem)] z-[99999] border-b border-gray-700 bg-[#01152d] p-4
             md:hidden
           "
         >
@@ -1023,7 +1057,6 @@ export function Header({
                 focus:ring-[#3AF4EF]/50 focus:outline-none
               "
               autoComplete="off"
-              autoFocus
             />
             <button
               type="button"
@@ -1065,10 +1098,10 @@ export function Header({
           </form>
         </div>
       )}
-      {mobileMenuOpen ? (
+      {isMobileViewport && mobileMenuOpen ? (
         <div
           className="
-            fixed inset-0 z-[99999]
+            fixed inset-0 z-[99999] overscroll-contain
             md:hidden
           "
         >
@@ -1088,7 +1121,7 @@ export function Header({
             aria-label="Menú principal"
             tabIndex={-1}
             className="
-              fixed inset-y-0 left-0 z-[99999] flex h-screen max-h-screen
+              fixed inset-y-0 right-0 z-[99999] flex h-[100svh] max-h-[100svh]
               w-[min(86vw,22rem)] flex-col overflow-hidden bg-[#01152d] px-6
               pt-[calc(env(safe-area-inset-top)+1.5rem)] shadow-2xl
               sm:w-[80%] sm:max-w-sm sm:px-7
@@ -1101,7 +1134,7 @@ export function Header({
                 onClick={() => setMobileMenuOpen(false)}
               >
                 <Image
-                  src="/artiefy-icon.png"
+                  src="/artiefy-icon-mobile.png"
                   alt="Artiefy"
                   width={36}
                   height={36}
@@ -1242,14 +1275,28 @@ export function Header({
                   })}
                 </ul>
               </nav>
+              {!isSignedIn ? (
+                <button
+                  type="button"
+                  onClick={handleOpenLoginModal}
+                  className="
+                    mt-6 flex h-12 w-full items-center justify-center rounded-xl
+                    bg-primary text-sm font-semibold text-[#01152d] transition
+                    hover:bg-primary/90
+                    active:scale-95
+                  "
+                >
+                  Acceder
+                </button>
+              ) : null}
             </div>
-            <div
-              className="
-              shrink-0 border-t border-white/8 pt-4
-              pb-[calc(env(safe-area-inset-bottom)+1.25rem)]
-            "
-            >
-              {isSignedIn ? (
+            {isSignedIn ? (
+              <div
+                className="
+                  shrink-0 border-t border-white/8 pt-4
+                  pb-[calc(env(safe-area-inset-bottom)+1.25rem)]
+                "
+              >
                 <div className="flex min-h-12 items-center justify-center">
                   <Suspense
                     fallback={<Icons.spinner className="size-5 text-primary" />}
@@ -1257,46 +1304,11 @@ export function Header({
                     <UserButtonWrapper />
                   </Suspense>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleOpenLoginModal}
-                  className="
-                  flex h-12 w-full items-center justify-center rounded-xl
-                  bg-primary text-sm font-semibold text-[#01152d] transition
-                  hover:bg-primary/90
-                  active:scale-95
-                "
-                >
-                  Acceder
-                </button>
-              )}
-            </div>
+              </div>
+            ) : null}
           </aside>
         </div>
       ) : null}
-
-      <MiniLoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onLoginSuccess={() => setShowLoginModal(false)}
-        redirectUrl={pathname || '/'}
-        onSwitchToSignUp={() => {
-          setShowLoginModal(false);
-          setShowSignUpModal(true);
-        }}
-      />
-
-      <MiniSignUpModal
-        isOpen={showSignUpModal}
-        onClose={() => setShowSignUpModal(false)}
-        onSignUpSuccess={() => setShowSignUpModal(false)}
-        redirectUrl={pathname || '/'}
-        onSwitchToLogin={() => {
-          setShowSignUpModal(false);
-          setShowLoginModal(true);
-        }}
-      />
     </nav>
   );
 }
