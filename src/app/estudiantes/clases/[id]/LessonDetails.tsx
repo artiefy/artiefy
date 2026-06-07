@@ -216,7 +216,7 @@ export default function LessonDetails({
       const initializeLessonsState = () => {
         const sortedLessons = sortLessons(lessons);
 
-        const lessonsWithProgress = sortedLessons.map((lessonItem, index) => {
+        const lessonsWithProgress = sortedLessons.map((lessonItem) => {
           const progress = userLessonsProgress.find(
             (p) => p.lessonId === lessonItem.id
           );
@@ -632,21 +632,23 @@ export default function LessonDetails({
 
     // Si es de suscripción (pro/premium), verificar suscripción activa y fecha
     if (isSubscription) {
+      const showExpiredSubscriptionMessage = () => {
+        toast.error(
+          'No puedes entrar a la clase porque se venció tu suscripción.',
+          { id: SUBSCRIPTION_REQUIRED_TOAST_ID }
+        );
+        void router.push('/planes?subscription_expired=1');
+      };
+
       if (!metadata.subscriptionStatus || !metadata.subscriptionEndDate) {
-        toast.error('Se requiere una suscripción activa para ver las clases', {
-          id: SUBSCRIPTION_REQUIRED_TOAST_ID,
-        });
-        void router.push('/planes');
+        showExpiredSubscriptionMessage();
         return;
       }
       const isActive = metadata.subscriptionStatus === 'active';
       const endDate = parseSubscriptionDate(metadata.subscriptionEndDate);
       const isValid = endDate ? endDate > new Date() : false;
       if (!isActive || !isValid) {
-        toast.error('Se requiere una suscripción activa para ver las clases', {
-          id: SUBSCRIPTION_REQUIRED_TOAST_ID,
-        });
-        void router.push('/planes');
+        showExpiredSubscriptionMessage();
       }
     }
   }, [user, course, router]);
@@ -819,10 +821,19 @@ export default function LessonDetails({
   const lessonSubscriptionEndDate = parseSubscriptionDate(
     lessonMetadata?.subscriptionEndDate ?? null
   );
+  const now = new Date();
   const lessonHasActiveSubscription =
     lessonMetadata?.subscriptionStatus === 'active' &&
     lessonSubscriptionEndDate !== null &&
-    lessonSubscriptionEndDate > new Date();
+    lessonSubscriptionEndDate > now;
+  const lessonHasPaidPlan = ['pro', 'premium', 'enterprise'].includes(
+    (lessonMetadata?.planType ?? '').toLowerCase()
+  );
+  const lessonHasExpiredSubscription =
+    lessonHasPaidPlan &&
+    (lessonMetadata?.subscriptionStatus !== 'active' ||
+      lessonSubscriptionEndDate === null ||
+      lessonSubscriptionEndDate <= now);
   const lessonCourseTypes: CourseType[] = [
     ...(course.courseType ? [course.courseType] : []),
     ...(Array.isArray(course.courseTypes) ? course.courseTypes : []),
@@ -833,20 +844,9 @@ export default function LessonDetails({
       : lessonCourseTypes.some(
           (type) => (type.requiredSubscriptionLevel ?? 'none') !== 'none'
         );
-  const hasPermanentEnrollment = Array.isArray(course.enrollments)
-    ? (
-        course.enrollments as Array<{
-          userId?: string;
-          isPermanent?: boolean | null;
-        }>
-      ).some(
-        (enrollment) => enrollment.userId === userId && enrollment.isPermanent
-      )
-    : false;
   const isSubscriptionAccessBlocked =
-    lessonRequiresSubscription &&
-    !hasPermanentEnrollment &&
-    !lessonHasActiveSubscription;
+    lessonHasExpiredSubscription ||
+    (lessonRequiresSubscription && !lessonHasActiveSubscription);
 
   return (
     <div

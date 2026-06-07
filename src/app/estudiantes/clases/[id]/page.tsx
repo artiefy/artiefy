@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 
 import { type Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
+import { notFound, redirect, unstable_rethrow } from 'next/navigation';
 
 import { auth, currentUser } from '@clerk/nextjs/server';
 
@@ -100,6 +100,7 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
     const user = await currentUser();
     const metadata = user?.publicMetadata as
       | {
+          planType?: string;
           subscriptionStatus?: string;
           subscriptionEndDate?: string;
         }
@@ -114,25 +115,28 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
         : courseTypes.some(
             (type) => (type.requiredSubscriptionLevel ?? 'none') !== 'none'
           );
-    const hasPermanentEnrollment = Array.isArray(course.enrollments)
-      ? course.enrollments.some(
-          (enrollment) => enrollment.userId === userId && enrollment.isPermanent
-        )
-      : false;
     const subscriptionEndDate = parseSubscriptionDate(
       metadata?.subscriptionEndDate
     );
+    const now = new Date();
     const hasActiveSubscription =
       metadata?.subscriptionStatus === 'active' &&
       subscriptionEndDate !== null &&
-      subscriptionEndDate > new Date();
+      subscriptionEndDate > now;
+    const hasPaidPlan = ['pro', 'premium', 'enterprise'].includes(
+      (metadata?.planType ?? '').toLowerCase()
+    );
+    const hasExpiredSubscription =
+      hasPaidPlan &&
+      (metadata?.subscriptionStatus !== 'active' ||
+        subscriptionEndDate === null ||
+        subscriptionEndDate <= now);
 
     if (
-      requiresSubscription &&
-      !hasPermanentEnrollment &&
-      !hasActiveSubscription
+      hasExpiredSubscription ||
+      (requiresSubscription && !hasActiveSubscription)
     ) {
-      redirect('/planes');
+      redirect('/planes?subscription_expired=1');
     }
 
     // Obtener progreso real de todas las lecciones del curso
@@ -200,6 +204,7 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
       />
     );
   } catch (error: unknown) {
+    unstable_rethrow(error);
     console.error(
       'Error al obtener los datos de la lección:',
       error instanceof Error ? error.message : String(error)

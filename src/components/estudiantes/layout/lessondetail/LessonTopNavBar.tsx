@@ -51,7 +51,12 @@ const LessonTopNavBar = ({
   const completedBars = Math.round((currentLessonIndex / totalLessons) * 22);
 
   return (
-    <div className="fixed top-16 right-0 left-0 z-[60] w-full px-4 py-2">
+    <div
+      className="
+        fixed top-[calc(var(--subscription-banner-height,0px)+4rem)] right-0
+        left-0 z-[110] w-full px-4 py-2
+      "
+    >
       <div
         className="
           mx-auto grid max-w-[1800px] grid-cols-[minmax(0,1fr)_auto]
