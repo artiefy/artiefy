@@ -423,6 +423,10 @@ export default function WhatsAppInboxPage({
     );
   }, [hiddenWaids]);
 
+  const [ileniaInactiveChats, setIleniaInactiveChats] = useState<Set<string>>(
+    new Set()
+  );
+
   const [filterName, setFilterName] = useState('');
   const [filterFrom, setFilterFrom] = useState<string>('');
   const [filterTo, setFilterTo] = useState<string>('');
@@ -990,6 +994,23 @@ export default function WhatsAppInboxPage({
     return <FileText className="size-4" />;
   };
 
+  const toggleIlenIA = (waid: string) => {
+    const isInactive = ileniaInactiveChats.has(waid);
+    const confirmMsg = isInactive
+      ? '¿Quieres activar nuevamente a IlenIA para esta conversación?'
+      : '¿Quieres inactivar a IlenIA y dejar esta conversación en atención humana?';
+
+    if (!confirm(confirmMsg)) return;
+
+    if (isInactive) {
+      setIleniaInactiveChats(
+        (prev) => new Set([...prev].filter((w) => w !== waid))
+      );
+    } else {
+      setIleniaInactiveChats((prev) => new Set([...prev, waid]));
+    }
+  };
+
   useEffect(() => {
     // Inicializar en true si estamos en escritorio
     const isLargeScreen = window.innerWidth >= 768;
@@ -1428,6 +1449,25 @@ export default function WhatsAppInboxPage({
               className="flex-shrink-0 rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-emerald-600"
             >
               ✓ Solucionado
+            </button>
+          )}
+
+          {/* Botón Toggle IlenIA */}
+          {selected && (
+            <button
+              onClick={() => void toggleIlenIA(selected)}
+              className={`
+                flex-shrink-0 rounded-full px-3 py-1.5 text-xs font-medium text-white transition-colors
+                ${
+                  ileniaInactiveChats.has(selected)
+                    ? 'bg-blue-700 hover:bg-blue-600'
+                    : 'bg-red-700 hover:bg-red-600'
+                }
+              `}
+            >
+              {ileniaInactiveChats.has(selected)
+                ? 'Activar IlenIA'
+                : 'Inactivar IlenIA'}
             </button>
           )}
 
