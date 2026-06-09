@@ -2220,3 +2220,242 @@ export const typesPrograms = pgTable('types_programs', {
   id: serial('id').primaryKey(),
   type: varchar('type', { length: 255 }).notNull(),
 });
+
+// Tabla principal - Proyecto Guiado
+export const guidedProjects = pgTable('guided_projects', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  coverImageKey: text('cover_image_key'),
+  coverVideoKey: text('cover_video_key'),
+  categoryId: integer('category_id')
+    .references(() => categories.id)
+    .notNull(),
+  instructor: text('instructor').notNull(),
+  creatorId: text('creator_id')
+    .references(() => users.id)
+    .notNull(),
+  rating: real('rating').default(0),
+  modalidadId: integer('modalidad_id')
+    .references(() => modalidades.id)
+    .notNull(),
+  nivelId: integer('nivel_id')
+    .references(() => nivel.id)
+    .notNull(),
+  courseTypeId: integer('course_type_id')
+    .references(() => courseTypes.id)
+    .default(sql`NULL`),
+  certificationTypeId: integer('certification_type_id')
+    .references(() => certificationTypes.id)
+    .default(sql`NULL`),
+  individualPrice: integer('individual_price'),
+  requiresProgram: boolean('requires_program').default(false),
+  isActive: boolean('is_active').default(true),
+  isTop: boolean('is_top').default(false),
+  isFeatured: boolean('is_featured').default(false),
+  visibility: boolean('visibility').default(true),
+  metaPixelId: text('meta_pixel_id'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Objetivos / Sesiones
+export const guidedObjectives = pgTable('guided_objectives', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  duration: integer('duration').notNull(),
+  orderIndex: integer('order_index').notNull().default(0),
+  coverImageKey: text('cover_image_key'),
+  coverVideoKey: text('cover_video_key'),
+  resourceKey: text('resource_key'),
+  resourceNames: text('resource_names'),
+  guidedProjectId: integer('guided_project_id')
+    .references(() => guidedProjects.id, { onDelete: 'cascade' })
+    .notNull(),
+  isEnabled: boolean('is_enabled').default(true).notNull(), // 👈 lo nuevo
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Actividades dentro de cada objetivo
+export const guidedObjectiveActivities = pgTable(
+  'guided_objective_activities',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 255 }).notNull(),
+    description: text('description'),
+    typeId: integer('type_id')
+      .references(() => typeActi.id)
+      .notNull(),
+    objectiveId: integer('objective_id')
+      .references(() => guidedObjectives.id, { onDelete: 'cascade' })
+      .notNull(),
+    parametroId: integer('parametro_id').references(() => parametros.id),
+    porcentaje: integer('porcentaje'),
+    startDate: date('start_date'), // 👈 lo nuevo
+    endDate: date('end_date'), // 👈 lo nuevo
+    weekNumber: integer('week_number'), // 👈 lo nuevo
+    fechaMaximaEntrega: timestamp('fecha_maxima_entrega'),
+    revisada: boolean('revisada').default(false),
+    lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  }
+);
+
+// Inscripciones
+export const guidedEnrollments = pgTable(
+  'guided_enrollments',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    guidedProjectId: integer('guided_project_id')
+      .references(() => guidedProjects.id, { onDelete: 'cascade' })
+      .notNull(),
+    enrolledAt: timestamp('enrolled_at').defaultNow().notNull(),
+    completed: boolean('completed').default(false),
+    isPermanent: boolean('is_permanent').default(false).notNull(),
+  },
+  (table) => [
+    unique('uniq_guided_enrollment').on(table.userId, table.guidedProjectId),
+  ]
+);
+
+// Progreso por objetivo
+export const userObjectiveProgress = pgTable(
+  'user_objective_progress',
+  {
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    objectiveId: integer('objective_id')
+      .references(() => guidedObjectives.id, { onDelete: 'cascade' })
+      .notNull(),
+    progress: real('progress').default(0).notNull(),
+    lastPositionSeconds: real('last_position_seconds').default(0).notNull(),
+    isCompleted: boolean('is_completed').default(false).notNull(),
+    isLocked: boolean('is_locked').default(true),
+    isNew: boolean('is_new').default(true).notNull(),
+    lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('uniq_user_objective_progress').on(table.userId, table.objectiveId),
+  ]
+);
+
+// Progreso por actividad
+export const userGuidedActivityProgress = pgTable(
+  'user_guided_activity_progress',
+  {
+    userId: text('user_id')
+      .references(() => users.id)
+      .notNull(),
+    activityId: integer('activity_id')
+      .references(() => guidedObjectiveActivities.id, { onDelete: 'cascade' })
+      .notNull(),
+    progress: real('progress').default(0).notNull(),
+    isCompleted: boolean('is_completed').default(false).notNull(),
+    revisada: boolean('revisada').default(false),
+    attemptCount: integer('attempt_count').default(0),
+    finalGrade: real('final_grade'),
+    lastAttemptAt: timestamp('last_attempt_at'),
+    lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('uniq_user_guided_activity_progress').on(
+      table.userId,
+      table.activityId
+    ),
+  ]
+);
+
+// Relaciones
+export const guidedProjectsRelations = relations(
+  guidedProjects,
+  ({ one, many }) => ({
+    creator: one(users, {
+      fields: [guidedProjects.creatorId],
+      references: [users.id],
+    }),
+    category: one(categories, {
+      fields: [guidedProjects.categoryId],
+      references: [categories.id],
+    }),
+    modalidad: one(modalidades, {
+      fields: [guidedProjects.modalidadId],
+      references: [modalidades.id],
+    }),
+    nivel: one(nivel, {
+      fields: [guidedProjects.nivelId],
+      references: [nivel.id],
+    }),
+    objectives: many(guidedObjectives),
+    enrollments: many(guidedEnrollments),
+  })
+);
+
+export const guidedObjectivesRelations = relations(
+  guidedObjectives,
+  ({ one, many }) => ({
+    guidedProject: one(guidedProjects, {
+      fields: [guidedObjectives.guidedProjectId],
+      references: [guidedProjects.id],
+    }),
+    activities: many(guidedObjectiveActivities),
+    userProgress: many(userObjectiveProgress),
+  })
+);
+
+export const guidedObjectiveActivitiesRelations = relations(
+  guidedObjectiveActivities,
+  ({ one, many }) => ({
+    objective: one(guidedObjectives, {
+      fields: [guidedObjectiveActivities.objectiveId],
+      references: [guidedObjectives.id],
+    }),
+    userProgress: many(userGuidedActivityProgress),
+  })
+);
+
+export const guidedEnrollmentsRelations = relations(
+  guidedEnrollments,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [guidedEnrollments.userId],
+      references: [users.id],
+    }),
+    guidedProject: one(guidedProjects, {
+      fields: [guidedEnrollments.guidedProjectId],
+      references: [guidedProjects.id],
+    }),
+  })
+);
+
+export const userObjectiveProgressRelations = relations(
+  userObjectiveProgress,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userObjectiveProgress.userId],
+      references: [users.id],
+    }),
+    objective: one(guidedObjectives, {
+      fields: [userObjectiveProgress.objectiveId],
+      references: [guidedObjectives.id],
+    }),
+  })
+);
+
+export const userGuidedActivityProgressRelations = relations(
+  userGuidedActivityProgress,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userGuidedActivityProgress.userId],
+      references: [users.id],
+    }),
+    activity: one(guidedObjectiveActivities, {
+      fields: [userGuidedActivityProgress.activityId],
+      references: [guidedObjectiveActivities.id],
+    }),
+  })
+);
