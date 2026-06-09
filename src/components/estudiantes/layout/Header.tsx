@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { Show, useAuth, useUser } from '@clerk/nextjs';
+import { type OAuthStrategy } from '@clerk/shared/types';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 import {
   BookOpen,
@@ -22,6 +23,8 @@ import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 import useSWR from 'swr';
 
+import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
+import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
 import CourseSearchPreview from '~/components/estudiantes/layout/studentdashboard/CourseSearchPreview';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
@@ -51,6 +54,11 @@ export function Header({
   const [searchInProgress, setSearchInProgress] = useState(false);
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [activeAuthModal, setActiveAuthModal] = useState<
+    'login' | 'signup' | null
+  >(null);
+  const [oauthSignUpStrategy, setOauthSignUpStrategy] =
+    useState<OAuthStrategy | null>(null);
 
   const { isLoaded: isAuthLoaded } = useAuth();
   const { user } = useUser();
@@ -435,7 +443,24 @@ export function Header({
   const handleOpenLoginModal = () => {
     setMobileMenuOpen(false);
     setShowMobileSearch(false);
+
+    if (isMobileViewport) {
+      setOauthSignUpStrategy(null);
+      setActiveAuthModal('login');
+      return;
+    }
+
     window.location.href = desktopSignInHref;
+  };
+
+  const handleSwitchToSignUp = (strategy?: OAuthStrategy) => {
+    setOauthSignUpStrategy(strategy ?? null);
+    setActiveAuthModal('signup');
+  };
+
+  const handleSwitchToLogin = () => {
+    setOauthSignUpStrategy(null);
+    setActiveAuthModal('login');
   };
 
   useEffect(() => {
@@ -1101,15 +1126,15 @@ export function Header({
       {isMobileViewport && mobileMenuOpen ? (
         <div
           className="
-            fixed inset-0 z-[99999] overscroll-contain
+            fixed inset-0 z-[2147483647] overscroll-contain
             md:hidden
           "
         >
           <button
             type="button"
             className="
-              fixed inset-0 cursor-default appearance-none border-0 bg-black/55
-              p-0
+              fixed inset-0 z-[2147483646] cursor-default appearance-none
+              border-0 bg-black/55 p-0
             "
             aria-label="Cerrar menú"
             onClick={() => setMobileMenuOpen(false)}
@@ -1121,9 +1146,10 @@ export function Header({
             aria-label="Menú principal"
             tabIndex={-1}
             className="
-              fixed inset-y-0 right-0 z-[99999] flex h-[100svh] max-h-[100svh]
-              w-[min(86vw,22rem)] flex-col overflow-hidden bg-[#01152d] px-6
-              pt-[calc(env(safe-area-inset-top)+1.5rem)] shadow-2xl
+              fixed inset-y-0 right-0 z-[2147483647] flex h-[100svh]
+              max-h-[100svh] w-[min(86vw,22rem)] flex-col overflow-hidden
+              bg-[#01152d] px-6 pt-[calc(env(safe-area-inset-top)+1.5rem)]
+              shadow-2xl
               sm:w-[80%] sm:max-w-sm sm:px-7
             "
           >
@@ -1309,6 +1335,29 @@ export function Header({
           </aside>
         </div>
       ) : null}
+
+      <MiniLoginModal
+        isOpen={isMobileViewport && activeAuthModal === 'login'}
+        onClose={() => setActiveAuthModal(null)}
+        onLoginSuccess={() => setActiveAuthModal(null)}
+        redirectUrl={pathname || '/'}
+        onSwitchToSignUp={handleSwitchToSignUp}
+      />
+      <MiniSignUpModal
+        isOpen={isMobileViewport && activeAuthModal === 'signup'}
+        onClose={() => {
+          setActiveAuthModal(null);
+          setOauthSignUpStrategy(null);
+        }}
+        onSignUpSuccess={() => {
+          setActiveAuthModal(null);
+          setOauthSignUpStrategy(null);
+        }}
+        redirectUrl={pathname || '/'}
+        autoStartOAuthStrategy={oauthSignUpStrategy}
+        onAutoStartOAuthHandled={() => setOauthSignUpStrategy(null)}
+        onSwitchToLogin={handleSwitchToLogin}
+      />
     </nav>
   );
 }

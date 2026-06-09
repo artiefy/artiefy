@@ -8,6 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { BsCheck2Circle } from 'react-icons/bs';
 import { FaCrown, FaStar, FaTimes, FaTimesCircle } from 'react-icons/fa';
+import { toast } from 'sonner';
 
 import Footer from '~/components/estudiantes/layout/Footer';
 import { Header } from '~/components/estudiantes/layout/Header';
@@ -28,6 +29,23 @@ const PlansPage: React.FC = () => {
   const hasProcessedUrlRef = useRef(false);
 
   const planIdParam = searchParams?.get('plan_id') ?? null;
+  const subscriptionExpiredParam =
+    searchParams?.get('subscription_expired') ?? null;
+
+  useEffect(() => {
+    if (subscriptionExpiredParam !== '1') return;
+
+    toast.error(
+      'No puedes entrar a la clase porque se venció tu suscripción.',
+      { id: 'subscription-expired-class-access' }
+    );
+
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('subscription_expired');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    }
+  }, [subscriptionExpiredParam]);
 
   // Detectar plan_id en la URL y abrir modal si corresponde (solo una vez)
   useEffect(() => {

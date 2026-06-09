@@ -77,3 +77,7 @@ dist/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Local agent/harness files
+.atl/
+.pi/

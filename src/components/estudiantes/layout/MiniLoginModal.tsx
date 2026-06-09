@@ -314,6 +314,10 @@ export default function MiniLoginModal({
     if (!loadingProvider) return;
 
     const timeoutId = window.setTimeout(() => {
+      if (document.visibilityState !== 'visible') return;
+      if (oauthStartedAtRef.current === 0) return;
+
+      oauthStartedAtRef.current = 0;
       setLoadingProvider(null);
       setErrors([
         {
@@ -324,7 +328,7 @@ export default function MiniLoginModal({
           meta: {},
         },
       ]);
-    }, 15000);
+    }, 45000);
 
     return () => window.clearTimeout(timeoutId);
   }, [loadingProvider]);
@@ -339,19 +343,26 @@ export default function MiniLoginModal({
     };
 
     const handleVisibilityChange = () => {
-      if (
-        document.visibilityState === 'visible' &&
-        oauthStartedAtRef.current > 0
-      ) {
+      if (oauthStartedAtRef.current === 0) return;
+
+      if (document.visibilityState === 'visible') {
+        resetTransientState(true);
+      }
+    };
+
+    const handlePageHide = () => {
+      if (oauthStartedAtRef.current > 0) {
         resetTransientState(true);
       }
     };
 
     window.addEventListener('pageshow', handlePageShow);
+    window.addEventListener('pagehide', handlePageHide);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('pageshow', handlePageShow);
+      window.removeEventListener('pagehide', handlePageHide);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [isOpen, resetTransientState]);
@@ -409,6 +420,8 @@ export default function MiniLoginModal({
           // ignore storage failures
         }
       }
+
+      signIn.reset();
 
       const { error } = await signIn.sso({
         strategy,
