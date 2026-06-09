@@ -1,0 +1,54 @@
+{
+  "agents": {
+    "overrides": {
+      "sdd-orchestrator": {
+        "modelConfig": {
+          "model": "gemini-3.1-pro-preview"
+        }
+      },
+      "sdd-explore": {
+        "modelConfig": {
+          "model": "gemini-3.1-pro-preview"
+        }
+      },
+      "sdd-design": {
+        "modelConfig": {
+          "model": "gemini-3.1-pro-preview"
+        }
+      },
+      "sdd-apply": {
+        "modelConfig": {
+          "model": "gemini-3.1-pro-preview"
+        }
+      },
+      "sdd-propose": {
+        "modelConfig": {
+          "model": "gemini-2.5-pro"
+        }
+      },
+      "sdd-spec": {
+        "modelConfig": {
+          "model": "gemini-2.5-pro"
+        }
+      },
+      "sdd-tasks": {
+        "modelConfig": {
+          "model": "gemini-3.1-flash"
+        }
+      },
+      "sdd-verify": {
+        "modelConfig": {
+          "model": "gemini-3.1-flash"
+        }
+      },
+      "sdd-archive": {
+        "modelConfig": {
+          "model": "gemini-2.5-flash"
+        }
+      }
+    }
+  },
+  "general": {
+    "enableNotifications": true
+  }
+}
