@@ -344,10 +344,6 @@ export const getAllCourses = async () => {
         .from(courseInstructors)
         .leftJoin(users, eq(courseInstructors.instructorId, users.id))
         .where(eq(courseInstructors.courseId, course.id));
-      console.log(
-        '🔍 instructorRows:',
-        JSON.stringify(instructorRows, null, 2)
-      ); // ← agrega esto
 
       const instructorName =
         instructorRows.length > 0
@@ -545,37 +541,29 @@ export const updateCourseInstructor = async (
 };
 
 export const getCoursesByUserIdSimplified = async (userId: string) => {
-  console.log('UserId recibido:', userId); // Verifica que el ID sea correcto
+  const coursesData = await db
+    .select({
+      id: courses.id,
+      title: courses.title,
+      description: courses.description,
+      coverImageKey: courses.coverImageKey,
+      instructor: courses.instructor,
+      instructorName: users.name,
+      modalidadName: modalidades.name,
+    })
+    .from(courses)
+    .innerJoin(enrollments, eq(enrollments.courseId, courses.id))
+    .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
+    .leftJoin(users, eq(courses.instructor, users.id))
+    .where(eq(enrollments.userId, userId));
 
-  try {
-    // Realiza la consulta para obtener los cursos en los que el usuario está inscrito
-    const coursesData = await db
-      .select({
-        id: courses.id,
-        title: courses.title,
-        description: courses.description,
-        coverImageKey: courses.coverImageKey, // Asegúrate de que este campo existe
-      })
-      .from(courses)
-      .innerJoin(enrollments, eq(enrollments.courseId, courses.id)) // Realiza el join con la tabla de enrollments
-      .where(eq(enrollments.userId, userId)); // Filtra por el userId en la tabla de enrollments
+  if (coursesData.length === 0) return [];
 
-    // Verifica los datos obtenidos de la consulta
-
-    console.log('Cursos obtenidos:', coursesData);
-
-    // Si no se obtienen cursos, retornar un array vacío
-    if (coursesData.length === 0) {
-      console.log('No se encontraron cursos para el usuario');
-      return [];
-    }
-
-    // De lo contrario, devolver los cursos
-    return coursesData;
-  } catch (error) {
-    console.error('Error al obtener los cursos:', error);
-    throw new Error('Error al obtener los cursos');
-  }
+  return coursesData.map((c) => ({
+    ...c,
+    instructor: c.instructorName ?? c.instructor ?? 'Sin instructor',
+    modalidad: c.modalidadName ? { name: c.modalidadName } : null,
+  }));
 };
 
 export const getModalidadById = async (modalidadId: number) => {

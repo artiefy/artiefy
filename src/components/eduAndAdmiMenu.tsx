@@ -48,6 +48,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const pathname = usePathname();
   const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
   const [isParametersOpen, setIsParametersOpen] = useState(false);
+  const [isProjectsOpen, setIsProjectsOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -100,12 +101,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       title: 'Control de Accesos',
       id: 'access-control',
       link: '/dashboard/super-admin/subscription',
-    },
-    {
-      icon: <FiFileText size={18} />,
-      title: 'Proyectos',
-      id: 'projects',
-      link: '/dashboard/super-admin/projects',
     },
   ];
 
@@ -818,6 +813,81 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                           )}
                         >
                           Tipos de Certificación
+                        </Link>
+                      </li>
+                    </ul>
+                  )}
+                </li>
+
+                {/* Submenú: Proyectos */}
+                <li>
+                  <button
+                    onClick={() =>
+                      shouldShowText && setIsProjectsOpen(!isProjectsOpen)
+                    }
+                    className={cn(
+                      `
+                        flex w-full items-center rounded-lg p-2 text-white
+                        transition-all duration-300
+                        hover:bg-secondary hover:text-white
+                      `,
+                      !shouldShowText && 'justify-center'
+                    )}
+                    title={!shouldShowText ? 'Proyectos' : undefined}
+                  >
+                    <FiFileText size={18} />
+                    {shouldShowText && (
+                      <>
+                        <span
+                          className="
+                            ml-2.5 flex-1 text-left text-xs font-medium
+                            whitespace-nowrap
+                          "
+                        >
+                          Proyectos
+                        </span>
+                        {isProjectsOpen ? (
+                          <FiChevronDown size={16} />
+                        ) : (
+                          <FiChevronRight size={16} />
+                        )}
+                      </>
+                    )}
+                  </button>
+
+                  {isProjectsOpen && shouldShowText && (
+                    <ul className="mt-1 ml-4 space-y-0.5">
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/projects"
+                          className={cn(
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
+                            pathname === '/dashboard/super-admin/projects' &&
+                              'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          Proyectos de Estudiantes
+                        </Link>
+                      </li>
+                      <li>
+                        <Link
+                          href="/dashboard/super-admin/proyectos-guiados"
+                          className={cn(
+                            `
+                              block rounded-lg px-2 py-1.5 text-xs text-white
+                              transition-all duration-300
+                              hover:bg-secondary hover:text-white
+                            `,
+                            pathname.includes(
+                              '/dashboard/super-admin/proyectos-guiados'
+                            ) && 'bg-primary text-[#01142B]'
+                          )}
+                        >
+                          Proyectos Guiados
                         </Link>
                       </li>
                     </ul>

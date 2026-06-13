@@ -457,6 +457,7 @@ export default function AdminDashboard() {
     coverImage?: string;
     instructor?: string;
     instructorName?: string;
+    modalidadesid?: string | number;
     modalidad?: { name: string };
     rating?: number;
   }
@@ -683,6 +684,10 @@ export default function AdminDashboard() {
       if (!isValidCourseArray(rawData)) {
         throw new Error('Datos inválidos para cursos');
       }
+      console.log(
+        '📌 Primer curso raw de /api/super-admin/courses:',
+        JSON.stringify((rawData as RawCourseData[])[0], null, 2)
+      );
 
       const data = rawData.map((c: RawCourseData) => ({
         id: String(c.id),
@@ -690,7 +695,9 @@ export default function AdminDashboard() {
         coverImageKey: c.coverImageKey ?? null,
         coverImage: c.coverImage,
         instructor: c.instructorName ?? c.instructor ?? 'Sin instructor',
-        modalidad: c.modalidad,
+        modalidad:
+          c.modalidad ??
+          (c.modalidadesid ? { name: String(c.modalidadesid) } : undefined), // 👈 null → undefined
         rating: c.rating,
       }));
 
@@ -822,24 +829,6 @@ export default function AdminDashboard() {
     );
   };
 
-  const fetchCourses = useCallback(async () => {
-    try {
-      const res = await fetch('/api/educadores/courses');
-      if (!res.ok) throw new Error('Error al cargar cursos');
-      const rawData: unknown = await res.json();
-      if (!Array.isArray(rawData)) throw new Error('Invalid data received');
-      const data: { id: string; title: string; instructor: string }[] =
-        rawData.map((item: RawCourseData) => ({
-          id: String(item.id),
-          title: String(item.title),
-          instructor:
-            item.instructorName ?? item.instructor ?? 'Sin instructor',
-        }));
-      setCourses(data);
-    } catch (err) {
-      console.error('Error fetching courses:', err);
-    }
-  }, []);
   const fetchAnuncios = async (userId: string) => {
     try {
       const res = await fetch('/api/super-admin/anuncios/view-anuncio', {
@@ -1465,7 +1454,12 @@ export default function AdminDashboard() {
         coverImageKey: course.coverImageKey ?? null,
         coverImage: course.coverImage ?? '/default-course.jpg',
         instructor: course.instructor || 'Instructor no disponible',
+        modalidad: course.modalidad, // 👈 agregar
       }));
+      console.log(
+        '📌 Primer curso mapeado:',
+        JSON.stringify(courses[0], null, 2)
+      ); // 👈
 
       // Actualizar el estado con los cursos
       setViewUser({
@@ -1478,10 +1472,6 @@ export default function AdminDashboard() {
       console.error('Error al obtener usuario o cursos:', error);
     }
   };
-
-  useEffect(() => {
-    void fetchCourses();
-  }, [fetchCourses]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -3745,6 +3735,11 @@ export default function AdminDashboard() {
                                 {course.instructor && (
                                   <p className="mt-0.5 text-xs text-emerald-400">
                                     👨‍🏫 {course.instructor}
+                                  </p>
+                                )}
+                                {course.modalidad?.name && (
+                                  <p className="mt-0.5 text-xs text-blue-400">
+                                    🖥️ {course.modalidad.name}
                                   </p>
                                 )}
                               </div>

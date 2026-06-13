@@ -32,8 +32,9 @@ interface CreateTicketBody {
   documentKey?: string | null;
 }
 
-interface UpdateTicketBody
-  extends Partial<Omit<CreateTicketBody, 'assignedToId'>> {
+interface UpdateTicketBody extends Partial<
+  Omit<CreateTicketBody, 'assignedToId'>
+> {
   id: number;
   assignedToIds?: string[];
 }
@@ -82,8 +83,6 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type');
 
-  console.log('🔐 User:', userId, '| Role:', role, '| Type:', type);
-
   if (!userId || (role !== 'admin' && role !== 'super-admin')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -131,24 +130,17 @@ export async function GET(request: Request) {
     }
     const ids = Array.from(assignedTicketIds);
     whereClause = sql`WHERE t.id IN (${sql.join(ids, sql`, `)})`;
-    console.log(`📄 Filtro aplicado para "assigned": ${ids.length} tickets.`);
   } else if (type === 'created') {
-    console.log('📄 Tipo "created" activado.');
     if (role === 'super-admin') {
-      console.log('🟢 Super-admin en "created", no se aplica filtro.');
       whereClause = sql``;
     } else {
-      console.log('🟠 Admin en "created", se filtra por creator_id.');
       whereClause = sql`WHERE t.creator_id = ${userId}`;
     }
   } else {
     // cualquier otro type o sin type
-    console.log('📄 Tipo vacío o desconocido.');
     if (role === 'super-admin') {
-      console.log('🟢 Super-admin sin type: se muestran todos los tickets.');
       whereClause = sql``;
     } else {
-      console.log('🟠 Admin sin type: se filtra por creator_id.');
       whereClause = sql`WHERE t.creator_id = ${userId}`;
     }
   }
@@ -220,7 +212,6 @@ export async function GET(request: Request) {
     };
   });
 
-  console.log('📦 Total tickets procesados:', ticketsFormatted.length);
   return NextResponse.json(ticketsFormatted);
 }
 
@@ -241,8 +232,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 });
     }
 
-    console.log('📝 Creando nuevo ticket:', body);
-
     const ticketData = {
       ...body,
       creatorId: userId,
@@ -250,12 +239,10 @@ export async function POST(request: Request) {
       updatedAt: new Date(),
       title: body.description?.slice(0, 50) || 'Ticket de Soporte', // Ajusta esto según tu lógica de títulos
     };
-    console.log('🧾 Datos que se van a guardar:', ticketData);
 
     delete ticketData.assignedToIds;
 
     const newTicket = await db.insert(tickets).values(ticketData).returning();
-    console.log('✅ Ticket creado:', newTicket[0]);
 
     // --- ASIGNACIÓN AUTOMÁTICA PARA ESTUDIANTES ---
     // Buscar los usuarios con los emails indicados y asignarles el ticket
@@ -280,10 +267,6 @@ export async function POST(request: Request) {
           })
         )
       );
-      console.log(
-        '📧 Ticket asignado automáticamente a:',
-        autoAssignees.map((u) => u.email)
-      );
     }
 
     // --- FIN ASIGNACIÓN AUTOMÁTICA ---
@@ -301,8 +284,6 @@ export async function POST(request: Request) {
 
     // Enviar correos si el ticket tiene asignaciones
     if (body.assignedToIds && body.assignedToIds.length > 0) {
-      console.log('📧 Usuarios asignados:', body.assignedToIds);
-
       for (const assignedId of body.assignedToIds) {
         try {
           const assignee = await db.query.users.findFirst({

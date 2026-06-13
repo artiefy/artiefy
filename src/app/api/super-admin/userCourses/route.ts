@@ -31,7 +31,14 @@ export async function GET(request: Request) {
       coverImage: course.coverImageKey
         ? `/path/to/images/${course.coverImageKey}`
         : '/default-course-image.png',
+      instructor:
+        course.instructor ?? course.instructorName ?? 'Sin instructor', // 👈
+      modalidad: course.modalidad ?? null, // 👈
     }));
+    console.log(
+      '📌 API userCourses - primer curso:',
+      JSON.stringify(filteredCourses[0], null, 2)
+    ); // 👈
 
     // Log para ver los cursos filtrados antes de devolverlos
 
