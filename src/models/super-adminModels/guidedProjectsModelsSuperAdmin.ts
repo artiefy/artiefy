@@ -252,15 +252,15 @@ export const createGuidedActivity = async (data: Partial<GuidedActivity>) => {
       objectiveId: data.objectiveId || 1,
       parametroId: data.parametroId,
       porcentaje: data.porcentaje,
+      weekNumber: data.weekNumber,
       startDate: data.startDate
         ? new Date(data.startDate).toISOString().split('T')[0]
         : null,
       endDate: data.endDate
         ? new Date(data.endDate).toISOString().split('T')[0]
         : null,
-      weekNumber: data.weekNumber,
       fechaMaximaEntrega: data.fechaMaximaEntrega
-        ? new Date(data.fechaMaximaEntrega).toISOString().split('T')[0]
+        ? new Date(data.fechaMaximaEntrega) // 👈
         : null,
       revisada: data.revisada || false,
     })
