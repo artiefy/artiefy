@@ -827,7 +827,7 @@ const ModalFormLessons = ({
                 type="image"
                 label="Imagen de portada:"
                 accept="image/*"
-                maxSize={5}
+                maxSize={50}
                 tipo="Imagen"
                 onFileChange={(file) => {
                   console.log('[FileUpload] onFileChange coverimage', file);
@@ -854,7 +854,7 @@ const ModalFormLessons = ({
                 type="file"
                 label="Archivo de la clase:"
                 accept=".pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx"
-                maxSize={10}
+                maxSize={50}
                 multiple
                 tipo="Archivos"
                 onFileChange={(file) => {
@@ -876,7 +876,7 @@ const ModalFormLessons = ({
                 type="image"
                 label="Imágenes adicionales"
                 accept="image/*"
-                maxSize={5}
+                maxSize={50}
                 multiple
                 tipo="Imágenes"
                 onFileChange={(file) => {

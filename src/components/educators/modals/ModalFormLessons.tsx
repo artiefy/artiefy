@@ -646,9 +646,11 @@ const ModalFormLessons = ({
 
   // Añadir componente de progreso persistente
   const UploadProgressDisplay = () => (
-    <div className="
+    <div
+      className="
       fixed right-4 bottom-4 z-50 w-96 rounded-lg bg-background p-4 shadow-lg
-    ">
+    "
+    >
       <h3 className="mb-2 font-semibold text-primary">Progreso de carga</h3>
       {Object.values(uploadProgresses).map((item) => (
         <div key={item.fileName} className="mb-4">
@@ -699,9 +701,7 @@ const ModalFormLessons = ({
               onChange={(e) => handleInputChange(e, 'title')}
               className={`
                 mb-4 w-full rounded border p-2 text-white outline-none
-                ${
-                errors.title ? 'border-red-500' : 'border-primary'
-              }
+                ${errors.title ? 'border-red-500' : 'border-primary'}
               `}
             />
             {errors.title && (
@@ -720,9 +720,7 @@ const ModalFormLessons = ({
               onChange={(e) => handleInputChange(e, 'description')}
               className={`
                 mb-3 h-auto w-full rounded border p-2 text-white outline-none
-                ${
-                errors.description ? 'border-red-500' : 'border-primary'
-              }
+                ${errors.description ? 'border-red-500' : 'border-primary'}
               `}
             />
             {errors.description && (
@@ -742,9 +740,7 @@ const ModalFormLessons = ({
               onChange={(e) => handleInputChange(e, 'duration')}
               className={`
                 mb-4 w-full rounded border p-2 text-white outline-none
-                ${
-                errors.duration ? 'border-red-500' : 'border-primary'
-              }
+                ${errors.duration ? 'border-red-500' : 'border-primary'}
               `}
             />
             {errors.duration && (
@@ -766,11 +762,13 @@ const ModalFormLessons = ({
             </div>
 
             {isEditing && (
-              <div className="
+              <div
+                className="
                 mb-4 grid grid-cols-1 gap-4
                 md:grid-cols-2
                 lg:grid-cols-3
-              ">
+              "
+              >
                 {formData.cover_image_key && (
                   <div className="flex flex-col gap-2">
                     <label className="text-sm font-medium text-primary">
@@ -820,17 +818,19 @@ const ModalFormLessons = ({
                 )}
               </div>
             )}
-            <div className="
+            <div
+              className="
               grid w-full grid-cols-1 gap-4
               md:grid-cols-2
               lg:grid-cols-3
-            ">
+            "
+            >
               <FileUpload
                 key="coverimage"
                 type="image"
                 label="Imagen de portada:"
                 accept="image/*"
-                maxSize={5}
+                maxSize={50}
                 tipo="Imagen"
                 onFileChange={(file) =>
                   handleFileChange('coverimage', file ?? null)
@@ -855,7 +855,7 @@ const ModalFormLessons = ({
                 type="file"
                 label="Archivo de la clase:"
                 accept=".pdf, .doc, .docx, .xls, .xlsx, .ppt, .pptx"
-                maxSize={10}
+                maxSize={50}
                 multiple
                 tipo="Archivos"
                 onFileChange={(file) =>
@@ -864,17 +864,19 @@ const ModalFormLessons = ({
               />
             </div>
             <br />
-            <div className="
+            <div
+              className="
               grid w-full grid-cols-1 gap-4
               md:grid-cols-2
               lg:grid-cols-3
-            ">
+            "
+            >
               <FileUpload
                 key="additionalImages"
                 type="image"
                 label="Imágenes adicionales"
                 accept="image/*"
-                maxSize={5}
+                maxSize={50}
                 multiple
                 tipo="Imágenes"
                 onFileChange={(file) =>
