@@ -398,13 +398,19 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
       : !isStudentCompleted(user)
   );
 
-  const searchedUsers = tabFilteredUsers.filter(
-    (user) =>
-      searchQuery === '' ||
-      user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const searchedUsers = tabFilteredUsers
+    .filter(
+      (user) =>
+        searchQuery === '' ||
+        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
+      const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
 
   const totalPages = Math.ceil(searchedUsers.length / USERS_PER_PAGE);
   const currentUsers = searchedUsers.slice(
