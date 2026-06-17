@@ -552,7 +552,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         };
       });
 
-      // Build activity map
+      // Build activity map (solo actividades reales, con nota)
       const activityMap = new Map<number, Omit<Activity, 'id'>>();
       const gradesMap: Record<string, Record<number, number>> = {};
 
@@ -574,62 +574,6 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
       const allActivities: Activity[] = Array.from(activityMap.entries()).map(
         ([id, data]) => ({ id, ...data })
       );
-
-      // ✅ NUEVO: calcular porcentaje usado por parámetro
-      const porcentajeUsadoPorParametro = new Map<number, number>();
-      allActivities.forEach((act) => {
-        const prev = porcentajeUsadoPorParametro.get(act.parametroId) ?? 0;
-        porcentajeUsadoPorParametro.set(
-          act.parametroId,
-          prev + act.actividadPeso
-        );
-      });
-
-      // Parámetros sin ninguna actividad → placeholder "Sin actividad"
-      const parametroMap = new Map<
-        number,
-        { parametroName: string; parametroPeso: number }
-      >();
-      rawUsers.forEach((u) => {
-        u.parameterGrades.forEach((p) => {
-          if (!parametroMap.has(p.parametroId)) {
-            parametroMap.set(p.parametroId, {
-              parametroName: p.parametroName,
-              parametroPeso: p.parametroPeso ?? 0,
-            });
-          }
-        });
-      });
-
-      parametroMap.forEach((param, parametroId) => {
-        const activitiesForParam = allActivities.filter(
-          (act) => act.parametroId === parametroId
-        );
-
-        if (activitiesForParam.length === 0) {
-          allActivities.push({
-            id: -parametroId,
-            name: 'Sin actividad',
-            parametroId,
-            parametro: param.parametroName,
-            parametroPeso: param.parametroPeso,
-            actividadPeso: 0,
-          });
-          return;
-        }
-
-        const totalUsado = porcentajeUsadoPorParametro.get(parametroId) ?? 0;
-        if (totalUsado < 100) {
-          allActivities.push({
-            id: -(parametroId + 10000), // ID único para no colisionar
-            name: 'Agregar actividad',
-            parametroId,
-            parametro: param.parametroName,
-            parametroPeso: param.parametroPeso,
-            actividadPeso: 0,
-          });
-        }
-      });
 
       setActivities(allActivities);
       setGrades(gradesMap);
