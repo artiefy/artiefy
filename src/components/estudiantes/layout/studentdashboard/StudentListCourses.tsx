@@ -52,6 +52,15 @@ function isCourseSortValue(value: string | null): value is CourseSortValue {
   return COURSE_SORT_VALUES.includes(value as CourseSortValue);
 }
 
+function getCourseImageUrl(imageKey: string | null | undefined): string {
+  if (!imageKey || imageKey === 'NULL') {
+    return 'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
+  }
+
+  const s3Url = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${imageKey}`.trimEnd();
+  return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
+}
+
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i -= 1) {
@@ -134,6 +143,22 @@ export default function StudentListCourses({
     setCategoryValue(searchParams?.get('category') ?? category ?? null);
     setSearchTermValue(searchParams?.get('query') ?? searchTerm ?? '');
   }, [category, currentPage, searchParams, searchTerm, sort, syncWithUrl]);
+
+  useEffect(() => {
+    if (!syncWithUrl) return;
+
+    const handleReset = () => {
+      setPageValue(1);
+      setCategoryValue(null);
+      setSearchTermValue('');
+    };
+
+    window.addEventListener('student-courses-reset', handleReset);
+
+    return () => {
+      window.removeEventListener('student-courses-reset', handleReset);
+    };
+  }, [syncWithUrl]);
 
   function formatShortSpanishDate(dateString: string) {
     const date = new Date(dateString);
@@ -226,13 +251,7 @@ export default function StudentListCourses({
   const processedCourses = useMemo(
     () =>
       paginatedCourses.map((item) => {
-        let imageUrl =
-          'https://placehold.co/600x400/01142B/3AF4EF?text=Artiefy&font=MONTSERRAT';
-        if (item.coverImageKey && item.coverImageKey !== 'NULL') {
-          imageUrl =
-            `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${item.coverImageKey}`.trimEnd();
-        }
-
+        const imageUrl = getCourseImageUrl(item.coverImageKey);
         const nextLiveClassDate = getNextLiveClassDateFromMeetings(item);
 
         return { item, imageUrl, nextLiveClassDate };
