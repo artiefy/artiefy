@@ -13,6 +13,7 @@ import { IoGiftOutline } from 'react-icons/io5';
 
 import CourseSortControl from '~/components/estudiantes/layout/studentdashboard/CourseSortControl';
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
+import { RevealStagger } from '~/components/estudiantes/ui/RevealStagger';
 import { getCourseCommentCounts } from '~/server/actions/estudiantes/comment/courseCommentActions';
 import { type UnifiedItem } from '~/server/actions/estudiantes/getAllLearningItems';
 
@@ -421,7 +422,7 @@ export default function StudentListCourses({
           />
         </div>
       </div>
-      <div className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-26">
+      <RevealStagger className="relative z-0 mb-8 grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-4 lg:px-26">
         {processedCourses.map(({ item, imageUrl, nextLiveClassDate }) => {
           const hasLiveClass = Boolean(nextLiveClassDate);
           const courseRating = item.rating ?? 0;
@@ -447,6 +448,7 @@ export default function StudentListCourses({
                   alt={item.title || 'Imagen'}
                   className="size-full transform-gpu object-cover transition-transform duration-500 group-hover:scale-110"
                   fill
+                  unoptimized={imageUrl.startsWith('/api/image-proxy')}
                   placeholder="empty"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   quality={75}
@@ -544,7 +546,7 @@ export default function StudentListCourses({
             </div>
           );
         })}
-      </div>
+      </RevealStagger>
       <StudentPagination
         totalPages={calculatedTotalPages}
         currentPage={pageValue}

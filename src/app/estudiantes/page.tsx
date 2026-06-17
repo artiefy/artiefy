@@ -165,49 +165,47 @@ export default async function Page({ searchParams }: PageProps) {
                   featuredCategories={data.featuredCategories}
                 />
               </Reveal>
-              <Reveal>
-                <CourseListWrapper>
-                  <Suspense
-                    fallback={
-                      <div
-                        className="
+              <CourseListWrapper>
+                <Suspense
+                  fallback={
+                    <div
+                      className="
                         my-8 grid grid-cols-1 gap-6 px-8
                         sm:grid-cols-2
                         lg:grid-cols-4 lg:px-20
                       "
-                      >
-                        {Array.from({ length: 12 }).map((_, i) => (
-                          <div key={i} className="group relative p-4">
-                            <Skeleton
-                              className="
+                    >
+                      {Array.from({ length: 12 }).map((_, i) => (
+                        <div key={i} className="group relative p-4">
+                          <Skeleton
+                            className="
                               relative h-40 w-full
                               md:h-56
                             "
-                            />
-                            <div className="mt-3 flex flex-col space-y-2">
-                              <Skeleton className="h-6 w-3/4" />
-                              <Skeleton className="h-4 w-1/2" />
-                              <Skeleton className="h-4 w-full" />
-                              <Skeleton className="h-4 w-full" />
-                              <Skeleton className="h-4 w-1/2" />
-                            </div>
+                          />
+                          <div className="mt-3 flex flex-col space-y-2">
+                            <Skeleton className="h-6 w-3/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-1/2" />
                           </div>
-                        ))}
-                      </div>
-                    }
-                  >
-                    <StudentListCourses
-                      courses={data.allCourses}
-                      currentPage={data.page}
-                      totalPages={data.totalPages}
-                      totalCourses={data.total}
-                      category={data.categoryId?.toString()}
-                      searchTerm={data.searchTerm}
-                      sort={parsedParams.sort ?? 'random'}
-                    />
-                  </Suspense>
-                </CourseListWrapper>
-              </Reveal>
+                        </div>
+                      ))}
+                    </div>
+                  }
+                >
+                  <StudentListCourses
+                    courses={data.allCourses}
+                    currentPage={data.page}
+                    totalPages={data.totalPages}
+                    totalCourses={data.total}
+                    category={data.categoryId?.toString()}
+                    searchTerm={data.searchTerm}
+                    sort={parsedParams.sort ?? 'random'}
+                  />
+                </Suspense>
+              </CourseListWrapper>
             </>
           )}
           <Footer />
