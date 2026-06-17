@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -8,7 +7,6 @@ import {
   activities,
   courses,
   enrollments,
-  lessons,
   nivel,
   parametros,
   posts,
@@ -19,20 +17,29 @@ import {
   userTimeTracking,
 } from '~/server/db/schema';
 
+interface ActivityDetail {
+  activityId: number;
+  name: string;
+  description: string | null;
+  isCompleted: boolean;
+  score: number;
+  parentTitle: string;
+  parametroId: number;
+  parametroNombre: string;
+  parametroPorcentaje: number;
+  actividadPorcentaje: number;
+}
+
+interface ParametroAcumulado {
+  sumaNotas: number;
+  sumaPesos: number;
+  parametroPorcentaje: number;
+}
+
 export async function GET(
   _req: Request,
   context: { params: { courseId?: string; userId?: string } }
 ) {
-  console.log(
-    '➡️ Endpoint /api/super-admin/course/[courseId]/stats/[userId] llamado con:',
-    { params: context.params }
-  );
-  // Instancia Redis
-  const redis = new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL!,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-  });
-
   function isPromise<T>(val: unknown): val is Promise<T> {
     return !!val && typeof (val as { then?: unknown }).then === 'function';
   }
@@ -44,48 +51,32 @@ export async function GET(
   const { courseId, userId } = params as { courseId?: string; userId?: string };
 
   if (!courseId || !userId) {
-    console.error('❌ Faltan parámetros requeridos', { courseId, userId });
     return NextResponse.json(
       { error: 'Faltan parámetros requeridos', courseId, userId },
       { status: 400 }
     );
   }
 
+  const courseIdNum = Number(courseId);
+
   try {
-    // 🔹 Verificar si el usuario está inscrito en el curso
     const existingEnrollment = await db
       .select({ enrolledAt: enrollments.enrolledAt })
       .from(enrollments)
       .where(
         and(
-          eq(enrollments.courseId, Number(courseId)),
+          eq(enrollments.courseId, courseIdNum),
           eq(enrollments.userId, userId)
         )
       )
       .limit(1);
 
-    if (existingEnrollment.length === 0) {
-      console.warn('⚠️ El usuario no está inscrito en este curso', {
-        courseId,
-        userId,
-      });
-      // Aún así, devolvemos la info del curso y del usuario si existen
-      // para que el frontend pueda mostrar algo
-    }
-
-    // 🔹 Obtener datos del usuario
     const userInfo = await db
-      .select({
-        firstName: users.name,
-        email: users.email,
-        role: users.role,
-      })
+      .select({ firstName: users.name, email: users.email, role: users.role })
       .from(users)
       .where(eq(users.id, userId))
       .limit(1);
-    console.log('👤 userInfo:', userInfo);
 
-    // 🔹 Obtener los parámetros de evaluación del curso
     const evaluationParameters = await db
       .select({
         id: parametros.id,
@@ -95,19 +86,8 @@ export async function GET(
         courseId: parametros.courseId,
       })
       .from(parametros)
-      .where(eq(parametros.courseId, Number(courseId)));
+      .where(eq(parametros.courseId, courseIdNum));
 
-    // 🔹 Asegurar que `evaluationParameters` sea un array
-    const formattedEvaluationParameters = Array.isArray(evaluationParameters)
-      ? evaluationParameters
-      : [];
-
-    console.log(
-      '📊 Parámetros de Evaluación obtenidos:',
-      formattedEvaluationParameters
-    );
-
-    // Traer datos del curso incluyendo la foto
     const courseInfoRaw = await db
       .select({
         title: courses.title,
@@ -117,11 +97,10 @@ export async function GET(
         coverImageKey: courses.coverImageKey,
       })
       .from(courses)
-      .where(eq(courses.id, Number(courseId)))
+      .where(eq(courses.id, courseIdNum))
       .leftJoin(nivel, eq(courses.nivelid, nivel.id))
       .limit(1);
 
-    // Resolver el nombre del instructor a partir del ID
     let instructorName: string | undefined;
     const instructorId = courseInfoRaw[0]?.instructor;
     if (instructorId) {
@@ -137,9 +116,7 @@ export async function GET(
       ...c,
       instructor: instructorName ?? c.instructor,
     }));
-    console.log('📚 courseInfo:', courseInfo);
 
-    // 🔹 Obtener todas las lecciones del curso
     const lessonRows = await db
       .select({
         lessonId: userLessonsProgress.lessonId,
@@ -153,154 +130,97 @@ export async function GET(
       .where(eq(userLessonsProgress.userId, userId));
 
     const totalLessons = lessonRows;
-    const completedLessons = lessonRows.filter((lesson) => lesson.isCompleted);
-
-    // 🔹 Calcular porcentaje de progreso
+    const completedLessons = lessonRows.filter((l) => l.isCompleted);
     const progressPercentage =
       totalLessons.length > 0
         ? Math.round((completedLessons.length / totalLessons.length) * 100)
         : 0;
 
-    // 🔹 Obtener progreso en actividades y notas por actividad, incluyendo la clase (lección) a la que pertenece
     const activityDetailsRaw = await db
       .select({
-        activityId: userActivitiesProgress.activityId,
+        activityId: activities.id,
         name: activities.name,
         description: activities.description,
+        parametroId: parametros.id,
+        parametroNombre: parametros.name,
+        parametroPorcentaje: parametros.porcentaje,
+        actividadPorcentaje: activities.porcentaje,
+        score: userActivitiesProgress.finalGrade,
         isCompleted: userActivitiesProgress.isCompleted,
-        score: userActivitiesProgress.finalGrade, // ✅ fuente correcta
-        parentTitle: lessons.title,
       })
-      .from(userActivitiesProgress)
-      .innerJoin(
-        activities,
-        eq(userActivitiesProgress.activityId, activities.id)
-      )
-      .innerJoin(lessons, eq(activities.lessonsId, lessons.id))
-      .where(
+      .from(activities)
+      .innerJoin(parametros, eq(activities.parametroId, parametros.id))
+      .leftJoin(
+        userActivitiesProgress,
         and(
-          eq(userActivitiesProgress.userId, userId),
-          eq(lessons.courseId, Number(courseId)) // ✅ filtra por curso
+          eq(userActivitiesProgress.activityId, activities.id),
+          eq(userActivitiesProgress.userId, userId)
         )
-      );
+      )
+      .where(eq(parametros.courseId, courseIdNum));
 
-    // 🔹 Consultar Redis para cada actividad
-    const activityDetails = await Promise.all(
-      activityDetailsRaw.map(async (activity) => {
-        const redisKey = `activity:${activity.activityId}:user:${userId}:submission`;
-        const redisData = await redis.get(redisKey);
-        // Type guard para asegurar que redisData tiene 'grade'
-        const hasGrade = (data: unknown): data is { grade: number } => {
-          return (
-            typeof data === 'object' &&
-            data !== null &&
-            'grade' in data &&
-            typeof (data as { grade?: unknown }).grade === 'number'
-          );
-        };
-        // Si no hay parentTitle, intentar buscarlo manualmente
-        let parentTitle = activity.parentTitle;
-        if (!parentTitle || parentTitle === '—') {
-          // Buscar la clase asociada a la actividad de forma typesafe
-          // Se asume que activity puede tener lessonsId o lessons_id (number | undefined)
-          const lessonsId: number | undefined =
-            (activity as { lessonsId?: number }).lessonsId ??
-            (activity as { lessons_id?: number }).lessons_id;
-          if (lessonsId) {
-            const lesson = await db
-              .select({ title: lessons.title })
-              .from(lessons)
-              .where(eq(lessons.id, lessonsId))
-              .limit(1);
-            if (lesson && lesson[0] && lesson[0].title) {
-              parentTitle = lesson[0].title;
-            } else {
-              console.warn(
-                '⚠️ Actividad sin clase asociada (lessonsId no encontrado):',
-                { activity, lessonsId }
-              );
-              parentTitle = '';
-            }
-          } else {
-            console.warn(
-              '⚠️ Actividad sin campo lessonsId/lessons_id:',
-              activity
-            );
-            parentTitle = '';
-          }
-        }
-        const result = {
-          ...activity,
-          score: hasGrade(redisData) ? redisData.grade : activity.score,
-          parentTitle,
-        };
-        console.log('🟩 activityDetail result:', result);
-        return result;
-      })
-    );
+    const activityDetails: ActivityDetail[] = activityDetailsRaw.map((a) => ({
+      activityId: a.activityId,
+      name: a.name,
+      description: a.description,
+      isCompleted: a.isCompleted ?? false,
+      score: a.score ?? 0,
+      parentTitle: a.parametroNombre,
+      parametroId: a.parametroId,
+      parametroNombre: a.parametroNombre,
+      parametroPorcentaje: a.parametroPorcentaje,
+      actividadPorcentaje: a.actividadPorcentaje ?? 0,
+    }));
 
     const totalActivities = activityDetails.length;
     const completedActivities = activityDetails.filter(
       (a) => a.isCompleted
     ).length;
 
-    // 🔹 Contar mensajes en foros
     const forumPosts = await db
       .select()
       .from(posts)
       .where(eq(posts.userId, userId));
 
-    // 🔹 Obtener puntaje total del usuario
     const userScoreResult = await db
       .select({ score: scores.score })
       .from(scores)
       .where(eq(scores.userId, userId))
       .limit(1);
-
     const userScore = userScoreResult.length > 0 ? userScoreResult[0].score : 0;
 
-    // 🔹 Obtener tiempo total invertido en la plataforma
     const totalTimeSpent = await db
       .select({ timeSpent: userTimeTracking.timeSpent })
       .from(userTimeTracking)
       .where(eq(userTimeTracking.userId, userId));
-
     const totalTime = totalTimeSpent.reduce(
-      (acc, time) => acc + (time.timeSpent || 0),
+      (acc, t) => acc + (t.timeSpent || 0),
       0
     );
 
-    // 🔹 Calcular nota global del curso basada en actividades
-    const totalActivityScore = activityDetails.reduce(
-      (sum, activity) => sum + (activity.score ?? 0),
-      0
-    );
-    const globalCourseScore =
-      totalActivities > 0
-        ? (totalActivityScore / totalActivities).toFixed(2)
-        : '0.00';
+    const porParametro: Map<number, ParametroAcumulado> = new Map();
 
-    // 🔹 Enviar la respuesta final con todos los datos completos
-    console.log('📊 Enviando respuesta final:', {
-      success: true,
-      enrolled: true,
-      user: userInfo[0] || {},
-      course: courseInfo[0] || {},
-      statistics: {
-        totalLessons: totalLessons.length,
-        completedLessons: completedLessons.length,
-        progressPercentage,
-        totalActivities,
-        completedActivities,
-        forumPosts: forumPosts.length,
-        userScore,
-        totalTimeSpent: totalTime,
-        globalCourseScore,
-        activities: activityDetails,
-        lessonDetails: lessonRows,
-        evaluationParameters: formattedEvaluationParameters,
-      },
+    activityDetails.forEach((a) => {
+      const entry: ParametroAcumulado = porParametro.get(a.parametroId) ?? {
+        sumaNotas: 0,
+        sumaPesos: 0,
+        parametroPorcentaje: a.parametroPorcentaje,
+      };
+      entry.sumaNotas += a.score * (a.actividadPorcentaje / 100);
+      entry.sumaPesos += a.actividadPorcentaje / 100;
+      porParametro.set(a.parametroId, entry);
     });
+
+    let sumaFinal = 0;
+    let sumaPesosFinal = 0;
+    porParametro.forEach(({ sumaNotas, sumaPesos, parametroPorcentaje }) => {
+      const promedioParametro = sumaPesos > 0 ? sumaNotas / sumaPesos : 0;
+      sumaFinal += promedioParametro * (parametroPorcentaje / 100);
+      sumaPesosFinal += parametroPorcentaje / 100;
+    });
+
+    const globalCourseScore =
+      sumaPesosFinal > 0 ? (sumaFinal / sumaPesosFinal).toFixed(2) : '0.00';
 
     return NextResponse.json({
       success: true,
@@ -319,9 +239,7 @@ export async function GET(
         globalCourseScore,
         activities: activityDetails,
         lessonDetails: lessonRows,
-        evaluationParameters: Array.isArray(evaluationParameters)
-          ? evaluationParameters
-          : [],
+        evaluationParameters,
       },
     });
   } catch (error) {
