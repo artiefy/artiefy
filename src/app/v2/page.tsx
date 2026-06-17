@@ -1,3 +1,4 @@
+import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
@@ -6,7 +7,7 @@ import HeroCanvas from '~/components/estudiantes/layout/HeroCanvas';
 import { Features } from '~/components/v2/Features';
 import { Hero } from '~/components/v2/Hero';
 
-export const metadata = {
+export const metadata: Metadata = {
   title: 'Artiefy - Transformamos ideas en realidades',
   description:
     'Descubre nuestros cursos y potencia tus conocimientos con ciencia y tecnología.',

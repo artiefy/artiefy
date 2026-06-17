@@ -15,6 +15,11 @@ import './notificationSubscription.css';
 
 type NotificationSeverity = 'medium' | 'high' | 'expired';
 
+// Clave para persistir el cierre del aviso durante la sesión de navegación.
+// Se guarda la severidad cerrada para que, si el estado escala (p. ej. de
+// "expira pronto" a "expirado"), el aviso vuelva a mostrarse.
+const DISMISS_STORAGE_KEY = 'artiefy-subscription-dismissed';
+
 type NotificationState = {
   daysLeft: number;
   message: string;
@@ -86,13 +91,19 @@ export function NotificationSubscription() {
       );
 
       if (status?.shouldNotify) {
+        const severity = status.severity as NotificationSeverity;
         setNotification({
           daysLeft: status.daysLeft ?? 0,
           message: status.message,
           planType: subscriptionData.planType || 'PRO',
-          severity: status.severity as NotificationSeverity,
+          severity,
         });
-        setIsDismissed(false);
+        // No reabrir si el usuario ya lo cerró con la X para esta severidad.
+        const dismissedSeverity =
+          typeof window !== 'undefined'
+            ? window.sessionStorage.getItem(DISMISS_STORAGE_KEY)
+            : null;
+        setIsDismissed(dismissedSeverity === severity);
       } else {
         setNotification(null);
       }
@@ -280,13 +291,20 @@ export function NotificationSubscription() {
             <button
               type="button"
               className="
-                hidden size-7 items-center justify-center rounded-full
+                flex size-7 items-center justify-center rounded-full
                 text-muted-foreground transition-colors
                 hover:bg-white/10 hover:text-foreground
-                sm:flex
               "
               aria-label="Cerrar"
-              onClick={() => setIsDismissed(true)}
+              onClick={() => {
+                setIsDismissed(true);
+                if (typeof window !== 'undefined') {
+                  window.sessionStorage.setItem(
+                    DISMISS_STORAGE_KEY,
+                    notification.severity
+                  );
+                }
+              }}
             >
               <X className="size-4" />
             </button>

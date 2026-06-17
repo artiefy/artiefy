@@ -39,6 +39,11 @@ declare global {
       role?: Roles;
       permissions?: AppPermissions[]; // ✅ Agregar permisos a la sesión
       isNewUser?: boolean;
+      // Para el gating de suscripción en el middleware. Requiere incluir estos
+      // campos del public_metadata en el session token de Clerk (ver proxy.ts).
+      subscriptionStatus?: string;
+      subscriptionEndDate?: string;
+      planType?: string;
     };
     fullName?: string;
     primaryEmail?: string;

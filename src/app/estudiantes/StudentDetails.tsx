@@ -25,6 +25,7 @@ import {
   Radio,
   SlidersHorizontal,
   Waypoints,
+  Workflow,
   Zap,
 } from 'lucide-react';
 import { FaArrowTrendUp } from 'react-icons/fa6';
@@ -79,6 +80,7 @@ type StaticStudentContentFilter =
   | 'todos'
   | 'cursos'
   | 'programas'
+  | 'proyectos-guiados'
   | 'live'
   | 'presencial'
   | 'hibrida'
@@ -102,6 +104,7 @@ const staticStudentContentFilters: StudentContentFilterItem[] = [
   { key: 'todos', label: 'Todos', icon: SlidersHorizontal },
   { key: 'cursos', label: 'Cursos', icon: BookOpen },
   { key: 'programas', label: 'Programas', icon: PanelsTopLeft },
+  { key: 'proyectos-guiados', label: 'Proyectos Guiados', icon: Workflow },
   { key: 'live', label: 'Artiefy Live', icon: Radio },
   { key: 'presencial', label: 'Presencial', icon: MapPin },
   { key: 'hibrida', label: 'Híbrida', icon: Waypoints },
@@ -414,7 +417,19 @@ export default function StudentDetails({
   }, [courses]);
 
   const filteredMenuCourses = useMemo(() => {
-    if (activeFilter === 'cursos') return courses;
+    if (activeFilter === 'proyectos-guiados') {
+      return courses.filter(
+        (course) =>
+          (course as { isGuidedProject?: boolean }).isGuidedProject === true
+      );
+    }
+
+    if (activeFilter === 'cursos') {
+      return courses.filter(
+        (course) =>
+          (course as { isGuidedProject?: boolean }).isGuidedProject !== true
+      );
+    }
 
     if (isCategoryFilter(activeFilter)) {
       const categoryId = getCategoryIdFromFilter(activeFilter);
@@ -617,8 +632,9 @@ export default function StudentDetails({
         >
           <div
             className="
-              -mt-6 flex animate-zoom-in flex-col items-center space-y-4 px-2
+              mt-16 flex animate-zoom-in flex-col items-center space-y-4 px-2
               sm:mt-8 sm:px-0
+              lg:mt-16
             "
           >
             <div
@@ -1178,11 +1194,12 @@ export default function StudentDetails({
             </div>
           )}
 
-          {/* Lista completa de cursos - Solo cuando el filtro es 'cursos' */}
-          {isCourseOnlyFilter(activeFilter) && (
+          {/* Lista completa de cursos / proyectos guiados según el filtro */}
+          {(isCourseOnlyFilter(activeFilter) ||
+            activeFilter === 'proyectos-guiados') && (
             <div
               id="courses-filter-section"
-              className="animation-delay-250 relative animate-zoom-in"
+              className="animation-delay-250 relative -mt-8 animate-zoom-in sm:-mt-12"
             >
               <ClientFilteredStudentListCourses
                 key={activeFilter}

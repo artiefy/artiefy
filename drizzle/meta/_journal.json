@@ -8,6 +8,20 @@
       "when": 1772109711938,
       "tag": "0000_useful_puff_adder",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781042286128,
+      "tag": "0001_add_type_course_to_guided_projects",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781656962642,
+      "tag": "0002_faulty_star_brand",
+      "breakpoints": true
     }
   ]
 }

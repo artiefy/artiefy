@@ -7,7 +7,11 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 80;
+  /* Por encima del header móvil (z-100000) y del panel de chat (z-100001) para
+     que el aviso siempre sea visible en responsive. No se solapan en vertical:
+     el header se posiciona debajo vía --subscription-banner-height. El menú
+     móvil (z máximo) sigue cubriéndolo cuando se abre. */
+  z-index: 100002;
   isolation: isolate;
   width: 100%;
   max-width: 100%;

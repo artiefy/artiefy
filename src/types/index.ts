@@ -1,3 +1,5 @@
+export * from './guided-projects';
+
 export interface User {
   id: string;
   role: string;

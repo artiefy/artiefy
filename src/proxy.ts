@@ -5,7 +5,11 @@ import {
   type ClerkMiddlewareOptions,
 } from '@clerk/nextjs/server';
 
-import { getPrivilegedDashboardRoute, getUserRole } from '~/utils/roles';
+import {
+  getDashboardRouteByRole,
+  getUserRole,
+  STUDENT_ROLE,
+} from '~/utils/roles';
 
 function getPathname(req: Request): string {
   return new URL(req.url).pathname;
@@ -43,6 +47,7 @@ function isPublicAppPath(pathname: string): boolean {
     pathname === '/' ||
     pathname === '/estudiantes' ||
     pathname.startsWith('/estudiantes/cursos/') ||
+    pathname.startsWith('/estudiantes/proyectos-guiados/') ||
     pathname.startsWith('/estudiantes/programas/') ||
     pathname === '/proyectos' ||
     pathname.startsWith('/proyectos/') ||
@@ -69,6 +74,53 @@ function isPublicContentPath(pathname: string): boolean {
 
 function isPublicApiPath(pathname: string): boolean {
   return pathname === '/api/image-proxy';
+}
+
+function isApiPath(pathname: string): boolean {
+  return pathname.startsWith('/api') || pathname.startsWith('/trpc');
+}
+
+// Rutas de contenido con [id] que requieren suscripción activa.
+function isSubscriptionGatedPath(pathname: string): boolean {
+  return (
+    /^\/estudiantes\/cursos\/[^/]+/.test(pathname) ||
+    /^\/estudiantes\/clases\/[^/]+/.test(pathname) ||
+    /^\/estudiantes\/programas\/[^/]+/.test(pathname) ||
+    /^\/estudiantes\/proyectos-guiados\/[^/]+/.test(pathname) ||
+    /^\/(cursos|programas)\/[^/]+/.test(pathname)
+  );
+}
+
+// Determina si la suscripción está vencida/inactiva a partir de los claims del
+// JWT. NOTA: requiere que el session token de Clerk incluya estos campos del
+// public_metadata. Si no están presentes, devuelve false (fail-open: no bloquea).
+// Configuración del session token en Clerk (Dashboard → Sessions → Customize):
+//   {
+//     "metadata": {
+//       "role": "{{user.public_metadata.role}}",
+//       "subscriptionStatus": "{{user.public_metadata.subscriptionStatus}}",
+//       "subscriptionEndDate": "{{user.public_metadata.subscriptionEndDate}}",
+//       "planType": "{{user.public_metadata.planType}}"
+//     }
+//   }
+function isSubscriptionExpired(
+  metadata: CustomJwtSessionClaims['metadata'] | undefined
+): boolean {
+  const planType = metadata?.planType;
+  // Solo los planes de pago requieren suscripción activa.
+  const requiresActive =
+    planType === 'Premium' || planType === 'Pro' || planType === 'Enterprise';
+  if (!requiresActive) return false;
+
+  const status = metadata?.subscriptionStatus;
+  if (status && status !== 'active') return true;
+
+  const endDate = metadata?.subscriptionEndDate;
+  if (endDate) {
+    const end = new Date(endDate);
+    if (!Number.isNaN(end.getTime()) && end < new Date()) return true;
+  }
+  return false;
 }
 
 const envPartyCandidates = [
@@ -113,32 +165,42 @@ export default clerkMiddleware(async (auth, req) => {
   try {
     const pathname = getPathname(req);
 
-    if (pathname === '/') {
-      try {
-        const { userId, sessionClaims } = await auth();
-        const role = getUserRole(sessionClaims?.metadata?.role);
-        const privilegedDashboardRoute = getPrivilegedDashboardRoute(role);
-
-        if (userId && privilegedDashboardRoute) {
-          return NextResponse.redirect(
-            new URL(privilegedDashboardRoute, req.url)
-          );
-        }
-      } catch {
-        return NextResponse.next();
-      }
-
+    // Webhooks y APIs públicas: nunca tocan auth ni redirecciones.
+    if (whatsAppWebhookPaths.has(pathname) || isPublicApiPath(pathname)) {
       return NextResponse.next();
     }
 
+    const { userId, sessionClaims } = await auth();
+    const metadata = sessionClaims?.metadata;
+    const role = getUserRole(metadata?.role);
+
+    // 1) Redirect por rol: un usuario con rol privilegiado (educador/admin/
+    //    super-admin) siempre es llevado a SU dashboard, sea cual sea la ruta
+    //    desde la que inicie sesión. Estudiantes y usuarios sin rol siguen en el
+    //    front normal. No aplica a /api ni a las rutas de auth (para no romper
+    //    llamadas ni el propio flujo de login/logout).
+    if (userId && role && role !== STUDENT_ROLE && !isApiPath(pathname)) {
+      const dashboardRoute = getDashboardRouteByRole(role);
+      const isInOwnDashboard = pathname.startsWith(dashboardRoute);
+      const isAuthRoute =
+        pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
+
+      if (!isInOwnDashboard && !isAuthRoute) {
+        return NextResponse.redirect(new URL(dashboardRoute, req.url));
+      }
+    }
+
+    // 2) Gating de suscripción: un estudiante autenticado con la suscripción
+    //    vencida/inactiva no puede ver contenido [id] (curso, clase, programa,
+    //    proyecto guiado); se le envía a /planes. Los visitantes anónimos siguen
+    //    pudiendo ver las páginas públicas para registrarse y comprar.
     if (
-      whatsAppWebhookPaths.has(pathname) ||
-      isPublicApiPath(pathname) ||
-      isPublicAppPath(pathname) ||
-      isPublicContentPath(pathname) ||
-      isPublicDashboardPath(pathname)
+      userId &&
+      (role === STUDENT_ROLE || !role) &&
+      isSubscriptionGatedPath(pathname) &&
+      isSubscriptionExpired(metadata)
     ) {
-      return NextResponse.next();
+      return NextResponse.redirect(new URL('/planes', req.url));
     }
 
     if (isLegacyEducadorPath(pathname)) {
@@ -150,8 +212,14 @@ export default clerkMiddleware(async (auth, req) => {
       );
     }
 
-    const { userId, sessionClaims } = await auth();
-    const role = getUserRole(sessionClaims?.metadata?.role);
+    // Rutas públicas: dejar pasar (después de los checks de rol/suscripción).
+    if (
+      isPublicAppPath(pathname) ||
+      isPublicContentPath(pathname) ||
+      isPublicDashboardPath(pathname)
+    ) {
+      return NextResponse.next();
+    }
 
     if (isProtectedStudentPath(pathname) || isDashboardPath(pathname)) {
       if (!userId) {

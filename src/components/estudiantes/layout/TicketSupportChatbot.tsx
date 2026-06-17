@@ -604,7 +604,9 @@ const TicketSupportChatbot = () => {
       {isOpen && isSignedIn && (
         <div
           className={[
-            'fixed top-1/2 left-1/2 z-50 size-[100%] -translate-1/2 overflow-hidden rounded-lg border border-gray-700 bg-[#050c1b] text-white shadow-[0_25px_80px_rgba(3,6,20,0.85)]',
+            // Móvil: se abre debajo del header fijo (banner + 64px) para que el
+            // header de navegación quede visible y usable en responsive.
+            'fixed inset-x-0 top-[calc(var(--subscription-banner-height,0px)+4rem)] bottom-0 z-50 translate-0 overflow-hidden rounded-lg border border-gray-700 bg-[#050c1b] text-white shadow-[0_25px_80px_rgba(3,6,20,0.85)]',
             'sm:top-auto sm:right-0 sm:bottom-0 sm:left-auto sm:h-[100vh] sm:w-[400px] sm:translate-0',
             'md:w-[500px]',
           ].join(' ')}

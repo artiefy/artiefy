@@ -12,12 +12,18 @@ import {
   SelectValue,
 } from '~/components/estudiantes/ui/select';
 
-export type CourseSortValue = 'random' | 'az' | 'created' | 'category';
+export type CourseSortValue =
+  | 'random'
+  | 'az'
+  | 'created'
+  | 'category'
+  | 'guided-projects';
 
 const SORT_OPTIONS: Array<{ value: CourseSortValue; label: string }> = [
   { value: 'az', label: 'A la Z' },
   { value: 'created', label: 'Fecha de creación' },
   { value: 'category', label: 'Categorías' },
+  { value: 'guided-projects', label: 'Proyectos guiados' },
   { value: 'random', label: 'Aleatorio' },
 ];
 

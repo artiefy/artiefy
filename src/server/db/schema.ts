@@ -2231,7 +2231,9 @@ export const guidedProjects = pgTable('guided_projects', {
   categoryId: integer('category_id')
     .references(() => categories.id)
     .notNull(),
-  instructor: text('instructor').notNull(),
+  instructor: text('instructor')
+    .references(() => users.id)
+    .notNull(),
   creatorId: text('creator_id')
     .references(() => users.id)
     .notNull(),
@@ -2244,6 +2246,9 @@ export const guidedProjects = pgTable('guided_projects', {
     .notNull(),
   courseTypeId: integer('course_type_id')
     .references(() => courseTypes.id)
+    .default(sql`NULL`),
+  typeCourseId: integer('type_course_id')
+    .references(() => typesCourses.id)
     .default(sql`NULL`),
   certificationTypeId: integer('certification_type_id')
     .references(() => certificationTypes.id)
@@ -2258,6 +2263,27 @@ export const guidedProjects = pgTable('guided_projects', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// Tabla de relación muchos-a-muchos entre proyectos guiados e instructores
+export const guidedProjectInstructors = pgTable(
+  'guided_project_instructors',
+  {
+    id: serial('id').primaryKey(),
+    guidedProjectId: integer('guided_project_id')
+      .references(() => guidedProjects.id, { onDelete: 'cascade' })
+      .notNull(),
+    instructorId: text('instructor_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('guided_project_instructor_unique').on(
+      table.guidedProjectId,
+      table.instructorId
+    ),
+  ]
+);
 
 // Objetivos / Sesiones
 export const guidedObjectives = pgTable('guided_objectives', {
@@ -2377,6 +2403,12 @@ export const guidedProjectsRelations = relations(
     creator: one(users, {
       fields: [guidedProjects.creatorId],
       references: [users.id],
+      relationName: 'createdGuidedProjects',
+    }),
+    instructorUser: one(users, {
+      fields: [guidedProjects.instructor],
+      references: [users.id],
+      relationName: 'guidedProjectPrimaryInstructor',
     }),
     category: one(categories, {
       fields: [guidedProjects.categoryId],
@@ -2390,8 +2422,27 @@ export const guidedProjectsRelations = relations(
       fields: [guidedProjects.nivelId],
       references: [nivel.id],
     }),
+    typeCourse: one(typesCourses, {
+      fields: [guidedProjects.typeCourseId],
+      references: [typesCourses.id],
+    }),
     objectives: many(guidedObjectives),
     enrollments: many(guidedEnrollments),
+    instructors: many(guidedProjectInstructors),
+  })
+);
+
+export const guidedProjectInstructorsRelations = relations(
+  guidedProjectInstructors,
+  ({ one }) => ({
+    guidedProject: one(guidedProjects, {
+      fields: [guidedProjectInstructors.guidedProjectId],
+      references: [guidedProjects.id],
+    }),
+    instructor: one(users, {
+      fields: [guidedProjectInstructors.instructorId],
+      references: [users.id],
+    }),
   })
 );
 

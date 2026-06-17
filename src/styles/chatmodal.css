@@ -221,17 +221,22 @@
     overflow: hidden !important;
   }
 
-  /* Asegurar que el contenedor del chat ocupe toda la pantalla */
+  /* El chat se abre debajo del header fijo (banner + 64px) para que el header
+     de navegación quede visible y usable en responsive. */
   .chat-container,
   .chat-resizable {
     position: fixed !important;
-    top: 0 !important;
+    top: calc(var(--subscription-banner-height, 0px) + 4rem) !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
     width: 100vw !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
+    height: calc(
+      100dvh - var(--subscription-banner-height, 0px) - 4rem
+    ) !important;
+    max-height: calc(
+      100dvh - var(--subscription-banner-height, 0px) - 4rem
+    ) !important;
     overflow: hidden !important;
   }
 }

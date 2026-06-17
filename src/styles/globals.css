@@ -917,15 +917,20 @@ body.no-chrome {
     font-size: 16px !important;
   }
 
-  /* Asegurar que el chat se ajuste correctamente al viewport */
+  /* El chat se ajusta al viewport pero debajo del header fijo (banner + 64px)
+     para que el header de navegación quede visible en responsive. */
   .chat-resizable {
     position: fixed !important;
-    top: 0 !important;
+    top: calc(var(--subscription-banner-height, 0px) + 4rem) !important;
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    height: 100dvh !important;
-    max-height: 100dvh !important;
+    height: calc(
+      100dvh - var(--subscription-banner-height, 0px) - 4rem
+    ) !important;
+    max-height: calc(
+      100dvh - var(--subscription-banner-height, 0px) - 4rem
+    ) !important;
     width: 100vw !important;
     overflow: hidden !important;
   }
