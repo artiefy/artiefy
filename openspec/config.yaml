@@ -1,0 +1,54 @@
+strict_tdd: false
+context: |
+  clerk-nextjs is a Node.js/TypeScript ESM, React, Next.js, Node.js/TypeScript, Python project.
+  Detected markers: package.json, tsconfig.json, npm package manager, .agents\skills\clerk-nextjs-patterns\templates\nextjs-basic-auth/package.json, .agents\skills\clerk-nextjs-patterns\templates\nextjs-basic-auth/tsconfig.json, .agents\skills\clerk-nextjs-patterns\templates\nextjs-basic-auth/npm package manager, .agents\skills\clerk-react-patterns\templates\react-basic-auth/package.json, .agents\skills\clerk-react-patterns\templates\react-basic-auth/tsconfig.json, .agents\skills\clerk-react-patterns\templates\react-basic-auth/npm package manager, .agents\skills\remotion-to-hyperframes\assets\test-corpus\tier-1-title-card\remotion-src/package.json, .agents\skills\remotion-to-hyperframes\assets\test-corpus\tier-1-title-card\remotion-src/tsconfig.json, .agents\skills\remotion-to-hyperframes\assets\test-corpus\tier-1-title-card\remotion-src/npm package manager, .agents\skills\remotion-to-hyperframes\assets\test-corpus\tier-2-multi-scene\remotion-src/package.json, .agents\skills\remotion-to-hyperframes\assets\test-corpus\tier-2-multi-scene\remotion-src/tsconfig.json, .agents\skills\remotion-to-hyperframes\assets\test-corpus\tier-2-multi-scene\remotion-src/npm package manager, .agents\skills\remotion-to-hyperframes\assets\test-corpus\tier-3-data-driven\remotion-src/package.json, .agents\skills\remotion-to-hyperframes\assets\test-corpus\tier-3-data-driven\remotion-src/tsconfig.json, .agents\skills\remotion-to-hyperframes\assets\test-corpus\tier-3-data-driven\remotion-src/npm package manager, .github\skills\clerk-nextjs-patterns\templates\nextjs-basic-auth/package.json, .github\skills\clerk-nextjs-patterns\templates\nextjs-basic-auth/tsconfig.json, .github\skills\clerk-nextjs-patterns\templates\nextjs-basic-auth/npm package manager.
+  Package managers: npm.
+  No reliable test runner was detected; verify testing manually before enabling strict TDD.
+  Unit tests: none.
+  Integration tests: none.
+  E2E tests: none.
+rules:
+  proposal:
+    require_problem_statement: true
+  spec:
+    require_acceptance_criteria: true
+  design:
+    require_tradeoffs: true
+  tasks:
+    protect_review_workload: true
+  apply:
+    test_command: ''
+  verify:
+    test_command: ''
+testing:
+  detected: '2026-06-07'
+  runner:
+    command: ''
+    framework: ''
+  layers:
+    unit: ''
+    integration: ''
+    e2e: ''
+  commands:
+    unit: []
+    integration: []
+    e2e: []
+  coverage:
+    command: ''
+    commands: []
+quality:
+  lint: 'npm run lint'
+  lint_commands:
+    - scope: '.'
+      command: 'npm run lint'
+      framework: 'linter'
+  typecheck: 'npm run typecheck'
+  typecheck_commands:
+    - scope: '.'
+      command: 'npm run typecheck'
+      framework: 'type checker'
+  format: 'npm run format:check'
+  format_commands:
+    - scope: '.'
+      command: 'npm run format:check'
+      framework: 'formatter'

@@ -16,6 +16,7 @@ type ParticipationNotificationType =
 // Extiende NotificationMetadata para permitir projectId y requestType
 type ParticipationNotificationMetadata = NotificationMetadata & {
   projectId?: number;
+  guidedProjectId?: number;
   requestType?: 'participation' | 'resignation';
   invitedByUserId?: string; // <-- Agregado para permitir invitedByUserId
 };

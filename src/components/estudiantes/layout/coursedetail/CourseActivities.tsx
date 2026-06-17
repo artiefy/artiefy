@@ -173,6 +173,7 @@ export function CourseActivities({
   );
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoadingContent, setIsLoadingContent] = useState(false);
 
   useEffect(() => {
     setLessonsState(initialLessonsWithActivities);
@@ -216,6 +217,7 @@ export function CourseActivities({
       content: activity.content ?? { questions: [] },
     });
     setIsModalOpen(true);
+    setIsLoadingContent(true);
 
     try {
       const cached = lessonActivitiesCache[lesson.id];
@@ -238,6 +240,8 @@ export function CourseActivities({
       }
     } catch (error) {
       console.error('Error cargando contenido de la actividad:', error);
+    } finally {
+      setIsLoadingContent(false);
     }
   };
 
@@ -470,6 +474,7 @@ export function CourseActivities({
       {selectedActivity && selectedLesson && userId && (
         <LessonActivityModal
           isOpen={isModalOpen}
+          isContentLoading={isLoadingContent}
           onCloseAction={() => setIsModalOpen(false)}
           activity={selectedActivity}
           userId={userId}

@@ -63,6 +63,8 @@ const resolveContentType = (
     jpeg: 'image/jpeg',
     gif: 'image/gif',
     webp: 'image/webp',
+    blend: 'application/octet-stream',
+    blend1: 'application/octet-stream',
   };
 
   return map[ext] ?? 'application/octet-stream';
@@ -113,7 +115,7 @@ export async function POST(request: Request) {
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: key,
       Conditions: [
-        ['content-length-range', 0, 10485760], // 10 MB limit
+        ['content-length-range', 0, 209715200], // 200 MB limit (permite .blend)
         ['starts-with', '$Content-Type', resolvedContentType],
       ],
       Fields: {

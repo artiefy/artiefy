@@ -19,6 +19,7 @@ import {
   Search,
   X,
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 import useSWR from 'swr';
@@ -490,8 +491,7 @@ export function Header({
   return (
     <nav
       className="
-        sticky z-[100] mb-8 w-full border-b bg-[#01152d]
-        sm:mb-8
+        fixed inset-x-0 z-[100] mb-0 w-full bg-[#01152d]
       "
       style={{ top: 'var(--subscription-banner-height, 0px)' }}
     >
@@ -963,7 +963,7 @@ export function Header({
             className="
               fixed inset-x-0 top-[var(--subscription-banner-height,0px)]
               z-[100000] flex h-16 items-center justify-between overflow-hidden
-              border-b border-[#1d283a] bg-[#01152d] px-5
+              bg-[#01152d] px-5
               md:hidden
             "
           >
@@ -1123,131 +1123,135 @@ export function Header({
           </form>
         </div>
       )}
-      {isMobileViewport && mobileMenuOpen ? (
-        <div
-          className="
-            fixed inset-0 z-[2147483647] overscroll-contain
-            md:hidden
-          "
-        >
-          <button
-            type="button"
-            className="
+      {mounted && isMobileViewport && mobileMenuOpen
+        ? createPortal(
+            <div
+              className="
+              fixed inset-0 z-[2147483647] overscroll-contain
+              md:hidden
+            "
+            >
+              <button
+                type="button"
+                className="
               fixed inset-0 z-[2147483646] cursor-default appearance-none
               border-0 bg-black/55 p-0
             "
-            aria-label="Cerrar menú"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-          <aside
-            id="mobile-menu"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Menú principal"
-            tabIndex={-1}
-            className="
+                aria-label="Cerrar menú"
+                onClick={() => setMobileMenuOpen(false)}
+              />
+              <aside
+                id="mobile-menu"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Menú principal"
+                tabIndex={-1}
+                className="
               fixed inset-y-0 right-0 z-[2147483647] flex h-[100svh]
               max-h-[100svh] w-[min(86vw,22rem)] flex-col overflow-hidden
               bg-[#01152d] px-6 pt-[calc(env(safe-area-inset-top)+1.5rem)]
               shadow-2xl
               sm:w-[80%] sm:max-w-sm sm:px-7
             "
-          >
-            <div className="mb-6 flex w-full items-center justify-between">
-              <Link
-                href="/"
-                className="flex items-center gap-3"
-                onClick={() => setMobileMenuOpen(false)}
               >
-                <Image
-                  src="/artiefy-icon-mobile.png"
-                  alt="Artiefy"
-                  width={36}
-                  height={36}
-                  className="size-9 object-contain"
-                />
-                <span className="text-xl font-bold text-primary">Artiefy</span>
-              </Link>
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className="
+                <div className="mb-6 flex w-full items-center justify-between">
+                  <Link
+                    href="/"
+                    className="flex items-center gap-3"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Image
+                      src="/artiefy-icon-mobile.png"
+                      alt="Artiefy"
+                      width={36}
+                      height={36}
+                      className="size-9 object-contain"
+                    />
+                    <span className="text-xl font-bold text-primary">
+                      Artiefy
+                    </span>
+                  </Link>
+                  <button
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="
                 rounded-full p-1 text-slate-300 transition
                 hover:bg-white/10 hover:text-white
                 focus:outline-none
                 focus-visible:ring-2 focus-visible:ring-primary
               "
-                aria-label="Close menu"
-              >
-                <XMarkIconSolid className="size-5" />
-              </button>
-            </div>
-            <div className="mb-6">
-              <div className="relative">
-                <Search
-                  className="
+                    aria-label="Close menu"
+                  >
+                    <XMarkIconSolid className="size-5" />
+                  </button>
+                </div>
+                <div className="mb-6">
+                  <div className="relative">
+                    <Search
+                      className="
                   absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400
                 "
-                />
-                <input
-                  type="search"
-                  placeholder="Buscar"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') {
-                      handleSearch();
-                      setMobileMenuOpen(false);
-                    }
-                  }}
-                  className="
+                    />
+                    <input
+                      type="search"
+                      placeholder="Buscar"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          handleSearch();
+                          setMobileMenuOpen(false);
+                        }
+                      }}
+                      className="
                   h-12 w-full rounded-xl border border-white/5 bg-white/7 pr-4
                   pl-12 text-sm text-white outline-none
                   placeholder:text-slate-400
                   focus:border-primary/50 focus:ring-2 focus:ring-primary/20
                 "
-                />
-              </div>
-              {showPreview &&
-                (previewCourses.length > 0 || previewPrograms.length > 0) && (
-                  <div className="mt-3 max-h-[42dvh] overflow-y-auto rounded-xl">
-                    <Suspense fallback={null}>
-                      <CourseSearchPreview
-                        courses={previewCourses}
-                        programs={previewPrograms}
-                        onSelectCourse={(courseId: number) => {
-                          setMobileMenuOpen(false);
-                          window.location.href = `/estudiantes/cursos/${courseId}`;
-                        }}
-                        onSelectProgram={(programId: string | number) => {
-                          setMobileMenuOpen(false);
-                          window.location.href = `/estudiantes/programas/${programId}`;
-                        }}
-                      />
-                    </Suspense>
+                    />
                   </div>
-                )}
-            </div>
-            <div
-              className="
+                  {showPreview &&
+                    (previewCourses.length > 0 ||
+                      previewPrograms.length > 0) && (
+                      <div className="mt-3 max-h-[42dvh] overflow-y-auto rounded-xl">
+                        <Suspense fallback={null}>
+                          <CourseSearchPreview
+                            courses={previewCourses}
+                            programs={previewPrograms}
+                            onSelectCourse={(courseId: number) => {
+                              setMobileMenuOpen(false);
+                              window.location.href = `/estudiantes/cursos/${courseId}`;
+                            }}
+                            onSelectProgram={(programId: string | number) => {
+                              setMobileMenuOpen(false);
+                              window.location.href = `/estudiantes/programas/${programId}`;
+                            }}
+                          />
+                        </Suspense>
+                      </div>
+                    )}
+                </div>
+                <div
+                  className="
               min-h-0 flex-1 overflow-y-auto overscroll-contain
               pb-[clamp(1rem,3dvh,1.75rem)]
             "
-            >
-              <nav>
-                <ul className="space-y-2.5">
-                  {visibleMobileNavItems.map((item) => {
-                    const isActive =
-                      pathname === item.href ||
-                      (item.href !== '/' &&
-                        !item.href.includes('#') &&
-                        pathname.startsWith(item.href));
-                    const Icon = item.icon;
-                    if (item.label === 'Espacios') {
-                      return (
-                        <li key={item.href}>
-                          <button
-                            type="button"
-                            className={`
+                >
+                  <nav>
+                    <ul className="space-y-2.5">
+                      {visibleMobileNavItems.map((item) => {
+                        const isActive =
+                          pathname === item.href ||
+                          (item.href !== '/' &&
+                            !item.href.includes('#') &&
+                            pathname.startsWith(item.href));
+                        const Icon = item.icon;
+                        if (item.label === 'Espacios') {
+                          return (
+                            <li key={item.href}>
+                              <button
+                                type="button"
+                                className={`
                             flex w-full items-center gap-4 rounded-xl px-4
                             py-2.5
                             text-left text-base font-semibold transition
@@ -1262,22 +1266,22 @@ export function Header({
                                 `
                             }
                           `}
-                            onClick={(e) => {
-                              setMobileMenuOpen(false);
-                              handleEspaciosClick(e);
-                            }}
-                          >
-                            <Icon className="size-5 shrink-0" />
-                            <span>{item.label}</span>
-                          </button>
-                        </li>
-                      );
-                    }
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={`
+                                onClick={(e) => {
+                                  setMobileMenuOpen(false);
+                                  handleEspaciosClick(e);
+                                }}
+                              >
+                                <Icon className="size-5 shrink-0" />
+                                <span>{item.label}</span>
+                              </button>
+                            </li>
+                          );
+                        }
+                        return (
+                          <li key={item.href}>
+                            <Link
+                              href={item.href}
+                              className={`
                           flex w-full items-center gap-4 rounded-xl px-4
                           py-2.5
                           text-base font-semibold transition
@@ -1291,50 +1295,54 @@ export function Header({
                               `
                           }
                         `}
-                          onClick={() => setMobileMenuOpen(false)}
-                        >
-                          <Icon className="size-5 shrink-0" />
-                          <span>{item.label}</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </nav>
-              {!isSignedIn ? (
-                <button
-                  type="button"
-                  onClick={handleOpenLoginModal}
-                  className="
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              <Icon className="size-5 shrink-0" />
+                              <span>{item.label}</span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </nav>
+                  {!isSignedIn ? (
+                    <button
+                      type="button"
+                      onClick={handleOpenLoginModal}
+                      className="
                     mt-6 flex h-12 w-full items-center justify-center rounded-xl
                     bg-primary text-sm font-semibold text-[#01152d] transition
                     hover:bg-primary/90
                     active:scale-95
                   "
-                >
-                  Acceder
-                </button>
-              ) : null}
-            </div>
-            {isSignedIn ? (
-              <div
-                className="
+                    >
+                      Acceder
+                    </button>
+                  ) : null}
+                </div>
+                {isSignedIn ? (
+                  <div
+                    className="
                   shrink-0 border-t border-white/8 pt-4
                   pb-[calc(env(safe-area-inset-bottom)+1.25rem)]
                 "
-              >
-                <div className="flex min-h-12 items-center justify-center">
-                  <Suspense
-                    fallback={<Icons.spinner className="size-5 text-primary" />}
                   >
-                    <UserButtonWrapper />
-                  </Suspense>
-                </div>
-              </div>
-            ) : null}
-          </aside>
-        </div>
-      ) : null}
+                    <div className="flex min-h-12 items-center justify-center">
+                      <Suspense
+                        fallback={
+                          <Icons.spinner className="size-5 text-primary" />
+                        }
+                      >
+                        <UserButtonWrapper />
+                      </Suspense>
+                    </div>
+                  </div>
+                ) : null}
+              </aside>
+            </div>,
+            document.body
+          )
+        : null}
 
       <MiniLoginModal
         isOpen={isMobileViewport && activeAuthModal === 'login'}

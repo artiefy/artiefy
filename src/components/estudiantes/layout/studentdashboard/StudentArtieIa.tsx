@@ -4,7 +4,22 @@ import BlurText from '~/components/reactbits/BlurText';
 
 export const StudentArtieIa = () => {
   return (
-    <div className="flex w-full items-center justify-center py-4 text-center">
+    <div
+      className="
+        relative isolate flex w-full items-center justify-center overflow-visible
+        pt-8 pb-4 text-center
+        md:pt-10
+      "
+    >
+      <div
+        aria-hidden="true"
+        className="
+          pointer-events-none absolute top-[-6.5rem] left-1/2 -z-10 h-56
+          w-[26rem] -translate-x-1/2 rounded-full
+          bg-[radial-gradient(circle_at_50%_100%,rgba(58,244,239,0.34),rgba(0,189,216,0.16)_42%,transparent_74%)]
+          blur-3xl
+        "
+      />
       <BlurText
         text="Artie IA"
         delay={120}

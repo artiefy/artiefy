@@ -3166,7 +3166,11 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     ? mobileViewportBase || fallbackMobileHeight
     : undefined;
   const mobileBoxWidth = mobileViewportWidth ?? fallbackMobileWidth;
-  const mobileBoxHeight = mobileViewportHeight ?? fallbackMobileHeight;
+  // El panel del chat se abre debajo del header fijo (h-16 = 64px) para que el
+  // header de navegación quede visible y usable en responsive.
+  const MOBILE_HEADER_OFFSET = 64;
+  const mobileBoxHeight =
+    (mobileViewportHeight ?? fallbackMobileHeight) - MOBILE_HEADER_OFFSET;
 
   // Mover el botón flotante a la esquina izquierda en pantallas grandes cuando estemos
   // en la ruta de una clase individual (/estudiantes/clases/:id)
@@ -3460,19 +3464,26 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
             <div
               className={`
                 fixed
-                ${isDesktop ? 'top-0 right-0 bottom-0 left-auto' : 'inset-0'} z-[100001]`}
+                ${
+                  isDesktop
+                    ? 'top-0 right-0 bottom-0 left-auto'
+                    : 'inset-x-0 top-[calc(var(--subscription-banner-height,0px)+4rem)] bottom-0'
+                } z-[100000]`}
               ref={chatContainerRef}
               style={
                 isDesktop
                   ? { right: 0, left: 'auto', top: 0, bottom: 0 }
                   : {
-                      inset: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      top: 'calc(var(--subscription-banner-height, 0px) + 4rem)',
                       width: '100vw',
                       minWidth: '100vw',
                       maxWidth: '100vw',
                       height: `${mobileBoxHeight}px`,
-                      minHeight: '100dvh',
-                      maxHeight: '100dvh',
+                      maxHeight:
+                        'calc(100dvh - var(--subscription-banner-height, 0px) - 4rem)',
                       overflow: 'hidden',
                     }
               }
@@ -3528,7 +3539,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                       z-50 flex flex-col border-b border-gray-800
                       bg-[#071024]/95 shadow-[0_10px_30px_rgba(0,0,0,0.55)]
                       backdrop-blur-sm
-                      ${isDesktop ? '' : 'sticky top-0'}
+                      ${isDesktop ? '' : 'relative'}
                     `}
                     style={
                       isDesktop

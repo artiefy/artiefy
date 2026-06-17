@@ -9,11 +9,14 @@ import StudentListCourses from '~/components/estudiantes/layout/studentdashboard
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
-import { getAllCourses } from '~/server/actions/estudiantes/courses/getAllCourses';
+import {
+  getAllLearningItems,
+  type UnifiedItem,
+} from '~/server/actions/estudiantes/getAllLearningItems';
 import { getAllPrograms } from '~/server/actions/estudiantes/programs/getAllPrograms';
 
 import type { CourseSortValue } from '~/components/estudiantes/layout/studentdashboard/CourseSortControl';
-import type { Category, Course, Program } from '~/types';
+import type { Category, Program } from '~/types';
 
 interface SearchParams {
   category?: string;
@@ -24,8 +27,8 @@ interface SearchParams {
 }
 
 interface APIResponse {
-  courses: Course[];
-  allCourses: Course[];
+  courses: UnifiedItem[];
+  allCourses: UnifiedItem[];
   programs: Program[];
   categories: Category[];
   featuredCategories: Category[];
@@ -47,35 +50,35 @@ function removeAccents(str: string): string {
 async function fetchData(
   params: SearchParams | undefined
 ): Promise<APIResponse> {
-  const [allCourses, allCategories, featuredCategories, allPrograms] =
+  const [allLearningItems, allCategories, featuredCategories, allPrograms] =
     await Promise.all([
-      getAllCourses(),
+      getAllLearningItems(),
       getAllCategories(),
       getFeaturedCategories(7),
       getAllPrograms(),
     ]);
 
-  let filteredCourses = allCourses;
+  let filteredCourses = allLearningItems;
 
   if (params?.category) {
     const categoryId = Number(params.category);
     filteredCourses = filteredCourses.filter(
-      (course) => course.categoryid === categoryId
+      (item) => item.categoryid === categoryId
     );
   }
 
   if (params?.query) {
     const normalizedQuery = removeAccents(params.query.toLowerCase());
-    filteredCourses = filteredCourses.filter((course) => {
-      const normalizedTitle = removeAccents(course.title.toLowerCase());
-      const normalizedCategory = course.category?.name
-        ? removeAccents(course.category.name.toLowerCase())
+    filteredCourses = filteredCourses.filter((item) => {
+      const normalizedTitle = removeAccents(item.title.toLowerCase());
+      const normalizedCategory = item.category?.name
+        ? removeAccents(item.category.name.toLowerCase())
         : '';
-      const normalizedModalidad = course.modalidad?.name
-        ? removeAccents(course.modalidad.name.toLowerCase())
+      const normalizedModalidad = item.modalidad?.name
+        ? removeAccents(item.modalidad.name.toLowerCase())
         : '';
-      const normalizedTypeCourse = course.typeCourse?.type
-        ? removeAccents(course.typeCourse.type.toLowerCase())
+      const normalizedTypeCourse = item.typeCourse?.type
+        ? removeAccents(item.typeCourse.type.toLowerCase())
         : '';
 
       // Solo buscar en título, categoría y modalidad
@@ -94,7 +97,7 @@ async function fetchData(
 
   return {
     courses: filteredCourses,
-    allCourses,
+    allCourses: allLearningItems,
     programs: allPrograms, // Ensure programs are included
     categories: allCategories,
     featuredCategories,

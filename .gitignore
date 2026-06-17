@@ -81,3 +81,7 @@ pnpm-lock.yaml
 # Local agent/harness files
 .atl/
 .pi/
+
+# Local AI/tooling runtime files
+.claude/
+.playwright-mcp/

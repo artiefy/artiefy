@@ -65,6 +65,9 @@ interface ActivityModalProps {
   onActivityCompleteAction: () => void; // Renamed
   isLastActivityInLesson: boolean;
   nextLesson?: { id: number; title: string } | null;
+  // True mientras el padre carga el contenido (preguntas) de la actividad de
+  // forma asíncrona. Evita mostrar el estado "sin preguntas" antes de tiempo.
+  isContentLoading?: boolean;
 }
 
 interface UserAnswer {
@@ -235,6 +238,7 @@ export function LessonActivityModal({
   onActivityCompleteAction,
   isLastActivityInLesson,
   nextLesson,
+  isContentLoading = false,
 }: ActivityModalProps) {
   const router = useRouter();
 
@@ -1401,8 +1405,9 @@ export function LessonActivityModal({
   };
 
   const handleFileUpload = (file: File) => {
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('El archivo no debe superar los 10MB');
+    // 200 MB: permite archivos pesados como .blend (proyectos de Blender).
+    if (file.size > 200 * 1024 * 1024) {
+      toast.error('El archivo no debe superar los 200MB');
       return;
     }
 
@@ -1857,7 +1862,7 @@ export function LessonActivityModal({
                           ref={fileInputRef}
                           id={fileInputId}
                           type="file"
-                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.ppt,.pptx,.xls,.xlsx,.webp,.heic,.heif,.zip,.rar,.7z"
+                          accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif,.ppt,.pptx,.xls,.xlsx,.webp,.heic,.heif,.zip,.rar,.7z,.blend,.blend1"
                           aria-label="Seleccionar archivo para subir"
                           className="
                             sr-only absolute size-px overflow-hidden border-0
@@ -2209,7 +2214,7 @@ export function LessonActivityModal({
     onCloseAction();
   };
 
-  if (isLoading) {
+  if (isLoading || isContentLoading) {
     return (
       <Dialog open={isOpen} onOpenChange={onCloseAction}>
         <DialogContent>
@@ -2232,9 +2237,11 @@ export function LessonActivityModal({
     );
   }
 
-  // --- NUEVO BLOQUE: Si no hay preguntas, muestra mensaje y DialogTitle ---
+  // --- Si terminó de cargar y no hay preguntas, muestra un mensaje claro ---
+  // (antes mostraba una animación que parecía un "cargando" infinito).
   if (
     !isLoading &&
+    !isContentLoading &&
     activity.typeid !== 1 &&
     (!questions || questions.length === 0)
   ) {
@@ -2249,11 +2256,22 @@ export function LessonActivityModal({
               id="activity-modal-title"
               className="text-center text-3xl font-bold"
             >
-              ACTIVIDAD
+              {activity.name ?? 'ACTIVIDAD'}
             </DialogTitle>
           </DialogHeader>
-          <div className="flex flex-col items-center justify-center p-8">
-            <Icons.blocks className="size-22 animate-pulse fill-primary" />
+          <div className="flex flex-col items-center justify-center gap-4 p-8">
+            <p className="text-center text-base text-gray-300">
+              Esta actividad no tiene preguntas disponibles.
+            </p>
+            <Button
+              onClick={onCloseAction}
+              className="
+                bg-blue-500 font-bold text-white
+                hover:bg-blue-600
+              "
+            >
+              Cerrar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
