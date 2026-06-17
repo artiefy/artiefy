@@ -168,24 +168,21 @@ export async function GET(
         name: activities.name,
         description: activities.description,
         isCompleted: userActivitiesProgress.isCompleted,
-        score: scores.score,
+        score: userActivitiesProgress.finalGrade, // ✅ fuente correcta
         parentTitle: lessons.title,
       })
       .from(userActivitiesProgress)
-      .leftJoin(
+      .innerJoin(
         activities,
         eq(userActivitiesProgress.activityId, activities.id)
       )
-      .leftJoin(
-        scores,
-        and(eq(scores.userId, userId), eq(scores.categoryid, activities.id))
-      )
-      .leftJoin(lessons, eq(activities.lessonsId, lessons.id))
-      .where(eq(userActivitiesProgress.userId, userId));
-    console.log(
-      '🟦 activityDetailsRaw:',
-      JSON.stringify(activityDetailsRaw, null, 2)
-    );
+      .innerJoin(lessons, eq(activities.lessonsId, lessons.id))
+      .where(
+        and(
+          eq(userActivitiesProgress.userId, userId),
+          eq(lessons.courseId, Number(courseId)) // ✅ filtra por curso
+        )
+      );
 
     // 🔹 Consultar Redis para cada actividad
     const activityDetails = await Promise.all(
