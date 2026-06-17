@@ -4,12 +4,31 @@ import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { activities, userActivitiesProgress } from '~/server/db/schema';
+import {
+  activities,
+  lessons,
+  parametros,
+  userActivitiesProgress,
+} from '~/server/db/schema';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
   token: process.env.UPSTASH_REDIS_REST_TOKEN!,
 });
+
+interface ActividadConNota {
+  activityId: number;
+  activityName: string;
+  porcentaje: number;
+  grade: number | null;
+}
+
+interface ParametroGroup {
+  parametroId: number;
+  parametroNombre: string;
+  parametroPorcentaje: number;
+  actividades: ActividadConNota[];
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,10 +36,7 @@ export async function GET(request: NextRequest) {
     const courseId = searchParams.get('courseId');
     const userId = searchParams.get('userId');
 
-    console.log('🟡 Buscando notas para:', { userId, courseId });
-
     if (!courseId || !userId) {
-      console.warn('❌ Faltan parámetros');
       return NextResponse.json(
         { error: 'Missing parameters' },
         { status: 400 }
@@ -32,39 +48,89 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'courseId inválido' }, { status: 400 });
     }
 
-    const result = await db
+    const rows = await db
       .select({
-        activityId: userActivitiesProgress.activityId,
-        grade: userActivitiesProgress.finalGrade,
+        parametroId: parametros.id,
+        parametroNombre: parametros.name,
+        parametroPorcentaje: parametros.porcentaje,
+        activityId: activities.id,
         activityName: activities.name,
+        activityPorcentaje: activities.porcentaje,
+        grade: userActivitiesProgress.finalGrade,
       })
-      .from(userActivitiesProgress)
-      .innerJoin(
-        activities,
-        eq(userActivitiesProgress.activityId, activities.id)
-      )
-      .where(
+      .from(activities)
+      .innerJoin(lessons, eq(activities.lessonsId, lessons.id))
+      .innerJoin(parametros, eq(activities.parametroId, parametros.id))
+      .leftJoin(
+        userActivitiesProgress,
         and(
-          eq(userActivitiesProgress.userId, userId),
-          eq(activities.lessonsId, courseIdParsed) // Asegúrate que este campo sea correcto
+          eq(userActivitiesProgress.activityId, activities.id),
+          eq(userActivitiesProgress.userId, userId)
         )
-      );
+      )
+      .where(eq(lessons.courseId, courseIdParsed));
 
-    console.log('🟢 Resultados encontrados:', result);
-
-    if (!result || result.length === 0) {
-      return NextResponse.json({
-        grades: [
-          {
-            activityId: -1,
-            activityName: 'Sin actividad',
-            grade: 1,
-          },
-        ],
-      });
+    if (!rows.length) {
+      return NextResponse.json({ parametros: [], notaFinal: '0.00' });
     }
 
-    return NextResponse.json({ grades: result });
+    const parametrosMap: Map<number, ParametroGroup> = new Map();
+
+    for (const row of rows) {
+      if (!parametrosMap.has(row.parametroId)) {
+        parametrosMap.set(row.parametroId, {
+          parametroId: row.parametroId,
+          parametroNombre: row.parametroNombre,
+          parametroPorcentaje: row.parametroPorcentaje,
+          actividades: [],
+        });
+      }
+      const grupo = parametrosMap.get(row.parametroId);
+      if (grupo) {
+        grupo.actividades.push({
+          activityId: row.activityId,
+          activityName: row.activityName,
+          porcentaje: row.activityPorcentaje ?? 0,
+          grade: row.grade,
+        });
+      }
+    }
+
+    let notaFinalAcumulada = 0;
+    let sumaPesosParametros = 0;
+
+    const parametrosResult = Array.from(parametrosMap.values()).map((param) => {
+      let sumaNotas = 0;
+      let sumaPesosActividades = 0;
+
+      param.actividades.forEach((act) => {
+        const nota = act.grade ?? 0;
+        sumaNotas += nota * (act.porcentaje / 100);
+        sumaPesosActividades += act.porcentaje / 100;
+      });
+
+      const promedioParametro =
+        sumaPesosActividades > 0 ? sumaNotas / sumaPesosActividades : 0;
+
+      notaFinalAcumulada +=
+        promedioParametro * (param.parametroPorcentaje / 100);
+      sumaPesosParametros += param.parametroPorcentaje / 100;
+
+      return {
+        ...param,
+        promedioParametro: Number(promedioParametro.toFixed(2)),
+      };
+    });
+
+    const notaFinal =
+      sumaPesosParametros > 0
+        ? (notaFinalAcumulada / sumaPesosParametros).toFixed(2)
+        : '0.00';
+
+    return NextResponse.json({
+      parametros: parametrosResult,
+      notaFinal,
+    });
   } catch (error) {
     console.error('❌ Error fetching grades:', error);
     return NextResponse.json(
