@@ -9,7 +9,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { TrashIcon } from '@heroicons/react/24/solid';
 import * as Tooltip from '@radix-ui/react-tooltip';
-// lucide icons removed (not used here)
+import { Brain } from 'lucide-react';
 import { HiMiniCpuChip } from 'react-icons/hi2';
 import { IoClose } from 'react-icons/io5';
 import { MdArrowBack, MdSupportAgent } from 'react-icons/md';
@@ -144,12 +144,13 @@ const StudentChatbot: React.FC<StudentChatbotProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 1,
-      text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+      text: 'Soy Artie, tu agente orquestador demo. Puedo abrir soporte, iniciar el tour o ayudarte con ideas y proyectos. ¿Qué necesitás hacer?',
       sender: 'bot',
       buttons: [
         { label: '📚 Crear Proyecto', action: 'new_project' },
         { label: '💬 Nueva Idea', action: 'new_idea' },
         { label: '🛠 Soporte Técnico', action: 'contact_support' },
+        { label: '🧭 Tour por la app', action: 'start_tour' },
       ],
     },
   ]);
@@ -1415,7 +1416,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           // - mapear roles: 'bot' -> 'assistant', 'user' -> 'user'
           // - limitar a últimas 12 entradas (ajustable)
           const RAW_WELCOME =
-            '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎';
+            'Soy Artie, tu agente orquestador demo. Puedo abrir soporte, iniciar el tour o ayudarte con ideas y proyectos. ¿Qué necesitás hacer?';
           const MAX_HISTORY = 12;
           const messageHistory = messages
             .filter(Boolean)
@@ -1810,12 +1811,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         setMessages([
           {
             id: now,
-            text: '¡Hola! soy Artie 🤖 tu chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 🤔',
+            text: 'Soy Artie, tu agente orquestador demo. Puedo abrir soporte, iniciar el tour o ayudarte con ideas y proyectos. ¿Qué necesitás hacer?',
             sender: 'bot',
             buttons: [
               { label: '🤖 Crear Proyecto', action: 'new_project' },
               { label: '💡 Nueva Idea', action: 'new_idea' },
               { label: '🛠️ Soporte Técnico', action: 'contact_support' },
+              { label: '🧭 Tour por la app', action: 'start_tour' },
             ],
           },
         ]);
@@ -1835,12 +1837,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
         setMessages([
           {
             id: now,
-            text: '¡Hola! soy Artie 🤖 tu chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 🤔',
+            text: 'Soy Artie, tu agente orquestador demo. Puedo abrir soporte, iniciar el tour o ayudarte con ideas y proyectos. ¿Qué necesitás hacer?',
             sender: 'bot',
             buttons: [
               { label: '🤖 Crear Proyecto', action: 'new_project' },
               { label: '💡 Nueva Idea', action: 'new_idea' },
               { label: '🛠️ Soporte Técnico', action: 'contact_support' },
+              { label: '🧭 Tour por la app', action: 'start_tour' },
             ],
           },
           {
@@ -2320,12 +2323,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     setMessages([
       {
         id: Date.now(),
-        text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+        text: 'Soy Artie, tu agente orquestador demo. Puedo abrir soporte, iniciar el tour o ayudarte con ideas y proyectos. ¿Qué necesitás hacer?',
         sender: 'bot',
         buttons: [
           { label: '📚 Crear Proyecto', action: 'new_project' },
           { label: '💬 Nueva Idea', action: 'new_idea' },
           { label: '🛠 Soporte Técnico', action: 'contact_support' },
+          { label: '🧭 Tour por la app', action: 'start_tour' },
         ],
       },
     ]);
@@ -2340,6 +2344,23 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
       handleClose();
     } else {
       setIsOpen(true);
+      setMessages((prev) =>
+        prev.length > 0
+          ? prev
+          : [
+              {
+                id: Date.now(),
+                text: 'Soy Artie, tu agente orquestador demo. Puedo abrir soporte, iniciar el tour o ayudarte con ideas y proyectos. ¿Qué necesitás hacer?',
+                sender: 'bot',
+                buttons: [
+                  { label: '🧭 Tour por la app', action: 'start_tour' },
+                  { label: '🛠 Soporte Técnico', action: 'contact_support' },
+                  { label: '📚 Crear Proyecto', action: 'new_project' },
+                  { label: '💬 Nueva Idea', action: 'new_idea' },
+                ],
+              },
+            ]
+      );
     }
   };
 
@@ -2395,6 +2416,12 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           })
         );
       }
+      return;
+    }
+    if (action === 'start_tour') {
+      queueOrSaveUserMessage('🧭 Tour por la app');
+      setIsOpen(false);
+      window.dispatchEvent(new Event('start-tour'));
       return;
     }
 
@@ -2933,7 +2960,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
       // Detecta bienvenida e idea
       const isWelcome =
         msgText ===
-        '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎';
+        'Soy Artie, tu agente orquestador demo. Puedo abrir soporte, iniciar el tour o ayudarte con ideas y proyectos. ¿Qué necesitás hacer?';
       const isIdea = msgText === '¡Cuéntame tu nueva idea!';
 
       // Unifica todos los casos que deben tener fondo especial
@@ -3122,21 +3149,33 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     isSupportChatVisible ||
     (isOpen && (activeSection === 'tickets' || chatMode.type === 'ticket'));
   const floatingButtonsZIndex = !isDesktop
-    ? 80
+    ? 40
     : shouldLowerFloatingButtons
       ? 40
       : 100001;
   const floatingButtonStyle: React.CSSProperties = shouldLowerFloatingButtons
     ? { zIndex: floatingButtonsZIndex, pointerEvents: 'none', opacity: 0.5 }
     : { zIndex: floatingButtonsZIndex };
+  const mainFloatingButtonStyle: React.CSSProperties = !isDesktop
+    ? {
+        ...floatingButtonStyle,
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6.5rem)',
+      }
+    : floatingButtonStyle;
   const shouldRenderSupportButton =
-    !isDesktop || ((showExtras || isHovered || extrasHovered) && showAnim);
-  const mainFloatingBottomClass = isMobileBottomCtaVisible
-    ? 'bottom-22'
-    : 'bottom-6';
-  const supportFloatingBottomClass = isMobileBottomCtaVisible
-    ? 'bottom-40'
-    : 'bottom-26';
+    isDesktop && (showExtras || isHovered || extrasHovered) && showAnim;
+  // En móvil siempre por encima de la barra inferior (MobileBottomNav, ~5rem);
+  // en desktop conserva el offset según el CTA de suscripción.
+  const mainFloatingBottomClass = !isDesktop
+    ? 'bottom-32'
+    : isMobileBottomCtaVisible
+      ? 'bottom-22'
+      : 'bottom-6';
+  const supportFloatingBottomClass = !isDesktop
+    ? 'bottom-72'
+    : isMobileBottomCtaVisible
+      ? 'bottom-40'
+      : 'bottom-26';
   const supportButtonWrapperClass = isDesktop
     ? _safePathname.startsWith('/estudiantes/clases/')
       ? `animate-in fade-in-0 slide-in-from-bottom-2 fixed left-7 ${supportFloatingBottomClass} duration-200 sm:left-7`
@@ -3183,7 +3222,7 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
           ? `fixed left-6 ${mainFloatingBottomClass}`
           : `fixed right-4 ${mainFloatingBottomClass}`;
   const floatingRootZIndex = !isDesktop
-    ? 80
+    ? 40
     : shouldLowerFloatingButtons
       ? 40
       : 99999;
@@ -3223,12 +3262,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
             setMessages([
               {
                 id: Date.now(),
-                text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+                text: 'Soy Artie, tu agente orquestador demo. Puedo abrir soporte, iniciar el tour o ayudarte con ideas y proyectos. ¿Qué necesitás hacer?',
                 sender: 'bot',
                 buttons: [
                   { label: '📚 Crear Proyecto', action: 'new_project' },
                   { label: '💬 Nueva Idea', action: 'new_idea' },
                   { label: '🛠 Soporte Técnico', action: 'contact_support' },
+                  { label: '🧭 Tour por la app', action: 'start_tour' },
                 ],
               },
             ]);
@@ -3251,12 +3291,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     setMessages([
       {
         id: Date.now(),
-        text: '¡Hola! soy Artie 🤖 tú chatbot para resolver tus dudas, ¿En qué puedo ayudarte hoy? 😎',
+        text: 'Soy Artie, tu agente orquestador demo. Puedo abrir soporte, iniciar el tour o ayudarte con ideas y proyectos. ¿Qué necesitás hacer?',
         sender: 'bot',
         buttons: [
           { label: '📚 Crear Proyecto', action: 'new_project' },
           { label: '💬 Nueva Idea', action: 'new_idea' },
           { label: '🛠 Soporte Técnico', action: 'contact_support' },
+          { label: '🧭 Tour por la app', action: 'start_tour' },
         ],
       },
     ]);
@@ -3280,15 +3321,20 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
             <div
               className={`
                 ${floatingMainWrapperClass}
+                js-floating-launcher
+                js-artie-orchestrator-launcher
               `}
-              style={floatingButtonStyle}
+              style={mainFloatingButtonStyle}
             >
               <div className="relative">
                 <button
                   className={`
-                    relative size-16 rounded-full bg-gradient-to-br
-                    from-cyan-400 via-teal-500 to-emerald-600 shadow-lg
-                    shadow-cyan-500/25 transition-all duration-300 ease-out
+                    liquid-glass relative flex size-[52px] items-center
+                    justify-center rounded-full border border-white/15
+                    !bg-[#01152d]/55 text-primary shadow-lg
+                    shadow-cyan-500/10 !backdrop-blur-2xl
+                    !backdrop-saturate-150 transition-all duration-300 ease-out
+                    hover:scale-105 hover:bg-[#01152d]/70
                     ${isOpen ? 'minimized' : ''}
                   `}
                   onMouseEnter={() => {
@@ -3309,72 +3355,22 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
                     }, 150);
                   }}
                   onClick={handleClick}
+                  aria-label="Abrir agente Artie"
                 >
-                  <div
-                    className={`
-                      absolute inset-0 rounded-full bg-gradient-to-br
-                      from-cyan-400 to-teal-500 opacity-0 blur-md
-                      transition-opacity duration-300
-                      group-hover:opacity-20
-                    `}
-                  />
-                  <div
-                    className={`
-                      absolute inset-1 flex items-center justify-center
-                      rounded-full bg-gradient-to-br from-slate-800 to-slate-900
-                    `}
-                  >
-                    <div className="relative flex items-center justify-center">
-                      <Image
-                        src="/robot-svgrepo-com.svg"
-                        alt="Artie IA"
-                        width={32}
-                        height={32}
-                        unoptimized
-                        className={`
-                          size-8 -translate-y-1 transform transition-all
-                          duration-300
-                          ${isHovered ? 'scale-105' : ''}
-                        `}
-                      />
-                    </div>
-                  </div>
-                  <div
-                    className={`
-                      absolute inset-0 rounded-full bg-gradient-to-r
-                      from-transparent via-cyan-400 to-transparent opacity-0
-                      transition-opacity duration-500
-                      group-hover:opacity-100
-                    `}
+                  <Brain
+                    className="size-6 text-primary"
                     style={{
-                      background:
-                        'conic-gradient(from 0deg, transparent, #22d3ee, transparent, #06b6d4, transparent)',
+                      filter: 'drop-shadow(0 0 12px rgba(34, 196, 211, 0.65))',
                     }}
                   />
-                  <div
-                    className={`
-                      absolute inset-0 rounded-full border-2 border-cyan-400
-                      opacity-0 transition-opacity duration-300
-                    `}
-                  />
                 </button>
-                {/* Label debajo del botón: más grande, bold y pegada al botón */}
-                <div
-                  className={`
-                    text-md absolute bottom-[-1.2rem] left-1/2 -translate-x-1/2
-                    transform text-center font-bold whitespace-nowrap
-                    text-primary
-                  `}
-                >
-                  Artie IA
-                </div>
               </div>
 
               {/* Eliminado el tooltip/frase "Asistente IA" y triángulo */}
 
               {shouldRenderSupportButton && (
                 <div
-                  className={supportButtonWrapperClass}
+                  className={`${supportButtonWrapperClass} js-floating-launcher js-support-floating-launcher`}
                   onMouseEnter={
                     isDesktop
                       ? () => {

@@ -7,7 +7,6 @@ import { db } from '~/server/db';
 import {
   categories,
   courses,
-  enrollments,
   modalidades,
   typesCourses,
 } from '~/server/db/schema';
@@ -27,24 +26,25 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
   const searchPattern = `%${normalizedQuery}%`;
   const normalizeColumn = (column: unknown) =>
     sql`translate(lower(${column}), ${accentFrom}, ${accentTo})`;
-  const { userId } = await auth();
-  const publicVisibilityCondition = or(
-    isNull(courses.visibility),
-    eq(courses.visibility, true)
-  );
-  const visibilityCondition = userId
-    ? or(
-        publicVisibilityCondition,
-        sql`exists (
-          select 1
-          from ${enrollments}
-          where ${enrollments.userId} = ${userId}
-            and ${enrollments.courseId} = ${courses.id}
-        )`
-      )
-    : publicVisibilityCondition;
 
-  // Buscar en título, categoría y modalidad
+  // Coincidencia de texto en título, categoría, modalidad o tipo de curso.
+  const textCondition = or(
+    sql`${normalizeColumn(courses.title)} ilike ${searchPattern}`,
+    sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
+    sql`${normalizeColumn(modalidades.name)} ilike ${searchPattern}`,
+    sql`${normalizeColumn(typesCourses.type)} ilike ${searchPattern}`
+  );
+
+  // Sin login: solo cursos visibles. Con login (matriculado o no): también los
+  // cursos con visibility desactivada, para que sean descubribles por búsqueda.
+  const { userId } = await auth();
+  const whereCondition = userId
+    ? textCondition
+    : and(
+        or(isNull(courses.visibility), eq(courses.visibility, true)),
+        textCondition
+      );
+
   const results = await db
     .select({
       id: courses.id,
@@ -65,17 +65,7 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
     .leftJoin(categories, eq(courses.categoryid, categories.id))
     .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
     .leftJoin(typesCourses, eq(courses.idTypesCourses, typesCourses.id))
-    .where(
-      and(
-        visibilityCondition,
-        or(
-          sql`${normalizeColumn(courses.title)} ilike ${searchPattern}`,
-          sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
-          sql`${normalizeColumn(modalidades.name)} ilike ${searchPattern}`,
-          sql`${normalizeColumn(typesCourses.type)} ilike ${searchPattern}`
-        )
-      )
-    )
+    .where(whereCondition)
     .limit(8);
 
   // Formatear resultados para cumplir con la interfaz Course

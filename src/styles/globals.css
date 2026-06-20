@@ -362,6 +362,47 @@ body.no-chrome {
   }
 }
 
+/* Liquid glass surface — mobile header pills and bottom bar */
+.liquid-glass {
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+
+.mobile-header-floating-control {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Reserve space for the fixed mobile bottom bar so it never covers content.
+   Applied only on small screens and only while the bar is mounted. */
+@media (max-width: 767px) {
+  body.has-bottom-nav {
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem);
+  }
+
+  body.has-bottom-nav .js-mobile-bottom-nav {
+    z-index: 2147483000 !important;
+  }
+
+  /* Lift the floating launchers (Artie chatbot + support) above the bottom bar.
+     Only when no bottom CTA is already managing their position, so the existing
+     ProgramHeader/StudentChatbot logic is never overridden. */
+  html:not(.mobile-bottom-cta-visible)
+    body.has-bottom-nav
+    .js-floating-launcher,
+  html:not(.mobile-bottom-cta-visible) body.has-bottom-nav .ticket-button {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 5.25rem);
+  }
+
+  html:not(.mobile-bottom-cta-visible)
+    body.has-bottom-nav
+    .js-support-floating-launcher {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 9.75rem);
+  }
+}
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

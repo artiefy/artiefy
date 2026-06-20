@@ -10,13 +10,16 @@ import { type OAuthStrategy } from '@clerk/shared/types';
 import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 import {
   BookOpen,
+  ChevronDown,
   CreditCard,
   FolderKanban,
   GraduationCap,
   Home,
+  LogIn,
   MapPin,
   PanelsTopLeft,
   Search,
+  Settings,
   X,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -33,6 +36,7 @@ import { ensureCurrentUserStudentRole, getUserRole } from '~/utils/roles';
 
 import { UserButtonWrapper } from '../auth/UserButtonWrapper';
 
+import { MobileBottomNav } from './MobileBottomNav';
 import { NotificationHeader } from './NotificationHeader';
 
 import type { EnrolledCourse } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
@@ -489,121 +493,122 @@ export function Header({
   }, [mobileMenuOpen]);
 
   return (
-    <nav
-      className="
-        fixed inset-x-0 z-[100] mb-0 w-full bg-[#01152d]
+    <>
+      <nav
+        className="
+        fixed inset-x-0 z-[100] mb-0 w-full bg-transparent md:bg-[#01152d]
       "
-      style={{ top: 'var(--subscription-banner-height, 0px)' }}
-    >
-      {showEspaciosModal ? (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="espacios-modal-title"
-        >
-          <button
-            type="button"
-            className="fixed inset-0 cursor-default bg-black/30"
-            aria-label="Cerrar modal"
-            onClick={() => setShowEspaciosModal(false)}
-          />
+        style={{ top: 'var(--subscription-banner-height, 0px)' }}
+      >
+        {showEspaciosModal ? (
           <div
-            className="
+            className="fixed inset-0 z-[100] flex items-center justify-center"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="espacios-modal-title"
+          >
+            <button
+              type="button"
+              className="fixed inset-0 cursor-default bg-black/30"
+              aria-label="Cerrar modal"
+              onClick={() => setShowEspaciosModal(false)}
+            />
+            <div
+              className="
               relative mx-auto flex w-full max-w-md flex-col items-center
               rounded-2xl bg-white p-8 shadow-2xl
             "
-          >
-            <span
-              className="
+            >
+              <span
+                className="
                 mb-4 flex size-16 items-center justify-center rounded-full
                 bg-gradient-to-tr from-primary to-blue-400 shadow-lg
               "
-            >
-              <svg
-                className="size-10 text-white"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2.5}
-                viewBox="0 0 24 24"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
-                />
-              </svg>
-            </span>
-            <h2
-              id="espacios-modal-title"
-              className="mb-2 text-center text-2xl font-bold text-secondary"
-            >
-              ¡Disponible muy pronto!
-            </h2>
-            <p className="mb-4 text-center text-gray-600">
-              La sección de{' '}
-              <span className="font-semibold text-secondary">Espacios</span>{' '}
-              estará habilitada próximamente.
-              <br />
-              ¡Gracias por tu interés!
-            </p>
-            <button
-              className="
+                <svg
+                  className="size-10 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"
+                  />
+                </svg>
+              </span>
+              <h2
+                id="espacios-modal-title"
+                className="mb-2 text-center text-2xl font-bold text-secondary"
+              >
+                ¡Disponible muy pronto!
+              </h2>
+              <p className="mb-4 text-center text-gray-600">
+                La sección de{' '}
+                <span className="font-semibold text-secondary">Espacios</span>{' '}
+                estará habilitada próximamente.
+                <br />
+                ¡Gracias por tu interés!
+              </p>
+              <button
+                className="
                 mt-2 rounded bg-secondary px-6 py-2 font-semibold text-white
                 shadow transition
                 hover:bg-blue-700
               "
-              onClick={() => setShowEspaciosModal(false)}
-            >
-              Cerrar
-            </button>
+                onClick={() => setShowEspaciosModal(false)}
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
-        </div>
-      ) : null}
-      <div
-        className="
+        ) : null}
+        <div
+          className="
           container mx-auto flex h-16 max-w-7xl items-center justify-between
           gap-12 px-4
           sm:px-6
         "
-      >
-        {!isMobileViewport ? (
-          <div className="hidden w-full items-center justify-between gap-12 md:flex">
-            {/* Logo */}
-            <Link
-              href="/"
-              className="
+        >
+          {!isMobileViewport ? (
+            <div className="hidden w-full items-center justify-between gap-12 md:flex">
+              {/* Logo */}
+              <Link
+                href="/"
+                className="
               ml-0 flex shrink-0 items-center gap-2
               md:-ml-8
             "
-            >
-              <div className="relative h-8 w-32">
-                <Image
-                  src="/artiefy-logo.svg"
-                  alt="Logo Artiefy"
-                  fill
-                  unoptimized
-                  className="object-contain"
-                  sizes="128px"
-                />
-              </div>
-            </Link>
+              >
+                <div className="relative h-8 w-32">
+                  <Image
+                    src="/artiefy-logo.svg"
+                    alt="Logo Artiefy"
+                    fill
+                    unoptimized
+                    className="object-contain"
+                    sizes="128px"
+                  />
+                </div>
+              </Link>
 
-            {/* Search Bar - Hidden on mobile */}
-            <form
-              onSubmit={handleSearch}
-              className="
+              {/* Search Bar - Hidden on mobile */}
+              <form
+                onSubmit={handleSearch}
+                className="
               hidden max-w-xl flex-1
               md:block
             "
-            >
-              <div className="relative">
-                <input
-                  type="search"
-                  placeholder="¡Aprende con IA!"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="
+              >
+                <div className="relative">
+                  <input
+                    type="search"
+                    placeholder="¡Aprende con IA!"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="
                   w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] py-3
                   pr-10 pl-4 text-sm text-foreground transition-all
                   placeholder:text-gray-400
@@ -611,67 +616,68 @@ export function Header({
                   focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2
                   focus:ring-[#3AF4EF]/50 focus:outline-none
                 "
-                  autoComplete="off"
-                />
-                <Search
-                  className="
+                    autoComplete="off"
+                  />
+                  <Search
+                    className="
                   absolute top-1/2 right-3 size-4 -translate-y-1/2
                   cursor-pointer text-primary/70 transition-colors
                   hover:text-primary
                 "
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (!searchQuery.trim()) return;
-                    handleSearch();
-                  }}
-                />
-                {/* Preview de cursos debajo del input */}
-                {showPreview &&
-                  (previewCourses.length > 0 || previewPrograms.length > 0) && (
-                    <div className="absolute z-50 w-full">
-                      <Suspense fallback={null}>
-                        <CourseSearchPreview
-                          courses={previewCourses}
-                          programs={previewPrograms}
-                          onSelectCourse={(courseId: number) => {
-                            window.location.href = `/estudiantes/cursos/${courseId}`;
-                          }}
-                          onSelectProgram={(programId: string | number) => {
-                            window.location.href = `/estudiantes/programas/${programId}`;
-                          }}
-                        />
-                      </Suspense>
-                    </div>
-                  )}
-              </div>
-            </form>
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!searchQuery.trim()) return;
+                      handleSearch();
+                    }}
+                  />
+                  {/* Preview de cursos debajo del input */}
+                  {showPreview &&
+                    (previewCourses.length > 0 ||
+                      previewPrograms.length > 0) && (
+                      <div className="absolute z-50 w-full">
+                        <Suspense fallback={null}>
+                          <CourseSearchPreview
+                            courses={previewCourses}
+                            programs={previewPrograms}
+                            onSelectCourse={(courseId: number) => {
+                              window.location.href = `/estudiantes/cursos/${courseId}`;
+                            }}
+                            onSelectProgram={(programId: string | number) => {
+                              window.location.href = `/estudiantes/programas/${programId}`;
+                            }}
+                          />
+                        </Suspense>
+                      </div>
+                    )}
+                </div>
+              </form>
 
-            {/* Navigation & Auth */}
-            <div
-              className="
+              {/* Navigation & Auth */}
+              <div
+                className="
               mr-0 flex items-center gap-4
               md:-mr-8
             "
-            >
-              {/* Desktop Navigation */}
-              <ul
-                className="
+              >
+                {/* Desktop Navigation */}
+                <ul
+                  className="
                 hidden items-center gap-1
                 lg:flex
               "
-              >
-                {navItems.map((item) => {
-                  const isActive =
-                    pathname === item.href ||
-                    (item.href !== '/' && pathname.startsWith(item.href));
+                >
+                  {navItems.map((item) => {
+                    const isActive =
+                      pathname === item.href ||
+                      (item.href !== '/' && pathname.startsWith(item.href));
 
-                  return (
-                    <li key={item.href}>
-                      {item.label === 'Cursos' && hasActiveStudentAccess ? (
-                        <div className="group relative">
-                          <Link
-                            href={item.href}
-                            className={`
+                    return (
+                      <li key={item.href}>
+                        {item.label === 'Cursos' && hasActiveStudentAccess ? (
+                          <div className="group relative">
+                            <Link
+                              href={item.href}
+                              className={`
                             inline-flex items-center gap-1 rounded-lg border
                             px-3 py-2 text-sm font-medium transition-colors
                             focus-visible:outline-none
@@ -691,29 +697,29 @@ export function Header({
                                 `
                             }
                           `}
-                          >
-                            {item.label}
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="24"
-                              height="24"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="
+                            >
+                              {item.label}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="
                               mt-0.5 size-3.5 transition-transform duration-200
                               group-hover:rotate-180
                             "
-                            >
-                              <path d="m6 9 6 6 6-6" />
-                            </svg>
-                          </Link>
+                              >
+                                <path d="m6 9 6 6 6-6" />
+                              </svg>
+                            </Link>
 
-                          <div
-                            className="
+                            <div
+                              className="
                             invisible absolute top-full left-0 z-50 mt-3
                             w-[360px] rounded-xl border border-border/60
                             bg-[#061c37] p-3 opacity-0 shadow-2xl transition-all
@@ -722,23 +728,189 @@ export function Header({
                             group-focus-within:opacity-100
                             group-hover:visible group-hover:opacity-100
                           "
-                          >
-                            <div className="space-y-1">
-                              <Link
-                                href="/estudiantes/myaccount"
-                                className="
+                            >
+                              <div className="space-y-1">
+                                <Link
+                                  href="/estudiantes/myaccount"
+                                  className="
                                 group/item flex items-center gap-3 rounded-lg
                                 px-3 py-2.5 transition-colors
                                 hover:bg-primary/10
                               "
-                              >
-                                <div
-                                  className="
+                                >
+                                  <div
+                                    className="
                                   flex size-8 items-center justify-center
                                   rounded-lg bg-primary/15 transition-colors
                                   group-hover/item:bg-primary/25
                                 "
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      width="24"
+                                      height="24"
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="size-4 text-primary"
+                                    >
+                                      <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+                                      <path d="M22 10v6" />
+                                      <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+                                    </svg>
+                                  </div>
+                                  <div>
+                                    <p
+                                      className="
+                                    text-sm font-medium text-foreground
+                                  "
+                                    >
+                                      Mis Cursos
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      Cursos y programas inscritos
+                                    </p>
+                                  </div>
+                                </Link>
+
+                                <div className="mx-2 my-1 h-px bg-border/40" />
+
+                                <p
+                                  className="
+                                px-3 pt-1 pb-1.5 text-[10px] font-semibold
+                                tracking-wider text-muted-foreground uppercase
+                              "
                                 >
+                                  Continuar viendo
+                                </p>
+
+                                {continueCourses.length > 0 ? (
+                                  continueCourses.map((course) => {
+                                    const targetLessonId =
+                                      course.lastUnlockedLessonId ??
+                                      course.continueLessonId ??
+                                      course.firstLessonId ??
+                                      null;
+                                    const courseHref = targetLessonId
+                                      ? `/estudiantes/clases/${targetLessonId}`
+                                      : `/estudiantes/cursos/${course.id}`;
+                                    const progress = Math.min(
+                                      Math.max(
+                                        Math.round(course.progress ?? 0),
+                                        0
+                                      ),
+                                      100
+                                    );
+                                    return (
+                                      <Link
+                                        key={course.id}
+                                        href={courseHref}
+                                        className="
+                                      group/item flex items-center gap-3
+                                      rounded-lg px-3 py-2 transition-colors
+                                      hover:bg-secondary/60
+                                    "
+                                      >
+                                        <div
+                                          className="
+                                        size-10 shrink-0 overflow-hidden
+                                        rounded-lg border border-border/30
+                                      "
+                                        >
+                                          <Image
+                                            src={getCourseImageUrl(
+                                              course.coverImageKey
+                                            )}
+                                            alt={course.title ?? 'Curso'}
+                                            width={40}
+                                            height={40}
+                                            className="size-full object-cover"
+                                          />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                          <p
+                                            className="
+                                          truncate text-xs font-medium
+                                          text-foreground
+                                        "
+                                          >
+                                            {course.title ?? 'Curso'}
+                                          </p>
+                                          <div
+                                            className="
+                                          mt-0.5 flex items-center gap-2
+                                        "
+                                          >
+                                            <div
+                                              className="
+                                            h-1 flex-1 overflow-hidden
+                                            rounded-full bg-muted
+                                          "
+                                            >
+                                              <div
+                                                className="
+                                              h-full rounded-full bg-primary
+                                            "
+                                                style={{
+                                                  width: `${progress}%`,
+                                                }}
+                                              />
+                                            </div>
+                                            <span
+                                              className="
+                                            text-[10px] text-muted-foreground
+                                          "
+                                            >
+                                              {progress}%
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <svg
+                                          xmlns="http://www.w3.org/2000/svg"
+                                          width="24"
+                                          height="24"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          className="
+                                        size-3.5 text-primary opacity-0
+                                        transition-opacity
+                                        group-hover/item:opacity-100
+                                      "
+                                        >
+                                          <polygon points="6 3 20 12 6 21 6 3" />
+                                        </svg>
+                                      </Link>
+                                    );
+                                  })
+                                ) : (
+                                  <div
+                                    className="
+                                  px-3 py-2 text-xs text-muted-foreground
+                                "
+                                  >
+                                    Aún no tienes cursos en progreso.
+                                  </div>
+                                )}
+
+                                <div className="mx-2 my-1 h-px bg-border/40" />
+
+                                <Link
+                                  href="/estudiantes/myaccount"
+                                  className="
+                                flex items-center justify-center gap-1.5
+                                rounded-lg px-3 py-2 text-xs font-medium
+                                text-primary transition-colors
+                                hover:bg-primary/10
+                              "
+                                >
+                                  Ver todos mis cursos
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     width="24"
@@ -749,182 +921,18 @@ export function Header({
                                     strokeWidth="2"
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    className="size-4 text-primary"
+                                    className="size-3 -rotate-90"
                                   >
-                                    <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
-                                    <path d="M22 10v6" />
-                                    <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+                                    <path d="m6 9 6 6 6-6" />
                                   </svg>
-                                </div>
-                                <div>
-                                  <p
-                                    className="
-                                    text-sm font-medium text-foreground
-                                  "
-                                  >
-                                    Mis Cursos
-                                  </p>
-                                  <p className="text-xs text-muted-foreground">
-                                    Cursos y programas inscritos
-                                  </p>
-                                </div>
-                              </Link>
-
-                              <div className="mx-2 my-1 h-px bg-border/40" />
-
-                              <p
-                                className="
-                                px-3 pt-1 pb-1.5 text-[10px] font-semibold
-                                tracking-wider text-muted-foreground uppercase
-                              "
-                              >
-                                Continuar viendo
-                              </p>
-
-                              {continueCourses.length > 0 ? (
-                                continueCourses.map((course) => {
-                                  const targetLessonId =
-                                    course.lastUnlockedLessonId ??
-                                    course.continueLessonId ??
-                                    course.firstLessonId ??
-                                    null;
-                                  const courseHref = targetLessonId
-                                    ? `/estudiantes/clases/${targetLessonId}`
-                                    : `/estudiantes/cursos/${course.id}`;
-                                  const progress = Math.min(
-                                    Math.max(
-                                      Math.round(course.progress ?? 0),
-                                      0
-                                    ),
-                                    100
-                                  );
-                                  return (
-                                    <Link
-                                      key={course.id}
-                                      href={courseHref}
-                                      className="
-                                      group/item flex items-center gap-3
-                                      rounded-lg px-3 py-2 transition-colors
-                                      hover:bg-secondary/60
-                                    "
-                                    >
-                                      <div
-                                        className="
-                                        size-10 shrink-0 overflow-hidden
-                                        rounded-lg border border-border/30
-                                      "
-                                      >
-                                        <Image
-                                          src={getCourseImageUrl(
-                                            course.coverImageKey
-                                          )}
-                                          alt={course.title ?? 'Curso'}
-                                          width={40}
-                                          height={40}
-                                          className="size-full object-cover"
-                                        />
-                                      </div>
-                                      <div className="min-w-0 flex-1">
-                                        <p
-                                          className="
-                                          truncate text-xs font-medium
-                                          text-foreground
-                                        "
-                                        >
-                                          {course.title ?? 'Curso'}
-                                        </p>
-                                        <div
-                                          className="
-                                          mt-0.5 flex items-center gap-2
-                                        "
-                                        >
-                                          <div
-                                            className="
-                                            h-1 flex-1 overflow-hidden
-                                            rounded-full bg-muted
-                                          "
-                                          >
-                                            <div
-                                              className="
-                                              h-full rounded-full bg-primary
-                                            "
-                                              style={{ width: `${progress}%` }}
-                                            />
-                                          </div>
-                                          <span
-                                            className="
-                                            text-[10px] text-muted-foreground
-                                          "
-                                          >
-                                            {progress}%
-                                          </span>
-                                        </div>
-                                      </div>
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="24"
-                                        height="24"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        className="
-                                        size-3.5 text-primary opacity-0
-                                        transition-opacity
-                                        group-hover/item:opacity-100
-                                      "
-                                      >
-                                        <polygon points="6 3 20 12 6 21 6 3" />
-                                      </svg>
-                                    </Link>
-                                  );
-                                })
-                              ) : (
-                                <div
-                                  className="
-                                  px-3 py-2 text-xs text-muted-foreground
-                                "
-                                >
-                                  Aún no tienes cursos en progreso.
-                                </div>
-                              )}
-
-                              <div className="mx-2 my-1 h-px bg-border/40" />
-
-                              <Link
-                                href="/estudiantes/myaccount"
-                                className="
-                                flex items-center justify-center gap-1.5
-                                rounded-lg px-3 py-2 text-xs font-medium
-                                text-primary transition-colors
-                                hover:bg-primary/10
-                              "
-                              >
-                                Ver todos mis cursos
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="24"
-                                  height="24"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  className="size-3 -rotate-90"
-                                >
-                                  <path d="m6 9 6 6 6-6" />
-                                </svg>
-                              </Link>
+                                </Link>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ) : (
-                        <Link
-                          href={item.href}
-                          className={`
+                        ) : (
+                          <Link
+                            href={item.href}
+                            className={`
                           rounded-lg border px-3 py-2 text-sm font-medium
                           transition-colors
                           focus-visible:outline-none
@@ -943,86 +951,41 @@ export function Header({
                               `
                           }
                         `}
-                        >
-                          {item.label}
-                        </Link>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+                          >
+                            {item.label}
+                          </Link>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
 
-              {/* Auth Button */}
-              {renderAuthButton()}
-            </div>
-          </div>
-        ) : null}
-
-        {isMobileViewport ? (
-          <div
-            className="
-              fixed inset-x-0 top-[var(--subscription-banner-height,0px)]
-              z-[100000] flex h-16 items-center justify-between overflow-hidden
-              bg-[#01152d] px-5
-              md:hidden
-            "
-          >
-            <div className="flex min-w-16 items-center justify-start">
-              <div className="campana-header mobile-notification-shell relative">
-                <NotificationHeader />
+                {/* Auth Button */}
+                {renderAuthButton()}
               </div>
             </div>
+          ) : null}
 
-            <Link
-              href="/"
-              aria-label="Ir al inicio"
+          {isMobileViewport ? (
+            <div
               className="
-              absolute left-1/2 flex size-9 -translate-x-1/2 items-center
-              justify-center
+              pointer-events-none fixed inset-x-0
+              top-[var(--subscription-banner-height,0px)] z-[100000] flex h-16 items-center
+              justify-between gap-2 bg-transparent px-4
+              md:hidden
             "
             >
-              <Image
-                src="/artiefy-icon-mobile.png"
-                alt="Artiefy"
-                width={36}
-                height={36}
-                priority
-                className="size-9 object-contain"
-              />
-            </Link>
-
-            <div className="flex min-w-16 items-center justify-end gap-3">
+              {/* Brand button: opens the main mobile menu (with search inside) */}
               <button
                 type="button"
-                aria-label={
-                  showMobileSearch ? 'Cerrar búsqueda' : 'Abrir búsqueda'
-                }
-                aria-expanded={showMobileSearch}
-                className="
-                inline-flex size-10 items-center justify-center rounded-full
-                text-white transition
-                hover:bg-white/10 hover:text-primary
-                focus-visible:ring-2 focus-visible:ring-primary
-                focus-visible:outline-none
-              "
-                onClick={() => {
-                  setShowMobileSearch((prev) => !prev);
-                  setMobileMenuOpen(false);
-                }}
-              >
-                <Search className="size-5" />
-              </button>
-              <button
-                type="button"
-                aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                aria-label="Menú principal"
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-menu"
                 className="
-                inline-flex size-10 items-center justify-center rounded-full
-                text-white transition
-                hover:bg-white/10 hover:text-primary
-                focus-visible:ring-2 focus-visible:ring-primary
-                focus-visible:outline-none
+                liquid-glass mobile-header-floating-control pointer-events-auto
+                flex items-center
+                gap-2 rounded-full !bg-[#01152d]/55 py-1.5 pr-3
+                pl-1.5 !backdrop-blur-2xl !backdrop-saturate-150 transition-transform active:scale-95
               "
                 onClick={() => {
                   setMobileMenuOpen((prev) => {
@@ -1032,48 +995,135 @@ export function Header({
                   });
                 }}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="22"
-                  height="22"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                <span
+                  className="
+                  flex size-7 items-center justify-center rounded-full
+                  bg-[#22c4d3]
+                  shadow-[0_0_10px_rgba(34,196,211,0.4)]
+                "
                 >
-                  <line x1="4" x2="20" y1="7" y2="7" />
-                  <line x1="4" x2="20" y1="12" y2="12" />
-                  <line x1="4" x2="20" y1="17" y2="17" />
-                </svg>
+                  <span className="text-sm leading-none font-bold text-[#080c16]">
+                    A
+                  </span>
+                </span>
+                <span
+                  className="
+                  bg-gradient-to-r from-primary to-[#3AF4EF] bg-clip-text
+                  text-sm font-bold text-transparent
+                "
+                >
+                  Artiefy
+                </span>
+                <ChevronDown
+                  className={`
+                  size-3.5 text-muted-foreground transition-transform
+                  ${mobileMenuOpen ? 'rotate-180' : ''}
+                `}
+                />
               </button>
+
+              {/* Auth area */}
+              {!mounted || !isAuthLoaded ? (
+                <Icons.spinner className="size-5 text-primary" />
+              ) : (
+                <>
+                  <Show when="signed-out">
+                    <button
+                      type="button"
+                      aria-label="Iniciar sesión"
+                      className="
+                      pointer-events-auto flex h-10 items-center gap-2
+                      rounded-full bg-[#22c4d3] px-4 text-[#080c16]
+                      transition-all active:scale-95
+                    "
+                      style={{
+                        boxShadow: '0 10px 24px rgba(0, 0, 0, 0.22)',
+                      }}
+                      onClick={handleOpenLoginModal}
+                    >
+                      <LogIn className="size-4" />
+                      <span className="text-sm font-medium">
+                        Iniciar sesión
+                      </span>
+                    </button>
+                  </Show>
+
+                  <Show when="signed-in">
+                    <div className="pointer-events-auto flex items-center gap-2">
+                      <div
+                        className="
+                        campana-header liquid-glass
+                        mobile-header-floating-control relative
+                        flex
+                        size-10 items-center justify-center rounded-full
+                        !bg-[#01152d]/55 !backdrop-blur-2xl !backdrop-saturate-150
+                      "
+                      >
+                        <NotificationHeader />
+                      </div>
+                      {/* Gear icon that triggers the Clerk UserButton menu.
+                        The real UserButton is rendered invisible underneath and
+                        the gear lets the click pass through to it, so all custom
+                        menu items are preserved. */}
+                      <div
+                        className="
+                        liquid-glass mobile-header-floating-control group
+                        relative flex size-10 items-center justify-center
+                        rounded-full !bg-[#01152d]/55 !backdrop-blur-2xl
+                        !backdrop-saturate-150 transition-colors
+                        hover:bg-white/10 md:hover:bg-primary
+                      "
+                      >
+                        <span
+                          className="
+                          pointer-events-none absolute inset-0 z-[1] flex
+                          items-center justify-center text-muted-foreground
+                          transition-colors md:group-hover:text-background
+                        "
+                        >
+                          <Settings className="size-[22px]" />
+                        </span>
+                        <div
+                          className="
+                          absolute inset-0 opacity-0
+                          [&_.cl-rootBox]:size-full
+                          [&_.cl-userButtonBox]:size-full
+                          [&_.cl-userButtonTrigger]:size-full
+                          [&_.cl-userButtonTrigger]:!p-0
+                        "
+                        >
+                          <UserButtonWrapper hidePlanBadge />
+                        </div>
+                      </div>
+                    </div>
+                  </Show>
+                </>
+              )}
             </div>
-          </div>
-        ) : null}
-      </div>
-      {isMobileViewport && showMobileSearch && (
-        <div
-          className="
+          ) : null}
+        </div>
+        {isMobileViewport && showMobileSearch && (
+          <div
+            className="
             fixed inset-x-0
             top-[calc(var(--subscription-banner-height,0px)+4rem)] z-[99999] border-b border-gray-700 bg-[#01152d] p-4
             md:hidden
           "
-        >
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSearch();
-              setShowMobileSearch(false);
-            }}
-            className="relative w-full"
           >
-            <input
-              type="search"
-              placeholder="¡Aprende con IA!"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearch();
+                setShowMobileSearch(false);
+              }}
+              className="relative w-full"
+            >
+              <input
+                type="search"
+                placeholder="¡Aprende con IA!"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="
                 w-full rounded-2xl border border-[#1f2937] bg-[#1D283A80] px-10
                 py-3 text-sm text-foreground transition-all
                 placeholder:text-gray-400
@@ -1081,177 +1131,177 @@ export function Header({
                 focus:border-[#3AF4EF] focus:bg-[#1D283A80] focus:ring-2
                 focus:ring-[#3AF4EF]/50 focus:outline-none
               "
-              autoComplete="off"
-            />
-            <button
-              type="button"
-              className="absolute top-1/2 right-3 -translate-y-1/2"
-              onClick={() => {
-                if (!searchQuery.trim()) return;
-                handleSearch();
-                setShowMobileSearch(false);
-              }}
-              aria-label="Buscar"
-            >
-              <Search className="size-4 text-primary/70" />
-            </button>
-            <button
-              type="button"
-              className="absolute top-1/2 left-3 -translate-y-1/2"
-              onClick={() => setShowMobileSearch(false)}
-              aria-label="Cerrar búsqueda"
-            >
-              <X className="size-4 text-primary/70" />
-            </button>
-            {showPreview &&
-              (previewCourses.length > 0 || previewPrograms.length > 0) && (
-                <div className="mt-3 w-full">
-                  <Suspense fallback={null}>
-                    <CourseSearchPreview
-                      courses={previewCourses}
-                      programs={previewPrograms}
-                      onSelectCourse={(courseId: number) => {
-                        window.location.href = `/estudiantes/cursos/${courseId}`;
-                      }}
-                      onSelectProgram={(programId: string | number) => {
-                        window.location.href = `/estudiantes/programas/${programId}`;
-                      }}
-                    />
-                  </Suspense>
-                </div>
-              )}
-          </form>
-        </div>
-      )}
-      {mounted && isMobileViewport && mobileMenuOpen
-        ? createPortal(
-            <div
-              className="
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                className="absolute top-1/2 right-3 -translate-y-1/2"
+                onClick={() => {
+                  if (!searchQuery.trim()) return;
+                  handleSearch();
+                  setShowMobileSearch(false);
+                }}
+                aria-label="Buscar"
+              >
+                <Search className="size-4 text-primary/70" />
+              </button>
+              <button
+                type="button"
+                className="absolute top-1/2 left-3 -translate-y-1/2"
+                onClick={() => setShowMobileSearch(false)}
+                aria-label="Cerrar búsqueda"
+              >
+                <X className="size-4 text-primary/70" />
+              </button>
+              {showPreview &&
+                (previewCourses.length > 0 || previewPrograms.length > 0) && (
+                  <div className="mt-3 w-full">
+                    <Suspense fallback={null}>
+                      <CourseSearchPreview
+                        courses={previewCourses}
+                        programs={previewPrograms}
+                        onSelectCourse={(courseId: number) => {
+                          window.location.href = `/estudiantes/cursos/${courseId}`;
+                        }}
+                        onSelectProgram={(programId: string | number) => {
+                          window.location.href = `/estudiantes/programas/${programId}`;
+                        }}
+                      />
+                    </Suspense>
+                  </div>
+                )}
+            </form>
+          </div>
+        )}
+        {mounted && isMobileViewport && mobileMenuOpen
+          ? createPortal(
+              <div
+                className="
               fixed inset-0 z-[2147483647] overscroll-contain
               md:hidden
             "
-            >
-              <button
-                type="button"
-                className="
+              >
+                <button
+                  type="button"
+                  className="
               fixed inset-0 z-[2147483646] cursor-default appearance-none
               border-0 bg-black/55 p-0
             "
-                aria-label="Cerrar menú"
-                onClick={() => setMobileMenuOpen(false)}
-              />
-              <aside
-                id="mobile-menu"
-                role="dialog"
-                aria-modal="true"
-                aria-label="Menú principal"
-                tabIndex={-1}
-                className="
+                  aria-label="Cerrar menú"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+                <aside
+                  id="mobile-menu"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-label="Menú principal"
+                  tabIndex={-1}
+                  className="
               fixed inset-y-0 right-0 z-[2147483647] flex h-[100svh]
               max-h-[100svh] w-[min(86vw,22rem)] flex-col overflow-hidden
               bg-[#01152d] px-6 pt-[calc(env(safe-area-inset-top)+1.5rem)]
               shadow-2xl
               sm:w-[80%] sm:max-w-sm sm:px-7
             "
-              >
-                <div className="mb-6 flex w-full items-center justify-between">
-                  <Link
-                    href="/"
-                    className="flex items-center gap-3"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Image
-                      src="/artiefy-icon-mobile.png"
-                      alt="Artiefy"
-                      width={36}
-                      height={36}
-                      className="size-9 object-contain"
-                    />
-                    <span className="text-xl font-bold text-primary">
-                      Artiefy
-                    </span>
-                  </Link>
-                  <button
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="
+                >
+                  <div className="mb-6 flex w-full items-center justify-between">
+                    <Link
+                      href="/"
+                      className="flex items-center gap-3"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Image
+                        src="/artiefy-icon-mobile.png"
+                        alt="Artiefy"
+                        width={36}
+                        height={36}
+                        className="size-9 object-contain"
+                      />
+                      <span className="text-xl font-bold text-primary">
+                        Artiefy
+                      </span>
+                    </Link>
+                    <button
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="
                 rounded-full p-1 text-slate-300 transition
                 hover:bg-white/10 hover:text-white
                 focus:outline-none
                 focus-visible:ring-2 focus-visible:ring-primary
               "
-                    aria-label="Close menu"
-                  >
-                    <XMarkIconSolid className="size-5" />
-                  </button>
-                </div>
-                <div className="mb-6">
-                  <div className="relative">
-                    <Search
-                      className="
+                      aria-label="Close menu"
+                    >
+                      <XMarkIconSolid className="size-5" />
+                    </button>
+                  </div>
+                  <div className="mb-6">
+                    <div className="relative">
+                      <Search
+                        className="
                   absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400
                 "
-                    />
-                    <input
-                      type="search"
-                      placeholder="Buscar"
-                      value={searchQuery}
-                      onChange={(event) => setSearchQuery(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter') {
-                          handleSearch();
-                          setMobileMenuOpen(false);
-                        }
-                      }}
-                      className="
+                      />
+                      <input
+                        type="search"
+                        placeholder="Buscar"
+                        value={searchQuery}
+                        onChange={(event) => setSearchQuery(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            handleSearch();
+                            setMobileMenuOpen(false);
+                          }
+                        }}
+                        className="
                   h-12 w-full rounded-xl border border-white/5 bg-white/7 pr-4
                   pl-12 text-sm text-white outline-none
                   placeholder:text-slate-400
                   focus:border-primary/50 focus:ring-2 focus:ring-primary/20
                 "
-                    />
+                      />
+                    </div>
+                    {showPreview &&
+                      (previewCourses.length > 0 ||
+                        previewPrograms.length > 0) && (
+                        <div className="mt-3 max-h-[42dvh] overflow-y-auto rounded-xl">
+                          <Suspense fallback={null}>
+                            <CourseSearchPreview
+                              courses={previewCourses}
+                              programs={previewPrograms}
+                              onSelectCourse={(courseId: number) => {
+                                setMobileMenuOpen(false);
+                                window.location.href = `/estudiantes/cursos/${courseId}`;
+                              }}
+                              onSelectProgram={(programId: string | number) => {
+                                setMobileMenuOpen(false);
+                                window.location.href = `/estudiantes/programas/${programId}`;
+                              }}
+                            />
+                          </Suspense>
+                        </div>
+                      )}
                   </div>
-                  {showPreview &&
-                    (previewCourses.length > 0 ||
-                      previewPrograms.length > 0) && (
-                      <div className="mt-3 max-h-[42dvh] overflow-y-auto rounded-xl">
-                        <Suspense fallback={null}>
-                          <CourseSearchPreview
-                            courses={previewCourses}
-                            programs={previewPrograms}
-                            onSelectCourse={(courseId: number) => {
-                              setMobileMenuOpen(false);
-                              window.location.href = `/estudiantes/cursos/${courseId}`;
-                            }}
-                            onSelectProgram={(programId: string | number) => {
-                              setMobileMenuOpen(false);
-                              window.location.href = `/estudiantes/programas/${programId}`;
-                            }}
-                          />
-                        </Suspense>
-                      </div>
-                    )}
-                </div>
-                <div
-                  className="
+                  <div
+                    className="
               min-h-0 flex-1 overflow-y-auto overscroll-contain
               pb-[clamp(1rem,3dvh,1.75rem)]
             "
-                >
-                  <nav>
-                    <ul className="space-y-2.5">
-                      {visibleMobileNavItems.map((item) => {
-                        const isActive =
-                          pathname === item.href ||
-                          (item.href !== '/' &&
-                            !item.href.includes('#') &&
-                            pathname.startsWith(item.href));
-                        const Icon = item.icon;
-                        if (item.label === 'Espacios') {
-                          return (
-                            <li key={item.href}>
-                              <button
-                                type="button"
-                                className={`
+                  >
+                    <nav>
+                      <ul className="space-y-2.5">
+                        {visibleMobileNavItems.map((item) => {
+                          const isActive =
+                            pathname === item.href ||
+                            (item.href !== '/' &&
+                              !item.href.includes('#') &&
+                              pathname.startsWith(item.href));
+                          const Icon = item.icon;
+                          if (item.label === 'Espacios') {
+                            return (
+                              <li key={item.href}>
+                                <button
+                                  type="button"
+                                  className={`
                             flex w-full items-center gap-4 rounded-xl px-4
                             py-2.5
                             text-left text-base font-semibold transition
@@ -1266,22 +1316,22 @@ export function Header({
                                 `
                             }
                           `}
-                                onClick={(e) => {
-                                  setMobileMenuOpen(false);
-                                  handleEspaciosClick(e);
-                                }}
-                              >
-                                <Icon className="size-5 shrink-0" />
-                                <span>{item.label}</span>
-                              </button>
-                            </li>
-                          );
-                        }
-                        return (
-                          <li key={item.href}>
-                            <Link
-                              href={item.href}
-                              className={`
+                                  onClick={(e) => {
+                                    setMobileMenuOpen(false);
+                                    handleEspaciosClick(e);
+                                  }}
+                                >
+                                  <Icon className="size-5 shrink-0" />
+                                  <span>{item.label}</span>
+                                </button>
+                              </li>
+                            );
+                          }
+                          return (
+                            <li key={item.href}>
+                              <Link
+                                href={item.href}
+                                className={`
                           flex w-full items-center gap-4 rounded-xl px-4
                           py-2.5
                           text-base font-semibold transition
@@ -1295,77 +1345,88 @@ export function Header({
                               `
                           }
                         `}
-                              onClick={() => setMobileMenuOpen(false)}
-                            >
-                              <Icon className="size-5 shrink-0" />
-                              <span>{item.label}</span>
-                            </Link>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </nav>
-                  {!isSignedIn ? (
-                    <button
-                      type="button"
-                      onClick={handleOpenLoginModal}
-                      className="
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                <Icon className="size-5 shrink-0" />
+                                <span>{item.label}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </nav>
+                    {!isSignedIn ? (
+                      <button
+                        type="button"
+                        onClick={handleOpenLoginModal}
+                        className="
                     mt-6 flex h-12 w-full items-center justify-center rounded-xl
                     bg-primary text-sm font-semibold text-[#01152d] transition
                     hover:bg-primary/90
                     active:scale-95
                   "
-                    >
-                      Acceder
-                    </button>
-                  ) : null}
-                </div>
-                {isSignedIn ? (
-                  <div
-                    className="
+                      >
+                        Acceder
+                      </button>
+                    ) : null}
+                  </div>
+                  {isSignedIn ? (
+                    <div
+                      className="
                   shrink-0 border-t border-white/8 pt-4
                   pb-[calc(env(safe-area-inset-bottom)+1.25rem)]
                 "
-                  >
-                    <div className="flex min-h-12 items-center justify-center">
-                      <Suspense
-                        fallback={
-                          <Icons.spinner className="size-5 text-primary" />
-                        }
-                      >
-                        <UserButtonWrapper />
-                      </Suspense>
+                    >
+                      <div className="flex min-h-12 items-center justify-center">
+                        <Suspense
+                          fallback={
+                            <Icons.spinner className="size-5 text-primary" />
+                          }
+                        >
+                          <UserButtonWrapper />
+                        </Suspense>
+                      </div>
                     </div>
-                  </div>
-                ) : null}
-              </aside>
-            </div>,
-            document.body
-          )
-        : null}
+                  ) : null}
+                </aside>
+              </div>,
+              document.body
+            )
+          : null}
 
-      <MiniLoginModal
-        isOpen={isMobileViewport && activeAuthModal === 'login'}
-        onClose={() => setActiveAuthModal(null)}
-        onLoginSuccess={() => setActiveAuthModal(null)}
-        redirectUrl={pathname || '/'}
-        onSwitchToSignUp={handleSwitchToSignUp}
-      />
-      <MiniSignUpModal
-        isOpen={isMobileViewport && activeAuthModal === 'signup'}
-        onClose={() => {
-          setActiveAuthModal(null);
-          setOauthSignUpStrategy(null);
-        }}
-        onSignUpSuccess={() => {
-          setActiveAuthModal(null);
-          setOauthSignUpStrategy(null);
-        }}
-        redirectUrl={pathname || '/'}
-        autoStartOAuthStrategy={oauthSignUpStrategy}
-        onAutoStartOAuthHandled={() => setOauthSignUpStrategy(null)}
-        onSwitchToLogin={handleSwitchToLogin}
-      />
-    </nav>
+        <MiniLoginModal
+          isOpen={isMobileViewport && activeAuthModal === 'login'}
+          onClose={() => setActiveAuthModal(null)}
+          onLoginSuccess={() => setActiveAuthModal(null)}
+          redirectUrl={pathname || '/'}
+          onSwitchToSignUp={handleSwitchToSignUp}
+        />
+        <MiniSignUpModal
+          isOpen={isMobileViewport && activeAuthModal === 'signup'}
+          onClose={() => {
+            setActiveAuthModal(null);
+            setOauthSignUpStrategy(null);
+          }}
+          onSignUpSuccess={() => {
+            setActiveAuthModal(null);
+            setOauthSignUpStrategy(null);
+          }}
+          redirectUrl={pathname || '/'}
+          autoStartOAuthStrategy={oauthSignUpStrategy}
+          onAutoStartOAuthHandled={() => setOauthSignUpStrategy(null)}
+          onSwitchToLogin={handleSwitchToLogin}
+        />
+      </nav>
+      {isMobileViewport ? (
+        <MobileBottomNav
+          isSignedIn={isSignedIn}
+          onSearchClick={() => {
+            setShowMobileSearch(true);
+            setMobileMenuOpen(false);
+          }}
+          onLoginClick={handleOpenLoginModal}
+        />
+      ) : null}
+    </>
   );
 }
