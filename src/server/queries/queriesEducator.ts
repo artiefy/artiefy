@@ -175,10 +175,17 @@ export async function getUsersEnrolledInCourse(courseId: number) {
           )
           .where(eq(parametros.courseId, courseId));
 
-        // Si no tiene actividades, construir una lista placeholder por parámetro
-        if (actividadNotas.length === 0) {
-          actividadNotas = allParametros.map((p) => ({
-            activityId: -1,
+        // Garantiza una columna por cada parámetro que aún no tiene actividad
+        // asignada (placeholder "Sin actividad"), para que el educador la vea
+        // en la tabla y pueda crear la actividad. Se usa un id negativo único
+        // por parámetro para no colisionar con actividades reales (ids > 0).
+        const parametrosConActividad = new Set(
+          actividadNotas.map((a) => a.parametroId)
+        );
+        const placeholders = allParametros
+          .filter((p) => !parametrosConActividad.has(p.parametroId))
+          .map((p) => ({
+            activityId: -p.parametroId,
             activityName: 'Sin actividad',
             parametroId: p.parametroId,
             parametroName: p.parametroName,
@@ -186,7 +193,7 @@ export async function getUsersEnrolledInCourse(courseId: number) {
             actividadPeso: 0,
             grade: 0,
           }));
-        }
+        actividadNotas = [...actividadNotas, ...placeholders];
 
         const meta = parsePublicMeta(clerkUser.publicMetadata);
 

@@ -92,6 +92,9 @@ function calcNotaFinal(
 
   const actsByParam: Record<string, Activity[]> = {};
   activities.forEach((act) => {
+    // Los placeholders de parámetros sin actividad solo existen para mostrar
+    // la columna y permitir crear la actividad: no entran en el cálculo.
+    if (act.name === 'Sin actividad' || act.id < 0) return;
     if (!actsByParam[act.parametro]) actsByParam[act.parametro] = [];
     actsByParam[act.parametro].push(act);
   });
