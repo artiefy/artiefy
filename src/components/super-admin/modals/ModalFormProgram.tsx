@@ -12,6 +12,7 @@ import Select, { type MultiValue } from 'react-select';
 import { toast } from 'sonner';
 
 import CategoryDropdown from '~/components/educators/layout/CategoryDropdown';
+import VisibilityDropdown from '~/components/educators/layout/VisibilityDropdown';
 import { Button } from '~/components/educators/ui/button';
 import {
   Dialog,
@@ -53,7 +54,8 @@ interface ProgramFormProps {
     fileName: string,
     subjectIds: number[],
     certificationTypeId?: number | null,
-    idTypesPrograms?: number | null
+    idTypesPrograms?: number | null,
+    visibility?: boolean // 👈 nuevo
   ) => Promise<void>;
   uploading: boolean;
   editingProgramId: number | null;
@@ -73,6 +75,8 @@ interface ProgramFormProps {
   idTypesPrograms?: number | null;
   setTypeId?: (idTypesPrograms: number | null) => void;
   programTypes?: ProgramType[];
+  visibility: boolean; // 👈 nuevo
+  setVisibility: (val: boolean) => void; // 👈 nuevo
 }
 
 const ModalFormProgram: React.FC<ProgramFormProps> = ({
@@ -94,6 +98,8 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
   idTypesPrograms: typeIdProp,
   setTypeId: setTypeIdProp,
   programTypes = [],
+  visibility, // 👈 nuevo
+  setVisibility, // 👈 nuevo
 }) => {
   const { user } = useUser(); // Obtiene el usuario actual
   const [file, setFile] = useState<File | null>(null);
@@ -135,6 +141,9 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
   const getImageUrl = (coverImageKey: string) => {
     return `${process.env.NEXT_PUBLIC_AWS_S3_URL ?? ''}/${coverImageKey}`;
   };
+  const [localVisibility, setLocalVisibility] = useState<boolean>(
+    visibility ?? true
+  ); // 👈 nuevo
 
   // Manejo de cambios en el archivo
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -275,6 +284,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
               subjectIds,
               certificationTypeId,
               idTypesPrograms,
+              visibility: localVisibility, // 👈 nuevo
             }),
           }
         );
@@ -295,7 +305,8 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
         uploadedFileName,
         subjectIds,
         certificationTypeId,
-        idTypesPrograms
+        idTypesPrograms,
+        localVisibility // 👈 nuevo
       );
 
       onCloseAction();
@@ -470,6 +481,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
       setCoverImage('');
       setSelectedSubjects([]);
       setCertificationTypeId(null);
+      setLocalVisibility(true); // 👈 nuevo
     }
   }, [isOpen, editingProgramId]);
 
@@ -490,6 +502,7 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
               coverImageKey: string;
               certificationTypeId?: number | null;
               materias?: { id: number; title: string }[];
+              visibility?: boolean; // 👈 nuevo
             }
             const programData = (await response.json()) as ProgramData;
             // Solo actualizar si los valores son diferentes
@@ -506,6 +519,10 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
             if (certificationTypeId !== programData.certificationTypeId) {
               setCertificationTypeId(programData.certificationTypeId ?? null);
             }
+            if (programData.visibility !== undefined) {
+              setLocalVisibility(programData.visibility);
+              setVisibility(programData.visibility);
+            } // 👈 nuevo
 
             if (programData.materias) {
               const subjectOptions = programData.materias.map(
@@ -602,6 +619,21 @@ const ModalFormProgram: React.FC<ProgramFormProps> = ({
                   Este campo es obligatorio.
                 </p>
               )}
+            </div>
+            <div className="flex w-full flex-col gap-2">
+              <label
+                htmlFor="visibility"
+                className="text-lg font-medium text-primary"
+              >
+                Visibilidad
+              </label>
+              <VisibilityDropdown
+                visibility={localVisibility}
+                setVisibility={(val) => {
+                  setLocalVisibility(val);
+                  setVisibility(val);
+                }}
+              />
             </div>
             <div className="flex w-full flex-col gap-2">
               <label

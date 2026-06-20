@@ -42,6 +42,10 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
   const [projects, setProjects] = useState<GuidedProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 6;
 
   const fetchProjects = useCallback(async () => {
     try {
@@ -61,19 +65,18 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
   }, [creatorId]);
 
   useEffect(() => {
-    fetchProjects();
+    void fetchProjects();
   }, [fetchProjects]);
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Eliminar este proyecto?')) return;
-
     try {
       const response = await fetch(`/api/guided-projects?id=${id}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Error al eliminar');
       toast.success('Proyecto eliminado');
-      setProjects(projects.filter((p) => p.id !== id));
+      setProjects((prev) => prev.filter((p) => p.id !== id));
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error al eliminar');
@@ -96,35 +99,128 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
     }
   };
 
+  // ✅ Categorías únicas para el filtro
+  const categories = Array.from(
+    new Set(projects.map((p) => p.categoryName).filter(Boolean))
+  );
+
+  // ✅ Filtrar por búsqueda y categoría
+  const filteredProjects = projects.filter(
+    (project) =>
+      project.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      (categoryFilter ? project.categoryName === categoryFilter : true)
+  );
+
+  const totalProjects = projects.length;
+  const totalActive = projects.filter((p) => p.isActive).length;
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredProjects.length / projectsPerPage)
+  );
+  const indexOfLast = currentPage * projectsPerPage;
+  const indexOfFirst = indexOfLast - projectsPerPage;
+  const displayedProjects = filteredProjects.slice(indexOfFirst, indexOfLast);
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <div className="text-center">
           <div className="inline-block size-12 animate-spin rounded-full border-b-2 border-primary"></div>
-          <p className="mt-4 text-gray-600">Cargando proyectos...</p>
+          <p className="mt-4 text-gray-400">Cargando proyectos...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="mb-2 text-4xl font-bold text-white">
+    <div className="p-4 sm:p-6">
+      {/* Header con efecto degradado */}
+      <header className="group relative overflow-hidden rounded-lg p-[1px]">
+        <div className="absolute -inset-0.5 animate-gradient bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-75 blur transition duration-500" />
+        <div className="relative flex flex-col items-start justify-between rounded-lg bg-gray-800 p-4 text-white shadow-lg transition-all duration-300 group-hover:bg-gray-800/95 sm:flex-row sm:items-center sm:p-6">
+          <h1 className="flex items-center gap-3 text-xl font-extrabold tracking-tight text-primary sm:text-2xl lg:text-3xl">
             Proyectos Guiados
           </h1>
-          <p className="text-gray-400">
-            Gestiona y organiza todos tus proyectos
+        </div>
+      </header>
+
+      {/* Stats Cards */}
+      <div className="my-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm sm:p-6">
+          <h2 className="text-base font-semibold text-gray-400 sm:text-lg">
+            Total de Proyectos
+          </h2>
+          <p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+            {totalProjects}
           </p>
         </div>
-        <Button onClick={() => setModalOpen(true)} className="gap-2">
-          <Plus className="size-5" />
-          Nuevo Proyecto
-        </Button>
+        <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm sm:p-6">
+          <h2 className="text-base font-semibold text-gray-400 sm:text-lg">
+            Proyectos Activos
+          </h2>
+          <p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+            {totalActive}
+          </p>
+        </div>
+        <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm sm:p-6">
+          <h2 className="text-base font-semibold text-gray-400 sm:text-lg">
+            Filtrar por Categoría
+          </h2>
+          <select
+            className="mt-2 w-full rounded-md border border-gray-700 bg-gray-900/50 px-3 py-1.5 text-white sm:px-4 sm:py-2"
+            value={categoryFilter}
+            onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="">Todas</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {projects.length === 0 ? (
+      {/* Search and Add Button */}
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="col-span-1 rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm lg:col-span-3">
+          <input
+            type="text"
+            placeholder="Buscar proyectos..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2 text-white placeholder:text-gray-400"
+          />
+        </div>
+        <div className="col-span-1">
+          <button
+            onClick={() => setModalOpen(true)}
+            className="group/button relative inline-flex size-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
+          >
+            <span className="relative z-10 font-medium">Nuevo Proyecto</span>
+            <Plus className="relative z-10 size-3.5 sm:size-4" />
+            <div className="absolute inset-0 z-0 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 transition-all duration-500 group-hover/button:[transform:translateX(100%)] group-hover/button:opacity-100" />
+          </button>
+        </div>
+      </div>
+
+      {/* Project Grid */}
+      {filteredProjects.length === 0 ? (
         <div className="flex min-h-[300px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-600 bg-gray-900/50 p-8">
           <div className="text-center">
             <div className="mb-4 text-6xl">📋</div>
@@ -132,7 +228,9 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
               No hay proyectos guiados
             </h3>
             <p className="mb-6 text-gray-400">
-              Comienza creando tu primer proyecto guiado
+              {searchQuery || categoryFilter
+                ? 'No se encontraron proyectos con ese filtro'
+                : 'Comienza creando tu primer proyecto guiado'}
             </p>
             <Button
               size="lg"
@@ -145,8 +243,8 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 px-2 sm:grid-cols-2 lg:grid-cols-3 lg:px-0">
-          {projects.map((project) => (
+        <div className="grid grid-cols-1 gap-4 px-8 sm:grid-cols-2 lg:grid-cols-3 lg:px-5">
+          {displayedProjects.map((project) => (
             <div key={project.id} className="group relative">
               <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
               <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
@@ -170,14 +268,12 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
                     </div>
                   </AspectRatio>
                 </CardHeader>
-
                 <CardContent className="flex grow flex-col justify-between space-y-2 px-2">
                   <CardTitle className="rounded-lg text-lg">
                     <div className="truncate font-bold text-primary">
                       {project.title}
                     </div>
                   </CardTitle>
-
                   <div className="flex flex-wrap gap-2">
                     <Badge
                       variant="outline"
@@ -192,31 +288,26 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
                       {project.modalidadName}
                     </Badge>
                   </div>
-
                   <p className="line-clamp-2 text-sm text-gray-300">
-                    {project.description || 'Sin descripción'}
+                    {project.description ?? 'Sin descripción'}
                   </p>
                 </CardContent>
-
                 <CardFooter className="flex flex-col items-start justify-between space-y-3 px-2 pb-3">
-                  <div className="flex w-full justify-between text-xs">
+                  <div className="flex w-full items-center justify-between text-xs">
                     <p className="font-bold text-gray-300">
                       Instructor:{' '}
                       <span className="text-primary">{project.instructor}</span>
                     </p>
-                    <div className="flex items-center gap-1">
-                      {project.isActive ? (
-                        <Badge className="border-green-500/50 bg-green-500/20 text-green-400">
-                          Activo
-                        </Badge>
-                      ) : (
-                        <Badge className="border-red-500/50 bg-red-500/20 text-red-400">
-                          Inactivo
-                        </Badge>
-                      )}
-                    </div>
+                    {project.isActive ? (
+                      <Badge className="border-green-500/50 bg-green-500/20 text-green-400">
+                        Activo
+                      </Badge>
+                    ) : (
+                      <Badge className="border-red-500/50 bg-red-500/20 text-red-400">
+                        Inactivo
+                      </Badge>
+                    )}
                   </div>
-
                   <div className="flex w-full gap-2">
                     <Link
                       href={`/dashboard/super-admin/proyectos-guiados/${project.id}`}
@@ -230,7 +321,6 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
                         </div>
                       </Button>
                     </Link>
-
                     <Button
                       size="sm"
                       variant="outline"
@@ -246,7 +336,6 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
                         <EyeOff className="size-4" />
                       )}
                     </Button>
-
                     <Button
                       size="sm"
                       variant="destructive"
@@ -261,6 +350,29 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
               </Card>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {filteredProjects.length > 0 && (
+        <div className="mt-6 flex justify-center gap-4">
+          <button
+            onClick={handlePrevPage}
+            disabled={currentPage === 1}
+            className="rounded-md bg-gray-800 px-4 py-2 text-white disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span className="flex items-center text-white">
+            Página {currentPage} de {totalPages}
+          </span>
+          <button
+            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            className="rounded-md bg-gray-800 px-4 py-2 text-white disabled:opacity-50"
+          >
+            Siguiente
+          </button>
         </div>
       )}
 

@@ -52,6 +52,7 @@ export async function POST(req: NextRequest) {
       certificationTypeId: z.number().nullable().optional(),
       idTypesPrograms: z.number().nullable().optional(),
       subjectIds: z.array(z.number()).optional(),
+      visibility: z.boolean().optional(), // 👈 nuevo
     });
 
     const body = schema.parse(await req.json()); // 📌 Validar y parsear JSON
@@ -65,6 +66,7 @@ export async function POST(req: NextRequest) {
       certificationTypeId,
       idTypesPrograms,
       subjectIds = [],
+      visibility, // 👈 nuevo
     } = body;
 
     if (!title || !description || !categoryid) {
@@ -88,6 +90,7 @@ export async function POST(req: NextRequest) {
         : null,
       idTypesPrograms: idTypesPrograms ? Number(idTypesPrograms) : null,
       creatorId: userId,
+      visibility: visibility ?? true, // 👈 nuevo
     });
     console.log('✅ Programa insertado con ID:', newProgram.id);
 
@@ -249,6 +252,7 @@ export async function PUT(req: NextRequest) {
       certificationTypeId: z.number().nullable().optional(),
       idTypesPrograms: z.number().nullable().optional(),
       subjectIds: z.array(z.number()).optional(),
+      visibility: z.boolean().optional(), // 👈 nuevo
     });
 
     const body = schema.parse(await req.json());
@@ -261,6 +265,7 @@ export async function PUT(req: NextRequest) {
       certificationTypeId,
       idTypesPrograms,
       subjectIds = [],
+      visibility, // 👈 nuevo
     } = body;
 
     // Update program
@@ -275,6 +280,7 @@ export async function PUT(req: NextRequest) {
         : null,
       idTypesPrograms: idTypesPrograms ? Number(idTypesPrograms) : null,
       creatorId: userId,
+      visibility: visibility ?? true, // 👈 nuevo
     });
 
     // Update subject associations

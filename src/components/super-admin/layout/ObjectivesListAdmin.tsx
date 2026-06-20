@@ -6,7 +6,7 @@ import {
   DragDropContext,
   Draggable,
   Droppable,
-  DropResult,
+  type DropResult,
 } from '@hello-pangea/dnd';
 import {
   CheckCircle2,
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 
 interface Objective {
@@ -60,7 +61,7 @@ export function ObjectivesList({
   }, [projectId]);
 
   useEffect(() => {
-    fetchObjectives();
+    void fetchObjectives();
   }, [projectId, fetchObjectives]);
 
   const handleDragEnd = async (result: DropResult) => {
@@ -94,7 +95,7 @@ export function ObjectivesList({
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error al actualizar orden');
-      fetchObjectives();
+      void fetchObjectives();
     }
   };
 
@@ -119,13 +120,21 @@ export function ObjectivesList({
     }
   };
 
-  if (loading) return <div className="py-4 text-center">Cargando...</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-6 text-sm text-gray-400">
+        <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        Cargando...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-xl font-bold">Sesiones/Objetivos</h3>
+        <h3 className="text-base font-bold text-white">Sesiones</h3>
         <Button
+          size="sm"
           onClick={() =>
             onEdit({
               id: 0,
@@ -136,15 +145,17 @@ export function ObjectivesList({
               isEnabled: true,
             })
           }
+          className="gap-1 bg-primary text-background hover:bg-primary/90"
         >
-          <Plus className="mr-2 size-4" />
-          Agregar Sesión
+          <Plus className="size-4" />
+          Agregar
         </Button>
       </div>
 
       {objectives.length === 0 ? (
-        <div className="py-8 text-center text-gray-500">
-          No hay sesiones creadas
+        <div className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-600 bg-gray-900/50 p-8 text-center">
+          <span className="text-3xl">📋</span>
+          <p className="text-sm text-gray-400">No hay sesiones creadas</p>
         </div>
       ) : (
         <DragDropContext onDragEnd={handleDragEnd}>
@@ -165,20 +176,41 @@ export function ObjectivesList({
                       <div
                         ref={provided.innerRef}
                         {...provided.draggableProps}
-                        className={`flex items-center gap-3 rounded-lg border bg-white p-3 ${
-                          snapshot.isDragging
-                            ? 'shadow-lg ring-2 ring-blue-500'
-                            : ''
-                        }`}
+                        className={`
+                          flex items-center gap-3 rounded-lg border
+                          border-gray-700 bg-gray-900/60 p-3 text-white
+                          transition-colors
+                          hover:border-primary/50
+                          ${
+                            snapshot.isDragging
+                              ? 'border-primary shadow-lg ring-2 ring-primary/40'
+                              : ''
+                          }
+                        `}
                       >
-                        <div {...provided.dragHandleProps}>
-                          <GripVertical className="size-5 text-gray-400" />
+                        <div
+                          {...provided.dragHandleProps}
+                          className="text-gray-500 hover:text-gray-300"
+                        >
+                          <GripVertical className="size-5" />
                         </div>
 
-                        <div className="flex-1">
-                          <p className="font-medium">{objective.title}</p>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate font-medium text-white">
+                              {objective.title}
+                            </p>
+                            {!objective.isEnabled && (
+                              <Badge
+                                variant="outline"
+                                className="border-gray-600 bg-background text-[10px] text-gray-400"
+                              >
+                                Deshabilitada
+                              </Badge>
+                            )}
+                          </div>
                           {objective.description && (
-                            <p className="text-sm text-gray-600">
+                            <p className="truncate text-sm text-gray-400">
                               {objective.description}
                             </p>
                           )}
@@ -187,34 +219,42 @@ export function ObjectivesList({
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="px-2 hover:bg-gray-700"
                             onClick={() =>
                               handleToggleEnabled(
                                 objective.id,
                                 objective.isEnabled
                               )
                             }
+                            title={
+                              objective.isEnabled ? 'Deshabilitar' : 'Habilitar'
+                            }
                           >
                             {objective.isEnabled ? (
-                              <CheckCircle2 className="size-4 text-green-600" />
+                              <CheckCircle2 className="size-4 text-green-400" />
                             ) : (
-                              <Circle className="size-4 text-gray-400" />
+                              <Circle className="size-4 text-gray-500" />
                             )}
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="px-2 text-primary hover:bg-gray-700"
                             onClick={() => onEdit(objective)}
+                            title="Editar"
                           >
                             <Edit2 className="size-4" />
                           </Button>
                           <Button
                             size="sm"
                             variant="ghost"
+                            className="px-2 hover:bg-gray-700"
                             onClick={() => onDelete(objective.id)}
+                            title="Eliminar"
                           >
                             <Trash2 className="size-4 text-red-500" />
                           </Button>

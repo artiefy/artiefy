@@ -297,6 +297,7 @@ export interface Program {
   categoryid: number;
   certificationTypeId?: number | null;
   idTypesPrograms?: number | null;
+  visibility?: boolean | null; // 👈 nuevo
   creator?: User;
   category?: Category;
   materias?: MateriaWithCourse[];

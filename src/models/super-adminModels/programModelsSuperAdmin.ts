@@ -16,6 +16,7 @@ export interface ProgramDetails {
   updatedAt: Date;
   rating?: number | null;
   certificationTypeId?: number | null;
+  visibility?: boolean | null; // 👈 nuevo
   materias: Materia[];
   courses: Course[];
 }
@@ -114,6 +115,7 @@ export const getProgramById = async (id: string) => {
     creatorId: program.creatorId,
     rating: program.rating,
     categoryid: program.categoryid,
+    visibility: program.visibility, // 👈 nuevo
     materias: transformedMaterias,
     courses: transformedCourses,
   };
@@ -140,6 +142,7 @@ export const updateProgram = async (
         rating: programData.rating,
         certificationTypeId: programData.certificationTypeId,
         idTypesPrograms: programData.idTypesPrograms,
+        visibility: programData.visibility, // 👈 nuevo
       })
       .where(eq(programas.id, programId))
       .returning();
@@ -172,6 +175,7 @@ interface CreateProgramInput {
   certificationTypeId?: number | null;
   idTypesPrograms?: number | null;
   creatorId: string;
+  visibility?: boolean; // 👈 nuevo
 }
 
 export async function createProgram(data: CreateProgramInput) {
@@ -187,6 +191,7 @@ export async function createProgram(data: CreateProgramInput) {
         certificationTypeId: data.certificationTypeId ?? null,
         idTypesPrograms: data.idTypesPrograms ?? null,
         creatorId: data.creatorId,
+        visibility: data.visibility ?? true, // 👈 nuevo
         createdAt: new Date(),
         updatedAt: new Date(),
       })

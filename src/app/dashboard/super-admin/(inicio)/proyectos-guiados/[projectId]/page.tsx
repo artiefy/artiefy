@@ -2,13 +2,23 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import { toast } from 'sonner';
 
+import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
+import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { ActivitiesList } from '~/components/super-admin/layout/ActivitiesListAdmin';
 import { ObjectivesList } from '~/components/super-admin/layout/ObjectivesListAdmin';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from '~/components/super-admin/ui/breadcrumb';
 
 interface GuidedProject {
   id: number;
@@ -16,6 +26,9 @@ interface GuidedProject {
   description: string | null;
   instructor: string;
   categoryName: string;
+  modalidadName?: string;
+  coverImageKey?: string | null;
+  isActive?: boolean;
 }
 
 interface Objective {
@@ -39,6 +52,8 @@ interface Activity {
   fechaMaximaEntrega: Date | null;
 }
 
+const predefinedColors = ['#1f2937', '#000000', '#FFFFFF'];
+
 export default function GuidedProjectDetailPage({
   params,
 }: {
@@ -46,6 +61,7 @@ export default function GuidedProjectDetailPage({
 }) {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<GuidedProject | null>(null);
+  const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF');
   const [selectedObjective, setSelectedObjective] = useState<Objective | null>(
     null
   );
@@ -58,7 +74,6 @@ export default function GuidedProjectDetailPage({
     description: '',
     duration: 60,
   });
-
   const [activityFormData, setActivityFormData] = useState({
     name: '',
     description: '',
@@ -72,7 +87,7 @@ export default function GuidedProjectDetailPage({
   const router = useRouter();
 
   useEffect(() => {
-    params.then((p) => setProjectId(p.projectId));
+    void params.then((p) => setProjectId(p.projectId));
   }, [params]);
 
   const fetchProject = useCallback(async () => {
@@ -80,7 +95,7 @@ export default function GuidedProjectDetailPage({
     try {
       const response = await fetch(`/api/guided-projects?id=${projectId}`);
       if (!response.ok) throw new Error('Error al cargar');
-      const data = await response.json();
+      const data = (await response.json()) as GuidedProject;
       setProject(data);
     } catch (error) {
       console.error('Error:', error);
@@ -89,8 +104,23 @@ export default function GuidedProjectDetailPage({
   }, [projectId]);
 
   useEffect(() => {
-    if (projectId) fetchProject();
+    if (projectId) void fetchProject();
   }, [projectId, fetchProject]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    const savedColor = localStorage.getItem(
+      `selectedColor_project_${projectId}`
+    );
+    if (savedColor) setSelectedColor(savedColor);
+  }, [projectId]);
+
+  const handlePredefinedColorChange = (color: string) => {
+    setSelectedColor(color);
+    if (projectId) {
+      localStorage.setItem(`selectedColor_project_${projectId}`, color);
+    }
+  };
 
   const handleSaveObjective = async () => {
     if (!projectId) return;
@@ -104,7 +134,6 @@ export default function GuidedProjectDetailPage({
         ? `/api/guided-projects/${projectId}/objectives?id=${editingObjective!.id}`
         : `/api/guided-projects/${projectId}/objectives`;
       const method = isEditing ? 'PUT' : 'POST';
-
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -152,7 +181,6 @@ export default function GuidedProjectDetailPage({
         ? `/api/guided-projects/${projectId}/objectives/${selectedObjective.id}/activities?id=${editingActivity!.id}`
         : `/api/guided-projects/${projectId}/objectives/${selectedObjective.id}/activities`;
       const method = isEditing ? 'PUT' : 'POST';
-
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -196,84 +224,261 @@ export default function GuidedProjectDetailPage({
     }
   };
 
+  const handleDeleteProject = async () => {
+    if (!project) return;
+    if (!confirm('¿Estás seguro de eliminar este proyecto guiado?')) return;
+    try {
+      const response = await fetch(`/api/guided-projects?id=${project.id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Error al eliminar');
+      toast.success('Proyecto eliminado');
+      router.push('/dashboard/super-admin/proyectos-guiados');
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error al eliminar el proyecto');
+    }
+  };
+
   if (!projectId || !project) {
     return (
-      <div className="flex min-h-[200px] items-center justify-center">
-        <p className="animate-pulse text-sm text-muted-foreground">
-          Cargando...
-        </p>
-      </div>
+      <main className="flex h-screen flex-col items-center justify-center">
+        <div className="size-32 rounded-full border-y-2 border-primary">
+          <span className="sr-only" />
+        </div>
+        <span className="text-primary">Cargando...</span>
+      </main>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-6">
-      {/* Botón volver */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => router.push('/dashboard/super-admin/proyectos-guiados')}
-        className="gap-2 text-muted-foreground"
-      >
-        ← Volver
-      </Button>
+    <div
+      className="relative min-h-screen w-full overflow-hidden px-1 py-2 md:px-3 md:py-4"
+      style={{ backgroundColor: 'rgb(25, 45, 80)' }}
+    >
+      {/* Overlay degradado */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/50 via-[#1a2d4a]/30 to-black/50" />
 
-      {/* Header del proyecto */}
-      <div className="rounded-xl border border-border/50 bg-card p-6">
-        <h1 className="mb-1 text-2xl font-medium">{project.title}</h1>
-        {project.description && (
-          <p className="mb-4 text-sm text-muted-foreground">
-            {project.description}
-          </p>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-[#EEEDFE] px-2.5 py-1 text-xs font-medium text-[#3C3489]">
-            <svg
-              className="size-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-            {project.instructor}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-md bg-[#E1F5EE] px-2.5 py-1 text-xs font-medium text-[#085041]">
-            <svg
-              className="size-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-              />
-            </svg>
-            {project.categoryName}
-          </span>
-        </div>
+      {/* Glow decorativo */}
+      <div className="pointer-events-none absolute inset-0 opacity-20">
+        <div className="absolute -top-40 -right-40 size-80 rounded-full bg-green-500 blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 size-80 rounded-full bg-purple-500 blur-3xl" />
       </div>
 
-      {/* Layout principal */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Breadcrumb */}
+      <Breadcrumb className="relative z-10 mb-8">
+        <BreadcrumbList className="flex flex-wrap gap-2">
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              className="text-cyan-400 transition-colors duration-300 hover:text-cyan-300"
+              href="/dashboard/super-admin"
+            >
+              Inicio
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              className="text-cyan-400 transition-colors duration-300 hover:text-cyan-300"
+              href="/dashboard/super-admin/proyectos-guiados"
+            >
+              Proyectos Guiados
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink className="text-white/60">Detalles</BreadcrumbLink>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
+      {/* Card principal */}
+      <div className="relative w-full">
+        <Card
+          className="
+            zoom-in relative mt-3 h-auto overflow-hidden border-2
+            border-cyan-500/30 bg-slate-800 p-4 shadow-2xl transition-all
+            duration-500 ease-out
+            hover:border-cyan-500/60 hover:shadow-cyan-500/30
+            sm:p-8
+          "
+        >
+          <CardHeader
+            className="
+              grid w-full grid-cols-1 gap-6 border-b border-cyan-500/20 p-0 pb-8
+              md:grid-cols-2 md:gap-12
+            "
+          >
+            <div className="space-y-3">
+              <p className="text-sm font-semibold tracking-widest text-cyan-400 uppercase">
+                Detalles del Proyecto
+              </p>
+              <CardTitle className="text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+                {project.title}
+              </CardTitle>
+            </div>
+            <div className="flex flex-col justify-start gap-4">
+              <p className="flex items-center gap-2 text-sm font-bold tracking-wider text-cyan-400 uppercase">
+                Tema Visual
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {predefinedColors.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => handlePredefinedColorChange(color)}
+                    style={{ backgroundColor: color }}
+                    className={`
+                      size-12 rounded-xl border-2 transition-all duration-300
+                      hover:scale-125 hover:shadow-lg hover:shadow-cyan-500/50
+                      ${
+                        selectedColor === color
+                          ? 'scale-110 border-white shadow-lg ring-2 ring-cyan-400 ring-offset-2'
+                          : 'border-white/20 hover:border-cyan-400'
+                      }
+                    `}
+                    title={`Cambiar tema a ${color}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </CardHeader>
+
+          <div className="mt-8 grid gap-8 md:grid-cols-2">
+            {/* Columna izquierda - Información */}
+            <div className="order-2 space-y-6 md:order-1">
+              <h2 className="text-2xl font-bold text-white md:text-3xl">
+                Información del Curso
+              </h2>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                    Categoría
+                  </p>
+                  <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
+                    {project.categoryName}
+                  </Badge>
+                </div>
+
+                {project.modalidadName && (
+                  <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
+                    <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                      Modalidad
+                    </p>
+                    <Badge className="border-cyan-500/50 bg-cyan-500/20 text-sm text-cyan-300">
+                      {project.modalidadName}
+                    </Badge>
+                  </div>
+                )}
+
+                <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                    Estado
+                  </p>
+                  <Badge
+                    className={`text-sm ${
+                      project.isActive
+                        ? 'border-green-500/50 bg-green-500/20 text-green-300'
+                        : 'border-red-500/50 bg-red-500/20 text-red-300'
+                    }`}
+                  >
+                    {project.isActive ? 'Activo' : 'Inactivo'}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-5 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/60 hover:bg-white/10">
+                <h3 className="mb-3 text-sm font-bold tracking-wide text-cyan-400 uppercase">
+                  Descripción
+                </h3>
+                <p className="text-sm leading-relaxed text-white/80">
+                  {project.description || 'Sin descripción'}
+                </p>
+              </div>
+
+              {/* Instructor */}
+              <div className="rounded-xl border-2 border-cyan-500/40 bg-cyan-500/10 p-6 backdrop-blur-sm transition-all duration-300 hover:border-cyan-500/70">
+                <h2 className="mb-4 flex items-center gap-2 text-sm font-bold tracking-wider text-cyan-400 uppercase">
+                  Instructor Asignado
+                </h2>
+                <div className="flex flex-wrap gap-2">
+                  <div className="flex items-center gap-2 rounded-full border border-primary bg-primary/20 px-4 py-2 text-sm text-white">
+                    <span className="font-semibold text-white">
+                      {project.instructor}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Columna derecha - Imagen y acciones */}
+            <div className="order-1 flex w-full flex-col space-y-6 md:order-2">
+              <div className="card-premium group relative aspect-video w-full overflow-hidden">
+                <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-40 transition-opacity duration-300 group-hover:opacity-20" />
+                {project.coverImageKey ? (
+                  <Image
+                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
+                    alt={project.title}
+                    width={400}
+                    height={225}
+                    className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    priority
+                    quality={85}
+                  />
+                ) : (
+                  <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#3AF4EF]/20 to-[#01142B]/20">
+                    <span className="text-5xl">📚</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Botones de acción */}
+              <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3 md:gap-3 lg:gap-4">
+                <Button className="btn-primary w-full">Ver</Button>
+                <Button
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/super-admin/proyectos-guiados/${project.id}/editar`
+                    )
+                  }
+                  className="
+                    w-full bg-yellow-500 px-3 py-2 text-xs font-semibold
+                    text-white transition-all duration-300
+                    hover:bg-yellow-600
+                    md:px-4 md:py-3 md:text-sm
+                  "
+                >
+                  ✏️ Editar
+                </Button>
+                <Button
+                  onClick={handleDeleteProject}
+                  className="
+                    w-full bg-red-500 px-3 py-2 text-xs font-semibold
+                    text-white transition-all duration-300
+                    hover:bg-red-600
+                    md:px-4 md:py-3 md:text-sm
+                  "
+                >
+                  🗑️ Eliminar
+                </Button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Sección de sesiones / actividades */}
+      <div className="relative z-10 mt-16 grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Columna sesiones */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl border border-border/50 bg-card p-4">
-            <p className="mb-3 text-[11px] font-medium tracking-widest text-muted-foreground uppercase">
+          <Card className="zoom-in h-full border-2 border-cyan-500/30 bg-slate-800 p-4 shadow-xl transition-all duration-300 hover:border-cyan-500/60">
+            <p className="mb-3 text-xs font-semibold tracking-widest text-cyan-400 uppercase">
               Sesiones
             </p>
             <ObjectivesList
               projectId={parseInt(projectId)}
               onEdit={(objective) => {
-                console.log('objective recibido:', objective); // verificar que id != 0
                 setSelectedObjective(objective);
                 setEditingObjective(objective);
                 setObjectiveFormData({
@@ -284,47 +489,34 @@ export default function GuidedProjectDetailPage({
               }}
               onDelete={handleDeleteObjective}
             />
-          </div>
+          </Card>
         </div>
 
         {/* Columna detalle */}
-        <div className="space-y-4 lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
           {selectedObjective ? (
             <>
               {/* Card sesión */}
-              <div className="rounded-xl border border-border/50 bg-card p-6">
+              <Card className="zoom-in border-2 border-cyan-500/30 bg-slate-800 p-4 shadow-xl transition-all duration-300 hover:border-cyan-500/60 sm:p-6">
                 <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-base font-medium">
+                  <h2 className="text-lg font-bold text-cyan-300 sm:text-xl">
                     {editingObjective
                       ? 'Editando sesión'
                       : 'Detalles de sesión'}
                   </h2>
                   {!editingObjective && (
-                    <button
+                    <Button
+                      size="sm"
                       onClick={() => setEditingObjective(selectedObjective)}
-                      className="inline-flex items-center gap-1.5 rounded-md bg-[#EEEDFE] px-3 py-1.5 text-xs font-medium text-[#534AB7] transition-colors hover:bg-[#CECBF6]"
+                      className="bg-yellow-500 text-white hover:bg-yellow-600"
                     >
-                      <svg
-                        className="size-3"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                        />
-                      </svg>
-                      Editar
-                    </button>
+                      ✏️ Editar
+                    </Button>
                   )}
                 </div>
-
                 <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">
+                    <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                       Título
                     </label>
                     <input
@@ -337,15 +529,17 @@ export default function GuidedProjectDetailPage({
                         })
                       }
                       disabled={!editingObjective}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground
-                        transition-colors focus:border-[#7F77DD] focus:ring-2
-                        focus:ring-[#7F77DD]/30 focus:outline-none disabled:cursor-default disabled:bg-muted
-                        disabled:text-muted-foreground"
+                      className="
+                        w-full rounded-lg border border-cyan-500/30 bg-white/5
+                        px-3 py-2 text-sm text-white transition-colors
+                        focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30
+                        focus:outline-none
+                        disabled:cursor-default disabled:opacity-60
+                      "
                     />
                   </div>
-
                   <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">
+                    <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                       Descripción
                     </label>
                     <textarea
@@ -358,15 +552,18 @@ export default function GuidedProjectDetailPage({
                       }
                       disabled={!editingObjective}
                       rows={3}
-                      className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm
-                        text-foreground transition-colors focus:border-[#7F77DD]
-                        focus:ring-2 focus:ring-[#7F77DD]/30 focus:outline-none disabled:cursor-default
-                        disabled:bg-muted disabled:text-muted-foreground"
+                      className="
+                        w-full resize-none rounded-lg border
+                        border-cyan-500/30 bg-white/5 px-3 py-2 text-sm
+                        text-white transition-colors
+                        focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30
+                        focus:outline-none
+                        disabled:cursor-default disabled:opacity-60
+                      "
                     />
                   </div>
-
                   <div className="max-w-[160px] space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">
+                    <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                       Duración (min)
                     </label>
                     <input
@@ -379,22 +576,25 @@ export default function GuidedProjectDetailPage({
                         })
                       }
                       disabled={!editingObjective}
-                      className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground
-                        transition-colors focus:border-[#7F77DD] focus:ring-2
-                        focus:ring-[#7F77DD]/30 focus:outline-none disabled:cursor-default disabled:bg-muted
-                        disabled:text-muted-foreground"
+                      className="
+                        w-full rounded-lg border border-cyan-500/30 bg-white/5
+                        px-3 py-2 text-sm text-white transition-colors
+                        focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30
+                        focus:outline-none
+                        disabled:cursor-default disabled:opacity-60
+                      "
                     />
                   </div>
-
                   {editingObjective && (
                     <div className="flex gap-2 pt-1">
-                      <button
+                      <Button
                         onClick={handleSaveObjective}
-                        className="rounded-md bg-[#534AB7] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#3C3489]"
+                        className="bg-cyan-500 text-white hover:bg-cyan-600"
                       >
                         Guardar
-                      </button>
-                      <button
+                      </Button>
+                      <Button
+                        variant="outline"
                         onClick={() => {
                           setEditingObjective(null);
                           setObjectiveFormData({
@@ -403,23 +603,20 @@ export default function GuidedProjectDetailPage({
                             duration: 60,
                           });
                         }}
-                        className="rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+                        className="border-white/20 text-white/70 hover:bg-white/10"
                       >
                         Cancelar
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
-              </div>
+              </Card>
 
               {/* Card actividades */}
-              <div className="rounded-xl border border-border/50 bg-card p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <p className="text-[11px] font-medium tracking-widest text-muted-foreground uppercase">
-                    Actividades
-                  </p>
-                </div>
-
+              <Card className="zoom-in border-2 border-cyan-500/30 bg-slate-800 p-4 shadow-xl transition-all duration-300 hover:border-cyan-500/60 sm:p-6">
+                <p className="mb-4 text-xs font-semibold tracking-widest text-cyan-400 uppercase">
+                  Actividades
+                </p>
                 <ActivitiesList
                   projectId={parseInt(projectId)}
                   objectiveId={selectedObjective.id}
@@ -448,15 +645,14 @@ export default function GuidedProjectDetailPage({
                   }}
                   onDelete={handleDeleteActivity}
                 />
-
                 {editingActivity && (
-                  <div className="mt-4 rounded-lg border border-border bg-muted/40 p-4">
-                    <p className="mb-3 text-xs font-medium text-foreground">
+                  <div className="mt-4 rounded-lg border border-cyan-500/30 bg-white/5 p-4">
+                    <p className="mb-3 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                       Editar actividad
                     </p>
                     <div className="space-y-3">
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">
+                        <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                           Nombre
                         </label>
                         <input
@@ -468,13 +664,17 @@ export default function GuidedProjectDetailPage({
                               name: e.target.value,
                             })
                           }
-                          className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-white
-            transition-colors focus:border-[#7F77DD] focus:ring-2 focus:ring-[#7F77DD]/30 focus:outline-none dark:text-white"
+                          className="
+                            w-full rounded-lg border border-cyan-500/30
+                            bg-white/5 px-3 py-2 text-sm text-white
+                            transition-colors
+                            focus:border-cyan-500 focus:ring-2
+                            focus:ring-cyan-500/30 focus:outline-none
+                          "
                         />
                       </div>
-
                       <div className="space-y-1.5">
-                        <label className="text-xs font-medium text-muted-foreground">
+                        <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                           Descripción
                         </label>
                         <textarea
@@ -486,14 +686,18 @@ export default function GuidedProjectDetailPage({
                             })
                           }
                           rows={2}
-                          className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm
-            text-white transition-colors focus:border-[#7F77DD] focus:ring-2 focus:ring-[#7F77DD]/30 focus:outline-none dark:text-white"
+                          className="
+                            w-full resize-none rounded-lg border
+                            border-cyan-500/30 bg-white/5 px-3 py-2 text-sm
+                            text-white transition-colors
+                            focus:border-cyan-500 focus:ring-2
+                            focus:ring-cyan-500/30 focus:outline-none
+                          "
                         />
                       </div>
-
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-muted-foreground">
+                          <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                             Semana
                           </label>
                           <input
@@ -505,12 +709,17 @@ export default function GuidedProjectDetailPage({
                                 weekNumber: parseInt(e.target.value),
                               })
                             }
-                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-white
-              transition-colors focus:border-[#7F77DD] focus:ring-2 focus:ring-[#7F77DD]/30 focus:outline-none dark:text-white"
+                            className="
+                              w-full rounded-lg border border-cyan-500/30
+                              bg-white/5 px-3 py-2 text-sm text-white
+                              transition-colors
+                              focus:border-cyan-500 focus:ring-2
+                              focus:ring-cyan-500/30 focus:outline-none
+                            "
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-muted-foreground">
+                          <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                             Porcentaje
                           </label>
                           <input
@@ -522,15 +731,19 @@ export default function GuidedProjectDetailPage({
                                 porcentaje: parseInt(e.target.value),
                               })
                             }
-                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-white
-              transition-colors focus:border-[#7F77DD] focus:ring-2 focus:ring-[#7F77DD]/30 focus:outline-none dark:text-white"
+                            className="
+                              w-full rounded-lg border border-cyan-500/30
+                              bg-white/5 px-3 py-2 text-sm text-white
+                              transition-colors
+                              focus:border-cyan-500 focus:ring-2
+                              focus:ring-cyan-500/30 focus:outline-none
+                            "
                           />
                         </div>
                       </div>
-
                       <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-muted-foreground">
+                          <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                             Fecha inicio
                           </label>
                           <input
@@ -542,12 +755,17 @@ export default function GuidedProjectDetailPage({
                                 startDate: e.target.value,
                               })
                             }
-                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-white
-              transition-colors focus:border-[#7F77DD] focus:ring-2 focus:ring-[#7F77DD]/30 focus:outline-none dark:text-white"
+                            className="
+                              w-full rounded-lg border border-cyan-500/30
+                              bg-white/5 px-3 py-2 text-sm text-white
+                              transition-colors
+                              focus:border-cyan-500 focus:ring-2
+                              focus:ring-cyan-500/30 focus:outline-none
+                            "
                           />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-xs font-medium text-muted-foreground">
+                          <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
                             Fecha fin
                           </label>
                           <input
@@ -559,20 +777,25 @@ export default function GuidedProjectDetailPage({
                                 endDate: e.target.value,
                               })
                             }
-                            className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-white
-              transition-colors focus:border-[#7F77DD] focus:ring-2 focus:ring-[#7F77DD]/30 focus:outline-none dark:text-white"
+                            className="
+                              w-full rounded-lg border border-cyan-500/30
+                              bg-white/5 px-3 py-2 text-sm text-white
+                              transition-colors
+                              focus:border-cyan-500 focus:ring-2
+                              focus:ring-cyan-500/30 focus:outline-none
+                            "
                           />
                         </div>
                       </div>
-
                       <div className="flex gap-2 pt-1">
-                        <button
+                        <Button
                           onClick={handleSaveActivity}
-                          className="rounded-md bg-[#534AB7] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#3C3489]"
+                          className="bg-cyan-500 text-white hover:bg-cyan-600"
                         >
                           Guardar
-                        </button>
-                        <button
+                        </Button>
+                        <Button
+                          variant="outline"
                           onClick={() => {
                             setEditingActivity(null);
                             setActivityFormData({
@@ -586,32 +809,20 @@ export default function GuidedProjectDetailPage({
                               fechaMaximaEntrega: '',
                             });
                           }}
-                          className="rounded-md border border-border px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted"
+                          className="border-white/20 text-white/70 hover:bg-white/10"
                         >
                           Cancelar
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border p-16 text-center">
-              <svg
-                className="size-8 text-[#AFA9EC]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-              <p className="text-sm text-muted-foreground">
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-cyan-500/30 bg-slate-800/50 p-16 text-center">
+              <span className="text-4xl">📋</span>
+              <p className="text-sm text-white/50">
                 Selecciona una sesión para ver sus detalles
               </p>
             </div>

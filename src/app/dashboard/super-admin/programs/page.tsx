@@ -57,6 +57,7 @@ export interface ProgramModel {
   creatorId: string;
   rating: number;
   idTypesPrograms?: number | null;
+  visibility: boolean; // 👈 nuevo
 }
 
 export type Program = Partial<ProgramModel>;
@@ -137,6 +138,7 @@ export default function Page() {
               creatorId: program.creatorId ?? '',
               rating: program.rating ?? 0,
               idTypesPrograms: program.idTypesPrograms ?? null,
+              visibility: program.visibility ?? true, // 👈 nuevo
             })
           )
         );
@@ -200,7 +202,8 @@ export default function Page() {
     fileName: string,
     subjectIds: number[],
     certificationTypeId?: number | null,
-    idTypesPrograms?: number | null
+    idTypesPrograms?: number | null,
+    visibility?: boolean
   ) => {
     if (!user) return;
     console.log('📤 Enviando programa con subjectIds:', subjectIds);
@@ -279,6 +282,7 @@ export default function Page() {
             subjectIds, // ✅ Enviar materias
             certificationTypeId,
             idTypesPrograms,
+            visibility,
           }),
         });
 
@@ -301,6 +305,7 @@ export default function Page() {
             subjectIds,
             certificationTypeId,
             idTypesPrograms,
+            visibility: visibility ?? true,
           }),
         });
 
@@ -326,6 +331,7 @@ export default function Page() {
             coverImageKey: program.coverImageKey ?? '',
             rating: program.rating ?? 0,
             idTypesPrograms: program.idTypesPrograms ?? null,
+            visibility: program.visibility ?? true, // 👈 nuevo
             createdAt:
               typeof program.createdAt === 'string'
                 ? program.createdAt
@@ -357,6 +363,7 @@ export default function Page() {
       creatorId: '',
       rating: 0,
       idTypesPrograms: null,
+      visibility: true, // 👈 nuevo
     });
     setIsModalOpen(true);
   };
@@ -394,6 +401,7 @@ export default function Page() {
             coverImageKey: program.coverImageKey ?? '',
             creatorId: program.creatorId ?? '',
             rating: program.rating ?? 0,
+            visibility: program.visibility ?? true, // 👈 nuevo
           })
         )
       );
@@ -847,6 +855,12 @@ export default function Page() {
               )
             }
             programTypes={programTypes}
+            visibility={editingProgram?.visibility ?? true} // 👈 nuevo
+            setVisibility={(visibility) =>
+              setEditingProgram((prev) =>
+                prev ? { ...prev, visibility } : null
+              )
+            } // 👈 nuevo
           />
         )}
       </div>
