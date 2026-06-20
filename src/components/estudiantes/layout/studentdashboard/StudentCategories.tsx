@@ -137,6 +137,29 @@ export default function StudentCategories({
     container.scrollTo({ left: newScrollLeft, behavior: 'smooth' });
   };
 
+  const resetCourseListImmediately = useCallback(() => {
+    window.dispatchEvent(new Event('student-courses-reset'));
+  }, []);
+
+  const clearSearchQuery = useCallback(() => {
+    setLoadingCategory('all');
+    setSelectedCategory(null);
+    setSearchQuery('');
+    resetCourseListImmediately();
+    window.dispatchEvent(new Event('search-end'));
+
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    params.delete('category');
+    params.delete('query');
+    params.delete('page');
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, {
+      scroll: false,
+    });
+    window.setTimeout(() => setLoadingCategory(null), 120);
+  }, [pathname, resetCourseListImmediately, router, searchParams]);
+
   const handleCategorySelect = (category: string | null) => {
     setLoadingCategory(category ?? 'all');
     setSelectedCategory(category);
@@ -154,11 +177,12 @@ export default function StudentCategories({
     params.delete('page');
 
     const query = params.toString();
-    window.history.pushState(
-      null,
-      '',
-      query ? `${pathname}?${query}` : pathname
-    );
+
+    if (!category) {
+      resetCourseListImmediately();
+    }
+
+    router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     window.setTimeout(() => setLoadingCategory(null), 120);
   };
 
@@ -173,9 +197,17 @@ export default function StudentCategories({
       params.set('query', trimmed);
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     } else {
-      router.push(pathname, { scroll: false });
+      clearSearchQuery();
     }
-  }, [searchQuery, pathname, router, start]);
+  }, [clearSearchQuery, searchQuery, pathname, router, start]);
+
+  const handleSearchInputChange = (nextValue: string) => {
+    setSearchQuery(nextValue);
+
+    if (nextValue.trim() === '' && searchParams?.get('query')) {
+      clearSearchQuery();
+    }
+  };
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -344,7 +376,7 @@ export default function StudentCategories({
                   type="text"
                   value={searchQuery}
                   ref={searchInputRef}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchInputChange(e.target.value)}
                   onKeyDown={handleKeyDown}
                 />
               </div>
@@ -373,7 +405,7 @@ export default function StudentCategories({
                   type="text"
                   value={searchQuery}
                   ref={searchInputRef}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchInputChange(e.target.value)}
                   onKeyDown={handleKeyDown}
                   autoFocus
                 />

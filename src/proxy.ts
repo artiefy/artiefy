@@ -27,6 +27,21 @@ function isEducadorPath(pathname: string): boolean {
   return pathname.startsWith('/dashboard/educadores');
 }
 
+// Cualquier ruta del front de estudiantes. Un super-admin puede verlas todas.
+function isStudentAppPath(pathname: string): boolean {
+  return pathname === '/estudiantes' || pathname.startsWith('/estudiantes/');
+}
+
+// Rutas [id] de cursos/clases que un educador puede ver de SUS cursos. La
+// propiedad real del curso se valida server-side en cada página; aquí solo se
+// abre el acceso para que el redirect por rol no lo expulse a su dashboard.
+function isEducadorStudentPath(pathname: string): boolean {
+  return (
+    /^\/estudiantes\/cursos\/[^/]+/.test(pathname) ||
+    /^\/estudiantes\/clases\/[^/]+/.test(pathname)
+  );
+}
+
 function isLegacyEducadorPath(pathname: string): boolean {
   return (
     pathname === '/dashboard/educador' ||
@@ -185,7 +200,15 @@ export default clerkMiddleware(async (auth, req) => {
       const isAuthRoute =
         pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
 
-      if (!isInOwnDashboard && !isAuthRoute) {
+      // Excepciones al redirect por rol hacia el dashboard:
+      //  - super-admin: puede navegar TODO el front de estudiantes.
+      //  - educador: puede ver las rutas [id] de cursos/clases (la propiedad
+      //    del curso se valida en la propia página server-side).
+      const canBrowseStudents =
+        (role === 'super-admin' && isStudentAppPath(pathname)) ||
+        (role === 'educador' && isEducadorStudentPath(pathname));
+
+      if (!isInOwnDashboard && !isAuthRoute && !canBrowseStudents) {
         return NextResponse.redirect(new URL(dashboardRoute, req.url));
       }
     }

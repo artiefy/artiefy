@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 
 import { type Metadata, type ResolvingMetadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 import { auth } from '@clerk/nextjs/server';
 
@@ -12,6 +12,8 @@ import { getClassMeetingsByCourseId } from '~/server/actions/estudiantes/classMe
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { getCourseTypeCounts } from '~/server/actions/estudiantes/courses/getCourseTypeCounts';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
+import { isCourseOwnedByEducator } from '~/server/queries/educatorCourseAccess';
+import { getDashboardRouteByRole, getUserRole } from '~/utils/roles';
 
 import CourseDetails from './CourseDetails';
 
@@ -154,11 +156,23 @@ async function CourseContent({ id }: { id: string }) {
       notFound();
     }
 
-    const { userId } = await auth();
+    const { userId, sessionClaims } = await auth();
     const course = await getCourseById(courseId, userId);
 
     if (!course) {
       notFound();
+    }
+
+    // Un educador solo puede ver las rutas [id] de SUS cursos (instructor,
+    // creador o co-instructor). El super-admin pasa sin restricción.
+    const role = getUserRole(sessionClaims?.metadata?.role);
+    if (role === 'educador') {
+      const ownsCourse = userId
+        ? await isCourseOwnedByEducator(courseId, userId)
+        : false;
+      if (!ownsCourse) {
+        redirect(getDashboardRouteByRole(role));
+      }
     }
 
     // Asegura que userId es string (no null)

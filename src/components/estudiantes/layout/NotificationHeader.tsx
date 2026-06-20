@@ -348,6 +348,7 @@ export function NotificationHeader() {
     },
     []
   );
+  const unreadLabel = unreadCount > 99 ? '99+' : unreadCount;
 
   // Modal de confirmación para eliminar notificación
   // Solo renderiza el modal si deleteId !== null
@@ -355,14 +356,18 @@ export function NotificationHeader() {
     <div className="notification-menu">
       <button
         className={`
-          group notification-button relative ml-2 rounded-full p-2
-          transition-colors
+          group notification-button relative rounded-full p-2 transition-colors
           hover:bg-white/10
+          md:ml-2
           md:hover:bg-primary
           ${isAnimating ? 'active' : ''}
         `}
         type="button"
-        aria-label="Notificaciones"
+        aria-label={
+          unreadCount > 0
+            ? `Notificaciones: ${unreadCount} pendientes`
+            : 'Notificaciones'
+        }
         onClick={handleClick}
       >
         <span
@@ -389,11 +394,13 @@ export function NotificationHeader() {
             />
             <span
               className="
-                absolute top-0 right-0 flex size-5 items-center justify-center
-                rounded-full bg-red-500 text-xs text-white
+                absolute -top-1 -right-1 z-10 flex h-5 min-w-5
+                items-center justify-center rounded-full border
+                border-[#01152d] bg-red-500 px-1 text-[10px] leading-none
+                font-bold text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)]
               "
             >
-              {unreadCount}
+              {unreadLabel}
             </span>
           </>
         ) : (

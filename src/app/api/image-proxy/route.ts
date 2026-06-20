@@ -1,17 +1,23 @@
 import { NextResponse } from 'next/server';
 
 import { GetObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import sharp from 'sharp';
 
 const TIMEOUT = 10000; // Reducido a 10 segundos
 const MAX_RETRIES = 2;
 const FALLBACK_CACHE_SECONDS = 600;
+const DEFAULT_PUBLIC_S3_BASE_URL =
+  'https://s3.us-east-2.amazonaws.com/artiefy-upload';
 const PUBLIC_S3_BASE_URL = process.env.NEXT_PUBLIC_AWS_S3_URL ?? '';
 const REGION = getRegionFromS3Url(PUBLIC_S3_BASE_URL) ?? 'us-east-2';
-const BUCKET = process.env.AWS_BUCKET_NAME ?? process.env.AWS_S3_BUCKET ?? '';
+const BUCKET =
+  process.env.AWS_BUCKET_NAME ??
+  process.env.AWS_S3_BUCKET ??
+  getBucketFromS3Url(PUBLIC_S3_BASE_URL) ??
+  'artiefy-upload';
 const EFFECTIVE_PUBLIC_S3_BASE_URL =
   PUBLIC_S3_BASE_URL ||
-  (BUCKET ? `https://s3.${REGION}.amazonaws.com/${BUCKET}` : '');
+  (BUCKET ? `https://s3.${REGION}.amazonaws.com/${BUCKET}` : '') ||
+  DEFAULT_PUBLIC_S3_BASE_URL;
 
 function getRegionFromS3Url(value: string): string | null {
   if (!value) return null;
@@ -20,6 +26,27 @@ function getRegionFromS3Url(value: string): string | null {
     const host = new URL(value).hostname;
     const match = /\.?s3[.-]([a-z0-9-]+)\.amazonaws\.com$/i.exec(host);
     return match?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function getBucketFromS3Url(value: string): string | null {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value);
+    const virtualHostedMatch = /^(.+)\.s3[.-][a-z0-9-]+\.amazonaws\.com$/i.exec(
+      url.hostname
+    );
+
+    if (virtualHostedMatch?.[1]) return virtualHostedMatch[1];
+
+    if (/^s3[.-][a-z0-9-]+\.amazonaws\.com$/i.test(url.hostname)) {
+      return url.pathname.split('/').filter(Boolean)[0] ?? null;
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -35,8 +62,6 @@ const s3Client = new S3Client({
         }
       : undefined,
 });
-
-let fallbackImagePromise: Promise<Buffer> | null = null;
 
 function getAllowedS3Origins(): Set<string> {
   const origins = new Set<string>([
@@ -100,7 +125,9 @@ function validateImageUrl(imageUrl: string): URL | null {
   }
 }
 
-async function getObjectFromS3(key: string): Promise<ArrayBuffer> {
+async function getObjectFromS3(
+  key: string
+): Promise<{ body: ArrayBuffer; contentType: string }> {
   if (!BUCKET) {
     throw new Error('AWS bucket is not configured');
   }
@@ -118,7 +145,10 @@ async function getObjectFromS3(key: string): Promise<ArrayBuffer> {
   }
 
   const copy = new Uint8Array(byteArray);
-  return copy.buffer as ArrayBuffer;
+  return {
+    body: copy.buffer as ArrayBuffer,
+    contentType: response.ContentType ?? 'image/jpeg',
+  };
 }
 
 function isExpectedImageFallbackError(error: unknown): boolean {
@@ -139,30 +169,34 @@ function isExpectedImageFallbackError(error: unknown): boolean {
   );
 }
 
-async function getFallbackImageBuffer(): Promise<Buffer> {
-  fallbackImagePromise ??= sharp(
-    Buffer.from(`
-      <svg width="600" height="400" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect width="600" height="400" fill="#01152D"/>
-        <rect x="1" y="1" width="598" height="398" rx="28" stroke="#22C4D3" stroke-opacity="0.35" stroke-width="2"/>
-        <text x="300" y="184" text-anchor="middle" fill="#3AF4EF" font-family="Arial, sans-serif" font-size="42" font-weight="700">Artiefy</text>
-        <text x="300" y="232" text-anchor="middle" fill="#94A3B8" font-family="Arial, sans-serif" font-size="24">Imagen no disponible</text>
-      </svg>
-    `)
-  )
-    .webp({ quality: 75 })
-    .toBuffer();
+function getFallbackImage(): Uint8Array {
+  const svg = `
+    <svg width="600" height="400" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="400" fill="#01152D"/>
+      <rect x="1" y="1" width="598" height="398" rx="28" stroke="#22C4D3" stroke-opacity="0.35" stroke-width="2"/>
+      <text x="300" y="184" text-anchor="middle" fill="#3AF4EF" font-family="Arial, sans-serif" font-size="42" font-weight="700">Artiefy</text>
+      <text x="300" y="232" text-anchor="middle" fill="#94A3B8" font-family="Arial, sans-serif" font-size="24">Imagen no disponible</text>
+    </svg>
+  `;
 
-  return fallbackImagePromise;
+  return new TextEncoder().encode(svg);
 }
 
-function imageResponse(buffer: Buffer, cacheSeconds: number) {
-  return new NextResponse(new Uint8Array(buffer), {
+function imageResponse(
+  buffer: ArrayBuffer | Uint8Array,
+  contentType: string,
+  cacheSeconds: number
+) {
+  const body = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+  const responseBody = new ArrayBuffer(body.byteLength);
+  new Uint8Array(responseBody).set(body);
+
+  return new NextResponse(responseBody, {
     status: 200,
     headers: {
-      'Content-Type': 'image/webp',
+      'Content-Type': contentType,
       'Cache-Control': `public, max-age=${cacheSeconds}, immutable`,
-      'Content-Length': buffer.length.toString(),
+      'Content-Length': body.byteLength.toString(),
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'GET',
       'X-Content-Type-Options': 'nosniff',
@@ -206,32 +240,6 @@ async function fetchWithTimeout(
   }
 }
 
-async function optimizeImageBuffer(
-  buffer: ArrayBuffer
-): Promise<Buffer | null> {
-  try {
-    const sharpImage = sharp(Buffer.from(buffer));
-    const metadata = await sharpImage.metadata();
-
-    // Siempre optimizar imágenes para reducir el tamaño y mejorar la caché
-    const width = metadata.width ? Math.min(metadata.width, 1000) : 1000;
-
-    return await sharpImage
-      .resize(width, null, {
-        withoutEnlargement: true,
-        fit: 'inside',
-      })
-      .webp({
-        quality: 75, // Calidad reducida para mejor compresión
-        effort: 6, // Mayor esfuerzo de compresión
-      })
-      .toBuffer();
-  } catch (error) {
-    console.error('Error optimizing image:', error);
-    return null;
-  }
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -250,19 +258,25 @@ export async function GET(request: Request) {
     }
 
     let buffer: ArrayBuffer;
+    let contentType = 'image/jpeg';
+
     try {
       const response = await fetchWithTimeout(parsedImageUrl.toString());
+      contentType = response.headers.get('content-type') ?? contentType;
       buffer = await response.arrayBuffer();
     } catch (error) {
       const key = getS3KeyFromUrl(parsedImageUrl);
       if (key && error instanceof Error && error.message.includes('status:')) {
         try {
-          buffer = await getObjectFromS3(key);
+          const s3Object = await getObjectFromS3(key);
+          buffer = s3Object.body;
+          contentType = s3Object.contentType;
         } catch (s3Error) {
-          if (isExpectedImageFallbackError(s3Error)) {
+          if (isExpectedImageFallbackError(s3Error) || s3Error) {
             console.warn('Image proxy using fallback for S3 key:', key);
             return imageResponse(
-              await getFallbackImageBuffer(),
+              getFallbackImage(),
+              'image/svg+xml',
               FALLBACK_CACHE_SECONDS
             );
           }
@@ -273,22 +287,12 @@ export async function GET(request: Request) {
       }
     }
 
-    // Siempre optimizar imágenes. Si Sharp no puede decodificar el formato
-    // original, devolver un WebP real de fallback en vez de marcar bytes
-    // originales como image/webp.
-    const optimizedBuffer = await optimizeImageBuffer(buffer);
-    if (!optimizedBuffer) {
-      return imageResponse(
-        await getFallbackImageBuffer(),
-        FALLBACK_CACHE_SECONDS
-      );
-    }
-
-    return imageResponse(optimizedBuffer, 31536000);
+    return imageResponse(buffer, contentType, 31536000);
   } catch (error) {
     console.error('Image proxy error:', error);
     return imageResponse(
-      await getFallbackImageBuffer(),
+      getFallbackImage(),
+      'image/svg+xml',
       FALLBACK_CACHE_SECONDS
     );
   }

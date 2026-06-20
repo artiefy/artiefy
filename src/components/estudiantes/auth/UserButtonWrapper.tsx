@@ -11,7 +11,11 @@ import {
 import { FaCrown, FaRegCalendarAlt, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 
-export function UserButtonWrapper() {
+export function UserButtonWrapper({
+  hidePlanBadge = false,
+}: {
+  hidePlanBadge?: boolean;
+} = {}) {
   const { user } = useUser();
   const planType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
@@ -231,7 +235,7 @@ export function UserButtonWrapper() {
         </UserButton.UserProfilePage>
       </UserButton>
       {/* Badge de planType */}
-      {renderPlanBadge({ compact: isMobile })}
+      {hidePlanBadge ? null : renderPlanBadge({ compact: isMobile })}
     </div>
   );
 }

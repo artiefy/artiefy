@@ -13,12 +13,15 @@ import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseByI
 import { getLessonById } from '~/server/actions/estudiantes/lessons/getLessonById';
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
 import { getUserLessonsProgress } from '~/server/actions/estudiantes/progress/getUserLessonsProgress';
+import { isCourseOwnedByEducator } from '~/server/queries/educatorCourseAccess';
 import { sortLessons } from '~/utils/lessonSorting';
+import { getDashboardRouteByRole, getUserRole } from '~/utils/roles';
 
 import LessonDetails from './LessonDetails';
 
 import type { LessonWithProgress } from '~/types';
 import type { CourseType } from '~/types';
+import type { Roles } from '~/types/globals';
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -54,11 +57,13 @@ export default async function LessonPage({ params }: PageProps) {
     return notFound();
   }
 
-  const { userId, redirectToSignIn } = await auth();
+  const { userId, sessionClaims, redirectToSignIn } = await auth();
 
   if (!userId) {
     return redirectToSignIn();
   }
+
+  const role = getUserRole(sessionClaims?.metadata?.role);
 
   return (
     <>
@@ -68,7 +73,7 @@ export default async function LessonPage({ params }: PageProps) {
       <Header />
       <main>
         <Suspense fallback={<LessonSkeleton />}>
-          <LessonContent id={id} userId={userId} />
+          <LessonContent id={id} userId={userId} role={role} />
         </Suspense>
       </main>
       <Footer />
@@ -77,7 +82,15 @@ export default async function LessonPage({ params }: PageProps) {
 }
 
 // Move LessonContent to a separate file for better organization
-async function LessonContent({ id, userId }: { id: string; userId: string }) {
+async function LessonContent({
+  id,
+  userId,
+  role,
+}: {
+  id: string;
+  userId: string;
+  role: Roles | undefined;
+}) {
   try {
     const lessonId = Number.parseInt(id, 10);
     if (isNaN(lessonId)) {
@@ -95,6 +108,19 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
     if (!course) {
       console.log('Curso no encontrado');
       return notFound();
+    }
+
+    // Un educador solo puede ver las clases de SUS cursos; el super-admin ve
+    // todas. Ambos roles privilegiados omiten el gating de suscripción.
+    const isPrivileged = role === 'educador' || role === 'super-admin';
+    if (role === 'educador') {
+      const ownsCourse = await isCourseOwnedByEducator(
+        lessonData.courseId,
+        userId
+      );
+      if (!ownsCourse) {
+        redirect(getDashboardRouteByRole(role));
+      }
     }
 
     const user = await currentUser();
@@ -133,8 +159,9 @@ async function LessonContent({ id, userId }: { id: string; userId: string }) {
         subscriptionEndDate <= now);
 
     if (
-      hasExpiredSubscription ||
-      (requiresSubscription && !hasActiveSubscription)
+      !isPrivileged &&
+      (hasExpiredSubscription ||
+        (requiresSubscription && !hasActiveSubscription))
     ) {
       redirect('/planes?subscription_expired=1');
     }

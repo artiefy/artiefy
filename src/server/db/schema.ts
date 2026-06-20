@@ -91,8 +91,17 @@ export const users = pgTable(
     profesion: text('profesion'),
     descripcion: text('descripcion'),
     profileImageKey: text('profile_image_key'),
+
+    // Campos de perfil público (editables por el usuario desde el frontend)
+    username: text('username'),
+    bio: text('bio'),
+    website: text('website'),
+    location: text('location'),
   },
-  (table) => [unique('users_email_role_unique').on(table.email, table.role)]
+  (table) => [
+    unique('users_email_role_unique').on(table.email, table.role),
+    unique('users_username_unique').on(table.username),
+  ]
 );
 
 // Tabla de categorías
@@ -725,6 +734,7 @@ export const programas = pgTable('programas', {
   certificationTypeId: integer('certification_type_id')
     .references(() => certificationTypes.id)
     .default(sql`NULL`),
+  visibility: boolean('visibility').default(true),
   idTypesPrograms: integer('id_types_programs').references(
     () => typesPrograms.id
   ),

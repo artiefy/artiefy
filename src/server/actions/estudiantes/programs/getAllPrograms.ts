@@ -5,32 +5,42 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
+import { withRetry } from '~/server/db/withRetry';
 import { type BaseCourse, type MateriaWithCourse, type Program } from '~/types';
 
 export async function getAllPrograms(): Promise<Program[]> {
   try {
-    const programs = await db.query.programas.findMany({
-      with: {
-        category: true,
-        certificationType: true,
-        typeProgram: true,
-        creator: true,
-        materias: {
-          with: {
-            curso: {
-              with: {
-                category: true,
+    const programs = await withRetry(() =>
+      db.query.programas.findMany({
+        where: (programas, { or, isNull, eq }) =>
+          or(isNull(programas.visibility), eq(programas.visibility, true)),
+        with: {
+          category: true,
+          certificationType: true,
+          typeProgram: true,
+          creator: true,
+          materias: {
+            with: {
+              curso: {
+                with: {
+                  category: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      })
+    );
 
     // Procesar cada programa y sus cursos para obtener instructorName
     const processedPrograms = await Promise.all(
       programs.map(async (program) => {
-        const coursesCount = program.materias.filter((m) => m.curso).length;
+        // Count distinct related courses: a program links courses through
+        // `materias`, and two materias can point to the same courseid, so we
+        // dedupe by courseid to match the real number of courses in the DB.
+        const coursesCount = new Set(
+          program.materias.filter((m) => m.curso).map((m) => m.courseid)
+        ).size;
         // TODO: Calcular horas reales cuando el campo duration esté disponible
         const totalHours = coursesCount * 40; // Estimación temporal: 40h por curso
 

@@ -6,6 +6,7 @@ import { Header } from '~/components/estudiantes/layout/Header';
 import { CourseListWrapper } from '~/components/estudiantes/layout/studentdashboard/CourseListWrapper';
 import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
 import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
+import { Reveal } from '~/components/estudiantes/ui/Reveal';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 import { getAllCategories } from '~/server/actions/estudiantes/categories/getAllCategories';
 import { getFeaturedCategories } from '~/server/actions/estudiantes/categories/getFeaturedCategories';
@@ -158,10 +159,12 @@ export default async function Page({ searchParams }: PageProps) {
           />
           {!view && (
             <>
-              <StudentCategories
-                allCategories={data.categories}
-                featuredCategories={data.featuredCategories}
-              />
+              <Reveal>
+                <StudentCategories
+                  allCategories={data.categories}
+                  featuredCategories={data.featuredCategories}
+                />
+              </Reveal>
               <CourseListWrapper>
                 <Suspense
                   fallback={
