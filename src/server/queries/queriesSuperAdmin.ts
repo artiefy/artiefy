@@ -512,7 +512,7 @@ export interface ProgramData {
   updatedAt?: Date | string;
   rating?: number | null;
   idTypesPrograms?: number | null;
-  visibility?: boolean; // 👈 nuevo
+  visibility?: boolean | null; // 👈 antes era `boolean`
 }
 
 // Obtener todos los programas
@@ -631,6 +631,7 @@ export async function updateProgram(
       creatorId: programData.creatorId,
       updatedAt: new Date(),
       rating: programData.rating,
+      visibility: programData.visibility,
     })
     .where(eq(programas.id, programId))
     .returning({

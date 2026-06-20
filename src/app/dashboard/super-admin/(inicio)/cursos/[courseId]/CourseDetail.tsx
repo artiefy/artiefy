@@ -495,6 +495,18 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     lessonTitle?: string;
     lessonOrderIndex?: number;
   }
+  interface LessonResource {
+    lessonId: number;
+    lessonTitle: string;
+    lessonOrderIndex: number;
+    coverImageKey: string | null;
+    coverVideoKey: string | null;
+    resourceKey: string;
+    resourceNames: string;
+  }
+
+  const [lessonResources, setLessonResources] = useState<LessonResource[]>([]);
+  const [loadingResources, setLoadingResources] = useState(false);
 
   const [courseActivities, setCourseActivities] = useState<CourseActivity[]>(
     []
@@ -644,7 +656,57 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
       setIsSubmittingReply(false);
     }
   };
+  useEffect(() => {
+    if (!courseIdNumber) return;
+    setLoadingResources(true);
 
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/super-admin/lessons?courseId=${courseIdNumber}`
+        );
+        if (!res.ok) return;
+
+        const data = (await res.json()) as {
+          id: number;
+          title: string;
+          orderIndex: number;
+          coverImageKey: string | null;
+          coverVideoKey: string | null;
+          resourceKey: string | null;
+          resourceNames: string | null;
+        }[];
+
+        const mapped: LessonResource[] = data
+          .filter(
+            (l) =>
+              (l.resourceKey && l.resourceNames) ||
+              (l.coverImageKey && l.coverImageKey.trim()) ||
+              (l.coverVideoKey &&
+                l.coverVideoKey.trim() &&
+                l.coverVideoKey !== 'none')
+          )
+          .map((l) => ({
+            lessonId: l.id,
+            lessonTitle: l.title,
+            lessonOrderIndex: l.orderIndex,
+            coverImageKey: l.coverImageKey ?? null,
+            coverVideoKey:
+              l.coverVideoKey && l.coverVideoKey !== 'none'
+                ? l.coverVideoKey
+                : null,
+            resourceKey: l.resourceKey ?? '',
+            resourceNames: l.resourceNames ?? '',
+          }));
+
+        setLessonResources(mapped);
+      } catch (e) {
+        console.error('Error cargando recursos del curso:', e);
+      } finally {
+        setLoadingResources(false);
+      }
+    })();
+  }, [courseIdNumber]);
   // Fetch student projects for all students enrolled in this course
   useEffect(() => {
     if (!courseIdNumber) return;
@@ -3028,6 +3090,34 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     Clases en Vivo
                   </button>
                   <button
+                    onClick={() => setActiveTab('actividades')}
+                    className={`
+                      rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                      transition-all duration-300
+                      ${
+                        activeTab === 'actividades'
+                          ? `
+          bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]
+          ring-1 ring-cyan-400/40
+        `
+                          : `
+          text-white/80
+          hover:bg-white/5 hover:text-white
+        `
+                      }
+                    `}
+                  >
+                    Actividades{' '}
+                    <span
+                      className="
+                      ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
+                      text-xs font-bold text-slate-950
+                    "
+                    >
+                      {courseActivities.length}
+                    </span>
+                  </button>
+                  <button
                     onClick={() => setActiveTab('estudiantes')}
                     className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
@@ -3164,35 +3254,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       "
                     >
                       3
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('actividades')}
-                    className={`
-                      rounded-full px-4 py-2 font-semibold whitespace-nowrap
-                      transition-all duration-300
-                      ${
-                        activeTab === 'actividades'
-                          ? `
-          bg-cyan-500/15 text-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.25)]
-          ring-1 ring-cyan-400/40
-        `
-                          : `
-          text-white/80
-          hover:bg-white/5 hover:text-white
-        `
-                      }
-                    `}
-                  >
-                    Actividades{' '}
-                    <span
-                      className="
-                      ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                      text-xs font-bold text-slate-950
-                    "
-                    >
-                      {courseActivities.length}
                     </span>
                   </button>
 
@@ -5693,21 +5754,156 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     )}
                   </div>
                 )}
-                {/* Recursos Tab */}
                 {activeTab === 'recursos' && (
                   <div className="animate-in fade-in duration-500">
                     <h2 className="mb-6 text-2xl font-bold text-white">
-                      Recursos
+                      Recursos del curso
                     </h2>
-                    <div
-                      className="
-                        rounded-xl border border-cyan-500/30 bg-cyan-500/5 p-6
+
+                    {loadingResources ? (
+                      <div className="flex items-center gap-3 text-white/60">
+                        <div
+                          className="
+            size-5 animate-spin rounded-full border-2
+            border-cyan-500 border-t-transparent
+          "
+                        />
+                        Cargando recursos...
+                      </div>
+                    ) : lessonResources.length === 0 ? (
+                      <div
+                        className="
+          rounded-xl border border-dashed border-white/20
+          bg-slate-800/30 p-8 text-center
+        "
+                      >
+                        <p className="text-white/60">
+                          No hay recursos registrados en este curso.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {[...lessonResources]
+                          .sort(
+                            (a, b) => a.lessonOrderIndex - b.lessonOrderIndex
+                          )
+                          .map((lessonRes) => {
+                            const fileKeys = lessonRes.resourceKey
+                              ? lessonRes.resourceKey
+                                  .split(',')
+                                  .map((k) => k.trim())
+                                  .filter(Boolean)
+                              : [];
+
+                            const fileNames = lessonRes.resourceNames
+                              ? lessonRes.resourceNames
+                                  .split(',')
+                                  .map((n) => n.trim())
+                                  .filter(Boolean)
+                              : [];
+
+                            type ResourceItem = {
+                              id: string;
+                              label: string;
+                              url: string;
+                            };
+
+                            const items: ResourceItem[] = [];
+                            const baseUrl =
+                              process.env.NEXT_PUBLIC_AWS_S3_URL ?? '';
+
+                            if (lessonRes.coverImageKey) {
+                              items.push({
+                                id: 'image',
+                                label: 'Imagen de portada',
+                                url: `${baseUrl}/${lessonRes.coverImageKey}`,
+                              });
+                            }
+
+                            if (lessonRes.coverVideoKey) {
+                              items.push({
+                                id: 'video',
+                                label: 'Video de la clase',
+                                url: `${baseUrl}/${lessonRes.coverVideoKey}`,
+                              });
+                            }
+
+                            fileKeys.forEach((key, idx) => {
+                              items.push({
+                                id: `file-${idx}`,
+                                label: fileNames[idx] ?? key,
+                                url: `${baseUrl}/${key}`,
+                              });
+                            });
+
+                            return (
+                              <div
+                                key={lessonRes.lessonId}
+                                className="
+                  rounded-2xl border border-cyan-500/30
+                  bg-slate-700/60 p-5 shadow-md shadow-cyan-500/5
+                "
+                              >
+                                <div className="mb-4 flex items-center gap-3">
+                                  <span
+                                    className="
+                      flex size-8 items-center justify-center rounded-full
+                      bg-cyan-500/30 text-sm font-bold text-cyan-300
+                    "
+                                  >
+                                    {lessonRes.lessonOrderIndex ?? '?'}
+                                  </span>
+
+                                  <h3 className="text-lg font-semibold text-white">
+                                    {lessonRes.lessonTitle ?? 'Sin título'}
+                                  </h3>
+
+                                  <span className="ml-auto text-xs text-gray-300">
+                                    {items.length} recurso
+                                    {items.length !== 1 ? 's' : ''}
+                                  </span>
+                                </div>
+
+                                <ul className="space-y-3">
+                                  {items.map((item) => (
+                                    <li
+                                      key={item.id}
+                                      className="
+                        flex flex-col gap-3 rounded-xl border
+                        border-cyan-500/20 bg-slate-600/50 p-4
+                        transition-colors hover:border-cyan-400/40
+                        hover:bg-slate-600/70 sm:flex-row
+                        sm:items-center sm:justify-between
                       "
-                    >
-                      <p className="text-white/60">
-                        Aquí irán los recursos del curso...
-                      </p>
-                    </div>
+                                    >
+                                      <div className="flex-1">
+                                        <span className="font-semibold text-white">
+                                          {item.label}
+                                        </span>
+                                      </div>
+
+                                      <div className="flex shrink-0 flex-wrap gap-2">
+                                        <a
+                                          href={item.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="
+                            rounded-lg bg-blue-500 px-3 py-1.5
+                            text-sm font-semibold text-white
+                            transition hover:bg-blue-400
+                          "
+                                        >
+                                          👁 Ver
+                                        </a>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -5768,17 +5964,17 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                               <div
                                 key={key}
                                 className="
-                                  rounded-2xl border border-gray-700
-                                  bg-[#111827] p-5 shadow-md
-                                "
+    rounded-2xl border border-cyan-500/30
+    bg-slate-700/60 p-5 shadow-md shadow-cyan-500/5
+  "
                               >
                                 <div className="mb-4 flex items-center gap-3">
                                   <span
                                     className="
-                                    flex size-8 items-center justify-center
-                                    rounded-full bg-cyan-500/20 text-sm
-                                    font-bold text-cyan-400
-                                  "
+  flex size-8 items-center justify-center
+  rounded-full bg-cyan-500/30 text-sm
+  font-bold text-cyan-300
+"
                                   >
                                     {first.lessonOrderIndex ?? '?'}
                                   </span>
@@ -5787,7 +5983,8 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     {first.lessonTitle ?? 'Sin título'}
                                   </h3>
 
-                                  <span className="ml-auto text-xs text-gray-500">
+                                  <span className="ml-auto text-xs text-gray-300">
+                                    {' '}
                                     {acts.length} actividad
                                     {acts.length !== 1 ? 'es' : ''}
                                   </span>
@@ -5798,11 +5995,12 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                     <li
                                       key={act.id}
                                       className="
-                                        flex flex-col gap-3 rounded-xl border
-                                        border-gray-600 bg-slate-800/60 p-4
-                                        sm:flex-row sm:items-center
-                                        sm:justify-between
-                                      "
+  flex flex-col gap-3 rounded-xl border
+  border-cyan-500/20 bg-slate-600/50 p-4
+  transition-colors hover:border-cyan-400/40 hover:bg-slate-600/70
+  sm:flex-row sm:items-center
+  sm:justify-between
+"
                                     >
                                       <div className="flex-1">
                                         <div
@@ -5817,19 +6015,19 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                           {act.revisada ? (
                                             <span
                                               className="
-                                              rounded-full bg-green-500/20 px-2
-                                              py-0.5 text-xs font-semibold
-                                              text-green-400
-                                            "
+rounded-full bg-green-500/30 px-2
+py-0.5 text-xs font-semibold
+text-green-300
+"
                                             >
                                               Calificable
                                             </span>
                                           ) : (
                                             <span
                                               className="
-                                              rounded-full bg-gray-600/40 px-2
-                                              py-0.5 text-xs text-gray-400
-                                            "
+rounded-full bg-gray-500/40 px-2
+py-0.5 text-xs text-gray-200
+"
                                             >
                                               No calificable
                                             </span>
@@ -5840,9 +6038,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                             act.porcentaje > 0 && (
                                               <span
                                                 className="
-                                                rounded-full bg-cyan-500/20 px-2
-                                                py-0.5 text-xs text-cyan-400
-                                              "
+rounded-full bg-cyan-500/30 px-2
+py-0.5 text-xs text-cyan-300
+"
                                               >
                                                 {act.porcentaje}%
                                               </span>
@@ -5851,9 +6049,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                           {act.fechaMaximaEntrega && (
                                             <span
                                               className="
-                                              rounded-full bg-yellow-500/20 px-2
-                                              py-0.5 text-xs text-yellow-400
-                                            "
+rounded-full bg-yellow-500/30 px-2
+py-0.5 text-xs text-yellow-300
+"
                                             >
                                               📅{' '}
                                               {new Date(
@@ -5870,9 +6068,9 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         {act.description && (
                                           <p
                                             className="
-                                            mt-2 line-clamp-2 text-sm
-                                            text-gray-400
-                                          "
+mt-2 line-clamp-2 text-sm
+text-gray-300
+"
                                           >
                                             {act.description}
                                           </p>
@@ -5887,23 +6085,23 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                                         <a
                                           href={`/dashboard/super-admin/cursos/${courseIdNumber}/${act.lessonsId}/actividades/${act.id}`}
                                           className="
-                                            rounded-lg bg-blue-600 px-3 py-1.5
-                                            text-sm font-semibold text-white
-                                            transition
-                                            hover:bg-blue-500
-                                          "
+  rounded-lg bg-blue-500 px-3 py-1.5
+  text-sm font-semibold text-white
+  transition
+  hover:bg-blue-400
+"
                                         >
                                           👁 Ver
                                         </a>
 
                                         <a
-                                          href={`/dashboard/super-admin/cursos/${courseIdNumber}/${act.lessonsId}/actividades/crear?lessonId=${act.lessonsId}&activityId=${act.id}`}
+                                          href={`/dashboard/super-admin/cursos/${courseIdNumber}/${act.lessonsId}/actividades?activityId=${act.id}`}
                                           className="
-                                            rounded-lg border border-cyan-600
-                                            px-3 py-1.5 text-sm font-semibold
-                                            text-cyan-400 transition
-                                            hover:bg-cyan-600 hover:text-white
-                                          "
+  rounded-lg border border-cyan-400
+  bg-cyan-500/10 px-3 py-1.5 text-sm font-semibold
+  text-cyan-300 transition
+  hover:bg-cyan-500 hover:text-white
+"
                                         >
                                           ✏️ Editar
                                         </a>

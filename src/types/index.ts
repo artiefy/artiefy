@@ -420,6 +420,7 @@ export interface Program {
   category?: Category;
   materias?: MateriaWithCourse[];
   enrollmentPrograms?: EnrollmentProgram[];
+  visibility?: boolean | null;
 }
 
 // New interface for Materia with optional course

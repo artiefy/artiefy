@@ -738,7 +738,6 @@ export const programas = pgTable('programas', {
   idTypesPrograms: integer('id_types_programs').references(
     () => typesPrograms.id
   ),
-  visibility: boolean('visibility').default(true), // 👈 nuevo
 });
 
 // Tabla de materias

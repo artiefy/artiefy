@@ -59,6 +59,7 @@ interface Program {
   rating: number;
   certificationTypeId?: number | null;
   idTypesPrograms?: number | null;
+  visibility?: boolean | null; // 👈 nuevo
 }
 
 export interface CourseModel {
@@ -132,6 +133,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
   const [educators, setEducators] = useState<{ id: string; name: string }[]>(
     []
   );
+  const [visibility, setVisibility] = useState<boolean>(true); // 👈 nuevo
   const [instructors, setInstructors] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -271,6 +273,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
         setProgram(data);
         setCertificationTypeId(data.certificationTypeId ?? null);
         setTypeId(data.idTypesPrograms ?? null);
+        setVisibility(data.visibility ?? true); // 👈 nuevo
         setLoading(false);
       } catch (error) {
         console.error('Error fetching program:', error);
@@ -574,17 +577,19 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
     }
   };
 
-  // Add this function to handle editing a program
   const handleEditProgram = async (
-    _id: string, // Add underscore to mark as intentionally unused
+    _id: string,
     title: string,
     description: string,
-    _file: File | null, // Add underscore
+    _file: File | null,
     categoryid: number,
     rating: number,
     coverImageKey: string,
-    _fileName: string, // Add underscore
-    subjectIds: number[]
+    _fileName: string,
+    subjectIds: number[],
+    certificationTypeId?: number | null, // 👈 nuevo (en la posición correcta)
+    idTypesPrograms?: number | null, // 👈 nuevo (en la posición correcta)
+    visibility?: boolean // 👈 ahora en la posición correcta
   ) => {
     try {
       const response = await fetch(`/api/super-admin/programs/${_id}`, {
@@ -597,6 +602,9 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
           rating,
           coverImageKey,
           subjectIds,
+          certificationTypeId, // 👈 ahora sí se envía
+          idTypesPrograms, // 👈 ahora sí se envía
+          visibility: visibility ?? true,
         }),
       });
 
@@ -606,7 +614,7 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
 
       toast.success('Programa actualizado exitosamente');
       setIsEditModalOpen(false);
-      void fetchProgram(); // Use void operator
+      void fetchProgram();
     } catch (error) {
       toast.error('Error al actualizar el programa');
       console.error(error);
@@ -1035,6 +1043,8 @@ const ProgramDetail: React.FC<ProgramDetailProps> = ({ programId }) => {
           idTypesPrograms={idTypesPrograms}
           setTypeId={(typeIdValue) => setTypeId(typeIdValue)}
           programTypes={programTypes}
+          visibility={visibility} // 👈 nuevo
+          setVisibility={setVisibility}
         />
       )}
     </div>
