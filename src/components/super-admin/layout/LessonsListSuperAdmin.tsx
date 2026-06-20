@@ -286,21 +286,21 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
       {/* Sección de reordenar - Nueva */}
       <div
-        className="
-          mb-8 flex flex-col gap-4 rounded-lg border border-gray-300 bg-gray-50
-          p-4
-        "
+        className="mb-8 flex flex-col gap-4 rounded-lg border border-gray-200 p-4"
+        style={{ backgroundColor: '#ffffff' }}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <SortAsc className="size-5 text-blue-600" />
-            <h3 className="text-lg font-semibold">Modo Reordenar Clases</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Modo Reordenar Clases
+            </h3>
           </div>
           <div className="flex items-center gap-2">
             <span
               className={`
-                text-sm
-                ${isReorderModeActive ? 'font-bold text-blue-600' : 'text-gray-600'}`}
+          text-sm
+          ${isReorderModeActive ? 'font-bold text-blue-600' : 'text-gray-500'}`}
             >
               {isReorderModeActive ? 'Activado' : 'Desactivado'}
             </span>
@@ -314,7 +314,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
         {isReorderModeActive ? (
           <>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-500">
               Arrastra y suelta las clases para cambiar su orden. Los cambios se
               guardarán automáticamente.
             </p>
@@ -341,10 +341,10 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                             ref={provided.innerRef}
                             {...provided.draggableProps}
                             className="
-                              flex items-center gap-2 rounded-md border bg-white
-                              p-3 shadow-sm
-                              hover:bg-gray-50
-                            "
+                        flex items-center gap-2 rounded-md border
+                        border-gray-200 bg-white p-3 shadow-sm
+                        hover:bg-white
+                      "
                             style={
                               provided.draggableProps
                                 .style as React.CSSProperties
@@ -353,23 +353,23 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
                             <div
                               {...provided.dragHandleProps}
                               className="
-                                cursor-grab p-1
-                                active:cursor-grabbing
-                              "
+                          cursor-grab p-1
+                          active:cursor-grabbing
+                        "
                             >
                               <GripVertical className="size-5 text-gray-400" />
                             </div>
 
                             <div
                               className="
-                                flex size-8 items-center justify-center
-                                rounded-full bg-blue-100 font-bold text-blue-800
-                              "
+                          flex size-8 items-center justify-center
+                          rounded-full bg-blue-100 font-bold text-blue-800
+                        "
                             >
                               {lesson.orderIndex || index + 1}
                             </div>
 
-                            <div className="flex-1 font-medium">
+                            <div className="flex-1 font-medium text-gray-900">
                               {lesson.title}
                             </div>
                           </div>
@@ -383,7 +383,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
             </DragDropContext>
           </>
         ) : (
-          <p className="text-sm text-gray-600 italic">
+          <p className="text-sm text-gray-500 italic">
             Activa el modo reordenar para cambiar el orden de las clases
             mediante drag & drop.
           </p>
