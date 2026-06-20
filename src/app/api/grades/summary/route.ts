@@ -70,9 +70,12 @@ export async function GET(request: NextRequest) {
           a.porcentaje as activity_weight,
           COALESCE(uap.final_grade, 0) as activity_grade
         FROM parametros p
-        LEFT JOIN activities a ON a.parametro_id = p.id
-        LEFT JOIN user_activities_progress uap 
-          ON uap.activity_id = a.id 
+        -- INNER JOIN: a parameter only enters the report and the final grade
+        -- once it has at least one activity assigned. Parameters without
+        -- activities are excluded entirely (hidden + not calculated).
+        INNER JOIN activities a ON a.parametro_id = p.id
+        LEFT JOIN user_activities_progress uap
+          ON uap.activity_id = a.id
           AND uap.user_id = ${userId}
         WHERE p.course_id = ${courseId}
       ),
@@ -104,9 +107,15 @@ export async function GET(request: NextRequest) {
         parameter_weight as weight,
         grade,
         activities::text,
+        -- Weighted average re-normalized over only the parameters that have
+        -- activities. When every parameter is assigned (weights sum to 100),
+        -- this equals the previous SUM(grade * weight / 100) behavior.
         CAST(
-          SUM(grade * parameter_weight / 100.0) OVER ()
-          AS DECIMAL(10,2)
+          COALESCE(
+            SUM(grade * parameter_weight) OVER ()
+              / NULLIF(SUM(parameter_weight) OVER (), 0),
+            0
+          ) AS DECIMAL(10,2)
         ) as final_grade
       FROM parameter_grades_calc
       ORDER BY parameter_id;
@@ -129,21 +138,37 @@ export async function GET(request: NextRequest) {
     );
 
     // Transform results with proper type safety
-    const parameters: GradeParameter[] = dbRows.map((row) => {
-      const activities = JSON.parse(row.activities ?? '[]') as ActivityResult[];
+    const parameters: GradeParameter[] = dbRows
+      .map((row) => {
+        const rawActivities = JSON.parse(row.activities ?? '[]') as {
+          id: number | null;
+          name: string | null;
+          grade: number | null;
+          weight: number | null;
+        }[];
 
-      return {
-        name: String(row.name),
-        grade: Number(row.grade ?? 0),
-        weight: Number(row.weight),
-        activities: activities.map((act) => ({
-          id: Number(act.id),
-          name: String(act.name),
-          grade: Number(act.grade),
-          weight: Number(act.weight),
-        })),
-      };
-    });
+        // The LEFT JOIN emits a placeholder row (id/name = null) for every
+        // parameter that has no linked activity. Drop those so the results
+        // view never renders phantom "null" grades.
+        const activities: ActivityResult[] = rawActivities
+          .filter((act) => act.id !== null && act.name !== null)
+          .map((act) => ({
+            id: Number(act.id),
+            name: String(act.name),
+            grade: Number(act.grade ?? 0),
+            weight: Number(act.weight ?? 0),
+          }));
+
+        return {
+          name: String(row.name),
+          grade: Number(row.grade ?? 0),
+          weight: Number(row.weight),
+          activities,
+        };
+      })
+      // Only surface parameters that actually have activities, keeping the
+      // results menu in sync with the educator's current activities.
+      .filter((param) => param.activities.length > 0);
 
     // Get final grade with proper type casting
     const finalGrade = Number(dbRows[0]?.final_grade ?? 0);

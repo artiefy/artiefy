@@ -105,11 +105,17 @@ export function MobileBottomNav({
           WebkitBackdropFilter: 'blur(16px)',
         }}
       >
-        <Link href="/estudiantes" aria-label="Cursos" className={buttonClass}>
+        <Link
+          href="/estudiantes/myaccount"
+          aria-label="Cursos"
+          className={buttonClass}
+        >
           <BookOpen
-            className={`size-[22px] ${itemClass(isActive('/estudiantes'))}`}
+            className={`size-[22px] ${itemClass(isActive('/estudiantes/myaccount'))}`}
           />
-          <span className={labelClass(isActive('/estudiantes'))}>Cursos</span>
+          <span className={labelClass(isActive('/estudiantes/myaccount'))}>
+            Cursos
+          </span>
         </Link>
 
         <Link href="/proyectos" aria-label="Proyectos" className={buttonClass}>
