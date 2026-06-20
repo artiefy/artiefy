@@ -332,7 +332,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           container mx-auto mt-2 h-auto w-full rounded-lg bg-background
         "
       >
-        <Breadcrumb>
+        <Breadcrumb className="mt-8">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink

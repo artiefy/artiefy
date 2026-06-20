@@ -214,7 +214,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
   // Render del componente
   return (
     <div className="h-auto w-full rounded-lg bg-background">
-      <Breadcrumb>
+      <Breadcrumb className="mt-8">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink

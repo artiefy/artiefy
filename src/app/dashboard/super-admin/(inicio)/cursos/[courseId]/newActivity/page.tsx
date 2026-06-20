@@ -720,7 +720,7 @@ const Page: React.FC = () => {
   // Renderizar el formulario
   return (
     <>
-      <Breadcrumb>
+      <Breadcrumb className="mt-8">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink

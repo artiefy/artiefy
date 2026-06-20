@@ -198,7 +198,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
   return (
     <>
       <div className="container">
-        <Breadcrumb>
+        <Breadcrumb className="mt-8">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink

@@ -13,12 +13,12 @@ export default function page() {
     <div className="min-h-screen bg-background">
       {/* Breadcrumb */}
       <div className="border-b border-gray-800 px-4 py-3">
-        <Breadcrumb>
+        <Breadcrumb className="mt-8">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
                 className="
-                  text-primary text-sm
+                  text-sm text-primary
                   hover:text-gray-300
                 "
                 href="/"

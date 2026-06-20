@@ -359,7 +359,7 @@ const Page: React.FC = () => {
 
   return (
     <>
-      <Breadcrumb>
+      <Breadcrumb className="mt-8">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink

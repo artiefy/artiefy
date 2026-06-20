@@ -357,7 +357,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
           container mx-auto mt-2 h-auto w-full rounded-lg bg-background
         "
       >
-        <Breadcrumb>
+        <Breadcrumb className="mt-12">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
@@ -391,7 +391,7 @@ const Page: React.FC<{ selectedColor: string }> = ({ selectedColor }) => {
                 "
                 href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
               >
-                Detalles curso
+                Detalles
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />

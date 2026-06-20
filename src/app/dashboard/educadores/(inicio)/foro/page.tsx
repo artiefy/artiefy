@@ -11,7 +11,7 @@ export default function page() {
   // Vista sencilla que muestra el componente and la lista de foros con detalles basicos y botones para ver el forto mas especifico
   return (
     <>
-      <Breadcrumb>
+      <Breadcrumb className="mt-8">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink

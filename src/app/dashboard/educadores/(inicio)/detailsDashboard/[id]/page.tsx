@@ -221,7 +221,7 @@ function App() {
   // Mostrar la vista principal
   return (
     <>
-      <Breadcrumb>
+      <Breadcrumb className="mt-8">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink

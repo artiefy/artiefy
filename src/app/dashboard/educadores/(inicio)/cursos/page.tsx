@@ -429,7 +429,7 @@ export default function Page() {
   return (
     <>
       <main className="h-auto">
-        <Breadcrumb>
+        <Breadcrumb className="mt-8">
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
