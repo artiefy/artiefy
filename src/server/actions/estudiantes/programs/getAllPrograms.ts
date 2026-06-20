@@ -12,6 +12,8 @@ export async function getAllPrograms(): Promise<Program[]> {
   try {
     const programs = await withRetry(() =>
       db.query.programas.findMany({
+        where: (programas, { or, isNull, eq }) =>
+          or(isNull(programas.visibility), eq(programas.visibility, true)),
         with: {
           category: true,
           certificationType: true,

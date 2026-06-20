@@ -734,6 +734,7 @@ export const programas = pgTable('programas', {
   certificationTypeId: integer('certification_type_id')
     .references(() => certificationTypes.id)
     .default(sql`NULL`),
+  visibility: boolean('visibility').default(true),
   idTypesPrograms: integer('id_types_programs').references(
     () => typesPrograms.id
   ),
