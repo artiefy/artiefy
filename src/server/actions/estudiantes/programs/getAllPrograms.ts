@@ -5,27 +5,30 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
+import { withRetry } from '~/server/db/withRetry';
 import { type BaseCourse, type MateriaWithCourse, type Program } from '~/types';
 
 export async function getAllPrograms(): Promise<Program[]> {
   try {
-    const programs = await db.query.programas.findMany({
-      with: {
-        category: true,
-        certificationType: true,
-        typeProgram: true,
-        creator: true,
-        materias: {
-          with: {
-            curso: {
-              with: {
-                category: true,
+    const programs = await withRetry(() =>
+      db.query.programas.findMany({
+        with: {
+          category: true,
+          certificationType: true,
+          typeProgram: true,
+          creator: true,
+          materias: {
+            with: {
+              curso: {
+                with: {
+                  category: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      })
+    );
 
     // Procesar cada programa y sus cursos para obtener instructorName
     const processedPrograms = await Promise.all(

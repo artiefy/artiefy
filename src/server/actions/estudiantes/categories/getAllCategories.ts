@@ -6,6 +6,7 @@ import { eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { categories, courses } from '~/server/db/schema';
+import { withRetry } from '~/server/db/withRetry';
 
 import type { Category } from '~/types';
 
@@ -13,17 +14,19 @@ import type { Category } from '~/types';
 export const getAllCategories = unstable_cache(
   async (): Promise<Category[]> => {
     try {
-      const allCategories = await db
-        .select({
-          id: categories.id,
-          name: categories.name,
-          description: categories.description,
-          is_featured: categories.is_featured,
-          courseCount: sql<number>`COUNT(${courses.id})`,
-        })
-        .from(categories)
-        .leftJoin(courses, eq(categories.id, courses.categoryid))
-        .groupBy(categories.id);
+      const allCategories = await withRetry(() =>
+        db
+          .select({
+            id: categories.id,
+            name: categories.name,
+            description: categories.description,
+            is_featured: categories.is_featured,
+            courseCount: sql<number>`COUNT(${courses.id})`,
+          })
+          .from(categories)
+          .leftJoin(courses, eq(categories.id, courses.categoryid))
+          .groupBy(categories.id)
+      );
 
       return allCategories.map((category) => ({
         ...category,
