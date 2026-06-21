@@ -26,13 +26,43 @@ export function MobileBottomNav({
 }: MobileBottomNavProps) {
   const pathname = usePathname();
   const [compact, setCompact] = useState(false);
+  // Hide the bar while the enroll/subscribe CTA bar owns the bottom of the
+  // screen (non-enrolled course/program pages). ProgramHeader/CourseDetails
+  // toggle `html.mobile-bottom-cta-visible` and emit this event.
+  const [ctaVisible, setCtaVisible] = useState(false);
+
+  useEffect(() => {
+    const readState = () =>
+      setCtaVisible(
+        document.documentElement.classList.contains('mobile-bottom-cta-visible')
+      );
+
+    readState();
+
+    const onCtaChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ visible?: boolean }>).detail;
+      setCtaVisible(Boolean(detail?.visible));
+    };
+
+    window.addEventListener('mobile-bottom-cta-visibility-change', onCtaChange);
+    return () =>
+      window.removeEventListener(
+        'mobile-bottom-cta-visibility-change',
+        onCtaChange
+      );
+  }, []);
 
   // Reserve space at the bottom of the page so the fixed bar never covers
   // content. Scoped to mobile via the CSS media query in globals.css.
+  // Skip it while the CTA bar is shown so it can sit flush at the bottom.
   useEffect(() => {
+    if (ctaVisible) {
+      document.body.classList.remove('has-bottom-nav');
+      return;
+    }
     document.body.classList.add('has-bottom-nav');
     return () => document.body.classList.remove('has-bottom-nav');
-  }, []);
+  }, [ctaVisible]);
 
   // Shrink the bar while scrolling down, expand while scrolling up / at top.
   useEffect(() => {
@@ -61,8 +91,10 @@ export function MobileBottomNav({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string, exact = false) =>
+    exact
+      ? pathname === href
+      : pathname === href || pathname.startsWith(`${href}/`);
 
   const itemClass = (active: boolean) => `
     relative z-10 transition-colors
@@ -82,6 +114,9 @@ export function MobileBottomNav({
     active:scale-95
     ${compact ? 'py-1' : 'py-2'}
   `;
+
+  // The enroll/subscribe CTA bar owns the bottom of the screen; step aside.
+  if (ctaVisible) return null;
 
   return (
     <div
@@ -105,15 +140,11 @@ export function MobileBottomNav({
           WebkitBackdropFilter: 'blur(16px)',
         }}
       >
-        <Link
-          href="/estudiantes/myaccount"
-          aria-label="Cursos"
-          className={buttonClass}
-        >
+        <Link href="/estudiantes" aria-label="Cursos" className={buttonClass}>
           <BookOpen
-            className={`size-[22px] ${itemClass(isActive('/estudiantes/myaccount'))}`}
+            className={`size-[22px] ${itemClass(isActive('/estudiantes', true))}`}
           />
-          <span className={labelClass(isActive('/estudiantes/myaccount'))}>
+          <span className={labelClass(isActive('/estudiantes', true))}>
             Cursos
           </span>
         </Link>

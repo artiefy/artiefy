@@ -16,14 +16,19 @@ import {
   MapPin,
 } from 'lucide-react';
 
+import MyCoursesContent, {
+  type Course,
+  type Program,
+} from '~/components/estudiantes/layout/MyCoursesContent';
+
 import { EditProfileModal } from './EditProfileModal';
 
 import type { MyProfile } from '~/server/actions/estudiantes/profile/profileActions';
 
 const TABS = [
+  { key: 'cursos', label: 'Cursos', icon: GraduationCap },
   { key: 'proyectos', label: 'Proyectos', icon: FolderKanban },
   { key: 'posts', label: 'Posts', icon: FileText },
-  { key: 'cursos', label: 'Cursos', icon: GraduationCap },
   { key: 'guardados', label: 'Guardados', icon: Bookmark },
 ] as const;
 
@@ -49,9 +54,17 @@ function normalizeUrl(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
 
-export function ProfileView({ profile }: { profile: MyProfile }) {
+export function ProfileView({
+  profile,
+  courses,
+  programs,
+}: {
+  profile: MyProfile;
+  courses: Course[];
+  programs: Program[];
+}) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabKey>('proyectos');
+  const [activeTab, setActiveTab] = useState<TabKey>('cursos');
   const [isEditing, setIsEditing] = useState(false);
 
   const joinDate = formatJoinDate(profile.createdAt);
@@ -130,7 +143,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
                 onClick={() => setIsEditing(true)}
                 className="
                   rounded-xl bg-gradient-to-r from-primary to-cyan-500 px-6 py-2
-                  text-sm font-semibold text-primary-foreground transition-all
+                  text-sm font-semibold text-[#01142B] transition-all
                   duration-300
                   hover:shadow-[0_0_25px_rgba(34,196,211,0.4)]
                 "
@@ -232,16 +245,20 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
           </div>
 
           <div className="mt-6">
-            <div
-              className="
-                rounded-2xl border border-dashed border-border/50 bg-card/30
-                px-6 py-16 text-center
-              "
-            >
-              <p className="text-sm text-muted-foreground">
-                {EMPTY_MESSAGES[activeTab]}
-              </p>
-            </div>
+            {activeTab === 'cursos' ? (
+              <MyCoursesContent courses={courses} programs={programs} />
+            ) : (
+              <div
+                className="
+                  rounded-2xl border border-dashed border-border/50 bg-card/30
+                  px-6 py-16 text-center
+                "
+              >
+                <p className="text-sm text-muted-foreground">
+                  {EMPTY_MESSAGES[activeTab]}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

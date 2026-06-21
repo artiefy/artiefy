@@ -970,8 +970,9 @@ export function Header({
             <div
               className="
               pointer-events-none fixed inset-x-0
-              top-[var(--subscription-banner-height,0px)] z-[100000] flex h-16 items-center
-              justify-between gap-2 bg-transparent px-4
+              top-[calc(var(--subscription-banner-height,0px)+env(safe-area-inset-top,0px)+0.75rem)]
+              z-[100000] flex h-16 items-center justify-between gap-2
+              bg-transparent px-4
               md:hidden
             "
             >
@@ -1417,6 +1418,14 @@ export function Header({
           onSwitchToLogin={handleSwitchToLogin}
         />
       </nav>
+      {/* Global mobile spacer: tops up the clearance every route needs for the
+          floating header's safe-area + offset, so content is never covered on
+          initial load. Pure CSS (md:hidden) so it's SSR-stable; the header
+          itself stays fixed and scrolls normally. */}
+      <div
+        aria-hidden
+        className="h-[calc(env(safe-area-inset-top,0px)+2.5rem)] md:hidden"
+      />
       {isMobileViewport ? (
         <MobileBottomNav
           isSignedIn={isSignedIn}
