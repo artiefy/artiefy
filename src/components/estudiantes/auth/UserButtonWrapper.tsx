@@ -7,6 +7,7 @@ import {
   AcademicCapIcon,
   FolderIcon,
   UserCircleIcon,
+  UserIcon,
 } from '@heroicons/react/24/solid';
 import { FaCrown, FaRegCalendarAlt, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
@@ -204,6 +205,11 @@ export function UserButtonWrapper({
             />
           ) : null}
           <UserButton.Action label="manageAccount" />
+          <UserButton.Link
+            label="Mi Perfil"
+            labelIcon={<UserIcon className="size-4" />}
+            href="/estudiantes/perfil"
+          />
           <UserButton.Link
             label="Mis Cursos"
             labelIcon={<UserCircleIcon className="size-4" />}

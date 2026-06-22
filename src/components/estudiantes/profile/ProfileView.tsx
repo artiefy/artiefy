@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { type ChangeEvent, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -13,17 +13,30 @@ import {
   FolderKanban,
   GraduationCap,
   Link as LinkIcon,
+  Loader2,
   MapPin,
+  Pencil,
 } from 'lucide-react';
+
+import MyCoursesContent, {
+  type Course,
+  type Program,
+} from '~/components/estudiantes/layout/MyCoursesContent';
+import {
+  coverKeyToUrl,
+  MAX_COVER_SIZE,
+  uploadCoverToS3,
+} from '~/lib/profileCover';
+import { updateMyCover } from '~/server/actions/estudiantes/profile/profileActions';
 
 import { EditProfileModal } from './EditProfileModal';
 
 import type { MyProfile } from '~/server/actions/estudiantes/profile/profileActions';
 
 const TABS = [
+  { key: 'cursos', label: 'Cursos', icon: GraduationCap },
   { key: 'proyectos', label: 'Proyectos', icon: FolderKanban },
   { key: 'posts', label: 'Posts', icon: FileText },
-  { key: 'cursos', label: 'Cursos', icon: GraduationCap },
   { key: 'guardados', label: 'Guardados', icon: Bookmark },
 ] as const;
 
@@ -49,12 +62,58 @@ function normalizeUrl(url: string) {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
 
-export function ProfileView({ profile }: { profile: MyProfile }) {
+export function ProfileView({
+  profile,
+  courses,
+  programs,
+}: {
+  profile: MyProfile;
+  courses: Course[];
+  programs: Program[];
+}) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabKey>('proyectos');
+  const [activeTab, setActiveTab] = useState<TabKey>('cursos');
   const [isEditing, setIsEditing] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const joinDate = formatJoinDate(profile.createdAt);
+  const coverUrl = coverKeyToUrl(profile.coverImageKey);
+
+  const handleCoverPick = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    // Allow re-picking the same file later.
+    event.target.value = '';
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setCoverError('La portada debe ser una imagen.');
+      return;
+    }
+    if (file.size > MAX_COVER_SIZE) {
+      setCoverError('La portada no puede superar los 5 MB.');
+      return;
+    }
+
+    setCoverError(null);
+    setUploadingCover(true);
+    try {
+      const key = await uploadCoverToS3(file);
+      const result = await updateMyCover(key);
+      if (!result.success) {
+        setCoverError(result.error ?? 'No se pudo guardar la portada.');
+        return;
+      }
+      router.refresh();
+    } catch (error) {
+      setCoverError(
+        error instanceof Error ? error.message : 'No se pudo subir la portada.'
+      );
+    } finally {
+      setUploadingCover(false);
+    }
+  };
   const stats = [
     { label: 'Proyectos', value: 0 },
     { label: 'Posts', value: 0 },
@@ -63,30 +122,82 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
   ];
 
   return (
-    <main className="relative pt-20 pb-12">
+    <main className="relative pt-14 pb-12">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <button
           type="button"
           onClick={() => router.back()}
           className="
-            mb-4 flex items-center gap-2 text-muted-foreground
-            transition-colors
-            hover:text-foreground
+            mb-4 inline-flex items-center gap-2 rounded-xl border
+            border-border/60 bg-card/40 px-4 py-2 text-sm font-medium
+            text-muted-foreground backdrop-blur-sm transition-all duration-200
+            hover:border-primary/40 hover:bg-card/60 hover:text-foreground
+            hover:shadow-[0_0_18px_rgba(34,196,211,0.18)]
           "
         >
-          <ArrowLeft className="size-5" />
-          <span className="text-sm font-medium">Volver</span>
+          <ArrowLeft className="size-4" />
+          <span>Volver</span>
         </button>
 
         <div className="relative mb-8">
-          {/* Banner (gradiente estático) */}
+          {/* Banner: portada subida (responsive) o gradiente por defecto */}
           <div
             className="
-              h-32 rounded-2xl border border-border/30 bg-gradient-to-r
-              from-primary/30 via-cyan-500/20 to-primary/10
+              relative h-32 w-full overflow-hidden rounded-2xl border
+              border-border/30
               sm:h-40
             "
-          />
+          >
+            {coverUrl ? (
+              <Image
+                src={coverUrl}
+                alt="Portada del perfil"
+                fill
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="object-cover"
+                priority
+              />
+            ) : (
+              <div
+                className="
+                  size-full bg-gradient-to-r from-primary/30 via-cyan-500/20
+                  to-primary/10
+                "
+              />
+            )}
+
+            <input
+              ref={coverInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleCoverPick}
+            />
+            <button
+              type="button"
+              onClick={() => coverInputRef.current?.click()}
+              disabled={uploadingCover}
+              aria-label="Editar portada"
+              title="Editar portada"
+              className="
+                absolute top-3 right-3 z-10 flex size-9 items-center
+                justify-center rounded-full border border-white/20 bg-black/40
+                text-white backdrop-blur-sm transition-all
+                hover:bg-black/60
+                disabled:opacity-70
+              "
+            >
+              {uploadingCover ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Pencil className="size-4" />
+              )}
+            </button>
+          </div>
+
+          {coverError ? (
+            <p className="mt-2 text-xs text-destructive">{coverError}</p>
+          ) : null}
 
           <div className="-mt-12 px-4 sm:px-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
@@ -130,7 +241,7 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
                 onClick={() => setIsEditing(true)}
                 className="
                   rounded-xl bg-gradient-to-r from-primary to-cyan-500 px-6 py-2
-                  text-sm font-semibold text-primary-foreground transition-all
+                  text-sm font-semibold text-[#01142B] transition-all
                   duration-300
                   hover:shadow-[0_0_25px_rgba(34,196,211,0.4)]
                 "
@@ -232,16 +343,20 @@ export function ProfileView({ profile }: { profile: MyProfile }) {
           </div>
 
           <div className="mt-6">
-            <div
-              className="
-                rounded-2xl border border-dashed border-border/50 bg-card/30
-                px-6 py-16 text-center
-              "
-            >
-              <p className="text-sm text-muted-foreground">
-                {EMPTY_MESSAGES[activeTab]}
-              </p>
-            </div>
+            {activeTab === 'cursos' ? (
+              <MyCoursesContent courses={courses} programs={programs} />
+            ) : (
+              <div
+                className="
+                  rounded-2xl border border-dashed border-border/50 bg-card/30
+                  px-6 py-16 text-center
+                "
+              >
+                <p className="text-sm text-muted-foreground">
+                  {EMPTY_MESSAGES[activeTab]}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>

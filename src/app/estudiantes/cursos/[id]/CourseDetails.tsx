@@ -742,6 +742,35 @@ export default function CourseDetails({
     };
   }, [isEnrolled]);
 
+  // Signal the global mobile bottom CTA so the floating bottom nav steps aside
+  // and the "Empezar ahora" bar can own the bottom of the screen.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const isVisible = !isEnrolled && showMobileStartBar;
+    document.documentElement.classList.toggle(
+      'mobile-bottom-cta-visible',
+      isVisible
+    );
+    document.documentElement.dataset.mobileBottomCtaVisible = String(isVisible);
+    window.dispatchEvent(
+      new CustomEvent('mobile-bottom-cta-visibility-change', {
+        detail: { visible: isVisible },
+      })
+    );
+
+    return () => {
+      if (!isVisible) return;
+      document.documentElement.classList.remove('mobile-bottom-cta-visible');
+      document.documentElement.dataset.mobileBottomCtaVisible = 'false';
+      window.dispatchEvent(
+        new CustomEvent('mobile-bottom-cta-visibility-change', {
+          detail: { visible: false },
+        })
+      );
+    };
+  }, [isEnrolled, showMobileStartBar]);
+
   const handleCertificateClick = () => {
     if (!isCertificateUnlocked) {
       const description =
@@ -1452,9 +1481,8 @@ export default function CourseDetails({
       <div className="min-h-screen bg-background">
         <main
           className={`
-            mx-auto -mt-6 max-w-7xl px-4 py-2
-            sm:-mt-0
-            md:px-6 md:py-8
+            mx-auto max-w-7xl px-4 pt-16 pb-2
+            md:px-6 md:pt-8 md:pb-8
             lg:px-8
           `}
         >
@@ -3214,9 +3242,9 @@ export default function CourseDetails({
       {!isEnrolled && showMobileStartBar && (
         <div
           className="
-            fixed inset-x-0 top-[calc(var(--subscription-banner-height,0px)+4rem)]
-            z-[90] border-y border-[#1d283a] bg-[#061c37f2] px-4 py-2
-            backdrop-blur-md
+            fixed inset-x-0 bottom-0 z-[900] border-t border-[#1d283a]
+            bg-[#061c37f2] px-4 pt-2
+            pb-[calc(env(safe-area-inset-bottom,0px)+0.65rem)] backdrop-blur-md
             lg:hidden
           "
         >

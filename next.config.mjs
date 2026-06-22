@@ -1,6 +1,5 @@
 import { withNextVideo } from 'next-video/process';
 
-import withPlaiceholder from '@plaiceholder/next';
 import { createJiti } from 'jiti';
 import { fileURLToPath } from 'node:url';
 
@@ -50,4 +49,4 @@ const nextConfig = {
   },
 };
 
-export default withNextVideo(withPlaiceholder(nextConfig));
+export default withNextVideo(nextConfig);
