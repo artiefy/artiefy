@@ -1,6 +1,6 @@
 'use server';
 
-import { eq, or, sql } from 'drizzle-orm';
+import { and, eq, isNull, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { categories, programas, typesPrograms } from '~/server/db/schema';
@@ -40,11 +40,15 @@ export async function searchProgramsPreview(query: string): Promise<Program[]> {
     .leftJoin(categories, eq(programas.categoryid, categories.id))
     .leftJoin(typesPrograms, eq(programas.idTypesPrograms, typesPrograms.id))
     .where(
-      or(
-        sql`${normalizeColumn(programas.title)} ilike ${searchPattern}`,
-        sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
-        sql`${normalizeColumn(typesPrograms.type)} ilike ${searchPattern}`,
-        sql`${normalizeColumn(programas.description)} ilike ${searchPattern}`
+      // Los programas con visibility desactivada nunca aparecen en el buscador.
+      and(
+        or(isNull(programas.visibility), eq(programas.visibility, true)),
+        or(
+          sql`${normalizeColumn(programas.title)} ilike ${searchPattern}`,
+          sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
+          sql`${normalizeColumn(typesPrograms.type)} ilike ${searchPattern}`,
+          sql`${normalizeColumn(programas.description)} ilike ${searchPattern}`
+        )
       )
     )
     .limit(8);

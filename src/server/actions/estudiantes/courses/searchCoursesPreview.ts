@@ -1,6 +1,5 @@
 'use server';
 
-import { auth } from '@clerk/nextjs/server';
 import { and, eq, isNull, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -35,15 +34,12 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
     sql`${normalizeColumn(typesCourses.type)} ilike ${searchPattern}`
   );
 
-  // Sin login: solo cursos visibles. Con login (matriculado o no): también los
-  // cursos con visibility desactivada, para que sean descubribles por búsqueda.
-  const { userId } = await auth();
-  const whereCondition = userId
-    ? textCondition
-    : and(
-        or(isNull(courses.visibility), eq(courses.visibility, true)),
-        textCondition
-      );
+  // Los cursos con visibility desactivada nunca aparecen en el buscador,
+  // sin importar si el usuario está logueado o no.
+  const whereCondition = and(
+    or(isNull(courses.visibility), eq(courses.visibility, true)),
+    textCondition
+  );
 
   const results = await db
     .select({
