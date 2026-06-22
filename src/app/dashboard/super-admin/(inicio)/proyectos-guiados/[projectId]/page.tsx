@@ -12,6 +12,7 @@ import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
 import { ActivitiesList } from '~/components/super-admin/layout/ActivitiesListAdmin';
 import { ObjectivesList } from '~/components/super-admin/layout/ObjectivesListAdmin';
+import { ModalGuidedProjectForm } from '~/components/super-admin/modals/ModalGuidedProjectForm';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,7 +25,7 @@ interface GuidedProject {
   id: number;
   title: string;
   description: string | null;
-  instructor: string;
+  instructorName: string; // 👈 antes: instructor
   categoryName: string;
   modalidadName?: string;
   coverImageKey?: string | null;
@@ -68,6 +69,7 @@ export default function GuidedProjectDetailPage({
   const [editingObjective, setEditingObjective] = useState<Objective | null>(
     null
   );
+  const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [objectiveFormData, setObjectiveFormData] = useState({
     title: '',
@@ -405,7 +407,7 @@ export default function GuidedProjectDetailPage({
                 <div className="flex flex-wrap gap-2">
                   <div className="flex items-center gap-2 rounded-full border border-primary bg-primary/20 px-4 py-2 text-sm text-white">
                     <span className="font-semibold text-white">
-                      {project.instructor}
+                      {project.instructorName ?? 'Sin asignar'}
                     </span>
                   </div>
                 </div>
@@ -437,11 +439,7 @@ export default function GuidedProjectDetailPage({
               <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3 md:gap-3 lg:gap-4">
                 <Button className="btn-primary w-full">Ver</Button>
                 <Button
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/super-admin/proyectos-guiados/${project.id}/editar`
-                    )
-                  }
+                  onClick={() => setEditModalOpen(true)}
                   className="
                     w-full bg-yellow-500 px-3 py-2 text-xs font-semibold
                     text-white transition-all duration-300
@@ -829,6 +827,12 @@ export default function GuidedProjectDetailPage({
           )}
         </div>
       </div>
+      <ModalGuidedProjectForm
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        projectId={project.id}
+        onSuccess={fetchProject}
+      />
     </div>
   );
 }

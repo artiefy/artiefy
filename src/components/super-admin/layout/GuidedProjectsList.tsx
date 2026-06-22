@@ -30,6 +30,7 @@ interface GuidedProject {
   categoryName: string;
   modalidadName: string;
   instructor: string;
+  instructorName: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -296,7 +297,9 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
                   <div className="flex w-full items-center justify-between text-xs">
                     <p className="font-bold text-gray-300">
                       Instructor:{' '}
-                      <span className="text-primary">{project.instructor}</span>
+                      <span className="text-primary">
+                        {project.instructorName ?? 'Sin asignar'}
+                      </span>
                     </p>
                     {project.isActive ? (
                       <Badge className="border-green-500/50 bg-green-500/20 text-green-400">

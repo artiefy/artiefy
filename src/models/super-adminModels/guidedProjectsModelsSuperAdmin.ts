@@ -10,6 +10,7 @@ import {
   nivel,
   parametros,
   typeActi,
+  users,
 } from '~/server/db/schema';
 
 export interface GuidedProject {
@@ -110,6 +111,7 @@ export const getAllGuidedProjects = async () => {
       categoryId: guidedProjects.categoryId,
       categoryName: categories.name,
       instructor: guidedProjects.instructor,
+      instructorName: users.name,
       creatorId: guidedProjects.creatorId,
       rating: guidedProjects.rating,
       modalidadId: guidedProjects.modalidadId,
@@ -128,13 +130,45 @@ export const getAllGuidedProjects = async () => {
     .from(guidedProjects)
     .leftJoin(categories, eq(guidedProjects.categoryId, categories.id))
     .leftJoin(modalidades, eq(guidedProjects.modalidadId, modalidades.id))
-    .leftJoin(nivel, eq(guidedProjects.nivelId, nivel.id));
+    .leftJoin(nivel, eq(guidedProjects.nivelId, nivel.id))
+    .leftJoin(users, eq(guidedProjects.instructor, users.id));
 };
 
 export const getGuidedProjectById = async (id: number) => {
   const [project] = await db
-    .select()
+    .select({
+      id: guidedProjects.id,
+      title: guidedProjects.title,
+      description: guidedProjects.description,
+      coverImageKey: guidedProjects.coverImageKey,
+      coverVideoKey: guidedProjects.coverVideoKey,
+      categoryId: guidedProjects.categoryId,
+      categoryName: categories.name,
+      instructor: guidedProjects.instructor,
+      instructorName: users.name, // 👈 nombre real
+      creatorId: guidedProjects.creatorId,
+      rating: guidedProjects.rating,
+      modalidadId: guidedProjects.modalidadId,
+      modalidadName: modalidades.name,
+      nivelId: guidedProjects.nivelId,
+      nivelName: nivel.name,
+      courseTypeId: guidedProjects.courseTypeId,
+      certificationTypeId: guidedProjects.certificationTypeId,
+      individualPrice: guidedProjects.individualPrice,
+      requiresProgram: guidedProjects.requiresProgram,
+      isActive: guidedProjects.isActive,
+      isTop: guidedProjects.isTop,
+      isFeatured: guidedProjects.isFeatured,
+      visibility: guidedProjects.visibility,
+      metaPixelId: guidedProjects.metaPixelId,
+      createdAt: guidedProjects.createdAt,
+      updatedAt: guidedProjects.updatedAt,
+    })
     .from(guidedProjects)
+    .leftJoin(categories, eq(guidedProjects.categoryId, categories.id))
+    .leftJoin(modalidades, eq(guidedProjects.modalidadId, modalidades.id))
+    .leftJoin(nivel, eq(guidedProjects.nivelId, nivel.id))
+    .leftJoin(users, eq(guidedProjects.instructor, users.id))
     .where(eq(guidedProjects.id, id));
 
   return project;

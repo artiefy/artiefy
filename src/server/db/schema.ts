@@ -2235,6 +2235,7 @@ export const typesPrograms = pgTable('types_programs', {
 export const guidedProjects = pgTable('guided_projects', {
   id: serial('id').primaryKey(),
   title: varchar('title', { length: 255 }).notNull(),
+  subtitle: varchar('subtitle', { length: 255 }), // 👈 nuevo campo - segundo título
   description: text('description'),
   coverImageKey: text('cover_image_key'),
   coverVideoKey: text('cover_video_key'),
@@ -2270,6 +2271,15 @@ export const guidedProjects = pgTable('guided_projects', {
   isFeatured: boolean('is_featured').default(false),
   visibility: boolean('visibility').default(true),
   metaPixelId: text('meta_pixel_id'),
+  problemStatement: text('problem_statement'),
+  howItWorks: text('how_it_works'),
+  whatYouWillBuild: text('what_you_will_build'),
+  prerequisites: text('prerequisites'),
+  techStack: text('tech_stack'),
+  deliverablesDescription: text('deliverables_description'),
+  studentsCount: integer('students_count').default(0),
+  contentHours: integer('content_hours').default(0),
+  slug: varchar('slug', { length: 255 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
