@@ -97,6 +97,7 @@ export const users = pgTable(
     bio: text('bio'),
     website: text('website'),
     location: text('location'),
+    coverImageKey: text('cover_image_key'),
   },
   (table) => [
     unique('users_email_role_unique').on(table.email, table.role),

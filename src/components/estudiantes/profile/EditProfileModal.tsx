@@ -1,9 +1,21 @@
 'use client';
 
-import { type FormEvent, type ReactNode, useState } from 'react';
+import {
+  type ChangeEvent,
+  type FormEvent,
+  type ReactNode,
+  useState,
+} from 'react';
 
-import { X } from 'lucide-react';
+import Image from 'next/image';
 
+import { ImagePlus, X } from 'lucide-react';
+
+import {
+  coverKeyToUrl,
+  MAX_COVER_SIZE,
+  uploadCoverToS3,
+} from '~/lib/profileCover';
 import {
   type MyProfile,
   updateMyProfile,
@@ -24,14 +36,70 @@ export function EditProfileModal({
   const [bio, setBio] = useState(profile.bio ?? '');
   const [website, setWebsite] = useState(profile.website ?? '');
   const [location, setLocation] = useState(profile.location ?? '');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(
+    coverKeyToUrl(profile.coverImageKey)
+  );
+  const [coverRemoved, setCoverRemoved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleCoverChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('La portada debe ser una imagen.');
+      return;
+    }
+    if (file.size > MAX_COVER_SIZE) {
+      setError('La portada no puede superar los 5 MB.');
+      return;
+    }
+    setError(null);
+    setCoverFile(file);
+    setCoverRemoved(false);
+    setCoverPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveCover = () => {
+    setCoverFile(null);
+    setCoverRemoved(true);
+    setCoverPreview(null);
+  };
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     setSaving(true);
     setError(null);
-    const result = await updateMyProfile({ username, bio, website, location });
+
+    // Resolve the cover: a new upload wins, an explicit removal clears it,
+    // otherwise leave whatever was stored untouched (undefined).
+    let coverImageKey: string | null | undefined;
+    try {
+      if (coverFile) {
+        coverImageKey = await uploadCoverToS3(coverFile);
+      } else if (coverRemoved) {
+        coverImageKey = null;
+      } else {
+        coverImageKey = undefined;
+      }
+    } catch (uploadError) {
+      setSaving(false);
+      setError(
+        uploadError instanceof Error
+          ? uploadError.message
+          : 'No se pudo subir la portada.'
+      );
+      return;
+    }
+
+    const result = await updateMyProfile({
+      username,
+      bio,
+      website,
+      location,
+      coverImageKey,
+    });
     setSaving(false);
     if (result.success) {
       onSaved();
@@ -70,6 +138,65 @@ export function EditProfileModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <Field label="Portada">
+            <div
+              className="
+                relative h-28 w-full overflow-hidden rounded-xl border
+                border-border bg-background
+                sm:h-32
+              "
+            >
+              {coverPreview ? (
+                <Image
+                  src={coverPreview}
+                  alt="Portada"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 28rem"
+                  className="object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div
+                  className="
+                    size-full bg-gradient-to-r from-primary/30 via-cyan-500/20
+                    to-primary/10
+                  "
+                />
+              )}
+
+              <label
+                className="
+                  absolute inset-0 flex cursor-pointer flex-col items-center
+                  justify-center gap-1 bg-black/30 text-xs font-medium
+                  text-white opacity-0 transition-opacity
+                  hover:opacity-100
+                "
+              >
+                <ImagePlus className="size-5" />
+                Cambiar portada
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleCoverChange}
+                />
+              </label>
+            </div>
+            {coverPreview ? (
+              <button
+                type="button"
+                onClick={handleRemoveCover}
+                className="
+                  mt-1.5 text-xs font-medium text-muted-foreground
+                  transition-colors
+                  hover:text-destructive
+                "
+              >
+                Quitar portada
+              </button>
+            ) : null}
+          </Field>
+
           <Field label="Nombre de usuario">
             <div className="flex items-center rounded-xl border border-border bg-background px-3">
               <span className="text-sm text-muted-foreground">@</span>

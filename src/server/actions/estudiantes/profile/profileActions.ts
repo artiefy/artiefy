@@ -18,6 +18,7 @@ export interface MyProfile {
   bio: string | null;
   website: string | null;
   location: string | null;
+  coverImageKey: string | null;
   createdAt: Date | null;
 }
 
@@ -35,6 +36,7 @@ export async function getMyProfile(): Promise<MyProfile | null> {
       bio: users.bio,
       website: users.website,
       location: users.location,
+      coverImageKey: users.coverImageKey,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -52,6 +54,7 @@ export async function getMyProfile(): Promise<MyProfile | null> {
     bio: row?.bio ?? null,
     website: row?.website ?? null,
     location: row?.location ?? null,
+    coverImageKey: row?.coverImageKey ?? null,
     createdAt: row?.createdAt ?? null,
   };
 }
@@ -82,6 +85,11 @@ const profileSchema = z.object({
     emptyToUndefined,
     z.string().trim().max(80, 'Máximo 80 caracteres').optional()
   ),
+  // S3 object key for the responsive cover image. `null` clears it; `undefined` leaves it untouched.
+  coverImageKey: z.preprocess(
+    (value) => (value === '' ? null : value),
+    z.string().trim().max(512).nullable().optional()
+  ),
 });
 
 export type UpdateProfileInput = z.infer<typeof profileSchema>;
@@ -104,7 +112,7 @@ export async function updateMyProfile(
     return { success: false, error: first };
   }
 
-  const { username, bio, website, location } = parsed.data;
+  const { username, bio, website, location, coverImageKey } = parsed.data;
   const toNull = (value?: string) => value ?? null;
 
   try {
@@ -115,6 +123,8 @@ export async function updateMyProfile(
         bio: toNull(bio),
         website: toNull(website),
         location: toNull(location),
+        // Only touch the cover when a value is sent: `null` clears, a key sets it.
+        ...(coverImageKey !== undefined ? { coverImageKey } : {}),
         updatedAt: new Date(),
       })
       .where(eq(users.id, userId));
@@ -128,6 +138,37 @@ export async function updateMyProfile(
     }
     console.error('Error actualizando perfil:', error);
     return { success: false, error: 'No se pudo guardar el perfil.' };
+  }
+
+  revalidatePath('/estudiantes/perfil');
+  return { success: true };
+}
+
+const coverKeySchema = z.string().trim().max(512).nullable();
+
+/**
+ * Updates only the cover image, leaving every other profile field intact.
+ * Used by the inline pencil button on the profile banner.
+ */
+export async function updateMyCover(
+  coverImageKey: string | null
+): Promise<UpdateProfileResult> {
+  const { userId } = await auth();
+  if (!userId) return { success: false, error: 'No autenticado' };
+
+  const parsed = coverKeySchema.safeParse(coverImageKey);
+  if (!parsed.success) {
+    return { success: false, error: 'Portada inválida.' };
+  }
+
+  try {
+    await db
+      .update(users)
+      .set({ coverImageKey: parsed.data, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  } catch (error) {
+    console.error('Error actualizando portada:', error);
+    return { success: false, error: 'No se pudo guardar la portada.' };
   }
 
   revalidatePath('/estudiantes/perfil');

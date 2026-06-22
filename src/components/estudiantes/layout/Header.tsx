@@ -1430,7 +1430,8 @@ export function Header({
         <MobileBottomNav
           isSignedIn={isSignedIn}
           onSearchClick={() => {
-            setShowMobileSearch(true);
+            // Toggle: the same magnifier opens and closes the mobile search.
+            setShowMobileSearch((prev) => !prev);
             setMobileMenuOpen(false);
           }}
           onLoginClick={handleOpenLoginModal}
