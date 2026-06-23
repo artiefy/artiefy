@@ -43,8 +43,8 @@
     "@hello-pangea/dnd": "^18.0.1",
     "@heroicons/react": "^2.2.0",
     "@ianvs/prettier-plugin-sort-imports": "^4.7.1",
-    "@mantine/core": "^9.3.2",
-    "@mantine/dropzone": "^9.3.2",
+    "@mantine/core": "^9.4.0",
+    "@mantine/dropzone": "^9.4.0",
     "@mux/mux-player-react": "^3.13.0",
     "@n8n/chat": "^1.25.0",
     "@neondatabase/serverless": "^1.1.0",
@@ -185,7 +185,7 @@
     "eslint-plugin-simple-import-sort": "^13.0.0",
     "eslint-plugin-svelte": "^3.19.0",
     "eslint-plugin-unicorn": "^68.0.0",
-    "globals": "^17.6.0",
+    "globals": "^17.7.0",
     "husky": "^9.1.7",
     "jiti": "^2.7.0",
     "lint-staged": "^17.0.8",
@@ -208,5 +208,13 @@
     "node": "24.x",
     "npm": "11.x"
   },
-  "packageManager": "npm@11.17.0"
+  "packageManager": "npm@11.17.0",
+  "allowScripts": {
+    "sharp@0.34.5": true,
+    "aws-crt@1.32.2": true,
+    "core-js@3.47.0": true,
+    "esbuild@0.28.1": true,
+    "unrs-resolver@1.11.1": true,
+    "vue-demi@0.14.10": true
+  }
 }
