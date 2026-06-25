@@ -3,16 +3,21 @@ import { type Category, type Modalidad, type Nivel, type User } from './index';
 export interface GuidedProject {
   id: number;
   title: string;
+  subtitle: string | null;
   description: string | null;
   coverImageKey: string | null;
   coverVideoKey: string | null;
   categoryId: number;
   instructor: string;
   instructorName?: string | null;
+  instructorProfesion?: string | null;
+  instructorDescripcion?: string | null;
+  instructorProfileImageKey?: string | null;
   creatorId: string;
   rating: number | null;
   modalidadId: number;
   nivelId: number;
+  nivelName?: string | null;
   courseTypeId: number | null;
   typeCourseId: number | null;
   certificationTypeId: number | null;
@@ -23,6 +28,16 @@ export interface GuidedProject {
   isFeatured: boolean | null;
   visibility: boolean | null;
   metaPixelId: string | null;
+  // Rich content fields (Lovable layout)
+  problemStatement: string | null;
+  howItWorks: string | null;
+  whatYouWillBuild: string | null;
+  prerequisites: string | null;
+  techStack: string | null;
+  deliverablesDescription: string | null;
+  studentsCount: number | null;
+  contentHours: number | null;
+  slug: string | null;
   createdAt: Date;
   updatedAt: Date;
 
