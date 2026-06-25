@@ -451,15 +451,17 @@ const Page: React.FC = () => {
       return;
     }
 
-    // Validaciones específicas para actividades revisadas
     if (formData.revisada) {
-      if (
-        formData.parametro &&
-        (!formData.porcentaje || formData.porcentaje <= 0)
-      ) {
+      if (!formData.parametro) {
         toast('Error', {
           description:
-            'Debe asignar un porcentaje mayor a 0 para actividades revisadas con parámetro',
+            'Debe asignar un parámetro de evaluación para actividades calificables',
+        });
+        return;
+      }
+      if (!formData.porcentaje || formData.porcentaje <= 0) {
+        toast('Error', {
+          description: 'Debe asignar un porcentaje mayor a 0',
         });
         return;
       }
@@ -468,12 +470,11 @@ const Page: React.FC = () => {
     // Validaciones finales
     const newErrors = {
       name: !formData.name,
-      description: !formData.description,
+      degiscription: !formData.description,
       type: !formData.type,
-      parametro: false,
+      parametro: !!(formData.revisada && !formData.parametro),
       porcentaje: !!(
         formData.revisada &&
-        formData.parametro &&
         (!formData.porcentaje || formData.porcentaje <= 0)
       ),
     };
