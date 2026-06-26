@@ -13,6 +13,11 @@ interface TypeActDropdownProps {
   setTypeActividad: (categoryId: number) => void;
   selectedColor: string;
 }
+const ALLOWED_TYPES: Record<string, string> = {
+  'Actividad de presentación de documentos': 'Subida de documento',
+  'Distintos tipos de pregunta': 'Preguntas tipo ICFES',
+  'Pregunta Abierta': 'Autocompletado',
+};
 
 const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
   typeActi,
@@ -50,7 +55,15 @@ const TypeActDropdown: React.FC<TypeActDropdownProps> = ({
         }
 
         const data = (await response.json()) as TypeAct[];
-        setTypeAct(data);
+
+        // Solo conservar los 3 tipos válidos y renombrarlos para mostrar
+        const filtered = data
+          .filter((type) => type.name in ALLOWED_TYPES)
+          .map((type) => ({
+            ...type,
+            name: ALLOWED_TYPES[type.name] ?? type.name,
+          }));
+        setTypeAct(filtered);
       } catch (error) {
         console.error('Error detallado:', error);
       } finally {

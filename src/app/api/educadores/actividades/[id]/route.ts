@@ -64,6 +64,7 @@ export async function PUT(
       parametroId: z.number().nullable().optional(),
       porcentaje: z.number().min(0).max(100).optional(),
       fechaMaximaEntrega: z.string().datetime().nullable().optional(), // ISO string
+      fechaInicioActividad: z.string().datetime().nullable().optional(),
       // opcional: “dryRun” para solo loguear sin guardar
       dryRun: z.boolean().optional(),
     });
@@ -87,6 +88,7 @@ export async function PUT(
       parametroId,
       porcentaje,
       fechaMaximaEntrega,
+      fechaInicioActividad,
       dryRun,
     } = parsed.data;
 
@@ -99,6 +101,11 @@ export async function PUT(
       ...(fechaMaximaEntrega !== undefined && {
         fechaMaximaEntrega: fechaMaximaEntrega
           ? new Date(fechaMaximaEntrega)
+          : null,
+      }),
+      ...(fechaInicioActividad !== undefined && {
+        fechaInicioActividad: fechaInicioActividad
+          ? new Date(fechaInicioActividad)
           : null,
       }),
     };

@@ -22,6 +22,7 @@ export interface Activity {
   porcentaje: number | null;
   parametroId: number | null; // <-- Ajusta esto
   fechaMaximaEntrega: Date | null;
+  fechaInicioActividad: Date | null;
   typeid: number;
   revisada: boolean;
   isCompleted: boolean;
@@ -54,6 +55,7 @@ export interface ActivityDetails {
     };
   };
   fechaMaximaEntrega: Date | null;
+  fechaInicioActividad: Date | null;
 }
 
 interface CreateActivityParams {
@@ -66,6 +68,7 @@ interface CreateActivityParams {
   parametroId?: number | null;
   porcentaje: number;
   fechaMaximaEntrega: Date | null;
+  fechaInicioActividad?: Date | null;
 }
 
 // CRUD Operations
@@ -127,6 +130,7 @@ export async function createActivity(params: CreateActivityParams) {
         porcentaje: params.porcentaje ?? 0,
         lastUpdated: new Date(),
         fechaMaximaEntrega: params.fechaMaximaEntrega ?? null,
+        fechaInicioActividad: params.fechaInicioActividad ?? null,
       })
       .returning();
 
@@ -173,6 +177,7 @@ export const getActivityById = async (activityId: number) => {
           courseInstructorName: users.name,
         },
         fechaMaximaEntrega: activities.fechaMaximaEntrega,
+        fechaInicioActividad: activities.fechaInicioActividad,
       })
       .from(activities)
       .leftJoin(typeActi, eq(activities.typeid, typeActi.id))
@@ -225,6 +230,7 @@ export const getActivitiesByLessonId = async (
           courseInstructorName: users.name,
         },
         fechaMaximaEntrega: activities.fechaMaximaEntrega,
+        fechaInicioActividad: activities.fechaInicioActividad,
       })
       .from(activities)
       .leftJoin(typeActi, eq(activities.typeid, typeActi.id))
@@ -258,6 +264,7 @@ export const getActivitiesByLessonId = async (
         },
       },
       fechaMaximaEntrega: actividad.fechaMaximaEntrega ?? null,
+      fechaInicioActividad: actividad.fechaInicioActividad ?? null,
     }));
   } catch (error) {
     console.error('Error fetching activities by lesson ID:', error);
@@ -275,6 +282,7 @@ export const updateActivity = async (
     parametroId?: number | null;
     porcentaje?: number;
     fechaMaximaEntrega?: Date | null;
+    fechaInicioActividad?: Date | null;
   }
 ): Promise<void> => {
   try {
@@ -289,6 +297,9 @@ export const updateActivity = async (
     if (data.porcentaje !== undefined) updateData.porcentaje = data.porcentaje;
     if (data.fechaMaximaEntrega !== undefined) {
       updateData.fechaMaximaEntrega = data.fechaMaximaEntrega; // Date | null
+    }
+    if (data.fechaInicioActividad !== undefined) {
+      updateData.fechaInicioActividad = data.fechaInicioActividad; // Date | null
     }
 
     await db

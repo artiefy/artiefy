@@ -72,6 +72,7 @@ interface ActivityDetailsAPI {
   nota?: number | null; // <-- idem
   parametroId?: number | null;
   fechaMaximaEntrega?: string | null;
+  fechaInicioActividad?: string | null;
 }
 
 // Definir la interfaz de los parámetros
@@ -112,6 +113,7 @@ const Page: React.FC = () => {
     revisada: false,
     parametro: 0,
     fechaMaximaEntrega: null as string | null,
+    fechaInicioActividad: null as string | null,
   }); // Definir formData
   const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl; // Obtener el ID del curso como string
   const courseIdNumber = courseIdUrl ? parseInt(courseIdUrl, 10) : null;
@@ -177,6 +179,7 @@ const Page: React.FC = () => {
           revisada: data.revisada,
           parametro: parametroId,
           fechaMaximaEntrega: data.fechaMaximaEntrega ?? null,
+          fechaInicioActividad: data.fechaInicioActividad ?? null,
         });
 
         // toggles y sección de parámetro
@@ -334,6 +337,7 @@ const Page: React.FC = () => {
     setFormData((prevFormData) => ({
       ...prevFormData,
       fechaMaximaEntrega: fechaMaxima ? new Date().toISOString() : null,
+      fechaInicioActividad: fechaMaxima ? new Date().toISOString() : null,
     }));
   };
 
@@ -517,6 +521,18 @@ const Page: React.FC = () => {
         return;
       }
     }
+    if (
+      formData.fechaMaximaEntrega &&
+      formData.fechaInicioActividad &&
+      new Date(formData.fechaInicioActividad) >=
+        new Date(formData.fechaMaximaEntrega)
+    ) {
+      toast('Error', {
+        description:
+          'La fecha de inicio debe ser anterior a la fecha máxima de entrega',
+      });
+      return;
+    }
 
     setIsUploading(true);
 
@@ -541,6 +557,9 @@ const Page: React.FC = () => {
           revisada: formData.revisada,
           parametroId: formData.parametro || null,
           porcentaje: formData.revisada ? formData.porcentaje || 0 : 0,
+          fechaInicioActividad: formData.fechaInicioActividad
+            ? new Date(formData.fechaInicioActividad).toISOString()
+            : null,
           fechaMaximaEntrega: formData.fechaMaximaEntrega
             ? new Date(formData.fechaMaximaEntrega).toISOString()
             : null,
@@ -875,6 +894,29 @@ const Page: React.FC = () => {
 
                   {fechaMaxima && (
                     <>
+                      <span
+                        className={`
+                          text-xl font-medium
+                          ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                        `}
+                      >
+                        Fecha de inicio:
+                      </span>
+                      <input
+                        type="datetime-local"
+                        value={
+                          formData.fechaInicioActividad
+                            ? formData.fechaInicioActividad.slice(0, 16)
+                            : ''
+                        }
+                        className="w-full rounded-lg border border-slate-200 bg-white p-2 text-black outline-none"
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            fechaInicioActividad: e.target.value,
+                          })
+                        }
+                      />
                       <span
                         className={`
                           text-xl font-medium

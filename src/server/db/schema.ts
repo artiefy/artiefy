@@ -314,6 +314,7 @@ export const activities = pgTable('activities', {
   parametroId: integer('parametro_id').references(() => parametros.id),
   porcentaje: integer('porcentaje'),
   fechaMaximaEntrega: timestamp('fecha_maxima_entrega'),
+  fechaInicioActividad: timestamp('fecha_inicio_actividad'),
 });
 
 // Tabla de inscripciones

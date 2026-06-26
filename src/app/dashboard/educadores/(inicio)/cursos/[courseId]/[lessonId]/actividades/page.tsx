@@ -56,6 +56,7 @@ interface ActivityApiResponse {
   nota?: number;
   parametroId?: number;
   revisada?: boolean;
+  fechaInicioActividad?: string | null;
   fechaMaximaEntrega?: string | null;
 }
 
@@ -112,6 +113,7 @@ const Page: React.FC = () => {
     porcentaje: 0,
     revisada: false,
     parametro: 0,
+    fechaInicioActividad: null as string | null,
     fechaMaximaEntrega: null as string | null,
   }); // Definir formData
   const cursoIdString = Array.isArray(cursoIdUrl) ? cursoIdUrl[0] : cursoIdUrl; // Obtener el ID del curso como string
@@ -164,6 +166,7 @@ const Page: React.FC = () => {
           nota,
           parametroId: rawParametroId = 0,
           revisada = false,
+          fechaInicioActividad = null,
           fechaMaximaEntrega = null,
         } = data;
 
@@ -181,12 +184,15 @@ const Page: React.FC = () => {
           porcentaje: pesoValor,
           revisada: revisada,
           parametro: parametroId,
+          fechaInicioActividad: fechaInicioActividad,
           fechaMaximaEntrega: fechaMaximaEntrega,
         });
 
         // toggles y sección de parámetro
         setIsActive(revisada);
-        setFechaMaxima(fechaMaximaEntrega !== null);
+        setFechaMaxima(
+          fechaInicioActividad !== null || fechaMaximaEntrega !== null
+        );
         setShowLongevidadForm(revisada && parametroId > 0);
 
         // precargar % disponible (100 – peso asignado)
@@ -318,11 +324,19 @@ const Page: React.FC = () => {
 
   // Función para manejar el cambio de la fecha máxima de entrega
   const handleToggleFechaMaxima = () => {
-    setFechaMaxima((prevFechaMaxima) => !prevFechaMaxima);
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      fechaMaximaEntrega: fechaMaxima ? new Date().toISOString() : null,
-    }));
+    setFechaMaxima((prevFechaMaxima) => {
+      const nextFechaMaxima = !prevFechaMaxima;
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        fechaInicioActividad: nextFechaMaxima
+          ? prevFormData.fechaInicioActividad
+          : null,
+        fechaMaximaEntrega: nextFechaMaxima
+          ? prevFormData.fechaMaximaEntrega
+          : null,
+      }));
+      return nextFechaMaxima;
+    });
   };
 
   // Función para manejar el click en el botón de asignar parámetro
@@ -467,16 +481,43 @@ const Page: React.FC = () => {
       }
     }
 
+    if (fechaMaxima) {
+      if (!formData.fechaInicioActividad) {
+        toast('Error', {
+          description: 'La fecha de inicio de la actividad es requerida',
+        });
+        return;
+      }
+      if (!formData.fechaMaximaEntrega) {
+        toast('Error', {
+          description: 'La fecha máxima de entrega es requerida',
+        });
+        return;
+      }
+      if (
+        new Date(formData.fechaInicioActividad) >=
+        new Date(formData.fechaMaximaEntrega)
+      ) {
+        toast('Error', {
+          description:
+            'La fecha de inicio debe ser anterior a la fecha máxima de entrega',
+        });
+        return;
+      }
+    }
+
     // Validaciones finales
     const newErrors = {
       name: !formData.name,
-      degiscription: !formData.description,
+      description: !formData.description,
       type: !formData.type,
       parametro: !!(formData.revisada && !formData.parametro),
       porcentaje: !!(
         formData.revisada &&
         (!formData.porcentaje || formData.porcentaje <= 0)
       ),
+      fechaInicioActividad: !!(fechaMaxima && !formData.fechaInicioActividad),
+      fechaMaximaEntrega: !!(fechaMaxima && !formData.fechaMaximaEntrega),
     };
 
     if (Object.values(newErrors).some((error) => error)) {
@@ -521,6 +562,9 @@ const Page: React.FC = () => {
           revisada: formData.revisada,
           parametroId: formData.parametro || null,
           porcentaje: formData.revisada ? formData.porcentaje || 0 : 0,
+          fechaInicioActividad: formData.fechaInicioActividad
+            ? new Date(formData.fechaInicioActividad).toISOString()
+            : null,
           fechaMaximaEntrega: formData.fechaMaximaEntrega
             ? new Date(formData.fechaMaximaEntrega).toISOString()
             : null,
@@ -860,6 +904,40 @@ const Page: React.FC = () => {
                       <span
                         className={`
                           text-xl font-medium
+                          ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
+                        `}
+                      >
+                        Fecha de inicio de la actividad:
+                      </span>
+                      <input
+                        type="datetime-local"
+                        value={
+                          formData.fechaInicioActividad
+                            ? formData.fechaInicioActividad.includes('T') &&
+                              !formData.fechaInicioActividad.endsWith('Z')
+                              ? formData.fechaInicioActividad.slice(0, 16)
+                              : new Date(formData.fechaInicioActividad)
+                                  .toLocaleString('sv-SE', {
+                                    timeZone: 'America/Bogota',
+                                  })
+                                  .replace(' ', 'T')
+                                  .slice(0, 16)
+                            : ''
+                        }
+                        className="
+                          w-full rounded-lg border border-slate-200 bg-white p-2
+                          text-black outline-none
+                        "
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            fechaInicioActividad: e.target.value,
+                          })
+                        }
+                      />
+                      <span
+                        className={`
+                          mt-4 text-xl font-medium
                           ${color === '#FFFFFF' ? 'text-black' : 'text-white'}
                         `}
                       >

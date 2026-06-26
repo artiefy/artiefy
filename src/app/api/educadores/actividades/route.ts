@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
       parametroId?: number | null;
       porcentaje: number;
       fechaMaximaEntrega: string | null;
+      fechaInicioActividad?: string | null;
     };
 
     const {
@@ -65,6 +66,7 @@ export async function POST(request: NextRequest) {
       parametroId,
       porcentaje,
       fechaMaximaEntrega,
+      fechaInicioActividad,
     } = body;
 
     const newActivity = await createActivity({
@@ -78,6 +80,9 @@ export async function POST(request: NextRequest) {
       porcentaje: revisada ? porcentaje : 0,
       fechaMaximaEntrega: fechaMaximaEntrega
         ? new Date(fechaMaximaEntrega)
+        : null,
+      fechaInicioActividad: fechaInicioActividad
+        ? new Date(fechaInicioActividad)
         : null,
     });
 
@@ -180,10 +185,18 @@ export async function PUT(request: NextRequest) {
       typeid?: number;
       revisada?: boolean;
       fechaMaximaEntrega?: Date | null;
+      fechaInicioActividad?: Date | null;
     };
 
-    const { id, name, description, typeid, revisada, fechaMaximaEntrega } =
-      body;
+    const {
+      id,
+      name,
+      description,
+      typeid,
+      revisada,
+      fechaMaximaEntrega,
+      fechaInicioActividad,
+    } = body;
 
     await updateActivity(id, {
       name,
@@ -191,6 +204,7 @@ export async function PUT(request: NextRequest) {
       typeid,
       revisada,
       fechaMaximaEntrega,
+      fechaInicioActividad,
     });
 
     return NextResponse.json({
