@@ -96,7 +96,7 @@ const getActivityContent = async (
           userProgress: activityProgress?.progress ?? 0,
           createdAt: activity.lastUpdated,
           isLastInLesson: isLastActivityInLesson, // Add this flag
-        } as Activity;
+        } as unknown as Activity;
       })
     );
 
