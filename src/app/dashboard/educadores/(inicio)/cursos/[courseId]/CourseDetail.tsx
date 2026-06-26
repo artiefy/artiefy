@@ -253,6 +253,65 @@ interface LessonResource {
   resourceKey: string;
   resourceNames: string;
 }
+
+interface ApiLesson {
+  id: number;
+  title: string;
+  orderIndex?: number;
+  order_index?: number;
+  coverImageKey?: string | null;
+  cover_image_key?: string | null;
+  coverVideoKey?: string | null;
+  cover_video_key?: string | null;
+  resourceKey?: string | null;
+  resource_key?: string | null;
+  resourceNames?: string | null;
+  resource_names?: string | null;
+}
+
+interface ApiCourseActivity {
+  id: number;
+  name: string;
+  description?: string | null;
+  typeid?: number;
+  type_id?: number;
+  lessonsId?: number;
+  lessons_id?: number;
+  revisada?: boolean;
+  parametroId?: number | null;
+  parametro_id?: number | null;
+  porcentaje?: number | null;
+  pesoNota?: number | null;
+  nota?: number | null;
+  fechaMaximaEntrega?: string | null;
+  fecha_maxima_entrega?: string | null;
+  lessonTitle?: string;
+  lessonOrderIndex?: number;
+}
+
+const normalizeLesson = (lesson: ApiLesson) => ({
+  id: lesson.id,
+  title: lesson.title,
+  orderIndex: lesson.orderIndex ?? lesson.order_index ?? 0,
+  coverImageKey: lesson.coverImageKey ?? lesson.cover_image_key ?? null,
+  coverVideoKey: lesson.coverVideoKey ?? lesson.cover_video_key ?? null,
+  resourceKey: lesson.resourceKey ?? lesson.resource_key ?? null,
+  resourceNames: lesson.resourceNames ?? lesson.resource_names ?? null,
+});
+
+const normalizeActivity = (raw: ApiCourseActivity): CourseActivity => ({
+  id: raw.id,
+  name: raw.name,
+  description: raw.description ?? null,
+  typeid: Number(raw.typeid ?? raw.type_id ?? 0),
+  lessonsId: Number(raw.lessonsId ?? raw.lessons_id ?? 0),
+  revisada: Boolean(raw.revisada ?? false),
+  parametroId: raw.parametroId ?? raw.parametro_id ?? null,
+  porcentaje: raw.porcentaje ?? raw.pesoNota ?? raw.nota ?? null,
+  fechaMaximaEntrega:
+    raw.fechaMaximaEntrega ?? raw.fecha_maxima_entrega ?? null,
+});
+
 // Función para obtener el contraste de un color
 const _getContrastYIQ = (hexcolor: string) => {
   if (hexcolor === '#FFFFFF') return 'black'; // Manejar el caso del color blanco
@@ -563,20 +622,20 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           `/api/super-admin/lessons?courseId=${courseIdNumber}`
         );
         if (!lessonsRes.ok) return;
-        const lessonsData = (await lessonsRes.json()) as {
-          id: number;
-          title: string;
-          orderIndex: number;
-        }[];
+        const lessonsData = (await lessonsRes.json()) as ApiLesson[];
+        const normalizedLessons = lessonsData.map(normalizeLesson);
 
         const allActivities: CourseActivity[] = [];
-        for (const lesson of lessonsData) {
+        for (const lesson of normalizedLessons) {
           const actRes = await fetch(
             `/api/educadores/actividades?courseId=${courseIdNumber}&lessonId=${lesson.id}`
           );
           if (!actRes.ok) continue;
-          const acts = (await actRes.json()) as CourseActivity[];
-          const filtered = acts.filter((a) => a.lessonsId === lesson.id);
+          const rawActivities = (await actRes.json()) as ApiCourseActivity[];
+          const filtered = rawActivities
+            .map(normalizeActivity)
+            .filter((a) => a.lessonsId === lesson.id);
+
           filtered.forEach((a) => {
             a.lessonTitle = lesson.title;
             a.lessonOrderIndex = lesson.orderIndex;
@@ -584,6 +643,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
           allActivities.push(...filtered);
         }
 
+        console.log('✅ Actividades mapeadas:', allActivities);
         setCourseActivities(allActivities);
       } catch (e) {
         console.error('Error cargando actividades del curso:', e);
@@ -604,24 +664,15 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         );
         if (!res.ok) return;
 
-        const data = (await res.json()) as {
-          id: number;
-          title: string;
-          orderIndex: number;
-          coverImageKey: string | null;
-          coverVideoKey: string | null;
-          resourceKey: string | null;
-          resourceNames: string | null;
-        }[];
+        const data = (await res.json()) as ApiLesson[];
+        const normalizedLessons = data.map(normalizeLesson);
 
-        const mapped: LessonResource[] = data
+        const mapped: LessonResource[] = normalizedLessons
           .filter(
             (l) =>
-              (l.resourceKey && l.resourceNames) ||
-              (l.coverImageKey && l.coverImageKey.trim()) ||
-              (l.coverVideoKey &&
-                l.coverVideoKey.trim() &&
-                l.coverVideoKey !== 'none')
+              Boolean(l.resourceKey?.trim()) ||
+              Boolean(l.coverImageKey?.trim()) ||
+              (l.coverVideoKey && l.coverVideoKey !== 'none')
           )
           .map((l) => ({
             lessonId: l.id,
@@ -636,6 +687,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             resourceNames: l.resourceNames ?? '',
           }));
 
+        console.log('✅ Recursos mapeados:', mapped);
         setLessonResources(mapped);
       } catch (e) {
         console.error('Error cargando recursos del curso:', e);
@@ -2907,43 +2959,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                       </button>
                       <button
                         onClick={(e) => {
-                          console.log('✅ CLICK recursos', {
-                            defaultPrevented: e.defaultPrevented,
-                          });
-                          setActiveTab('recursos');
-                        }}
-                        className={`
-                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
-                          transition-all duration-300
-                          ${
-                            activeTab === 'recursos'
-                              ? `
-                                bg-cyan-500/15 text-cyan-300
-                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                                ring-cyan-400/40
-                              `
-                              : `
-                                text-white/80
-                                hover:bg-white/5 hover:text-white
-                              `
-                          }
-                        `}
-                      >
-                        Recursos{' '}
-                        <span
-                          className="
-                            ml-2 inline-block rounded-full bg-cyan-500 px-2
-                            py-0.5 text-xs font-bold text-slate-950
-                          "
-                        >
-                          {lessonResources.length}
-                        </span>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          console.log('✅ CLICK actividades', {
-                            defaultPrevented: e.defaultPrevented,
-                          });
                           setActiveTab('actividades');
                         }}
                         className={`
@@ -2971,6 +2986,37 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                           "
                         >
                           {courseActivities.length}
+                        </span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          setActiveTab('recursos');
+                        }}
+                        className={`
+                          rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                          transition-all duration-300
+                          ${
+                            activeTab === 'recursos'
+                              ? `
+                                bg-cyan-500/15 text-cyan-300
+                                shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                                ring-cyan-400/40
+                              `
+                              : `
+                                text-white/80
+                                hover:bg-white/5 hover:text-white
+                              `
+                          }
+                        `}
+                      >
+                        Recursos{' '}
+                        <span
+                          className="
+                            ml-2 inline-block rounded-full bg-cyan-500 px-2
+                            py-0.5 text-xs font-bold text-slate-950
+                          "
+                        >
+                          {lessonResources.length}
                         </span>
                       </button>
                       <button
