@@ -142,7 +142,7 @@ export async function getLessonById(
         : [],
       resourceKey: lesson.resourceKey || '',
       activities:
-        (lesson.activities as Activity[] | undefined)?.map((activity) => {
+        lesson.activities?.map((activity) => {
           const activityProgress = userActivitiesProgressData.find(
             (progress) => progress.activityId === activity.id
           );
@@ -150,7 +150,9 @@ export async function getLessonById(
             ...activity,
             isCompleted: activityProgress?.isCompleted ?? false,
             userProgress: activityProgress?.progress ?? 0,
-          };
+            attemptLimit: 0,
+            currentAttempts: 0,
+          } as Activity;
         }) ?? [],
       course: transformedCourse,
     };
