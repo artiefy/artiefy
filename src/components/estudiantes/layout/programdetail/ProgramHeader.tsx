@@ -8,7 +8,16 @@ import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
 import { CheckCircleIcon, StarIcon } from '@heroicons/react/24/solid';
 import * as Tabs from '@radix-ui/react-tabs';
-import { Award, Book, Clock, Crown, Users, Video, Wrench } from 'lucide-react';
+import {
+  Award,
+  Book,
+  Clock,
+  Crown,
+  Trophy,
+  Users,
+  Video,
+  Wrench,
+} from 'lucide-react';
 import { FaCheck, FaClock, FaTimes } from 'react-icons/fa';
 import { IoCloseOutline } from 'react-icons/io5';
 import { LiaCertificateSolid } from 'react-icons/lia';
@@ -28,9 +37,9 @@ import { Icons } from '~/components/estudiantes/ui/icons';
 import { blurDataURL } from '~/lib/blurDataUrl';
 import { type GradesApiResponse } from '~/lib/utils2';
 import { getProgramEnrollmentCount } from '~/server/actions/estudiantes/programs/getProgramEnrollmentCount';
+import { formatScore } from '~/utils/formatScore';
 
 import { ProgramCertificationPanel, ProgramContent } from './ProgramContent';
-import { ProgramGradesModal } from './ProgramGradesModal';
 
 import type { ClassMeeting, Course, MateriaWithCourse, Program } from '~/types';
 
@@ -74,12 +83,11 @@ export function ProgramHeader({
   isLoadingEnrollments,
 }: ProgramHeaderProps) {
   const { user, isSignedIn } = useUser();
-  const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [isLoadingGrade, setIsLoadingGrade] = useState(true);
   const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
   const [activeTab, setActiveTab] = useState<
-    'cursos' | 'en-vivo' | 'certificacion'
+    'cursos' | 'en-vivo' | 'certificacion' | 'resultado-final'
   >('cursos');
   const [enrollmentCount, setEnrollmentCount] = useState(0);
   const [liveSessions, setLiveSessions] = useState<
@@ -235,20 +243,17 @@ export function ProgramHeader({
     }
   );
 
-  // Agrupa por curso y toma solo una nota final por curso (la primera materia encontrada)
-  const allCourses =
-    program.materias?.map((m) => m.curso?.title ?? 'Curso sin nombre') ?? [];
-  const uniqueCourses = Array.from(new Set(allCourses));
-
-  const coursesGrades: CourseGrade[] = uniqueCourses.map((courseTitle) => {
-    // Busca la primera materia de ese curso en gradesData
+  // Una única nota final por curso real del programa. Partimos de `courses`
+  // (ya deduplicado por id de curso y sin materias huérfanas) para no mostrar
+  // filas fantasma como "Curso sin nombre". Todas las materias de un mismo
+  // curso comparten la misma nota final, así que basta con buscar una.
+  const coursesGrades: CourseGrade[] = courses.map((course) => {
     const materiaDelCurso = gradesData?.materias?.find(
-      (m) => m.courseTitle === courseTitle
+      (m) => m.courseTitle === course.title
     );
-    // Toma la nota final de esa materia (todas tienen la misma)
     const finalGrade = materiaDelCurso ? Number(materiaDelCurso.grade) : 0;
     return {
-      courseTitle,
+      courseTitle: course.title,
       finalGrade,
     };
   });
@@ -263,6 +268,18 @@ export function ProgramHeader({
           ).toFixed(2)
         )
       : 0;
+
+  // El programa solo tiene "nota final" cuando TODOS sus cursos están calificados
+  const totalProgramCourses = coursesGrades.length;
+  const gradedProgramCourses = coursesGrades.filter(
+    (course) => (course.finalGrade ?? 0) > 0
+  ).length;
+  const pendingProgramCourses = Math.max(
+    totalProgramCourses - gradedProgramCourses,
+    0
+  );
+  const allProgramCoursesGraded =
+    totalProgramCourses > 0 && pendingProgramCourses === 0;
 
   // Verificar si el usuario tiene nota para todas las materias del programa
   const programMateriaIds = program.materias?.map((m) => m.id) ?? [];
@@ -1151,7 +1168,13 @@ export function ProgramHeader({
             <Tabs.Root
               value={activeTab}
               onValueChange={(value) =>
-                setActiveTab(value as 'cursos' | 'en-vivo' | 'certificacion')
+                setActiveTab(
+                  value as
+                    | 'cursos'
+                    | 'en-vivo'
+                    | 'certificacion'
+                    | 'resultado-final'
+                )
               }
               className="w-full"
             >
@@ -1222,6 +1245,26 @@ export function ProgramHeader({
                   >
                     <Award className="size-4" />
                     Certificación
+                  </Tabs.Trigger>
+                  <Tabs.Trigger
+                    value="resultado-final"
+                    className="
+                      flex items-center justify-center gap-2 rounded-none
+                      bg-transparent px-4 py-3 text-sm font-medium
+                      whitespace-nowrap text-muted-foreground
+                      ring-offset-background transition-all
+                      focus-visible:ring-2 focus-visible:ring-ring
+                      focus-visible:ring-offset-2 focus-visible:outline-none
+                      disabled:pointer-events-none disabled:opacity-50
+                      data-[state=active]:border-b-2
+                      data-[state=active]:border-primary
+                      data-[state=active]:bg-transparent
+                      data-[state=active]:text-primary
+                      data-[state=active]:shadow-none
+                    "
+                  >
+                    <Trophy className="size-4" />
+                    Resultado Final
                   </Tabs.Trigger>
                 </Tabs.List>
               </div>
@@ -1745,6 +1788,161 @@ export function ProgramHeader({
                   isEnrolled={isEnrolled}
                 />
               </Tabs.Content>
+              <Tabs.Content value="resultado-final" className="pt-6">
+                <section
+                  className="
+                    rounded-2xl border border-border bg-card p-6
+                    md:p-8
+                  "
+                >
+                  <div className="mb-6 flex items-center gap-3">
+                    <div
+                      className="
+                        flex items-center justify-center rounded-full
+                        bg-amber-500/20 p-2
+                      "
+                    >
+                      <Trophy className="size-5 text-amber-400" />
+                    </div>
+                    <div>
+                      <h2
+                        className="
+                          font-display text-xl font-bold text-foreground
+                          md:text-2xl
+                        "
+                      >
+                        Resultado Final del Programa
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        Una sola nota final por curso y la nota final del
+                        programa
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Nota final del programa: solo disponible cuando todos los
+                      cursos del programa tienen su nota final calculada. */}
+                  <div
+                    className="
+                      mb-6 rounded-xl border border-border p-6 text-center
+                    "
+                    style={{ backgroundColor: '#01152d' }}
+                  >
+                    <p className="mb-2 text-sm font-medium text-muted-foreground">
+                      Nota Final del Programa
+                    </p>
+                    {isLoadingGrade ? (
+                      <Icons.spinner className="mx-auto size-7 text-primary" />
+                    ) : allProgramCoursesGraded ? (
+                      <>
+                        <span
+                          className={`
+                            text-4xl font-bold
+                            ${
+                              programAverage >= 3
+                                ? 'text-emerald-400'
+                                : 'text-red-400'
+                            }
+                          `}
+                        >
+                          {formatScore(programAverage)}
+                        </span>
+                        <p
+                          className="
+                            mt-2 text-xs font-semibold tracking-wide text-emerald-400
+                            uppercase
+                          "
+                        >
+                          {programAverage >= 3 ? 'Aprobado' : 'No aprobado'} ·
+                          Programa completo
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-3xl font-bold text-muted-foreground">
+                          —
+                        </span>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Disponible cuando todos los cursos estén calificados
+                          {totalProgramCourses > 0 && (
+                            <>
+                              {' '}
+                              ({gradedProgramCourses}/{totalProgramCourses}{' '}
+                              cursos calificados)
+                            </>
+                          )}
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Lista de cursos del programa, una única nota final por curso */}
+                  <div className="overflow-hidden rounded-xl border border-border">
+                    <div
+                      className="
+                        grid grid-cols-[1fr_auto] gap-4 px-4 py-3
+                        text-xs font-semibold tracking-wide text-muted-foreground
+                        uppercase
+                      "
+                      style={{ backgroundColor: '#061c3766' }}
+                    >
+                      <span>Curso</span>
+                      <span className="text-right">Nota Final</span>
+                    </div>
+                    <div className="divide-y divide-border">
+                      {isLoadingGrade ? (
+                        <div className="flex justify-center p-6">
+                          <Icons.spinner className="size-6 text-primary" />
+                        </div>
+                      ) : coursesGrades.length > 0 ? (
+                        coursesGrades.map((course) => {
+                          const isGraded = (course.finalGrade ?? 0) > 0;
+                          return (
+                            <div
+                              key={course.courseTitle}
+                              className="
+                                grid grid-cols-[1fr_auto] items-center gap-4
+                                px-4 py-3
+                              "
+                            >
+                              <span className="text-sm font-medium text-foreground">
+                                {course.courseTitle}
+                              </span>
+                              {isGraded ? (
+                                <span
+                                  className={`
+                                    text-right text-base font-bold
+                                    ${
+                                      course.finalGrade >= 3
+                                        ? 'text-emerald-400'
+                                        : 'text-red-400'
+                                    }
+                                  `}
+                                >
+                                  {formatScore(course.finalGrade)}
+                                </span>
+                              ) : (
+                                <span
+                                  className="
+                                    text-right text-xs font-medium
+                                    text-muted-foreground
+                                  "
+                                >
+                                  Pendiente
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })
+                      ) : (
+                        <div className="p-6 text-center text-sm text-muted-foreground">
+                          Aún no hay cursos con calificaciones en este programa.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </section>
+              </Tabs.Content>
             </Tabs.Root>
           </div>
 
@@ -1760,16 +1958,6 @@ export function ProgramHeader({
           )}
         </div>
       </div>
-      <ProgramGradesModal
-        isOpen={isGradeModalOpen}
-        onCloseAction={() => setIsGradeModalOpen(false)}
-        programTitle={program.title}
-        finalGrade={programAverage}
-        isLoading={isLoadingGrade}
-        coursesGrades={coursesGrades}
-        programId={program.id}
-        materias={program.materias ?? []}
-      />
       {!isEnrolled && showMobileEnrollBar && (
         <div
           className="

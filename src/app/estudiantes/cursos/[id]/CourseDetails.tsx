@@ -196,9 +196,23 @@ export default function CourseDetails({
   const { mutate } = useSWRConfig();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [gradeSummary, setGradeSummary] = useState<CourseGradeSummary | null>(
-    null
+  // Resumen de calificaciones en tiempo real: SWR re-valida al volver a la
+  // pestaña y hace polling cada 5s, así la nota del estudiante se actualiza
+  // sola cuando el educador la califica (sin recargar la página).
+  const gradeSummaryKey =
+    isSignedIn && userId && course.id
+      ? `/api/grades/summary?courseId=${course.id}&userId=${userId}`
+      : null;
+  const { data: gradeSummaryData } = useSWR<CourseGradeSummary>(
+    gradeSummaryKey,
+    swrFetcher<CourseGradeSummary>,
+    {
+      refreshInterval: 5000,
+      revalidateOnFocus: true,
+      keepPreviousData: true,
+    }
   );
+  const gradeSummary = gradeSummaryData ?? null;
   const userMetadata = user?.publicMetadata as UserMetadata | undefined;
   const enrollmentAuthHint = useMemo(
     () => ({
@@ -818,27 +832,6 @@ export default function CourseDetails({
     };
 
     void fetchProjectsCount();
-  }, [isSignedIn, userId, course.id]);
-
-  // Cargar resumen de calificaciones para la sección de resultados
-  useEffect(() => {
-    const fetchGradeSummary = async () => {
-      if (isSignedIn && userId && course.id) {
-        try {
-          const response = await fetch(
-            `/api/grades/summary?courseId=${course.id}&userId=${userId}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            setGradeSummary(data);
-          }
-        } catch (error) {
-          console.error('Error al obtener resumen de calificaciones:', error);
-        }
-      }
-    };
-
-    void fetchGradeSummary();
   }, [isSignedIn, userId, course.id]);
 
   // NOTA: Ya no usamos este useEffect porque abrimos el modal directamente en handleLoginSuccess
@@ -1483,7 +1476,7 @@ export default function CourseDetails({
           className={`
             mx-auto max-w-7xl px-4 pt-16 pb-2
             md:px-6 md:pt-8 md:pb-8
-            lg:px-8
+            lg:px-8 lg:pt-24
           `}
         >
           <CourseBreadcrumb title={course.title} programInfo={programInfo} />
