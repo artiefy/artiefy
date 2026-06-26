@@ -185,6 +185,7 @@ export default function StudentDetails({
   const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
   const [previewPrograms, setPreviewPrograms] = useState<Program[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [topCoursesApi, setTopCoursesApi] = useState<CarouselApi>();
   const [programsApi, setProgramsApi] = useState<CarouselApi>();
   const [canScrollPrevTop, setCanScrollPrevTop] = useState(false);
@@ -322,12 +323,19 @@ export default function StudentDetails({
 
   // Debounce para evitar demasiadas llamadas
   useEffect(() => {
-    if (!searchQuery || searchQuery.trim().length < 2) {
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < 2) {
       setPreviewCourses([]);
       setPreviewPrograms([]);
       setShowPreview(false);
+      setPreviewLoading(false);
       return;
     }
+    // Guard de carrera: ignoramos la respuesta de esta corrida si el usuario
+    // siguió escribiendo, para que una petición vieja no pise a la nueva.
+    let cancelled = false;
+    setPreviewLoading(true);
+    setShowPreview(true);
     const timeout = setTimeout(async () => {
       try {
         const [{ searchCoursesPreview }, { searchProgramsPreview }] =
@@ -336,19 +344,26 @@ export default function StudentDetails({
             import('~/server/actions/estudiantes/programs/searchProgramsPreview'),
           ]);
         const [courseResults, programResults] = await Promise.all([
-          searchCoursesPreview(searchQuery),
-          searchProgramsPreview(searchQuery),
+          searchCoursesPreview(trimmed),
+          searchProgramsPreview(trimmed),
         ]);
+        if (cancelled) return;
         setPreviewCourses(courseResults);
         setPreviewPrograms(programResults);
         setShowPreview(courseResults.length > 0 || programResults.length > 0);
       } catch (_err) {
+        if (cancelled) return;
         setPreviewCourses([]);
         setPreviewPrograms([]);
         setShowPreview(false);
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
       }
-    }, 350);
-    return () => clearTimeout(timeout);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [searchQuery]);
   const [_text, setText] = useState(''); // índice del mensaje
   const [index, setIndex] = useState(0); // índice del mensaje
@@ -704,10 +719,13 @@ export default function StudentDetails({
                 </svg>
                 {/* Preview de cursos debajo del input */}
                 {showPreview &&
-                  (previewCourses.length > 0 || previewPrograms.length > 0) && (
+                  (previewLoading ||
+                    previewCourses.length > 0 ||
+                    previewPrograms.length > 0) && (
                     <div className="z-50 w-full">
                       <Suspense fallback={null}>
                         <CourseSearchPreview
+                          isLoading={previewLoading}
                           courses={previewCourses}
                           programs={previewPrograms}
                           onSelectCourse={(courseId: number) => {

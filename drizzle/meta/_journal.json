@@ -3,13 +3,6 @@
   "dialect": "postgresql",
   "entries": [
     {
-      "idx": 0,
-      "version": "7",
-      "when": 1772109711938,
-      "tag": "0000_useful_puff_adder",
-      "breakpoints": true
-    },
-    {
       "idx": 1,
       "version": "7",
       "when": 1781042286128,
@@ -35,6 +28,13 @@
       "version": "7",
       "when": 1782109394708,
       "tag": "0004_cute_jackal",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1782493200000,
+      "tag": "0005_fuzzy_search_pg_trgm",
       "breakpoints": true
     }
   ]

@@ -1,6 +1,6 @@
 'use server';
 
-import { and, eq, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { categories, programas, typesPrograms } from '~/server/db/schema';
@@ -19,6 +19,16 @@ export async function searchProgramsPreview(query: string): Promise<Program[]> {
   const searchPattern = `%${normalizedQuery}%`;
   const normalizeColumn = (column: unknown) =>
     sql`translate(lower(${column}), ${accentFrom}, ${accentTo})`;
+  const textCondition = or(
+    sql`${normalizeColumn(programas.title)} ilike ${searchPattern}`,
+    sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
+    sql`${normalizeColumn(typesPrograms.type)} ilike ${searchPattern}`,
+    sql`${normalizeColumn(programas.description)} ilike ${searchPattern}`
+  );
+  const titleSimilarity = sql<number>`word_similarity(
+    ${normalizedQuery}, ${normalizeColumn(programas.title)}
+  )`;
+  const fuzzyTitleCondition = sql`${titleSimilarity} >= 0.5`;
 
   const results = await db
     .select({
@@ -43,13 +53,13 @@ export async function searchProgramsPreview(query: string): Promise<Program[]> {
       // Los programas con visibility desactivada nunca aparecen en el buscador.
       and(
         or(isNull(programas.visibility), eq(programas.visibility, true)),
-        or(
-          sql`${normalizeColumn(programas.title)} ilike ${searchPattern}`,
-          sql`${normalizeColumn(categories.name)} ilike ${searchPattern}`,
-          sql`${normalizeColumn(typesPrograms.type)} ilike ${searchPattern}`,
-          sql`${normalizeColumn(programas.description)} ilike ${searchPattern}`
-        )
+        or(textCondition, fuzzyTitleCondition)
       )
+    )
+    .orderBy(
+      sql`case when ${textCondition} then 0 else 1 end`,
+      sql`${titleSimilarity} desc`,
+      asc(programas.title)
     )
     .limit(8);
 
