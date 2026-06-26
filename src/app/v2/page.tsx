@@ -3,9 +3,12 @@ import { notFound } from 'next/navigation';
 
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
-import HeroCanvas from '~/components/estudiantes/layout/HeroCanvas';
+import { Educators } from '~/components/v2/Educators';
 import { Features } from '~/components/v2/Features';
 import { Hero } from '~/components/v2/Hero';
+import NeuralBackground from '~/components/v2/NeuralBackground';
+import { StickySearchBar } from '~/components/v2/StickySearchBar';
+import { Testimonials } from '~/components/v2/Testimonials';
 
 export const metadata: Metadata = {
   title: 'Artiefy - Transformamos ideas en realidades',
@@ -21,16 +24,23 @@ export default function V2LandingPage() {
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-slate-950 text-slate-50">
       <SmoothGradient />
-      <HeroCanvas />
+      <NeuralBackground />
 
       <div className="relative z-10 flex min-h-screen flex-col">
         <Header />
+        <StickySearchBar />
 
         <main className="flex grow flex-col">
           <Hero />
-          <Features />
-          {/* <Testimonials /> */}
-          {/* <Pricing /> */}
+
+          {/* Calm the animated background behind reading content so sections
+              stay legible while the neural net still glows through. */}
+          <div className="relative bg-slate-950/60">
+            <Features />
+            <Testimonials />
+            <Educators />
+            {/* <Pricing /> */}
+          </div>
         </main>
 
         {/* Footer Placeholder */}

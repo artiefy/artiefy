@@ -1,9 +1,26 @@
+import { Reveal } from '~/components/estudiantes/ui/Reveal';
+
 import { SearchBar } from './SearchBar';
 
 export function Hero() {
   return (
     <section className="relative flex min-h-[85vh] flex-col items-center justify-center overflow-hidden px-4 pt-24 text-center sm:pt-32">
-      <div className="animate-in fade-in slide-in-from-bottom-8 relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center gap-8 duration-1000">
+      {/* Soft scrim so the headline keeps strong contrast over the neural net */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(60% 50% at 50% 45%, rgba(2,6,23,0.72) 0%, rgba(2,6,23,0.35) 45%, transparent 75%)',
+        }}
+      />
+
+      <Reveal
+        stagger={0.12}
+        y={32}
+        duration={0.8}
+        className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center gap-8"
+      >
         {/* Badge / Eyebrow */}
         <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary backdrop-blur-sm">
           <span className="relative mr-2 flex size-2">
@@ -30,7 +47,9 @@ export function Hero() {
 
         {/* Search Interaction */}
         <div className="flex w-full flex-col items-center gap-4 pt-4">
-          <SearchBar />
+          <div id="hero-search-anchor" className="flex w-full justify-center">
+            <SearchBar />
+          </div>
           <div className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium text-slate-400">
             <span>Populares:</span>
             <span className="cursor-pointer rounded-full bg-white/5 px-3 py-1 transition-colors hover:bg-white/10 hover:text-white">
@@ -44,7 +63,7 @@ export function Hero() {
             </span>
           </div>
         </div>
-      </div>
+      </Reveal>
 
       {/* Decorative glowing orbs behind text */}
       <div className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[600px] w-[800px] -translate-1/2 opacity-30 mix-blend-screen">
