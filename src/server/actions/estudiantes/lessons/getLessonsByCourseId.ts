@@ -61,6 +61,8 @@ export async function getLessonsByCourseId(
             isCompleted: activityProgress?.isCompleted ?? false,
             userProgress: activityProgress?.progress ?? 0,
             createdAt: activity.lastUpdated, // Use lastUpdated as createdAt if not present
+            attemptLimit: 0,
+            currentAttempts: 0,
           };
         }) ?? [],
     } as Lesson; // Add type assertion here
