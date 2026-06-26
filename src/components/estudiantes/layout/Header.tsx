@@ -56,6 +56,7 @@ export function Header({
   const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
   const [previewPrograms, setPreviewPrograms] = useState<Program[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [searchInProgress, setSearchInProgress] = useState(false);
   const [showEspaciosModal, setShowEspaciosModal] = useState(false);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
@@ -220,12 +221,19 @@ export function Header({
 
   // Debounce para preview de cursos
   useEffect(() => {
-    if (!searchQuery || searchQuery.trim().length < 2) {
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < 2) {
       setPreviewCourses([]);
       setPreviewPrograms([]);
       setShowPreview(false);
+      setPreviewLoading(false);
       return;
     }
+    // Guard de carrera: si el usuario sigue escribiendo, ignoramos la respuesta
+    // de esta corrida para que una petición vieja y lenta no pise a una nueva.
+    let cancelled = false;
+    setPreviewLoading(true);
+    setShowPreview(true);
     const timeout = setTimeout(async () => {
       try {
         const [{ searchCoursesPreview }, { searchProgramsPreview }] =
@@ -234,19 +242,26 @@ export function Header({
             import('~/server/actions/estudiantes/programs/searchProgramsPreview'),
           ]);
         const [courseResults, programResults] = await Promise.all([
-          searchCoursesPreview(searchQuery),
-          searchProgramsPreview(searchQuery),
+          searchCoursesPreview(trimmed),
+          searchProgramsPreview(trimmed),
         ]);
+        if (cancelled) return;
         setPreviewCourses(courseResults);
         setPreviewPrograms(programResults);
         setShowPreview(courseResults.length > 0 || programResults.length > 0);
       } catch (_err) {
+        if (cancelled) return;
         setPreviewCourses([]);
         setPreviewPrograms([]);
         setShowPreview(false);
+      } finally {
+        if (!cancelled) setPreviewLoading(false);
       }
-    }, 350);
-    return () => clearTimeout(timeout);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+    };
   }, [searchQuery]);
 
   const handleSearch = (e?: React.FormEvent) => {
@@ -632,11 +647,13 @@ export function Header({
                   />
                   {/* Preview de cursos debajo del input */}
                   {showPreview &&
-                    (previewCourses.length > 0 ||
+                    (previewLoading ||
+                      previewCourses.length > 0 ||
                       previewPrograms.length > 0) && (
                       <div className="absolute z-50 w-full">
                         <Suspense fallback={null}>
                           <CourseSearchPreview
+                            isLoading={previewLoading}
                             courses={previewCourses}
                             programs={previewPrograms}
                             onSelectCourse={(courseId: number) => {
@@ -1155,10 +1172,13 @@ export function Header({
                 <X className="size-4 text-primary/70" />
               </button>
               {showPreview &&
-                (previewCourses.length > 0 || previewPrograms.length > 0) && (
+                (previewLoading ||
+                  previewCourses.length > 0 ||
+                  previewPrograms.length > 0) && (
                   <div className="mt-3 w-full">
                     <Suspense fallback={null}>
                       <CourseSearchPreview
+                        isLoading={previewLoading}
                         courses={previewCourses}
                         programs={previewPrograms}
                         onSelectCourse={(courseId: number) => {
@@ -1262,11 +1282,13 @@ export function Header({
                       />
                     </div>
                     {showPreview &&
-                      (previewCourses.length > 0 ||
+                      (previewLoading ||
+                        previewCourses.length > 0 ||
                         previewPrograms.length > 0) && (
                         <div className="mt-3 max-h-[42dvh] overflow-y-auto rounded-xl">
                           <Suspense fallback={null}>
                             <CourseSearchPreview
+                              isLoading={previewLoading}
                               courses={previewCourses}
                               programs={previewPrograms}
                               onSelectCourse={(courseId: number) => {

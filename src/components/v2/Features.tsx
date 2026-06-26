@@ -1,5 +1,7 @@
 import { FaBrain, FaCode, FaRocket, FaUsers } from 'react-icons/fa';
 
+import { RevealStagger } from '~/components/estudiantes/ui/RevealStagger';
+
 const features = [
   {
     title: 'Aprendizaje Práctico',
@@ -31,7 +33,10 @@ export function Features() {
   return (
     <section className="relative z-10 mx-auto w-full max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
       <div className="mb-16 text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+        <span className="text-sm font-semibold tracking-widest text-primary uppercase">
+          Nuestra metodología
+        </span>
+        <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
           ¿Por qué elegir Artiefy?
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-400">
@@ -40,13 +45,13 @@ export function Features() {
         </p>
       </div>
 
-      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <RevealStagger className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {features.map((feature, index) => {
           const Icon = feature.icon;
           return (
             <div
               key={index}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/50 p-8 shadow-xl backdrop-blur-sm transition-all hover:-translate-y-2 hover:border-primary/50 hover:bg-slate-900/80 hover:shadow-primary/20"
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900/75 p-8 shadow-xl backdrop-blur-md transition-all hover:-translate-y-2 hover:border-primary/50 hover:bg-slate-900/90 hover:shadow-primary/20"
             >
               {/* Decorative top gradient */}
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
@@ -65,7 +70,7 @@ export function Features() {
             </div>
           );
         })}
-      </div>
+      </RevealStagger>
     </section>
   );
 }

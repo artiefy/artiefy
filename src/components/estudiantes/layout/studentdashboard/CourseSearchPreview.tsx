@@ -2,11 +2,14 @@
 
 import Image from 'next/image';
 
+import { Icons } from '~/components/estudiantes/ui/icons';
+
 import type { Course, Program } from '~/types';
 
 interface CourseSearchPreviewProps {
   courses?: Course[];
   programs?: Program[];
+  isLoading?: boolean;
   onSelectCourse?: (courseId: number) => void;
   onSelectProgram?: (programId: string | number) => void;
 }
@@ -22,13 +25,17 @@ function getImageUrl(coverImageKey: string | null | undefined) {
 export default function CourseSearchPreview({
   courses = [],
   programs = [],
+  isLoading = false,
   onSelectCourse,
   onSelectProgram,
 }: CourseSearchPreviewProps) {
   const hasCourses = courses.length > 0;
   const hasPrograms = programs.length > 0;
 
-  if (!hasCourses && !hasPrograms) return null;
+  // Mientras la búsqueda está en curso mostramos un spinner para que el dropdown
+  // aparezca al instante y no se sienta "trabado"; solo lo ocultamos cuando ya
+  // no hay nada que mostrar (sin resultados y sin búsqueda en curso).
+  if (!hasCourses && !hasPrograms && !isLoading) return null;
   return (
     <div
       className="
@@ -37,6 +44,17 @@ export default function CourseSearchPreview({
         sm:inset-x-0
       "
     >
+      {isLoading && !hasCourses && !hasPrograms && (
+        <div
+          className="
+            flex items-center justify-center gap-2 px-3 py-6 text-sm
+            text-[#94a3b8]
+          "
+        >
+          <Icons.spinner className="size-4 text-[#94a3b8]" />
+          Buscando cursos y programas…
+        </div>
+      )}
       {hasCourses && (
         <div className="border-b border-[#1d283a] px-1 pt-3 pb-2 text-white">
           <p

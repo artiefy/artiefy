@@ -1,6 +1,6 @@
 'use server';
 
-import { and, eq, isNull, or, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -33,12 +33,16 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
     sql`${normalizeColumn(modalidades.name)} ilike ${searchPattern}`,
     sql`${normalizeColumn(typesCourses.type)} ilike ${searchPattern}`
   );
+  const titleSimilarity = sql<number>`word_similarity(
+    ${normalizedQuery}, ${normalizeColumn(courses.title)}
+  )`;
+  const fuzzyTitleCondition = sql`${titleSimilarity} >= 0.5`;
 
   // Los cursos con visibility desactivada nunca aparecen en el buscador,
   // sin importar si el usuario está logueado o no.
   const whereCondition = and(
     or(isNull(courses.visibility), eq(courses.visibility, true)),
-    textCondition
+    or(textCondition, fuzzyTitleCondition)
   );
 
   const results = await db
@@ -62,6 +66,11 @@ export async function searchCoursesPreview(query: string): Promise<Course[]> {
     .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
     .leftJoin(typesCourses, eq(courses.idTypesCourses, typesCourses.id))
     .where(whereCondition)
+    .orderBy(
+      sql`case when ${textCondition} then 0 else 1 end`,
+      sql`${titleSimilarity} desc`,
+      asc(courses.title)
+    )
     .limit(8);
 
   // Formatear resultados para cumplir con la interfaz Course

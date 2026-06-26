@@ -231,7 +231,7 @@ export default function ProgramDetails({
         className="
         mx-auto max-w-7xl px-4 pt-16 pb-8
         md:px-6 md:pt-8
-        lg:px-8
+        lg:px-8 lg:pt-24
       "
       >
         <ProgramsBreadcrumbs title={program.title} />
