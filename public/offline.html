@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#01142B" />
+    <title>Sin conexión · Artiefy</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1.25rem;
+        padding: 1.5rem;
+        text-align: center;
+        background: #01142b;
+        color: #f8fafc;
+        font-family:
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      img {
+        width: 96px;
+        height: 96px;
+        border-radius: 22px;
+      }
+      h1 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+      p {
+        margin: 0;
+        max-width: 28rem;
+        color: #94a3b8;
+        line-height: 1.5;
+      }
+      button {
+        margin-top: 0.5rem;
+        padding: 0.7rem 1.4rem;
+        border: 0;
+        border-radius: 9999px;
+        background: #3af4ef;
+        color: #01142b;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <img src="/icon-192.png" alt="Artiefy" />
+    <h1>Estás sin conexión</h1>
+    <p>
+      No pudimos cargar esta página. Revisá tu conexión a internet e intentá de
+      nuevo.
+    </p>
+    <button onclick="location.reload()">Reintentar</button>
+  </body>
+</html>

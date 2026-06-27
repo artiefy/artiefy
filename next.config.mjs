@@ -11,6 +11,25 @@ jiti('./src/env.ts');
 const nextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
+  async headers() {
+    return [
+      {
+        // Always serve the freshest service worker and the correct MIME type.
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/javascript; charset=utf-8',
+          },
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+          { key: 'Service-Worker-Allowed', value: '/' },
+        ],
+      },
+    ];
+  },
   reactCompiler: false,
   cacheComponents: false,
   expireTime: 3600,

@@ -44,6 +44,12 @@ const defaultMetadata: Metadata = {
     'artiefy online',
   ],
   metadataBase: new URL('https://artiefy.com'),
+  applicationName: 'Artiefy',
+  appleWebApp: {
+    capable: true,
+    title: 'Artiefy',
+    statusBarStyle: 'black-translucent',
+  },
   openGraph: {
     type: 'website',
     locale: 'es_ES',
