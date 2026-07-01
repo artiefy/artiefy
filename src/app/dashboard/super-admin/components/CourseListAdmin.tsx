@@ -197,6 +197,11 @@ export default function CourseListAdmin({
                   </button>
                   <Button asChild>
                     <Link
+                      data-tour-id={
+                        course.id === courses[0]?.id
+                          ? 'tutorial-course-list'
+                          : undefined
+                      }
                       href={`/dashboard/super-admin/cursos/${course.id}`}
                       className="
                         group/button relative inline-flex items-center

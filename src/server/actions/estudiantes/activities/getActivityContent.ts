@@ -19,7 +19,9 @@ const getActivityContent = async (
 ): Promise<Activity[]> => {
   try {
     console.log(`Fetching related activities for lesson ${lessonId}`);
-    const relatedActivities = await getRelatedActivities(lessonId);
+    const relatedActivities = (await getRelatedActivities(
+      lessonId
+    )) as Activity[];
 
     console.log('Related activities:', relatedActivities);
 
@@ -31,7 +33,7 @@ const getActivityContent = async (
     const userProgress = await getUserActivityProgress(userId);
 
     const activitiesWithContent = await Promise.all(
-      relatedActivities.map(async (activity, index) => {
+      relatedActivities.map(async (activity: Activity, index: number) => {
         let allQuestions: Question[] = [];
 
         // Para actividades tipo documento no se consultan bancos de preguntas.
@@ -82,7 +84,8 @@ const getActivityContent = async (
         }
 
         const activityProgress = userProgress.find(
-          (progress) => progress.activityId === activity.id
+          (progress: (typeof userProgress)[number]) =>
+            progress.activityId === activity.id
         );
 
         const isLastActivityInLesson = index === relatedActivities.length - 1;

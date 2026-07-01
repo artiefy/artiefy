@@ -112,7 +112,10 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
 
   // Renderiza la vista
   return (
-    <div className="container mx-auto p-4">
+    <div
+      data-tour-id="tutorial-calificar-preguntas"
+      className="container mx-auto p-4"
+    >
       <h1 className="mb-4 text-2xl font-bold">Calificar Preguntas</h1>
       <table className="min-w-full bg-white">
         <thead>
@@ -125,7 +128,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
           </tr>
         </thead>
         <tbody>
-          {studentAnswers.map((answer) => (
+          {studentAnswers.map((answer, index) => (
             <tr key={answer.id}>
               <td className="border px-4 py-2">{answer.studentName}</td>
               <td className="border px-4 py-2">{answer.questionText}</td>
@@ -134,7 +137,12 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
                 {new Date(answer.submissionDate).toLocaleString()}
               </td>
               <td className="border px-4 py-2">
-                <Button onClick={() => handleOpenModal(answer)}>
+                <Button
+                  data-tour-id={
+                    index === 0 ? 'tutorial-open-grade-modal' : undefined
+                  }
+                  onClick={() => handleOpenModal(answer)}
+                >
                   Calificar
                 </Button>
               </td>
@@ -159,6 +167,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
             <div className="mt-4">
               <Label htmlFor="grade">Calificación</Label>
               <Input
+                data-tour-id="tutorial-grade-input"
                 id="grade"
                 type="number"
                 value={grade ?? ''}
@@ -171,6 +180,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
             <div className="mt-4">
               <Label htmlFor="comment">Comentario</Label>
               <textarea
+                data-tour-id="tutorial-comment-input"
                 id="comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
@@ -182,7 +192,9 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
             <Button variant="outline" onClick={handleCloseModal}>
               Cancelar
             </Button>
-            <Button onClick={handleSave}>Guardar</Button>
+            <Button data-tour-id="tutorial-grade-save" onClick={handleSave}>
+              Guardar
+            </Button>
           </ModalFooter>
         </Modal>
       )}
