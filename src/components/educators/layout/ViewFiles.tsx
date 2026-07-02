@@ -163,13 +163,15 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
         "
       >
         {files.map((file, index) => {
-          if (!file) return null; // Manejar caso de clave vacía
-          const fileUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`; // URL de S3
-          const icon = getIconForFileType(file.fileName); // Icono basado en la extensión del archivo
+          if (!file) return null;
+          const fileUrl = file.key.startsWith('http')
+            ? file.key
+            : `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${file.key}`;
+          const icon = getIconForFileType(file.fileName);
           if (lessonFileName === null) {
-            return null; // Manejar caso de nombre de archivo vacío
+            return null;
           }
-          const resourceNames = lessonFileName.resourceNames.split(','); // Separar resourceNames por comas
+          const resourceNames = lessonFileName.resourceNames.split(',');
 
           return (
             <Link
@@ -178,19 +180,21 @@ const ViewFiles = ({ lessonId, selectedColor }: ViewFilesProps) => {
               target="_blank"
               rel="noopener noreferrer"
               className="
-                relative mb-3 flex h-24 w-full items-center space-x-2 rounded-lg
-                border border-gray-600/10 bg-slate-200/20 p-2
-                hover:bg-slate-200/40
-              "
+        relative mb-3 flex h-24 w-full items-center gap-3 rounded-lg
+        border border-gray-600/10 bg-slate-200/20 p-3
+        hover:bg-slate-200/40
+      "
             >
-              {icon}
+              <div className="flex shrink-0 items-center justify-center">
+                {icon}
+              </div>
 
               <p
                 className={`
-                  no-underline
-                  hover:underline
-                  ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
-                `}
+          truncate no-underline
+          hover:underline
+          ${selectedColor === '#FFFFFF' ? 'text-black' : 'text-white'}
+        `}
               >
                 {resourceNames[index] ?? file.fileName}
               </p>
