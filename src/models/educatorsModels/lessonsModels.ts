@@ -340,7 +340,7 @@ export const getLessonById = async (
   lessonId: number
 ): Promise<Lesson | null> => {
   try {
-    const lessonData = await db
+    const rows = await db
       .select({
         id: lessons.id,
         title: lessons.title,
@@ -367,32 +367,9 @@ export const getLessonById = async (
       .leftJoin(users, eq(courses.instructor, users.id))
       .leftJoin(categories, eq(courses.categoryid, categories.id))
       .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-      .where(eq(lessons.id, lessonId))
-      .then(
-        (
-          rows: Array<{
-            id: number;
-            title: string;
-            description: string | null;
-            duration: number;
-            coverImageKey: string | null;
-            coverVideoKey: string | null;
-            courseId: number;
-            createdAt: Date | string | null;
-            updatedAt: Date | string | null;
-            resourceKey: string | null;
-            resourceNames: string | null;
-            course: {
-              id: number;
-              title: string;
-              modalidadId: string | null;
-              categoryId: string | null;
-              description: string | null;
-              instructor: string | null;
-            };
-          }>
-        ) => rows[0]
-      );
+      .where(eq(lessons.id, lessonId));
+
+    const lessonData = rows[0];
 
     if (!lessonData) {
       return null;
