@@ -1,0 +1,4 @@
+# Codebase Memory ignore — keep the code graph focused on Artiefy's real app.
+# Excludes agent skill bundles whose templates were wrongly indexed as app entry points.
+.agents/
+.github/skills/
