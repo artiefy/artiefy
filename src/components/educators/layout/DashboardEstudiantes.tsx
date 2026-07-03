@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -245,6 +245,8 @@ interface MobileUserCardProps {
   user: User;
   activities: Activity[];
   grades: Record<string, Record<number, number>>;
+  firstGradeActivityId?: number;
+  firstVisibleUserId?: string;
   onGradeChange: (userId: string, activityId: number, grade: number) => void;
   onSaveGrade: (userId: string, activityId: number, grade: number) => void;
   onViewDetails: (user: User) => void;
@@ -254,6 +256,8 @@ function MobileUserCard({
   user,
   activities,
   grades,
+  firstGradeActivityId,
+  firstVisibleUserId,
   onGradeChange,
   onSaveGrade,
   onViewDetails,
@@ -306,6 +310,12 @@ function MobileUserCard({
               min={0}
               max={100}
               step={0.5}
+              data-tour-id={
+                user.id === firstVisibleUserId &&
+                activity.id === firstGradeActivityId
+                  ? 'tutorial-first-grade-input'
+                  : undefined
+              }
               className="
                 w-12 rounded bg-gray-600 p-[2px] text-center text-xs text-white
               "
@@ -382,6 +392,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   const USERS_PER_PAGE = 10;
 
@@ -420,6 +431,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
     (currentPage - 1) * USERS_PER_PAGE,
     currentPage * USERS_PER_PAGE
   );
+
+  const firstGradeActivityId = activities.find(
+    (activity) =>
+      activity.name !== 'Sin actividad' && activity.name !== 'Agregar actividad'
+  )?.id;
+  const firstVisibleUserId = currentUsers[0]?.id;
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
@@ -524,7 +541,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
       const formattedUsers = rawUsers.map((user) => {
         const totalProgress = user.lessonsProgress.reduce(
-          (acc, lesson) => acc + lesson.progress,
+          (acc: number, lesson: LessonProgress) => acc + lesson.progress,
           0
         );
         const averageProgress =
@@ -559,20 +576,25 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
       const activityMap = new Map<number, Omit<Activity, 'id'>>();
       const gradesMap: Record<string, Record<number, number>> = {};
 
-      rawUsers.forEach((u) => {
-        const g: Record<number, number> = {};
-        u.activitiesWithGrades.forEach((a) => {
-          activityMap.set(a.activityId, {
-            name: a.activityName,
-            parametro: a.parametroName,
-            parametroId: a.parametroId,
-            parametroPeso: a.parametroPeso ?? 0,
-            actividadPeso: a.actividadPeso ?? 0,
+      rawUsers.forEach(
+        (u: {
+          activitiesWithGrades: User['activitiesWithGrades'];
+          id: string;
+        }) => {
+          const g: Record<number, number> = {};
+          u.activitiesWithGrades.forEach((a) => {
+            activityMap.set(a.activityId, {
+              name: a.activityName,
+              parametro: a.parametroName,
+              parametroId: a.parametroId,
+              parametroPeso: a.parametroPeso ?? 0,
+              actividadPeso: a.actividadPeso ?? 0,
+            });
+            g[a.activityId] = a.grade;
           });
-          g[a.activityId] = a.grade;
-        });
-        gradesMap[u.id] = g;
-      });
+          gradesMap[u.id] = g;
+        }
+      );
 
       const allActivities: Activity[] = Array.from(activityMap.entries()).map(
         ([id, data]) => ({ id, ...data })
@@ -603,7 +625,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         onClose={closeModal}
       />
 
-      <div className="group relative">
+      <div ref={containerRef} className="group relative">
         <div
           className="
             absolute -inset-0.5 rounded-xl bg-gradient-to-r from-[#3AF4EF]
@@ -1009,6 +1031,12 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                                 min={0}
                                 max={100}
                                 step={0.5}
+                                data-tour-id={
+                                  user.id === firstVisibleUserId &&
+                                  activity.id === firstGradeActivityId
+                                    ? 'tutorial-first-grade-input'
+                                    : undefined
+                                }
                                 className="
                                   w-16 rounded bg-gray-700 p-1 text-center
                                   text-white

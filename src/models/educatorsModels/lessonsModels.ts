@@ -116,7 +116,9 @@ export async function createLesson({
           unlockNextLesson = progress.progress >= 100;
         } else {
           // Con actividades: desbloquear si TODAS están completas
-          const activityIds = lessonActivities.map((a) => a.id);
+          const activityIds = lessonActivities.map(
+            (a: (typeof lessonActivities)[number]) => a.id
+          );
 
           const userActivityProgress = await db
             .select()
@@ -130,7 +132,9 @@ export async function createLesson({
 
           unlockNextLesson =
             userActivityProgress.length === activityIds.length &&
-            userActivityProgress.every((a) => a.isCompleted);
+            userActivityProgress.every(
+              (a: (typeof userActivityProgress)[number]) => a.isCompleted
+            );
         }
 
         // 5. Crear el progreso para la nueva lección para este usuario
@@ -178,7 +182,7 @@ export const getCourseDifficulty = async (courseId: number) => {
     .select({ nivel: courses.nivelid })
     .from(courses)
     .where(eq(courses.id, courseId))
-    .then((rows) => rows[0]?.nivel);
+    .then((rows: Array<{ nivel: number | null }>) => rows[0]?.nivel);
 
   return course;
 };
@@ -236,7 +240,7 @@ export async function getLessonsByCourseId(courseId: number) {
           })
           .from(users)
           .where(eq(users.id, instructorId))
-          .then((rows) => rows[0]);
+          .then((rows: Array<{ name: string | null }>) => rows[0]);
 
         if (dbUser?.name) {
           fullname = dbUser.name;
@@ -298,6 +302,14 @@ export async function getLessonsByCourseId(courseId: number) {
     return lessonsWithCourse;
   } catch (_error) {
     console.error('Error al obtener las lecciones:', _error);
+    // log cause if provided by the DB client for easier debugging
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cause = (_error as any)?.cause;
+    if (cause)
+      console.error(
+        'Error cause:',
+        cause instanceof Error ? cause.message : cause
+      );
     throw new Error('No se pudieron cargar las lecciones del curso');
   }
 }
@@ -318,7 +330,7 @@ export const getUserProgressByLessonId = async (
         eq(userLessonsProgress.userId, userId)
       )
     )
-    .then((rows) => rows[0]?.progress);
+    .then((rows: Array<{ progress: number }>) => rows[0]?.progress);
 
   return progress;
 };
@@ -328,7 +340,7 @@ export const getLessonById = async (
   lessonId: number
 ): Promise<Lesson | null> => {
   try {
-    const lessonData = await db
+    const rows = await db
       .select({
         id: lessons.id,
         title: lessons.title,
@@ -355,8 +367,9 @@ export const getLessonById = async (
       .leftJoin(users, eq(courses.instructor, users.id))
       .leftJoin(categories, eq(courses.categoryid, categories.id))
       .leftJoin(modalidades, eq(courses.modalidadesid, modalidades.id))
-      .where(eq(lessons.id, lessonId))
-      .then((rows) => rows[0]);
+      .where(eq(lessons.id, lessonId));
+
+    const lessonData = rows[0];
 
     if (!lessonData) {
       return null;
@@ -392,7 +405,7 @@ export const getLessonById = async (
             })
             .from(users)
             .where(eq(users.id, instructorId))
-            .then((rows) => rows[0]);
+            .then((rows: Array<{ name: string | null }>) => rows[0]);
 
           if (dbUser?.name) {
             instructorName = dbUser.name;
@@ -470,7 +483,9 @@ export const deleteLesson = async (lessonId: number): Promise<void> => {
       .select({ id: activities.id })
       .from(activities)
       .where(eq(activities.lessonsId, lessonId))
-      .then((rows) => rows.map((row) => row.id));
+      .then((rows: Array<{ id: number }>) =>
+        rows.map((row: { id: number }) => row.id)
+      );
 
     // Eliminar el progreso de los usuarios asociado a las actividades
     if (activityIds.length > 0) {
@@ -504,14 +519,18 @@ export const deleteLessonsByCourseId = async (courseId: number) => {
       .select({ id: lessons.id })
       .from(lessons)
       .where(eq(lessons.courseId, courseId))
-      .then((rows) => rows.map((row) => row.id));
+      .then((rows: Array<{ id: number }>) =>
+        rows.map((row: { id: number }) => row.id)
+      );
 
     // Obtener todas las actividades asociadas a las lecciones del curso
     const activityIds = await db
       .select({ id: activities.id })
       .from(activities)
       .where(inArray(activities.lessonsId, lessonIds))
-      .then((rows) => rows.map((row) => row.id));
+      .then((rows: Array<{ id: number }>) =>
+        rows.map((row: { id: number }) => row.id)
+      );
 
     // Eliminar el progreso de los usuarios asociado a las actividades
     if (activityIds.length > 0) {
@@ -554,7 +573,9 @@ export const getUserProgressByCourseId = async (courseId: number) => {
     .select({ id: lessons.id })
     .from(lessons)
     .where(eq(lessons.courseId, courseId))
-    .then((rows) => rows.map((row) => row.id));
+    .then((rows: Array<{ id: number }>) =>
+      rows.map((row: { id: number }) => row.id)
+    );
 
   // Obtener el progreso de los usuarios para las lecciones obtenidas
   const progress = await db
@@ -568,12 +589,22 @@ export const getUserProgressByCourseId = async (courseId: number) => {
 
   // Transformar los datos en un formato más conveniente
   const progressByLesson: Record<number, Record<string, number>> = {};
-  progress.forEach(({ lessonId, userId, progress }) => {
-    if (!progressByLesson[lessonId]) {
-      progressByLesson[lessonId] = {};
+  progress.forEach(
+    ({
+      lessonId,
+      userId,
+      progress,
+    }: {
+      lessonId: number;
+      userId: string;
+      progress: number;
+    }) => {
+      if (!progressByLesson[lessonId]) {
+        progressByLesson[lessonId] = {};
+      }
+      progressByLesson[lessonId][userId] = progress;
     }
-    progressByLesson[lessonId][userId] = progress;
-  });
+  );
 
   return progressByLesson;
 };

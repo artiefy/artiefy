@@ -349,555 +349,558 @@ const Page: React.FC = () => {
 
   return (
     <>
-      <Breadcrumb className="mt-8">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="
-                text-cyan-400 transition duration-300
-                hover:text-cyan-200
-              "
-              href="/dashboard/super-admin"
-            >
-              Cursos
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="
-                text-cyan-400 transition duration-300
-                hover:text-cyan-200
-              "
-              href="/dashboard/super-admin/cursos"
-            >
-              Lista de cursos
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              className="
-                text-cyan-400 transition duration-300
-                hover:text-cyan-200
-              "
-              href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
-            >
-              Detalles curso
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
-              className="
-                text-cyan-400 transition duration-300
-                hover:text-cyan-200
-              "
-            >
-              Lección
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink
-              href="#"
-              onClick={() => window.history.back()}
-              className="
-                text-cyan-300 transition duration-300
-                hover:text-white
-              "
-            >
-              Creación de actividad
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="group relative h-auto w-full">
-        <div
-          className="
-            absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
-            from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
-            duration-500
-            group-hover:opacity-100
-          "
-        />
+      <div data-tour-id="tutorial-actividad-detalle">
+        <Breadcrumb className="mt-8">
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="
+                  text-cyan-400 transition duration-300
+                  hover:text-cyan-200
+                "
+                href="/dashboard/super-admin"
+              >
+                Cursos
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="
+                  text-cyan-400 transition duration-300
+                  hover:text-cyan-200
+                "
+                href="/dashboard/super-admin/cursos"
+              >
+                Lista de cursos
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                className="
+                  text-cyan-400 transition duration-300
+                  hover:text-cyan-200
+                "
+                href={`/dashboard/super-admin/cursos/${courseIdNumber}`}
+              >
+                Detalles curso
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}`}
+                className="
+                  text-cyan-400 transition duration-300
+                  hover:text-cyan-200
+                "
+              >
+                Lección
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                href="#"
+                onClick={() => window.history.back()}
+                className="
+                  text-cyan-300 transition duration-300
+                  hover:text-white
+                "
+              >
+                Creación de actividad
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
 
-        <div
-          className="
-            relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-2xl
-            border border-cyan-500/20 bg-slate-800 p-4 text-white
-            shadow-[0_0_20px_rgba(34,211,238,0.08)]
-            sm:p-6
-            lg:p-8
-          "
-        >
-          <div className="mb-6 space-y-3">
-            <h2
-              className="
-                bg-gradient-to-r from-cyan-300 to-white bg-clip-text text-2xl
-                font-bold text-transparent
-                sm:text-3xl
-                lg:text-4xl
-              "
-            >
-              {actividad.name}
-            </h2>
-            <p
-              className="
-                text-sm font-medium text-white/70
-                sm:text-base
-                lg:text-lg
-              "
-            >
-              Lección: {actividad.lesson?.title}
-            </p>
-          </div>
+        <div className="group relative h-auto w-full">
+          <div
+            className="
+              absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r
+              from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition
+              duration-500
+              group-hover:opacity-100
+            "
+          />
 
           <div
             className="
-              my-6 grid grid-cols-1 gap-6
-              lg:grid-cols-2
+              relative mx-auto mt-2 flex w-full max-w-7xl flex-col rounded-2xl
+              border border-cyan-500/20 bg-slate-800 p-4 text-white
+              shadow-[0_0_20px_rgba(34,211,238,0.08)]
+              sm:p-6
+              lg:p-8
             "
           >
-            <div
-              className="
-                space-y-4 text-sm
-                sm:text-base
-              "
-            >
-              <div className="flex flex-col gap-1">
-                <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
-                  Docente
-                </span>
-                <Badge
-                  variant="outline"
-                  className="
-                    w-fit border-cyan-500/30 bg-cyan-950/30 font-medium
-                    text-cyan-300
-                    hover:bg-cyan-950/50
-                  "
-                >
-                  {actividad.lesson?.courseInstructorName ??
-                    actividad.lesson.courseInstructor}
-                </Badge>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
-                  Tipo de actividad
-                </span>
-                <p className="font-medium text-white/90">
-                  {actividad.type?.name}
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
-                  Descripción
-                </span>
-                <p className="font-normal text-white/80">
-                  {actividad.description}
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-1">
-                <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
-                  Calificable
-                </span>
-                <Badge
-                  variant="outline"
-                  className="
-                    w-fit border-cyan-500/30 bg-cyan-950/30 text-cyan-300
-                    hover:bg-cyan-950/50
-                  "
-                >
-                  {actividad.revisada ? 'Sí' : 'No'}
-                </Badge>
-              </div>
-
-              {actividad.fechaMaximaEntrega && (
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
-                    Fecha de entrega
-                  </span>
-                  <p className="font-medium text-white/90">
-                    {new Date(actividad.fechaMaximaEntrega).toLocaleString(
-                      'es-ES',
-                      {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      }
-                    )}
-                  </p>
-                </div>
-              )}
+            <div className="mb-6 space-y-3">
+              <h2
+                className="
+                  bg-gradient-to-r from-cyan-300 to-white bg-clip-text text-2xl
+                  font-bold text-transparent
+                  sm:text-3xl
+                  lg:text-4xl
+                "
+              >
+                {actividad.name}
+              </h2>
+              <p
+                className="
+                  text-sm font-medium text-white/70
+                  sm:text-base
+                  lg:text-lg
+                "
+              >
+                Lección: {actividad.lesson?.title}
+              </p>
             </div>
 
             <div
               className="
-                flex items-center justify-center
-                lg:col-span-1
+                my-6 grid grid-cols-1 gap-6
+                lg:grid-cols-2
               "
             >
               <div
                 className="
-                  w-full max-w-xs
-                  sm:max-w-sm
+                  space-y-4 text-sm
+                  sm:text-base
                 "
               >
-                <Image
-                  src={
-                    actividad.lesson.coverImageKey
-                      ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${actividad.lesson.coverImageKey}`
-                      : `/favicon.ico`
-                  }
-                  alt="Imagen de la lección"
-                  width={400}
-                  height={400}
-                  className="h-auto w-full rounded-lg object-cover shadow-lg"
-                />
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                    Docente
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="
+                      w-fit border-cyan-500/30 bg-cyan-950/30 font-medium
+                      text-cyan-300
+                      hover:bg-cyan-950/50
+                    "
+                  >
+                    {actividad.lesson?.courseInstructorName ??
+                      actividad.lesson.courseInstructor}
+                  </Badge>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                    Tipo de actividad
+                  </span>
+                  <p className="font-medium text-white/90">
+                    {actividad.type?.name}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                    Descripción
+                  </span>
+                  <p className="font-normal text-white/80">
+                    {actividad.description}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                    Calificable
+                  </span>
+                  <Badge
+                    variant="outline"
+                    className="
+                      w-fit border-cyan-500/30 bg-cyan-950/30 text-cyan-300
+                      hover:bg-cyan-950/50
+                    "
+                  >
+                    {actividad.revisada ? 'Sí' : 'No'}
+                  </Badge>
+                </div>
+
+                {actividad.fechaMaximaEntrega && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs tracking-wide text-cyan-300/70 uppercase">
+                      Fecha de entrega
+                    </span>
+                    <p className="font-medium text-white/90">
+                      {new Date(actividad.fechaMaximaEntrega).toLocaleString(
+                        'es-ES',
+                        {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        }
+                      )}
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>
-          </div>
 
-          <div
-            className="
-              my-6 flex flex-col flex-wrap justify-center gap-3
-              sm:flex-row
-              lg:justify-start
-            "
-          >
-            <Link
-              href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
-              className="
-                rounded-lg border border-cyan-500/30 bg-cyan-600 px-6 py-2
-                text-center text-sm font-medium text-white transition-colors
-                duration-200
-                hover:bg-cyan-700
-                sm:text-base
-              "
-            >
-              Realizar Actividad
-            </Link>
-
-            <Link
-              href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
-              className="
-                rounded-lg border border-cyan-500/30 bg-cyan-600 px-6 py-2
-                text-center text-sm font-medium text-white transition-colors
-                duration-200
-                hover:bg-cyan-700
-                sm:text-base
-              "
-            >
-              Editar Actividad
-            </Link>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
+              <div
+                className="
+                  flex items-center justify-center
+                  lg:col-span-1
+                "
+              >
+                <div
                   className="
-                    rounded-lg border border-red-600 bg-red-600 px-6 py-2
-                    text-sm font-medium text-white transition-colors
-                    duration-200
-                    hover:bg-white hover:text-red-600
-                    sm:text-base
+                    w-full max-w-xs
+                    sm:max-w-sm
                   "
                 >
-                  Eliminar
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta acción no se puede deshacer. Se eliminará
-                    permanentemente la actividad
-                    <span className="font-bold"> {actividad?.name}</span> y
-                    todos los datos asociados.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleDeleteAct}
+                  <Image
+                    src={
+                      actividad.lesson.coverImageKey
+                        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${actividad.lesson.coverImageKey}`
+                        : `/favicon.ico`
+                    }
+                    alt="Imagen de la lección"
+                    width={400}
+                    height={400}
+                    className="h-auto w-full rounded-lg object-cover shadow-lg"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="
+                my-6 flex flex-col flex-wrap justify-center gap-3
+                sm:flex-row
+                lg:justify-start
+              "
+            >
+              <Link
+                href={`/dashboard/educadores/cursos/${courseIdNumber}/${lessonIdNumber}/actividades/${actividadIdNumber}/verActividad`}
+                className="
+                  rounded-lg border border-cyan-500/30 bg-cyan-600 px-6 py-2
+                  text-center text-sm font-medium text-white transition-colors
+                  duration-200
+                  hover:bg-cyan-700
+                  sm:text-base
+                "
+              >
+                Realizar Actividad
+              </Link>
+
+              <Link
+                href={`/dashboard/super-admin/cursos/${courseIdNumber}/${lessonIdNumber}/actividades?activityId=${actividadIdNumber}`}
+                className="
+                  rounded-lg border border-cyan-500/30 bg-cyan-600 px-6 py-2
+                  text-center text-sm font-medium text-white transition-colors
+                  duration-200
+                  hover:bg-cyan-700
+                  sm:text-base
+                "
+              >
+                Editar Actividad
+              </Link>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
                     className="
-                      rounded-lg border border-red-600 bg-red-600 font-medium
-                      text-white transition-colors duration-200
-                      hover:border-red-700 hover:bg-transparent
-                      hover:text-red-700
+                      rounded-lg border border-red-600 bg-red-600 px-6 py-2
+                      text-sm font-medium text-white transition-colors
+                      duration-200
+                      hover:bg-white hover:text-red-600
+                      sm:text-base
                     "
                   >
                     Eliminar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta acción no se puede deshacer. Se eliminará
+                      permanentemente la actividad
+                      <span className="font-bold"> {actividad?.name}</span> y
+                      todos los datos asociados.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleDeleteAct}
+                      className="
+                        rounded-lg border border-red-600 bg-red-600 font-medium
+                        text-white transition-colors duration-200
+                        hover:border-red-700 hover:bg-transparent
+                        hover:text-red-700
+                      "
+                    >
+                      Eliminar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
 
-          {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
-          {actividad?.type.id === 1 ? (
-            <div className="mt-8 space-y-6">
-              <div className="rounded-2xl bg-slate-900 shadow-md">
-                <div className="space-y-4">
-                  {actividadIdNumber !== null && (
-                    <>
-                      <div
-                        className="
-                          overflow-hidden rounded-2xl border border-cyan-500/20
-                        "
-                      >
+            {/* Zona de actividades, renderiza la creacion de la actividad segun su tipo "las cuales estan en la database" */}
+            {actividad?.type.id === 1 ? (
+              <div className="mt-8 space-y-6">
+                <div className="rounded-2xl bg-slate-900 shadow-md">
+                  <div className="space-y-4">
+                    {actividadIdNumber !== null && (
+                      <>
                         <div
                           className="
-                            rounded-t-2xl bg-gradient-to-r from-slate-800
-                            to-cyan-950/30 p-4
-                            sm:p-6
+                            overflow-hidden rounded-2xl border border-cyan-500/20
                           "
                         >
-                          <h2
+                          <div
                             className="
-                              bg-gradient-to-r from-cyan-300 to-white
-                              bg-clip-text text-lg font-semibold
-                              text-transparent
-                              sm:text-xl
+                              rounded-t-2xl bg-gradient-to-r from-slate-800
+                              to-cyan-950/30 p-4
+                              sm:p-6
                             "
                           >
-                            Gestión de Archivos y Calificaciones
-                          </h2>
-                          <p
-                            className="
-                              mt-1 text-xs text-white/60
-                              sm:text-sm
-                            "
-                          >
-                            Administra los archivos subidos y asigna
-                            calificaciones
-                          </p>
+                            <h2
+                              className="
+                                bg-gradient-to-r from-cyan-300 to-white
+                                bg-clip-text text-lg font-semibold
+                                text-transparent
+                                sm:text-xl
+                              "
+                            >
+                              Gestión de Archivos y Calificaciones
+                            </h2>
+                            <p
+                              className="
+                                mt-1 text-xs text-white/60
+                                sm:text-sm
+                              "
+                            >
+                              Administra los archivos subidos y asigna
+                              calificaciones
+                            </p>
+                          </div>
+                          <VerRespuestasArchivos
+                            activityId={actividadIdNumber.toString()}
+                          />
                         </div>
-                        <VerRespuestasArchivos
-                          activityId={actividadIdNumber.toString()}
-                        />
-                      </div>
-                      {questions.includes('ARCHIVO') && (
-                        <FormActCompletado
-                          activityId={actividadIdNumber}
-                          onSubmit={handleFormSubmit}
-                          onCancel={handleCancel}
-                        />
-                      )}
 
-                      {editingQuestion?.tipo === 'ARCHIVO' &&
-                        'parametros' in editingQuestion && (
+                        {questions.includes('ARCHIVO') && (
                           <FormActCompletado
                             activityId={actividadIdNumber}
-                            editingQuestion={editingQuestion}
                             onSubmit={handleFormSubmit}
                             onCancel={handleCancel}
                           />
                         )}
 
-                      <div
-                        className="
-                          rounded-2xl border border-cyan-500/20 bg-slate-800 p-6
-                        "
-                      >
-                        <QuestionSubidaList
-                          key={`subida-${shouldRefresh}`}
-                          activityId={actividadIdNumber}
-                          onEdit={(q) => {
-                            if ('parametros' in q) {
-                              console.log(
-                                '[onEdit] Editando pregunta con parámetros:',
-                                q
-                              );
-                              setEditingQuestion({ ...q, tipo: 'ARCHIVO' });
-                            } else {
-                              console.warn(
-                                '[onEdit] La pregunta no tiene "parametros":',
-                                q
-                              );
-                            }
-                          }}
-                        />
-                      </div>
-                    </>
-                  )}
+                        {editingQuestion?.tipo === 'ARCHIVO' &&
+                          'parametros' in editingQuestion && (
+                            <FormActCompletado
+                              activityId={actividadIdNumber}
+                              editingQuestion={editingQuestion}
+                              onSubmit={handleFormSubmit}
+                              onCancel={handleCancel}
+                            />
+                          )}
+
+                        <div
+                          className="
+                            rounded-2xl border border-cyan-500/20 bg-slate-800 p-6
+                          "
+                        >
+                          <QuestionSubidaList
+                            key={`subida-${shouldRefresh}`}
+                            activityId={actividadIdNumber}
+                            onEdit={(q) => {
+                              if ('parametros' in q) {
+                                console.log(
+                                  '[onEdit] Editando pregunta con parámetros:',
+                                  q
+                                );
+                                setEditingQuestion({ ...q, tipo: 'ARCHIVO' });
+                              } else {
+                                console.warn(
+                                  '[onEdit] La pregunta no tiene "parametros":',
+                                  q
+                                );
+                              }
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : actividad?.type.id === 2 ? (
-            <>
-              <SeleccionActi
-                selectedColor={color}
-                onSelectChange={setSelectedActivityType}
-              />
-              <div
-                className="
-                  mt-4 rounded-2xl border border-cyan-500/20 bg-slate-900 p-4
-                  text-sm text-white
-                  sm:p-6 sm:text-base
-                "
-              >
-                <p className="mb-3 font-semibold text-cyan-300">
-                  Distribución de preguntas:
-                </p>
+            ) : actividad?.type.id === 2 ? (
+              <div className="space-y-6">
+                <SeleccionActi
+                  selectedColor={color}
+                  onSelectChange={setSelectedActivityType}
+                />
                 <div
                   className="
-                    space-y-2 text-xs
-                    sm:text-sm
+                    mt-4 rounded-2xl border border-cyan-500/20 bg-slate-900 p-4
+                    text-sm text-white
+                    sm:p-6 sm:text-base
                   "
                 >
-                  <div className="flex items-center justify-between">
-                    <span>Opción Múltiple</span>
-                    <span className="font-medium">
-                      {resumenPorTipo.opcionMultiple}%
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Verdadero/Falso</span>
-                    <span className="font-medium">
-                      {resumenPorTipo.verdaderoFalso}%
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Completar</span>
-                    <span className="font-medium">
-                      {resumenPorTipo.completar}%
-                    </span>
-                  </div>
+                  <p className="mb-3 font-semibold text-cyan-300">
+                    Distribución de preguntas:
+                  </p>
                   <div
                     className="
-                      mt-2 flex items-center justify-between border-t
-                      border-current/20 pt-2 font-semibold
-                    "
-                  >
-                    <span>Total usado</span>
-                    <span>{porcentajeUsado}%</span>
-                  </div>
-                  <div
-                    className="
-                      flex items-center justify-between text-xs opacity-80
+                      space-y-2 text-xs
                       sm:text-sm
                     "
                   >
-                    <span>Disponible</span>
-                    <span>{porcentajeDisponible}%</span>
+                    <div className="flex items-center justify-between">
+                      <span>Opción Múltiple</span>
+                      <span className="font-medium">
+                        {resumenPorTipo.opcionMultiple}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Verdadero/Falso</span>
+                      <span className="font-medium">
+                        {resumenPorTipo.verdaderoFalso}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Completar</span>
+                      <span className="font-medium">
+                        {resumenPorTipo.completar}%
+                      </span>
+                    </div>
+                    <div
+                      className="
+                        mt-2 flex items-center justify-between border-t
+                        border-current/20 pt-2 font-semibold
+                      "
+                    >
+                      <span>Total usado</span>
+                      <span>{porcentajeUsado}%</span>
+                    </div>
+                    <div
+                      className="
+                        flex items-center justify-between text-xs opacity-80
+                        sm:text-sm
+                      "
+                    >
+                      <span>Disponible</span>
+                      <span>{porcentajeDisponible}%</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {selectedActivityType && (
-                <Button
-                  className="
-                    mx-auto mt-4 block border border-cyan-500/30 bg-transparent
-                    px-6 py-2 text-sm font-medium text-cyan-300
-                    hover:bg-cyan-950/40
-                    sm:text-base
-                  "
-                  onClick={handleAddQuestion}
-                >
-                  Agregar Pregunta
-                </Button>
-              )}
-              {/* Para agregar nuevas preguntas */}
-              {questions.map((questionType, index) => (
-                <div key={index}>
-                  {questionType === 'OM' && actividadIdNumber !== null && (
-                    <QuestionForm
-                      activityId={actividadIdNumber}
-                      onSubmit={handleFormSubmit}
-                      onCancel={handleCancel}
-                      isUploading={false}
-                      editingQuestion={undefined} // <- ✅ Tipo correcto
-                    />
-                  )}
-                  {questionType === 'FOV' && actividadIdNumber !== null && (
-                    <QuestionVOFForm
-                      activityId={actividadIdNumber}
-                      onSubmit={handleFormSubmit}
-                      onCancel={handleCancel}
-                      isUploading={false}
-                      editingQuestion={undefined} // <- ✅ Tipo correcto
-                    />
-                  )}
-                  {questionType === 'COMPLETADO' &&
-                    actividadIdNumber !== null && (
-                      <PreguntasAbiertas
-                        activityId={actividadIdNumber}
-                        onSubmit={handleFormSubmit}
-                        onCancel={handleCancel}
-                        isUploading={false}
-                      />
-                    )}
-                </div>
-              ))}
+                {selectedActivityType && (
+                  <Button
+                    className="
+                      mx-auto mt-4 block border border-cyan-500/30 bg-transparent
+                      px-6 py-2 text-sm font-medium text-cyan-300
+                      hover:bg-cyan-950/40
+                      sm:text-base
+                    "
+                    onClick={handleAddQuestion}
+                  >
+                    Agregar Pregunta
+                  </Button>
+                )}
 
-              {/* Para editar una pregunta existente */}
-              {editingQuestion && (
-                <div className="mt-4">
-                  {editingQuestion.tipo === 'OM' &&
-                    actividadIdNumber !== null && (
+                {questions.map((questionType, index) => (
+                  <div key={index}>
+                    {questionType === 'OM' && actividadIdNumber !== null && (
                       <QuestionForm
                         activityId={actividadIdNumber}
                         onSubmit={handleFormSubmit}
                         onCancel={handleCancel}
                         isUploading={false}
-                        editingQuestion={editingQuestion as Question}
+                        editingQuestion={undefined}
                       />
                     )}
-                  {editingQuestion.tipo === 'FOV' &&
-                    actividadIdNumber !== null && (
+                    {questionType === 'FOV' && actividadIdNumber !== null && (
                       <QuestionVOFForm
                         activityId={actividadIdNumber}
                         onSubmit={handleFormSubmit}
                         onCancel={handleCancel}
                         isUploading={false}
-                        editingQuestion={editingQuestion as VerdaderoOFlaso}
+                        editingQuestion={undefined}
                       />
                     )}
+                    {questionType === 'COMPLETADO' &&
+                      actividadIdNumber !== null && (
+                        <PreguntasAbiertas
+                          activityId={actividadIdNumber}
+                          onSubmit={handleFormSubmit}
+                          onCancel={handleCancel}
+                          isUploading={false}
+                        />
+                      )}
+                  </div>
+                ))}
+
+                {editingQuestion && (
+                  <div className="mt-4">
+                    {editingQuestion.tipo === 'OM' &&
+                      actividadIdNumber !== null && (
+                        <QuestionForm
+                          activityId={actividadIdNumber}
+                          onSubmit={handleFormSubmit}
+                          onCancel={handleCancel}
+                          isUploading={false}
+                          editingQuestion={editingQuestion as Question}
+                        />
+                      )}
+                    {editingQuestion.tipo === 'FOV' &&
+                      actividadIdNumber !== null && (
+                        <QuestionVOFForm
+                          activityId={actividadIdNumber}
+                          onSubmit={handleFormSubmit}
+                          onCancel={handleCancel}
+                          isUploading={false}
+                          editingQuestion={editingQuestion as VerdaderoOFlaso}
+                        />
+                      )}
+                  </div>
+                )}
+
+                {actividadIdNumber !== null && (
+                  <div className="space-y-6">
+                    <QuestionVOFList
+                      key={`vof-${shouldRefresh}`}
+                      activityId={actividadIdNumber}
+                      onEdit={(q) => setEditingQuestion({ ...q, tipo: 'FOV' })}
+                      shouldRefresh={shouldRefresh}
+                    />
+
+                    <QuestionList
+                      key={`om-${shouldRefresh}`}
+                      activityId={actividadIdNumber}
+                      onEdit={(q) => setEditingQuestion({ ...q, tipo: 'OM' })}
+                    />
+                    <ListPreguntaAbierta
+                      key={`abierta-${shouldRefresh}`}
+                      activityId={actividadIdNumber}
+                      shouldRefresh={shouldRefresh}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              actividad.type.id === 4 &&
+              actividadIdNumber !== null && (
+                <div className="mt-8 space-y-6">
+                  <CalificarPreguntas activityId={actividadIdNumber} />
+                  <PreguntasAbiertas2
+                    activityId={actividadIdNumber}
+                    onSubmit={handleFormSubmit}
+                    isUploading={false}
+                  />
+                  <ListPreguntaAbierta2 activityId={actividadIdNumber} />
                 </div>
-              )}
-
-              {actividadIdNumber !== null && (
-                <>
-                  <QuestionVOFList
-                    key={`vof-${shouldRefresh}`}
-                    activityId={actividadIdNumber}
-                    onEdit={(q) => setEditingQuestion({ ...q, tipo: 'FOV' })}
-                    shouldRefresh={shouldRefresh}
-                  />
-
-                  <QuestionList
-                    key={`om-${shouldRefresh}`}
-                    activityId={actividadIdNumber}
-                    onEdit={(q) => setEditingQuestion({ ...q, tipo: 'OM' })}
-                  />
-                  <ListPreguntaAbierta
-                    key={`abierta-${shouldRefresh}`}
-                    activityId={actividadIdNumber}
-                    shouldRefresh={shouldRefresh}
-                  />
-                </>
-              )}
-            </>
-          ) : (
-            actividad.type.id === 4 &&
-            actividadIdNumber !== null && (
-              <>
-                <CalificarPreguntas activityId={actividadIdNumber} />
-                <PreguntasAbiertas2
-                  activityId={actividadIdNumber}
-                  onSubmit={handleFormSubmit}
-                  isUploading={false}
-                />
-                <ListPreguntaAbierta2 activityId={actividadIdNumber} />
-              </>
-            )
-          )}
+              )
+            )}
+          </div>
         </div>
       </div>
     </>

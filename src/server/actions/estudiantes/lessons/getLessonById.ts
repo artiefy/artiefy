@@ -74,17 +74,20 @@ export async function getLessonById(
     );
 
     // Transform course lessons with progress data
-    const transformedLessons: Lesson[] = lesson.course.lessons.map((l) => ({
-      ...l,
-      porcentajecompletado: lessonsProgressByLessonId.get(l.id)?.progress ?? 0,
-      userProgress: lessonsProgressByLessonId.get(l.id)?.progress ?? 0,
-      lastPositionSeconds:
-        lessonsProgressByLessonId.get(l.id)?.lastPositionSeconds ?? 0,
-      isCompleted: lessonsProgressByLessonId.get(l.id)?.isCompleted ?? false,
-      isLocked: false,
-      isNew: lessonsProgressByLessonId.get(l.id)?.isNew ?? true,
-      resourceNames: l.resourceNames ? l.resourceNames.split(',') : [],
-    }));
+    const transformedLessons: Lesson[] = lesson.course.lessons.map(
+      (l: (typeof lesson.course.lessons)[number]) => ({
+        ...l,
+        porcentajecompletado:
+          lessonsProgressByLessonId.get(l.id)?.progress ?? 0,
+        userProgress: lessonsProgressByLessonId.get(l.id)?.progress ?? 0,
+        lastPositionSeconds:
+          lessonsProgressByLessonId.get(l.id)?.lastPositionSeconds ?? 0,
+        isCompleted: lessonsProgressByLessonId.get(l.id)?.isCompleted ?? false,
+        isLocked: false,
+        isNew: lessonsProgressByLessonId.get(l.id)?.isNew ?? true,
+        resourceNames: l.resourceNames ? l.resourceNames.split(',') : [],
+      })
+    );
 
     // Transform raw course data to match Course interface
     const transformedCourse: Course = {
@@ -142,18 +145,21 @@ export async function getLessonById(
         : [],
       resourceKey: lesson.resourceKey || '',
       activities:
-        lesson.activities?.map((activity) => {
-          const activityProgress = userActivitiesProgressData.find(
-            (progress) => progress.activityId === activity.id
-          );
-          return {
-            ...activity,
-            isCompleted: activityProgress?.isCompleted ?? false,
-            userProgress: activityProgress?.progress ?? 0,
-            attemptLimit: 0,
-            currentAttempts: 0,
-          } as Activity;
-        }) ?? [],
+        lesson.activities?.map(
+          (activity: NonNullable<typeof lesson.activities>[number]) => {
+            const activityProgress = userActivitiesProgressData.find(
+              (progress: (typeof userActivitiesProgressData)[number]) =>
+                progress.activityId === activity.id
+            );
+            return {
+              ...activity,
+              isCompleted: activityProgress?.isCompleted ?? false,
+              userProgress: activityProgress?.progress ?? 0,
+              attemptLimit: 0,
+              currentAttempts: 0,
+            } as Activity;
+          }
+        ) ?? [],
       course: transformedCourse,
     };
 

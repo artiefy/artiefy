@@ -19,19 +19,28 @@ const getActivityContent = async (
 ): Promise<Activity[]> => {
   try {
     console.log(`Fetching related activities for lesson ${lessonId}`);
-    const relatedActivities = await getRelatedActivities(lessonId);
+    const dbActivities = await getRelatedActivities(lessonId);
 
-    console.log('Related activities:', relatedActivities);
+    console.log('Related activities:', dbActivities);
 
-    if (relatedActivities.length === 0) {
+    if (dbActivities.length === 0) {
       console.log(`No related activities found for lesson ${lessonId}`);
       return [];
     }
 
+    // Map database activities to Activity interface with default values for missing fields
+    const relatedActivities: Activity[] = dbActivities.map((dbActivity) => ({
+      ...dbActivity,
+      isCompleted: false,
+      userProgress: 0,
+      attemptLimit: 0,
+      currentAttempts: 0,
+    }));
+
     const userProgress = await getUserActivityProgress(userId);
 
     const activitiesWithContent = await Promise.all(
-      relatedActivities.map(async (activity, index) => {
+      relatedActivities.map(async (activity: Activity, index: number) => {
         let allQuestions: Question[] = [];
 
         // Para actividades tipo documento no se consultan bancos de preguntas.
@@ -82,7 +91,8 @@ const getActivityContent = async (
         }
 
         const activityProgress = userProgress.find(
-          (progress) => progress.activityId === activity.id
+          (progress: (typeof userProgress)[number]) =>
+            progress.activityId === activity.id
         );
 
         const isLastActivityInLesson = index === relatedActivities.length - 1;
