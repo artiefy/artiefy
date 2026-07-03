@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { db } from '~/server/db';
 import { roleSecundarioPermisos, rolesSecundarios } from '~/server/db/schema';
+import { authorizeRole } from '~/server/utils/apiAuth';
 
 interface CreateRoleBody {
   name: string;
@@ -10,8 +11,16 @@ interface CreateRoleBody {
 
 export async function POST(req: Request) {
   try {
+    // Security best practice: managing roles is restricted to admin/super-admin.
+    const authz = await authorizeRole(['admin', 'super-admin']);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
+    }
+
     const body = (await req.json()) as CreateRoleBody;
-    console.log('Body recibido:', body);
 
     const { name, permisos } = body;
 
@@ -23,8 +32,6 @@ export async function POST(req: Request) {
       .insert(rolesSecundarios)
       .values({ name })
       .returning();
-
-    console.log('Insert result:', inserted);
 
     const newRole = inserted[0];
     if (!newRole) throw new Error('No se insertó el rol');
@@ -42,8 +49,7 @@ export async function POST(req: Request) {
       ...newRole,
       permisos: permisos ?? [],
     });
-  } catch (error) {
-    console.error('Error al crear rol secundario:', error);
+  } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

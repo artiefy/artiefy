@@ -99,14 +99,12 @@ async function LessonContent({
 
     const lessonData = await getLessonById(lessonId, userId);
     if (!lessonData) {
-      console.log('Lección no encontrada');
       return notFound();
     }
 
     // Get course first to check if it's free
     const course = await getCourseById(lessonData.courseId, userId);
     if (!course) {
-      console.log('Curso no encontrado');
       return notFound();
     }
 
@@ -232,10 +230,6 @@ async function LessonContent({
     );
   } catch (error: unknown) {
     unstable_rethrow(error);
-    console.error(
-      'Error al obtener los datos de la lección:',
-      error instanceof Error ? error.message : String(error)
-    );
     return notFound();
   }
 }

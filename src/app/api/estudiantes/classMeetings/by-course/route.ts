@@ -26,8 +26,7 @@ export async function GET(request: Request) {
     const meetings = await getClassMeetingsByCourseId(courseId);
 
     return NextResponse.json({ meetings });
-  } catch (error) {
-    console.error('Error in /api/estudiantes/classMeetings/by-course:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error', meetings: [] },
       { status: 500 }

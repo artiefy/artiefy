@@ -3,7 +3,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { projectActivities } from '~/server/db/schema';
+import { projectActivities, projects } from '~/server/db/schema';
+import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 export async function PUT(
   req: NextRequest,
@@ -28,6 +29,37 @@ export async function PUT(
       );
     }
 
+    // Security best practice: only the project owner (or staff) may edit this
+    // activity's link. Resolve the owning project and authorize before writing.
+    const activity = await db
+      .select({ projectId: projectActivities.projectId })
+      .from(projectActivities)
+      .where(eq(projectActivities.id, numActivityId))
+      .limit(1)
+      .then((rows) => rows[0]);
+
+    if (!activity) {
+      return NextResponse.json(
+        { error: 'Actividad no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    const project = await db
+      .select({ userId: projects.userId })
+      .from(projects)
+      .where(eq(projects.id, activity.projectId))
+      .limit(1)
+      .then((rows) => rows[0]);
+
+    const authz = await authorizeOwnerOrStaff(project?.userId);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
+    }
+
     // Actualizar el linkUrl de la actividad
     await db
       .update(projectActivities)
@@ -38,13 +70,9 @@ export async function PUT(
       { success: true, message: 'Link URL actualizado correctamente' },
       { status: 200 }
     );
-  } catch (error) {
-    console.error('Error al actualizar link URL de actividad:', error);
+  } catch {
     return NextResponse.json(
-      {
-        error: 'Error al actualizar el link URL',
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: 'Error al actualizar el link URL' },
       { status: 500 }
     );
   }

@@ -1,23 +1,29 @@
 import { NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
 import { and, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { projects, projectsTaken, users } from '~/server/db/schema';
+import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { userId, projectId, isInvited } = body;
 
-    console.log('📝 POST /api/projects/taken:', {
-      userId,
-      projectId,
-      isInvited,
-    });
-
     if (!userId || !projectId) {
       return NextResponse.json({ error: 'Missing data' }, { status: 400 });
+    }
+
+    // Security best practice: a user may only enroll themselves; staff may act
+    // on behalf of others.
+    const authz = await authorizeOwnerOrStaff(String(userId));
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
     }
 
     // Verificar si ya está inscrito
@@ -33,10 +39,6 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (existingEnrollment.length > 0) {
-      console.log(
-        '⚠️ Usuario ya inscrito en este proyecto, actualizando isInvited...'
-      );
-
       // Si ya existe, actualizar el campo isInvited si es necesario
       if (
         isInvited !== undefined &&
@@ -51,7 +53,6 @@ export async function POST(request: Request) {
               eq(projectsTaken.projectId, Number(projectId))
             )
           );
-        console.log('✅ Campo isInvited actualizado');
         return NextResponse.json(
           { success: true, updated: true },
           { status: 200 }
@@ -72,13 +73,10 @@ export async function POST(request: Request) {
       createdAt: new Date(), // ✅ Agregar explícitamente para evitar null
     });
 
-    console.log('✅ Usuario inscrito en proyecto correctamente');
-
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    console.error('❌ Error al inscribir en proyecto:', error);
+  } catch {
     return NextResponse.json(
-      { error: 'No se pudo inscribir al proyecto', details: String(error) },
+      { error: 'No se pudo inscribir al proyecto' },
       { status: 500 }
     );
   }
@@ -91,6 +89,16 @@ export async function DELETE(request: Request) {
 
     if (!userId || !projectId) {
       return NextResponse.json({ error: 'Missing data' }, { status: 400 });
+    }
+
+    // Security best practice: a user may only remove their own participation;
+    // staff may act on behalf of others.
+    const authz = await authorizeOwnerOrStaff(String(userId));
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
     }
 
     await db
@@ -113,14 +121,19 @@ export async function DELETE(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    // Security best practice: require an authenticated session — this returns
+    // member names and emails (PII).
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
 
     if (!projectId) {
       return NextResponse.json({ error: 'Missing projectId' }, { status: 400 });
     }
-
-    console.log('🔍 Obteniendo integrantes del proyecto:', projectId);
 
     // Obtener responsable del proyecto primero
     const responsable = await db
@@ -137,8 +150,6 @@ export async function GET(request: Request) {
       .innerJoin(users, eq(projects.userId, users.id))
       .where(eq(projects.id, Number(projectId)))
       .limit(1);
-
-    console.log('👤 Responsable encontrado:', responsable);
 
     // Obtener integrantes inscritos (excluyendo al responsable para evitar duplicados)
     const integrantes = await db
@@ -163,25 +174,16 @@ export async function GET(request: Request) {
         )
       );
 
-    console.log('👥 Integrantes encontrados:', integrantes);
-
     // Combinar responsable e integrantes
     const todosLosIntegrantes = [...responsable, ...integrantes];
-
-    console.log('✅ Total integrantes:', todosLosIntegrantes.length);
 
     return NextResponse.json(
       { integrantes: todosLosIntegrantes },
       { status: 200 }
     );
-  } catch (error) {
-    console.error('❌ Error al obtener integrantes:', error);
-    console.error('❌ Error detallado:', JSON.stringify(error, null, 2));
+  } catch {
     return NextResponse.json(
-      {
-        error: 'No se pudieron obtener los integrantes',
-        details: error instanceof Error ? error.message : String(error),
-      },
+      { error: 'No se pudieron obtener los integrantes' },
       { status: 500 }
     );
   }

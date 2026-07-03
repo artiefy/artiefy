@@ -56,9 +56,18 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: 'Archivo faltante' }, { status: 400 });
   }
-  if (!file.type.startsWith('image/')) {
+  // Security best practice: only accept raster image types. SVG is rejected
+  // because, if served inline, it can carry embedded scripts (stored XSS).
+  const ALLOWED_IMAGE_TYPES = new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+    'image/avif',
+  ]);
+  if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
     return NextResponse.json(
-      { error: 'La portada debe ser una imagen.' },
+      { error: 'La portada debe ser una imagen (JPG, PNG, WEBP, GIF o AVIF).' },
       { status: 400 }
     );
   }
@@ -85,8 +94,7 @@ export async function POST(request: Request) {
         ContentType: file.type,
       })
     );
-  } catch (error) {
-    console.error('❌ Error subiendo portada a S3:', error);
+  } catch {
     return NextResponse.json(
       { error: 'No se pudo subir la portada.' },
       { status: 500 }

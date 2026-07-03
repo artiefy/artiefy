@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { sql } from 'drizzle-orm';
 
@@ -28,6 +29,15 @@ interface RequestBody {
 
 export async function POST(request: NextRequest) {
   try {
+    // Security best practice: authenticate and bind the write to the caller.
+    const { userId: sessionUserId } = await auth();
+    if (!sessionUserId) {
+      return NextResponse.json(
+        { success: false, error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+
     const body = (await request.json()) as RequestBody;
     const { activityId, userId, submissionData } = body;
 
@@ -35,6 +45,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Invalid request data' },
         { status: 400 }
+      );
+    }
+
+    if (userId !== sessionUserId) {
+      return NextResponse.json(
+        { success: false, error: 'Acceso denegado' },
+        { status: 403 }
       );
     }
 
@@ -81,8 +98,7 @@ export async function POST(request: NextRequest) {
       message: 'URL guardada correctamente',
       submission,
     });
-  } catch (error) {
-    console.error('Error saving URL submission:', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Error al guardar la URL' },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { db } from '~/server/db';
 import { permisos } from '~/server/db/schema';
+import { authorizeRole } from '~/server/utils/apiAuth';
 
 const ACCIONES = [
   'create',
@@ -24,6 +25,16 @@ interface PermisoBody {
 
 export async function POST(req: Request) {
   try {
+    // Security best practice: managing permissions is restricted to
+    // admin/super-admin.
+    const authz = await authorizeRole(['admin', 'super-admin']);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
+    }
+
     const body = (await req.json()) as PermisoBody;
     const { name, description } = body;
 
@@ -53,8 +64,7 @@ export async function POST(req: Request) {
     const permisoCreado = created[0] as { name: string; description?: string };
 
     return NextResponse.json(permisoCreado);
-  } catch (error) {
-    console.error('Error al crear permiso:', error);
+  } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

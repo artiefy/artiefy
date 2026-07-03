@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { roleSecundarioPermisos, rolesSecundarios } from '~/server/db/schema';
+import { authorizeRole } from '~/server/utils/apiAuth';
 
 interface DeleteRolBody {
   id: number;
@@ -11,6 +12,15 @@ interface DeleteRolBody {
 
 export async function DELETE(req: Request) {
   try {
+    // Security best practice: managing roles is restricted to admin/super-admin.
+    const authz = await authorizeRole(['admin', 'super-admin']);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
+    }
+
     const body = (await req.json()) as DeleteRolBody;
     const { id } = body;
 
@@ -27,8 +37,7 @@ export async function DELETE(req: Request) {
     await db.delete(rolesSecundarios).where(eq(rolesSecundarios.id, id));
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error al eliminar rol secundario:', error);
+  } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

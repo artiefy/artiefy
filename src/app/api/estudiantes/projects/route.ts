@@ -34,13 +34,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    console.log(
-      '📂 Obteniendo proyectos para usuario:',
-      userId,
-      'curso:',
-      courseId
-    );
-
     // Primero obtener IDs de proyectos donde el usuario está invitado
     const invitedProjects = await db
       .select({ projectId: projectsTaken.projectId })
@@ -50,7 +43,6 @@ export async function GET(req: NextRequest) {
       );
 
     const invitedProjectIds = invitedProjects.map((p) => p.projectId);
-    console.log('📧 Proyectos donde está invitado:', invitedProjectIds);
 
     // Construir WHERE clause según si hay invitaciones
     const whereCondition =
@@ -151,8 +143,6 @@ export async function GET(req: NextRequest) {
         .where(whereCondition);
     }
 
-    console.log('✅ Proyectos encontrados:', userProjects.length);
-
     const projectIds = userProjects.map((project) => project.id);
 
     const objectivesByProject = new Map<number, number>();
@@ -233,14 +223,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(projectsWithProgress, { status: 200 });
-  } catch (error) {
-    console.error('❌ Error al obtener proyectos:', error);
-    console.error('❌ Error detallado:', JSON.stringify(error, null, 2));
+  } catch {
     return NextResponse.json(
-      {
-        error: 'Error al obtener proyectos',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
+      { error: 'Error al obtener proyectos' },
       { status: 500 }
     );
   }
@@ -304,8 +289,7 @@ export async function POST(req: NextRequest) {
       .returning();
 
     return NextResponse.json(newProject[0], { status: 201 });
-  } catch (error) {
-    console.error('Error al crear proyecto:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error al crear proyecto' },
       { status: 500 }
@@ -335,7 +319,7 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
+    const body = (await req.json()) as Record<string, unknown>;
 
     // Verificar que el proyecto pertenece al usuario
     const existingProject = await db
@@ -353,19 +337,50 @@ export async function PUT(req: NextRequest) {
       );
     }
 
+    // Security best practice: allowlist the columns a user may update instead of
+    // spreading the raw body. Prevents mass assignment (e.g. overwriting userId
+    // to transfer ownership, or forging createdAt).
+    const UPDATABLE_FIELDS = [
+      'name',
+      'description',
+      'planteamiento',
+      'justificacion',
+      'objetivo_general',
+      'requirements',
+      'coverImageKey',
+      'coverVideoKey',
+      'multimedia',
+      'type_project',
+      'projectTypeId',
+      'categoryId',
+      'isPublic',
+      'needsCollaborators',
+      'publicComment',
+      'fecha_inicio',
+      'fecha_fin',
+      'duration_unit',
+      'tipo_visualizacion',
+      'horas_por_dia',
+      'total_horas',
+      'tiempo_estimado',
+    ] as const;
+
+    const updateData: Record<string, unknown> = { updatedAt: new Date() };
+    for (const field of UPDATABLE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(body, field)) {
+        updateData[field] = body[field];
+      }
+    }
+
     // Actualizar el proyecto
     const updatedProject = await db
       .update(projects)
-      .set({
-        ...body,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(projects.id, parseInt(projectId)))
       .returning();
 
     return NextResponse.json(updatedProject[0], { status: 200 });
-  } catch (error) {
-    console.error('Error al actualizar proyecto:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error al actualizar proyecto' },
       { status: 500 }
@@ -418,8 +433,7 @@ export async function DELETE(req: NextRequest) {
       { message: 'Proyecto eliminado correctamente' },
       { status: 200 }
     );
-  } catch (error) {
-    console.error('Error al eliminar proyecto:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error al eliminar proyecto' },
       { status: 500 }

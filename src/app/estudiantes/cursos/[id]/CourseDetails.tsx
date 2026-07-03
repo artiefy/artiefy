@@ -564,9 +564,8 @@ export default function CourseDetails({
         localStorage.setItem(storageKey, JSON.stringify(initial));
         setLastSeenCounts(initial);
       }
-    } catch (err) {
+    } catch {
       // Si falló el acceso a localStorage, no bloquear la UI
-      console.warn('No se pudo leer lastSeenCounts:', err);
       setLastSeenCounts({
         curso: 0,
         grabadas: 0,
@@ -728,8 +727,8 @@ export default function CourseDetails({
         const updated = { ...prev, [key]: unseenCounts[key] };
         localStorage.setItem(storageKey, JSON.stringify(updated));
         setLastSeenCounts(updated);
-      } catch (err) {
-        console.warn('No se pudo actualizar lastSeenCounts:', err);
+      } catch {
+        // Ignorar fallos al escribir en localStorage.
       }
     }
     if (key === 'grabadas') setViewMode('recorded');
@@ -825,8 +824,8 @@ export default function CourseDetails({
             const data = await response.json();
             setProjectsCount(Array.isArray(data) ? data.length : 0);
           }
-        } catch (error) {
-          console.error('Error al obtener proyectos:', error);
+        } catch {
+          // Ignorar errores al obtener el conteo de proyectos.
         }
       }
     };
@@ -847,7 +846,6 @@ export default function CourseDetails({
         hasPurchasable && course.individualPrice && course.individualPrice > 0;
 
       if (isIndividualPurchase) {
-        console.log('✅ Abriendo modal de pago después del login');
         setPendingOpenPayment(false);
         setShowPaymentModal(true);
       }
@@ -1119,8 +1117,7 @@ export default function CourseDetails({
       )}`;
       await mutate(enrollmentKey, { isEnrolled: true }, { revalidate: false });
       await mutate(lessonsKey);
-    } catch (error) {
-      console.error('Error enrolling user:', error);
+    } catch {
       toast.error('Ocurrió un error al inscribirte. Inténtalo de nuevo.');
     } finally {
       enrollmentRequestInFlight.current = false;
@@ -1328,8 +1325,7 @@ export default function CourseDetails({
         );
         await mutate(lessonsKey, [], { revalidate: false });
       }
-    } catch (error) {
-      console.error('Error unenrolling user:', error);
+    } catch {
       toast.error('Ocurrió un error al desuscribirte. Intenta nuevamente.');
     } finally {
       setIsUnenrolling(false);
@@ -1614,7 +1610,7 @@ export default function CourseDetails({
                                 if (video) {
                                   video.controls = true;
                                   video.focus();
-                                  void video.play().catch(console.error);
+                                  void video.play().catch(() => undefined);
                                 }
                               }}
                             >
@@ -3045,7 +3041,9 @@ export default function CourseDetails({
                                       if (video) {
                                         video.controls = true;
                                         video.focus();
-                                        void video.play().catch(console.error);
+                                        void video
+                                          .play()
+                                          .catch(() => undefined);
                                       }
                                     }}
                                   >

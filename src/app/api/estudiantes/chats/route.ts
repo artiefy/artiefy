@@ -83,8 +83,7 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ chats: allChats }, { status: 200 });
-  } catch (error) {
-    console.error('Error al obtener chats:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error al obtener chats' },
       { status: 500 }

@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getLessonsByCourseId } from '~/server/actions/estudiantes/lessons/getLessonsByCourseId';
+import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 const paramsSchema = z.object({
   courseId: z.string(),
@@ -22,6 +23,15 @@ export async function GET(req: Request) {
   const parseResult = paramsSchema.safeParse({ courseId, userId });
   if (!parseResult.success) {
     return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 });
+  }
+
+  // Security best practice: owner student or staff only.
+  const authz = await authorizeOwnerOrStaff(userId);
+  if (!authz.ok) {
+    return NextResponse.json(
+      { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+      { status: authz.status }
+    );
   }
 
   try {

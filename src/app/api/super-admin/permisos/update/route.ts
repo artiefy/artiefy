@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { permisos } from '~/server/db/schema';
+import { authorizeRole } from '~/server/utils/apiAuth';
 
 const ACCIONES = [
   'create',
@@ -27,6 +28,16 @@ interface UpdatePermisoBody {
 
 export async function PUT(req: Request) {
   try {
+    // Security best practice: managing permissions is restricted to
+    // admin/super-admin.
+    const authz = await authorizeRole(['admin', 'super-admin']);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
+    }
+
     const body = (await req.json()) as UpdatePermisoBody;
     const { id, name, description, servicio, accion } = body;
 
@@ -54,8 +65,7 @@ export async function PUT(req: Request) {
       .where(eq(permisos.id, id));
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error al actualizar permiso:', error);
+  } catch {
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
   }
 }

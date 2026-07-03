@@ -100,8 +100,8 @@ export default function ProgramDetails({
         setCourseEnrollments(enrollmentMap);
 
         checkSubscriptionStatus();
-      } catch (error) {
-        console.error('Error initializing program:', error);
+      } catch {
+        // El estado de carga se restablece en el bloque finally.
       } finally {
         setIsCheckingEnrollment(false);
         setIsLoadingEnrollments(false);
@@ -165,8 +165,7 @@ export default function ProgramDetails({
       } else {
         toast.error(result.message);
       }
-    } catch (err) {
-      console.error('Error enrolling:', err);
+    } catch {
       toast.error('Error al inscribirse en el programa');
     } finally {
       setIsEnrolling(false);
@@ -183,8 +182,7 @@ export default function ProgramDetails({
       } else {
         toast.error(result.message);
       }
-    } catch (err) {
-      console.error('Error unenrolling:', err);
+    } catch {
       toast.error('Error al cancelar la inscripción');
     } finally {
       setIsUnenrolling(false);

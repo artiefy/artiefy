@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -16,6 +17,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ): Promise<NextResponse<NextLessonStatusResponse>> {
   try {
+    // Security best practice: require an authenticated session.
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ lessonId: null, isUnlocked: false });
+    }
+
     // Usar el patrón recomendado por Next.js para params asíncronos
     const paramsData = await Promise.resolve(params);
     const { id } = paramsData;
@@ -68,8 +75,7 @@ export async function GET(
       lessonId: nextLesson.id,
       isUnlocked: progress?.isLocked === false,
     });
-  } catch (error) {
-    console.error('Error in next-lesson-status:', error);
+  } catch {
     return NextResponse.json({
       lessonId: null,
       isUnlocked: false,

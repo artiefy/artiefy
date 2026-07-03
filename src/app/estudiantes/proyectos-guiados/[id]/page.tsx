@@ -90,8 +90,7 @@ export async function generateMetadata(
         site: '@artiefy',
       },
     };
-  } catch (error) {
-    console.error('Error generating metadata:', error);
+  } catch {
     return {
       title: 'Error',
       description: 'Error al cargar el proyecto',
@@ -137,7 +136,6 @@ async function ProjectContent({ id }: { id: string }) {
       </section>
     );
   } catch (error) {
-    console.error('Error in ProjectContent:', error);
     throw error;
   }
 }

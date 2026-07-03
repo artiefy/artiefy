@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 
 import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
-import { classMeetings } from '~/server/db/schema';
+import { classMeetings, enrollments } from '~/server/db/schema';
 
 export async function POST(req: Request) {
   try {
-    // Verificar autenticación - properly await the auth() call
     const session = await auth();
     const userId = session.userId;
 
@@ -28,18 +27,41 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
     }
 
-    // Ensure meetingId is treated as a number
     const meetingIdNumber = Number(meetingId);
+    if (isNaN(meetingIdNumber)) {
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
+    }
 
-    // Actualizar el progreso en la base de datos
+    // Security best practice: verify the caller is enrolled in the meeting's
+    // course before mutating it (prevents IDOR against arbitrary meeting rows).
+    const meeting = await db.query.classMeetings.findFirst({
+      where: eq(classMeetings.id, meetingIdNumber),
+      columns: { id: true, courseId: true },
+    });
+    if (!meeting) {
+      return NextResponse.json(
+        { error: 'Reunión no encontrada' },
+        { status: 404 }
+      );
+    }
+
+    const enrollment = await db.query.enrollments.findFirst({
+      where: and(
+        eq(enrollments.userId, userId),
+        eq(enrollments.courseId, meeting.courseId)
+      ),
+    });
+    if (!enrollment) {
+      return NextResponse.json({ error: 'No inscrito' }, { status: 403 });
+    }
+
     await db
       .update(classMeetings)
       .set({ progress })
       .where(eq(classMeetings.id, meetingIdNumber));
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error al actualizar progreso:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error interno del servidor' },
       { status: 500 }

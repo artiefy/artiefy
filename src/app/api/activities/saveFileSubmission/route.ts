@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { sql } from 'drizzle-orm';
 
@@ -26,13 +27,21 @@ interface FileSubmissionRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Security best practice: authenticate and ensure the submission belongs to
+    // the caller. Prevents a user from writing/overwriting another student's
+    // submission and progress by supplying an arbitrary userId.
+    const { userId: sessionUserId } = await auth();
+    if (!sessionUserId) {
+      return NextResponse.json(
+        { success: false, error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+
     // Type-safe request body parsing
     const rawBody: unknown = await request.json();
 
     if (!isValidFileSubmission(rawBody)) {
-      console.warn('[saveFileSubmission] Invalid request format', {
-        body: rawBody,
-      });
       return NextResponse.json(
         { success: false, error: 'Invalid request format' },
         { status: 400 }
@@ -41,12 +50,13 @@ export async function POST(request: NextRequest) {
 
     // Now TypeScript knows this is a valid FileSubmissionRequest
     const { activityId, userId, fileInfo } = rawBody;
-    console.info('[saveFileSubmission] Saving submission', {
-      activityId,
-      userId,
-      fileName: fileInfo.fileName,
-      documentKey: fileInfo.documentKey,
-    });
+
+    if (userId !== sessionUserId) {
+      return NextResponse.json(
+        { success: false, error: 'Acceso denegado' },
+        { status: 403 }
+      );
+    }
 
     // Guarda en Upstash con valores reiniciados
     const submissionKey = `activity:${activityId}:user:${userId}:submission`;
@@ -61,11 +71,6 @@ export async function POST(request: NextRequest) {
       },
       { ex: 2592000 }
     );
-    console.info('[saveFileSubmission] Submission stored in Redis', {
-      activityId,
-      userId,
-      submissionKey,
-    });
 
     // Actualizar en la base de datos también reiniciando valores
     await db
@@ -94,22 +99,13 @@ export async function POST(request: NextRequest) {
           revisada: false, // Reiniciar estado de revisión
         },
       });
-    console.info('[saveFileSubmission] Progress upserted in DB', {
-      activityId,
-      userId,
-    });
 
     return NextResponse.json({
       success: true,
       message: 'Archivo subido correctamente',
       documentKey: fileInfo.documentKey,
     });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Error desconocido';
-    console.error('[saveFileSubmission] Error saving file submission:', {
-      errorMessage,
-    });
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Error al guardar el archivo' },
       { status: 500 }

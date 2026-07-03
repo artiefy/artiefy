@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { eq } from 'drizzle-orm';
 
@@ -13,6 +14,12 @@ const redis = new Redis({
 
 export async function GET(request: NextRequest) {
   try {
+    // Security best practice: require an authenticated session to read content.
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const lessonId = searchParams.get('lessonId');
 
@@ -44,8 +51,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ transcription });
-  } catch (error) {
-    console.error('Error fetching transcription:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error retrieving transcription' },
       { status: 500 }
