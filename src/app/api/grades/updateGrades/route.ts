@@ -8,6 +8,7 @@ import {
   materias,
   userActivitiesProgress,
 } from '~/server/db/schema';
+import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 interface UpdateGradesRequest {
   courseId: number;
@@ -22,6 +23,20 @@ export async function POST(request: NextRequest) {
   try {
     const data = (await request.json()) as UpdateGradesRequest;
     const { courseId, userId, activityId, finalGrade } = data;
+
+    // Security best practice: only the owning student (self, on completion) or
+    // staff may write to this record. NOTE: finalGrade is still client-supplied
+    // (see report) — a fully robust fix computes it server-side.
+    const authz = await authorizeOwnerOrStaff(userId);
+    if (!authz.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado',
+        },
+        { status: authz.status }
+      );
+    }
 
     // 1. Guarda/actualiza la nota de la actividad en user_activities_progress
     await db
@@ -110,8 +125,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error updating grades:', error);
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Error updating grades' },
       { status: 500 }

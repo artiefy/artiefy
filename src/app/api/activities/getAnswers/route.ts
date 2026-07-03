@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { activities } from '~/server/db/schema';
+import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 import type { ActivityResults } from '~/types';
 
@@ -25,6 +26,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'ActivityId and userId are required' },
         { status: 400 }
+      );
+    }
+
+    // Security best practice: owner student or staff only.
+    const authz = await authorizeOwnerOrStaff(userId);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
       );
     }
 
@@ -67,8 +77,7 @@ export async function GET(request: NextRequest) {
       { error: 'No activity progress found' },
       { status: 404 }
     );
-  } catch (error) {
-    console.error('Error:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error fetching answers' },
       { status: 500 }

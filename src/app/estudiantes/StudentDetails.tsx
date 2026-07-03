@@ -172,7 +172,6 @@ export default function StudentDetails({
   const [courses] = useState<Course[]>(initialCourses);
   const [sortedPrograms] = useState<Program[]>(() => {
     if (!Array.isArray(initialPrograms)) {
-      console.warn('initialPrograms is not an array:', initialPrograms);
       return [];
     }
     return shufflePrograms(initialPrograms);
@@ -512,8 +511,6 @@ export default function StudentDetails({
 
       if (!searchQuery.trim() || searchInProgress) return;
 
-      console.log('🔍 Iniciando búsqueda:', searchQuery.trim());
-
       setSearchInProgress(true);
       setSearchBarDisabled(true);
 
@@ -521,7 +518,6 @@ export default function StudentDetails({
       const searchEvent = new CustomEvent('artiefy-search', {
         detail: { query: searchQuery.trim() },
       });
-      console.log('📤 Disparando evento artiefy-search');
       window.dispatchEvent(searchEvent);
 
       // Clear the search input
@@ -537,8 +533,6 @@ export default function StudentDetails({
     const handleGlobalSearch = (event: CustomEvent<{ query: string }>) => {
       const query = event.detail.query;
       if (!query) return;
-
-      console.log('📥 Evento artiefy-search recibido:', query);
 
       window.dispatchEvent(
         new CustomEvent('create-new-chat-with-search', {

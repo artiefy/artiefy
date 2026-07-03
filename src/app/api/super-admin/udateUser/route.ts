@@ -1,9 +1,21 @@
 import { NextResponse } from 'next/server';
 
 import { updateUserInClerk } from '~/server/queries/queries';
+import { authorizeRole } from '~/server/utils/apiAuth';
 
 export async function PATCH(req: Request) {
   try {
+    // Security best practice: editing users (including their role) is restricted
+    // to admin/super-admin. Without this, an anonymous caller could PATCH any
+    // user's role and escalate to super-admin.
+    const authz = await authorizeRole(['admin', 'super-admin']);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
+    }
+
     const {
       userId,
       firstName,
@@ -29,20 +41,6 @@ export async function PATCH(req: Request) {
       descripcion?: string;
       profileImageKey?: string;
     };
-
-    console.log('📦 Datos recibidos en PATCH /api/super-admin/udateUser:', {
-      userId,
-      firstName,
-      lastName,
-      role,
-      status,
-      permissions,
-      subscriptionEndDate,
-      planType,
-      profesion,
-      descripcion,
-      profileImageKey,
-    });
 
     if (!userId || !firstName?.trim() || !lastName?.trim()) {
       return NextResponse.json(
@@ -89,14 +87,11 @@ export async function PATCH(req: Request) {
         profileImageKey,
       },
     });
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Error desconocido';
-
-    console.error('❌ Error en la API de actualización:', errorMessage);
-
+  } catch {
+    // Security best practice: return a generic message; do not leak the raw
+    // exception text to the client.
     return NextResponse.json(
-      { error: `Error interno del servidor: ${errorMessage}` },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     );
   }

@@ -122,8 +122,15 @@ export function ProfileView({
   ];
 
   return (
-    <main className="relative pt-14 pb-12">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+    <main className="relative pt-14 pb-12 lg:pt-20 lg:pb-20">
+      <div
+        className="
+          mx-auto max-w-3xl px-4
+          sm:px-6
+          lg:max-w-6xl lg:px-8
+          xl:max-w-7xl
+        "
+      >
         <button
           type="button"
           onClick={() => router.back()}
@@ -133,19 +140,22 @@ export function ProfileView({
             text-muted-foreground backdrop-blur-sm transition-all duration-200
             hover:border-primary/40 hover:bg-card/60 hover:text-foreground
             hover:shadow-[0_0_18px_rgba(34,196,211,0.18)]
+            lg:mb-6
           "
         >
           <ArrowLeft className="size-4" />
           <span>Volver</span>
         </button>
 
-        <div className="relative mb-8">
+        <div className="relative mb-8 lg:mb-10">
           {/* Banner: portada subida (responsive) o gradiente por defecto */}
           <div
             className="
               relative h-32 w-full overflow-hidden rounded-2xl border
               border-border/30
               sm:h-40
+              lg:h-56 lg:rounded-3xl
+              xl:h-64
             "
           >
             {coverUrl ? (
@@ -153,7 +163,7 @@ export function ProfileView({
                 src={coverUrl}
                 alt="Portada del perfil"
                 fill
-                sizes="(max-width: 768px) 100vw, 768px"
+                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 1152px, 1280px"
                 className="object-cover"
                 priority
               />
@@ -185,6 +195,7 @@ export function ProfileView({
                 text-white backdrop-blur-sm transition-all
                 hover:bg-black/60
                 disabled:opacity-70
+                lg:top-5 lg:right-5 lg:size-11
               "
             >
               {uploadingCover ? (
@@ -199,20 +210,27 @@ export function ProfileView({
             <p className="mt-2 text-xs text-destructive">{coverError}</p>
           ) : null}
 
-          <div className="-mt-12 px-4 sm:px-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div className="-mt-12 px-4 sm:px-6 lg:-mt-16 lg:px-8 xl:px-10">
+            <div
+              className="
+                flex flex-col gap-4
+                sm:flex-row sm:items-end
+                lg:gap-6
+              "
+            >
               <span
                 className="
                   relative flex size-24 shrink-0 overflow-hidden rounded-full
                   border-4 border-background shadow-xl
+                  lg:size-32 lg:border-[5px]
                 "
               >
                 {profile.imageUrl ? (
                   <Image
                     src={profile.imageUrl}
                     alt={profile.name ?? 'Perfil'}
-                    width={96}
-                    height={96}
+                    width={128}
+                    height={128}
                     className="aspect-square size-full object-cover"
                   />
                 ) : (
@@ -228,7 +246,12 @@ export function ProfileView({
               </span>
 
               <div className="flex-1 pb-1">
-                <h1 className="text-2xl font-bold text-foreground">
+                <h1
+                  className="
+                    text-2xl font-bold text-foreground
+                    lg:text-3xl
+                  "
+                >
                   {profile.name ?? 'Sin nombre'}
                 </h1>
                 <p className="text-sm text-muted-foreground">
@@ -244,6 +267,7 @@ export function ProfileView({
                   text-sm font-semibold text-[#01142B] transition-all
                   duration-300
                   hover:shadow-[0_0_25px_rgba(34,196,211,0.4)]
+                  lg:px-7 lg:py-2.5
                 "
               >
                 Editar perfil
@@ -251,16 +275,32 @@ export function ProfileView({
             </div>
 
             {profile.bio ? (
-              <p className="mt-4 max-w-xl text-sm leading-relaxed text-foreground/80">
+              <p
+                className="
+                  mt-4 max-w-xl text-sm leading-relaxed text-foreground/80
+                  lg:mt-5 lg:max-w-3xl lg:text-base
+                "
+              >
                 {profile.bio}
               </p>
             ) : (
-              <p className="mt-4 text-sm text-muted-foreground italic">
+              <p
+                className="
+                  mt-4 text-sm text-muted-foreground italic
+                  lg:mt-5 lg:text-base
+                "
+              >
                 Todavía no agregaste una bio.
               </p>
             )}
 
-            <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            <div
+              className="
+                mt-3 flex flex-wrap items-center gap-4 text-xs
+                text-muted-foreground
+                lg:mt-4 lg:text-sm
+              "
+            >
               {profile.location ? (
                 <span className="flex items-center gap-1">
                   <MapPin className="size-3.5" />
@@ -288,7 +328,13 @@ export function ProfileView({
               ) : null}
             </div>
 
-            <div className="mt-5 flex items-center justify-center gap-6 sm:justify-start">
+            <div
+              className="
+                mt-5 flex items-center justify-center gap-6
+                sm:justify-start
+                lg:mt-6 lg:gap-10
+              "
+            >
               {stats.map((stat) => (
                 <div key={stat.label} className="text-center">
                   <div className="text-lg font-bold text-foreground">
@@ -311,6 +357,7 @@ export function ProfileView({
                 inline-flex w-max items-center gap-2 rounded-2xl border
                 border-border/30 bg-card/50 p-2 backdrop-blur-sm
                 sm:w-full sm:justify-center
+                lg:rounded-3xl lg:p-3
               "
             >
               {TABS.map((tab) => {
@@ -324,6 +371,7 @@ export function ProfileView({
                     className={`
                       flex shrink-0 items-center gap-2 rounded-full border px-5
                       py-2.5 text-sm font-medium transition-all duration-200
+                      lg:px-7
                       ${
                         active
                           ? 'border-primary/30 bg-primary/15 text-primary shadow-sm'
@@ -342,7 +390,7 @@ export function ProfileView({
             </div>
           </div>
 
-          <div className="mt-6">
+          <div className="mt-6 lg:mt-8">
             {activeTab === 'cursos' ? (
               <MyCoursesContent courses={courses} programs={programs} />
             ) : (
@@ -350,6 +398,7 @@ export function ProfileView({
                 className="
                   rounded-2xl border border-dashed border-border/50 bg-card/30
                   px-6 py-16 text-center
+                  lg:py-24
                 "
               >
                 <p className="text-sm text-muted-foreground">

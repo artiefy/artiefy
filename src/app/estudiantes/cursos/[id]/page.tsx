@@ -78,8 +78,7 @@ export async function generateMetadata(
           coverImageUrl = coverData.coverImageUrl;
         }
       }
-    } catch (error) {
-      console.warn('Error fetching cover image from API:', error);
+    } catch {
       // Fallback to direct course cover if API fails
       if (course.coverImageKey) {
         coverImageUrl = `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${course.coverImageKey}`;
@@ -120,8 +119,7 @@ export async function generateMetadata(
         site: '@artiefy',
       },
     };
-  } catch (error) {
-    console.error('Error generating metadata:', error);
+  } catch {
     return {
       title: 'Error',
       description: 'Error al cargar el curso',
@@ -236,7 +234,6 @@ async function CourseContent({ id }: { id: string }) {
       </section>
     );
   } catch (error) {
-    console.error('Error in CourseContent:', error);
     throw error;
   }
 }

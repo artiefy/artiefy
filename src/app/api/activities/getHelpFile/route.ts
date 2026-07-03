@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 
 const redis = new Redis({
@@ -9,6 +10,13 @@ const redis = new Redis({
 
 export async function GET(request: NextRequest) {
   try {
+    // Security best practice: require an authenticated session (student doing
+    // the activity or staff); help files should not be world-readable.
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const activityId = searchParams.get('activityId');
     if (!activityId) {

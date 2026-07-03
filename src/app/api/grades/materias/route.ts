@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { materiaGrades, materias } from '~/server/db/schema';
+import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required parameters' },
         { status: 400 }
+      );
+    }
+
+    // Security best practice: owner student or staff only.
+    const authz = await authorizeOwnerOrStaff(userId);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
       );
     }
 

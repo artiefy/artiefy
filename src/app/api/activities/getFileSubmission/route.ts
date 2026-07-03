@@ -7,6 +7,7 @@ import { and, eq } from 'drizzle-orm';
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { db } from '~/server/db';
 import { activities, userActivitiesProgress } from '~/server/db/schema';
+import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -23,6 +24,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing required parameters' },
         { status: 400 }
+      );
+    }
+
+    // Security best practice: only the owning student or a staff member
+    // (educador/admin/super-admin) may read a submission.
+    const authz = await authorizeOwnerOrStaff(userId);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
       );
     }
 
@@ -82,8 +93,7 @@ export async function GET(request: NextRequest) {
           }
         : null,
     });
-  } catch (error) {
-    console.error('Error getting submission:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error retrieving submission' },
       { status: 500 }

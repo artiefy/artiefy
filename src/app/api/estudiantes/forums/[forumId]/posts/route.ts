@@ -13,6 +13,11 @@ export async function GET(
   _req: Request,
   { params }: { params: Promise<{ forumId: string }> }
 ) {
+  // Security best practice: require an authenticated session to read forum posts.
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+  }
   const resolvedParams = await params;
   const forumId = Number(resolvedParams.forumId);
   if (isNaN(forumId)) return NextResponse.json([], { status: 400 });

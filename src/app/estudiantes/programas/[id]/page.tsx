@@ -87,12 +87,7 @@ export async function generateMetadata(
         site: '@artiefy',
       },
     };
-  } catch (_error) {
-    // Evitar imprimir la traza completa para no generar ruido de source-maps en dev
-    if (process.env.NODE_ENV === 'development') {
-      // Imprimimos un mensaje corto; el objeto error puede contener stack maps ruidosos
-      console.warn('generateMetadata: fallo al generar metadata para programa');
-    }
+  } catch {
     return {
       title: 'Error',
       description: 'Error al cargar el programa',

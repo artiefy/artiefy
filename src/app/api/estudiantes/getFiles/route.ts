@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -7,7 +8,14 @@ import { lessons } from '~/server/db/schema';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get the lessonId from the query parameters
+    // Security best practice: require an authenticated session. This endpoint
+    // returns S3 object keys (resourceKey), which must not be enumerable by
+    // anonymous callers.
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const lessonId = searchParams.get('lessonId');
 
@@ -29,17 +37,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Log what we found for debugging
-    console.log(`Lesson ${lessonId} resourceKey:`, lesson.resourceKey);
-    console.log(`Lesson ${lessonId} resourceNames:`, lesson.resourceNames);
-
-    // Return raw data from the database to let the frontend handle parsing
     return NextResponse.json({
       resourceKey: lesson.resourceKey,
       resourceNames: lesson.resourceNames,
     });
-  } catch (error) {
-    console.error('Error fetching files:', error);
+  } catch {
     return NextResponse.json(
       { message: 'Internal Server Error' },
       { status: 500 }

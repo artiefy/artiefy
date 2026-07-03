@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
 import { Redis } from '@upstash/redis';
 import { and, eq } from 'drizzle-orm';
 
@@ -32,8 +33,25 @@ const redis = new Redis({
 
 export async function POST(request: NextRequest) {
   try {
+    // Security best practice: authenticate and bind the write to the caller so a
+    // user cannot save answers/grades under another student's userId.
+    const { userId: sessionUserId } = await auth();
+    if (!sessionUserId) {
+      return NextResponse.json(
+        { success: false, error: 'No autorizado' },
+        { status: 401 }
+      );
+    }
+
     const data = (await request.json()) as SaveAnswersRequest;
     const { activityId, userId, answers } = data;
+
+    if (userId !== sessionUserId) {
+      return NextResponse.json(
+        { success: false, error: 'Acceso denegado' },
+        { status: 403 }
+      );
+    }
 
     // Get activity and its details
     const activityKey = `activity:${activityId}`;
@@ -171,11 +189,7 @@ export async function POST(request: NextRequest) {
       attemptCount: newAttemptCount,
       isCompleted,
     });
-  } catch (error) {
-    console.error(
-      'Error saving answers:',
-      error instanceof Error ? error.message : 'Unknown error'
-    );
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Error al guardar las respuestas' },
       { status: 500 }

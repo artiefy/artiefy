@@ -119,7 +119,6 @@ export default function LessonDetails({
   activities = [],
   lessons = [],
   userLessonsProgress = [],
-  userActivitiesProgress = [],
   userId,
   course,
 }: LessonDetailsProps) {
@@ -192,8 +191,8 @@ export default function LessonDetails({
             parameters: data.parameters ?? [],
           });
         }
-      } catch (error) {
-        console.error('Error loading grades:', error);
+      } catch {
+        // El estado de carga se restablece en el bloque finally.
       } finally {
         setIsGradesLoading(false);
       }
@@ -245,12 +244,6 @@ export default function LessonDetails({
     setLessonsState,
   ]);
 
-  // Usar userActivitiesProgress para algo útil, por ejemplo, mostrar el progreso de las actividades
-  useEffect(() => {
-    console.log(userActivitiesProgress);
-    // Aquí puedes agregar lógica para usar userActivitiesProgress en la interfaz de usuario
-  }, [userActivitiesProgress]);
-
   // Handle lesson navigation
   useEffect(() => {
     if (selectedLessonId !== null && selectedLessonId !== lesson?.id) {
@@ -283,8 +276,8 @@ export default function LessonDetails({
           );
           void router.replace(`/estudiantes/cursos/${lesson.courseId}`);
         }
-      } catch (error) {
-        console.error('Error checking enrollment:', error);
+      } catch {
+        // Ignorar errores de verificación de inscripción.
       }
     };
 
@@ -321,8 +314,7 @@ export default function LessonDetails({
 
           // Update database
           return updateLessonProgress(lesson.id, roundedProgress);
-        } catch (error) {
-          console.error('Error al actualizar el progreso:', error);
+        } catch {
           toast.error('Error al sincronizar el progreso');
         }
       }
@@ -354,8 +346,7 @@ export default function LessonDetails({
           )
         );
       }
-    } catch (error) {
-      console.error('Error al completar la lección:', error);
+    } catch {
       toast.error('Error al marcar la lección como completada');
     }
   };
@@ -369,8 +360,7 @@ export default function LessonDetails({
       setIsActivityCompleted(true);
 
       // Parent state updated; child component (or modal) shows the toast to avoid duplicates
-    } catch (error) {
-      console.error('Error:', error);
+    } catch {
       toast.error('Error al completar la actividad');
     }
   };
@@ -403,8 +393,7 @@ export default function LessonDetails({
         );
 
         toast.success('Clase marcada como completada');
-      } catch (err) {
-        console.error('Complete lesson error:', err);
+      } catch {
         toast.error('No se pudo marcar la clase como completada');
       }
     };
@@ -450,8 +439,8 @@ export default function LessonDetails({
                 )
               );
             }
-          } catch (e) {
-            console.error('Auto-complete failed:', e);
+          } catch {
+            // Ignorar fallos del auto-completado.
           }
         })();
       }
@@ -703,8 +692,7 @@ export default function LessonDetails({
         })();
 
         setResourcesCount(parsedCount);
-      } catch (error) {
-        console.error('❌ Error fetching resources count:', error);
+      } catch {
         setResourcesCount(0);
       }
     };
@@ -898,8 +886,8 @@ export default function LessonDetails({
         {!isSubscriptionAccessBlocked && !isMobile && isSidebarOpen && (
           <aside
             className="
-              hide-scrollbar sticky top-[calc(4rem-0.75rem)] z-[50]
-              h-[calc(100vh-4rem+0.75rem)] w-80 flex-shrink-0 overflow-y-auto
+              hide-scrollbar sticky top-[8.5rem] z-[50]
+              h-[calc(100vh-8.5rem)] w-80 flex-shrink-0 overflow-y-auto
             "
             style={{ backgroundColor: '#061c37cc' }}
           >
@@ -918,7 +906,12 @@ export default function LessonDetails({
         )}
 
         {/* Main Content Area */}
-        <main className="flex min-w-0 flex-1 flex-col overflow-y-auto p-0">
+        <main
+          className="
+            flex min-w-0 flex-1 flex-col overflow-y-auto p-0 pt-[5.25rem]
+            md:pt-[4.5rem]
+          "
+        >
           {isSubscriptionAccessBlocked ? (
             <div
               className="
@@ -1144,7 +1137,7 @@ export default function LessonDetails({
           isLastActivity={isLastActivity(lessonsState, activities, lesson)}
           onViewHistoryAction={() => {}}
           onActivityCompleteAction={() => {
-            handleActivityCompletion().catch(console.error);
+            void handleActivityCompletion();
           }}
           isLastActivityInLesson={
             activities[0]?.id === selectedActivityForModal.id

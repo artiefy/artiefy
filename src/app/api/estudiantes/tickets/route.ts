@@ -51,8 +51,7 @@ export async function POST(
     // Asignación automática deshabilitada: los tickets nuevos quedan sin asignados
 
     return NextResponse.json(newTicket as StudentTicket);
-  } catch (error) {
-    console.error('Error creating ticket:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error creating ticket' },
       { status: 500 }

@@ -10,6 +10,7 @@ import {
   parametros,
   userActivitiesProgress,
 } from '~/server/db/schema';
+import { authorizeStaff } from '~/server/utils/apiAuth';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -40,6 +41,16 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'Missing parameters' },
         { status: 400 }
+      );
+    }
+
+    // Security best practice: reading a course-wide grade consolidation is a
+    // staff action (educator/admin dashboards).
+    const authz = await authorizeStaff();
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
       );
     }
 
@@ -131,8 +142,7 @@ export async function GET(request: NextRequest) {
       parametros: parametrosResult,
       notaFinal,
     });
-  } catch (error) {
-    console.error('❌ Error fetching grades:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error fetching grades' },
       { status: 500 }
@@ -142,6 +152,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Security best practice: writing a student's grade is a staff action.
+    const authz = await authorizeStaff();
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
+      );
+    }
+
     const rawBody: unknown = await request.json();
 
     if (
@@ -159,8 +178,6 @@ export async function POST(request: NextRequest) {
       userId: string;
       grade: number;
     };
-
-    console.log('✏️ Guardando nota:', { userId, activityId, grade });
 
     if (!activityId || !userId || grade === undefined) {
       return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
@@ -188,8 +205,6 @@ export async function POST(request: NextRequest) {
         },
       });
 
-    console.log('✅ Nota guardada o actualizada en BD');
-
     // 2. Redis
     const submissionKey = `activity:${activityId}:user:${userId}:submission`;
 
@@ -200,11 +215,8 @@ export async function POST(request: NextRequest) {
 
     await redis.set(submissionKey, submission, { ex: 60 * 60 * 24 * 30 });
 
-    console.log('📦 Nota también guardada en Redis:', submissionKey);
-
     return NextResponse.json({ success: true, grade });
-  } catch (error) {
-    console.error('❌ Error updating grade:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error updating grade' },
       { status: 500 }

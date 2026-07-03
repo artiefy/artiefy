@@ -5,6 +5,11 @@ import { db } from '~/server/db';
 import { projectAddedSections, projects } from '~/server/db/schema';
 
 export async function GET(request: Request) {
+  // Security best practice: dev-only debug endpoint; never reachable in prod.
+  if (process.env.NODE_ENV === 'production') {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+
   try {
     const user = await currentUser();
     if (!user) {
@@ -35,8 +40,6 @@ export async function GET(request: Request) {
       );
     }
 
-    console.log(`✅ Proyecto encontrado:`, project[0].name);
-
     // Test 2: Verificar permisos
     if (project[0].userId !== user.id) {
       return Response.json(
@@ -45,11 +48,8 @@ export async function GET(request: Request) {
       );
     }
 
-    console.log(`✅ Permiso verificado para usuario ${user.id}`);
-
     // Test 3: Intentar insertar una sección de prueba
     const testSectionId = `test-${Date.now()}`;
-    console.log(`📝 Intentando insertar sección de prueba: ${testSectionId}`);
 
     await db.insert(projectAddedSections).values({
       projectId: pid,
@@ -60,22 +60,16 @@ export async function GET(request: Request) {
       displayOrder: 0,
     });
 
-    console.log(`✅ Sección de prueba insertada correctamente`);
-
     // Test 4: Verificar que se insertó
     const inserted = await db
       .select()
       .from(projectAddedSections)
       .where(eq(projectAddedSections.projectId, pid));
 
-    console.log(`✅ Secciones encontradas para proyecto ${pid}:`, inserted);
-
     // Test 5: Limpiar (eliminar la sección de prueba)
     await db
       .delete(projectAddedSections)
       .where(eq(projectAddedSections.sectionId, testSectionId));
-
-    console.log(`✅ Sección de prueba eliminada`);
 
     return Response.json({
       success: true,
@@ -88,14 +82,7 @@ export async function GET(request: Request) {
       },
       sectionsCount: inserted.length,
     });
-  } catch (error) {
-    console.error('❌ Error en test:', error);
-    return Response.json(
-      {
-        error: error instanceof Error ? error.message : 'Error desconocido',
-        details: String(error),
-      },
-      { status: 500 }
-    );
+  } catch {
+    return Response.json({ error: 'Error interno' }, { status: 500 });
   }
 }

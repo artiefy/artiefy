@@ -43,8 +43,7 @@ export async function PUT(
       .where(eq(posts.id, parseInt(postId)));
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error updating post:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -78,8 +77,7 @@ export async function DELETE(
     await db.delete(posts).where(eq(posts.id, parseInt(postId)));
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting post:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

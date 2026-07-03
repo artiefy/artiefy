@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
+
 import { db } from '~/server/db';
 
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ courseId: string }> }
 ) {
-  const { searchParams } = new URL(req.url);
-  const userId = searchParams.get('userId');
+  // Security best practice: derive the identity from the session instead of a
+  // client-supplied userId query param, which allowed enumerating any user's
+  // enrollment status.
+  const { userId } = await auth();
   const { courseId: rawCourseId } = await params;
   const courseId = Number(rawCourseId);
   if (!userId || isNaN(courseId))

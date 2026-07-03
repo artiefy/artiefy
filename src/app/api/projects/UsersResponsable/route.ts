@@ -1,10 +1,19 @@
 import { NextResponse } from 'next/server';
 
+import { auth } from '@clerk/nextjs/server';
+
 import { db } from '~/server/db';
 import { users } from '~/server/db/schema';
 
 export async function GET() {
   try {
+    // Security best practice: this returns a directory of users (id/name/email).
+    // Require an authenticated session so it is not world-readable.
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+
     // Selecciona todos los usuarios
     const allUsers = await db.select().from(users);
 

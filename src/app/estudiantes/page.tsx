@@ -212,8 +212,7 @@ export default async function Page({ searchParams }: PageProps) {
         </div>
       </>
     );
-  } catch (error) {
-    console.error('Error al cargar los cursos:', error);
+  } catch {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">

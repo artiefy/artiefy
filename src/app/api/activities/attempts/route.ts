@@ -5,6 +5,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { activities, userActivitiesProgress } from '~/server/db/schema';
+import { authorizeOwnerOrStaff } from '~/server/utils/apiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'ActivityId and userId are required' },
         { status: 400 }
+      );
+    }
+
+    // Security best practice: owner student or staff only.
+    const authz = await authorizeOwnerOrStaff(userId);
+    if (!authz.ok) {
+      return NextResponse.json(
+        { error: authz.status === 401 ? 'No autorizado' : 'Acceso denegado' },
+        { status: authz.status }
       );
     }
 
@@ -61,8 +71,7 @@ export async function GET(request: NextRequest) {
       lastGrade: progress?.finalGrade ?? null,
       lastAttemptAt: progress?.lastAttemptAt ?? null,
     });
-  } catch (error) {
-    console.error('Error fetching attempts:', error);
+  } catch {
     return NextResponse.json(
       { error: 'Error fetching attempts' },
       { status: 500 }
