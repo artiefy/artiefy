@@ -6,6 +6,7 @@ import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { activities, userActivitiesProgress } from '~/server/db/schema';
+import { getActivitySubmissionWindow } from '~/server/utils/activitySubmissionWindow';
 import { formatScoreNumber } from '~/utils/formatScore';
 
 import type { ActivityResults, SavedAnswer } from '~/types';
@@ -89,6 +90,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Activity not found' },
         { status: 404 }
+      );
+    }
+
+    // Enforce the submission time window (fechaInicioActividad / fechaMaximaEntrega).
+    const submissionWindow = getActivitySubmissionWindow(
+      dbActivity.fechaInicioActividad,
+      dbActivity.fechaMaximaEntrega
+    );
+    if (!submissionWindow.isOpen) {
+      return NextResponse.json(
+        {
+          success: false,
+          canClose: true,
+          error:
+            submissionWindow.message ??
+            'La actividad no está disponible para entrega en este momento.',
+        },
+        { status: 403 }
       );
     }
 

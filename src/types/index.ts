@@ -286,6 +286,7 @@ export interface Activity {
   lastAttemptAt?: Date;
   pesoPregunta?: number;
   fechaMaximaEntrega: Date | null;
+  fechaInicioActividad?: Date | null;
   isLastInLesson?: boolean; // Add this property
 }
 
