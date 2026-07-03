@@ -886,8 +886,8 @@ export default function LessonDetails({
         {!isSubscriptionAccessBlocked && !isMobile && isSidebarOpen && (
           <aside
             className="
-              hide-scrollbar sticky top-[calc(4rem-0.75rem)] z-[50]
-              h-[calc(100vh-4rem+0.75rem)] w-80 flex-shrink-0 overflow-y-auto
+              hide-scrollbar sticky top-[8.5rem] z-[50]
+              h-[calc(100vh-8.5rem)] w-80 flex-shrink-0 overflow-y-auto
             "
             style={{ backgroundColor: '#061c37cc' }}
           >
@@ -906,7 +906,12 @@ export default function LessonDetails({
         )}
 
         {/* Main Content Area */}
-        <main className="flex min-w-0 flex-1 flex-col overflow-y-auto p-0">
+        <main
+          className="
+            flex min-w-0 flex-1 flex-col overflow-y-auto p-0 pt-[5.25rem]
+            md:pt-[4.5rem]
+          "
+        >
           {isSubscriptionAccessBlocked ? (
             <div
               className="

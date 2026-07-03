@@ -1042,28 +1042,15 @@ export default function CourseDetails({
       (_hasFree ? false : !hasPlanAccess && !_hasActiveSubscription);
 
     if (!isSignedIn) {
-      if (isIndividualPurchaseRequired) {
-        setShowPaymentModal(true);
-        return;
-      }
-
-      const shouldOpenPlansSubscription =
-        !_hasFree && !hasPlanAccess && !_hasActiveSubscription;
-
-      if (shouldOpenPlansSubscription) {
-        router.push(getPlansRedirectUrl());
-        return;
-      }
-
       setAuthIntent('enroll');
-      // Establecer pendingOpenPayment basado en si el curso requiere pago individual
-      setPendingOpenPayment(!!isIndividualPurchaseRequired);
+      setPendingOpenPayment(false);
       setActiveAuthModal('login');
       return;
     }
 
     const shouldForcePlansRedirect =
       forcePlansFromAutoEnroll &&
+      !hasPurchasable &&
       !_hasFree &&
       !hasPlanAccess &&
       !_hasActiveSubscription;

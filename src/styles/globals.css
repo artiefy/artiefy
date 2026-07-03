@@ -719,6 +719,11 @@ body.no-chrome {
   display: none !important;
 }
 
+/* Hide Clerk branding only inside the UserButton menu. */
+.cl-userButtonPopoverCard .cl-footerItem {
+  display: none !important;
+}
+
 /* - Bola Artie - */
 
 /* Agrega estas reglas CSS para solucionar el problema de impresión */
