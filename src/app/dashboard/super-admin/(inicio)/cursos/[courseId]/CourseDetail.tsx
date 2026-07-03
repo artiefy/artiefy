@@ -31,7 +31,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '~/components/educators/ui/alert-dialog';
 import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
@@ -2601,19 +2600,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                   </Link>
                 </Button>
                 <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      className="
-                        w-full bg-red-500 px-3 py-2 text-xs font-semibold
-                        transition-all duration-300
-                        hover:bg-red-600
-                        md:px-4 md:py-3 md:text-sm
-                      "
-                    >
-                      🗑️ Eliminar
-                    </Button>
-                  </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
                       <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
