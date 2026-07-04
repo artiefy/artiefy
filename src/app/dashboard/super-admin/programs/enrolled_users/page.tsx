@@ -6758,6 +6758,7 @@ export default function EnrolledUsersPage() {
                                         editablePagos[idx]?.fechaPrograma
                                       )
                                 }
+                                style={{ colorScheme: 'light' }}
                                 onChange={(e) =>
                                   handleCuotaChange(
                                     idx,
@@ -6792,6 +6793,7 @@ export default function EnrolledUsersPage() {
                                         editablePagos[idx]?.fechaRealPago
                                       )
                                 }
+                                style={{ colorScheme: 'light' }}
                                 onChange={(e) =>
                                   handleCuotaChange(
                                     idx,
@@ -7497,6 +7499,7 @@ export default function EnrolledUsersPage() {
                                               ?.fechaPrograma
                                           )
                                     }
+                                    style={{ colorScheme: 'light' }}
                                     onChange={(e) =>
                                       handleCuotaChange(
                                         idxBase,
@@ -7532,6 +7535,7 @@ export default function EnrolledUsersPage() {
                                               ?.fechaRealPago
                                           )
                                     }
+                                    style={{ colorScheme: 'light' }}
                                     onChange={(e) =>
                                       handleCuotaChange(
                                         idxBase,

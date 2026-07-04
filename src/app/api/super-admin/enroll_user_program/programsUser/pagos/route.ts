@@ -23,6 +23,11 @@ function formatDateToClerk(date: Date): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+function parseDateOnly(dateStr: string): Date {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export const runtime = 'nodejs';
 
 const REGION = process.env.AWS_REGION ?? 'us-east-2';
@@ -435,7 +440,7 @@ export async function POST(req: Request) {
     }
 
     // Usar fechaPrograma en vez de fecha
-    const firstDate = new Date(firstPayment[0].fechaPrograma); // ej: 2025-09-01
+    const firstDate = parseDateOnly(firstPayment[0].fechaPrograma); // ej: 2025-09-01
     const cutoffDay = firstDate.getDate(); // 1
 
     // Fecha del último pago
@@ -451,7 +456,7 @@ export async function POST(req: Request) {
             : eq(pagos.programaId, programId)
         )
       )
-      .orderBy(desc(pagos.fechaPrograma))
+      .orderBy(desc(pagos.nroPago))
       .limit(1);
 
     if (lastPayment.length === 0) {
@@ -461,25 +466,14 @@ export async function POST(req: Request) {
       );
     }
 
-    const lastPaymentDate = new Date(lastPayment[0].fechaPrograma);
-    // Calcular fecha fin en el mes del pago
-    let subscriptionEndDate = new Date(
-      lastPaymentDate.getFullYear(),
-      lastPaymentDate.getMonth(),
+    const lastNroPago = lastPayment[0].nroPago;
+    const subscriptionEndDate = new Date(
+      firstDate.getFullYear(),
+      firstDate.getMonth() + (lastNroPago - 1),
       cutoffDay
     );
 
-    // Si esa fecha ya pasó respecto al pago → mover al siguiente mes
-    if (subscriptionEndDate <= lastPaymentDate) {
-      subscriptionEndDate = new Date(
-        subscriptionEndDate.getFullYear(),
-        subscriptionEndDate.getMonth() + 1,
-        cutoffDay
-      );
-    }
-
     try {
-      // Usuario en tu BD
       const dbUser = await db.query.users.findFirst({
         where: eq(users.id, userId),
       });
