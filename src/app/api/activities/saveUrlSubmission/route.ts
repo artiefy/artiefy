@@ -6,6 +6,7 @@ import { sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import { userActivitiesProgress } from '~/server/db/schema';
+import { checkActivitySubmissionWindow } from '~/server/utils/activitySubmissionWindow';
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -51,6 +52,20 @@ export async function POST(request: NextRequest) {
     if (userId !== sessionUserId) {
       return NextResponse.json(
         { success: false, error: 'Acceso denegado' },
+        { status: 403 }
+      );
+    }
+
+    // Enforce the submission time window before persisting the URL submission.
+    const submissionWindow = await checkActivitySubmissionWindow(activityId);
+    if (!submissionWindow.isOpen) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            submissionWindow.message ??
+            'La actividad no está disponible para entrega en este momento.',
+        },
         { status: 403 }
       );
     }

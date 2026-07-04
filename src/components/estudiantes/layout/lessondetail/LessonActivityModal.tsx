@@ -9,6 +9,7 @@ import { StarIcon as StarOutlineIcon } from '@heroicons/react/24/outline';
 import {
   CheckCircleIcon,
   ChevronRightIcon,
+  ClockIcon,
   LightBulbIcon,
   StarIcon as StarSolidIcon,
   XCircleIcon,
@@ -509,6 +510,43 @@ export function LessonActivityModal({
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const canProceedToNext = currentQuestion && userAnswers[currentQuestion.id];
 
+  // --- Ventana de entrega (fecha de inicio / fecha máxima) ---
+  // Aplica a los 3 tipos de actividad. Si un campo está activo, la entrega
+  // solo es posible dentro de ese lapso; si ambos son null, no hay restricción.
+  const parseActivityDate = (value: Date | string | null | undefined) => {
+    if (!value) return null;
+    const parsed = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+
+  const submissionStartDate = parseActivityDate(activity.fechaInicioActividad);
+  const submissionDeadlineDate = parseActivityDate(activity.fechaMaximaEntrega);
+  const hasSubmissionWindow = Boolean(
+    submissionStartDate ?? submissionDeadlineDate
+  );
+
+  const getSubmissionWindowStatus = () => {
+    const now = Date.now();
+    const notStarted = submissionStartDate
+      ? now < submissionStartDate.getTime()
+      : false;
+    const closed = submissionDeadlineDate
+      ? now > submissionDeadlineDate.getTime()
+      : false;
+    return { notStarted, closed, isOpen: !notStarted && !closed };
+  };
+
+  const formatSubmissionDate = (date: Date) =>
+    new Intl.DateTimeFormat('es-CO', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+
+  const submissionWindowStatus = getSubmissionWindowStatus();
+
   const calculateScore = () => {
     const answers = Object.values(userAnswers);
     const correctAnswers = answers.filter((a) => a.isCorrect).length;
@@ -554,6 +592,20 @@ export function LessonActivityModal({
   };
 
   const handleFinish = async () => {
+    const windowStatus = getSubmissionWindowStatus();
+    if (windowStatus.notStarted && submissionStartDate) {
+      toast.error(
+        `Esta actividad estará disponible el ${formatSubmissionDate(submissionStartDate)}`
+      );
+      return;
+    }
+    if (windowStatus.closed && submissionDeadlineDate) {
+      toast.error(
+        `El plazo de entrega venció el ${formatSubmissionDate(submissionDeadlineDate)}`
+      );
+      return;
+    }
+
     try {
       setIsSavingResults(true);
       setIsResultsLoaded(false);
@@ -1694,6 +1746,58 @@ export function LessonActivityModal({
     );
   };
 
+  // Aviso de la ventana de entrega, visible en el modal de los 3 tipos.
+  const renderSubmissionWindowNotice = () => {
+    if (!hasSubmissionWindow) return null;
+
+    const { notStarted, closed } = getSubmissionWindowStatus();
+
+    let tone = 'border-cyan-500/40 bg-cyan-500/10 text-cyan-100';
+    let title = 'Ventana de entrega';
+    let message = '';
+
+    if (notStarted && submissionStartDate) {
+      tone = 'border-amber-500/40 bg-amber-500/10 text-amber-100';
+      title = 'Aún no disponible';
+      message = `Podrás entregar esta actividad a partir del ${formatSubmissionDate(
+        submissionStartDate
+      )}.`;
+    } else if (closed && submissionDeadlineDate) {
+      tone = 'border-red-500/40 bg-red-500/10 text-red-100';
+      title = 'Plazo cerrado';
+      message = `El plazo de entrega venció el ${formatSubmissionDate(
+        submissionDeadlineDate
+      )}. Ya no puedes entregar esta actividad.`;
+    } else {
+      const parts: string[] = [];
+      if (submissionStartDate) {
+        parts.push(
+          `disponible desde el ${formatSubmissionDate(submissionStartDate)}`
+        );
+      }
+      if (submissionDeadlineDate) {
+        parts.push(`hasta el ${formatSubmissionDate(submissionDeadlineDate)}`);
+      }
+      message = `Esta actividad está ${parts.join(' ')}.`;
+    }
+
+    return (
+      <div
+        className={`
+          mx-4 mb-4 flex items-start gap-3 rounded-xl border p-4
+          ${tone}
+        `}
+        role="status"
+      >
+        <ClockIcon className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+        <div className="text-left">
+          <p className="text-sm font-semibold">{title}</p>
+          <p className="mt-1 text-sm opacity-90">{message}</p>
+        </div>
+      </div>
+    );
+  };
+
   const renderContent = () => {
     const isFileUploadActivity = activity.typeid === 1;
 
@@ -1986,7 +2090,10 @@ export function LessonActivityModal({
                         })
                       }
                       disabled={
-                        !selectedFile || isUploading || !!uploadedFileInfo
+                        !selectedFile ||
+                        isUploading ||
+                        !!uploadedFileInfo ||
+                        !submissionWindowStatus.isOpen
                       }
                       className="
                         group/btn relative mt-6 w-full overflow-hidden
@@ -2092,7 +2199,10 @@ export function LessonActivityModal({
                           : undefined
                       }
                       disabled={
-                        !isUrlValid || isUploadingUrl || !!uploadedFileInfo
+                        !isUrlValid ||
+                        isUploadingUrl ||
+                        !!uploadedFileInfo ||
+                        !submissionWindowStatus.isOpen
                       }
                       className={`
                         w-full rounded-lg px-4 py-2 transition-all
@@ -2355,6 +2465,7 @@ export function LessonActivityModal({
             </div>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto">
+            {renderSubmissionWindowNotice()}
             {isSavingResults ? (
               <>
                 <div aria-live="assertive" className="sr-only">
@@ -2403,7 +2514,10 @@ export function LessonActivityModal({
                           btn-arrow
                           ${isLastQuestion ? 'btn-arrow-success' : ''}
                         `}
-                        disabled={!canProceedToNext}
+                        disabled={
+                          !canProceedToNext ||
+                          (isLastQuestion && !submissionWindowStatus.isOpen)
+                        }
                         onClick={isLastQuestion ? handleFinish : handleNext}
                       >
                         <span>

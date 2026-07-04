@@ -571,6 +571,7 @@ const LessonActivities = ({
     const activityType = resolveActivityType(activity);
     const ActivityIcon = activityType.icon;
     const deadlineText = formatDeadline(activity.fechaMaximaEntrega);
+    const startText = formatDeadline(activity.fechaInicioActividad ?? null);
     const currentLesson = activity.lessonsId
       ? lessons.find((l) => l.id === activity.lessonsId)
       : null;
@@ -645,6 +646,24 @@ const LessonActivities = ({
                 >
                   {activityType.label}
                 </span>
+                {startText && activity.typeid !== 2 && (
+                  <span
+                    className="
+                      flex items-center gap-1 truncate rounded-md border px-2
+                      py-0.5 text-xs font-medium
+                    "
+                    style={{
+                      borderColor: '#1d283a33',
+                      background: '#1d283a0f',
+                      color: '#1d283a',
+                      maxWidth: '160px',
+                    }}
+                    title={`Disponible desde ${startText}`}
+                  >
+                    <Clock className="size-3" />
+                    Desde {startText}
+                  </span>
+                )}
                 {deadlineText && activity.typeid !== 2 && (
                   <span
                     className="
@@ -657,10 +676,10 @@ const LessonActivities = ({
                       color: '#1d283a',
                       maxWidth: '160px',
                     }}
-                    title={deadlineText}
+                    title={`Fecha máxima de entrega ${deadlineText}`}
                   >
                     <Clock className="size-3" />
-                    {deadlineText}
+                    Hasta {deadlineText}
                   </span>
                 )}
                 {/* Mostrar duración de vídeo si está disponible en la lección */}
