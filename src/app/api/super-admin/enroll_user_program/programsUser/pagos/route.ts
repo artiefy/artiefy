@@ -473,11 +473,24 @@ export async function POST(req: Request) {
       cutoffDay
     );
 
+    console.log('LOG PARA SOSA SOBRE FECHA FIN', {
+      userId,
+      programId,
+      firstPaymentFechaPrograma: firstPayment[0].fechaPrograma,
+      cutoffDay,
+      lastNroPago,
+      subscriptionEndDateCalculada: subscriptionEndDate.toISOString(),
+    });
+
     const dbUser = await db.query.users.findFirst({
       where: eq(users.id, userId),
     });
 
     if (!dbUser?.id) {
+      console.log(
+        'LOG PARA SOSA SOBRE FECHA FIN: usuario no encontrado en BD',
+        { userId }
+      );
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 404 }
@@ -492,14 +505,23 @@ export async function POST(req: Request) {
 
     // La BD siempre debe reflejar la nueva fecha fin, aunque Clerk falle
     // (por ejemplo, si el usuario ya no existe en Clerk).
-    await db
+    const usersActualizados = await db
       .update(users)
       .set({
         planType: normalizedPlanType,
         subscriptionStatus: 'active',
         subscriptionEndDate,
       })
-      .where(eq(users.id, userId));
+      .where(eq(users.id, userId))
+      .returning({
+        id: users.id,
+        subscriptionEndDate: users.subscriptionEndDate,
+      });
+
+    console.log('LOG PARA SOSA SOBRE FECHA FIN: resultado update BD', {
+      filasActualizadas: usersActualizados.length,
+      valorGuardado: usersActualizados[0]?.subscriptionEndDate ?? null,
+    });
 
     try {
       const clerk = await clerkClient();
@@ -510,7 +532,14 @@ export async function POST(req: Request) {
           subscriptionEndDate: formatDateToClerk(subscriptionEndDate),
         },
       });
+      console.log('LOG PARA SOSA SOBRE FECHA FIN: Clerk actualizado OK', {
+        clerkUserId: dbUser.id,
+      });
     } catch (err) {
+      console.log('LOG PARA SOSA SOBRE FECHA FIN: Clerk FALLÓ', {
+        clerkUserId: dbUser.id,
+        error: err instanceof Error ? err.message : String(err),
+      });
       console.error('Error actualizando metadata en Clerk:', err);
     }
 
