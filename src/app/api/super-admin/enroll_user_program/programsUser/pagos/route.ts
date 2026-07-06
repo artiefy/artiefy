@@ -473,22 +473,36 @@ export async function POST(req: Request) {
       cutoffDay
     );
 
+    const dbUser = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    });
+
+    if (!dbUser?.id) {
+      return NextResponse.json(
+        { error: 'Usuario no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    // Plan actual o default Premium
+    const normalizedPlanType =
+      dbUser.planType && dbUser.planType !== 'none'
+        ? dbUser.planType
+        : 'Premium';
+
+    // La BD siempre debe reflejar la nueva fecha fin, aunque Clerk falle
+    // (por ejemplo, si el usuario ya no existe en Clerk).
+    await db
+      .update(users)
+      .set({
+        planType: normalizedPlanType,
+        subscriptionStatus: 'active',
+        subscriptionEndDate,
+      })
+      .where(eq(users.id, userId));
+
     try {
-      const dbUser = await db.query.users.findFirst({
-        where: eq(users.id, userId),
-      });
-
-      if (!dbUser?.id) {
-        throw new Error('El usuario no tiene clerkId guardado');
-      }
-
-      // Plan actual o default Premium
-      const normalizedPlanType =
-        dbUser.planType && dbUser.planType !== 'none'
-          ? dbUser.planType
-          : 'Premium';
-
-      const clerk = await clerkClient(); // tu wrapper
+      const clerk = await clerkClient();
       await clerk.users.updateUserMetadata(dbUser.id, {
         publicMetadata: {
           planType: normalizedPlanType,
@@ -496,17 +510,8 @@ export async function POST(req: Request) {
           subscriptionEndDate: formatDateToClerk(subscriptionEndDate),
         },
       });
-      // BD
-      await db
-        .update(users)
-        .set({
-          planType: normalizedPlanType,
-          subscriptionStatus: 'active',
-          subscriptionEndDate,
-        })
-        .where(eq(users.id, userId));
     } catch (err) {
-      console.error('Error actualizando plan en Clerk/DB:', err);
+      console.error('Error actualizando metadata en Clerk:', err);
     }
 
     return NextResponse.json({ ok: true });
