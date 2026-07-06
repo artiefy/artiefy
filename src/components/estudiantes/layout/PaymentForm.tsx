@@ -27,6 +27,7 @@ const PaymentForm: React.FC<{
   redirectUrlOnAuth?: string;
   persistOnAuth?: { key: string; value: string };
   isIndividualPurchase?: boolean; // Nuevo: indica si es compra individual sin suscripción
+  guestCheckout?: boolean; // Nuevo: permite pagar sin login creando la cuenta Clerk por detrás (planes)
   submitLabel?: string;
   showTitle?: boolean;
   variant?: 'default' | 'inline-course-card' | 'inline-plan-card';
@@ -36,6 +37,7 @@ const PaymentForm: React.FC<{
   redirectUrlOnAuth = '',
   persistOnAuth,
   isIndividualPurchase = false,
+  guestCheckout = false,
   submitLabel = 'Enviar',
   showTitle = true,
   variant = 'default',
@@ -328,7 +330,8 @@ const PaymentForm: React.FC<{
     // Flujo inteligente para compra individual sin login:
     // - Si ya tiene cuenta en Clerk => abrir mini login y luego pagar automáticamente.
     // - Si no tiene cuenta => crear cuenta + enviar credenciales y continuar a PayU.
-    if (!isLoggedIn && isIndividualPurchase) {
+    // Aplica tanto a cursos (isIndividualPurchase) como a planes (guestCheckout).
+    if (!isLoggedIn && (isIndividualPurchase || guestCheckout)) {
       try {
         setIsPreparingBuyerAccount(true);
         setError(null);
@@ -374,7 +377,7 @@ const PaymentForm: React.FC<{
 
         try {
           setPrePayMessage(
-            `Te enviamos tu contrasena temporal al correo ${normalizedManualEmail}`
+            `✅ Creamos tu cuenta en Artiefy. Tu contraseña para ingresar fue enviada a ${normalizedManualEmail}. Revisa tu correo (también spam); podrás cambiarla cuando quieras.`
           );
           setIsAutoSigningIn(true);
           setIsRedirectingToPayU(true);
@@ -382,7 +385,7 @@ const PaymentForm: React.FC<{
             normalizedManualEmail,
             payload.temporaryPassword
           );
-          await wait(1500);
+          await wait(4500);
           await processPayment();
           return;
         } catch (autoLoginError) {
@@ -413,8 +416,13 @@ const PaymentForm: React.FC<{
     }
 
     // Si requiere autenticación y no hay usuario, mostrar modal de login
-    // EXCEPTO si es una compra individual de curso (pago único)
-    if (requireAuthOnSubmit && !isLoggedIn && !isIndividualPurchase) {
+    // EXCEPTO si es compra individual de curso (pago único) o checkout guest de plan
+    if (
+      requireAuthOnSubmit &&
+      !isLoggedIn &&
+      !isIndividualPurchase &&
+      !guestCheckout
+    ) {
       // Persistencia opcional (p.ej. planes) para reabrir el modal tras login SIN query params.
       // Importante: NO persistir por defecto para no afectar otros flujos (cursos, etc.).
       if (persistOnAuth) {

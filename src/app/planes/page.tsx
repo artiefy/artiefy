@@ -547,6 +547,7 @@ const PlansPage: React.FC = () => {
               <PaymentForm
                 selectedProduct={selectedProduct}
                 requireAuthOnSubmit={false}
+                guestCheckout={!isSignedIn}
                 submitLabel={`Suscribirse por $${getDisplayCopPrice(selectedPlan).toLocaleString('es-CO')}/mes`}
                 showTitle={false}
                 variant="inline-plan-card"
