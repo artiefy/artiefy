@@ -1465,6 +1465,25 @@ export default function EnrolledUsersPage() {
         return;
       }
 
+      const saveData: unknown = await res.json().catch(() => ({}));
+      const nuevaSubscriptionEndDate =
+        typeof saveData === 'object' &&
+        saveData !== null &&
+        'subscriptionEndDate' in saveData
+          ? ((saveData as { subscriptionEndDate: string | null })
+              .subscriptionEndDate ?? null)
+          : null;
+
+      // Actualiza la tabla general de estudiantes con la nueva fecha fin,
+      // sin esperar a un refresh manual de la página.
+      setStudents((prev) =>
+        prev.map((s) =>
+          s.id === carteraUserId
+            ? { ...s, subscriptionEndDate: nuevaSubscriptionEndDate }
+            : s
+        )
+      );
+
       // 👇 CAMBIO: Guardar el estado actual de fechas autocompletadas
       const currentFechas = editablePagos.map((p) => p.fechaPrograma);
 

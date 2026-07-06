@@ -543,7 +543,10 @@ export async function POST(req: Request) {
       console.error('Error actualizando metadata en Clerk:', err);
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({
+      ok: true,
+      subscriptionEndDate: usersActualizados[0]?.subscriptionEndDate ?? null,
+    });
   } catch (error) {
     console.error('Error al guardar pago:', error);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });
