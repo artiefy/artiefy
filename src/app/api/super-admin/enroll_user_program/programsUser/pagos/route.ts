@@ -469,7 +469,7 @@ export async function POST(req: Request) {
     const lastNroPago = lastPayment[0].nroPago;
     const subscriptionEndDate = new Date(
       firstDate.getFullYear(),
-      firstDate.getMonth() + (lastNroPago - 1),
+      firstDate.getMonth() + lastNroPago,
       cutoffDay
     );
 
