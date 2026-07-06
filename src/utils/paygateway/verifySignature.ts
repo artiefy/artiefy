@@ -11,7 +11,7 @@ interface PaymentData {
   sign: string;
 }
 
-function resolveApiKeyForSignature(merchantId: string): string {
+export function resolveApiKeyForSignature(merchantId: string): string {
   const testMerchantId = env.PAYU_TEST_MERCHANT_ID;
   const prodMerchantId = env.PAYU_PROD_MERCHANT_ID;
 
@@ -43,7 +43,7 @@ function resolveApiKeyForSignature(merchantId: string): string {
 }
 
 // ✅ Formatear correctamente el monto según las reglas de PayU
-function formatValueForSignature(value: string): string {
+export function formatValueForSignature(value: string): string {
   const numericValue = parseFloat(value);
   return numericValue % 1 === 0
     ? numericValue.toFixed(1)

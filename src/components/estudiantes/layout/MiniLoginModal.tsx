@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Image from 'next/image';
 
-import { useAuth, useSignIn } from '@clerk/nextjs';
+import { useAuth, useClerk, useSignIn } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
 import { Eye, EyeOff } from 'lucide-react';
@@ -58,6 +58,16 @@ const TRANSIENT_OAUTH_ERROR_CODES = new Set([
 
 const hasTransientOAuthError = (errors?: ClerkAPIError[]) =>
   errors?.some((error) => TRANSIENT_OAUTH_ERROR_CODES.has(error.code)) ?? false;
+
+// A half-completed login leaves a stale Clerk session in the browser; the
+// next OAuth attempt then fails with one of these codes until it is cleared.
+const STALE_SESSION_ERROR_CODES = new Set([
+  'session_exists',
+  'identifier_already_signed_in',
+]);
+
+const hasStaleSessionError = (errors: ClerkAPIError[]) =>
+  errors.some((error) => STALE_SESSION_ERROR_CODES.has(error.code));
 
 const STAR_DECORATIONS = [
   { left: '8%', top: '12%', animationDelay: '0.1s', animationDuration: '1.9s' },
@@ -218,6 +228,7 @@ export default function MiniLoginModal({
   infoMessage,
 }: MiniLoginModalProps) {
   const { signIn, fetchStatus } = useSignIn();
+  const { signOut } = useClerk();
   const { isSignedIn } = useAuth({
     treatPendingAsSignedOut: false,
   });
@@ -423,14 +434,27 @@ export default function MiniLoginModal({
 
       signIn.reset();
 
-      const { error } = await signIn.sso({
-        strategy,
-        redirectCallbackUrl: '/sign-in/sso-callback',
-        redirectUrl: completePath || '/',
-        ...(strategy === 'oauth_google'
-          ? { oidcPrompt: 'select_account' }
-          : {}),
-      });
+      const startSso = () =>
+        signIn.sso({
+          strategy,
+          redirectCallbackUrl: '/sign-in/sso-callback',
+          redirectUrl: completePath || '/',
+          ...(strategy === 'oauth_google'
+            ? { oidcPrompt: 'select_account' }
+            : {}),
+        });
+
+      let { error } = await startSso();
+
+      if (error && hasStaleSessionError(toClerkApiErrors(error))) {
+        // Clear the stale session left by a half-completed login and retry
+        // the OAuth redirect once, instead of forcing the user to wipe
+        // browser cookies manually.
+        await signOut(async () => {
+          const retry = await startSso();
+          error = retry.error;
+        });
+      }
 
       if (error) {
         oauthStartedAtRef.current = 0;
@@ -686,6 +710,12 @@ export default function MiniLoginModal({
     }
     if (error.code === 'oauth_timeout') {
       return 'No se pudo abrir OAuth. Inténtalo nuevamente.';
+    }
+    if (
+      error.code === 'session_exists' ||
+      error.code === 'identifier_already_signed_in'
+    ) {
+      return 'Había una sesión anterior sin cerrar. Ya la cerramos, inténtalo de nuevo.';
     }
     if (error.code === 'invalid_strategy') {
       return 'La contraseña es incorrecta. Inténtalo de nuevo.';

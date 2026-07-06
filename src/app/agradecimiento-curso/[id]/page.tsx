@@ -7,6 +7,7 @@ import Script from 'next/script';
 
 import { useAuth } from '@clerk/nextjs';
 
+import { verifyPayuResponse } from '~/server/actions/estudiantes/confirmation/verifyPayuResponse';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 
 import '~/styles/confetti.css';
@@ -36,28 +37,59 @@ export default function AgradecimientoCursoPage({
   }, [courseId]);
 
   useEffect(() => {
-    if (searchParams && searchParams.get('from') === 'payu') {
-      setShowModal(true);
-      // Obtener email del pagador si viene en los parámetros
-      const email = searchParams.get('email');
-      if (email) {
-        setBuyerEmail(email);
-      }
-      // Consultar el pixel dinámico desde la API
-      console.log('📡 Consultando pixel para curso:', courseId);
-      fetch(`/api/courses/${courseId}/pixel`)
-        .then((res) => res.json())
-        .then((data: { metaPixelId: string | null }) => {
-          console.log('✅ Pixel ID recibido:', data.metaPixelId);
-          setMetaPixelId(data.metaPixelId);
-        })
-        .catch((err) => {
-          console.error('❌ Error fetching pixel:', err);
-          setMetaPixelId(null);
-        });
-    } else {
-      router.replace('/'); // Redirigir si no viene de PayU
+    if (!searchParams) return;
+
+    const isFromPayu = searchParams.get('from') === 'payu';
+    const signature = searchParams.get('signature');
+    const merchantId = searchParams.get('merchantId');
+    const referenceCode = searchParams.get('referenceCode');
+
+    // Bloqueo rápido para URLs escritas a mano (sin params firmados de PayU).
+    if (!isFromPayu || !signature || !merchantId || !referenceCode) {
+      router.replace('/');
+      return;
     }
+
+    let cancelled = false;
+
+    // Solo mostrar la bienvenida si la firma de PayU es válida y el pago fue aprobado.
+    void verifyPayuResponse({
+      merchantId,
+      referenceCode,
+      txValue: searchParams.get('TX_VALUE') ?? '',
+      currency: searchParams.get('currency') ?? '',
+      transactionState: searchParams.get('transactionState') ?? '',
+      signature,
+    })
+      .then((result) => {
+        if (cancelled) return;
+        if (!result.valid || !result.approved) {
+          router.replace('/');
+          return;
+        }
+        setShowModal(true);
+        // Obtener email del pagador si viene en los parámetros
+        const email = searchParams.get('email');
+        if (email) {
+          setBuyerEmail(email);
+        }
+        // Consultar el pixel dinámico desde la API
+        fetch(`/api/courses/${courseId}/pixel`)
+          .then((res) => res.json())
+          .then((data: { metaPixelId: string | null }) => {
+            if (!cancelled) setMetaPixelId(data.metaPixelId);
+          })
+          .catch(() => {
+            if (!cancelled) setMetaPixelId(null);
+          });
+      })
+      .catch(() => {
+        if (!cancelled) router.replace('/');
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [courseId, searchParams, router]);
 
   // Disparar el evento cuando tengamos el pixel ID

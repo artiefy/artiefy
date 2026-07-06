@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 
+import { verifyPayuResponse } from '~/server/actions/estudiantes/confirmation/verifyPayuResponse';
 import { getCourseTypeById } from '~/server/queries/courseTypes';
 
 import '~/styles/confetti.css';
@@ -21,16 +22,49 @@ export default function AgradecimientoPlanPage({
   const planId = params.id;
 
   useEffect(() => {
-    if (searchParams && searchParams.get('from') === 'payu') {
-      const t = setTimeout(() => setShowModal(true), 0);
-      // Consultar el pixel dinámico
-      getCourseTypeById(planId).then((plan) => {
-        setMetaPixelId(plan?.metaPixelId ?? null);
-      });
-      return () => clearTimeout(t);
-    } else {
+    if (!searchParams) return;
+
+    const isFromPayu = searchParams.get('from') === 'payu';
+    const signature = searchParams.get('signature');
+    const merchantId = searchParams.get('merchantId');
+    const referenceCode = searchParams.get('referenceCode');
+
+    // Bloqueo rápido para URLs escritas a mano (sin params firmados de PayU).
+    if (!isFromPayu || !signature || !merchantId || !referenceCode) {
       router.replace('/');
+      return;
     }
+
+    let cancelled = false;
+
+    // Solo mostrar la bienvenida si la firma de PayU es válida y el pago fue aprobado.
+    void verifyPayuResponse({
+      merchantId,
+      referenceCode,
+      txValue: searchParams.get('TX_VALUE') ?? '',
+      currency: searchParams.get('currency') ?? '',
+      transactionState: searchParams.get('transactionState') ?? '',
+      signature,
+    })
+      .then((result) => {
+        if (cancelled) return;
+        if (!result.valid || !result.approved) {
+          router.replace('/');
+          return;
+        }
+        setShowModal(true);
+        // Consultar el pixel dinámico
+        void getCourseTypeById(planId).then((plan) => {
+          if (!cancelled) setMetaPixelId(plan?.metaPixelId ?? null);
+        });
+      })
+      .catch(() => {
+        if (!cancelled) router.replace('/');
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [planId, searchParams, router]);
 
   const handleContinue = () => {

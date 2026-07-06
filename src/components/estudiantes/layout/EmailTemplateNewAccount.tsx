@@ -22,7 +22,7 @@ export function EmailTemplateNewAccount({
           <div style="background:#ffffff;border-radius:16px;padding:28px;border:1px solid #e2e8f0;">
             <h1 style="margin:0 0 12px;font-size:24px;color:#01142B;">Bienvenido a Artiefy, ${userName}</h1>
             <p style="margin:0 0 12px;font-size:15px;line-height:1.6;">
-              Detectamos una compra de curso individual con este correo y te creamos una cuenta para que puedas iniciar sesion de inmediato.
+              Detectamos una compra con este correo y te creamos una cuenta para que puedas iniciar sesion de inmediato.
             </p>
             <div style="margin:18px 0;padding:14px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;">
               <p style="margin:0 0 8px;"><strong>Correo:</strong> ${email}</p>
