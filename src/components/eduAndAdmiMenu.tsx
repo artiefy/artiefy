@@ -1,23 +1,28 @@
 'use client';
 import { type JSX, useEffect, useState } from 'react';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { UserButton, useUser } from '@clerk/nextjs';
-import { FaWhatsapp } from 'react-icons/fa';
+import { AnimatePresence, motion } from 'framer-motion';
+import { FaGraduationCap, FaWhatsapp } from 'react-icons/fa';
 import {
+  FiAward,
   FiBook,
+  FiBookOpen,
   FiChevronDown,
   FiChevronRight,
+  FiCreditCard,
   FiFileText,
   FiHome,
+  FiLayers,
   FiMenu,
   FiMessageSquare,
   FiSettings,
   FiShieldOff,
   FiUser,
+  FiUsers,
   FiX,
 } from 'react-icons/fi';
 
@@ -32,23 +37,59 @@ interface ResponsiveSidebarProps {
   children: React.ReactNode;
 }
 
+interface NavSubItem {
+  title: string;
+  link?: string;
+}
+
+interface NavLinkItem {
+  kind: 'link';
+  id: string;
+  icon: JSX.Element;
+  title: string;
+  link: string;
+  badge?: number;
+}
+
+interface NavPlaceholderItem {
+  kind: 'placeholder';
+  id: string;
+  icon: JSX.Element;
+  title: string;
+}
+
+interface NavGroupItem {
+  kind: 'group';
+  id: string;
+  icon: JSX.Element;
+  title: string;
+  extra?: JSX.Element;
+  items: NavSubItem[];
+}
+
+type SuperAdminNavItem = NavLinkItem | NavPlaceholderItem | NavGroupItem;
+
 const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
   const { user } = useUser();
   const { totalUnread } = useTicketsUnread(); // ✅ Agregar esto
   const { totalRecaudado } = useFinancialsSummary(); // ✅ Total recaudado
 
+  const sidebarUserName =
+    user?.fullName ??
+    user?.username ??
+    user?.primaryEmailAddress?.emailAddress ??
+    'Usuario';
+  const sidebarUserInitial = sidebarUserName.charAt(0).toUpperCase();
+
   const [isOpen, setIsOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const [isCoursesOpen, setIsCoursesOpen] = useState(false);
-  const [isProgramsOpen, setIsProgramsOpen] = useState(false);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isFinancesOpen, setIsFinancesOpen] = useState(false);
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const pathname = usePathname();
-  const [isWhatsAppOpen, setIsWhatsAppOpen] = useState(false);
-  const [isParametersOpen, setIsParametersOpen] = useState(false);
-  const [isProjectsOpen, setIsProjectsOpen] = useState(false);
+
+  const toggleMenu = (id: string) =>
+    setOpenMenus((prev) => ({ ...prev, [id]: !prev[id] }));
 
   useEffect(() => {
     const handleResize = () => {
@@ -63,46 +104,6 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const navItemsSuperAdmin = [
-    {
-      icon: <FiHome size={18} />,
-      title: 'Usuarios y Roles',
-      id: 'users',
-      link: '/dashboard/super-admin',
-    },
-    {
-      icon: <FiMessageSquare size={18} />,
-      title: 'Foro',
-      id: 'foro',
-      link: '/dashboard/super-admin/foro',
-    },
-    {
-      icon: <FiMessageSquare size={18} />,
-      title: 'Tickets',
-      id: 'tickets',
-      link: '/dashboard/super-admin/tickets',
-      badge: totalUnread > 0 ? totalUnread : undefined,
-    },
-    {
-      icon: <FiShieldOff size={18} />,
-      title: 'Roles Secundarios',
-      id: 'roles-secundarios',
-      link: '/dashboard/super-admin/usuariosRoles',
-    },
-    {
-      icon: <FiFileText size={18} />,
-      title: 'Logs credenciales',
-      id: 'cred-logs',
-      link: '/dashboard/super-admin/credentials-logs',
-    },
-    {
-      icon: <FiUser size={18} />,
-      title: 'Control de Accesos',
-      id: 'access-control',
-      link: '/dashboard/super-admin/subscription',
-    },
-  ];
 
   const navItemsEducator = [
     {
@@ -201,14 +202,451 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
     navItems = navItemsAdmin;
   } else if (user?.publicMetadata?.role === 'educador') {
     navItems = navItemsEducator;
-  } else if (user?.publicMetadata?.role === 'super-admin') {
-    navItems = navItemsSuperAdmin;
   }
+
+  const superAdminNav: SuperAdminNavItem[] = [
+    {
+      kind: 'placeholder',
+      id: 'inicio',
+      icon: <FiHome size={18} />,
+      title: 'Inicio',
+    },
+    {
+      kind: 'group',
+      id: 'usuarios-roles',
+      icon: <FiUsers size={18} />,
+      title: 'Usuarios y Roles',
+      items: [
+        { title: 'Todos', link: '/dashboard/super-admin' },
+        {
+          title: 'Roles Secundarios',
+          link: '/dashboard/super-admin/usuariosRoles',
+        },
+      ],
+    },
+    {
+      kind: 'link',
+      id: 'tickets',
+      icon: <FiMessageSquare size={18} />,
+      title: 'Tickets',
+      link: '/dashboard/super-admin/tickets',
+      badge: totalUnread > 0 ? totalUnread : undefined,
+    },
+    {
+      kind: 'group',
+      id: 'estudiantes',
+      icon: <FaGraduationCap size={18} />,
+      title: 'Estudiantes',
+      items: [
+        {
+          title: 'Lista de Estudiantes',
+          link: '/dashboard/super-admin/programs/enrolled_users',
+        },
+        { title: 'Grupos' },
+        {
+          title: 'Logs credenciales',
+          link: '/dashboard/super-admin/credentials-logs',
+        },
+        {
+          title: 'Control de Accesos',
+          link: '/dashboard/super-admin/subscription',
+        },
+      ],
+    },
+    {
+      kind: 'group',
+      id: 'proyectos',
+      icon: <FiFileText size={18} />,
+      title: 'Proyectos',
+      items: [
+        {
+          title: 'Proyectos de Estudiantes',
+          link: '/dashboard/super-admin/projects',
+        },
+        {
+          title: 'Proyectos Guiados',
+          link: '/dashboard/super-admin/proyectos-guiados',
+        },
+      ],
+    },
+    {
+      kind: 'group',
+      id: 'cursos',
+      icon: <FiBook size={18} />,
+      title: 'Cursos',
+      items: [
+        { title: 'Todos los Cursos', link: '/dashboard/super-admin/cursos' },
+        {
+          title: 'Top / Destacados',
+          link: '/dashboard/super-admin/courses/topFeature',
+        },
+        { title: 'Categorías', link: '/dashboard/super-admin/categories' },
+        { title: 'Modalidades', link: '/dashboard/super-admin/modalities' },
+        { title: 'Niveles', link: '/dashboard/super-admin/difficulties' },
+        { title: 'Horarios', link: '/dashboard/subscription/schedule-options' },
+        { title: 'Espacios', link: '/dashboard/subscription/space-options' },
+        {
+          title: 'Tipos de Certificación',
+          link: '/dashboard/super-admin/cursos/certification-types',
+        },
+        { title: 'Parámetros', link: '/dashboard/super-admin/parametros' },
+        {
+          title: 'Plantillas',
+          link: '/dashboard/super-admin/parametros/plantillas',
+        },
+      ],
+    },
+    {
+      kind: 'group',
+      id: 'programas',
+      icon: <FiLayers size={18} />,
+      title: 'Programas',
+      items: [
+        {
+          title: 'Todos los programas',
+          link: '/dashboard/super-admin/programs',
+        },
+        { title: 'Materias', link: '/dashboard/super-admin/materias' },
+      ],
+    },
+    {
+      kind: 'group',
+      id: 'finanzas',
+      icon: <FiCreditCard size={18} />,
+      title: 'Finanzas',
+      extra:
+        totalRecaudado > 0 ? (
+          <span
+            className="
+              rounded bg-green-500/20 px-1.5 py-0.5 text-[10px]
+              font-semibold whitespace-nowrap text-green-400
+            "
+          >
+            ${(totalRecaudado / 1000000).toFixed(1)}M
+          </span>
+        ) : undefined,
+      items: [
+        {
+          title: 'Historial de Transacciones',
+          link: '/dashboard/transaction-history',
+        },
+        {
+          title: 'Sesión 2',
+          link: '/dashboard/super-admin/whatsapp/sesion2',
+        },
+      ],
+    },
+    {
+      kind: 'group',
+      id: 'whatsapp',
+      icon: <FaWhatsapp size={18} />,
+      title: 'WhatsApp',
+      items: [
+        { title: 'Soporte', link: '/dashboard/super-admin/whatsapp/soporte' },
+      ],
+    },
+    {
+      kind: 'link',
+      id: 'foros',
+      icon: <FiMessageSquare size={18} />,
+      title: 'Foros',
+      link: '/dashboard/super-admin/foro',
+    },
+    {
+      kind: 'placeholder',
+      id: 'educacion',
+      icon: <FiBookOpen size={18} />,
+      title: 'Educación',
+    },
+    {
+      kind: 'placeholder',
+      id: 'academy',
+      icon: <FiAward size={18} />,
+      title: 'Academy',
+    },
+    {
+      kind: 'group',
+      id: 'formulario',
+      icon: <FiFileText size={18} />,
+      title: 'Formulario',
+      items: [
+        {
+          title: 'Fechas inscritas',
+          link: '/dashboard/super-admin/form-inscription/dates',
+        },
+        {
+          title: 'Comerciales registrados',
+          link: '/dashboard/super-admin/form-inscription/comercials',
+        },
+        {
+          title: 'Horarios registrados',
+          link: '/dashboard/super-admin/form-inscription/horario',
+        },
+        {
+          title: 'Sedes',
+          link: '/dashboard/super-admin/form-inscription/sedes',
+        },
+      ],
+    },
+  ];
 
   const [activeItem, setActiveItem] = useState('home');
 
+  // El resaltado de los items reales (con ruta) se calcula a partir de
+  // `pathname`; `activeItem` solo sirve para los placeholders sin ruta
+  // (Inicio, Educación, Academy, etc.), así que se limpia en cada navegación
+  // para que no quede un item viejo marcado junto con la ruta actual.
+  useEffect(() => {
+    setActiveItem('');
+  }, [pathname]);
+
   const shouldShowText = isMobile ? isOpen : isHovered;
   const sidebarWidth = shouldShowText ? 'w-56' : 'w-16';
+
+  const renderSubItem = (sub: NavSubItem, idx: number) => {
+    if (!sub.link) {
+      return (
+        <li key={idx}>
+          <span
+            className="
+              flex cursor-default items-center gap-2 rounded-lg px-2 py-1.5
+              text-xs text-gray-500
+            "
+          >
+            <span className="size-1 shrink-0 rounded-full bg-gray-600" />
+            {sub.title}
+          </span>
+        </li>
+      );
+    }
+    const isActive = pathname === sub.link;
+    return (
+      <li key={idx}>
+        <Link
+          href={sub.link}
+          className={cn(
+            `
+              flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs
+              text-white transition-all duration-300
+              hover:text-primary
+            `,
+            isActive && 'text-primary'
+          )}
+        >
+          <span
+            className={cn(
+              'size-1 shrink-0 rounded-full bg-gray-500',
+              isActive && 'bg-primary'
+            )}
+          />
+          {sub.title}
+        </Link>
+      </li>
+    );
+  };
+
+  const renderSuperAdminItem = (item: SuperAdminNavItem) => {
+    if (item.kind === 'placeholder') {
+      const isActive = activeItem === item.id;
+      return (
+        <li key={item.id}>
+          <button
+            type="button"
+            onClick={() => setActiveItem(item.id)}
+            className={cn(
+              `
+                group relative flex w-full items-center rounded-lg p-2
+                text-white transition-all duration-200
+                hover:bg-primary hover:text-black
+              `,
+              !shouldShowText && 'justify-center'
+            )}
+            title={!shouldShowText ? item.title : undefined}
+          >
+            {isActive && (
+              <span
+                className="
+                  absolute top-1/2 left-0 h-5 w-[3px] -translate-y-1/2
+                  rounded-r bg-primary
+                "
+              />
+            )}
+            <span
+              className={cn(
+                `
+                  relative transition duration-75
+                  group-hover:text-black
+                `,
+                isActive ? 'text-primary' : 'text-gray-300'
+              )}
+            >
+              {item.icon}
+            </span>
+            {shouldShowText && (
+              <span
+                className={cn(
+                  `
+                    ml-2.5 flex-1 text-left text-xs font-medium
+                    whitespace-nowrap
+                  `,
+                  isActive && 'text-primary'
+                )}
+              >
+                {item.title}
+              </span>
+            )}
+          </button>
+        </li>
+      );
+    }
+
+    if (item.kind === 'link') {
+      const isActive = pathname === item.link;
+      return (
+        <li key={item.id}>
+          <Link
+            href={item.link}
+            className={cn(
+              `
+                group relative flex items-center rounded-lg p-2 text-white
+                transition-all duration-200
+                hover:bg-primary hover:text-black
+              `,
+              !shouldShowText && 'justify-center'
+            )}
+            title={!shouldShowText ? item.title : undefined}
+          >
+            {isActive && (
+              <span
+                className="
+                  absolute top-1/2 left-0 h-5 w-[3px] -translate-y-1/2
+                  rounded-r bg-primary
+                "
+              />
+            )}
+            <span
+              className={cn(
+                `
+                  relative transition duration-75
+                  group-hover:text-black
+                `,
+                isActive ? 'text-primary' : 'text-gray-300'
+              )}
+            >
+              {item.icon}
+              {!shouldShowText && item.badge && item.badge > 0 && (
+                <span
+                  className="
+                    absolute -top-2 -right-2 flex h-4 min-w-[16px]
+                    animate-pulse items-center justify-center rounded-full
+                    bg-red-600 px-1 text-[9px] font-bold text-white ring-1
+                    ring-background
+                  "
+                >
+                  {item.badge > 99 ? '99+' : item.badge}
+                </span>
+              )}
+            </span>
+            {shouldShowText && (
+              <span
+                className={cn(
+                  `
+                    ml-2.5 flex flex-1 items-center justify-between text-xs
+                    font-medium whitespace-nowrap
+                  `,
+                  isActive && 'text-primary'
+                )}
+              >
+                {item.title}
+                {item.badge && item.badge > 0 && (
+                  <span
+                    className="
+                      ml-2 flex h-5 min-w-[20px] animate-pulse items-center
+                      justify-center rounded-full bg-red-600 px-1.5 text-[10px]
+                      font-bold text-white
+                    "
+                  >
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
+              </span>
+            )}
+          </Link>
+        </li>
+      );
+    }
+
+    const isMenuOpen = !!openMenus[item.id];
+    const hasActiveChild = item.items.some(
+      (sub) => sub.link && pathname === sub.link
+    );
+    return (
+      <li key={item.id}>
+        <button
+          type="button"
+          onClick={() => shouldShowText && toggleMenu(item.id)}
+          className={cn(
+            `
+              group relative flex w-full items-center rounded-lg p-2
+              text-white transition-all duration-300
+              hover:bg-secondary hover:text-white
+            `,
+            !shouldShowText && 'justify-center'
+          )}
+          title={!shouldShowText ? item.title : undefined}
+        >
+          {hasActiveChild && (
+            <span
+              className="
+                absolute top-1/2 left-0 h-5 w-[3px] -translate-y-1/2 rounded-r
+                bg-primary
+              "
+            />
+          )}
+          <span className={hasActiveChild ? 'text-primary' : 'text-gray-300'}>
+            {item.icon}
+          </span>
+          {shouldShowText && (
+            <>
+              <span
+                className={cn(
+                  `
+                    ml-2.5 flex-1 text-left text-xs font-medium
+                    whitespace-nowrap
+                  `,
+                  hasActiveChild && 'text-primary'
+                )}
+              >
+                {item.title}
+              </span>
+              <div className="flex items-center gap-2">
+                {item.extra}
+                {isMenuOpen ? (
+                  <FiChevronDown size={16} />
+                ) : (
+                  <FiChevronRight size={16} />
+                )}
+              </div>
+            </>
+          )}
+        </button>
+        <AnimatePresence initial={false}>
+          {isMenuOpen && shouldShowText && (
+            <motion.ul
+              key="submenu"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="ml-4 space-y-0.5 overflow-hidden"
+            >
+              {item.items.map(renderSubItem)}
+            </motion.ul>
+          )}
+        </AnimatePresence>
+      </li>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -239,18 +677,16 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
           <FiX size={24} />
         </button>
       )}
-
       {/* Navbar */}
       <nav
         className="
-          fixed top-0 z-40 w-full border-b border-gray-200 bg-background
-          shadow-xs
+          fixed top-0 z-40 w-full bg-transparent
         "
       >
         <div
           className="
-            p-2.5
-            lg:px-4 lg:pl-3
+            py-2.5 pr-2.5 pl-3
+            lg:pr-4
           "
         >
           <div className="flex items-center justify-between">
@@ -272,15 +708,19 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 </button>
               )}
               <div className="flex items-center gap-2">
-                <div className="relative size-[32px]">
-                  <Image
-                    src="/favicon.ico"
-                    className="size-8 rounded-full object-contain"
-                    alt="Educational Logo"
-                    fill
-                    sizes="32px"
-                  />
+                <div
+                  className="
+                    flex size-8 shrink-0 items-center justify-center
+                    rounded-full bg-primary text-sm font-bold text-black
+                  "
+                >
+                  {sidebarUserInitial}
                 </div>
+                {shouldShowText && (
+                  <span className="truncate text-sm font-semibold text-white">
+                    {sidebarUserName}
+                  </span>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -289,7 +729,20 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                 onClose={() => setIsModalOpen(false)}
               />
               <TicketNotificationBell />
-              <UserButton showName />
+              <UserButton
+                showName
+                appearance={{
+                  elements: {
+                    userButtonBox: '!flex-row-reverse',
+                    userButtonAvatarBox: '!size-8 !rounded-full !bg-primary',
+                    userButtonOuterIdentifier:
+                      '!text-sm !font-bold !text-white',
+                  },
+                  variables: {
+                    colorForeground: '#000000',
+                  },
+                }}
+              />
             </div>
           </div>
         </div>
@@ -301,9 +754,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
         onMouseLeave={() => !isMobile && setIsHovered(false)}
         className={cn(
           `
-            fixed top-0 left-0 z-50 h-screen border-r border-gray-200
-            bg-background pt-[52px] transition-all duration-300
-            dark:border-gray-700 dark:bg-gray-800
+            fixed top-[52px] left-0 z-40 flex h-[calc(100vh-52px)] flex-col
+            bg-background transition-all duration-300
+            dark:bg-gray-800
           `,
           sidebarWidth,
           isMobile && !isOpen && '-translate-x-full'
@@ -312,755 +765,101 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       >
         <div
           className="
-            h-full scrollbar-thin scrollbar-thumb-gray-700
-            scrollbar-track-gray-300 overflow-x-hidden
+            min-h-0 flex-1
+            scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent overflow-x-hidden
             overflow-y-auto
-            bg-background px-2 pb-4 transition-colors duration-200 hover:scrollbar-thumb-gray-600
-            dark:scrollbar-thumb-gray-600 dark:scrollbar-track-gray-900
+            bg-background px-2 pb-4 transition-colors duration-200 hover:scrollbar-thumb-gray-500
             dark:bg-gray-800
           "
-          style={{ scrollbarWidth: 'thin', scrollbarColor: '#374151 #e5e7eb' }}
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#4b5563 transparent',
+          }}
         >
           <ul className="mt-3 space-y-1.5 font-medium">
-            {navItems.map((item) => (
-              <li key={item.id} onClick={item.onClick}>
-                <Link
-                  href={item.link ?? '#'}
-                  onClick={() => setActiveItem(item.id)}
-                  className={cn(
-                    `
-                      group relative flex items-center rounded-lg p-2 text-white
-                      transition-all duration-200
-                      hover:bg-primary
-                    `,
-                    activeItem === item.id && 'bg-primary text-black',
-                    !shouldShowText && 'justify-center'
-                  )}
-                  title={!shouldShowText ? item.title : undefined}
-                >
-                  <span
+            {navItems.map((item) => {
+              const isActive = item.link
+                ? pathname === item.link
+                : activeItem === item.id;
+              return (
+                <li key={item.id} onClick={item.onClick}>
+                  <Link
+                    href={item.link ?? '#'}
+                    onClick={() => setActiveItem(item.id)}
                     className={cn(
                       `
-                        relative text-gray-300 transition duration-75
-                        group-hover:text-gray-900
-                      `,
-                      activeItem === item.id && 'text-black'
+                      group relative flex items-center rounded-lg p-2 text-white
+                      transition-all duration-200
+                      hover:bg-primary hover:text-black
+                    `,
+                      !shouldShowText && 'justify-center'
                     )}
+                    title={!shouldShowText ? item.title : undefined}
                   >
-                    {item.icon}
-                    {/* ✅ Badge cuando el sidebar está CERRADO - aparece sobre el ícono */}
-                    {!shouldShowText && item.badge && item.badge > 0 && (
+                    {isActive && (
                       <span
                         className="
+                        absolute top-1/2 left-0 h-5 w-[3px] -translate-y-1/2
+                        rounded-r bg-primary
+                      "
+                      />
+                    )}
+                    <span
+                      className={cn(
+                        `
+                        relative transition duration-75
+                        group-hover:text-black
+                      `,
+                        isActive ? 'text-primary' : 'text-gray-300'
+                      )}
+                    >
+                      {item.icon}
+                      {/* ✅ Badge cuando el sidebar está CERRADO - aparece sobre el ícono */}
+                      {!shouldShowText && item.badge && item.badge > 0 && (
+                        <span
+                          className="
                           absolute -top-2 -right-2 flex h-4 min-w-[16px]
                           animate-pulse items-center justify-center rounded-full
                           bg-red-600 px-1 text-[9px] font-bold text-white ring-1
                           ring-background
                         "
-                      >
-                        {item.badge > 99 ? '99+' : item.badge}
-                      </span>
-                    )}
-                  </span>
-                  {/* ✅ Badge cuando el sidebar está ABIERTO - aparece al final del texto */}
-                  {shouldShowText && (
-                    <span
-                      className="
-                        ml-2.5 flex flex-1 items-center justify-between text-xs
-                        font-medium whitespace-nowrap
-                      "
-                    >
-                      {item.title}
-                      {item.badge && item.badge > 0 && (
-                        <span
-                          className="
-                            ml-2 flex h-5 min-w-[20px] animate-pulse
-                            items-center justify-center rounded-full bg-red-600
-                            px-1.5 text-[10px] font-bold text-white
-                          "
                         >
                           {item.badge > 99 ? '99+' : item.badge}
                         </span>
                       )}
                     </span>
-                  )}
-                </Link>
-              </li>
-            ))}
-
-            {user?.publicMetadata?.role === 'super-admin' && (
-              <>
-                {/* Submenú: Formulario */}
-                <li>
-                  <button
-                    onClick={() => shouldShowText && setIsFormOpen(!isFormOpen)}
-                    className={cn(
-                      `
-                        flex w-full items-center rounded-lg p-2 text-white
-                        transition-all duration-300
-                        hover:bg-secondary hover:text-white
-                      `,
-                      !shouldShowText && 'justify-center'
-                    )}
-                    title={!shouldShowText ? 'Formulario' : undefined}
-                  >
-                    <FiFileText size={18} />
+                    {/* ✅ Badge cuando el sidebar está ABIERTO - aparece al final del texto */}
                     {shouldShowText && (
-                      <>
-                        <span
-                          className="
-                            ml-2.5 flex-1 text-left text-xs font-medium
-                            whitespace-nowrap
-                          "
-                        >
-                          Formulario
-                        </span>
-                        {isFormOpen ? (
-                          <FiChevronDown size={16} />
-                        ) : (
-                          <FiChevronRight size={16} />
+                      <span
+                        className={cn(
+                          `
+                          ml-2.5 flex flex-1 items-center justify-between
+                          text-xs font-medium whitespace-nowrap
+                        `,
+                          isActive && 'text-primary'
                         )}
-                      </>
-                    )}
-                  </button>
-
-                  {isFormOpen && shouldShowText && (
-                    <ul className="mt-1 ml-4 space-y-0.5">
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/form-inscription/dates"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/form-inscription/dates' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Fechas inscritas
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/form-inscription/comercials"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/form-inscription/comercials' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Comerciales registrados
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/form-inscription/horario"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/form-inscription/horario' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Horarios registrados
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/form-inscription/sedes"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/form-inscription/sedes' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Sedes
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
-                </li>
-                {/* Submenú: WhatsApp */}
-                <li>
-                  <button
-                    onClick={() =>
-                      shouldShowText && setIsWhatsAppOpen(!isWhatsAppOpen)
-                    }
-                    className={cn(
-                      `
-                        flex w-full items-center rounded-lg p-2 text-white
-                        transition-all duration-300
-                        hover:bg-secondary hover:text-white
-                      `,
-                      !shouldShowText && 'justify-center'
-                    )}
-                    title={!shouldShowText ? 'WhatsApp' : undefined}
-                  >
-                    <FaWhatsapp size={18} />
-                    {shouldShowText && (
-                      <>
-                        <span
-                          className="
-                            ml-2.5 flex-1 text-left text-xs font-medium
-                            whitespace-nowrap
+                      >
+                        {item.title}
+                        {item.badge && item.badge > 0 && (
+                          <span
+                            className="
+                            ml-2 flex h-5 min-w-[20px] animate-pulse
+                            items-center justify-center rounded-full bg-red-600
+                            px-1.5 text-[10px] font-bold text-white
                           "
-                        >
-                          WhatsApp
-                        </span>
-                        {isWhatsAppOpen ? (
-                          <FiChevronDown size={16} />
-                        ) : (
-                          <FiChevronRight size={16} />
+                          >
+                            {item.badge > 99 ? '99+' : item.badge}
+                          </span>
                         )}
-                      </>
+                      </span>
                     )}
-                  </button>
-
-                  {isWhatsAppOpen && shouldShowText && (
-                    <ul className="mt-1 ml-4 space-y-0.5">
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/whatsapp/soporte"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/whatsapp/soporte' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Soporte
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
+                  </Link>
                 </li>
+              );
+            })}
 
-                {/* Submenú: Finanzas */}
-                <li>
-                  <button
-                    onClick={() =>
-                      shouldShowText && setIsFinancesOpen(!isFinancesOpen)
-                    }
-                    className={cn(
-                      `
-                        flex w-full items-center rounded-lg p-2 text-white
-                        transition-all duration-300
-                        hover:bg-secondary hover:text-white
-                      `,
-                      !shouldShowText && 'justify-center'
-                    )}
-                    title={!shouldShowText ? 'Finanzas' : undefined}
-                  >
-                    <FiFileText size={18} />
-                    {shouldShowText && (
-                      <>
-                        <span
-                          className="
-                            ml-2.5 flex-1 text-left text-xs font-medium
-                            whitespace-nowrap
-                          "
-                        >
-                          Finanzas
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {totalRecaudado > 0 && (
-                            <span
-                              className="
-                                rounded bg-green-500/20 px-1.5 py-0.5
-                                text-[10px] font-semibold whitespace-nowrap
-                                text-green-400
-                              "
-                            >
-                              ${(totalRecaudado / 1000000).toFixed(1)}M
-                            </span>
-                          )}
-                          {isFinancesOpen ? (
-                            <FiChevronDown size={16} />
-                          ) : (
-                            <FiChevronRight size={16} />
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </button>
-
-                  {isFinancesOpen && shouldShowText && (
-                    <ul className="mt-1 ml-4 space-y-0.5">
-                      <li>
-                        <Link
-                          href="/dashboard/transaction-history"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname === '/dashboard/transaction-history' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Historial de Transacciones
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/whatsapp/sesion2"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/whatsapp/sesion2' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Sesión 2
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
-                </li>
-
-                {/* Submenú: Cursos */}
-                <li>
-                  <button
-                    onClick={() =>
-                      shouldShowText && setIsCoursesOpen(!isCoursesOpen)
-                    }
-                    className={cn(
-                      `
-                        flex w-full items-center rounded-lg p-2 text-white
-                        transition-all duration-300
-                        hover:bg-secondary hover:text-white
-                      `,
-                      !shouldShowText && 'justify-center'
-                    )}
-                    title={!shouldShowText ? 'Cursos' : undefined}
-                  >
-                    <FiBook size={18} />
-                    {shouldShowText && (
-                      <>
-                        <span
-                          className="
-                            ml-2.5 flex-1 text-left text-xs font-medium
-                            whitespace-nowrap
-                          "
-                        >
-                          Cursos
-                        </span>
-                        {isCoursesOpen ? (
-                          <FiChevronDown size={16} />
-                        ) : (
-                          <FiChevronRight size={16} />
-                        )}
-                      </>
-                    )}
-                  </button>
-
-                  {isCoursesOpen && shouldShowText && (
-                    <ul className="mt-1 ml-4 space-y-0.5">
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/cursos"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname === '/dashboard/super-admin/cursos' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Todos los Cursos
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/courses/topFeature"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/courses/topFeature' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Top / Destacados
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/categories"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname === '/dashboard/super-admin/categories' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Categorías
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/modalities"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname === '/dashboard/super-admin/modalities' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Modalidades
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/difficulties"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/difficulties' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Niveles
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/subscription/schedule-options"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/subscription/schedule-options' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Horarios
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/subscription/space-options"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/subscription/space-options' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Espacios
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/cursos/certification-types"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/cursos/certification-types' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Tipos de Certificación
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
-                </li>
-
-                {/* Submenú: Proyectos */}
-                <li>
-                  <button
-                    onClick={() =>
-                      shouldShowText && setIsProjectsOpen(!isProjectsOpen)
-                    }
-                    className={cn(
-                      `
-                        flex w-full items-center rounded-lg p-2 text-white
-                        transition-all duration-300
-                        hover:bg-secondary hover:text-white
-                      `,
-                      !shouldShowText && 'justify-center'
-                    )}
-                    title={!shouldShowText ? 'Proyectos' : undefined}
-                  >
-                    <FiFileText size={18} />
-                    {shouldShowText && (
-                      <>
-                        <span
-                          className="
-                            ml-2.5 flex-1 text-left text-xs font-medium
-                            whitespace-nowrap
-                          "
-                        >
-                          Proyectos
-                        </span>
-                        {isProjectsOpen ? (
-                          <FiChevronDown size={16} />
-                        ) : (
-                          <FiChevronRight size={16} />
-                        )}
-                      </>
-                    )}
-                  </button>
-
-                  {isProjectsOpen && shouldShowText && (
-                    <ul className="mt-1 ml-4 space-y-0.5">
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/projects"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname === '/dashboard/super-admin/projects' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Proyectos de Estudiantes
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/proyectos-guiados"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname.includes(
-                              '/dashboard/super-admin/proyectos-guiados'
-                            ) && 'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Proyectos Guiados
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
-                </li>
-
-                {/* Submenú: Parámetros y Plantillas */}
-                <li>
-                  <button
-                    onClick={() =>
-                      shouldShowText && setIsParametersOpen(!isParametersOpen)
-                    }
-                    className={cn(
-                      `
-                        flex w-full items-center rounded-lg p-2 text-white
-                        transition-all duration-300
-                        hover:bg-secondary hover:text-white
-                      `,
-                      !shouldShowText && 'justify-center'
-                    )}
-                    title={!shouldShowText ? 'Parámetros' : undefined}
-                  >
-                    <FiFileText size={18} />
-                    {shouldShowText && (
-                      <>
-                        <span
-                          className="
-                            ml-2.5 flex-1 text-left text-xs font-medium
-                            whitespace-nowrap
-                          "
-                        >
-                          Parámetros
-                        </span>
-                        {isParametersOpen ? (
-                          <FiChevronDown size={16} />
-                        ) : (
-                          <FiChevronRight size={16} />
-                        )}
-                      </>
-                    )}
-                  </button>
-
-                  {isParametersOpen && shouldShowText && (
-                    <ul className="mt-1 ml-4 space-y-0.5">
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/parametros"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname === '/dashboard/super-admin/parametros' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Parámetros
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/parametros/plantillas"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/parametros/plantillas' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Plantillas
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
-                </li>
-
-                {/* Submenú: Programas */}
-                <li>
-                  <button
-                    onClick={() =>
-                      shouldShowText && setIsProgramsOpen(!isProgramsOpen)
-                    }
-                    className={cn(
-                      `
-                        flex w-full items-center rounded-lg p-2 text-white
-                        transition-all duration-300
-                        hover:bg-secondary hover:text-white
-                      `,
-                      !shouldShowText && 'justify-center'
-                    )}
-                    title={!shouldShowText ? 'Programas' : undefined}
-                  >
-                    <FiBook size={18} />
-                    {shouldShowText && (
-                      <>
-                        <span
-                          className="
-                            ml-2.5 flex-1 text-left text-xs font-medium
-                            whitespace-nowrap
-                          "
-                        >
-                          Programas
-                        </span>
-                        {isProgramsOpen ? (
-                          <FiChevronDown size={16} />
-                        ) : (
-                          <FiChevronRight size={16} />
-                        )}
-                      </>
-                    )}
-                  </button>
-
-                  {isProgramsOpen && shouldShowText && (
-                    <ul className="mt-1 ml-4 space-y-0.5">
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/programs"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname === '/dashboard/super-admin/programs' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Todos los programas
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/materias"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname === '/dashboard/super-admin/materias' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Materias
-                        </Link>
-                      </li>
-                      <li>
-                        <Link
-                          href="/dashboard/super-admin/programs/enrolled_users"
-                          className={cn(
-                            `
-                              block rounded-lg px-2 py-1.5 text-xs text-white
-                              transition-all duration-300
-                              hover:bg-secondary hover:text-white
-                            `,
-                            pathname ===
-                              '/dashboard/super-admin/programs/enrolled_users' &&
-                              'bg-primary text-[#01142B]'
-                          )}
-                        >
-                          Matricular Estudiantes
-                        </Link>
-                      </li>
-                    </ul>
-                  )}
-                </li>
-              </>
-            )}
+            {user?.publicMetadata?.role === 'super-admin' &&
+              superAdminNav.map(renderSuperAdminItem)}
           </ul>
         </div>
       </aside>
