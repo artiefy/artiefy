@@ -110,11 +110,8 @@ export default function NivelesPage() {
   return (
     <>
       <div className="p-6">
-        <header className="
-          flex items-center justify-between rounded-lg bg-[#00BDD8] p-6 text-3xl
-          font-bold text-[#01142B] shadow-md
-        ">
-          <h1>Gestión de Niveles de Niveles</h1>
+        {/* Action buttons with consistent styling */}
+        <div className="mb-6 flex flex-wrap gap-2">
           <button
             onClick={() => {
               setShowCreateForm(true);
@@ -122,14 +119,31 @@ export default function NivelesPage() {
               setDescription('');
             }}
             className="
-              bg-background flex items-center rounded-md px-4 py-2 font-semibold
-              text-white shadow-md
-              hover:bg-[#00A5C0]
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md border border-white/20
+              bg-background px-2 py-1.5 text-xs text-primary transition-all
+              hover:bg-primary/10
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
             "
           >
-            <Plus className="mr-2 size-5" /> Crear
+            <span className="relative z-10 font-medium">Crear Nivel</span>
+            <Plus
+              className="
+                relative z-10 size-3.5
+                sm:size-4
+              "
+            />
+            <div
+              className="
+                absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                via-white/10 to-transparent opacity-0 transition-all
+                duration-500
+                group-hover/button:[transform:translateX(100%)]
+                group-hover/button:opacity-100
+              "
+            />
           </button>
-        </header>
+        </div>
 
         {showCreateForm && (
           <ModalForm
@@ -180,8 +194,6 @@ export default function NivelesPage() {
               onDelete={setShowConfirmDelete}
             />
             {/* 🔹 Controles de paginación */}
-
-            {/* 🔹 Controles de paginación */}
             <PaginationControls
               currentPage={currentPage}
               totalPages={totalPages}
@@ -213,20 +225,29 @@ const ModalForm = ({
   description,
   setDescription,
 }: ModalFormProps) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center">
-    <div className="
-      absolute inset-0 bg-gradient-to-b from-[#01142B] to-[#01142B] opacity-80
-    " />
-    <div className="
-      relative z-10 w-full max-w-md rounded-lg bg-gray-800 p-6 shadow-lg
-    ">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-bold text-white">{title}</h2>
-        <button onClick={onClose}>
-          <X className="
-            size-6 text-gray-300
-            hover:text-white
-          " />
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+    <div
+      className="
+        relative m-4 w-full max-w-lg rounded-xl bg-[#01142B] p-4 text-white
+        shadow-2xl
+        md:p-8
+      "
+    >
+      <div
+        className="
+          mb-6 flex items-center justify-between border-b border-white/10
+          pb-4
+        "
+      >
+        <h2 className="text-2xl font-bold text-[#3AF4EF]">{title}</h2>
+        <button
+          onClick={onClose}
+          className="
+            rounded-lg bg-white/5 p-2
+            hover:bg-white/10
+          "
+        >
+          <X className="size-5" />
         </button>
       </div>
       <input
@@ -234,24 +255,42 @@ const ModalForm = ({
         placeholder="Nombre"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        className="mt-4 w-full rounded-md bg-gray-700 px-3 py-2 text-white"
+        className="
+          w-full rounded-md border border-gray-700 bg-gray-900/50 px-4 py-2
+          text-white
+          placeholder:text-gray-400
+        "
       />
       <input
         type="text"
         placeholder="Descripción"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="mt-2 w-full rounded-md bg-gray-700 px-3 py-2 text-white"
+        className="
+          mt-3 w-full rounded-md border border-gray-700 bg-gray-900/50 px-4
+          py-2 text-white
+          placeholder:text-gray-400
+        "
       />
       <button
         onClick={onSubmit}
         className="
-          bg-primary
-          hover:bg-secondary
-          mt-4 w-full rounded-md px-4 py-2 font-bold text-white
+          group/button relative mt-6 inline-flex w-full items-center
+          justify-center gap-2 overflow-hidden rounded-md border
+          border-white/20 bg-background px-4 py-2 text-sm text-primary
+          transition-all
+          hover:bg-primary/10
         "
       >
-        Guardar
+        <span className="relative z-10 font-medium">Guardar</span>
+        <div
+          className="
+            absolute inset-0 z-0 bg-gradient-to-r from-transparent
+            via-white/10 to-transparent opacity-0 transition-all duration-500
+            group-hover/button:[transform:translateX(100%)]
+            group-hover/button:opacity-100
+          "
+        />
       </button>
     </div>
   </div>
@@ -266,30 +305,61 @@ const ConfirmDeleteModal = ({
   onClose: () => void;
   onConfirm: () => void;
 }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center">
-    <div className="absolute inset-0 bg-black opacity-80" />
-    <div className="
-      relative z-10 w-full max-w-sm rounded-lg bg-gray-800 p-6 shadow-lg
-    ">
-      <h2 className="text-lg font-bold text-white">
-        ¿Eliminar &quot;{item.name}&quot;?
-      </h2>
-      <p className="mt-2 text-gray-300">Esta acción no se puede deshacer.</p>
-      <div className="mt-4 flex justify-end space-x-2">
+  <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50">
+    <div
+      className="
+        relative m-4 w-full max-w-md rounded-xl bg-[#01142B] p-4 text-white
+        shadow-2xl
+        md:p-8
+      "
+    >
+      <div
+        className="
+          mb-6 flex items-center justify-between border-b border-white/10
+          pb-4
+        "
+      >
+        <h2 className="text-2xl font-bold text-[#3AF4EF]">
+          ¿Eliminar &quot;{item.name}&quot;?
+        </h2>
         <button
           onClick={onClose}
           className="
-            rounded-md bg-gray-600 px-4 py-2 text-white
-            hover:bg-gray-500
+            rounded-lg bg-white/5 p-2
+            hover:bg-white/10
           "
         >
-          Cancelar
+          <X className="size-5" />
+        </button>
+      </div>
+      <p className="text-sm text-gray-300">Esta acción no se puede deshacer.</p>
+      <div className="mt-6 flex justify-end gap-2">
+        <button
+          onClick={onClose}
+          className="
+            group/button relative inline-flex items-center justify-center
+            gap-2 overflow-hidden rounded-md border border-white/20
+            bg-background px-4 py-2 text-sm text-primary transition-all
+            hover:bg-primary/10
+          "
+        >
+          <span className="relative z-10 font-medium">Cancelar</span>
+          <div
+            className="
+              absolute inset-0 z-0 bg-gradient-to-r from-transparent
+              via-white/10 to-transparent opacity-0 transition-all
+              duration-500
+              group-hover/button:[transform:translateX(100%)]
+              group-hover/button:opacity-100
+            "
+          />
         </button>
         <button
           onClick={onConfirm}
           className="
-            rounded-md bg-red-600 px-4 py-2 text-white
-            hover:bg-red-500
+            rounded-md border border-red-500/30 bg-red-500/10 px-4 py-2
+            text-sm text-red-400
+            hover:bg-red-500/20
           "
         >
           Eliminar
@@ -310,26 +380,30 @@ const PaginationControls = ({
   totalPages,
   onPageChange,
 }: PaginationControlsProps) => (
-  <div className="mt-4 flex justify-center space-x-4">
+  <div className="mt-4 flex items-center justify-center gap-4">
     <button
       disabled={currentPage === 1}
       onClick={() => onPageChange(currentPage - 1)}
       className="
-        rounded-md bg-gray-700 px-4 py-2 text-white
-        disabled:opacity-50
+        rounded-md border border-white/20 bg-background p-2 text-primary
+        transition-all
+        hover:bg-primary/10
+        disabled:cursor-not-allowed disabled:opacity-50
       "
     >
       <ChevronLeft size={20} />
     </button>
-    <span className="text-white">
-      {currentPage} de {totalPages}
+    <span className="text-sm text-white">
+      {currentPage} de {totalPages || 1}
     </span>
     <button
-      disabled={currentPage === totalPages}
+      disabled={currentPage === totalPages || totalPages === 0}
       onClick={() => onPageChange(currentPage + 1)}
       className="
-        rounded-md bg-gray-700 px-4 py-2 text-white
-        disabled:opacity-50
+        rounded-md border border-white/20 bg-background p-2 text-primary
+        transition-all
+        hover:bg-primary/10
+        disabled:cursor-not-allowed disabled:opacity-50
       "
     >
       <ChevronRight size={20} />
@@ -338,13 +412,25 @@ const PaginationControls = ({
 );
 
 const LoaderComponent = () => (
-  <div className="mt-6 flex justify-center">
-    <Loader2 className="text-primary size-6" />
+  <div
+    className="
+      flex items-center justify-center rounded-xl border border-[#1a2a35]
+      bg-[#0a0f14] p-12 text-gray-400
+    "
+  >
+    <Loader2 className="size-6 animate-spin text-primary" />
   </div>
 );
 
 const ErrorMessage = ({ message }: { message: string }) => (
-  <div className="mt-6 text-red-500">{message}</div>
+  <div
+    className="
+      flex items-center justify-center rounded-xl border border-[#1a2a35]
+      bg-[#0a0f14] p-12 text-red-400
+    "
+  >
+    {message}
+  </div>
 );
 
 const TableComponent = ({
@@ -356,33 +442,106 @@ const TableComponent = ({
   onEdit: (item: Nivel) => void;
   onDelete: (item: Nivel) => void;
 }) => (
-  <table className="
-    mt-6 w-full border-collapse rounded-lg bg-gray-800 text-white shadow-lg
-  ">
-    <thead className="bg-[#00BDD8] text-[#01142B]">
-      <tr>
-        <th className="px-4 py-3 text-left text-xs font-semibold">Nombre</th>
-        <th className="px-4 py-3 text-left text-xs font-semibold">
-          Descripción
-        </th>
-        <th className="px-4 py-3 text-left text-xs font-semibold">Acciones</th>
-      </tr>
-    </thead>
-    <tbody className="divide-y divide-gray-700">
-      {data.map((item) => (
-        <tr key={item.id} className="hover:bg-gray-700">
-          <td className="px-4 py-3">{item.name}</td>
-          <td className="px-4 py-3">{item.description}</td>
-          <td className="flex space-x-2 px-4 py-3">
-            <button onClick={() => onEdit(item)} className="text-yellow-500">
-              <Edit size={14} />
-            </button>
-            <button onClick={() => onDelete(item)} className="text-red-500">
-              <Trash2 size={14} />
-            </button>
-          </td>
+  <div className="overflow-x-auto">
+    <table
+      className="
+        min-w-full table-auto border-collapse overflow-hidden rounded-xl
+        border border-[#1a2a35] bg-[#0a0f14]
+      "
+    >
+      <thead>
+        <tr className="border-b border-[#00BDD8] bg-[#0d1a22]">
+          <th
+            className="
+              p-3 text-left text-[10px] font-semibold tracking-[0.12em]
+              text-[#00BDD8] uppercase
+              sm:px-4
+            "
+          >
+            Nombre
+          </th>
+          <th
+            className="
+              p-3 text-left text-[10px] font-semibold tracking-[0.12em]
+              text-[#00BDD8] uppercase
+              sm:px-4
+            "
+          >
+            Descripción
+          </th>
+          <th
+            className="
+              p-3 text-right text-[10px] font-semibold tracking-[0.12em]
+              text-[#00BDD8] uppercase
+              sm:px-4
+            "
+          >
+            Acciones
+          </th>
         </tr>
-      ))}
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        {data.map((item) => (
+          <tr
+            key={item.id}
+            className="
+              border-b border-[#111c24] transition-colors
+              last:border-0
+              hover:bg-[#0d1e28]
+            "
+          >
+            <td
+              className="
+                p-3
+                sm:p-4
+              "
+            >
+              <span className="text-xs font-medium text-[#e8f4f8] sm:text-sm">
+                {item.name}
+              </span>
+            </td>
+            <td
+              className="
+                p-3
+                sm:p-4
+              "
+            >
+              <span className="text-[11px] text-[#4a7080] sm:text-xs">
+                {item.description}
+              </span>
+            </td>
+            <td
+              className="
+                p-3
+                sm:p-4
+              "
+            >
+              <div className="flex items-center justify-end gap-1">
+                <button
+                  onClick={() => onEdit(item)}
+                  className="
+                    rounded-md p-1.5 text-gray-400 transition-colors
+                    hover:bg-white/5 hover:text-primary
+                  "
+                  title="Editar"
+                >
+                  <Edit size={14} />
+                </button>
+                <button
+                  onClick={() => onDelete(item)}
+                  className="
+                    rounded-md p-1.5 text-gray-400 transition-colors
+                    hover:bg-white/5 hover:text-red-400
+                  "
+                  title="Eliminar"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 );

@@ -280,20 +280,11 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
           title: 'Top / Destacados',
           link: '/dashboard/super-admin/courses/topFeature',
         },
-        { title: 'Categorías', link: '/dashboard/super-admin/categories' },
-        { title: 'Modalidades', link: '/dashboard/super-admin/modalities' },
-        { title: 'Niveles', link: '/dashboard/super-admin/difficulties' },
-        { title: 'Horarios', link: '/dashboard/subscription/schedule-options' },
-        { title: 'Espacios', link: '/dashboard/subscription/space-options' },
         {
-          title: 'Tipos de Certificación',
-          link: '/dashboard/super-admin/cursos/certification-types',
+          title: 'Configuraciones',
+          link: '/dashboard/super-admin/cursos/configuraciones',
         },
         { title: 'Parámetros', link: '/dashboard/super-admin/parametros' },
-        {
-          title: 'Plantillas',
-          link: '/dashboard/super-admin/parametros/plantillas',
-        },
       ],
     },
     {
@@ -644,26 +635,19 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Overlay para cerrar sidebar en móvil */}
-      {isMobile && isOpen && (
-        <div
-          className="
-            backdrop-blur-s fixed inset-0 z-40 bg-white/10
-            md:hidden
-          "
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
       {/* Degradado oscuro tipo vignette detrás del sidebar al expandirse: se
-          funde con el contenido sin dejar ninguna línea o caja visible */}
-      {!isMobile && shouldShowText && (
+          funde con el contenido sin dejar ninguna línea o caja visible.
+          En móvil además cierra el sidebar al tocar fuera. */}
+      {shouldShowText && (
         <div
-          className="
-            pointer-events-none fixed inset-0 z-30
-            bg-gradient-to-r from-black via-black/80 to-transparent
-            transition-opacity duration-300
-          "
+          onClick={() => isMobile && setIsOpen(false)}
+          className={cn(
+            `
+              fixed inset-0 z-30 bg-gradient-to-r from-black via-black/80
+              to-transparent transition-opacity duration-300
+            `,
+            !isMobile && 'pointer-events-none'
+          )}
           style={{
             backgroundSize: '420px 100%',
             backgroundRepeat: 'no-repeat',

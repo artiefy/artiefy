@@ -253,15 +253,24 @@ const PlantillasPage = () => {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
+      <div className="min-h-screen bg-background p-6">
+        <div className="mx-auto max-w-6xl">
           <div
             className="
-              loader mb-4 size-12 rounded-full border-4 border-primary
-              border-t-transparent
+              flex items-center justify-center rounded-xl border
+              border-[#1a2a35] bg-[#0a0f14] p-12 text-gray-400
             "
-          ></div>
-          <p className="text-gray-600">Cargando plantillas...</p>
+          >
+            <div className="text-center">
+              <div
+                className="
+                  loader mb-4 size-12 rounded-full border-4 border-primary
+                  border-t-transparent
+                "
+              ></div>
+              <p>Cargando plantillas...</p>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -269,150 +278,225 @@ const PlantillasPage = () => {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="mx-auto max-w-6xl">
-        {/* Encabezado */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Plantillas</h1>
-            <p className="mt-2 text-gray-600">
-              Organiza parámetros en plantillas reutilizables
-            </p>
-          </div>
+        {/* Action buttons with consistent styling */}
+        <div className="mb-6 flex flex-wrap gap-2">
           <button
             onClick={() => handleOpenModal()}
             className="
-              flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm
-              font-medium text-[#01142B] transition-colors
-              hover:bg-primary/90
+              group/button relative inline-flex items-center justify-center
+              gap-1 overflow-hidden rounded-md border border-white/20
+              bg-background px-2 py-1.5 text-xs text-primary transition-all
+              hover:bg-primary/10
+              sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
             "
           >
-            <FiPlus size={18} />
-            Crear Nueva Plantilla
+            <span className="relative z-10 font-medium">
+              Crear Nueva Plantilla
+            </span>
+            <FiPlus
+              className="
+                relative z-10 size-3.5
+                sm:size-4
+              "
+            />
+            <div
+              className="
+                absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                via-white/10 to-transparent opacity-0 transition-all
+                duration-500
+                group-hover/button:[transform:translateX(100%)]
+                group-hover/button:opacity-100
+              "
+            />
           </button>
         </div>
 
         {error && (
           <div
             className="
-              mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
+              mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4
+              text-sm text-red-400
             "
           >
             {error}
           </div>
         )}
 
-        {/* Grid de plantillas */}
+        {/* Tabla de plantillas */}
         {templates.length === 0 ? (
           <div
             className="
-              rounded-lg border border-gray-200 bg-white p-8 text-center
+              flex items-center justify-center rounded-xl border
+              border-[#1a2a35] bg-[#0a0f14] p-12 text-gray-400
             "
           >
-            <p className="text-gray-500">
-              No hay plantillas creadas. ¡Crea una para empezar!
-            </p>
+            <p>No hay plantillas creadas. ¡Crea una para empezar!</p>
           </div>
         ) : (
           <div
             className="
-              grid grid-cols-1 gap-6
-              md:grid-cols-2
-              lg:grid-cols-3
+              overflow-hidden rounded-lg bg-gray-800/50 shadow-xl
+              backdrop-blur-sm
             "
           >
-            {templates.map((template) => (
-              <div
-                key={template.id}
+            <div className="overflow-x-auto">
+              <table
                 className="
-                  rounded-lg border border-gray-200 bg-white p-6 shadow-sm
-                  transition-all
-                  hover:shadow-md
+                  min-w-full table-auto border-collapse overflow-hidden
+                  rounded-xl border border-[#1a2a35] bg-[#0a0f14]
                 "
               >
-                <div className="mb-4 flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {template.name}
-                    </h3>
-                    {template.description && (
-                      <p className="mt-1 text-sm text-gray-600">
-                        {template.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="ml-2 flex gap-2">
-                    <button
-                      onClick={() => handleOpenModal(template)}
+                <thead>
+                  <tr className="border-b border-[#00BDD8] bg-[#0d1a22]">
+                    <th
                       className="
-                        rounded-lg bg-blue-50 p-2 text-blue-600
-                        hover:bg-blue-100
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
                       "
-                      title="Editar"
                     >
-                      <FiEdit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(template.id)}
+                      Plantilla
+                    </th>
+                    <th
                       className="
-                        rounded-lg bg-red-50 p-2 text-red-600
-                        hover:bg-red-100
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
                       "
-                      title="Eliminar"
                     >
-                      <FiTrash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-4 rounded-lg bg-gray-50 p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-gray-700">
                       Porcentaje Total
-                    </span>
-                    <span className="text-lg font-bold text-primary">
-                      {template.totalPercentage}%
-                    </span>
-                  </div>
-                  <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
-                    <div
-                      className="h-full rounded-full bg-primary transition-all"
-                      style={{
-                        width: `${Math.min(template.totalPercentage, 100)}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-700">
-                    Parámetros incluidos:
-                  </p>
-                  {template.parametros.length === 0 ? (
-                    <p className="text-xs text-gray-500">
-                      Sin parámetros asignados
-                    </p>
-                  ) : (
-                    <div className="space-y-1">
-                      {template.parametros.map((param) => (
+                    </th>
+                    <th
+                      className="
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
+                      "
+                    >
+                      Parámetros incluidos
+                    </th>
+                    <th
+                      className="
+                        p-3 text-right text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
+                      "
+                    >
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {templates.map((template) => (
+                    <tr
+                      key={template.id}
+                      className="
+                        border-b border-[#111c24] transition-colors
+                        last:border-0
+                        hover:bg-[#0d1e28]
+                      "
+                    >
+                      <td
+                        className="
+                          p-3
+                          sm:p-4
+                        "
+                      >
                         <div
-                          key={param.id}
                           className="
-                            flex items-center justify-between rounded-md
-                            bg-blue-50 px-2 py-1
+                            text-xs font-medium text-[#e8f4f8]
+                            sm:text-sm
                           "
                         >
-                          <span className="text-xs font-medium text-gray-700">
-                            {param.name}
-                          </span>
-                          <span className="text-xs font-semibold text-blue-600">
-                            {param.porcentaje}%
+                          {template.name}
+                        </div>
+                        {template.description && (
+                          <div className="mt-1 text-[11px] text-[#4a7080]">
+                            {template.description}
+                          </div>
+                        )}
+                      </td>
+                      <td
+                        className="
+                          p-3
+                          sm:p-4
+                        "
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-bold text-[#00BDD8]">
+                            {template.totalPercentage}%
                           </span>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+                        <div className="mt-2 h-1.5 w-32 rounded-full bg-[#0d1a22]">
+                          <div
+                            className="h-full rounded-full bg-[#00BDD8] transition-all"
+                            style={{
+                              width: `${Math.min(template.totalPercentage, 100)}%`,
+                            }}
+                          ></div>
+                        </div>
+                      </td>
+                      <td
+                        className="
+                          p-3
+                          sm:p-4
+                        "
+                      >
+                        {template.parametros.length === 0 ? (
+                          <span className="text-xs text-gray-500">
+                            Sin parámetros asignados
+                          </span>
+                        ) : (
+                          <div className="flex flex-wrap gap-1">
+                            {template.parametros.map((param) => (
+                              <span
+                                key={param.id}
+                                className="
+                                  inline-flex items-center rounded-full border
+                                  border-[#00BDD8]/20 bg-[#0d2830] px-2 py-0.5
+                                  text-[10px] text-[#00BDD8]
+                                "
+                              >
+                                {param.name} · {param.porcentaje}%
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
+                      <td
+                        className="
+                          p-3
+                          sm:p-4
+                        "
+                      >
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleOpenModal(template)}
+                            className="
+                              rounded-md p-1.5 text-gray-400 transition-colors
+                              hover:bg-white/5 hover:text-primary
+                            "
+                            title="Editar"
+                          >
+                            <FiEdit2 size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(template.id)}
+                            className="
+                              rounded-md p-1.5 text-gray-400 transition-colors
+                              hover:bg-white/5 hover:text-red-400
+                            "
+                            title="Eliminar"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -421,24 +505,31 @@ const PlantillasPage = () => {
       {modal.isOpen && (
         <div
           className="
-            fixed inset-0 z-50 flex items-center justify-center bg-black/50
+            fixed inset-0 z-[9999] flex items-center justify-center
+            bg-black/50
           "
         >
           <div
             className="
-              max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white
-              p-6 shadow-lg
+              relative m-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto
+              rounded-xl bg-[#01142B] p-4 text-white shadow-2xl
+              md:p-8
             "
           >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-gray-900">
+            <div
+              className="
+                mb-6 flex items-center justify-between border-b
+                border-white/10 pb-4
+              "
+            >
+              <h2 className="text-2xl font-bold text-[#3AF4EF]">
                 {modal.isEdit ? 'Editar Plantilla' : 'Crear Nueva Plantilla'}
               </h2>
               <button
                 onClick={handleCloseModal}
                 className="
-                  rounded-lg p-1
-                  hover:bg-gray-100
+                  rounded-lg bg-white/5 p-2
+                  hover:bg-white/10
                 "
               >
                 <FiX size={20} />
@@ -447,7 +538,7 @@ const PlantillasPage = () => {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-300">
                   Nombre de la Plantilla
                 </label>
                 <input
@@ -457,8 +548,9 @@ const PlantillasPage = () => {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   className="
-                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
-                    text-gray-900 placeholder-gray-500
+                    mt-1 w-full rounded-md border border-gray-700
+                    bg-gray-900/50 px-4 py-2 text-white
+                    placeholder:text-gray-400
                     focus:border-primary focus:outline-none
                   "
                   placeholder="Ej: Plantilla de Evaluación Continua"
@@ -467,7 +559,7 @@ const PlantillasPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-300">
                   Descripción (Opcional)
                 </label>
                 <textarea
@@ -476,8 +568,9 @@ const PlantillasPage = () => {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   className="
-                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
-                    text-gray-900 placeholder-gray-500
+                    mt-1 w-full rounded-md border border-gray-700
+                    bg-gray-900/50 px-4 py-2 text-white
+                    placeholder:text-gray-400
                     focus:border-primary focus:outline-none
                   "
                   placeholder="Describe esta plantilla..."
@@ -486,8 +579,8 @@ const PlantillasPage = () => {
               </div>
 
               {/* Buscador de parámetros */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
+              <div className="rounded-lg bg-gray-800/50 p-4 shadow-lg backdrop-blur-sm">
+                <label className="block text-sm font-medium text-gray-300">
                   Agregar Parámetros
                 </label>
                 <input
@@ -495,8 +588,9 @@ const PlantillasPage = () => {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="
-                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
-                    text-gray-900 placeholder-gray-500
+                    mt-1 w-full rounded-md border border-gray-700
+                    bg-gray-900/50 px-4 py-2 text-white
+                    placeholder:text-gray-400
                     focus:border-primary focus:outline-none
                   "
                   placeholder="Buscar parámetros..."
@@ -507,7 +601,7 @@ const PlantillasPage = () => {
               <div
                 className="
                   max-h-64 space-y-2 overflow-y-auto rounded-lg border
-                  border-gray-200 bg-gray-50 p-4
+                  border-[#1a2a35] bg-[#0a0f14] p-4
                 "
               >
                 {filteredParametros.length === 0 ? (
@@ -526,29 +620,29 @@ const PlantillasPage = () => {
                         key={param.id}
                         className={cn(
                           `
-                            flex items-center justify-between rounded-lg p-3
-                            transition-colors
+                            flex items-center justify-between rounded-lg
+                            border p-3 transition-colors
                           `,
                           isSelected
-                            ? 'bg-blue-100'
+                            ? 'border-[#00BDD8]/30 bg-[#0d2830]'
                             : canAdd
                               ? `
-                                bg-white
-                                hover:bg-gray-50
+                                border-[#1a2a35] bg-gray-900/40
+                                hover:border-[#00BDD8]/20
                               `
-                              : 'bg-red-50 opacity-60'
+                              : 'border-red-500/20 bg-red-500/5 opacity-60'
                         )}
                       >
                         <div className="flex-1">
-                          <div className="font-medium text-gray-900">
+                          <div className="text-sm font-medium text-[#e8f4f8]">
                             {param.name}
                           </div>
-                          <div className="text-xs text-gray-600">
+                          <div className="text-xs text-gray-400">
                             {param.description}
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="font-semibold text-gray-700">
+                          <span className="text-sm font-semibold text-[#00BDD8]">
                             {param.porcentaje}%
                           </span>
                           <button
@@ -557,25 +651,28 @@ const PlantillasPage = () => {
                             disabled={!canAdd && !isSelected}
                             className={cn(
                               `
-                                rounded-lg px-3 py-1 text-sm font-medium
+                                rounded-md px-3 py-1 text-xs font-medium
                                 transition-colors
                               `,
                               isSelected
                                 ? `
-                                  bg-blue-600 text-white
-                                  hover:bg-blue-700
+                                  border border-red-500/30 bg-red-500/10
+                                  text-red-400
+                                  hover:bg-red-500/20
                                 `
                                 : canAdd
                                   ? `
-                                    bg-gray-200 text-gray-700
-                                    hover:bg-gray-300
+                                    border border-white/20 bg-background
+                                    text-primary
+                                    hover:bg-primary/10
                                   `
                                   : `
-                                    cursor-not-allowed bg-gray-200 text-gray-400
+                                    cursor-not-allowed border border-white/10
+                                    text-gray-500
                                   `
                             )}
                           >
-                            {isSelected ? 'Removido' : 'Agregar'}
+                            {isSelected ? 'Remover' : 'Agregar'}
                           </button>
                         </div>
                       </div>
@@ -585,36 +682,36 @@ const PlantillasPage = () => {
               </div>
 
               {/* Resumen de parámetros seleccionados */}
-              <div className="rounded-lg bg-blue-50 p-4">
+              <div className="rounded-lg border border-[#00BDD8]/20 bg-[#0d2830] p-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <span className="font-semibold text-gray-900">
+                  <span className="text-sm font-semibold text-[#e8f4f8]">
                     Parámetros Seleccionados:{' '}
                     {formData.selectedParametros.length}
                   </span>
                   <span
                     className={cn(
-                      'font-bold',
+                      'text-sm font-bold',
                       getTotalPercentage() > 100
-                        ? 'text-red-600'
-                        : 'text-gray-900'
+                        ? 'text-red-400'
+                        : 'text-[#00BDD8]'
                     )}
                   >
                     {getTotalPercentage()}%
                   </span>
                 </div>
                 {getTotalPercentage() > 100 && (
-                  <p className="text-sm text-red-600">
+                  <p className="text-xs text-red-400">
                     ⚠️ Excede el 100% permitido
                   </p>
                 )}
                 {getTotalPercentage() < 100 && getTotalPercentage() > 0 && (
-                  <p className="text-sm text-yellow-600">
+                  <p className="text-xs text-[#ffab40]">
                     ⚠️ Porcentaje incompleto (falta {100 - getTotalPercentage()}
                     %)
                   </p>
                 )}
                 {getTotalPercentage() === 100 && (
-                  <p className="text-sm text-green-600">
+                  <p className="text-xs text-[#00e676]">
                     ✓ Porcentaje completo (100%)
                   </p>
                 )}
@@ -625,24 +722,46 @@ const PlantillasPage = () => {
                   type="button"
                   onClick={handleCloseModal}
                   className="
-                    flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm
-                    font-medium text-gray-700
-                    hover:bg-gray-50
+                    group/button relative flex-1 overflow-hidden rounded-md
+                    border border-white/20 bg-background px-4 py-2 text-sm
+                    text-primary transition-all
+                    hover:bg-primary/10
                   "
                 >
-                  Cancelar
+                  <span className="relative z-10 font-medium">Cancelar</span>
+                  <div
+                    className="
+                      absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                      via-white/10 to-transparent opacity-0 transition-all
+                      duration-500
+                      group-hover/button:[transform:translateX(100%)]
+                      group-hover/button:opacity-100
+                    "
+                  />
                 </button>
                 <button
                   type="submit"
                   disabled={getTotalPercentage() !== 100}
                   className="
-                    flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium
-                    text-[#01142B]
-                    hover:bg-primary/90
-                    disabled:opacity-50
+                    group/button relative flex-1 overflow-hidden rounded-md
+                    border border-white/20 bg-background px-4 py-2 text-sm
+                    text-primary transition-all
+                    hover:bg-primary/10
+                    disabled:cursor-not-allowed disabled:opacity-50
                   "
                 >
-                  {modal.isEdit ? 'Guardar Cambios' : 'Crear Plantilla'}
+                  <span className="relative z-10 font-medium">
+                    {modal.isEdit ? 'Guardar Cambios' : 'Crear Plantilla'}
+                  </span>
+                  <div
+                    className="
+                      absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                      via-white/10 to-transparent opacity-0 transition-all
+                      duration-500
+                      group-hover/button:[transform:translateX(100%)]
+                      group-hover/button:opacity-100
+                    "
+                  />
                 </button>
               </div>
             </form>
