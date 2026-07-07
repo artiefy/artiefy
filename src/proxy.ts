@@ -23,6 +23,10 @@ function isSuperAdminPath(pathname: string): boolean {
   return pathname.startsWith('/dashboard/super-admin');
 }
 
+function isSuperAdminSharedDashboardPath(pathname: string): boolean {
+  return pathname.startsWith('/dashboard/subscription');
+}
+
 function isEducadorPath(pathname: string): boolean {
   return pathname.startsWith('/dashboard/educadores');
 }
@@ -196,7 +200,9 @@ export default clerkMiddleware(async (auth, req) => {
     //    llamadas ni el propio flujo de login/logout).
     if (userId && role && role !== STUDENT_ROLE && !isApiPath(pathname)) {
       const dashboardRoute = getDashboardRouteByRole(role);
-      const isInOwnDashboard = pathname.startsWith(dashboardRoute);
+      const isInOwnDashboard =
+        pathname.startsWith(dashboardRoute) ||
+        (role === 'super-admin' && isSuperAdminSharedDashboardPath(pathname));
       const isAuthRoute =
         pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
 
