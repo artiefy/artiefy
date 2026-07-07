@@ -776,15 +776,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       >
         <div
           className="
-            min-h-0 flex-1
-            scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent overflow-x-hidden
-            overflow-y-auto
-            bg-transparent px-2 pb-4 transition-colors duration-200 hover:scrollbar-thumb-gray-500
+            hide-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto
+            bg-transparent px-2 pb-4
           "
-          style={{
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#4b5563 transparent',
-          }}
         >
           <ul className="mt-3 space-y-1.5 font-medium">
             {navItems.map((item) => {
