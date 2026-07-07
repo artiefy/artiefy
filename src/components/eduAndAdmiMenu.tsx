@@ -550,10 +550,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             {shouldShowText && (
               <span
                 className={cn(
-                  `
-                    ml-2.5 flex flex-1 items-center justify-between text-xs
-                    font-medium whitespace-nowrap
-                  `,
+                  'ml-2.5 flex items-center text-xs font-medium whitespace-nowrap',
                   isActive && 'text-primary'
                 )}
               >
@@ -610,10 +607,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             <>
               <span
                 className={cn(
-                  `
-                    ml-2.5 flex-1 text-left text-xs font-medium
-                    whitespace-nowrap
-                  `,
+                  'ml-2.5 w-32 shrink-0 text-left text-xs font-medium whitespace-nowrap',
                   hasActiveChild && 'text-primary'
                 )}
               >
@@ -658,6 +652,23 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             md:hidden
           "
           onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Degradado oscuro tipo vignette detrás del sidebar al expandirse: se
+          funde con el contenido sin dejar ninguna línea o caja visible */}
+      {!isMobile && shouldShowText && (
+        <div
+          className="
+            pointer-events-none fixed inset-0 z-30
+            bg-gradient-to-r from-black via-black/80 to-transparent
+            transition-opacity duration-300
+          "
+          style={{
+            backgroundSize: '420px 100%',
+            backgroundRepeat: 'no-repeat',
+          }}
+          aria-hidden="true"
         />
       )}
 
@@ -755,9 +766,9 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
         className={cn(
           `
             fixed top-[52px] left-0 z-40 flex h-[calc(100vh-52px)] flex-col
-            bg-background transition-all duration-300
-            dark:bg-gray-800
+            transition-all duration-300
           `,
+          shouldShowText ? 'bg-transparent' : 'bg-background dark:bg-gray-800',
           sidebarWidth,
           isMobile && !isOpen && '-translate-x-full'
         )}
@@ -768,8 +779,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
             min-h-0 flex-1
             scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent overflow-x-hidden
             overflow-y-auto
-            bg-background px-2 pb-4 transition-colors duration-200 hover:scrollbar-thumb-gray-500
-            dark:bg-gray-800
+            bg-transparent px-2 pb-4 transition-colors duration-200 hover:scrollbar-thumb-gray-500
           "
           style={{
             scrollbarWidth: 'thin',
@@ -832,10 +842,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
                     {shouldShowText && (
                       <span
                         className={cn(
-                          `
-                          ml-2.5 flex flex-1 items-center justify-between
-                          text-xs font-medium whitespace-nowrap
-                        `,
+                          'ml-2.5 flex items-center text-xs font-medium whitespace-nowrap',
                           isActive && 'text-primary'
                         )}
                       >
@@ -868,7 +875,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       <div
         className={cn(
           'pt-[52px] transition-all duration-300',
-          !isMobile && (shouldShowText ? 'ml-56' : 'ml-16')
+          !isMobile && 'ml-16'
         )}
       >
         {children}
