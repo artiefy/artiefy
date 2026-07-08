@@ -257,27 +257,27 @@ const PaymentForm: React.FC<{
         throw new Error('No se pudo generar el pago. Intenta de nuevo.');
       }
 
-      const data: FormData = (await response.json()) as FormData;
+      const data = (await response.json()) as FormData & {
+        checkoutUrl?: string;
+      };
+      const { checkoutUrl, ...formFields } = data;
 
       const form = document.createElement('form');
       form.method = 'POST';
-      const isLocalhostRuntime =
-        window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1';
-      const sandboxCheckoutUrl =
-        'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/';
-      const productionCheckoutUrl =
+      // The server resolves the checkout URL from the same PayU mode used
+      // to sign the transaction, so credentials, test flag, and URL never
+      // diverge between environments.
+      form.action =
+        checkoutUrl ??
+        process.env.NEXT_PUBLIC_PAYU_URL ??
         'https://checkout.payulatam.com/ppp-web-gateway-payu/';
-      form.action = isLocalhostRuntime
-        ? sandboxCheckoutUrl
-        : (process.env.NEXT_PUBLIC_PAYU_URL ?? productionCheckoutUrl);
 
-      for (const key in data) {
-        if (Object.prototype.hasOwnProperty.call(data, key)) {
+      for (const key in formFields) {
+        if (Object.prototype.hasOwnProperty.call(formFields, key)) {
           const hiddenField = document.createElement('input');
           hiddenField.type = 'hidden';
           hiddenField.name = key;
-          hiddenField.value = String(data[key as keyof FormData]);
+          hiddenField.value = String(formFields[key as keyof FormData]);
           form.appendChild(hiddenField);
         }
       }

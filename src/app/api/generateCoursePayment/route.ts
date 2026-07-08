@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { env } from '~/env';
-import { getAuthConfig } from '~/utils/paygateway/auth';
+import { type PaymentFormResponse } from '~/types/payu';
+import { getAuthConfig, getCheckoutUrl } from '~/utils/paygateway/auth';
 import { createFormData } from '~/utils/paygateway/form';
 
 interface RequestBody {
@@ -41,8 +42,13 @@ export async function POST(req: NextRequest) {
       'course'
     );
 
-    console.log('Generated payment data:', formData);
-    return NextResponse.json(formData);
+    const payload: PaymentFormResponse = {
+      ...formData,
+      checkoutUrl: getCheckoutUrl(auth.mode),
+    };
+
+    console.log('Generated payment data:', payload);
+    return NextResponse.json(payload);
   } catch (error) {
     console.error('Error generating payment data:', error);
     return NextResponse.json(

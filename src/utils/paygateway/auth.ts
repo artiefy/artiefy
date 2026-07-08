@@ -1,7 +1,16 @@
 import { env } from '~/env';
-import { type Auth } from '~/types/payu';
+import { type Auth, type PayUMode } from '~/types/payu';
 
-function resolvePayUMode(): 'sandbox' | 'production' {
+const CHECKOUT_URLS: Record<PayUMode, string> = {
+  sandbox: 'https://sandbox.checkout.payulatam.com/ppp-web-gateway-payu/',
+  production: 'https://checkout.payulatam.com/ppp-web-gateway-payu/',
+};
+
+export function getCheckoutUrl(mode: PayUMode): string {
+  return CHECKOUT_URLS[mode];
+}
+
+function resolvePayUMode(): PayUMode {
   if (env.PAYU_MODE) return env.PAYU_MODE;
 
   // Heurística segura: en desarrollo o checkout sandbox, usar sandbox.
@@ -48,5 +57,6 @@ export function getAuthConfig(): Auth {
     accountId,
     apiLogin,
     apiKey,
+    mode,
   };
 }

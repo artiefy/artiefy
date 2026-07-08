@@ -54,7 +54,8 @@ export function createFormData(
     taxReturnBase,
     currency,
     signature,
-    test: '0',
+    // PayU docs: test=1 marks a test transaction, test=0 a real charge
+    test: auth.mode === 'sandbox' ? '1' : '0',
     buyerEmail,
     buyerFullName,
     telephone,
