@@ -26,6 +26,7 @@ Read only what is needed:
 - `skills-lock.json`, when present
 - `package.json`
 - hook/config files such as `.husky/*`, `lefthook.yml`, `lint-staged.config.*`, formatter/linter configs
+- When native Codex `/init` is available, use its proposed context only as review input: compare it with the existing `AGENTS.md` and merge verified repo-specific additions. If unavailable, perform the equivalent evidence-based audit manually and report the limitation. Never regenerate a customized file wholesale.
 
 Use `.agents/skills` as the source of truth for local skills. Do not trust install logs or memory if the folder is missing.
 
