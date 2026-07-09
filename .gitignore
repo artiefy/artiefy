@@ -85,3 +85,6 @@ pnpm-lock.yaml
 # Local AI/tooling runtime files
 .claude/
 .playwright-mcp/
+
+# Local audit reports
+security_best_practices_report.md

@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { env } from '~/env';
-import { type FormData } from '~/types/payu';
-import { getAuthConfig } from '~/utils/paygateway/auth';
+import { type FormData, type PaymentFormResponse } from '~/types/payu';
+import { getAuthConfig, getCheckoutUrl } from '~/utils/paygateway/auth';
 import { createFormData } from '~/utils/paygateway/form';
 import { getProductById } from '~/utils/paygateway/products';
 
@@ -51,7 +51,12 @@ export async function POST(req: NextRequest) {
       'plan' // Specify payment type as plan
     );
 
-    return NextResponse.json(formData);
+    const payload: PaymentFormResponse = {
+      ...formData,
+      checkoutUrl: getCheckoutUrl(auth.mode),
+    };
+
+    return NextResponse.json(payload);
   } catch (error) {
     console.error(error);
     return NextResponse.json(

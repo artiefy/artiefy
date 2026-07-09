@@ -1,9 +1,12 @@
+export type PayUMode = 'sandbox' | 'production';
+
 // Definición de la interfaz para la autenticación
 export interface Auth {
   merchantId: string;
   accountId: string;
   apiLogin: string;
   apiKey: string;
+  mode: PayUMode;
 }
 
 // ✅ Definición de la interfaz para los productos (referenceCode es opcional)
@@ -13,6 +16,12 @@ export interface Product {
   amount: string;
   description: string;
   referenceCode?: string; // ✅ Ahora es opcional
+}
+
+// Respuesta de las API de pago: campos del formulario + URL del checkout
+// resuelta en el servidor según el modo (sandbox o producción)
+export interface PaymentFormResponse extends FormData {
+  checkoutUrl: string;
 }
 
 // Definición de la interfaz para los datos del formulario
