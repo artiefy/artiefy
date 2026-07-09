@@ -398,13 +398,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
 
   // ─── Computed ──────────────────────────────────────────────────────────────
 
-  const isStudentCompleted = (user: User): boolean => {
-    const userGrades = grades[user.id] ?? {};
-    const hasAllGrades = activities.every(
-      (act) => typeof userGrades[act.id] === 'number'
-    );
-    return user.completed || (user.averageProgress === 100 && hasAllGrades);
-  };
+  const isStudentCompleted = (user: User): boolean => user.completed;
 
   const tabFilteredUsers = users.filter((user) =>
     activeTab === 'completos'
