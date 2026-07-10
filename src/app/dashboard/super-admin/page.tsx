@@ -636,21 +636,24 @@ export default function AdminDashboard() {
       .replace(/\p{Diacritic}/gu, '')
       .toLowerCase();
 
-  // Y cambia el filtro por esto:
-  const filteredUsers = users.filter(
-    (user) =>
-      (searchQuery === '' ||
-        normalize(user.firstName).includes(normalize(searchQuery)) ||
-        normalize(user.lastName).includes(normalize(searchQuery)) ||
-        normalize(`${user.firstName} ${user.lastName}`).includes(
-          normalize(searchQuery)
-        ) ||
-        normalize(user.email).includes(normalize(searchQuery)) ||
-        (user.username &&
-          normalize(user.username).includes(normalize(searchQuery)))) &&
+  // Búsqueda por tokens: cada palabra escrita debe aparecer en algún lugar
+  // del nombre/correo/username, sin importar el orden ni palabras de más
+  // en medio (ej. "Angelly Lagos" debe encontrar a "Angelly Sofia Lagos").
+  const filteredUsers = users.filter((user) => {
+    const searchTokens = normalize(searchQuery).split(/\s+/).filter(Boolean);
+    const searchableText = normalize(
+      `${user.firstName} ${user.lastName} ${user.email} ${user.username ?? ''}`
+    );
+    const matchesSearch =
+      searchTokens.length === 0 ||
+      searchTokens.every((token) => searchableText.includes(token));
+
+    return (
+      matchesSearch &&
       (roleFilter ? user.role === roleFilter : true) &&
       (statusFilter ? user.status === statusFilter : true)
-  );
+    );
+  });
   const [sendingEmails, setSendingEmails] = useState(false);
 
   const fetchPrograms = useCallback(async () => {
