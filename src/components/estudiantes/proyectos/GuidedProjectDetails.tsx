@@ -21,7 +21,6 @@ import {
   MessageSquare,
   Package,
   Rocket,
-  SquareCheckBig,
   Star,
   Target,
   TriangleAlert,
@@ -31,14 +30,16 @@ import { FaCheck, FaCrown, FaProjectDiagram, FaStar } from 'react-icons/fa';
 import { MdErrorOutline } from 'react-icons/md';
 import { toast } from 'sonner';
 
+import { GuidedProjectActivities } from '~/components/estudiantes/proyectos/GuidedProjectActivities';
 import { GuidedProjectBreadcrumb } from '~/components/estudiantes/proyectos/GuidedProjectBreadcrumb';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import { cn } from '~/lib/utils';
 import { enrollInGuidedProject } from '~/server/actions/estudiantes/guided-projects/enrollInGuidedProject';
 
 import type { GuidedObjective, GuidedProject } from '~/types/guided-projects';
-import type { ReactNode } from 'react';
+import type { KeyboardEvent, ReactNode } from 'react';
 
-type NavKey = 'proyecto' | 'sesiones' | 'recursos' | 'entregables' | 'foro';
+type NavKey = 'proyecto' | 'actividades' | 'recursos' | 'foro';
 
 interface GuidedProjectDetailsProps {
   project: GuidedProject;
@@ -92,7 +93,7 @@ export function GuidedProjectDetails({
 }: GuidedProjectDetailsProps) {
   const [isEnrolled, setIsEnrolled] = useState(initialIsEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
-  const [activePill, setActivePill] = useState<NavKey>('proyecto');
+  const [activePill, setActivePill] = useState<NavKey>('actividades');
   const [expandedObjective, setExpandedObjective] = useState<number | null>(
     null
   );
@@ -127,19 +128,14 @@ export function GuidedProjectDetails({
       icon: <Rocket className="size-4 shrink-0" />,
     },
     {
-      key: 'sesiones',
-      label: 'Sesiones',
+      key: 'actividades',
+      label: 'Actividades',
       icon: <Layers className="size-4 shrink-0" />,
     },
     {
       key: 'recursos',
       label: 'Recursos',
       icon: <FileBox className="size-4 shrink-0" />,
-    },
-    {
-      key: 'entregables',
-      label: 'Entregables',
-      icon: <SquareCheckBig className="size-4 shrink-0" />,
     },
     {
       key: 'foro',
@@ -149,6 +145,34 @@ export function GuidedProjectDetails({
   ];
 
   const handlePillClick = (key: NavKey) => setActivePill(key);
+
+  const handleTabKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    currentIndex: number
+  ) => {
+    let nextIndex: number | null = null;
+
+    if (event.key === 'ArrowRight') {
+      nextIndex = (currentIndex + 1) % navItems.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIndex = (currentIndex - 1 + navItems.length) % navItems.length;
+    } else if (event.key === 'Home') {
+      nextIndex = 0;
+    } else if (event.key === 'End') {
+      nextIndex = navItems.length - 1;
+    }
+
+    if (nextIndex == null) return;
+
+    event.preventDefault();
+    const nextItem = navItems[nextIndex];
+    if (!nextItem) return;
+
+    setActivePill(nextItem.key);
+    carouselRef.current
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+      [nextIndex]?.focus();
+  };
 
   const scrollNav = (direction: 'left' | 'right') => {
     const node = carouselRef.current;
@@ -185,7 +209,7 @@ export function GuidedProjectDetails({
       if (result.success) {
         toast.success(result.message);
         setIsEnrolled(true);
-        setActivePill('sesiones');
+        setActivePill('actividades');
       } else {
         toast.error(result.message);
       }
@@ -239,6 +263,8 @@ export function GuidedProjectDetails({
       ? project.contentHours
       : null;
   const nivelLabel = project.nivelName?.trim() ?? null;
+  const activitiesIntroduction =
+    project.whatYouWillBuild?.trim() || project.description?.trim() || null;
 
   const prerequisites = splitLines(project.prerequisites);
   const techStack = splitTags(project.techStack);
@@ -829,19 +855,31 @@ export function GuidedProjectDetails({
                   </button>
                   <nav
                     ref={carouselRef}
+                    role="tablist"
+                    aria-label="Secciones del proyecto guiado"
                     className="flex [scrollbar-width:none] items-center gap-2 overflow-x-auto px-10"
                   >
-                    {navItems.map((item) => {
+                    {navItems.map((item, index) => {
                       const isActive = activePill === item.key;
+                      const tabId = `guided-project-${project.id}-${item.key}-tab`;
+                      const panelId = `guided-project-${project.id}-${item.key}-panel`;
                       return (
                         <button
                           key={item.key}
+                          id={tabId}
+                          type="button"
+                          role="tab"
                           onClick={() => handlePillClick(item.key)}
-                          className={`relative flex items-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-200 md:px-5 ${
+                          onKeyDown={(event) => handleTabKeyDown(event, index)}
+                          aria-selected={isActive}
+                          aria-controls={panelId}
+                          tabIndex={isActive ? 0 : -1}
+                          className={cn(
+                            'relative flex items-center gap-2 rounded-full px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-all duration-200 md:px-5',
                             isActive
                               ? 'border border-border/50 bg-card text-foreground shadow-sm'
                               : 'text-muted-foreground hover:bg-card/50 hover:text-foreground'
-                          }`}
+                          )}
                         >
                           {item.icon}
                           <span
@@ -865,23 +903,52 @@ export function GuidedProjectDetails({
 
                 {/* Main Content Render */}
                 <div className="mt-6">
-                  {activePill === 'proyecto' && renderOverview()}
-                  {activePill === 'sesiones' &&
-                    renderComingSoon(
-                      'Las sesiones del proyecto estarán disponibles pronto.'
-                    )}
-                  {activePill === 'recursos' &&
-                    renderComingSoon(
+                  <div
+                    id={`guided-project-${project.id}-proyecto-panel`}
+                    role="tabpanel"
+                    aria-labelledby={`guided-project-${project.id}-proyecto-tab`}
+                    hidden={activePill !== 'proyecto'}
+                    tabIndex={0}
+                  >
+                    {renderOverview()}
+                  </div>
+                  <div
+                    id={`guided-project-${project.id}-actividades-panel`}
+                    role="tabpanel"
+                    aria-labelledby={`guided-project-${project.id}-actividades-tab`}
+                    hidden={activePill !== 'actividades'}
+                    tabIndex={0}
+                  >
+                    <GuidedProjectActivities
+                      objectives={objectives}
+                      isEnrolled={isEnrolled}
+                      guidedProjectId={project.id}
+                      isSubscriptionValid={isSubscriptionValid && hasValidPlan}
+                      introduction={activitiesIntroduction}
+                    />
+                  </div>
+                  <div
+                    id={`guided-project-${project.id}-recursos-panel`}
+                    role="tabpanel"
+                    aria-labelledby={`guided-project-${project.id}-recursos-tab`}
+                    hidden={activePill !== 'recursos'}
+                    tabIndex={0}
+                  >
+                    {renderComingSoon(
                       'Los recursos del proyecto estarán disponibles pronto.'
                     )}
-                  {activePill === 'entregables' &&
-                    renderComingSoon(
-                      'Los entregables del proyecto estarán disponibles pronto.'
-                    )}
-                  {activePill === 'foro' &&
-                    renderComingSoon(
+                  </div>
+                  <div
+                    id={`guided-project-${project.id}-foro-panel`}
+                    role="tabpanel"
+                    aria-labelledby={`guided-project-${project.id}-foro-tab`}
+                    hidden={activePill !== 'foro'}
+                    tabIndex={0}
+                  >
+                    {renderComingSoon(
                       'El foro de este proyecto estará disponible pronto.'
                     )}
+                  </div>
                 </div>
               </div>
 

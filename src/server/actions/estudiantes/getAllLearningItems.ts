@@ -1,10 +1,11 @@
 'use server';
 
-import { and, desc, eq, isNull, or } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
   categories,
+  classMeetings,
   courses,
   courseTypes,
   guidedProjects,
@@ -17,7 +18,16 @@ import { withRetry } from '~/server/db/withRetry';
 
 import type { Course } from '~/types';
 
-export type UnifiedItem = Course & { isGuidedProject?: boolean };
+export interface ClassMeetingPreview {
+  courseId: number;
+  startDateTime: string;
+  video_key: string | null;
+}
+
+export type UnifiedItem = Omit<Course, 'classMeetings'> & {
+  isGuidedProject?: boolean;
+  classMeetings?: ClassMeetingPreview[];
+};
 
 export async function getAllLearningItems(): Promise<UnifiedItem[]> {
   try {
@@ -66,6 +76,40 @@ export async function getAllLearningItems(): Promise<UnifiedItem[]> {
         )
         .orderBy(desc(courses.createdAt))
     );
+
+    const courseIds = coursesData.map((course) => course.id);
+    const classMeetingsMap: Record<number, ClassMeetingPreview[]> = {};
+
+    if (courseIds.length > 0) {
+      try {
+        const meetings = await withRetry(() =>
+          db
+            .select({
+              courseId: classMeetings.courseId,
+              startDateTime: classMeetings.startDateTime,
+              video_key: classMeetings.video_key,
+            })
+            .from(classMeetings)
+            .where(inArray(classMeetings.courseId, courseIds))
+        );
+
+        for (const meeting of meetings) {
+          const courseMeetings = classMeetingsMap[meeting.courseId] ?? [];
+          courseMeetings.push({
+            courseId: meeting.courseId,
+            startDateTime: meeting.startDateTime
+              ? new Date(meeting.startDateTime).toISOString()
+              : '',
+            video_key: meeting.video_key ?? null,
+          });
+          classMeetingsMap[meeting.courseId] = courseMeetings;
+        }
+      } catch {
+        console.warn(
+          'No se pudieron cargar las reuniones para el catálogo. Se continúa sin vistas previas.'
+        );
+      }
+    }
 
     // 2. Fetch Guided Projects
     const projectsData = await withRetry(() =>
@@ -137,6 +181,7 @@ export async function getAllLearningItems(): Promise<UnifiedItem[]> {
             is_featured: c.is_featured ?? false,
             is_top: c.is_top ?? false,
             individualPrice: c.individualPrice,
+            classMeetings: classMeetingsMap[c.id] ?? [],
             typeCourse: c.typeCourseId
               ? { id: c.typeCourseId, type: c.typeCourseType ?? '' }
               : null,

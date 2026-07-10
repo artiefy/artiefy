@@ -161,11 +161,15 @@ export default function StudentListCourses({
     };
   }, [syncWithUrl]);
 
-  function formatShortSpanishDate(dateString: string) {
+  function formatShortSpanishDateTime(dateString: string) {
     const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES', {
+    return date.toLocaleString('es-CO', {
       day: 'numeric',
       month: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'America/Bogota',
     });
   }
 
@@ -501,7 +505,7 @@ export default function StudentListCourses({
                       </span>
                       <CalendarDays className="size-3.5 text-primary/60" />
                       <span className="font-medium text-foreground/85">
-                        {formatShortSpanishDate(nextLiveClassDate)}
+                        {formatShortSpanishDateTime(nextLiveClassDate)}
                       </span>
                     </span>
                   ) : (

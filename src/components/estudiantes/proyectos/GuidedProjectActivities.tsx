@@ -2,32 +2,89 @@
 
 import { useState, useTransition } from 'react';
 
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { FaCheckCircle, FaLock, FaRegCircle } from 'react-icons/fa';
+import {
+  CalendarDays,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Circle,
+  LoaderCircle,
+  LockKeyhole,
+  Target,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
+import { cn } from '~/lib/utils';
 import { updateActivityProgress } from '~/server/actions/estudiantes/guided-projects/updateActivityProgress';
 
-import type { GuidedObjective } from '~/types/guided-projects';
+import type {
+  GuidedObjective,
+  GuidedObjectiveActivity,
+} from '~/types/guided-projects';
 
 interface GuidedProjectActivitiesProps {
   objectives: GuidedObjective[];
   isEnrolled: boolean;
   guidedProjectId: number;
   isSubscriptionValid?: boolean;
+  introduction?: string | null;
 }
+
+const formatActivityDates = (
+  startDate: Date | null,
+  endDate: Date | null
+): string | null => {
+  const start = startDate ? new Date(startDate) : null;
+  const end = endDate ? new Date(endDate) : null;
+  const formattedStart =
+    start && isValid(start)
+      ? format(start, 'd MMM yyyy', { locale: es })
+      : null;
+  const formattedEnd =
+    end && isValid(end) ? format(end, 'd MMM yyyy', { locale: es }) : null;
+
+  if (formattedStart && formattedEnd) {
+    return `${formattedStart} – ${formattedEnd}`;
+  }
+
+  return formattedStart ?? formattedEnd;
+};
 
 export function GuidedProjectActivities({
   objectives,
   isEnrolled,
   guidedProjectId,
   isSubscriptionValid = true,
+  introduction,
 }: GuidedProjectActivitiesProps) {
-  const [isPending, startTransition] = useTransition();
+  const firstObjective = objectives[0];
+  const [expandedObjectiveId, setExpandedObjectiveId] = useState<number | null>(
+    () => firstObjective?.id ?? null
+  );
+  const [expandedActivityId, setExpandedActivityId] = useState<number | null>(
+    () => firstObjective?.activities?.[0]?.id ?? null
+  );
   const [optimisticProgress, setOptimisticProgress] = useState<
     Record<number, boolean>
   >({});
+  const [pendingActivityId, setPendingActivityId] = useState<number | null>(
+    null
+  );
+  const [isPending, startTransition] = useTransition();
+
+  const isActivityCompleted = (activity: GuidedObjectiveActivity) =>
+    optimisticProgress[activity.id] ?? activity.isCompleted ?? false;
+
+  const toggleObjective = (objective: GuidedObjective) => {
+    const willOpen = expandedObjectiveId !== objective.id;
+    setExpandedObjectiveId(willOpen ? objective.id : null);
+
+    if (willOpen) {
+      setExpandedActivityId(objective.activities?.[0]?.id ?? null);
+    }
+  };
 
   const toggleActivityStatus = (
     activityId: number,
@@ -35,192 +92,336 @@ export function GuidedProjectActivities({
     objectiveEnabled: boolean
   ) => {
     if (!isEnrolled || !objectiveEnabled || !isSubscriptionValid) {
-      if (!isSubscriptionValid && isEnrolled) {
-        toast.error(
-          'Tu suscripción ha expirado. Renueva tu plan para marcar progreso.'
-        );
-      }
       return;
     }
 
     const newStatus = !currentCompleted;
-    setOptimisticProgress((prev) => ({ ...prev, [activityId]: newStatus }));
+    setOptimisticProgress((current) => ({
+      ...current,
+      [activityId]: newStatus,
+    }));
+    setPendingActivityId(activityId);
 
     startTransition(async () => {
-      const result = await updateActivityProgress({
-        activityId,
-        isCompleted: newStatus,
-      });
+      try {
+        const result = await updateActivityProgress({
+          activityId,
+          isCompleted: newStatus,
+        });
 
-      if (!result.success) {
-        toast.error(result.message || 'Error al actualizar actividad');
-        setOptimisticProgress((prev) => ({
-          ...prev,
-          [activityId]: currentCompleted,
-        }));
-      } else {
+        if (!result.success) {
+          toast.error(result.message || 'Error al actualizar la actividad');
+          setOptimisticProgress((current) => ({
+            ...current,
+            [activityId]: currentCompleted,
+          }));
+          return;
+        }
+
         toast.success(
           newStatus
             ? 'Actividad completada'
             : 'Actividad marcada como pendiente'
         );
+      } catch {
+        toast.error('No se pudo actualizar la actividad');
+        setOptimisticProgress((current) => ({
+          ...current,
+          [activityId]: currentCompleted,
+        }));
+      } finally {
+        setPendingActivityId(null);
       }
     });
   };
 
-  if (!objectives || objectives.length === 0) {
-    return (
-      <div className="rounded-xl border border-[#1d283a] bg-[#061c37] p-8 text-center">
-        <p className="text-[#94A3B8]">
-          Aún no hay actividades disponibles para este proyecto.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-bold text-white">Actividades del Proyecto</h2>
-      <div className="space-y-6">
-        {objectives.map((objective) => (
-          <div
-            key={objective.id}
-            className={`overflow-hidden rounded-xl border border-[#1d283a] bg-[#061c37] transition-all ${
-              !objective.isEnabled || !isSubscriptionValid ? 'opacity-70' : ''
-            }`}
-          >
-            <div className="border-b border-[#1d283a] bg-[#0b2747] p-4">
-              <div className="flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-lg font-semibold text-white">
-                  {!objective.isEnabled && (
-                    <FaLock className="size-4 text-amber-400" />
-                  )}
-                  {objective.title}
-                </h3>
-              </div>
-              {objective.description && (
-                <p className="mt-1 text-sm text-[#94A3B8]">
-                  {objective.description}
-                </p>
-              )}
-            </div>
-
-            <div className="divide-y divide-[#1d283a]">
-              {!objective.activities || objective.activities.length === 0 ? (
-                <div className="p-4 text-center text-sm text-[#94A3B8]">
-                  No hay actividades registradas en este objetivo.
-                </div>
-              ) : (
-                objective.activities.map((activity) => {
-                  const isCompleted =
-                    optimisticProgress[activity.id] ??
-                    activity.isCompleted ??
-                    false;
-
-                  return (
-                    <div
-                      key={activity.id}
-                      className={`flex flex-col gap-4 p-4 sm:flex-row sm:items-center ${
-                        !objective.isEnabled || !isSubscriptionValid
-                          ? 'cursor-not-allowed'
-                          : 'transition-colors hover:bg-[#0b223f]'
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        disabled={
-                          !isEnrolled ||
-                          !objective.isEnabled ||
-                          isPending ||
-                          !isSubscriptionValid
-                        }
-                        onClick={() =>
-                          toggleActivityStatus(
-                            activity.id,
-                            isCompleted,
-                            objective.isEnabled
-                          )
-                        }
-                        className={`flex size-6 shrink-0 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
-                          !isEnrolled ||
-                          !objective.isEnabled ||
-                          !isSubscriptionValid
-                            ? 'cursor-not-allowed text-slate-500'
-                            : isCompleted
-                              ? 'text-emerald-400 hover:text-emerald-300'
-                              : 'text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        {isCompleted ? (
-                          <FaCheckCircle className="size-full" />
-                        ) : (
-                          <FaRegCircle className="size-full" />
-                        )}
-                      </button>
-
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p
-                            className={`text-base font-medium ${isCompleted ? 'text-white/70 line-through' : 'text-white'}`}
-                          >
-                            {activity.name}
-                          </p>
-                          {activity.weekNumber && (
-                            <span className="inline-flex items-center rounded-full bg-[#22C4D3]/10 px-2 py-0.5 text-xs font-medium text-[#22C4D3]">
-                              Semana {activity.weekNumber}
-                            </span>
-                          )}
-                        </div>
-                        {activity.description && (
-                          <p className="line-clamp-2 text-sm text-[#94A3B8]">
-                            {activity.description}
-                          </p>
-                        )}
-                        {(activity.startDate || activity.endDate) && (
-                          <p className="mt-1 flex items-center gap-1 text-xs text-[#9fb3cc]">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              width="14"
-                              height="14"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <rect
-                                width="18"
-                                height="18"
-                                x="3"
-                                y="4"
-                                rx="2"
-                                ry="2"
-                              />
-                              <line x1="16" x2="16" y1="2" y2="6" />
-                              <line x1="8" x2="8" y1="2" y2="6" />
-                              <line x1="3" x2="21" y1="10" y2="10" />
-                            </svg>
-                            {activity.startDate &&
-                              format(new Date(activity.startDate), 'd MMM', {
-                                locale: es,
-                              })}
-                            {activity.startDate && activity.endDate && ' - '}
-                            {activity.endDate &&
-                              format(new Date(activity.endDate), 'd MMM yyyy', {
-                                locale: es,
-                              })}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </div>
-        ))}
+    <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex size-8 items-center justify-center rounded-lg border border-accent/30 bg-accent/15 text-accent">
+          <Target className="size-4" aria-hidden="true" />
+        </div>
+        <h2 className="text-xl font-bold text-foreground">Objetivos</h2>
       </div>
-    </div>
+
+      {introduction?.trim() && (
+        <p className="mb-6 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+          {introduction}
+        </p>
+      )}
+
+      {objectives.length === 0 ? (
+        <div className="rounded-lg border border-border/50 bg-muted/20 p-6 text-center text-sm text-muted-foreground">
+          Aún no hay sesiones disponibles para este proyecto.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {objectives.map((objective, objectiveIndex) => {
+            const activities = objective.activities ?? [];
+            const isObjectiveOpen = expandedObjectiveId === objective.id;
+            const completedActivities = activities.filter((activity) =>
+              isActivityCompleted(activity)
+            ).length;
+            const isObjectiveCompleted =
+              activities.length > 0 &&
+              completedActivities === activities.length;
+            const objectiveButtonId = `guided-project-${guidedProjectId}-objective-${objective.id}-trigger`;
+            const objectivePanelId = `guided-project-${guidedProjectId}-objective-${objective.id}-panel`;
+
+            return (
+              <div
+                key={objective.id}
+                className={cn(
+                  'overflow-hidden rounded-lg border border-border/50',
+                  !objective.isEnabled && 'opacity-75'
+                )}
+              >
+                <button
+                  id={objectiveButtonId}
+                  type="button"
+                  aria-expanded={isObjectiveOpen}
+                  aria-controls={objectivePanelId}
+                  onClick={() => toggleObjective(objective)}
+                  className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+                >
+                  <span
+                    className={cn(
+                      'flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium',
+                      isObjectiveCompleted
+                        ? 'bg-emerald-500/15 text-emerald-400'
+                        : 'bg-muted text-muted-foreground'
+                    )}
+                  >
+                    {isObjectiveCompleted ? (
+                      <Check className="size-3.5" aria-hidden="true" />
+                    ) : (
+                      objectiveIndex + 1
+                    )}
+                  </span>
+
+                  <span className="min-w-0 flex-1 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-2">
+                      {!objective.isEnabled && (
+                        <LockKeyhole
+                          className="size-3.5 shrink-0 text-amber-400"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span className="sr-only">
+                        Sesión {objectiveIndex + 1}:{' '}
+                      </span>
+                      <span className="truncate">{objective.title}</span>
+                    </span>
+                  </span>
+
+                  <span className="mr-1 text-xs whitespace-nowrap text-muted-foreground sm:mr-2">
+                    {completedActivities}/{activities.length}
+                    <span className="hidden sm:inline">
+                      {' '}
+                      {activities.length === 1 ? 'actividad' : 'actividades'}
+                    </span>
+                  </span>
+
+                  <ChevronDown
+                    className={cn(
+                      'size-4 shrink-0 text-muted-foreground transition-transform',
+                      isObjectiveOpen && 'rotate-180'
+                    )}
+                    aria-hidden="true"
+                  />
+                </button>
+
+                <div
+                  id={objectivePanelId}
+                  role="region"
+                  aria-labelledby={objectiveButtonId}
+                  hidden={!isObjectiveOpen}
+                  className="border-t border-border/50 bg-muted/20"
+                >
+                  {objective.description?.trim() && (
+                    <p className="border-b border-border/30 px-4 py-3 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                      {objective.description}
+                    </p>
+                  )}
+
+                  {activities.length === 0 && (
+                    <p className="p-4 text-center text-sm text-muted-foreground">
+                      No hay actividades registradas en esta sesión.
+                    </p>
+                  )}
+
+                  {activities.map((activity, activityIndex) => {
+                    const isCompleted = isActivityCompleted(activity);
+                    const isActivityOpen = expandedActivityId === activity.id;
+                    const isBlocked = !objective.isEnabled;
+                    const cannotUpdate =
+                      !isEnrolled || isBlocked || !isSubscriptionValid;
+                    const activityButtonId = `guided-project-${guidedProjectId}-activity-${activity.id}-trigger`;
+                    const activityPanelId = `guided-project-${guidedProjectId}-activity-${activity.id}-panel`;
+                    const activityDates = formatActivityDates(
+                      activity.startDate,
+                      activity.endDate
+                    );
+                    const actionLabel = !isEnrolled
+                      ? 'Inscríbete para completar'
+                      : isBlocked
+                        ? 'Actividad bloqueada'
+                        : !isSubscriptionValid
+                          ? 'Renueva tu plan para completar'
+                          : isCompleted
+                            ? 'Marcar como pendiente'
+                            : 'Completar actividad';
+
+                    return (
+                      <div
+                        key={activity.id}
+                        className="border-b border-border/30 last:border-b-0"
+                      >
+                        <button
+                          id={activityButtonId}
+                          type="button"
+                          aria-expanded={isActivityOpen}
+                          aria-controls={activityPanelId}
+                          onClick={() =>
+                            setExpandedActivityId(
+                              isActivityOpen ? null : activity.id
+                            )
+                          }
+                          className="w-full p-4 text-left transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+                        >
+                          <span className="mb-1 block text-xs text-muted-foreground">
+                            Actividad {activityIndex + 1}
+                          </span>
+                          <span className="flex items-center justify-between gap-3">
+                            <span className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                              <span
+                                className={cn(
+                                  'text-sm font-medium',
+                                  isCompleted
+                                    ? 'text-foreground/70 line-through'
+                                    : 'text-foreground'
+                                )}
+                              >
+                                {activity.name}
+                              </span>
+                              {activity.weekNumber != null && (
+                                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <CalendarDays
+                                    className="size-3"
+                                    aria-hidden="true"
+                                  />
+                                  Semana {activity.weekNumber}
+                                </span>
+                              )}
+                            </span>
+
+                            <span className="flex shrink-0 items-center gap-2">
+                              {isBlocked ? (
+                                <LockKeyhole
+                                  className="size-3.5 text-amber-400"
+                                  aria-label="Actividad bloqueada"
+                                />
+                              ) : isCompleted ? (
+                                <CheckCircle2
+                                  className="size-4 text-emerald-400"
+                                  aria-label="Actividad completada"
+                                />
+                              ) : null}
+                              <ChevronDown
+                                className={cn(
+                                  'size-4 text-muted-foreground transition-transform',
+                                  isActivityOpen && 'rotate-180'
+                                )}
+                                aria-hidden="true"
+                              />
+                            </span>
+                          </span>
+                        </button>
+
+                        <div
+                          id={activityPanelId}
+                          role="region"
+                          aria-labelledby={activityButtonId}
+                          hidden={!isActivityOpen}
+                          className="space-y-3 px-4 pb-4"
+                        >
+                          {activity.description?.trim() && (
+                            <div className="rounded-lg bg-muted/30 p-3">
+                              <span className="mb-1 block text-xs font-medium text-muted-foreground">
+                                Descripción
+                              </span>
+                              <p className="text-sm leading-relaxed whitespace-pre-line text-foreground">
+                                {activity.description}
+                              </p>
+                            </div>
+                          )}
+
+                          {activityDates && (
+                            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                              <CalendarDays
+                                className="size-3.5"
+                                aria-hidden="true"
+                              />
+                              <span>
+                                <span className="font-medium">Fechas:</span>{' '}
+                                {activityDates}
+                              </span>
+                            </p>
+                          )}
+
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={cannotUpdate || isPending}
+                              aria-busy={pendingActivityId === activity.id}
+                              onClick={() =>
+                                toggleActivityStatus(
+                                  activity.id,
+                                  isCompleted,
+                                  objective.isEnabled
+                                )
+                              }
+                              className={cn(
+                                'inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
+                                isCompleted
+                                  ? 'border border-input bg-background text-foreground hover:bg-muted'
+                                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                              )}
+                            >
+                              {pendingActivityId === activity.id ? (
+                                <LoaderCircle
+                                  className="size-3.5 animate-spin"
+                                  aria-hidden="true"
+                                />
+                              ) : cannotUpdate ? (
+                                <LockKeyhole
+                                  className="size-3.5"
+                                  aria-hidden="true"
+                                />
+                              ) : isCompleted ? (
+                                <Circle
+                                  className="size-3.5"
+                                  aria-hidden="true"
+                                />
+                              ) : (
+                                <Check
+                                  className="size-3.5"
+                                  aria-hidden="true"
+                                />
+                              )}
+                              {actionLabel}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
