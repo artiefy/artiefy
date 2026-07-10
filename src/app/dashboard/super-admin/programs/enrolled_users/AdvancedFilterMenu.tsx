@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { Search, X } from 'lucide-react';
 
+import { normalizeSearch } from '~/lib/utils';
+
 interface FilterOption {
   value: string;
   count: number;
@@ -110,7 +112,7 @@ export function AdvancedFilterMenu({
     // Filtrar por búsqueda
     if (searchTerm) {
       options = options.filter((opt) =>
-        opt.value.toLowerCase().includes(searchTerm.toLowerCase())
+        normalizeSearch(opt.value).includes(normalizeSearch(searchTerm))
       );
     }
 

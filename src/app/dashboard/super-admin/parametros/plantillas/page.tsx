@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { FiEdit2, FiPlus, FiTrash2, FiX } from 'react-icons/fi';
 
-import { cn } from '~/lib/utils';
+import { cn, normalizeSearch } from '~/lib/utils';
 
 interface Parametro {
   id: number;
@@ -156,7 +156,7 @@ const PlantillasPage = () => {
   };
 
   const filteredParametros = parametros.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
+    normalizeSearch(p.name).includes(normalizeSearch(searchQuery))
   );
 
   const handleSubmit = async (e: React.FormEvent) => {

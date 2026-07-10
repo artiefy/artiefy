@@ -44,6 +44,7 @@ import { Button } from '~/components/estudiantes/ui/button';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormProgram from '~/components/super-admin/modals/ModalFormProgram';
 import ProgramListAdmin from '~/components/super-admin/ProgramsListAdmin';
+import { normalizeSearch } from '~/lib/utils';
 import { getPrograms } from '~/server/queries/queriesSuperAdmin';
 
 // Define el modelo de datos del programa
@@ -186,7 +187,7 @@ export default function Page() {
   // ✅ Filtrar programas por búsqueda y categoría
   const filteredPrograms = programs.filter(
     (program) =>
-      program.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      normalizeSearch(program.title).includes(normalizeSearch(searchQuery)) &&
       (categoryFilter ? program.categoryid === Number(categoryFilter) : true)
   );
 

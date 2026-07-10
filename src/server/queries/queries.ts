@@ -1,6 +1,6 @@
 'use server';
 
-import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
+import { auth, clerkClient } from '@clerk/nextjs/server'; // Clerk Client
 import { desc, eq, inArray, or, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -377,12 +377,25 @@ export async function setRoleWrapper({
   role: string;
 }) {
   try {
+    const { userId: adminId } = await auth();
+
+    // Rol actual antes de actualizar, para el log de auditoría
+    const [currentUser] = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, id));
+    const oldRole = currentUser?.role ?? 'sin-rol';
+
     // Update in Clerk
     const client = await clerkClient();
 
     // 1. Leer el usuario para obtener los metadatos actuales
     const user = await client.users.getUser(id);
     const existingMetadata = user.publicMetadata;
+    const targetEmail =
+      user.emailAddresses.find(
+        (email) => email.id === user.primaryEmailAddressId
+      )?.emailAddress ?? 'sin-email';
 
     // 2. Fusionar los metadatos existentes con el nuevo rol
     const newMetadata = {
@@ -404,7 +417,9 @@ export async function setRoleWrapper({
       })
       .where(eq(users.id, id));
 
-    console.log(`DEBUG: Rol actualizado para usuario ${id} en Clerk y BD`);
+    console.log(
+      `[ROLE_CHANGE] admin=${adminId ?? 'desconocido'} target=${id} (${targetEmail}) oldRole=${oldRole} newRole=${role} source=dashboard/super-admin setRoleWrapper at=${new Date().toISOString()}`
+    );
   } catch (error) {
     console.error('Error al actualizar el rol:', error);
     throw new Error('No se pudo actualizar el rol');

@@ -17,6 +17,7 @@ import {
 import { ChevronLeft, ChevronRight, Eye, Loader2 } from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
 
+import { normalizeSearch } from '~/lib/utils';
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
 
 // ─── ChartJS plugins ───────────────────────────────────────────────────────────
@@ -410,9 +411,11 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
     .filter(
       (user) =>
         searchQuery === '' ||
-        user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
+        normalizeSearch(user.firstName).includes(
+          normalizeSearch(searchQuery)
+        ) ||
+        normalizeSearch(user.lastName).includes(normalizeSearch(searchQuery)) ||
+        normalizeSearch(user.email).includes(normalizeSearch(searchQuery))
     )
     .sort((a, b) => {
       const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();

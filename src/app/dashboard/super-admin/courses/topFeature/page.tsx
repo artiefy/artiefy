@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { toast } from 'sonner';
 
+import { normalizeSearch } from '~/lib/utils';
+
 interface Course {
   id: number;
   title: string;
@@ -51,7 +53,7 @@ export default function TopFeaturedCourses() {
     setSearch(query);
     setPage(1);
     const filtered = courses.filter((c) =>
-      c.title.toLowerCase().includes(query.toLowerCase())
+      normalizeSearch(c.title).includes(normalizeSearch(query))
     );
     setFilteredCourses(filtered);
   };
@@ -81,7 +83,7 @@ export default function TopFeaturedCourses() {
       });
 
       const filtered = reordered.filter((c) =>
-        c.title.toLowerCase().includes(search.toLowerCase())
+        normalizeSearch(c.title).includes(normalizeSearch(search))
       );
 
       setCourses(reordered);
@@ -140,13 +142,13 @@ export default function TopFeaturedCourses() {
               className={`
                 rounded px-3 py-1
                 ${
-                btn === page
-                  ? 'bg-cyan-400 font-bold text-black'
-                  : `
+                  btn === page
+                    ? 'bg-cyan-400 font-bold text-black'
+                    : `
                     bg-[#0b2239] text-white
                     hover:bg-cyan-600
                   `
-              }
+                }
               `}
             >
               {btn}
@@ -216,12 +218,14 @@ export default function TopFeaturedCourses() {
       {paginatedCourses.length === 0 ? (
         <p className="text-center text-gray-400">No hay cursos disponibles.</p>
       ) : (
-        <div className="
+        <div
+          className="
           grid grid-cols-1 gap-6
           sm:grid-cols-2
           md:grid-cols-3
           lg:grid-cols-4
-        ">
+        "
+        >
           {paginatedCourses.map((course) => (
             <div
               key={course.id}

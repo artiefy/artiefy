@@ -1,6 +1,6 @@
 'use server';
 
-import { clerkClient } from '@clerk/nextjs/server'; // Clerk Client
+import { auth, clerkClient } from '@clerk/nextjs/server'; // Clerk Client
 import { and, desc, eq, sql } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -89,8 +89,23 @@ export async function setRoleWrapper({
   role: string;
 }) {
   try {
+    const { userId: adminId } = await auth();
+
+    // Rol actual antes de actualizar, para el log de auditoría
+    const [currentUser] = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, id));
+    const oldRole = currentUser?.role ?? 'sin-rol';
+
     // Update in Clerk
     const client = await clerkClient();
+    const user = await client.users.getUser(id);
+    const targetEmail =
+      user.emailAddresses.find(
+        (email) => email.id === user.primaryEmailAddressId
+      )?.emailAddress ?? 'sin-email';
+
     await client.users.updateUser(id, {
       publicMetadata: { role },
     });
@@ -104,7 +119,9 @@ export async function setRoleWrapper({
       })
       .where(eq(users.id, id));
 
-    console.log(`DEBUG: Rol actualizado para usuario ${id} en Clerk y BD`);
+    console.log(
+      `[ROLE_CHANGE] admin=${adminId ?? 'desconocido'} target=${id} (${targetEmail}) oldRole=${oldRole} newRole=${role} source=dashboard/super-admin setRoleWrapper at=${new Date().toISOString()}`
+    );
   } catch (error) {
     console.error('Error al actualizar el rol:', error);
     throw new Error('No se pudo actualizar el rol');

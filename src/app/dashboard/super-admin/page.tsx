@@ -729,9 +729,9 @@ export default function AdminDashboard() {
         normalize(`${user.firstName} ${user.lastName}`).includes(
           normalize(searchQuery)
         ) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ??
-          false)) &&
+        normalize(user.email).includes(normalize(searchQuery)) ||
+        (user.username &&
+          normalize(user.username).includes(normalize(searchQuery)))) &&
       (roleFilter ? user.role === roleFilter : true) &&
       (statusFilter ? user.status === statusFilter : true)
   );
@@ -2064,13 +2064,13 @@ export default function AdminDashboard() {
   const filteredCourses = Array.from(
     new Map(courses.map((course) => [course.title, course])).values()
   ).filter((course) =>
-    course.title.toLowerCase().includes(courseSearch.toLowerCase())
+    normalize(course.title).includes(normalize(courseSearch))
   );
 
   const filteredPrograms = Array.from(
     new Map(programs.map((program) => [program.title, program])).values()
   ).filter((program) =>
-    program.title.toLowerCase().includes(programSearch.toLowerCase())
+    normalize(program.title).includes(normalize(programSearch))
   );
 
   return (

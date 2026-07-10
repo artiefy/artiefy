@@ -1643,8 +1643,9 @@ export default function EnrolledUsersPage() {
     () =>
       programOptions.filter(
         (o) =>
-          o.toLowerCase().includes(programQuery.toLowerCase()) &&
-          !selectedPrograms.includes(o)
+          normalizeFilterValue(o).includes(
+            normalizeFilterValue(programQuery)
+          ) && !selectedPrograms.includes(o)
       ),
     [programOptions, programQuery, selectedPrograms]
   );
@@ -2298,7 +2299,9 @@ export default function EnrolledUsersPage() {
     [totalColumns]
   );
   const filteredColumns = massiveEditableColumns.filter((col) =>
-    col.label.toLowerCase().includes(searchFieldTerm.toLowerCase())
+    normalizeFilterValue(col.label).includes(
+      normalizeFilterValue(searchFieldTerm)
+    )
   );
   const [showCarteraModal, setShowCarteraModal] = useState(false);
   const [carteraUserId, setCarteraUserId] = useState<string | null>(null);
@@ -2979,7 +2982,9 @@ export default function EnrolledUsersPage() {
               }
 
               return selectedValues.some((v) =>
-                safeStudentValue.toLowerCase().includes(v.toLowerCase())
+                normalizeFilterValue(safeStudentValue).includes(
+                  normalizeFilterValue(v)
+                )
               );
             }
           );
@@ -2990,12 +2995,16 @@ export default function EnrolledUsersPage() {
         // Filtros generales (nombre, email, estado, fechas)
         .filter((s) =>
           filters.name
-            ? s.name.toLowerCase().includes(filters.name.toLowerCase())
+            ? normalizeFilterValue(s.name).includes(
+                normalizeFilterValue(filters.name)
+              )
             : true
         )
         .filter((s) =>
           filters.email
-            ? s.email.toLowerCase().includes(filters.email.toLowerCase())
+            ? normalizeFilterValue(s.email).includes(
+                normalizeFilterValue(filters.email)
+              )
             : true
         )
         .filter((s) =>
@@ -9338,9 +9347,9 @@ export default function EnrolledUsersPage() {
                     focus:border-blue-500 focus:ring-2 focus:ring-blue-500
                   "
                   onChange={(e) => {
-                    const term = e.target.value.toLowerCase();
+                    const term = normalizeFilterValue(e.target.value);
                     const filtered = availableCourses.filter((c) =>
-                      c.title.toLowerCase().includes(term)
+                      normalizeFilterValue(c.title).includes(term)
                     );
                     setFilteredCourseResults(filtered);
                   }}

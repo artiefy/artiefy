@@ -57,6 +57,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
+import { normalizeSearch } from '~/lib/utils';
 
 import '~/styles/course-detail-system.css';
 
@@ -1753,10 +1754,14 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
     // Filtrar educadores por búsqueda
     const filteredEducators = educators.filter(
       (educator) =>
-        (educator.name?.toLowerCase().includes(searchTerm.toLowerCase()) ??
-          false) ||
-        (educator.email?.toLowerCase().includes(searchTerm.toLowerCase()) ??
-          false)
+        Boolean(
+          educator.name &&
+          normalizeSearch(educator.name).includes(normalizeSearch(searchTerm))
+        ) ||
+        Boolean(
+          educator.email &&
+          normalizeSearch(educator.email).includes(normalizeSearch(searchTerm))
+        )
     );
 
     // Función para copiar al portapapeles

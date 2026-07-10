@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import CourseListAdmin from '~/app/dashboard/admin/components/CourseListAdmin';
 import { SkeletonCard } from '~/components/super-admin/layout/SkeletonCard';
 import ModalFormCourse from '~/components/super-admin/modals/ModalFormCourse';
+import { normalizeSearch } from '~/lib/utils';
 import {
   type CourseData,
   getCourses,
@@ -156,7 +157,7 @@ export default function Page() {
   // ✅ Filtrar cursos por búsqueda y categoría
   const filteredCourses = courses.filter(
     (course) =>
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      normalizeSearch(course.title).includes(normalizeSearch(searchQuery)) &&
       (categoryFilter ? course.categoryid === Number(categoryFilter) : true)
   );
 

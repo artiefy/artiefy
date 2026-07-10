@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 
+import { normalizeSearch } from '~/lib/utils';
 import { type Materia } from '~/models/super-adminModels/materiaModels';
 
 import ModalFormMateria from './modalFormCreate';
@@ -35,7 +36,7 @@ const MateriasPage: React.FC = () => {
   };
 
   const filteredMaterias = materias.filter((materia) =>
-    materia.title.toLowerCase().includes(searchTerm.toLowerCase())
+    normalizeSearch(materia.title).includes(normalizeSearch(searchTerm))
   );
 
   const totalPages = Math.ceil(filteredMaterias.length / materiasPerPage);
@@ -98,9 +99,11 @@ const MateriasPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="
+      <div
+        className="
         mb-6 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-700
-      ">
+      "
+      >
         <p>Error: {error}</p>
       </div>
     );
@@ -108,17 +111,21 @@ const MateriasPage: React.FC = () => {
 
   return (
     <>
-      <header className="
-        bg-secondary flex items-center justify-between rounded-lg p-6 text-3xl
+      <header
+        className="
+        flex items-center justify-between rounded-lg bg-secondary p-6 text-3xl
         font-bold text-[#01142B] shadow-md
-      ">
+      "
+      >
         <h1>Materias</h1>
       </header>
       <div className="p-6">
-        <div className="
+        <div
+          className="
           mb-6 flex flex-col gap-4
           sm:flex-row sm:items-center sm:justify-between
-        ">
+        "
+        >
           <input
             type="text"
             placeholder="Buscar materias..."
@@ -128,9 +135,9 @@ const MateriasPage: React.FC = () => {
               setCurrentPage(1);
             }}
             className="
+              w-full
+              rounded-md border border-gray-300 bg-gray-700 p-2 text-white
               focus:border-primary
-              w-full rounded-md border border-gray-300 bg-gray-700 p-2
-              text-white
               focus:outline-none
               sm:w-64
             "
@@ -138,11 +145,11 @@ const MateriasPage: React.FC = () => {
           <button
             onClick={() => handleOpenModal()}
             className="
-              bg-secondary
+              flex
+              items-center
+              rounded-md bg-secondary px-4 py-2 font-semibold text-white shadow-md
+              transition hover:scale-105
               hover:bg-primary
-              flex items-center rounded-md px-4 py-2 font-semibold text-white
-              shadow-md transition
-              hover:scale-105
             "
           >
             Crear Materia
@@ -154,7 +161,7 @@ const MateriasPage: React.FC = () => {
             <li
               key={materia.id}
               className="
-                border-primary rounded-lg border bg-gray-800 p-4 shadow-md
+                rounded-lg border border-primary bg-gray-800 p-4 shadow-md
               "
             >
               <h2 className="text-xl font-bold">{materia.title}</h2>
@@ -240,10 +247,10 @@ const MateriasPage: React.FC = () => {
                 className={`
                   rounded-md px-3 py-1
                   ${
-                  currentPage === pageNum
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-700 text-white'
-                }
+                    currentPage === pageNum
+                      ? 'bg-primary text-white'
+                      : 'bg-gray-700 text-white'
+                  }
                 `}
               >
                 {pageNum}
@@ -263,12 +270,16 @@ const MateriasPage: React.FC = () => {
         )}
 
         {isModalOpen && (
-          <div className="
+          <div
+            className="
             bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center
-          ">
-            <div className="
+          "
+          >
+            <div
+              className="
               relative w-full max-w-lg rounded-lg bg-white p-6 shadow-lg
-            ">
+            "
+            >
               <button
                 onClick={handleCloseModal}
                 className="

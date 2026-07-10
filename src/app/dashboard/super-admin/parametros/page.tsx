@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 
 import { FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
 
+import { normalizeSearch } from '~/lib/utils';
+
 interface Parametro {
   id: number;
   name: string;
@@ -311,10 +313,12 @@ const ParametrosPage = () => {
                 {parametros
                   .filter(
                     (param) =>
-                      param.name.toLowerCase().includes(search.toLowerCase()) ||
-                      param.description
-                        .toLowerCase()
-                        .includes(search.toLowerCase())
+                      normalizeSearch(param.name).includes(
+                        normalizeSearch(search)
+                      ) ||
+                      normalizeSearch(param.description).includes(
+                        normalizeSearch(search)
+                      )
                   )
                   .slice(
                     (currentPage - 1) * itemsPerPage,

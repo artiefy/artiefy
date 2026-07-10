@@ -19,6 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from '~/components/educators/ui/card';
+import { normalizeSearch } from '~/lib/utils';
 
 import { ModalGuidedProjectForm } from '../modals/ModalGuidedProjectForm';
 
@@ -108,7 +109,7 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
   // ✅ Filtrar por búsqueda y categoría
   const filteredProjects = projects.filter(
     (project) =>
-      project.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
+      normalizeSearch(project.title).includes(normalizeSearch(searchQuery)) &&
       (categoryFilter ? project.categoryName === categoryFilter : true)
   );
 
