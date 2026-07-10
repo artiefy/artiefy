@@ -2,13 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import Link from 'next/link';
+
 import {
   DragDropContext,
   Draggable,
   Droppable,
   DropResult,
 } from '@hello-pangea/dnd';
-import { Edit2, GripVertical, Plus, Trash2 } from 'lucide-react';
+import { Edit2, Eye, GripVertical, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/educators/ui/button';
@@ -173,6 +175,17 @@ export function ActivitiesList({
                         </div>
 
                         <div className="flex items-center gap-2">
+                          <Link
+                            href={`/dashboard/super-admin/proyectos-guiados/${projectId}/${objectiveId}/actividades/${activity.id}`}
+                          >
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              title="Ver detalle"
+                            >
+                              <Eye className="size-4" />
+                            </Button>
+                          </Link>
                           <Button
                             size="sm"
                             variant="ghost"

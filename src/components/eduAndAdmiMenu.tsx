@@ -635,23 +635,19 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Degradado oscuro tipo vignette detrás del sidebar al expandirse: se
-          funde con el contenido sin dejar ninguna línea o caja visible.
-          En móvil además cierra el sidebar al tocar fuera. */}
+      {/* Overlay uniforme con desenfoque detrás del sidebar al expandirse:
+          cubre toda la pantalla parejo, sin división entre el sidebar y el
+          resto. En móvil además cierra el sidebar al tocar fuera. */}
       {shouldShowText && (
         <div
           onClick={() => isMobile && setIsOpen(false)}
           className={cn(
             `
-              fixed inset-0 z-30 bg-gradient-to-r from-black via-black/80
-              to-transparent transition-opacity duration-300
+              fixed inset-0 z-30 bg-black/60 backdrop-blur-md
+              transition-opacity duration-300
             `,
             !isMobile && 'pointer-events-none'
           )}
-          style={{
-            backgroundSize: '420px 100%',
-            backgroundRepeat: 'no-repeat',
-          }}
           aria-hidden="true"
         />
       )}

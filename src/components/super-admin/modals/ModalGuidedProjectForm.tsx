@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Input } from '~/components/educators/ui/input';
+import { uploadFileToS3 } from '~/lib/uploadFileToS3';
 
 interface Option {
   id: number;
@@ -40,6 +41,7 @@ interface GuidedProjectFormData {
   visibility: boolean;
   requiresProgram: boolean;
   coverImageKey: string;
+  coverVideoKey: string;
 }
 
 interface ModalGuidedProjectFormProps {
@@ -64,6 +66,7 @@ const EMPTY_FORM: GuidedProjectFormData = {
   visibility: true,
   requiresProgram: false,
   coverImageKey: '',
+  coverVideoKey: '',
 };
 
 export function ModalGuidedProjectForm({
@@ -86,6 +89,11 @@ export function ModalGuidedProjectForm({
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const [needsVideo, setNeedsVideo] = useState(false);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const set = (key: keyof GuidedProjectFormData, value: unknown) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -125,6 +133,8 @@ export function ModalGuidedProjectForm({
     if (!open || !projectId) {
       setFormData(EMPTY_FORM);
       setImagePreview(null);
+      setVideoPreview(null);
+      setNeedsVideo(false);
       return;
     }
 
@@ -149,10 +159,17 @@ export function ModalGuidedProjectForm({
           visibility: data.visibility ?? true,
           requiresProgram: data.requiresProgram ?? false,
           coverImageKey: data.coverImageKey ?? '',
+          coverVideoKey: data.coverVideoKey ?? '',
         });
         if (data.coverImageKey) {
           setImagePreview(
             `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${data.coverImageKey}`
+          );
+        }
+        if (data.coverVideoKey && data.coverVideoKey !== 'none') {
+          setNeedsVideo(true);
+          setVideoPreview(
+            `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${data.coverVideoKey}`
           );
         }
       } catch {
@@ -211,6 +228,27 @@ export function ModalGuidedProjectForm({
     }
   };
 
+  // Upload video
+  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setVideoPreview(URL.createObjectURL(file));
+    setUploadingVideo(true);
+
+    try {
+      const { key } = await uploadFileToS3(file);
+      set('coverVideoKey', key);
+      toast.success('Video subido');
+    } catch (err) {
+      console.error(err);
+      toast.error('Error al subir video');
+      setVideoPreview(null);
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!formData.title || !formData.instructor) {
       toast.error('Título e instructor son requeridos');
@@ -223,10 +261,15 @@ export function ModalGuidedProjectForm({
         : '/api/guided-projects';
       const method = isEditing ? 'PUT' : 'POST';
 
+      const payload = {
+        ...formData,
+        coverVideoKey: needsVideo ? formData.coverVideoKey : 'none',
+      };
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error();
 
@@ -293,6 +336,52 @@ export function ModalGuidedProjectForm({
                 className="hidden"
                 onChange={handleImageChange}
               />
+            </div>
+
+            {/* Video */}
+            <div className="space-y-2">
+              <label className={checkLabel}>
+                <input
+                  type="checkbox"
+                  checked={needsVideo}
+                  onChange={(e) => setNeedsVideo(e.target.checked)}
+                  className="size-4 accent-primary"
+                />
+                ¿Este proyecto necesita video?
+              </label>
+
+              {needsVideo && (
+                <>
+                  <div
+                    onClick={() => videoInputRef.current?.click()}
+                    className="relative flex h-40 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-600 bg-gray-800 transition hover:border-primary"
+                  >
+                    {videoPreview ? (
+                      <video
+                        src={videoPreview}
+                        controls
+                        className="size-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-gray-400">
+                        <FiUploadCloud className="size-8" />
+                        <span className="text-sm">
+                          {uploadingVideo
+                            ? 'Subiendo...'
+                            : 'Clic para subir video'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    ref={videoInputRef}
+                    type="file"
+                    accept="video/mp4"
+                    className="hidden"
+                    onChange={handleVideoChange}
+                  />
+                </>
+              )}
             </div>
 
             {/* Título */}
@@ -438,7 +527,7 @@ export function ModalGuidedProjectForm({
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={loading || uploadingImage}
+                disabled={loading || uploadingImage || uploadingVideo}
                 className="bg-primary text-black hover:bg-primary/90 disabled:opacity-50"
               >
                 {loading

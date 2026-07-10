@@ -1,0 +1,12 @@
+
+> artiefy@0.1.0 check
+> eslint . --config eslint.cli.config.mjs --max-warnings=0 && tsc --noEmit
+
+
+C:\Users\User\projects\artiefy\src\app\dashboard\super-admin\(inicio)\proyectos-guiados\[projectId]\[objectiveId]\actividades\[activityId]\page.tsx
+  3:1  warning  Run autofix to sort these imports!  simple-import-sort/imports
+
+✖ 1 problem (0 errors, 1 warning)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+ESLint found too many warnings (maximum: 0).
