@@ -1,0 +1,5 @@
+
+> artiefy@0.1.0 check
+> eslint . --config eslint.cli.config.mjs --max-warnings=0 && tsc --noEmit
+
+src/app/dashboard/super-admin/page.tsx(622,7): error TS2552: Cannot find name 'setAllCourses'. Did you mean 'setCourses'?

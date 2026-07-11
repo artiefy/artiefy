@@ -1,0 +1,12 @@
+
+> artiefy@0.1.0 check
+> eslint . --config eslint.cli.config.mjs --max-warnings=0 && tsc --noEmit
+
+
+C:\Users\User\projects\artiefy\src\app\dashboard\super-admin\page.tsx
+  276:10  error  'allPrograms' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u  @typescript-eslint/no-unused-vars
+  277:10  error  'materias' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u     @typescript-eslint/no-unused-vars
+  527:10  error  'allCourses' is assigned a value but never used. Allowed unused elements of array destructuring must match /^_/u   @typescript-eslint/no-unused-vars
+
+✖ 3 problems (3 errors, 0 warnings)
+

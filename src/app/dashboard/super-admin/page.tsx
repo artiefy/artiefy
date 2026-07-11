@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import AnuncioPreview from '~/app/dashboard/super-admin/anuncios/AnuncioPreview';
 import EditUserModal from '~/app/dashboard/super-admin/users/EditUserModal';
 import SunEditorCDN from '~/components/SunEditorCDN';
+import { AssignStudentsModal } from '~/components/super-admin/AssignStudentsModal';
 import CourseCarousel from '~/components/super-admin/CourseCarousel';
 import { deleteUser, setRoleWrapper } from '~/server/queries/queries';
 
@@ -53,12 +54,6 @@ type ConfirmationState = {
   onConfirm: () => void;
   onCancel?: () => void;
 } | null;
-
-interface Materia {
-  id: string;
-  courseId: string;
-  programaId: string;
-}
 
 interface ViewUserResponse {
   id: string;
@@ -248,7 +243,6 @@ export default function AdminDashboard() {
   const [selectedCourses, setSelectedCourses] = useState<string[]>([]);
   const [selectedPrograms, setSelectedPrograms] = useState<string[]>([]);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
   const [creatingUser, setCreatingUser] = useState(false);
   const [viewUser, setViewUser] = useState<ViewUserResponse | null>(null);
@@ -273,9 +267,6 @@ export default function AdminDashboard() {
   }
 
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedCourse, setSelectedCourse] = useState<string | null>(null);
-  const [allPrograms, setAllPrograms] = useState<Program[]>([]);
-  const [materias, setMaterias] = useState<Materia[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const handleOpenWhatsApp = useCallback(() => {
     setShowWhatsAppModal(true);
@@ -502,12 +493,11 @@ export default function AdminDashboard() {
         ).values()
       );
       setPrograms(data);
-      setAllPrograms(data);
     } catch (error) {
       console.error('Error cargando programas:', error);
       setPrograms([]);
     }
-  }, [setPrograms, setAllPrograms, isValidProgramArray]);
+  }, [setPrograms, isValidProgramArray]);
 
   const isValidCourseArray = useCallback((data: unknown): data is Course[] => {
     return (
@@ -525,7 +515,6 @@ export default function AdminDashboard() {
     );
   }, []);
 
-  const [allCourses, setAllCourses] = useState<Course[]>([]);
   useEffect(() => {
     if (!showWhatsAppModal) return;
 
@@ -599,78 +588,6 @@ export default function AdminDashboard() {
   );
 
   useEffect(() => {
-    const fetchMaterias = async () => {
-      try {
-        const res = await fetch('/api/super-admin/materias');
-        const rawData: unknown = await res.json();
-        if (
-          !Array.isArray(rawData) ||
-          !rawData.every(
-            (item) =>
-              typeof item === 'object' &&
-              item !== null &&
-              'id' in item &&
-              'courseid' in item &&
-              'programaId' in item
-          )
-        ) {
-          throw new Error('Invalid data format for Materias');
-        }
-        const data: Materia[] = rawData as Materia[];
-        setMaterias(data);
-      } catch (error) {
-        console.error('Error al cargar materias:', error);
-      }
-    };
-
-    void fetchMaterias();
-  }, []);
-
-  useEffect(() => {
-    if (!selectedCourse) {
-      setPrograms(allPrograms); // Mostrar todos los programas si no hay curso seleccionado
-      return;
-    }
-
-    const programIds = materias
-      .filter(
-        (m) =>
-          String((m as unknown as { courseid: unknown }).courseid) ===
-          String(selectedCourse)
-      )
-      .map((m) => m.programaId);
-
-    const uniqueProgramIds = [...new Set(programIds)]; // Eliminar duplicados
-
-    const relatedPrograms = allPrograms.filter((p) =>
-      uniqueProgramIds.includes(p.id)
-    );
-
-    setPrograms(relatedPrograms);
-  }, [selectedCourse, materias, allPrograms, isValidProgramArray]); // ✅ añadimos
-
-  const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!selectedProgram) {
-      setCourses(allCourses); // Mostrar todos los cursos si no hay programa seleccionado
-      return;
-    }
-
-    const courseIds = materias
-      .filter((m) => String(m.programaId) === String(selectedProgram))
-      .map((m) => String((m as unknown as { courseid: unknown }).courseid));
-
-    const uniqueCourseIds = [...new Set(courseIds)]; // Eliminar duplicados
-
-    const relatedCourses = allCourses.filter((c) =>
-      uniqueCourseIds.includes(String(c.id))
-    );
-
-    setCourses(relatedCourses);
-  }, [selectedProgram, materias, allCourses]);
-
-  useEffect(() => {
     void fetchAllPrograms();
   }, [fetchAllPrograms]); // ✅ lo añadimos
 
@@ -702,7 +619,6 @@ export default function AdminDashboard() {
       }));
 
       setCourses(data);
-      setAllCourses(data);
     } catch (error) {
       console.error('Error cargando todos los cursos:', error);
       setCourses([]);
@@ -720,21 +636,24 @@ export default function AdminDashboard() {
       .replace(/\p{Diacritic}/gu, '')
       .toLowerCase();
 
-  // Y cambia el filtro por esto:
-  const filteredUsers = users.filter(
-    (user) =>
-      (searchQuery === '' ||
-        normalize(user.firstName).includes(normalize(searchQuery)) ||
-        normalize(user.lastName).includes(normalize(searchQuery)) ||
-        normalize(`${user.firstName} ${user.lastName}`).includes(
-          normalize(searchQuery)
-        ) ||
-        normalize(user.email).includes(normalize(searchQuery)) ||
-        (user.username &&
-          normalize(user.username).includes(normalize(searchQuery)))) &&
+  // Búsqueda por tokens: cada palabra escrita debe aparecer en algún lugar
+  // del nombre/correo/username, sin importar el orden ni palabras de más
+  // en medio (ej. "Angelly Lagos" debe encontrar a "Angelly Sofia Lagos").
+  const filteredUsers = users.filter((user) => {
+    const searchTokens = normalize(searchQuery).split(/\s+/).filter(Boolean);
+    const searchableText = normalize(
+      `${user.firstName} ${user.lastName} ${user.email} ${user.username ?? ''}`
+    );
+    const matchesSearch =
+      searchTokens.length === 0 ||
+      searchTokens.every((token) => searchableText.includes(token));
+
+    return (
+      matchesSearch &&
       (roleFilter ? user.role === roleFilter : true) &&
       (statusFilter ? user.status === statusFilter : true)
-  );
+    );
+  });
   const [sendingEmails, setSendingEmails] = useState(false);
 
   const fetchPrograms = useCallback(async () => {
@@ -770,43 +689,6 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  const fetchProgramsForAssign = useCallback(async () => {
-    try {
-      const res = await fetch('/api/super-admin/programs/enrollInProgram');
-      if (!res.ok) throw new Error('Error al obtener programas');
-
-      const rawData: unknown = await res.json();
-      if (
-        !Array.isArray(rawData) ||
-        !rawData.every(
-          (item) =>
-            typeof item === 'object' &&
-            item !== null &&
-            'id' in item &&
-            'title' in item &&
-            (typeof (item as { id: unknown }).id === 'string' ||
-              typeof (item as { id: unknown }).id === 'number') &&
-            typeof (item as { title: unknown }).title === 'string'
-        )
-      ) {
-        throw new Error('Datos inválidos recibidos');
-      }
-
-      const data = rawData.map((program) => ({
-        id: String((program as { id: string | number }).id),
-        title: (program as { title: string }).title,
-      }));
-      console.log('✅ Programas para asignación cargados:', data);
-      setPrograms(data);
-    } catch (error) {
-      console.error('Error al cargar programas:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    void fetchProgramsForAssign();
-  }, [fetchProgramsForAssign]);
-
   useEffect(() => {
     void fetchPrograms();
   }, [fetchPrograms]);
@@ -821,13 +703,6 @@ export default function AdminDashboard() {
       : filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
 
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const handleSelectStudent = (userId: string) => {
-    setSelectedStudents((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    );
-  };
 
   const fetchAnuncios = async (userId: string) => {
     try {
@@ -1239,162 +1114,6 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('❌ Error al guardar anuncio:', error);
       toast.error('Error al guardar el anuncio.');
-    }
-  };
-
-  const [selectedPlanType, setSelectedPlanType] = useState<
-    'Pro' | 'Premium' | 'Enterprise'
-  >('Premium');
-
-  const handleAssignStudents = async () => {
-    if (selectedStudents.length === 0) return;
-
-    try {
-      const payload: {
-        userIds: string[];
-        planType: 'Pro' | 'Premium' | 'Enterprise';
-        courseId?: string;
-        programId?: string;
-      } = {
-        userIds: selectedStudents,
-        planType: selectedPlanType,
-      };
-
-      if (selectedCourse) {
-        payload.courseId = selectedCourse;
-      }
-
-      if (selectedProgram) {
-        payload.programId = selectedProgram;
-      }
-
-      const response = await fetch('/api/enrollments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) throw new Error('Error during enrollment');
-
-      const rawResult: unknown = await response.json();
-
-      if (
-        typeof rawResult === 'object' &&
-        rawResult !== null &&
-        'success' in rawResult &&
-        typeof (rawResult as { success: unknown }).success === 'boolean' &&
-        'message' in rawResult &&
-        typeof (rawResult as { message: unknown }).message === 'string'
-      ) {
-        const result: {
-          success: boolean;
-          message: string;
-          alreadyEnrolledCourse?: { userId: string; userName: string }[];
-          alreadyEnrolledProgram?: { userId: string; userName: string }[];
-        } = rawResult as {
-          success: boolean;
-          message: string;
-          alreadyEnrolledCourse?: { userId: string; userName: string }[];
-          alreadyEnrolledProgram?: { userId: string; userName: string }[];
-        };
-
-        console.log('Enrollment successful:', result);
-        setShowAssignModal(false);
-        setSelectedStudents([]);
-        setSelectedCourse(null);
-        setSelectedProgram(null);
-
-        // Show success message with details about already enrolled students
-        const courseName = selectedCourse
-          ? courses.find((course) => course.id === selectedCourse)?.title
-          : null;
-        const programName = selectedProgram
-          ? programs.find((program) => program.id === selectedProgram)?.title
-          : null;
-
-        const newlyEnrolled =
-          selectedStudents.length -
-          ((result.alreadyEnrolledCourse?.length ?? 0) +
-            (result.alreadyEnrolledProgram?.length ?? 0));
-
-        let successMessage = '';
-
-        // Mensaje sobre los matriculados nuevos
-        if (newlyEnrolled > 0) {
-          successMessage = `✅ Se matricularon ${newlyEnrolled} estudiantes`;
-          if (courseName && programName) {
-            successMessage += ` al curso "${courseName}" y al programa "${programName}".`;
-          } else if (courseName) {
-            successMessage += ` al curso "${courseName}".`;
-          } else if (programName) {
-            successMessage += ` al programa "${programName}".`;
-          }
-          successMessage += '\n\n';
-        }
-
-        // Mensaje sobre los ya matriculados en el curso
-        if (
-          result.alreadyEnrolledCourse &&
-          result.alreadyEnrolledCourse.length > 0
-        ) {
-          const alreadyNames = result.alreadyEnrolledCourse
-            .map((u) => u.userName)
-            .join(', ');
-          successMessage += `⚠️ Los siguientes estudiantes ya estaban matriculados al curso "${courseName}":\n${alreadyNames}\n\n`;
-        }
-
-        // Mensaje sobre los ya matriculados en el programa
-        if (
-          result.alreadyEnrolledProgram &&
-          result.alreadyEnrolledProgram.length > 0
-        ) {
-          const alreadyNames = result.alreadyEnrolledProgram
-            .map((u) => u.userName)
-            .join(', ');
-          successMessage += `⚠️ Los siguientes estudiantes ya estaban matriculados al programa "${programName}":\n${alreadyNames}`;
-        }
-
-        // Show elegant multi-line toast
-        if (
-          result.alreadyEnrolledCourse &&
-          result.alreadyEnrolledCourse.length > 0
-        ) {
-          const alreadyNames = result.alreadyEnrolledCourse
-            .map((u) => u.userName)
-            .join(', ');
-          toast.info(
-            `${result.alreadyEnrolledCourse.length} estudiante(s) ya estaban matriculado(s) en "${courseName}": ${alreadyNames}`
-          );
-          if (newlyEnrolled > 0) {
-            toast.success(
-              `✅ ${newlyEnrolled} estudiante(s) matriculado(s) exitosamente en "${courseName}"`
-            );
-          }
-        } else if (
-          result.alreadyEnrolledProgram &&
-          result.alreadyEnrolledProgram.length > 0
-        ) {
-          const alreadyNames = result.alreadyEnrolledProgram
-            .map((u) => u.userName)
-            .join(', ');
-          toast.info(
-            `${result.alreadyEnrolledProgram.length} estudiante(s) ya estaban matriculado(s) en "${programName}": ${alreadyNames}`
-          );
-          if (newlyEnrolled > 0) {
-            toast.success(
-              `✅ ${newlyEnrolled} estudiante(s) matriculado(s) exitosamente en "${programName}"`
-            );
-          }
-        } else {
-          toast.success(
-            successMessage || '✅ Matrícula completada exitosamente'
-          );
-        }
-      } else {
-        throw new Error('Invalid response format');
-      }
-    } catch (error) {
-      console.error('Error assigning students:', error);
     }
   };
 
@@ -1899,9 +1618,6 @@ export default function AdminDashboard() {
   };
 
   const [modalIsOpen, setModalIsOpen] = useState(false); // ✅ Asegurar que está definido
-  const [programsCollapsed, setProgramsCollapsed] = useState(true);
-  const [coursesCollapsed, setCoursesCollapsed] = useState(true);
-  const [studentSearch, setStudentSearch] = useState('');
 
   const handleMassUserUpload = useCallback(
     (newUsers: User[]) => {
@@ -1974,104 +1690,6 @@ export default function AdminDashboard() {
       console.error('❌ Error al obtener usuario:', error);
     }
   };
-
-  useEffect(() => {
-    const fetchProgramsFromCourse = async () => {
-      if (!selectedCourse) {
-        setPrograms(allPrograms); // Use cached programs if no course is selected
-        return;
-      }
-
-      try {
-        const res = await fetch(
-          `/api/super-admin/programs/fromCourse?courseId=${selectedCourse}`
-        );
-        if (!res.ok) throw new Error('Error al obtener programas desde curso');
-
-        const rawData: unknown = await res.json();
-
-        if (!isValidProgramArray(rawData)) {
-          throw new Error('Datos inválidos al obtener programas desde curso');
-        }
-
-        const data = Array.from(
-          new Map(
-            rawData.map((p) => [p.id, { id: String(p.id), title: p.title }])
-          ).values()
-        );
-
-        setPrograms(data);
-      } catch (error) {
-        console.error('Error cargando programas desde curso:', error);
-        setPrograms([]);
-      }
-    };
-    void fetchProgramsFromCourse();
-  }, [selectedCourse, allPrograms, isValidProgramArray]);
-
-  useEffect(() => {
-    if (!selectedCourse) {
-      setPrograms([...new Set(allPrograms)]); // Eliminar duplicados en programas
-      return;
-    }
-
-    const loadPrograms = async () => {
-      try {
-        const res = await fetch(
-          `/api/super-admin/programs/fromCourse?courseId=${selectedCourse}`
-        );
-        if (!res.ok) throw new Error('Error al obtener programas');
-
-        const rawData: unknown = await res.json();
-        if (
-          !Array.isArray(rawData) ||
-          !rawData.every(
-            (item) =>
-              typeof item === 'object' &&
-              item !== null &&
-              'id' in item &&
-              'title' in item
-          )
-        ) {
-          throw new Error('Datos inválidos recibidos');
-        }
-
-        interface RawProgramData {
-          id: string | number;
-          title: string;
-        }
-
-        const data: { id: string; title: string }[] = rawData.map(
-          (item: RawProgramData) => ({
-            id: String(item.id),
-            title: String(item.title),
-          })
-        );
-
-        setPrograms(data); // Ya no necesitas el Set porque estás creando nuevos objetos // Eliminar duplicados en programas
-      } catch (err) {
-        console.error('Error al cargar programas desde curso:', err);
-      }
-    };
-
-    void loadPrograms();
-  }, [selectedCourse, allPrograms]);
-
-  // Add search filters for courses and programs
-  const [courseSearch, setCourseSearch] = useState('');
-  const [programSearch, setProgramSearch] = useState('');
-
-  const filteredCourses = Array.from(
-    new Map(courses.map((course) => [course.title, course])).values()
-  ).filter((course) =>
-    normalize(course.title).includes(normalize(courseSearch))
-  );
-
-  const filteredPrograms = Array.from(
-    new Map(programs.map((program) => [program.title, program])).values()
-  ).filter((program) =>
-    normalize(program.title).includes(normalize(programSearch))
-  );
 
   return (
     <>
@@ -3476,441 +3094,11 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {showAssignModal && (
-        <div
-          className="
-            fixed inset-0 z-[100] flex items-center justify-center bg-black/50
-            p-4 backdrop-blur-md
-          "
-        >
-          <div
-            className="
-              flex max-h-[90vh] w-full max-w-5xl flex-col rounded-xl bg-gray-900
-              shadow-2xl
-            "
-          >
-            {/* Header */}
-            <div
-              className="
-                flex items-center justify-between border-b border-gray-700
-                bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] px-4
-                py-3
-                sm:px-6 sm:py-4
-              "
-            >
-              <div>
-                <h2
-                  className="
-                    text-base font-bold text-white
-                    sm:text-lg
-                  "
-                >
-                  Asignar a Curso o Programa
-                </h2>
-                <p className="text-xs text-white/80">
-                  {selectedStudents.length} estudiante(s) seleccionado(s)
-                </p>
-              </div>
-              <button
-                onClick={() => setShowAssignModal(false)}
-                className="
-                  rounded-lg bg-white/10 p-1.5 transition-colors
-                  hover:bg-white/20
-                "
-              >
-                <X className="size-5 text-white" />
-              </button>
-            </div>
-
-            {/* Content - con scroll interno */}
-            <div
-              className="
-                flex-1 overflow-y-auto p-4
-                sm:p-6
-              "
-            >
-              <div
-                className="
-                  grid gap-4
-                  lg:grid-cols-2
-                "
-              >
-                {/* Panel de Estudiantes */}
-                <div className="rounded-lg bg-gray-800 p-4">
-                  <h3
-                    className="
-                      mb-3 flex items-center gap-2 text-sm font-semibold
-                      text-white
-                      sm:text-base
-                    "
-                  >
-                    <UserPlus className="size-4 text-blue-400" />
-                    Seleccionar Estudiantes
-                  </h3>
-
-                  <input
-                    type="text"
-                    placeholder="Buscar estudiante..."
-                    className="
-                      mb-2 w-full rounded-lg border border-gray-700 bg-gray-900
-                      px-3 py-2 text-sm text-white
-                      placeholder:text-gray-500
-                    "
-                    value={studentSearch}
-                    onChange={(e) => setStudentSearch(e.target.value)}
-                  />
-
-                  <label
-                    className="
-                      mb-2 flex cursor-pointer items-center justify-between
-                      rounded-lg bg-gray-700 px-3 py-2
-                      hover:bg-gray-600
-                    "
-                  >
-                    <span className="text-sm font-medium text-white">
-                      Seleccionar Todos
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={
-                        selectedStudents.length === users.length &&
-                        users.length > 0
-                      }
-                      onChange={(e) =>
-                        setSelectedStudents(
-                          e.target.checked ? users.map((u) => u.id) : []
-                        )
-                      }
-                      className="form-checkbox size-4 rounded text-blue-500"
-                    />
-                  </label>
-
-                  <div
-                    className="
-                      max-h-[250px] space-y-1 overflow-y-auto rounded-lg border
-                      border-gray-700 bg-gray-900 p-2
-                    "
-                  >
-                    {users
-                      .filter(
-                        (user) =>
-                          user.firstName
-                            .toLowerCase()
-                            .includes(studentSearch.toLowerCase()) ||
-                          user.lastName
-                            .toLowerCase()
-                            .includes(studentSearch.toLowerCase()) ||
-                          user.email
-                            .toLowerCase()
-                            .includes(studentSearch.toLowerCase())
-                      )
-                      .map((user) => (
-                        <label
-                          key={user.id}
-                          className="
-                            flex cursor-pointer items-center gap-2 rounded p-2
-                            hover:bg-gray-700
-                          "
-                        >
-                          <div
-                            className="
-                              flex size-8 flex-shrink-0 items-center
-                              justify-center rounded-full bg-blue-500 text-xs
-                              font-semibold text-white
-                            "
-                          >
-                            {user.firstName[0]}
-                            {user.lastName[0]}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm text-white">
-                              {user.firstName} {user.lastName}
-                            </p>
-                            <p className="truncate text-xs text-gray-400">
-                              {user.email}
-                            </p>
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={selectedStudents.includes(user.id)}
-                            onChange={() => handleSelectStudent(user.id)}
-                            className="
-                              form-checkbox size-4 flex-shrink-0 rounded
-                              text-blue-500
-                            "
-                          />
-                        </label>
-                      ))}
-                  </div>
-                </div>
-
-                {/* Panel de Cursos y Programas */}
-                <div className="space-y-3">
-                  {/* Plan de Suscripción */}
-                  <div className="rounded-lg bg-gray-800 p-4">
-                    <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Plan de Suscripción
-                    </label>
-                    <select
-                      value={selectedPlanType}
-                      onChange={(e) =>
-                        setSelectedPlanType(
-                          e.target.value as 'Pro' | 'Premium' | 'Enterprise'
-                        )
-                      }
-                      className="
-                        w-full rounded-lg border border-gray-700 bg-gray-900
-                        px-3 py-2 text-sm text-white
-                      "
-                    >
-                      <option value="Pro">Pro</option>
-                      <option value="Premium">Premium</option>
-                      <option value="Enterprise">Enterprise</option>
-                    </select>
-                  </div>
-
-                  {/* Cursos */}
-                  <div className="rounded-lg bg-gray-800">
-                    <button
-                      onClick={() => setCoursesCollapsed(!coursesCollapsed)}
-                      className="
-                        flex w-full items-center justify-between rounded-t-lg
-                        bg-emerald-600 px-4 py-2.5 text-white transition-colors
-                        hover:bg-emerald-700
-                      "
-                    >
-                      <span className="text-sm font-semibold">
-                        {coursesCollapsed ? 'Mostrar' : 'Ocultar'} Cursos
-                      </span>
-                      <svg
-                        className={`
-                          size-4 transition-transform
-                          ${!coursesCollapsed ? 'rotate-180' : ''}
-                        `}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-
-                    {!coursesCollapsed && (
-                      <div className="p-3">
-                        <input
-                          type="text"
-                          placeholder="Buscar cursos..."
-                          value={courseSearch}
-                          onChange={(e) => setCourseSearch(e.target.value)}
-                          className="
-                            mb-2 w-full rounded-lg border border-gray-700
-                            bg-gray-900 px-3 py-2 text-sm text-white
-                            placeholder:text-gray-500
-                          "
-                        />
-                        <div
-                          className="
-                            max-h-[180px] space-y-1 overflow-y-auto rounded-lg
-                            border border-gray-700 bg-gray-900 p-2
-                          "
-                        >
-                          {filteredCourses.map((course) => (
-                            <label
-                              key={course.id}
-                              className="
-                                flex cursor-pointer items-start gap-2 rounded
-                                p-2
-                                hover:bg-gray-700
-                              "
-                            >
-                              <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-white">
-                                  {course.title}
-                                </p>
-                                {course.instructor && (
-                                  <p className="mt-0.5 text-xs text-emerald-400">
-                                    👨‍🏫 {course.instructor}
-                                  </p>
-                                )}
-                                {course.modalidad?.name && (
-                                  <p className="mt-0.5 text-xs text-blue-400">
-                                    🖥️ {course.modalidad.name}
-                                  </p>
-                                )}
-                              </div>
-                              <input
-                                type="radio"
-                                name="selectedCourse"
-                                checked={selectedCourse === course.id}
-                                onChange={() => setSelectedCourse(course.id)}
-                                className="
-                                  form-radio mt-1 size-4 flex-shrink-0
-                                  text-emerald-500
-                                "
-                              />
-                            </label>
-                          ))}
-                        </div>
-                        {selectedCourse && (
-                          <button
-                            onClick={() => {
-                              setSelectedCourse(null);
-                              void fetchAllPrograms();
-                            }}
-                            className="
-                              mt-2 flex w-full items-center justify-center gap-1
-                              rounded-lg bg-red-600 px-3 py-1.5 text-xs
-                              font-medium text-white
-                              hover:bg-red-700
-                            "
-                          >
-                            <X className="size-3" />
-                            Quitar selección
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Programas */}
-                  <div className="rounded-lg bg-gray-800">
-                    <button
-                      onClick={() => setProgramsCollapsed(!programsCollapsed)}
-                      className="
-                        flex w-full items-center justify-between rounded-t-lg
-                        bg-purple-600 px-4 py-2.5 text-white transition-colors
-                        hover:bg-purple-700
-                      "
-                    >
-                      <span className="text-sm font-semibold">
-                        {programsCollapsed ? 'Mostrar' : 'Ocultar'} Programas
-                      </span>
-                      <svg
-                        className={`
-                          size-4 transition-transform
-                          ${!programsCollapsed ? 'rotate-180' : ''}
-                        `}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-
-                    {!programsCollapsed && (
-                      <div className="p-3">
-                        <input
-                          type="text"
-                          placeholder="Buscar programas..."
-                          value={programSearch}
-                          onChange={(e) => setProgramSearch(e.target.value)}
-                          className="
-                            mb-2 w-full rounded-lg border border-gray-700
-                            bg-gray-900 px-3 py-2 text-sm text-white
-                            placeholder:text-gray-500
-                          "
-                        />
-                        <div
-                          className="
-                            max-h-[180px] space-y-1 overflow-y-auto rounded-lg
-                            border border-gray-700 bg-gray-900 p-2
-                          "
-                        >
-                          {filteredPrograms.map((program) => (
-                            <label
-                              key={program.id}
-                              className="
-                                flex cursor-pointer items-center gap-2 rounded
-                                p-2
-                                hover:bg-gray-700
-                              "
-                            >
-                              <span className="min-w-0 flex-1 text-sm text-white">
-                                {program.title}
-                              </span>
-                              <input
-                                type="radio"
-                                name="selectedProgram"
-                                checked={selectedProgram === program.id}
-                                onChange={() => setSelectedProgram(program.id)}
-                                className="
-                                  form-radio size-4 flex-shrink-0
-                                  text-purple-500
-                                "
-                              />
-                            </label>
-                          ))}
-                        </div>
-                        {selectedProgram && (
-                          <button
-                            onClick={() => setSelectedProgram(null)}
-                            className="
-                              mt-2 flex w-full items-center justify-center gap-1
-                              rounded-lg bg-red-600 px-3 py-1.5 text-xs
-                              font-medium text-white
-                              hover:bg-red-700
-                            "
-                          >
-                            <X className="size-3" />
-                            Quitar selección
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer con botones - siempre visible */}
-            <div
-              className="
-                flex flex-col gap-2 border-t border-gray-700 bg-gray-800 px-4
-                py-3
-                sm:flex-row sm:justify-between sm:px-6
-              "
-            >
-              <button
-                onClick={handleAssignStudents}
-                className="
-                  flex items-center justify-center gap-2 rounded-lg bg-green-600
-                  px-4 py-2 text-sm font-semibold text-white
-                  hover:bg-green-700
-                  disabled:cursor-not-allowed disabled:opacity-50
-                "
-                disabled={
-                  selectedStudents.length === 0 ||
-                  (!selectedCourse && !selectedProgram)
-                }
-              >
-                <Check className="size-4" />
-                Asignar Estudiantes
-              </button>
-              <button
-                onClick={() => setShowAssignModal(false)}
-                className="
-                  rounded-lg bg-gray-700 px-4 py-2 text-sm font-semibold
-                  text-white
-                  hover:bg-gray-600
-                "
-              >
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AssignStudentsModal
+        isOpen={showAssignModal}
+        users={users}
+        onClose={() => setShowAssignModal(false)}
+      />
 
       {/* Contenedor de botones arriba de la tabla */}
 

@@ -5,7 +5,6 @@ import { useState } from 'react';
 import {
   FiAward,
   FiClock,
-  FiFileText,
   FiLayers,
   FiMapPin,
   FiTag,
@@ -20,7 +19,6 @@ import CertificationTypesPage from '../../(inicio)/cursos/certification-types/pa
 import CategoriesPage from '../../categories/page';
 import DifficultiesPage from '../../difficulties/page';
 import ModalitiesPage from '../../modalities/page';
-import PlantillasPage from '../../parametros/plantillas/page';
 
 const TABS = [
   {
@@ -59,12 +57,6 @@ const TABS = [
     icon: FiAward,
     Component: CertificationTypesPage,
   },
-  {
-    id: 'plantillas',
-    label: 'Plantillas',
-    icon: FiFileText,
-    Component: PlantillasPage,
-  },
 ] as const;
 
 export default function ConfiguracionesPage() {
@@ -81,12 +73,7 @@ export default function ConfiguracionesPage() {
         sm:p-6
       "
     >
-      <div
-        className="
-          rounded-2xl border border-white/10 bg-gray-900/40 p-6
-          backdrop-blur-sm
-        "
-      >
+      <div>
         <h1
           className="
             text-2xl font-bold text-white

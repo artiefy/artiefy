@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import { toast } from 'sonner';
@@ -10,7 +11,7 @@ import { toast } from 'sonner';
 import { Badge } from '~/components/educators/ui/badge';
 import { Button } from '~/components/educators/ui/button';
 import { Card, CardHeader, CardTitle } from '~/components/educators/ui/card';
-import { ActivitiesList } from '~/components/super-admin/layout/ActivitiesListAdmin';
+import { ModalFormGuidedObjective } from '~/components/super-admin/modals/ModalFormGuidedObjective';
 import { ModalGuidedProjectForm } from '~/components/super-admin/modals/ModalGuidedProjectForm';
 import {
   Breadcrumb,
@@ -28,6 +29,7 @@ interface GuidedProject {
   categoryName: string;
   modalidadName?: string;
   coverImageKey?: string | null;
+  coverVideoKey?: string | null;
   isActive?: boolean;
 }
 
@@ -40,18 +42,6 @@ interface Objective {
   isEnabled: boolean;
 }
 
-interface Activity {
-  id: number;
-  name: string;
-  description: string | null;
-  typeName: string;
-  weekNumber: number | null;
-  startDate: Date | null;
-  endDate: Date | null;
-  porcentaje: number | null;
-  fechaMaximaEntrega: Date | null;
-}
-
 const predefinedColors = ['#1f2937', '#000000', '#FFFFFF'];
 
 export default function GuidedProjectDetailPage({
@@ -62,44 +52,13 @@ export default function GuidedProjectDetailPage({
   const [projectId, setProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<GuidedProject | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>('#FFFFFF');
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
-  // Único tab principal por ahora (mismo patrón visual que CourseDetail)
-  const [activeTab, setActiveTab] = useState<string>('sesiones');
-  const tabsRef = useRef<HTMLDivElement>(null);
-
-  // --- Sesiones (objectives) ---
   const [objectives, setObjectives] = useState<Objective[]>([]);
   const [loadingObjectives, setLoadingObjectives] = useState(false);
 
-  // Vista actual dentro del tab "Sesiones": lista de tarjetas o detalle de una sesión
-  const [selectedObjective, setSelectedObjective] = useState<Objective | null>(
-    null
-  );
-  // Sub-tab interno del detalle de sesión: 'info' | 'actividades'
-  const [sessionDetailTab, setSessionDetailTab] = useState<
-    'info' | 'actividades'
-  >('info');
+  const [newSessionModalOpen, setNewSessionModalOpen] = useState(false);
 
-  const [editingObjective, setEditingObjective] = useState<Objective | null>(
-    null
-  );
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
-  const [objectiveFormData, setObjectiveFormData] = useState({
-    title: '',
-    description: '',
-    duration: 60,
-  });
-  const [activityFormData, setActivityFormData] = useState({
-    name: '',
-    description: '',
-    typeId: 1,
-    weekNumber: 1,
-    startDate: '',
-    endDate: '',
-    porcentaje: 0,
-    fechaMaximaEntrega: '',
-  });
   const router = useRouter();
 
   useEffect(() => {
@@ -161,156 +120,6 @@ export default function GuidedProjectDetailPage({
     setSelectedColor(color);
     if (projectId) {
       localStorage.setItem(`selectedColor_project_${projectId}`, color);
-    }
-  };
-
-  // Abre el detalle de una sesión (tarjeta) en modo lectura
-  const handleOpenObjective = (objective: Objective) => {
-    setSelectedObjective(objective);
-    setSessionDetailTab('info');
-    setEditingObjective(null);
-    setObjectiveFormData({
-      title: objective.title,
-      description: objective.description ?? '',
-      duration: objective.duration,
-    });
-  };
-
-  const handleBackToSessions = () => {
-    setSelectedObjective(null);
-    setEditingObjective(null);
-    setEditingActivity(null);
-  };
-
-  const handleSaveObjective = async () => {
-    if (!projectId) return;
-    if (!objectiveFormData.title) {
-      toast.error('El título es requerido');
-      return;
-    }
-    try {
-      const isEditing = editingObjective !== null && editingObjective.id !== 0;
-      const url = isEditing
-        ? `/api/guided-projects/${projectId}/objectives?id=${editingObjective!.id}`
-        : `/api/guided-projects/${projectId}/objectives`;
-      const method = isEditing ? 'PUT' : 'POST';
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(objectiveFormData),
-      });
-      if (!response.ok) throw new Error('Error al guardar');
-      toast.success(
-        isEditing ? 'Sesión actualizada' : 'Sesión creada correctamente'
-      );
-      setEditingObjective(null);
-      const wasCreating = !isEditing;
-      await fetchObjectives();
-      if (wasCreating) {
-        // Tras crear, volvemos a la lista de tarjetas
-        setSelectedObjective(null);
-        setObjectiveFormData({ title: '', description: '', duration: 60 });
-      } else if (selectedObjective) {
-        // Refrescar datos mostrados del objective seleccionado
-        setSelectedObjective({
-          ...selectedObjective,
-          title: objectiveFormData.title,
-          description: objectiveFormData.description,
-          duration: objectiveFormData.duration,
-        });
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al guardar sesión');
-    }
-  };
-
-  const handleDeleteObjective = async (id: number) => {
-    if (!projectId) return;
-    if (!confirm('¿Eliminar esta sesión?')) return;
-    try {
-      const response = await fetch(
-        `/api/guided-projects/${projectId}/objectives?id=${id}`,
-        { method: 'DELETE' }
-      );
-      if (!response.ok) throw new Error('Error al eliminar');
-      toast.success('Sesión eliminada');
-      setSelectedObjective(null);
-      setEditingObjective(null);
-      await fetchObjectives();
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al eliminar sesión');
-    }
-  };
-
-  const handleCreateNewSession = () => {
-    const draft: Objective = {
-      id: 0,
-      title: '',
-      description: '',
-      duration: 60,
-      orderIndex: objectives.length,
-      isEnabled: true,
-    };
-    setSelectedObjective(draft);
-    setEditingObjective(draft);
-    setSessionDetailTab('info');
-    setObjectiveFormData({ title: '', description: '', duration: 60 });
-  };
-
-  const handleSaveActivity = async () => {
-    if (!projectId || !selectedObjective) return;
-    if (!activityFormData.name) {
-      toast.error('El nombre es requerido');
-      return;
-    }
-    try {
-      const isEditing = editingActivity !== null && editingActivity.id !== 0;
-      const url = isEditing
-        ? `/api/guided-projects/${projectId}/objectives/${selectedObjective.id}/activities?id=${editingActivity!.id}`
-        : `/api/guided-projects/${projectId}/objectives/${selectedObjective.id}/activities`;
-      const method = isEditing ? 'PUT' : 'POST';
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(activityFormData),
-      });
-      if (!response.ok) throw new Error('Error al guardar');
-      toast.success(
-        isEditing ? 'Actividad actualizada' : 'Actividad creada correctamente'
-      );
-      setEditingActivity(null);
-      setActivityFormData({
-        name: '',
-        description: '',
-        typeId: 1,
-        weekNumber: 1,
-        startDate: '',
-        endDate: '',
-        porcentaje: 0,
-        fechaMaximaEntrega: '',
-      });
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al guardar actividad');
-    }
-  };
-
-  const handleDeleteActivity = async (id: number) => {
-    if (!projectId || !selectedObjective) return;
-    if (!confirm('¿Eliminar esta actividad?')) return;
-    try {
-      const response = await fetch(
-        `/api/guided-projects/${projectId}/objectives/${selectedObjective.id}/activities?id=${id}`,
-        { method: 'DELETE' }
-      );
-      if (!response.ok) throw new Error('Error al eliminar');
-      toast.success('Actividad eliminada');
-      setEditingActivity(null);
-    } catch (error) {
-      console.error('Error:', error);
-      toast.error('Error al eliminar actividad');
     }
   };
 
@@ -523,6 +332,22 @@ export default function GuidedProjectDetailPage({
                 )}
               </div>
 
+              {project.coverVideoKey && project.coverVideoKey !== 'none' && (
+                <div className="aspect-video w-full overflow-hidden rounded-xl border border-cyan-500/30">
+                  <video
+                    controls
+                    className="size-full object-cover"
+                    aria-label={`Video de ${project.title}`}
+                  >
+                    <source
+                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                      type="video/mp4"
+                    />
+                    Tu navegador no soporta la reproducción de videos.
+                  </video>
+                </div>
+              )}
+
               {/* Botones de acción */}
               <div className="grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3 md:gap-3 lg:gap-4">
                 <Button className="btn-primary w-full">Ver</Button>
@@ -555,7 +380,7 @@ export default function GuidedProjectDetailPage({
       </div>
 
       {/* ============================ */}
-      {/* TAB MENU: Sesiones (mismo patrón visual que CourseDetail) */}
+      {/* SESIONES DEL PROYECTO */}
       {/* ============================ */}
       <div
         className="
@@ -564,658 +389,73 @@ export default function GuidedProjectDetailPage({
         "
       >
         <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-          {/* Tabs Navigation */}
-          <div
-            className="
-              relative -mx-1 mb-8 px-1
-              md:-mx-3 md:px-3
-            "
-          >
-            {/* Flecha izquierda */}
-            <button
-              onClick={() => {
-                tabsRef.current?.scrollBy({ left: -200, behavior: 'smooth' });
-              }}
-              className="
-                absolute top-1/2 left-0 z-10 -translate-y-1/2
-                animate-[pulse-arrow_2s_ease-in-out_infinite]
-                bg-gradient-to-r from-slate-900/90 to-transparent py-4 pr-3
-                pl-1 text-cyan-400
-              "
-              aria-label="Desplazar tabs a la izquierda"
-            >
-              <span
-                className="
-                  inline-block animate-[bounce-left_2s_ease-in-out_infinite]
-                  text-lg font-bold
-                "
-              >
-                ‹
+          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl font-bold text-white">
+              Sesiones del proyecto{' '}
+              <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+                {objectives.length}
               </span>
-            </button>
-
-            {/* Flecha derecha */}
-            <button
-              onClick={() => {
-                tabsRef.current?.scrollBy({ left: 200, behavior: 'smooth' });
-              }}
-              className="
-                absolute top-1/2 right-0 z-10 -translate-y-1/2
-                animate-[pulse-arrow_2s_ease-in-out_infinite]
-                bg-gradient-to-l from-slate-900/90 to-transparent py-4 pr-1
-                pl-3 text-cyan-400
-              "
-              aria-label="Desplazar tabs a la derecha"
+            </h2>
+            <Button
+              onClick={() => setNewSessionModalOpen(true)}
+              className="bg-cyan-500 text-white hover:bg-cyan-600"
             >
-              <span
-                className="
-                  inline-block animate-[bounce-right_2s_ease-in-out_infinite]
-                  text-lg font-bold
-                "
-              >
-                ›
-              </span>
-            </button>
+              + Nueva sesión
+            </Button>
+          </div>
 
-            <div
-              ref={tabsRef}
-              className="
-                flex scrollbar-none gap-2 overflow-x-auto scroll-smooth px-8
-                py-2
-                md:gap-3
-                lg:gap-4
-              "
-              style={{
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none',
-              }}
-            >
-              <button
-                onClick={() => setActiveTab('sesiones')}
-                className={`
-                  rounded-full px-4 py-2 font-semibold whitespace-nowrap
-                  transition-all duration-300
-                  ${
-                    activeTab === 'sesiones'
-                      ? `
-                        bg-cyan-500/15 text-cyan-300
-                        shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                        ring-cyan-400/40
-                      `
-                      : `
-                        text-white/80
-                        hover:bg-white/5 hover:text-white
-                      `
-                  }
-                `}
-              >
-                Sesiones{' '}
-                <span
+          {loadingObjectives ? (
+            <div className="flex items-center gap-3 text-white/60">
+              <div className="size-5 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+              Cargando sesiones...
+            </div>
+          ) : objectives.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-cyan-500/30 bg-slate-800/50 p-16 text-center">
+              <span className="text-4xl">📋</span>
+              <p className="text-sm text-white/50">
+                No hay sesiones creadas todavía
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {objectives.map((objective) => (
+                <Link
+                  key={objective.id}
+                  href={`/dashboard/super-admin/proyectos-guiados/${projectId}/${objective.id}`}
                   className="
-                    ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5
-                    text-xs font-bold text-slate-950
+                    group relative overflow-hidden rounded-2xl border-2
+                    border-cyan-500/30 bg-gradient-to-br from-slate-800
+                    via-cyan-900/20 to-cyan-950/30 p-6 text-left shadow-xl
+                    transition-all duration-300
+                    hover:scale-[1.02] hover:border-cyan-400
+                    hover:shadow-2xl hover:shadow-cyan-500/20
                   "
                 >
-                  {objectives.length}
-                </span>
-              </button>
-            </div>
-          </div>
-
-          {/* TAB CONTENT */}
-          <div
-            className="
-              -mx-1 space-y-6 px-1
-              md:-mx-3 md:px-3
-            "
-          >
-            {activeTab === 'sesiones' && (
-              <div className="animate-in fade-in duration-500">
-                {!selectedObjective ? (
-                  // -------- Vista: grid de tarjetas de sesiones --------
-                  <>
-                    <div className="mb-6 flex items-center justify-between">
-                      <h2 className="text-2xl font-bold text-white">
-                        Sesiones del proyecto
-                      </h2>
-                      <Button
-                        onClick={handleCreateNewSession}
-                        className="bg-cyan-500 text-white hover:bg-cyan-600"
-                      >
-                        + Nueva sesión
-                      </Button>
-                    </div>
-
-                    {loadingObjectives ? (
-                      <div className="flex items-center gap-3 text-white/60">
-                        <div className="size-5 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-                        Cargando sesiones...
-                      </div>
-                    ) : objectives.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-cyan-500/30 bg-slate-800/50 p-16 text-center">
-                        <span className="text-4xl">📋</span>
-                        <p className="text-sm text-white/50">
-                          No hay sesiones creadas todavía
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {objectives.map((objective) => (
-                          <button
-                            key={objective.id}
-                            onClick={() => handleOpenObjective(objective)}
-                            className="
-                        group relative overflow-hidden rounded-2xl border-2
-                        border-cyan-500/30 bg-gradient-to-br from-slate-800
-                        via-cyan-900/20 to-cyan-950/30 p-6 text-left shadow-xl
-                        transition-all duration-300
-                        hover:scale-[1.02] hover:border-cyan-400
-                        hover:shadow-2xl hover:shadow-cyan-500/20
-                      "
-                          >
-                            <div className="mb-3 flex items-center gap-3">
-                              <span
-                                className="
-                            flex size-9 flex-shrink-0 items-center
-                            justify-center rounded-full bg-cyan-500/30 text-sm
-                            font-bold text-cyan-300
-                          "
-                              >
-                                {objective.orderIndex + 1}
-                              </span>
-                              <h3 className="line-clamp-1 text-lg font-bold text-cyan-300">
-                                {objective.title || 'Sin título'}
-                              </h3>
-                            </div>
-                            <p className="mb-4 line-clamp-2 text-sm text-white/70">
-                              {objective.description || 'Sin descripción'}
-                            </p>
-                            <div className="flex items-center justify-between">
-                              <Badge className="border-cyan-500/50 bg-cyan-500/20 text-xs text-cyan-300">
-                                ⏱ {objective.duration} min
-                              </Badge>
-                              {!objective.isEnabled && (
-                                <Badge className="border-gray-500/50 bg-gray-500/20 text-xs text-gray-300">
-                                  Deshabilitada
-                                </Badge>
-                              )}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
+                  <div className="mb-3 flex items-center gap-3">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-cyan-500/30 text-sm font-bold text-cyan-300">
+                      {objective.orderIndex + 1}
+                    </span>
+                    <h3 className="line-clamp-1 text-lg font-bold text-cyan-300">
+                      {objective.title || 'Sin título'}
+                    </h3>
+                  </div>
+                  <p className="mb-4 line-clamp-2 text-sm text-white/70">
+                    {objective.description || 'Sin descripción'}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <Badge className="border-cyan-500/50 bg-cyan-500/20 text-xs text-cyan-300">
+                      ⏱ {objective.duration} min
+                    </Badge>
+                    {!objective.isEnabled && (
+                      <Badge className="border-gray-500/50 bg-gray-500/20 text-xs text-gray-300">
+                        Deshabilitada
+                      </Badge>
                     )}
-                  </>
-                ) : (
-                  // -------- Vista: detalle de sesión seleccionada (con sub-tabs) --------
-                  <>
-                    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                      <Button
-                        variant="outline"
-                        onClick={handleBackToSessions}
-                        className="border-white/20 text-white/70 hover:bg-white/10"
-                      >
-                        ← Volver a sesiones
-                      </Button>
-
-                      {selectedObjective.id !== 0 && (
-                        <Button
-                          variant="destructive"
-                          onClick={() =>
-                            handleDeleteObjective(selectedObjective.id)
-                          }
-                          className="bg-red-500 text-white hover:bg-red-600"
-                        >
-                          🗑️ Eliminar sesión
-                        </Button>
-                      )}
-                    </div>
-
-                    {/* Card tipo "ver clase" con info principal de la sesión */}
-                    <Card
-                      className="
-                  zoom-in mb-8 border-2 border-cyan-500/30 bg-slate-800 p-4
-                  shadow-2xl transition-all duration-500
-                  hover:border-cyan-500/60 hover:shadow-cyan-500/30
-                  sm:p-8
-                "
-                    >
-                      <div className="mb-6 flex items-center justify-between gap-3">
-                        <h2 className="text-2xl font-bold text-white md:text-3xl">
-                          {selectedObjective.id === 0
-                            ? 'Nueva sesión'
-                            : selectedObjective.title || 'Sesión sin título'}
-                        </h2>
-                      </div>
-
-                      {/* Sub-tabs internos de la sesión */}
-                      <div className="mb-6 flex gap-2 border-b border-cyan-500/20 pb-4">
-                        <button
-                          onClick={() => setSessionDetailTab('info')}
-                          className={`
-                      rounded-full px-4 py-2 text-sm font-semibold
-                      whitespace-nowrap transition-all duration-300
-                      ${
-                        sessionDetailTab === 'info'
-                          ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
-                          : 'text-white/80 hover:bg-white/5 hover:text-white'
-                      }
-                    `}
-                        >
-                          Información
-                        </button>
-                        <button
-                          onClick={() => setSessionDetailTab('actividades')}
-                          disabled={selectedObjective.id === 0}
-                          className={`
-                      rounded-full px-4 py-2 text-sm font-semibold
-                      whitespace-nowrap transition-all duration-300
-                      disabled:cursor-not-allowed disabled:opacity-40
-                      ${
-                        sessionDetailTab === 'actividades'
-                          ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
-                          : 'text-white/80 hover:bg-white/5 hover:text-white'
-                      }
-                    `}
-                          title={
-                            selectedObjective.id === 0
-                              ? 'Guarda la sesión primero para agregar actividades'
-                              : undefined
-                          }
-                        >
-                          Actividades
-                        </button>
-                      </div>
-
-                      {/* Sub-tab: Información */}
-                      {sessionDetailTab === 'info' && (
-                        <div className="animate-in fade-in duration-300">
-                          <div className="mb-4 flex items-center justify-between">
-                            <p className="text-xs font-semibold tracking-widest text-cyan-400 uppercase">
-                              {editingObjective
-                                ? 'Editando sesión'
-                                : 'Detalles de sesión'}
-                            </p>
-                            {!editingObjective && (
-                              <Button
-                                size="sm"
-                                onClick={() =>
-                                  setEditingObjective(selectedObjective)
-                                }
-                                className="bg-yellow-500 text-white hover:bg-yellow-600"
-                              >
-                                ✏️ Editar
-                              </Button>
-                            )}
-                          </div>
-                          <div className="space-y-4">
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                Título
-                              </label>
-                              <input
-                                type="text"
-                                value={objectiveFormData.title}
-                                onChange={(e) =>
-                                  setObjectiveFormData({
-                                    ...objectiveFormData,
-                                    title: e.target.value,
-                                  })
-                                }
-                                disabled={!editingObjective}
-                                className="
-                            w-full rounded-lg border border-cyan-500/30
-                            bg-white/5 px-3 py-2 text-sm text-white
-                            transition-colors
-                            focus:border-cyan-500 focus:ring-2
-                            focus:ring-cyan-500/30 focus:outline-none
-                            disabled:cursor-default disabled:opacity-60
-                          "
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                Descripción
-                              </label>
-                              <textarea
-                                value={objectiveFormData.description}
-                                onChange={(e) =>
-                                  setObjectiveFormData({
-                                    ...objectiveFormData,
-                                    description: e.target.value,
-                                  })
-                                }
-                                disabled={!editingObjective}
-                                rows={3}
-                                className="
-                            w-full resize-none rounded-lg border
-                            border-cyan-500/30 bg-white/5 px-3 py-2 text-sm
-                            text-white transition-colors
-                            focus:border-cyan-500 focus:ring-2
-                            focus:ring-cyan-500/30 focus:outline-none
-                            disabled:cursor-default disabled:opacity-60
-                          "
-                              />
-                            </div>
-                            <div className="max-w-[160px] space-y-1.5">
-                              <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                Duración (min)
-                              </label>
-                              <input
-                                type="number"
-                                value={objectiveFormData.duration}
-                                onChange={(e) =>
-                                  setObjectiveFormData({
-                                    ...objectiveFormData,
-                                    duration: parseInt(e.target.value),
-                                  })
-                                }
-                                disabled={!editingObjective}
-                                className="
-                            w-full rounded-lg border border-cyan-500/30
-                            bg-white/5 px-3 py-2 text-sm text-white
-                            transition-colors
-                            focus:border-cyan-500 focus:ring-2
-                            focus:ring-cyan-500/30 focus:outline-none
-                            disabled:cursor-default disabled:opacity-60
-                          "
-                              />
-                            </div>
-                            {editingObjective && (
-                              <div className="flex gap-2 pt-1">
-                                <Button
-                                  onClick={handleSaveObjective}
-                                  className="bg-cyan-500 text-white hover:bg-cyan-600"
-                                >
-                                  Guardar
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  onClick={() => {
-                                    if (selectedObjective.id === 0) {
-                                      // Era una sesión nueva sin guardar: volvemos a la lista
-                                      handleBackToSessions();
-                                      return;
-                                    }
-                                    setEditingObjective(null);
-                                    setObjectiveFormData({
-                                      title: selectedObjective.title,
-                                      description:
-                                        selectedObjective.description ?? '',
-                                      duration: selectedObjective.duration,
-                                    });
-                                  }}
-                                  className="border-white/20 text-white/70 hover:bg-white/10"
-                                >
-                                  Cancelar
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Sub-tab: Actividades */}
-                      {sessionDetailTab === 'actividades' &&
-                        selectedObjective.id !== 0 && (
-                          <div className="animate-in fade-in duration-300">
-                            <p className="mb-4 text-xs font-semibold tracking-widest text-cyan-400 uppercase">
-                              Actividades de esta sesión
-                            </p>
-                            <ActivitiesList
-                              projectId={parseInt(projectId)}
-                              objectiveId={selectedObjective.id}
-                              onEdit={(activity) => {
-                                setEditingActivity(activity);
-                                setActivityFormData({
-                                  name: activity.name,
-                                  description: activity.description ?? '',
-                                  typeId: 1,
-                                  weekNumber: activity.weekNumber ?? 1,
-                                  startDate: activity.startDate
-                                    ? new Date(activity.startDate)
-                                        .toISOString()
-                                        .split('T')[0]
-                                    : '',
-                                  endDate: activity.endDate
-                                    ? new Date(activity.endDate)
-                                        .toISOString()
-                                        .split('T')[0]
-                                    : '',
-                                  porcentaje: activity.porcentaje ?? 0,
-                                  fechaMaximaEntrega:
-                                    activity.fechaMaximaEntrega
-                                      ? new Date(activity.fechaMaximaEntrega)
-                                          .toISOString()
-                                          .split('T')[0]
-                                      : '',
-                                });
-                              }}
-                              onDelete={handleDeleteActivity}
-                            />
-                            {editingActivity && (
-                              <div className="mt-4 rounded-lg border border-cyan-500/30 bg-white/5 p-4">
-                                <p className="mb-3 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                  {editingActivity.id === 0
-                                    ? 'Nueva actividad'
-                                    : 'Editar actividad'}
-                                </p>
-                                <div className="space-y-3">
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                      Nombre
-                                    </label>
-                                    <input
-                                      type="text"
-                                      value={activityFormData.name}
-                                      onChange={(e) =>
-                                        setActivityFormData({
-                                          ...activityFormData,
-                                          name: e.target.value,
-                                        })
-                                      }
-                                      className="
-                                  w-full rounded-lg border border-cyan-500/30
-                                  bg-white/5 px-3 py-2 text-sm text-white
-                                  transition-colors
-                                  focus:border-cyan-500 focus:ring-2
-                                  focus:ring-cyan-500/30 focus:outline-none
-                                "
-                                    />
-                                  </div>
-                                  <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                      Descripción
-                                    </label>
-                                    <textarea
-                                      value={activityFormData.description}
-                                      onChange={(e) =>
-                                        setActivityFormData({
-                                          ...activityFormData,
-                                          description: e.target.value,
-                                        })
-                                      }
-                                      rows={2}
-                                      className="
-                                  w-full resize-none rounded-lg border
-                                  border-cyan-500/30 bg-white/5 px-3 py-2
-                                  text-sm text-white transition-colors
-                                  focus:border-cyan-500 focus:ring-2
-                                  focus:ring-cyan-500/30 focus:outline-none
-                                "
-                                    />
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                      <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                        Semana
-                                      </label>
-                                      <input
-                                        type="number"
-                                        value={activityFormData.weekNumber}
-                                        onChange={(e) =>
-                                          setActivityFormData({
-                                            ...activityFormData,
-                                            weekNumber: parseInt(
-                                              e.target.value
-                                            ),
-                                          })
-                                        }
-                                        className="
-                                    w-full rounded-lg border
-                                    border-cyan-500/30 bg-white/5 px-3 py-2
-                                    text-sm text-white transition-colors
-                                    focus:border-cyan-500 focus:ring-2
-                                    focus:ring-cyan-500/30 focus:outline-none
-                                  "
-                                      />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                        Porcentaje
-                                      </label>
-                                      <input
-                                        type="number"
-                                        value={activityFormData.porcentaje}
-                                        onChange={(e) =>
-                                          setActivityFormData({
-                                            ...activityFormData,
-                                            porcentaje: parseInt(
-                                              e.target.value
-                                            ),
-                                          })
-                                        }
-                                        className="
-                                    w-full rounded-lg border
-                                    border-cyan-500/30 bg-white/5 px-3 py-2
-                                    text-sm text-white transition-colors
-                                    focus:border-cyan-500 focus:ring-2
-                                    focus:ring-cyan-500/30 focus:outline-none
-                                  "
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-3">
-                                    <div className="space-y-1.5">
-                                      <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                        Fecha inicio
-                                      </label>
-                                      <input
-                                        type="date"
-                                        value={activityFormData.startDate}
-                                        onChange={(e) =>
-                                          setActivityFormData({
-                                            ...activityFormData,
-                                            startDate: e.target.value,
-                                          })
-                                        }
-                                        className="
-                                    w-full rounded-lg border
-                                    border-cyan-500/30 bg-white/5 px-3 py-2
-                                    text-sm text-white transition-colors
-                                    focus:border-cyan-500 focus:ring-2
-                                    focus:ring-cyan-500/30 focus:outline-none
-                                  "
-                                      />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                      <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                                        Fecha fin
-                                      </label>
-                                      <input
-                                        type="date"
-                                        value={activityFormData.endDate}
-                                        onChange={(e) =>
-                                          setActivityFormData({
-                                            ...activityFormData,
-                                            endDate: e.target.value,
-                                          })
-                                        }
-                                        className="
-                                    w-full rounded-lg border
-                                    border-cyan-500/30 bg-white/5 px-3 py-2
-                                    text-sm text-white transition-colors
-                                    focus:border-cyan-500 focus:ring-2
-                                    focus:ring-cyan-500/30 focus:outline-none
-                                  "
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="flex gap-2 pt-1">
-                                    <Button
-                                      onClick={handleSaveActivity}
-                                      className="bg-cyan-500 text-white hover:bg-cyan-600"
-                                    >
-                                      Guardar
-                                    </Button>
-                                    <Button
-                                      variant="outline"
-                                      onClick={() => {
-                                        setEditingActivity(null);
-                                        setActivityFormData({
-                                          name: '',
-                                          description: '',
-                                          typeId: 1,
-                                          weekNumber: 1,
-                                          startDate: '',
-                                          endDate: '',
-                                          porcentaje: 0,
-                                          fechaMaximaEntrega: '',
-                                        });
-                                      }}
-                                      className="border-white/20 text-white/70 hover:bg-white/10"
-                                    >
-                                      Cancelar
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                            {!editingActivity && (
-                              <Button
-                                onClick={() => {
-                                  setEditingActivity({
-                                    id: 0,
-                                    name: '',
-                                    description: '',
-                                    typeName: '',
-                                    weekNumber: 1,
-                                    startDate: null,
-                                    endDate: null,
-                                    porcentaje: 0,
-                                    fechaMaximaEntrega: null,
-                                  });
-                                  setActivityFormData({
-                                    name: '',
-                                    description: '',
-                                    typeId: 1,
-                                    weekNumber: 1,
-                                    startDate: '',
-                                    endDate: '',
-                                    porcentaje: 0,
-                                    fechaMaximaEntrega: '',
-                                  });
-                                }}
-                                className="mt-4 bg-cyan-500 text-white hover:bg-cyan-600"
-                              >
-                                + Nueva actividad
-                              </Button>
-                            )}
-                          </div>
-                        )}
-                    </Card>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1224,6 +464,14 @@ export default function GuidedProjectDetailPage({
         onOpenChange={setEditModalOpen}
         projectId={project.id}
         onSuccess={fetchProject}
+      />
+
+      <ModalFormGuidedObjective
+        open={newSessionModalOpen}
+        onOpenChange={setNewSessionModalOpen}
+        projectId={project.id}
+        orderIndex={objectives.length}
+        onSuccess={fetchObjectives}
       />
     </div>
   );

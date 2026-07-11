@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
@@ -10,6 +10,7 @@ import {
   nivel,
   parametros,
   typeActi,
+  userGuidedActivityProgress,
   users,
 } from '~/server/db/schema';
 
@@ -383,4 +384,48 @@ export const deleteGuidedActivity = async (id: number) => {
   return await db
     .delete(guidedObjectiveActivities)
     .where(eq(guidedObjectiveActivities.id, id));
+};
+
+// ========== GUIDED ACTIVITY PROGRESS (entregas/calificaciones) ==========
+export const getStudentsProgressForActivity = async (activityId: number) => {
+  return await db
+    .select({
+      userId: userGuidedActivityProgress.userId,
+      userName: users.name,
+      userEmail: users.email,
+      progress: userGuidedActivityProgress.progress,
+      isCompleted: userGuidedActivityProgress.isCompleted,
+      revisada: userGuidedActivityProgress.revisada,
+      attemptCount: userGuidedActivityProgress.attemptCount,
+      finalGrade: userGuidedActivityProgress.finalGrade,
+      lastAttemptAt: userGuidedActivityProgress.lastAttemptAt,
+    })
+    .from(userGuidedActivityProgress)
+    .leftJoin(users, eq(userGuidedActivityProgress.userId, users.id))
+    .where(eq(userGuidedActivityProgress.activityId, activityId));
+};
+
+export const updateGuidedActivityProgress = async (
+  activityId: number,
+  userId: string,
+  data: { finalGrade?: number; revisada?: boolean }
+) => {
+  const updateData = {} as Record<string, unknown>;
+
+  if (data.finalGrade !== undefined) updateData.finalGrade = data.finalGrade;
+  if (data.revisada !== undefined) updateData.revisada = data.revisada;
+  updateData.lastUpdated = new Date();
+
+  const [updated] = await db
+    .update(userGuidedActivityProgress)
+    .set(updateData as typeof updateData)
+    .where(
+      and(
+        eq(userGuidedActivityProgress.activityId, activityId),
+        eq(userGuidedActivityProgress.userId, userId)
+      )
+    )
+    .returning();
+
+  return updated;
 };

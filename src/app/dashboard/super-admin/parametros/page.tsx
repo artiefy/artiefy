@@ -2,9 +2,17 @@
 
 import { useEffect, useState } from 'react';
 
-import { FiEdit2, FiPlus, FiTrash2 } from 'react-icons/fi';
+import {
+  FiEdit2,
+  FiFileText,
+  FiPlus,
+  FiSliders,
+  FiTrash2,
+} from 'react-icons/fi';
 
-import { normalizeSearch } from '~/lib/utils';
+import { cn, normalizeSearch } from '~/lib/utils';
+
+import PlantillasPage from './plantillas/page';
 
 interface Parametro {
   id: number;
@@ -21,7 +29,7 @@ interface ModalState {
   parametro: Parametro | null;
 }
 
-const ParametrosPage = () => {
+const ParametrosListView = () => {
   const [parametros, setParametros] = useState<Parametro[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -178,7 +186,12 @@ const ParametrosPage = () => {
 
   if (loading)
     return (
-      <div className="flex items-center justify-center p-8">
+      <div
+        className="
+          flex items-center justify-center rounded-xl border
+          border-[#1a2a35] bg-[#0a0f14] p-12 text-gray-400
+        "
+      >
         <div className="text-center">
           <div
             className="
@@ -186,29 +199,21 @@ const ParametrosPage = () => {
               border-t-transparent
             "
           ></div>
-          <p className="text-gray-600">Cargando parámetros...</p>
+          <p>Cargando parámetros...</p>
         </div>
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div>
       <div className="mx-auto max-w-6xl">
-        {/* Encabezado */}
+        {/* Barra de búsqueda y creación */}
         <div
           className="
-            mb-8 flex flex-col gap-4
-            md:flex-row md:items-center md:justify-between
+            mb-6 flex flex-col gap-4
+            md:flex-row md:items-center md:justify-end
           "
         >
-          <div>
-            <h1 className="text-3xl font-bold text-gray-200">
-              Parámetros de Evaluación
-            </h1>
-            <p className="mt-2 text-gray-600">
-              Gestiona criterios de evaluación reutilizables
-            </p>
-          </div>
           <div
             className="
               flex flex-col gap-2
@@ -224,20 +229,39 @@ const ParametrosPage = () => {
                 setCurrentPage(1);
               }}
               className="
-                rounded-lg border border-gray-300 px-3 py-2 text-sm
+                rounded-md border border-gray-700 bg-gray-900/50 px-3 py-2
+                text-sm text-white placeholder:text-gray-400
                 focus:border-primary focus:outline-none
               "
             />
             <button
               onClick={() => handleOpenModal()}
               className="
-                flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm
-                font-medium text-[#01142B] transition-colors
-                hover:bg-primary/90
+                group/button relative inline-flex items-center justify-center
+                gap-1 overflow-hidden rounded-md border border-white/20
+                bg-background px-2 py-1.5 text-xs text-primary transition-all
+                hover:bg-primary/10
+                sm:gap-2 sm:px-4 sm:py-2 sm:text-sm
               "
             >
-              <FiPlus size={18} />
-              Crear Nuevo Parámetro
+              <span className="relative z-10 font-medium">
+                Crear Nuevo Parámetro
+              </span>
+              <FiPlus
+                className="
+                  relative z-10 size-3.5
+                  sm:size-4
+                "
+              />
+              <div
+                className="
+                  absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                  via-white/10 to-transparent opacity-0 transition-all
+                  duration-500
+                  group-hover/button:[transform:translateX(100%)]
+                  group-hover/button:opacity-100
+                "
+              />
             </button>
           </div>
         </div>
@@ -245,7 +269,8 @@ const ParametrosPage = () => {
         {error && (
           <div
             className="
-              mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700
+              mb-6 rounded-lg border border-red-500/30 bg-red-500/10 p-4
+              text-sm text-red-400
             "
           >
             {error}
@@ -256,123 +281,179 @@ const ParametrosPage = () => {
         {parametros.length === 0 ? (
           <div
             className="
-              rounded-lg border border-gray-200 bg-white p-8 text-center
+              flex items-center justify-center rounded-xl border
+              border-[#1a2a35] bg-[#0a0f14] p-12 text-gray-400
             "
           >
-            <p className="text-gray-500">
-              No hay parámetros creados aún. ¡Crea uno para empezar!
-            </p>
+            <p>No hay parámetros creados aún. ¡Crea uno para empezar!</p>
           </div>
         ) : (
           <div
             className="
-              overflow-x-auto rounded-lg border border-gray-200 bg-white
+              overflow-hidden rounded-lg bg-gray-800/50 shadow-xl
+              backdrop-blur-sm
             "
           >
-            <table className="w-full">
-              <thead className="border-b border-gray-200 bg-gray-50">
-                <tr>
-                  <th
-                    className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
-                  >
-                    Nombre
-                  </th>
-                  <th
-                    className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
-                  >
-                    Descripción
-                  </th>
-                  <th
-                    className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
-                  >
-                    Porcentaje
-                  </th>
-                  <th
-                    className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
-                  >
-                    Número de Actividades
-                  </th>
-                  <th
-                    className="
-                      px-6 py-3 text-left text-xs font-semibold text-gray-700
-                    "
-                  >
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {parametros
-                  .filter(
-                    (param) =>
-                      normalizeSearch(param.name).includes(
-                        normalizeSearch(search)
-                      ) ||
-                      normalizeSearch(param.description).includes(
-                        normalizeSearch(search)
-                      )
-                  )
-                  .slice(
-                    (currentPage - 1) * itemsPerPage,
-                    currentPage * itemsPerPage
-                  )
-                  .map((param) => (
-                    <tr key={param.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {param.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {param.description}
-                      </td>
-                      <td
+            <div className="overflow-x-auto">
+              <table
+                className="
+                  min-w-full table-auto border-collapse overflow-hidden
+                  rounded-xl border border-[#1a2a35] bg-[#0a0f14]
+                "
+              >
+                <thead>
+                  <tr className="border-b border-[#00BDD8] bg-[#0d1a22]">
+                    <th
+                      className="
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
+                      "
+                    >
+                      Nombre
+                    </th>
+                    <th
+                      className="
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
+                      "
+                    >
+                      Descripción
+                    </th>
+                    <th
+                      className="
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
+                      "
+                    >
+                      Porcentaje
+                    </th>
+                    <th
+                      className="
+                        p-3 text-left text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
+                      "
+                    >
+                      Número de Actividades
+                    </th>
+                    <th
+                      className="
+                        p-3 text-right text-[10px] font-semibold
+                        tracking-[0.12em] text-[#00BDD8] uppercase
+                        sm:px-4
+                      "
+                    >
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {parametros
+                    .filter(
+                      (param) =>
+                        normalizeSearch(param.name).includes(
+                          normalizeSearch(search)
+                        ) ||
+                        normalizeSearch(param.description).includes(
+                          normalizeSearch(search)
+                        )
+                    )
+                    .slice(
+                      (currentPage - 1) * itemsPerPage,
+                      currentPage * itemsPerPage
+                    )
+                    .map((param) => (
+                      <tr
+                        key={param.id}
                         className="
-                          px-6 py-4 text-sm font-semibold text-gray-900
+                          border-b border-[#111c24] transition-colors
+                          last:border-0
+                          hover:bg-[#0d1e28]
                         "
                       >
-                        {param.porcentaje}%
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {param.numberOfActivities}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleOpenModal(param)}
+                        <td
+                          className="
+                            p-3
+                            sm:p-4
+                          "
+                        >
+                          <div
                             className="
-                              rounded-lg bg-blue-50 p-2 text-blue-600
-                              hover:bg-blue-100
+                              text-xs font-medium text-[#e8f4f8]
+                              sm:text-sm
                             "
-                            title="Editar"
                           >
-                            <FiEdit2 size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(param.id)}
-                            className="
-                              rounded-lg bg-red-50 p-2 text-red-600
-                              hover:bg-red-100
-                            "
-                            title="Eliminar"
-                          >
-                            <FiTrash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                            {param.name}
+                          </div>
+                        </td>
+                        <td
+                          className="
+                            p-3 text-xs text-[#4a7080]
+                            sm:p-4 sm:text-sm
+                          "
+                        >
+                          {param.description}
+                        </td>
+                        <td
+                          className="
+                            p-3
+                            sm:p-4
+                          "
+                        >
+                          <span className="text-sm font-bold text-[#00BDD8]">
+                            {param.porcentaje}%
+                          </span>
+                        </td>
+                        <td
+                          className="
+                            p-3 text-xs text-[#4a7080]
+                            sm:p-4 sm:text-sm
+                          "
+                        >
+                          {param.numberOfActivities}
+                        </td>
+                        <td
+                          className="
+                            p-3
+                            sm:p-4
+                          "
+                        >
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              onClick={() => handleOpenModal(param)}
+                              className="
+                                rounded-md p-1.5 text-gray-400
+                                transition-colors
+                                hover:bg-white/5 hover:text-primary
+                              "
+                              title="Editar"
+                            >
+                              <FiEdit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(param.id)}
+                              className="
+                                rounded-md p-1.5 text-gray-400
+                                transition-colors
+                                hover:bg-white/5 hover:text-red-400
+                              "
+                              title="Eliminar"
+                            >
+                              <FiTrash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
             {/* Paginación */}
-            <div className="flex items-center justify-between px-6 py-4">
-              <span className="text-sm text-gray-600">
+            <div className="flex items-center justify-between px-3 py-4 sm:px-4">
+              <span className="text-xs text-gray-400 sm:text-sm">
                 Página {currentPage} de{' '}
                 {Math.max(
                   1,
@@ -394,8 +475,10 @@ const ParametrosPage = () => {
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   className="
-                    rounded border px-3 py-1 text-sm
-                    disabled:opacity-50
+                    rounded-md border border-white/20 px-3 py-1 text-xs
+                    text-gray-300
+                    hover:bg-white/5
+                    disabled:cursor-not-allowed disabled:opacity-50
                   "
                 >
                   Anterior
@@ -417,8 +500,10 @@ const ParametrosPage = () => {
                     )
                   }
                   className="
-                    rounded border px-3 py-1 text-sm
-                    disabled:opacity-50
+                    rounded-md border border-white/20 px-3 py-1 text-xs
+                    text-gray-300
+                    hover:bg-white/5
+                    disabled:cursor-not-allowed disabled:opacity-50
                   "
                 >
                   Siguiente
@@ -433,17 +518,24 @@ const ParametrosPage = () => {
       {modal.isOpen && (
         <div
           className="
-            fixed inset-0 z-50 flex items-center justify-center bg-black/50
+            fixed inset-0 z-[9999] flex items-center justify-center
+            bg-black/50
           "
         >
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
-            <h2 className="mb-4 text-lg font-bold text-gray-900">
+          <div
+            className="
+              relative m-4 w-full max-w-md rounded-xl bg-[#01142B] p-4
+              text-white shadow-2xl
+              md:p-8
+            "
+          >
+            <h2 className="mb-6 border-b border-white/10 pb-4 text-2xl font-bold text-[#3AF4EF]">
               {modal.isEdit ? 'Editar Parámetro' : 'Crear Nuevo Parámetro'}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-300">
                   Título
                 </label>
                 <input
@@ -453,8 +545,9 @@ const ParametrosPage = () => {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   className="
-                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
-                    text-gray-900 placeholder-gray-500
+                    mt-1 w-full rounded-md border border-gray-700
+                    bg-gray-900/50 px-4 py-2 text-white
+                    placeholder:text-gray-400
                     focus:border-primary focus:outline-none
                   "
                   placeholder="Ej: Participación en clase"
@@ -463,7 +556,7 @@ const ParametrosPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-300">
                   Descripción
                 </label>
                 <textarea
@@ -472,8 +565,9 @@ const ParametrosPage = () => {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   className="
-                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
-                    text-gray-900 placeholder-gray-500
+                    mt-1 w-full rounded-md border border-gray-700
+                    bg-gray-900/50 px-4 py-2 text-white
+                    placeholder:text-gray-400
                     focus:border-primary focus:outline-none
                   "
                   placeholder="Describe este parámetro..."
@@ -483,7 +577,7 @@ const ParametrosPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-300">
                   Porcentaje (%)
                 </label>
                 <input
@@ -493,8 +587,9 @@ const ParametrosPage = () => {
                     setFormData({ ...formData, porcentaje: e.target.value })
                   }
                   className="
-                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
-                    text-gray-900 placeholder-gray-500
+                    mt-1 w-full rounded-md border border-gray-700
+                    bg-gray-900/50 px-4 py-2 text-white
+                    placeholder:text-gray-400
                     focus:border-primary focus:outline-none
                   "
                   placeholder="Ej: 30"
@@ -505,7 +600,7 @@ const ParametrosPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-300">
                   Número de Actividades
                 </label>
                 <input
@@ -518,14 +613,15 @@ const ParametrosPage = () => {
                     })
                   }
                   className="
-                    mt-1 w-full rounded-lg border border-gray-300 px-4 py-2
-                    text-gray-900 placeholder-gray-500
+                    mt-1 w-full rounded-md border border-gray-700
+                    bg-gray-900/50 px-4 py-2 text-white
+                    placeholder:text-gray-400
                     focus:border-primary focus:outline-none
                   "
                   placeholder="Ej: 4"
                   min="0"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-gray-400">
                   El porcentaje se dividirá equitativamente entre las
                   actividades
                 </p>
@@ -536,22 +632,44 @@ const ParametrosPage = () => {
                   type="button"
                   onClick={handleCloseModal}
                   className="
-                    flex-1 rounded-lg border border-gray-300 px-4 py-2 text-sm
-                    font-medium text-gray-700
-                    hover:bg-gray-50
+                    group/button relative flex-1 overflow-hidden rounded-md
+                    border border-white/20 bg-background px-4 py-2 text-sm
+                    text-primary transition-all
+                    hover:bg-primary/10
                   "
                 >
-                  Cancelar
+                  <span className="relative z-10 font-medium">Cancelar</span>
+                  <div
+                    className="
+                      absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                      via-white/10 to-transparent opacity-0 transition-all
+                      duration-500
+                      group-hover/button:[transform:translateX(100%)]
+                      group-hover/button:opacity-100
+                    "
+                  />
                 </button>
                 <button
                   type="submit"
                   className="
-                    flex-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium
-                    text-[#01142B]
-                    hover:bg-primary/90
+                    group/button relative flex-1 overflow-hidden rounded-md
+                    border border-white/20 bg-background px-4 py-2 text-sm
+                    text-primary transition-all
+                    hover:bg-primary/10
                   "
                 >
-                  {modal.isEdit ? 'Guardar Cambios' : 'Crear Parámetro'}
+                  <span className="relative z-10 font-medium">
+                    {modal.isEdit ? 'Guardar Cambios' : 'Crear Parámetro'}
+                  </span>
+                  <div
+                    className="
+                      absolute inset-0 z-0 bg-gradient-to-r from-transparent
+                      via-white/10 to-transparent opacity-0 transition-all
+                      duration-500
+                      group-hover/button:[transform:translateX(100%)]
+                      group-hover/button:opacity-100
+                    "
+                  />
                 </button>
               </div>
             </form>
@@ -562,4 +680,80 @@ const ParametrosPage = () => {
   );
 };
 
-export default ParametrosPage;
+const TABS = [
+  {
+    id: 'parametros',
+    label: 'Parámetros',
+    icon: FiSliders,
+    Component: ParametrosListView,
+  },
+  {
+    id: 'plantillas',
+    label: 'Plantillas',
+    icon: FiFileText,
+    Component: PlantillasPage,
+  },
+] as const;
+
+export default function ParametrosPage() {
+  const [activeTab, setActiveTab] =
+    useState<(typeof TABS)[number]['id']>('parametros');
+
+  const ActiveComponent =
+    TABS.find((tab) => tab.id === activeTab)?.Component ?? TABS[0].Component;
+
+  return (
+    <div
+      className="
+        p-4
+        sm:p-6
+      "
+    >
+      <div>
+        <h1
+          className="
+            text-2xl font-bold text-white
+            sm:text-3xl
+          "
+        >
+          Parámetros
+        </h1>
+        <p className="mt-1 text-sm text-gray-400">
+          Gestiona los parámetros y plantillas de los cursos.
+        </p>
+      </div>
+
+      <div
+        className="
+          mt-6 flex flex-wrap gap-2 rounded-2xl border border-white/10
+          bg-gray-900/30 p-2
+        "
+      >
+        {TABS.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = tab.id === activeTab;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setActiveTab(tab.id)}
+              className={cn(
+                'flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all',
+                isActive
+                  ? 'bg-primary text-black'
+                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
+              )}
+            >
+              <Icon size={16} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-6">
+        <ActiveComponent />
+      </div>
+    </div>
+  );
+}
