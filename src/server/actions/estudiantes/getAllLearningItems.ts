@@ -1,5 +1,7 @@
 'use server';
 
+import { unstable_cache } from 'next/cache';
+
 import { and, desc, eq, inArray, isNull, or } from 'drizzle-orm';
 
 import { db } from '~/server/db';
@@ -29,10 +31,12 @@ export type UnifiedItem = Omit<Course, 'classMeetings'> & {
   classMeetings?: ClassMeetingPreview[];
 };
 
-export async function getAllLearningItems(): Promise<UnifiedItem[]> {
+async function loadAllLearningItems(): Promise<UnifiedItem[]> {
   try {
-    // 1. Fetch Courses
-    const coursesData = await withRetry(() =>
+    // Kick off the independent course and guided-project queries together so
+    // they run concurrently instead of one after the other. Class meetings
+    // depend on the resolved course ids, so that query still runs afterwards.
+    const coursesPromise = withRetry(() =>
       db
         .select({
           id: courses.id,
@@ -77,42 +81,7 @@ export async function getAllLearningItems(): Promise<UnifiedItem[]> {
         .orderBy(desc(courses.createdAt))
     );
 
-    const courseIds = coursesData.map((course) => course.id);
-    const classMeetingsMap: Record<number, ClassMeetingPreview[]> = {};
-
-    if (courseIds.length > 0) {
-      try {
-        const meetings = await withRetry(() =>
-          db
-            .select({
-              courseId: classMeetings.courseId,
-              startDateTime: classMeetings.startDateTime,
-              video_key: classMeetings.video_key,
-            })
-            .from(classMeetings)
-            .where(inArray(classMeetings.courseId, courseIds))
-        );
-
-        for (const meeting of meetings) {
-          const courseMeetings = classMeetingsMap[meeting.courseId] ?? [];
-          courseMeetings.push({
-            courseId: meeting.courseId,
-            startDateTime: meeting.startDateTime
-              ? new Date(meeting.startDateTime).toISOString()
-              : '',
-            video_key: meeting.video_key ?? null,
-          });
-          classMeetingsMap[meeting.courseId] = courseMeetings;
-        }
-      } catch {
-        console.warn(
-          'No se pudieron cargar las reuniones para el catálogo. Se continúa sin vistas previas.'
-        );
-      }
-    }
-
-    // 2. Fetch Guided Projects
-    const projectsData = await withRetry(() =>
+    const projectsPromise = withRetry(() =>
       db
         .select({
           id: guidedProjects.id,
@@ -158,6 +127,46 @@ export async function getAllLearningItems(): Promise<UnifiedItem[]> {
         )
         .orderBy(desc(guidedProjects.createdAt))
     );
+
+    // 1. Fetch Courses
+    const coursesData = await coursesPromise;
+
+    const courseIds = coursesData.map((course) => course.id);
+    const classMeetingsMap: Record<number, ClassMeetingPreview[]> = {};
+
+    if (courseIds.length > 0) {
+      try {
+        const meetings = await withRetry(() =>
+          db
+            .select({
+              courseId: classMeetings.courseId,
+              startDateTime: classMeetings.startDateTime,
+              video_key: classMeetings.video_key,
+            })
+            .from(classMeetings)
+            .where(inArray(classMeetings.courseId, courseIds))
+        );
+
+        for (const meeting of meetings) {
+          const courseMeetings = classMeetingsMap[meeting.courseId] ?? [];
+          courseMeetings.push({
+            courseId: meeting.courseId,
+            startDateTime: meeting.startDateTime
+              ? new Date(meeting.startDateTime).toISOString()
+              : '',
+            video_key: meeting.video_key ?? null,
+          });
+          classMeetingsMap[meeting.courseId] = courseMeetings;
+        }
+      } catch {
+        console.warn(
+          'No se pudieron cargar las reuniones para el catálogo. Se continúa sin vistas previas.'
+        );
+      }
+    }
+
+    // 2. Fetch Guided Projects (query already started above, in parallel)
+    const projectsData = await projectsPromise;
 
     // 3. Transform and Unify
     const unifiedItems: UnifiedItem[] = [
@@ -230,3 +239,14 @@ export async function getAllLearningItems(): Promise<UnifiedItem[]> {
     return [];
   }
 }
+
+// The catalog changes infrequently, so cache it across requests (following the
+// same convention as getAllCategories). A 60s window keeps newly published
+// items visible within a minute while still absorbing most traffic; call
+// `revalidateTag('learning-items')` from the publish/edit flows for instant
+// (0s) invalidation.
+export const getAllLearningItems = unstable_cache(
+  loadAllLearningItems,
+  ['all-learning-items'],
+  { revalidate: 60, tags: ['learning-items'] }
+);

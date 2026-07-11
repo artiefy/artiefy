@@ -14,6 +14,7 @@ import {
   GraduationCap,
   Link as LinkIcon,
   Loader2,
+  Mail,
   MapPin,
   Pencil,
 } from 'lucide-react';
@@ -254,9 +255,11 @@ export function ProfileView({
                 >
                   {profile.name ?? 'Sin nombre'}
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  {profile.username ? `@${profile.username}` : 'Sin usuario'}
-                </p>
+                {profile.username ? (
+                  <p className="text-sm text-muted-foreground">
+                    @{profile.username}
+                  </p>
+                ) : null}
               </div>
 
               <button
@@ -293,6 +296,18 @@ export function ProfileView({
                 Todavía no agregaste una bio.
               </p>
             )}
+
+            {profile.email ? (
+              <p
+                className="
+                  mt-2 flex items-center gap-1.5 text-sm text-muted-foreground
+                  lg:mt-3
+                "
+              >
+                <Mail className="size-3.5 shrink-0" />
+                <span className="break-all">{profile.email}</span>
+              </p>
+            ) : null}
 
             <div
               className="

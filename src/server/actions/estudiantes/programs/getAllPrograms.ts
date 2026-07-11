@@ -1,5 +1,7 @@
 'use server';
 
+import { unstable_cache } from 'next/cache';
+
 import { clerkClient } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 
@@ -8,7 +10,7 @@ import { users } from '~/server/db/schema';
 import { withRetry } from '~/server/db/withRetry';
 import { type BaseCourse, type MateriaWithCourse, type Program } from '~/types';
 
-export async function getAllPrograms(): Promise<Program[]> {
+async function loadAllPrograms(): Promise<Program[]> {
   try {
     const programs = await withRetry(() =>
       db.query.programas.findMany({
@@ -169,3 +171,16 @@ export async function getAllPrograms(): Promise<Program[]> {
     return [];
   }
 }
+
+// Programs resolve instructor names through per-course DB lookups and Clerk
+// calls, so this is expensive. Cache it across requests with a 60s window and
+// invalidate with `revalidateTag('programs')` from the program create/update
+// flows for instant (0s) invalidation.
+export const getAllPrograms = unstable_cache(
+  loadAllPrograms,
+  ['all-programs'],
+  {
+    revalidate: 60,
+    tags: ['programs'],
+  }
+);

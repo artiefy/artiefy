@@ -31,17 +31,24 @@ function isEducadorPath(pathname: string): boolean {
   return pathname.startsWith('/dashboard/educadores');
 }
 
-// Cualquier ruta del front de estudiantes. Un super-admin puede verlas todas.
-function isStudentAppPath(pathname: string): boolean {
-  return pathname === '/estudiantes' || pathname.startsWith('/estudiantes/');
-}
-
 // Rutas [id] de cursos/clases que un educador puede ver de SUS cursos. La
 // propiedad real del curso se valida server-side en cada página; aquí solo se
 // abre el acceso para que el redirect por rol no lo expulse a su dashboard.
 function isEducadorStudentPath(pathname: string): boolean {
   return (
     /^\/estudiantes\/cursos\/[^/]+/.test(pathname) ||
+    /^\/estudiantes\/clases\/[^/]+/.test(pathname)
+  );
+}
+
+// Rutas del front de estudiantes que un super-admin SÍ puede ver: solo el
+// detalle de cursos y programas (y las clases, que son el contenido dentro de
+// un curso). El resto del front de estudiantes —listados, perfil, cuenta— lo
+// devuelve a su dashboard.
+function isSuperAdminStudentPath(pathname: string): boolean {
+  return (
+    /^\/estudiantes\/cursos\/[^/]+/.test(pathname) ||
+    /^\/estudiantes\/programas\/[^/]+/.test(pathname) ||
     /^\/estudiantes\/clases\/[^/]+/.test(pathname)
   );
 }
@@ -207,11 +214,13 @@ export default clerkMiddleware(async (auth, req) => {
         pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up');
 
       // Excepciones al redirect por rol hacia el dashboard:
-      //  - super-admin: puede navegar TODO el front de estudiantes.
-      //  - educador: puede ver las rutas [id] de cursos/clases (la propiedad
-      //    del curso se valida en la propia página server-side).
+      //  - super-admin: solo el DETALLE de cursos y programas (y clases). Los
+      //    listados y el resto del front de estudiantes lo devuelven a su
+      //    dashboard.
+      //  - educador: puede ver las rutas [id] de cursos/clases que tenga
+      //    asignados (la propiedad del curso se valida en la página server-side).
       const canBrowseStudents =
-        (role === 'super-admin' && isStudentAppPath(pathname)) ||
+        (role === 'super-admin' && isSuperAdminStudentPath(pathname)) ||
         (role === 'educador' && isEducadorStudentPath(pathname));
 
       if (!isInOwnDashboard && !isAuthRoute && !canBrowseStudents) {

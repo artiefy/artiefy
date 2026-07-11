@@ -14,6 +14,7 @@ import { IoGiftOutline } from 'react-icons/io5';
 import CourseSortControl from '~/components/estudiantes/layout/studentdashboard/CourseSortControl';
 import GradientText from '~/components/estudiantes/layout/studentdashboard/StudentGradientText';
 import { RevealStagger } from '~/components/estudiantes/ui/RevealStagger';
+import { blurDataURL } from '~/lib/blurDataUrl';
 import { getCourseCommentCounts } from '~/server/actions/estudiantes/comment/courseCommentActions';
 import { type UnifiedItem } from '~/server/actions/estudiantes/getAllLearningItems';
 
@@ -132,6 +133,14 @@ export default function StudentListCourses({
   const [commentCountsByCourseId, setCommentCountsByCourseId] = useState<
     Record<number, number>
   >({});
+  // Random sort must not call Math.random() during the hydration-critical
+  // render: the server and the first client render have to produce identical
+  // HTML. Keep the server-provided order until after mount, then shuffle.
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!syncWithUrl) return;
@@ -237,10 +246,12 @@ export default function StudentListCourses({
     return nextItems;
   }, [categoryValue, courses, searchTermValue, sortValue]);
 
-  const sortedCourses = useMemo(
-    () => sortCourses(filteredCourses, sortValue),
-    [filteredCourses, sortValue]
-  );
+  const sortedCourses = useMemo(() => {
+    if (sortValue === 'random' && !hasMounted) {
+      return filteredCourses;
+    }
+    return sortCourses(filteredCourses, sortValue);
+  }, [filteredCourses, sortValue, hasMounted]);
 
   const calculatedTotalPages = Math.max(
     1,
@@ -453,7 +464,8 @@ export default function StudentListCourses({
                   className="size-full transform-gpu object-cover transition-transform duration-500 group-hover:scale-110"
                   fill
                   unoptimized={imageUrl.startsWith('/api/image-proxy')}
-                  placeholder="empty"
+                  placeholder="blur"
+                  blurDataURL={blurDataURL}
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   quality={75}
                 />
