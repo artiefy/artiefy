@@ -12,6 +12,8 @@ import {
 import { FaCrown, FaRegCalendarAlt, FaStar } from 'react-icons/fa';
 import { IoGiftOutline } from 'react-icons/io5';
 
+import { clerkAppearance } from '~/lib/clerkAppearance';
+
 export function UserButtonWrapper({
   hidePlanBadge = false,
 }: {
@@ -169,6 +171,7 @@ export function UserButtonWrapper({
         userProfileMode="modal"
         userProfileProps={{
           appearance: {
+            variables: clerkAppearance.variables,
             elements: {
               // Forzar backdrop y contenido del modal con z-index muy alto en mobile
               modalBackdrop: 'z-[1000000] fixed inset-0',
@@ -177,6 +180,7 @@ export function UserButtonWrapper({
           },
         }}
         appearance={{
+          variables: clerkAppearance.variables,
           elements: {
             rootBox: 'flex items-center justify-end',
             userButtonTrigger: 'focus:shadow-none',
@@ -280,7 +284,7 @@ function SubscriptionDetailsPage({
     <div className="flex flex-col items-center justify-center px-2 py-4">
       <h3
         className="
-        mb-4 text-center text-xl font-extrabold whitespace-nowrap text-gray-900
+        mb-4 text-center text-xl font-extrabold whitespace-nowrap text-white
       "
       >
         Detalles de Suscripción

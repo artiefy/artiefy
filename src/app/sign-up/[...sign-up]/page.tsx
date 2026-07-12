@@ -4,6 +4,8 @@ import { useSearchParams } from 'next/navigation';
 
 import { SignUp } from '@clerk/nextjs';
 
+import { clerkAppearance } from '~/lib/clerkAppearance';
+
 export default function Page() {
   const searchParams = useSearchParams();
   const redirectUrl = searchParams?.get('redirect_url');
@@ -63,6 +65,7 @@ export default function Page() {
         signInFallbackRedirectUrl={finalRedirectUrl}
         oauthFlow="redirect"
         appearance={{
+          variables: clerkAppearance.variables,
           options: {
             logoPlacement: 'inside', // Ubicación del logo: 'inside' o 'outside'
             privacyPageUrl: 'https://clerk.com/legal/privacy', // URL de tu política de privacidad
