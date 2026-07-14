@@ -45,12 +45,17 @@ export async function getMyProfile(): Promise<MyProfile | null> {
 
   const row = rows[0];
 
+  // Prefer Clerk's live full name so the profile reflects the current Clerk
+  // identity dynamically, falling back to the stored DB name only when Clerk
+  // has none.
+  const clerkFullName = clerkUser?.fullName?.trim();
+
   return {
     id: userId,
-    name: row?.name ?? clerkUser?.fullName ?? null,
+    name: (clerkFullName ? clerkFullName : null) ?? row?.name ?? null,
     email: row?.email ?? clerkUser?.primaryEmailAddress?.emailAddress ?? null,
     imageUrl: clerkUser?.imageUrl ?? null,
-    username: row?.username ?? null,
+    username: row?.username ?? clerkUser?.username ?? null,
     bio: row?.bio ?? null,
     website: row?.website ?? null,
     location: row?.location ?? null,

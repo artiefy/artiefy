@@ -170,12 +170,20 @@ export default function StudentDetails({
   initialPrograms: Program[];
 }) {
   const [courses] = useState<Course[]>(initialCourses);
-  const [sortedPrograms] = useState<Program[]>(() => {
-    if (!Array.isArray(initialPrograms)) {
-      return [];
+  // Keep the server-provided program order for SSR and the first client
+  // render (Math.random() inside a useState initializer runs independently
+  // on the server and on the client, producing a different order each time
+  // and triggering a hydration mismatch). Shuffle only after mount.
+  const [sortedPrograms, setSortedPrograms] = useState<Program[]>(() =>
+    Array.isArray(initialPrograms) ? initialPrograms : []
+  );
+
+  useEffect(() => {
+    if (!Array.isArray(initialPrograms) || initialPrograms.length === 0) {
+      return;
     }
-    return shufflePrograms(initialPrograms);
-  });
+    setSortedPrograms(shufflePrograms(initialPrograms));
+  }, [initialPrograms]);
   const [_currentSlide, setCurrentSlide] = useState<number>(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -643,7 +651,7 @@ export default function StudentDetails({
             className="
               mt-16 flex animate-zoom-in flex-col items-center space-y-4 px-2
               sm:mt-8 sm:px-0
-              lg:mt-16
+              lg:mt-24
             "
           >
             <div

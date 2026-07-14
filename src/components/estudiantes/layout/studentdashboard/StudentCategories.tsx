@@ -254,7 +254,7 @@ export default function StudentCategories({
         lg:px-20
       "
     >
-      <div className="container mx-auto">
+      <div>
         <div
           className="
             mt-4 mb-2 ml-0 w-full
