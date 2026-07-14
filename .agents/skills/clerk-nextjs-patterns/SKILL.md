@@ -85,9 +85,9 @@ import { Show } from '@clerk/nextjs';
 ## Common Pitfalls
 
 | Symptom                                | Cause                     | Fix                                      |
-| -------------------------------------- | ------------------------- | ---------------------------------------- | ------------------------------------------------------ |
+| -------------------------------------- | ------------------------- | ---------------------------------------- |
 | `undefined` userId in Server Component | Missing `await`           | `await auth()` not `auth()`              |
-| Auth not working on API routes         | Missing matcher           | Add `'/(api                              | trpc)(.\*)'`to`proxy.ts`(Next.js <=15:`middleware.ts`) |
+| Auth not working on API routes         | Missing matcher           | Add `'/(api                              | trpc)(.*)'`to`proxy.ts`(Next.js <=15:`middleware.ts`) |
 | Cache returns wrong user's data        | Missing userId in key     | Include `userId` in `unstable_cache` key |
 | Mutations bypass auth                  | Unprotected Server Action | Check `auth()` at start of action        |
 | Wrong HTTP error code                  | Confused 401/403          | 401 = not signed in, 403 = no permission |

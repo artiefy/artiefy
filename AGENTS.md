@@ -1,4 +1,4 @@
-<!-- NEXT-AGENTS-MD-START -->
+<!-- BEGIN:nextjs-agent-rules -->
 
 # Next.js: ALWAYS read docs before coding
 
