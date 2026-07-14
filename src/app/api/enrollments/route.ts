@@ -151,9 +151,14 @@ export async function POST(request: Request) {
 
     // Enroll in course if courseId is provided
     const alreadyEnrolledCourse: { userId: string; userName: string }[] = [];
+    const revertedFromCompletedCourse: { userId: string; userName: string }[] =
+      [];
     if (parsedCourseId) {
       const existingEnrollments = await db
-        .select({ userId: enrollments.userId })
+        .select({
+          userId: enrollments.userId,
+          completed: enrollments.completed,
+        })
         .from(enrollments)
         .where(
           and(
@@ -164,6 +169,9 @@ export async function POST(request: Request) {
         .execute();
 
       const existingUserIds = new Set(existingEnrollments.map((e) => e.userId));
+      const completedUserIds = existingEnrollments
+        .filter((e) => e.completed)
+        .map((e) => e.userId);
 
       // Obtener nombres de los usuarios ya matriculados
       for (const userId of existingUserIds) {
@@ -173,11 +181,25 @@ export async function POST(request: Request) {
           .where(eq(users.id, userId))
           .execute();
         if (user.length > 0) {
-          alreadyEnrolledCourse.push({
-            userId,
-            userName: user[0]?.name || 'Sin nombre',
-          });
+          const userName = user[0]?.name || 'Sin nombre';
+          alreadyEnrolledCourse.push({ userId, userName });
+          if (completedUserIds.includes(userId)) {
+            revertedFromCompletedCourse.push({ userId, userName });
+          }
         }
+      }
+
+      // Si estaban marcados como completados, se pasan de vuelta a "Actuales"
+      if (completedUserIds.length > 0) {
+        await db
+          .update(enrollments)
+          .set({ completed: false })
+          .where(
+            and(
+              eq(enrollments.courseId, parsedCourseId),
+              inArray(enrollments.userId, completedUserIds)
+            )
+          );
       }
 
       const newUsers = filteredUserIds.filter((id) => !existingUserIds.has(id));
@@ -282,9 +304,16 @@ export async function POST(request: Request) {
 
     // Enroll in program if programId is provided
     const alreadyEnrolledProgram: { userId: string; userName: string }[] = [];
+    const revertedFromCompletedProgram: {
+      userId: string;
+      userName: string;
+    }[] = [];
     if (parsedProgramId) {
       const existingProgramEnrollments = await db
-        .select({ userId: enrollmentPrograms.userId })
+        .select({
+          userId: enrollmentPrograms.userId,
+          completed: enrollmentPrograms.completed,
+        })
         .from(enrollmentPrograms)
         .where(
           and(
@@ -297,6 +326,9 @@ export async function POST(request: Request) {
       const existingProgramUserIds = new Set(
         existingProgramEnrollments.map((e) => e.userId)
       );
+      const completedProgramUserIds = existingProgramEnrollments
+        .filter((e) => e.completed)
+        .map((e) => e.userId);
 
       // Obtener nombres de los usuarios ya matriculados en el programa
       for (const userId of existingProgramUserIds) {
@@ -306,11 +338,25 @@ export async function POST(request: Request) {
           .where(eq(users.id, userId))
           .execute();
         if (user.length > 0) {
-          alreadyEnrolledProgram.push({
-            userId,
-            userName: user[0]?.name || 'Sin nombre',
-          });
+          const userName = user[0]?.name || 'Sin nombre';
+          alreadyEnrolledProgram.push({ userId, userName });
+          if (completedProgramUserIds.includes(userId)) {
+            revertedFromCompletedProgram.push({ userId, userName });
+          }
         }
+      }
+
+      // Si estaban marcados como completados, se pasan de vuelta a "Actuales"
+      if (completedProgramUserIds.length > 0) {
+        await db
+          .update(enrollmentPrograms)
+          .set({ completed: false })
+          .where(
+            and(
+              eq(enrollmentPrograms.programaId, parsedProgramId),
+              inArray(enrollmentPrograms.userId, completedProgramUserIds)
+            )
+          );
       }
 
       const newProgramUsers = filteredUserIds.filter(
@@ -334,6 +380,8 @@ export async function POST(request: Request) {
       message: 'Enrollment completed successfully',
       alreadyEnrolledCourse,
       alreadyEnrolledProgram,
+      revertedFromCompletedCourse,
+      revertedFromCompletedProgram,
     });
   } catch (error) {
     console.error('Error in POST /api/enrollments:', error);

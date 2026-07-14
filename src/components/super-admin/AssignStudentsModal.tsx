@@ -44,11 +44,14 @@ interface EnrollResult {
   message: string;
   alreadyEnrolledCourse?: { userId: string; userName: string }[];
   alreadyEnrolledProgram?: { userId: string; userName: string }[];
+  revertedFromCompletedCourse?: { userId: string; userName: string }[];
+  revertedFromCompletedProgram?: { userId: string; userName: string }[];
 }
 
 interface AssignResult {
   newlyEnrolledCount: number;
   alreadyEnrolledNames: string[];
+  revertedFromCompletedNames: string[];
   targetName: string;
   targetType: 'curso' | 'programa' | 'ambos';
 }
@@ -424,15 +427,29 @@ export function AssignStudentsModal({
       }
       const result = rawResult as EnrollResult;
 
-      const alreadyNames = Array.from(
-        new Set(
-          [
-            ...(result.alreadyEnrolledCourse ?? []),
-            ...(result.alreadyEnrolledProgram ?? []),
-          ].map((a) => a.userName)
-        )
-      );
-      const newlyEnrolledCount = selectedStudents.length - alreadyNames.length;
+      const already = [
+        ...(result.alreadyEnrolledCourse ?? []),
+        ...(result.alreadyEnrolledProgram ?? []),
+      ];
+      const reverted = [
+        ...(result.revertedFromCompletedCourse ?? []),
+        ...(result.revertedFromCompletedProgram ?? []),
+      ];
+
+      const revertedMap = new Map(reverted.map((a) => [a.userId, a.userName]));
+      const alreadyMap = new Map(already.map((a) => [a.userId, a.userName]));
+      // Los que pasaron de "completado" a "actuales" se reportan aparte,
+      // no como un simple "ya estaba matriculado" sin cambios.
+      for (const id of revertedMap.keys()) alreadyMap.delete(id);
+
+      const alreadyNames = Array.from(alreadyMap.values());
+      const revertedNames = Array.from(revertedMap.values());
+      const totalUnchangedOrReverted = new Set([
+        ...alreadyMap.keys(),
+        ...revertedMap.keys(),
+      ]).size;
+      const newlyEnrolledCount =
+        selectedStudents.length - totalUnchangedOrReverted;
 
       const targetName =
         selectedCourse && selectedProgram
@@ -443,6 +460,7 @@ export function AssignStudentsModal({
       setAssignResult({
         newlyEnrolledCount,
         alreadyEnrolledNames: alreadyNames,
+        revertedFromCompletedNames: revertedNames,
         targetName,
         targetType:
           selectedCourse && selectedProgram
@@ -561,8 +579,17 @@ export function AssignStudentsModal({
                     {assignResult.alreadyEnrolledNames.join(', ')}.
                   </p>
                 )}
+                {assignResult.revertedFromCompletedNames.length > 0 && (
+                  <p>
+                    🔄 {assignResult.revertedFromCompletedNames.length}{' '}
+                    estudiante(s) estaban como completados y se pasaron de
+                    vuelta a &quot;Actuales&quot;:{' '}
+                    {assignResult.revertedFromCompletedNames.join(', ')}.
+                  </p>
+                )}
                 {assignResult.newlyEnrolledCount === 0 &&
-                  assignResult.alreadyEnrolledNames.length === 0 && (
+                  assignResult.alreadyEnrolledNames.length === 0 &&
+                  assignResult.revertedFromCompletedNames.length === 0 && (
                     <p>Matrícula procesada.</p>
                   )}
               </div>
