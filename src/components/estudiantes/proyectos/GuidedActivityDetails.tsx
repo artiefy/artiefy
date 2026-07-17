@@ -561,6 +561,7 @@ export function GuidedActivityDetails({
                   onVideoEnd={() => undefined}
                   onProgressUpdate={() => undefined}
                   isVideoCompleted={false}
+                  allowSeek
                 />
               ) : coverImageUrl ? (
                 <Image
