@@ -2347,7 +2347,80 @@ export const guidedObjectiveActivities = pgTable(
     fechaMaximaEntrega: timestamp('fecha_maxima_entrega'),
     revisada: boolean('revisada').default(false),
     lastUpdated: timestamp('last_updated').defaultNow().notNull(),
+    instructionVideoKey: text('instruction_video_key'), // 👈 video del botón "Instrucción"
+    instructionText: text('instruction_text'), // 👈 texto de instrucciones
   }
+);
+
+// Objetivos (uno o varios) de cada actividad guiada
+export const guidedActivityObjectives = pgTable('guided_activity_objectives', {
+  id: serial('id').primaryKey(),
+  activityId: integer('activity_id')
+    .references(() => guidedObjectiveActivities.id, { onDelete: 'cascade' })
+    .notNull(),
+  description: text('description').notNull(),
+  orderIndex: integer('order_index').notNull().default(0),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const guidedActivityObjectivesRelations = relations(
+  guidedActivityObjectives,
+  ({ one }) => ({
+    activity: one(guidedObjectiveActivities, {
+      fields: [guidedActivityObjectives.activityId],
+      references: [guidedObjectiveActivities.id],
+    }),
+  })
+);
+
+// Entregas de archivos de cada actividad guiada
+export const guidedActivityDeliveries = pgTable(
+  'guided_activity_deliveries',
+  {
+    id: serial('id').primaryKey(),
+    activityId: integer('activity_id')
+      .references(() => guidedObjectiveActivities.id, { onDelete: 'cascade' })
+      .notNull(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    entregado: boolean('entregado').default(false).notNull(),
+    aprobado: boolean('aprobado').default(false).notNull(),
+
+    documentKey: text('document_key'), // Para documentos (PDF, Word, Excel, etc.)
+    documentName: text('document_name'), // Nombre original del documento
+    imageKey: text('image_key'), // Para imágenes (JPG, PNG, etc.)
+    imageName: text('image_name'), // Nombre original de la imagen
+    compressedFileKey: text('compressed_file_key'), // Para archivos comprimidos (RAR, ZIP, 7z, etc.)
+    compressedFileName: text('compressed_file_name'), // Nombre original del archivo comprimido
+
+    // Metadatos adicionales
+    fileTypes: text('file_types'), // JSON string con los tipos de archivos subidos
+    totalFiles: integer('total_files').default(0), // Contador total de archivos
+
+    comentario: text('comentario'), // opcional: comentario del usuario
+    feedback: text('feedback'), // opcional: comentario del responsable
+    entregadoAt: timestamp('entregado_at').defaultNow(),
+    aprobadoAt: timestamp('aprobado_at'),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('unique_guided_activity_user').on(table.activityId, table.userId),
+  ]
+);
+
+export const guidedActivityDeliveriesRelations = relations(
+  guidedActivityDeliveries,
+  ({ one }) => ({
+    activity: one(guidedObjectiveActivities, {
+      fields: [guidedActivityDeliveries.activityId],
+      references: [guidedObjectiveActivities.id],
+    }),
+    user: one(users, {
+      fields: [guidedActivityDeliveries.userId],
+      references: [users.id],
+    }),
+  })
 );
 
 // Inscripciones
@@ -2488,6 +2561,8 @@ export const guidedObjectiveActivitiesRelations = relations(
       references: [guidedObjectives.id],
     }),
     userProgress: many(userGuidedActivityProgress),
+    objectives: many(guidedActivityObjectives),
+    deliveries: many(guidedActivityDeliveries),
   })
 );
 

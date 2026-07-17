@@ -2742,7 +2742,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
             <LoadingCourses />
           ) : (
             courseIdNumber !== null && (
-              <div className="mt-16 space-y-8">
+              <div className="relative z-10 mt-16 space-y-8">
                 {/* TABS MENU HORIZONTAL */}
                 <div
                   className="

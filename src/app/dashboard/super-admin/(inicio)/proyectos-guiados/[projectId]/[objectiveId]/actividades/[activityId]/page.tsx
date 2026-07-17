@@ -4,6 +4,16 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import {
+  BookOpen,
+  ClipboardList,
+  Download,
+  MessageSquare,
+  Trash2,
+  Trophy,
+  Users,
+  VideoOff,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import FormActCompletado from '~/components/educators/layout/FormActCompletado';
@@ -27,6 +37,7 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from '~/components/super-admin/ui/breadcrumb';
+import { uploadFileToS3 } from '~/lib/uploadFileToS3';
 
 import type {
   Completado,
@@ -74,6 +85,8 @@ interface Activity {
   porcentaje: number | null;
   fechaMaximaEntrega: string | null;
   revisada: boolean | null;
+  instructionVideoKey: string | null;
+  instructionText: string | null;
 }
 
 interface StudentProgress {
@@ -114,6 +127,17 @@ export default function GuidedActivityDetailPage({
   >({});
   const [savingUserId, setSavingUserId] = useState<string | null>(null);
 
+  // Instrucción (video + texto) de la actividad
+  const [editingInstruction, setEditingInstruction] = useState(false);
+  const [instructionTextDraft, setInstructionTextDraft] = useState('');
+  const [instructionVideoFile, setInstructionVideoFile] = useState<File | null>(
+    null
+  );
+  const [instructionVideoPreview, setInstructionVideoPreview] = useState<
+    string | null
+  >(null);
+  const [instructionUploading, setInstructionUploading] = useState(false);
+
   // Contenido de la actividad: preguntas según el tipo (OM/FOV/COMPLETADO/ARCHIVO)
   const [questions, setQuestions] = useState<TipoPregunta[]>([]);
   const [editingQuestion, setEditingQuestion] =
@@ -130,6 +154,19 @@ export default function GuidedActivityDetailPage({
 
   const router = useRouter();
   const activityIdNumber = activityId ? parseInt(activityId) : null;
+
+  type DetailTab = 'instruccion' | 'contenido' | 'calificaciones' | 'recursos';
+  const [activeDetailTab, setActiveDetailTab] =
+    useState<DetailTab>('instruccion');
+
+  useEffect(() => {
+    if (
+      typeof window !== 'undefined' &&
+      window.location.hash === '#estudiantes'
+    ) {
+      setActiveDetailTab('calificaciones');
+    }
+  }, []);
 
   useEffect(() => {
     void params.then((p) => {
@@ -208,6 +245,59 @@ export default function GuidedActivityDetailPage({
     }
   }, [activity]);
 
+  useEffect(() => {
+    if (!activity || editingInstruction) return;
+    setInstructionTextDraft(activity.instructionText ?? '');
+    setInstructionVideoFile(null);
+    setInstructionVideoPreview(
+      activity.instructionVideoKey
+        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${activity.instructionVideoKey}`
+        : null
+    );
+  }, [activity, editingInstruction]);
+
+  const handleInstructionVideoChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setInstructionVideoFile(file);
+    setInstructionVideoPreview(URL.createObjectURL(file));
+  };
+
+  const handleSaveInstruction = async () => {
+    if (!projectId || !objectiveId || !activityId) return;
+    setInstructionUploading(true);
+    try {
+      let instructionVideoKey = activity?.instructionVideoKey ?? null;
+      if (instructionVideoFile) {
+        const result = await uploadFileToS3(instructionVideoFile);
+        instructionVideoKey = result.key;
+      }
+
+      const response = await fetch(
+        `/api/guided-projects/${projectId}/objectives/${objectiveId}/activities?id=${activityId}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            instructionVideoKey,
+            instructionText: instructionTextDraft || null,
+          }),
+        }
+      );
+      if (!response.ok) throw new Error('Error al guardar');
+      toast.success('Instrucción guardada');
+      setEditingInstruction(false);
+      await fetchContext();
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error al guardar la instrucción');
+    } finally {
+      setInstructionUploading(false);
+    }
+  };
+
   const fetchPorcentajes = useCallback(() => {
     if (activityIdNumber === null) return;
     fetch(
@@ -261,7 +351,7 @@ export default function GuidedActivityDetailPage({
       if (!response.ok) throw new Error('Error al eliminar');
       toast.success('Actividad eliminada');
       router.push(
-        `/dashboard/super-admin/proyectos-guiados/${projectId}/${objectiveId}`
+        `/dashboard/super-admin/proyectos-guiados/${projectId}?tab=actividades`
       );
     } catch (error) {
       console.error('Error:', error);
@@ -380,7 +470,7 @@ export default function GuidedActivityDetailPage({
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-cyan-400 transition-colors duration-300 hover:text-cyan-300"
-              href={`/dashboard/super-admin/proyectos-guiados/${projectId}/${objectiveId}`}
+              href={`/dashboard/super-admin/proyectos-guiados/${projectId}?tab=actividades`}
             >
               {objective?.title ?? 'Sesión'}
             </BreadcrumbLink>
@@ -394,19 +484,38 @@ export default function GuidedActivityDetailPage({
         </BreadcrumbList>
       </Breadcrumb>
 
-      <Card className="zoom-in relative z-10 mb-10 border-2 border-cyan-500/30 bg-slate-800 p-4 shadow-2xl transition-all duration-500 hover:border-cyan-500/60 hover:shadow-cyan-500/30 sm:p-8">
-        <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold tracking-widest text-cyan-400 uppercase">
-              Detalle de actividad
+      {/* Video hero (siempre visible, como el reproductor de clase) */}
+      <div className="relative z-10 mb-6 aspect-video w-full overflow-hidden rounded-2xl border-2 border-cyan-500/30 bg-slate-900 shadow-2xl">
+        {activity.instructionVideoKey ? (
+          <video controls className="size-full object-cover">
+            <source
+              src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${activity.instructionVideoKey}`}
+              type="video/mp4"
+            />
+            Tu navegador no soporta la reproducción de videos.
+          </video>
+        ) : (
+          <div className="flex size-full flex-col items-center justify-center gap-2 text-white/40">
+            <VideoOff className="size-10" />
+            <p className="text-sm">
+              Sin video de instrucción — agrégalo en la pestaña
+              &quot;Instrucción&quot;.
             </p>
-            <h1 className="mt-1 text-2xl font-bold text-white md:text-3xl">
-              {activity.name}
-            </h1>
           </div>
-          <div className="flex flex-wrap gap-2">
+        )}
+      </div>
+
+      {/* Encabezado compacto */}
+      <Card className="relative z-10 mb-6 border-2 border-cyan-500/30 bg-slate-800 p-4 shadow-xl sm:p-6">
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            {activity.weekNumber != null && (
+              <Badge className="border-cyan-500/50 bg-cyan-500/20 text-xs text-cyan-300">
+                Semana {activity.weekNumber}
+              </Badge>
+            )}
             <Badge
-              className={`text-sm ${
+              className={`text-xs ${
                 activity.revisada
                   ? 'border-green-500/50 bg-green-500/20 text-green-300'
                   : 'border-gray-500/50 bg-gray-500/20 text-gray-300'
@@ -414,6 +523,8 @@ export default function GuidedActivityDetailPage({
             >
               {activity.revisada ? 'Revisada' : 'Sin revisar'}
             </Badge>
+          </div>
+          <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
               variant="outline"
@@ -426,58 +537,195 @@ export default function GuidedActivityDetailPage({
               size="sm"
               variant="destructive"
               onClick={handleDeleteActivity}
-              className="bg-red-500 text-white hover:bg-red-600"
+              className="flex items-center gap-1.5 bg-red-500 text-white hover:bg-red-600"
             >
-              🗑️ Eliminar
+              <Trash2 className="size-3.5" />
+              Eliminar
             </Button>
           </div>
         </div>
-
-        <p className="mb-6 text-sm leading-relaxed text-white/80">
+        <h1 className="mb-2 text-2xl font-bold text-white md:text-3xl">
+          {activity.name}
+        </h1>
+        <p className="text-sm leading-relaxed text-white/80">
           {activity.description || 'Sin descripción'}
         </p>
-
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4">
-            <p className="mb-1 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-              Semana
-            </p>
-            <p className="text-sm text-white">{activity.weekNumber ?? 'N/A'}</p>
-          </div>
-          <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4">
-            <p className="mb-1 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-              Porcentaje
-            </p>
-            <p className="text-sm text-white">
-              {activity.porcentaje != null ? `${activity.porcentaje}%` : 'N/A'}
-            </p>
-          </div>
-          <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4">
-            <p className="mb-1 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-              Fecha fin
-            </p>
-            <p className="text-sm text-white">
-              {activity.endDate
-                ? new Date(activity.endDate).toLocaleDateString('es-ES')
-                : 'N/A'}
-            </p>
-          </div>
-          <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4">
-            <p className="mb-1 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-              Entrega máxima
-            </p>
-            <p className="text-sm text-white">
-              {activity.fechaMaximaEntrega
-                ? new Date(activity.fechaMaximaEntrega).toLocaleDateString(
-                    'es-ES'
-                  )
-                : 'N/A'}
-            </p>
-          </div>
-        </div>
       </Card>
 
-      <div className="relative z-10 mb-10 space-y-6">
+      {/* Tabs */}
+      <div className="relative z-10 mb-6 flex flex-wrap gap-2 rounded-2xl border border-cyan-500/20 bg-slate-900/60 p-2">
+        {(
+          [
+            { key: 'instruccion', label: 'Instrucción', icon: BookOpen },
+            { key: 'contenido', label: 'Contenido', icon: ClipboardList },
+            {
+              key: 'calificaciones',
+              label: `Calificaciones (${students.length})`,
+              icon: Trophy,
+            },
+            { key: 'recursos', label: 'Recursos', icon: Download },
+          ] as { key: DetailTab; label: string; icon: typeof BookOpen }[]
+        ).map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveDetailTab(tab.key)}
+              className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all ${
+                activeDetailTab === tab.key
+                  ? 'bg-cyan-500 text-black'
+                  : 'text-white/70 hover:bg-white/5 hover:text-white'
+              }`}
+            >
+              <Icon className="size-4" />
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Instrucción */}
+      {activeDetailTab === 'instruccion' && (
+        <Card className="relative z-10 mb-10 border-2 border-cyan-500/20 bg-slate-800 p-4 shadow-xl sm:p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-bold text-white">
+              Texto e instrucciones
+            </h2>
+            {!editingInstruction && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setEditingInstruction(true)}
+                className="border-white/20 text-white/70 hover:bg-white/10"
+              >
+                Editar instrucción
+              </Button>
+            )}
+          </div>
+
+          {editingInstruction ? (
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                  Texto de instrucciones
+                </label>
+                <textarea
+                  value={instructionTextDraft}
+                  onChange={(e) => setInstructionTextDraft(e.target.value)}
+                  rows={4}
+                  className="w-full rounded-lg border border-cyan-500/30 bg-white/5 px-3 py-2 text-sm text-white transition-colors focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                  Video de instrucción
+                </label>
+                <label className="flex h-40 max-w-sm cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-cyan-500/30 bg-white/5 transition hover:border-cyan-400">
+                  {instructionVideoPreview ? (
+                    <video
+                      src={instructionVideoPreview}
+                      controls
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-white/50">
+                      Clic para subir video
+                    </span>
+                  )}
+                  <input
+                    type="file"
+                    accept="video/mp4"
+                    className="hidden"
+                    onChange={handleInstructionVideoChange}
+                  />
+                </label>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleSaveInstruction}
+                  disabled={instructionUploading}
+                  className="bg-cyan-500 text-white hover:bg-cyan-600"
+                >
+                  {instructionUploading ? 'Guardando...' : 'Guardar'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingInstruction(false)}
+                  className="border-white/20 text-white/70 hover:bg-white/10"
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </div>
+          ) : activity.instructionText ? (
+            <p className="mb-6 text-sm leading-relaxed whitespace-pre-line text-white/80">
+              {activity.instructionText}
+            </p>
+          ) : (
+            <p className="mb-6 text-sm text-white/50">
+              Esta actividad todavía no tiene instrucción configurada.
+            </p>
+          )}
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4">
+              <p className="mb-1 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                Semana
+              </p>
+              <p className="text-sm text-white">
+                {activity.weekNumber ?? 'N/A'}
+              </p>
+            </div>
+            <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4">
+              <p className="mb-1 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                Porcentaje
+              </p>
+              <p className="text-sm text-white">
+                {activity.porcentaje != null
+                  ? `${activity.porcentaje}%`
+                  : 'N/A'}
+              </p>
+            </div>
+            <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4">
+              <p className="mb-1 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                Fecha fin
+              </p>
+              <p className="text-sm text-white">
+                {activity.endDate
+                  ? new Date(activity.endDate).toLocaleDateString('es-ES')
+                  : 'N/A'}
+              </p>
+            </div>
+            <div className="rounded-xl border border-cyan-500/30 bg-white/5 p-4">
+              <p className="mb-1 text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                Entrega máxima
+              </p>
+              <p className="text-sm text-white">
+                {activity.fechaMaximaEntrega
+                  ? new Date(activity.fechaMaximaEntrega).toLocaleDateString(
+                      'es-ES'
+                    )
+                  : 'N/A'}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Recursos */}
+      {activeDetailTab === 'recursos' && (
+        <div className="relative z-10 mb-10 rounded-2xl border border-cyan-500/20 bg-slate-800 p-8 text-center text-white/50">
+          Los recursos de esta actividad estarán disponibles pronto.
+        </div>
+      )}
+
+      <div
+        className="relative z-10 mb-10 space-y-6"
+        hidden={activeDetailTab !== 'contenido'}
+      >
         <h2 className="text-2xl font-bold text-white">
           Contenido de la actividad
         </h2>
@@ -657,122 +905,139 @@ export default function GuidedActivityDetailPage({
         )}
       </div>
 
-      <div className="relative z-10 mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-white">
-          Estudiantes{' '}
-          <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
-            {students.length}
-          </span>
-        </h2>
-      </div>
+      <div hidden={activeDetailTab !== 'calificaciones'}>
+        <div
+          id="estudiantes"
+          className="relative z-10 mb-6 flex scroll-mt-24 items-center justify-between"
+        >
+          <h2 className="text-2xl font-bold text-white">
+            Estudiantes{' '}
+            <span className="ml-2 inline-block rounded-full bg-cyan-500 px-2 py-0.5 text-xs font-bold text-slate-950">
+              {students.length}
+            </span>
+          </h2>
+        </div>
 
-      {loadingStudents ? (
-        <div className="relative z-10 flex items-center gap-3 text-white/60">
-          <div className="size-5 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
-          Cargando estudiantes...
-        </div>
-      ) : students.length === 0 ? (
-        <div className="relative z-10 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-cyan-500/30 bg-slate-800/50 p-16 text-center">
-          <span className="text-4xl">🧑‍🎓</span>
-          <p className="text-sm text-white/50">
-            Aún no hay estudiantes con progreso registrado en esta actividad.
-          </p>
-        </div>
-      ) : (
-        <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {students.map((student) => {
-            const draft = gradeDrafts[student.userId] ?? {
-              finalGrade: '',
-              revisada: false,
-            };
-            return (
-              <Card
-                key={student.userId}
-                className="border-2 border-cyan-500/20 bg-slate-800/80 p-5 shadow-lg"
-              >
-                <div className="mb-3 flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-white">
-                      {student.userName ?? 'Sin nombre'}
-                    </p>
-                    <p className="text-xs text-white/50">
-                      {student.userEmail ?? student.userId}
+        {loadingStudents ? (
+          <div className="relative z-10 flex items-center gap-3 text-white/60">
+            <div className="size-5 animate-spin rounded-full border-2 border-cyan-500 border-t-transparent" />
+            Cargando estudiantes...
+          </div>
+        ) : students.length === 0 ? (
+          <div className="relative z-10 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-cyan-500/30 bg-slate-800/50 p-16 text-center">
+            <Users className="size-10 text-white/30" />
+            <p className="text-sm text-white/50">
+              Aún no hay estudiantes con progreso registrado en esta actividad.
+            </p>
+          </div>
+        ) : (
+          <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {students.map((student) => {
+              const draft = gradeDrafts[student.userId] ?? {
+                finalGrade: '',
+                revisada: false,
+              };
+              return (
+                <Card
+                  key={student.userId}
+                  className="border-2 border-cyan-500/20 bg-slate-800/80 p-5 shadow-lg"
+                >
+                  <div className="mb-3 flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-white">
+                        {student.userName ?? 'Sin nombre'}
+                      </p>
+                      <p className="text-xs text-white/50">
+                        {student.userEmail ?? student.userId}
+                      </p>
+                    </div>
+                    <Badge
+                      className={`shrink-0 text-[11px] ${
+                        student.isCompleted
+                          ? 'border-green-500/50 bg-green-500/20 text-green-300'
+                          : 'border-yellow-500/50 bg-yellow-500/20 text-yellow-300'
+                      }`}
+                    >
+                      {student.isCompleted ? 'Completado' : 'En progreso'}
+                    </Badge>
+                  </div>
+
+                  <div className="mb-4 grid grid-cols-2 gap-2 text-xs text-white/70">
+                    <p>Progreso: {Math.round(student.progress * 100)}%</p>
+                    <p>Intentos: {student.attemptCount ?? 0}</p>
+                    <p className="col-span-2">
+                      Último intento:{' '}
+                      {student.lastAttemptAt
+                        ? new Date(student.lastAttemptAt).toLocaleString(
+                            'es-ES'
+                          )
+                        : 'N/A'}
                     </p>
                   </div>
-                  <Badge
-                    className={`shrink-0 text-[11px] ${
-                      student.isCompleted
-                        ? 'border-green-500/50 bg-green-500/20 text-green-300'
-                        : 'border-yellow-500/50 bg-yellow-500/20 text-yellow-300'
-                    }`}
-                  >
-                    {student.isCompleted ? 'Completado' : 'En progreso'}
-                  </Badge>
-                </div>
 
-                <div className="mb-4 grid grid-cols-2 gap-2 text-xs text-white/70">
-                  <p>Progreso: {Math.round(student.progress * 100)}%</p>
-                  <p>Intentos: {student.attemptCount ?? 0}</p>
-                  <p className="col-span-2">
-                    Último intento:{' '}
-                    {student.lastAttemptAt
-                      ? new Date(student.lastAttemptAt).toLocaleString('es-ES')
-                      : 'N/A'}
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
-                    Nota final
-                  </label>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={draft.finalGrade}
-                    onChange={(e) =>
-                      setGradeDrafts((prev) => ({
-                        ...prev,
-                        [student.userId]: {
-                          ...draft,
-                          finalGrade: e.target.value,
-                        },
-                      }))
-                    }
-                    placeholder="Ej: 4.5"
-                    className="w-full rounded-lg border border-cyan-500/30 bg-white/5 px-3 py-2 text-sm text-white transition-colors focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none"
-                  />
-                  <label className="flex items-center gap-2 text-xs text-white/70">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold tracking-wide text-cyan-400 uppercase">
+                      Nota final
+                    </label>
                     <input
-                      type="checkbox"
-                      checked={draft.revisada}
+                      type="text"
+                      inputMode="decimal"
+                      value={draft.finalGrade}
                       onChange={(e) =>
                         setGradeDrafts((prev) => ({
                           ...prev,
                           [student.userId]: {
                             ...draft,
-                            revisada: e.target.checked,
+                            finalGrade: e.target.value,
                           },
                         }))
                       }
+                      placeholder="Ej: 4.5"
+                      className="w-full rounded-lg border border-cyan-500/30 bg-white/5 px-3 py-2 text-sm text-white transition-colors focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/30 focus:outline-none"
                     />
-                    Revisada
-                  </label>
-                  <Button
-                    size="sm"
-                    onClick={() => handleSaveGrade(student.userId)}
-                    disabled={savingUserId === student.userId}
-                    className="w-full bg-cyan-500 text-white hover:bg-cyan-600"
-                  >
-                    {savingUserId === student.userId
-                      ? 'Guardando...'
-                      : 'Guardar calificación'}
-                  </Button>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                    <label className="flex items-center gap-2 text-xs text-white/70">
+                      <input
+                        type="checkbox"
+                        checked={draft.revisada}
+                        onChange={(e) =>
+                          setGradeDrafts((prev) => ({
+                            ...prev,
+                            [student.userId]: {
+                              ...draft,
+                              revisada: e.target.checked,
+                            },
+                          }))
+                        }
+                      />
+                      Revisada
+                    </label>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSaveGrade(student.userId)}
+                      disabled={savingUserId === student.userId}
+                      className="w-full bg-cyan-500 text-white hover:bg-cyan-600"
+                    >
+                      {savingUserId === student.userId
+                        ? 'Guardando...'
+                        : 'Guardar calificación'}
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="relative z-10 mt-10 rounded-2xl border border-cyan-500/20 bg-slate-800 p-6">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-bold text-white">
+          <MessageSquare className="size-4" />
+          Comentarios
+        </h2>
+        <p className="text-sm text-white/50">
+          Los comentarios en esta actividad estarán disponibles pronto.
+        </p>
+      </div>
     </div>
   );
 }

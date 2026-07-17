@@ -69,6 +69,8 @@ export interface GuidedActivity {
   fechaMaximaEntrega: Date | null;
   revisada: boolean;
   lastUpdated: Date;
+  instructionVideoKey: string | null;
+  instructionText: string | null;
 }
 
 // ========== GUIDED PROJECTS CRUD ==========
@@ -298,6 +300,8 @@ export const createGuidedActivity = async (data: Partial<GuidedActivity>) => {
         ? new Date(data.fechaMaximaEntrega) // 👈
         : null,
       revisada: data.revisada || false,
+      instructionVideoKey: data.instructionVideoKey,
+      instructionText: data.instructionText,
     })
     .returning();
 
@@ -368,6 +372,10 @@ export const updateGuidedActivity = async (
       ? new Date(data.fechaMaximaEntrega).toISOString().split('T')[0]
       : null;
   if (data.revisada !== undefined) updateData.revisada = data.revisada;
+  if (data.instructionVideoKey !== undefined)
+    updateData.instructionVideoKey = data.instructionVideoKey;
+  if (data.instructionText !== undefined)
+    updateData.instructionText = data.instructionText;
 
   updateData.lastUpdated = new Date();
 
