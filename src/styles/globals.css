@@ -531,13 +531,22 @@ body.no-chrome {
 }
 
 /* Clerk Components */
+/* Force the Artiefy logo to render white on the dark auth cards */
+.cl-logoImage {
+  filter: brightness(0) invert(1);
+}
+
 .cl-formButtonPrimary {
   font-size: 0.875rem; /* 14px */
   text-transform: none;
+  color: var(--color-primary); /* light blue text/arrow over dark button */
   background-color: var(--color-secondary);
-  transition: background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 
   &:is(:hover, :focus, :active) {
+    color: var(--color-foreground); /* brighten to near-white on hover */
     background-color: var(--color-background);
   }
 }
@@ -726,7 +735,8 @@ body.no-chrome {
 .cl-footerPages,
 .cl-footerPagesLink,
 .cl-internal-6685xs,
-.cl-internal-3din4a {
+.cl-internal-3din4a,
+.cl-footerItem {
   display: none !important;
 }
 
