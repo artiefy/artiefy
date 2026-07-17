@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import TypeActDropdown from '~/components/educators/layout/TypesActDropdown';
@@ -13,6 +14,7 @@ import {
   DialogTitle,
 } from '~/components/educators/ui/dialog';
 import { Input } from '~/components/educators/ui/input';
+import { uploadFileToS3 } from '~/lib/uploadFileToS3';
 
 interface ModalFormGuidedActivityProps {
   open: boolean;
@@ -47,12 +49,24 @@ export function ModalFormGuidedActivity({
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [formData, setFormData] = useState(EMPTY_DATA);
+  const [instructionVideoFile, setInstructionVideoFile] = useState<File | null>(
+    null
+  );
+  const [instructionVideoPreview, setInstructionVideoPreview] = useState<
+    string | null
+  >(null);
+  const [existingInstructionVideoKey, setExistingInstructionVideoKey] =
+    useState<string | null>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
 
   useEffect(() => {
     if (!open) return;
 
     if (!activityId) {
       setFormData(EMPTY_DATA);
+      setInstructionVideoFile(null);
+      setInstructionVideoPreview(null);
+      setExistingInstructionVideoKey(null);
       return;
     }
 
@@ -80,6 +94,13 @@ export function ModalFormGuidedActivity({
             ? new Date(data.fechaMaximaEntrega).toISOString().split('T')[0]
             : '',
         });
+        setInstructionVideoFile(null);
+        setExistingInstructionVideoKey(data.instructionVideoKey ?? null);
+        setInstructionVideoPreview(
+          data.instructionVideoKey
+            ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${data.instructionVideoKey}`
+            : null
+        );
       } catch {
         toast.error('Error al cargar la actividad');
       } finally {
@@ -101,6 +122,14 @@ export function ModalFormGuidedActivity({
     }
     setLoading(true);
     try {
+      let instructionVideoKey = existingInstructionVideoKey;
+      if (instructionVideoFile) {
+        setUploadingVideo(true);
+        const result = await uploadFileToS3(instructionVideoFile);
+        instructionVideoKey = result.key;
+        setUploadingVideo(false);
+      }
+
       const url = isEditing
         ? `/api/guided-projects/${projectId}/objectives/${objectiveId}/activities?id=${activityId}`
         : `/api/guided-projects/${projectId}/objectives/${objectiveId}/activities`;
@@ -109,7 +138,7 @@ export function ModalFormGuidedActivity({
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, instructionVideoKey }),
       });
       if (!res.ok) throw new Error();
 
@@ -123,7 +152,21 @@ export function ModalFormGuidedActivity({
       toast.error('Error al guardar la actividad');
     } finally {
       setLoading(false);
+      setUploadingVideo(false);
     }
+  };
+
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setInstructionVideoFile(file);
+    setInstructionVideoPreview(URL.createObjectURL(file));
+  };
+
+  const handleRemoveVideo = () => {
+    setInstructionVideoFile(null);
+    setInstructionVideoPreview(null);
+    setExistingInstructionVideoKey(null);
   };
 
   const labelClass = 'text-sm font-medium text-white';
@@ -254,6 +297,41 @@ export function ModalFormGuidedActivity({
                 }
                 className="border-cyan-500/30 bg-slate-800 text-white"
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className={labelClass}>
+                Video de instrucción (opcional)
+              </label>
+              {instructionVideoPreview ? (
+                <div className="space-y-2">
+                  <video
+                    src={instructionVideoPreview}
+                    controls
+                    className="max-h-48 w-full rounded-md border border-cyan-500/30"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRemoveVideo}
+                    className="border-red-500/40 text-red-400 hover:bg-red-500/10"
+                  >
+                    <Trash2 className="mr-1 size-4" />
+                    Quitar video
+                  </Button>
+                </div>
+              ) : (
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={handleVideoChange}
+                  className="block w-full text-sm text-gray-300 file:mr-3 file:rounded-md file:border-0 file:bg-cyan-500 file:px-3 file:py-1.5 file:text-white hover:file:bg-cyan-600"
+                />
+              )}
+              {uploadingVideo && (
+                <p className="text-xs text-cyan-400">Subiendo video…</p>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
