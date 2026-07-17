@@ -36,6 +36,13 @@
       "when": 1782493200000,
       "tag": "0005_fuzzy_search_pg_trgm",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784259237957,
+      "tag": "0006_workable_psynapse",
+      "breakpoints": true
     }
   ]
 }

@@ -92,3 +92,7 @@ Validation policy: do NOT run `build`, `check`, `lint`, or `typecheck` by defaul
 - Drizzle schema/migrations only via `drizzle-kit` scripts; incremental, reviewable changes; explain impact before schema changes; never destructive operations or `db:push` without explicit approval.
 - Clerk: keep role/permission checks server-side; verify protected routes and fallbacks before closing auth changes.
 - Payments (PayU), S3, Redis, OpenAI, WhatsApp, and database changes: verify environment variables and failure behavior before closing.
+
+## Model Routing
+
+Plan expensive, execute cheap. For medium/large changes (several files, new behavior, architecture, DB/auth): do the analysis and a written implementation plan with the strongest available model (Opus-class), hand implementation to a cheaper model (Sonnet-class; Haiku-class for mechanical edits), then review the diff against the plan on the strong model. Plans for a cheaper executor must be self-contained: exact file paths, current-state code excerpts, this repo's check-gate commands as verification steps, an explicit out-of-scope list, and STOP conditions. Tiny one-file changes skip the split — plan/delegate overhead costs more than it saves.

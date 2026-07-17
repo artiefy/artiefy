@@ -103,9 +103,10 @@
   }
 
   .notification-button:hover svg,
-  .notification-button:hover .notification-icon {
-    color: #22c4d3 !important;
-    stroke: #22c4d3 !important;
+  .notification-button:hover .notification-icon,
+  .notification-button:hover .notification-icon * {
+    color: #020617 !important;
+    stroke: #020617 !important;
   }
 
   .notification-menu {

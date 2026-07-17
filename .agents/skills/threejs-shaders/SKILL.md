@@ -494,9 +494,7 @@ textureSize(sampler, lod)
 
 ```javascript
 const material = new THREE.ShaderMaterial({
-  uniforms: {
-    /* ... */
-  },
+  uniforms: {/* ... */},
   vertexShader: '/* ... */',
   fragmentShader: '/* ... */',
 

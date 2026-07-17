@@ -236,16 +236,16 @@ Also import the shadcn CSS in your global styles:
 
 ## Common Pitfalls
 
-| Level    | Issue                       | Solution                                                                |
+| Level | Issue | Solution |
 | -------- | --------------------------- | ----------------------------------------------------------------------- | ------------------- | ----------------------- |
-| CRITICAL | Missing `await` on `auth()` | In Next.js 15+, `auth()` is async: `const { userId } = await auth()`    |
+| CRITICAL | Missing `await` on `auth()` | In Next.js 15+, `auth()` is async: `const { userId } = await auth()` |
 | CRITICAL | Exposing `CLERK_SECRET_KEY` | Never use secret key in client code; only `NEXT_PUBLIC_*` keys are safe |
-| HIGH     | Missing middleware matcher  | Include API routes: `matcher: ['/((?!._\\.._                            | \_next).\*)', '/']` |
-| HIGH     | ClerkProvider placement     | Must be inside `<body>` in root layout (Core 2: could wrap `<html>`)    |
-| HIGH     | Auth routes not public      | Allow `/sign-in`, `/sign-up` in middleware config                       |
-| HIGH     | Landing page requires auth  | To keep "/" public, exclude it: `matcher: ['/((?!._\\.._                | \_next              | ^/$)._)', '/api/(._)']` |
-| MEDIUM   | Wrong import path           | Server code uses `@clerk/nextjs/server`, client uses `@clerk/nextjs`    |
-| MEDIUM   | Wrong package name          | Use `@clerk/react` not `@clerk/clerk-react` (Core 2 naming)             |
+| HIGH | Missing middleware matcher | Include API routes: `matcher: ['/((?!._\\.._                            | \_next).\*)', '/']` |
+| HIGH | ClerkProvider placement | Must be inside `<body>` in root layout (Core 2: could wrap `<html>`) |
+| HIGH | Auth routes not public | Allow `/sign-in`, `/sign-up` in middleware config |
+| HIGH | Landing page requires auth | To keep "/" public, exclude it: `matcher: ['/((?!._\\.._                | \_next              | ^/$)._)', '/api/(._)']` |
+| MEDIUM | Wrong import path | Server code uses `@clerk/nextjs/server`, client uses `@clerk/nextjs` |
+| MEDIUM | Wrong package name | Use `@clerk/react` not `@clerk/clerk-react` (Core 2 naming) |
 
 ## See Also
 

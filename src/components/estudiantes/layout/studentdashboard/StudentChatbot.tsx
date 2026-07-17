@@ -3176,11 +3176,15 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
     : isMobileBottomCtaVisible
       ? 'bottom-40'
       : 'bottom-26';
+  const shouldDockFloatingButtonsLeft =
+    /^\/estudiantes\/proyectos-guiados\/[^/]+\/actividades\/[^/]+\/?$/.test(
+      _safePathname
+    );
   const supportButtonWrapperClass = isDesktop
-    ? _safePathname.startsWith('/estudiantes/clases/')
+    ? shouldDockFloatingButtonsLeft
       ? `animate-in fade-in-0 slide-in-from-bottom-2 fixed left-7 ${supportFloatingBottomClass} duration-200 sm:left-7`
       : `animate-in fade-in-0 slide-in-from-bottom-2 fixed right-4 ${supportFloatingBottomClass} duration-200 sm:right-4`
-    : _safePathname.startsWith('/estudiantes/clases/')
+    : shouldDockFloatingButtonsLeft
       ? `fixed left-8.5 ${supportFloatingBottomClass}`
       : `fixed right-6 ${supportFloatingBottomClass}`;
   const supportButtonStyle: React.CSSProperties = {
@@ -3211,14 +3215,13 @@ Responde siempre en Español. Sé consultivo y amable. Descubre qué busca el us
   const mobileBoxHeight =
     (mobileViewportHeight ?? fallbackMobileHeight) - MOBILE_HEADER_OFFSET;
 
-  // Mover el botón flotante a la esquina izquierda en pantallas grandes cuando estemos
-  // en la ruta de una clase individual (/estudiantes/clases/:id)
+  // Mover el botón flotante a la izquierda en experiencias inmersivas de aprendizaje.
   const floatingMainWrapperClass =
-    isDesktop && _safePathname.startsWith('/estudiantes/clases/')
+    isDesktop && shouldDockFloatingButtonsLeft
       ? `fixed left-6 ${mainFloatingBottomClass}`
       : isDesktop
         ? `fixed right-4 ${mainFloatingBottomClass}`
-        : _safePathname.startsWith('/estudiantes/clases/')
+        : shouldDockFloatingButtonsLeft
           ? `fixed left-6 ${mainFloatingBottomClass}`
           : `fixed right-4 ${mainFloatingBottomClass}`;
   const floatingRootZIndex = !isDesktop

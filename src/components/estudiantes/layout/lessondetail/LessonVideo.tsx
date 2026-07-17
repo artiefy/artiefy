@@ -23,6 +23,9 @@ interface VideoPlayerProps {
   resumeProgress?: number;
   resumeTimeSeconds?: number;
   onPlaybackChange?: (isPlaying: boolean) => void;
+  // Permite adelantar libremente el video (desactiva el bloqueo de seek).
+  // Por defecto false para conservar el gating de las clases.
+  allowSeek?: boolean;
 }
 
 export interface VideoPlayerHandle {
@@ -48,6 +51,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
       resumeProgress = 0,
       resumeTimeSeconds = 0,
       onPlaybackChange,
+      allowSeek = false,
     },
     ref
   ) => {
@@ -173,19 +177,19 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
 
     const handleSeeking = useCallback(
       (video: HTMLVideoElement | null) => {
-        if (!video || isVideoCompleted) return;
+        if (!video || isVideoCompleted || allowSeek) return;
         const maxAllowed = maxWatchedTimeRef.current + SEEK_TOLERANCE_SECONDS;
         if (video.currentTime > maxAllowed) {
           video.currentTime = maxWatchedTimeRef.current;
         }
       },
-      [isVideoCompleted]
+      [isVideoCompleted, allowSeek]
     );
 
     const handleTimeUpdate = useCallback(
       (video: HTMLVideoElement) => {
         const safeCurrent = Math.max(video.currentTime, 0);
-        if (!isVideoCompleted) {
+        if (!isVideoCompleted && !allowSeek) {
           const maxAllowed = maxWatchedTimeRef.current + SEEK_TOLERANCE_SECONDS;
           if (safeCurrent > maxAllowed) {
             video.currentTime = maxWatchedTimeRef.current;
@@ -211,7 +215,7 @@ const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(
           onTimeUpdate(safeCurrent);
         }
       },
-      [isVideoCompleted, onProgressUpdate, onTimeUpdate]
+      [isVideoCompleted, onProgressUpdate, onTimeUpdate, allowSeek]
     );
 
     useEffect(() => {

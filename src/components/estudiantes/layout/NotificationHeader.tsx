@@ -356,10 +356,13 @@ export function NotificationHeader() {
     <div className="notification-menu">
       <button
         className={`
-          group notification-button relative rounded-full p-2 transition-colors
-          hover:bg-white/10
+          group notification-button relative flex size-10 items-center
+          justify-center rounded-full border border-border/50 p-0 text-primary
+          transition-colors hover:border-primary hover:bg-primary
+          focus-visible:ring-2 focus-visible:ring-primary
+          focus-visible:ring-offset-2 focus-visible:ring-offset-background
+          focus-visible:outline-none
           md:ml-2
-          md:hover:bg-primary
           ${isAnimating ? 'active' : ''}
         `}
         type="button"
@@ -385,12 +388,9 @@ export function NotificationHeader() {
           <>
             <BellRing
               className="
-                notification-icon size-6 text-[#22C4D3] transition-colors
-                md:group-hover:text-background
+                notification-icon size-6 text-primary transition-colors
+                group-hover:text-slate-950
               "
-              color="#22C4D3"
-              stroke="#22C4D3"
-              style={{ color: '#22C4D3', stroke: '#22C4D3' }}
             />
             <span
               className="
@@ -406,12 +406,9 @@ export function NotificationHeader() {
         ) : (
           <Bell
             className="
-              notification-icon size-6 text-[#22C4D3] transition-colors
-              md:group-hover:text-background
+              notification-icon size-6 text-primary transition-colors
+              group-hover:text-slate-950
             "
-            color="#22C4D3"
-            stroke="#22C4D3"
-            style={{ color: '#22C4D3', stroke: '#22C4D3' }}
           />
         )}
       </button>
