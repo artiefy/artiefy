@@ -1,23 +1,26 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
+
+import Link from 'next/link';
 
 import { format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {
+  BookOpen,
   CalendarDays,
   Check,
   CheckCircle2,
   ChevronDown,
-  Circle,
-  LoaderCircle,
   LockKeyhole,
+  Send,
   Target,
+  Wrench,
 } from 'lucide-react';
-import { toast } from 'sonner';
 
+import { GuidedActivitySubmissionDialog } from '~/components/estudiantes/proyectos/GuidedActivitySubmissionDialog';
+import { Button } from '~/components/estudiantes/ui/button';
 import { cn } from '~/lib/utils';
-import { updateActivityProgress } from '~/server/actions/estudiantes/guided-projects/updateActivityProgress';
 
 import type {
   GuidedObjective,
@@ -32,12 +35,40 @@ interface GuidedProjectActivitiesProps {
   introduction?: string | null;
 }
 
+const toCalendarDate = (value: Date | string | null) => {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return null;
+    const [, year, month, day] = match;
+    const parsedYear = Number(year);
+    const parsedMonth = Number(month) - 1;
+    const parsedDay = Number(day);
+    const parsed = new Date(parsedYear, parsedMonth, parsedDay);
+    return isValid(parsed) &&
+      parsed.getFullYear() === parsedYear &&
+      parsed.getMonth() === parsedMonth &&
+      parsed.getDate() === parsedDay
+      ? parsed
+      : null;
+  }
+
+  if (!isValid(value)) return null;
+  const usesUtcCalendar =
+    value.getUTCHours() === 0 &&
+    value.getUTCMinutes() === 0 &&
+    value.getUTCSeconds() === 0;
+  return usesUtcCalendar
+    ? new Date(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate())
+    : new Date(value.getFullYear(), value.getMonth(), value.getDate());
+};
+
 const formatActivityDates = (
-  startDate: Date | null,
-  endDate: Date | null
+  startDate: Date | string | null,
+  endDate: Date | string | null
 ): string | null => {
-  const start = startDate ? new Date(startDate) : null;
-  const end = endDate ? new Date(endDate) : null;
+  const start = toCalendarDate(startDate);
+  const end = toCalendarDate(endDate);
   const formattedStart =
     start && isValid(start)
       ? format(start, 'd MMM yyyy', { locale: es })
@@ -50,6 +81,23 @@ const formatActivityDates = (
   }
 
   return formattedStart ?? formattedEnd;
+};
+
+const compareActivities = (
+  first: GuidedObjectiveActivity,
+  second: GuidedObjectiveActivity
+) => {
+  const weekDifference =
+    (first.weekNumber ?? Number.MAX_SAFE_INTEGER) -
+    (second.weekNumber ?? Number.MAX_SAFE_INTEGER);
+  if (weekDifference !== 0) return weekDifference;
+
+  const firstDate =
+    toCalendarDate(first.startDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  const secondDate =
+    toCalendarDate(second.startDate)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+  const dateDifference = firstDate - secondDate;
+  return dateDifference !== 0 ? dateDifference : first.id - second.id;
 };
 
 export function GuidedProjectActivities({
@@ -66,16 +114,13 @@ export function GuidedProjectActivities({
   const [expandedActivityId, setExpandedActivityId] = useState<number | null>(
     () => firstObjective?.activities?.[0]?.id ?? null
   );
-  const [optimisticProgress, setOptimisticProgress] = useState<
-    Record<number, boolean>
-  >({});
-  const [pendingActivityId, setPendingActivityId] = useState<number | null>(
-    null
-  );
-  const [isPending, startTransition] = useTransition();
+  const [submissionActivity, setSubmissionActivity] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
   const isActivityCompleted = (activity: GuidedObjectiveActivity) =>
-    optimisticProgress[activity.id] ?? activity.isCompleted ?? false;
+    activity.isCompleted ?? false;
 
   const toggleObjective = (objective: GuidedObjective) => {
     const willOpen = expandedObjectiveId !== objective.id;
@@ -84,55 +129,6 @@ export function GuidedProjectActivities({
     if (willOpen) {
       setExpandedActivityId(objective.activities?.[0]?.id ?? null);
     }
-  };
-
-  const toggleActivityStatus = (
-    activityId: number,
-    currentCompleted: boolean,
-    objectiveEnabled: boolean
-  ) => {
-    if (!isEnrolled || !objectiveEnabled || !isSubscriptionValid) {
-      return;
-    }
-
-    const newStatus = !currentCompleted;
-    setOptimisticProgress((current) => ({
-      ...current,
-      [activityId]: newStatus,
-    }));
-    setPendingActivityId(activityId);
-
-    startTransition(async () => {
-      try {
-        const result = await updateActivityProgress({
-          activityId,
-          isCompleted: newStatus,
-        });
-
-        if (!result.success) {
-          toast.error(result.message || 'Error al actualizar la actividad');
-          setOptimisticProgress((current) => ({
-            ...current,
-            [activityId]: currentCompleted,
-          }));
-          return;
-        }
-
-        toast.success(
-          newStatus
-            ? 'Actividad completada'
-            : 'Actividad marcada como pendiente'
-        );
-      } catch {
-        toast.error('No se pudo actualizar la actividad');
-        setOptimisticProgress((current) => ({
-          ...current,
-          [activityId]: currentCompleted,
-        }));
-      } finally {
-        setPendingActivityId(null);
-      }
-    });
   };
 
   return (
@@ -157,7 +153,9 @@ export function GuidedProjectActivities({
       ) : (
         <div className="space-y-3">
           {objectives.map((objective, objectiveIndex) => {
-            const activities = objective.activities ?? [];
+            const activities = [...(objective.activities ?? [])].sort(
+              compareActivities
+            );
             const isObjectiveOpen = expandedObjectiveId === objective.id;
             const completedActivities = activities.filter((activity) =>
               isActivityCompleted(activity)
@@ -254,23 +252,22 @@ export function GuidedProjectActivities({
                     const isCompleted = isActivityCompleted(activity);
                     const isActivityOpen = expandedActivityId === activity.id;
                     const isBlocked = !objective.isEnabled;
-                    const cannotUpdate =
+                    const cannotAccess =
                       !isEnrolled || isBlocked || !isSubscriptionValid;
                     const activityButtonId = `guided-project-${guidedProjectId}-activity-${activity.id}-trigger`;
                     const activityPanelId = `guided-project-${guidedProjectId}-activity-${activity.id}-panel`;
+                    const buildHelpId = `guided-project-${guidedProjectId}-activity-${activity.id}-build-help`;
                     const activityDates = formatActivityDates(
                       activity.startDate,
                       activity.endDate
                     );
-                    const actionLabel = !isEnrolled
-                      ? 'Inscríbete para completar'
+                    const accessLabel = !isEnrolled
+                      ? 'Inscríbete para acceder'
                       : isBlocked
                         ? 'Actividad bloqueada'
                         : !isSubscriptionValid
-                          ? 'Renueva tu plan para completar'
-                          : isCompleted
-                            ? 'Marcar como pendiente'
-                            : 'Completar actividad';
+                          ? 'Renueva tu plan para acceder'
+                          : undefined;
 
                     return (
                       <div
@@ -370,47 +367,77 @@ export function GuidedProjectActivities({
                           )}
 
                           <div className="flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              disabled={cannotUpdate || isPending}
-                              aria-busy={pendingActivityId === activity.id}
-                              onClick={() =>
-                                toggleActivityStatus(
-                                  activity.id,
-                                  isCompleted,
-                                  objective.isEnabled
-                                )
-                              }
-                              className={cn(
-                                'inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
-                                isCompleted
-                                  ? 'border border-input bg-background text-foreground hover:bg-muted'
-                                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
-                              )}
-                            >
-                              {pendingActivityId === activity.id ? (
-                                <LoaderCircle
-                                  className="size-3.5 animate-spin"
-                                  aria-hidden="true"
-                                />
-                              ) : cannotUpdate ? (
+                            {cannotAccess ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled
+                                title={accessLabel}
+                              >
                                 <LockKeyhole
-                                  className="size-3.5"
+                                  data-icon="inline-start"
                                   aria-hidden="true"
                                 />
-                              ) : isCompleted ? (
-                                <Circle
-                                  className="size-3.5"
+                                Instrucción
+                              </Button>
+                            ) : (
+                              <Button asChild variant="outline" size="sm">
+                                <Link
+                                  href={`/estudiantes/proyectos-guiados/${guidedProjectId}/actividades/${activity.id}`}
+                                >
+                                  <BookOpen
+                                    data-icon="inline-start"
+                                    aria-hidden="true"
+                                  />
+                                  Instrucción
+                                </Link>
+                              </Button>
+                            )}
+
+                            <div className="flex flex-col items-start gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                aria-disabled="true"
+                                aria-describedby={buildHelpId}
+                                onClick={(event) => event.preventDefault()}
+                                className="cursor-not-allowed border-accent/40 text-accent opacity-60"
+                              >
+                                <Wrench
+                                  data-icon="inline-start"
                                   aria-hidden="true"
                                 />
-                              ) : (
-                                <Check
-                                  className="size-3.5"
-                                  aria-hidden="true"
-                                />
-                              )}
-                              {actionLabel}
-                            </button>
+                                Construir
+                              </Button>
+                              <span
+                                id={buildHelpId}
+                                className="text-[11px] text-muted-foreground"
+                              >
+                                Disponible próximamente
+                              </span>
+                            </div>
+
+                            <Button
+                              type="button"
+                              size="sm"
+                              disabled={cannotAccess}
+                              title={accessLabel}
+                              onClick={() =>
+                                setSubmissionActivity({
+                                  id: activity.id,
+                                  name: activity.name,
+                                })
+                              }
+                              className="bg-gradient-to-r from-primary to-primary/80 text-slate-950 hover:from-primary hover:to-primary"
+                            >
+                              <Send
+                                data-icon="inline-start"
+                                aria-hidden="true"
+                              />
+                              Entregar
+                            </Button>
                           </div>
                         </div>
                       </div>
@@ -421,6 +448,18 @@ export function GuidedProjectActivities({
             );
           })}
         </div>
+      )}
+
+      {submissionActivity && (
+        <GuidedActivitySubmissionDialog
+          activityId={submissionActivity.id}
+          activityName={submissionActivity.name}
+          projectId={guidedProjectId}
+          open
+          onOpenChange={(open) => {
+            if (!open) setSubmissionActivity(null);
+          }}
+        />
       )}
     </section>
   );

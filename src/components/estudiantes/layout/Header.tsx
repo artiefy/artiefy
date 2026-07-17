@@ -19,12 +19,11 @@ import {
   MapPin,
   PanelsTopLeft,
   Search,
-  Settings,
   X,
 } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import { FaCrown, FaStar } from 'react-icons/fa';
-import { IoGiftOutline } from 'react-icons/io5';
+import { FaCrown } from 'react-icons/fa';
+import { IoSettingsOutline } from 'react-icons/io5';
 import useSWR from 'swr';
 
 import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
@@ -102,11 +101,9 @@ export function Header({
 
   const planType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
-    | string
-    | undefined;
+    string | undefined;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    | string
-    | undefined;
+    string | undefined;
 
   useEffect(() => {
     if (!user || userRole) return;
@@ -141,63 +138,102 @@ export function Header({
     (item) => item.href !== '/estudiantes/myaccount' || isSignedIn
   );
 
-  const getPlanBadgeConfig = (type?: string) => {
-    if (!type) return null;
-    const normalized = type.toLowerCase();
-    if (normalized === 'premium') {
-      return {
-        label: 'Premium',
-        icon: FaCrown,
-        classes: 'border-amber-500/30 bg-amber-500/20 text-amber-400',
-      };
-    }
-    if (normalized === 'pro') {
-      return {
-        label: 'Pro',
-        icon: FaStar,
-        classes: 'border-blue-500/30 bg-blue-500/20 text-blue-400',
-      };
-    }
-    if (normalized === 'enterprise') {
-      return {
-        label: 'Enterprise',
-        icon: FaCrown,
-        classes: 'border-indigo-500/30 bg-indigo-500/20 text-indigo-300',
-      };
-    }
-    if (normalized === 'gratuito' || normalized === 'free') {
-      return {
-        label: 'Gratuito',
-        icon: IoGiftOutline,
-        classes: 'border-emerald-500/30 bg-emerald-500/20 text-emerald-400',
-      };
-    }
-    return {
-      label: type,
-      icon: null,
-      classes: 'border-slate-500/30 bg-slate-500/20 text-slate-200',
-    };
-  };
+  const profileName =
+    user?.fullName ?? user?.firstName ?? user?.username ?? 'Mi perfil';
+  const subscriptionEndTime = subscriptionEndDate
+    ? new Date(subscriptionEndDate).getTime()
+    : null;
+  const hasActivePremiumPlan =
+    planType?.toLowerCase() === 'premium' &&
+    subscriptionStatus === 'active' &&
+    (subscriptionEndTime === null ||
+      (!Number.isNaN(subscriptionEndTime) && subscriptionEndTime > Date.now()));
 
-  const renderMobilePlanBadge = () => {
-    if (!planType || isPlanExpired()) return null;
-    const config = getPlanBadgeConfig(planType);
-    if (!config) return null;
-    const Icon = config.icon;
-    return (
-      <span
-        className={`
-          inline-flex items-center gap-1 rounded-full border px-2 py-0.5
-          text-[10px] font-medium
-          ${config.classes}
-        `}
-        title={`Plan ${config.label}`}
-      >
-        {Icon ? <Icon className="size-3" /> : null}
-        {config.label}
+  const renderProfileLink = (mobileMenu = false) => (
+    <Link
+      href="/estudiantes/perfil"
+      aria-label={`Ir al perfil de ${profileName}`}
+      onClick={mobileMenu ? () => setMobileMenuOpen(false) : undefined}
+      className={`
+        group/profile inline-flex min-h-10 min-w-0 items-center gap-2.5 border
+        text-left transition-colors focus-visible:ring-2 focus-visible:ring-primary
+        focus-visible:ring-offset-2 focus-visible:ring-offset-background
+        focus-visible:outline-none
+        ${
+          mobileMenu
+            ? `
+              min-h-12 w-full rounded-xl border-white/10 bg-white/5 px-3 py-2
+              hover:border-primary/40 hover:bg-primary/10
+            `
+            : `
+              max-w-56 rounded-full border-border/50 bg-secondary/30 px-2.5
+              py-1.5 hover:border-primary/50 hover:bg-primary/10
+            `
+        }
+      `}
+    >
+      {user?.imageUrl ? (
+        <Image
+          src={user.imageUrl}
+          alt=""
+          width={32}
+          height={32}
+          className="size-8 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-semibold text-primary"
+        >
+          {profileName.charAt(0).toUpperCase()}
+        </span>
+      )}
+      <span className="flex min-w-0 flex-1 items-center gap-1.5 whitespace-nowrap">
+        <span className="min-w-0 truncate text-sm font-semibold text-foreground">
+          {profileName}
+        </span>
+        {hasActivePremiumPlan ? (
+          <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-medium text-amber-400">
+            <FaCrown className="size-3" aria-hidden="true" />
+            Premium
+          </span>
+        ) : null}
       </span>
-    );
-  };
+    </Link>
+  );
+
+  const renderAccountMenuButton = (floating = false) => (
+    <div
+      className={`
+        group/account relative flex size-10 shrink-0 items-center justify-center
+        overflow-hidden rounded-full border transition-colors
+        focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2
+        focus-within:ring-offset-background
+        ${
+          floating
+            ? `
+              liquid-glass mobile-header-floating-control border-white/10
+              !bg-[#01152d]/55 !backdrop-blur-2xl !backdrop-saturate-150
+              hover:!border-primary hover:!bg-primary
+            `
+            : `
+              border-border/50 bg-secondary/30 hover:border-primary
+              hover:bg-primary
+            `
+        }
+      `}
+      title="Abrir menú de cuenta"
+    >
+      <span className="pointer-events-none absolute inset-0 z-[1] flex items-center justify-center text-muted-foreground transition-colors group-hover/account:text-slate-950">
+        <IoSettingsOutline className="size-[22px]" aria-hidden="true" />
+      </span>
+      <div className="absolute inset-0 opacity-0 [&_.cl-rootBox]:!size-full [&_.cl-rootBox]:!max-w-full [&_.cl-rootBox]:!min-w-0 [&_.cl-userButtonBox]:!size-full [&_.cl-userButtonBox]:!max-w-full [&_.cl-userButtonBox]:!min-w-0 [&_.cl-userButtonBox]:!justify-center [&_.cl-userButtonOuterIdentifier]:!hidden [&_.cl-userButtonTrigger]:!size-full [&_.cl-userButtonTrigger]:!max-w-full [&_.cl-userButtonTrigger]:!min-w-0 [&_.cl-userButtonTrigger]:!p-0 [&>div]:!size-full">
+        <Suspense fallback={null}>
+          <UserButtonWrapper hidePlanBadge />
+        </Suspense>
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -280,9 +316,7 @@ export function Header({
     setSearchInProgress(false);
   };
 
-  const renderAuthButton = (variant: 'header' | 'mobileMenu' = 'header') => {
-    const isMobileMenu = variant === 'mobileMenu';
-    const mobilePlanBadge = renderMobilePlanBadge();
+  const renderAuthButton = () => {
     if (!mounted) {
       return (
         <div className="flex items-center">
@@ -343,88 +377,13 @@ export function Header({
             </Show>
 
             <Show when="signed-in">
-              {isMobileMenu ? (
-                <div className="flex w-full flex-col items-center gap-2">
-                  <Suspense
-                    fallback={
-                      <div
-                        className="
-                          flex min-w-[180px] items-center justify-start
-                        "
-                      >
-                        <Icons.spinner className="ml-2 size-5 text-primary" />
-                      </div>
-                    }
-                  >
-                    <UserButtonWrapper />
-                  </Suspense>
-                  {mobilePlanBadge ? (
-                    <div className="mt-1">{mobilePlanBadge}</div>
-                  ) : null}
-                  <div
-                    className="
-                      campana-header relative
-                      md:text-white
-                    "
-                  >
-                    <NotificationHeader />
-                  </div>
+              <div className="mr-4 hidden items-center gap-2 md:mr-6 md:flex">
+                {renderProfileLink()}
+                <div className="campana-header relative md:text-white">
+                  <NotificationHeader />
                 </div>
-              ) : (
-                <>
-                  <div className="mr-4 hidden items-center gap-3 md:mr-6 md:flex">
-                    <Suspense
-                      fallback={
-                        <div className="flex items-center">
-                          <Icons.spinner className="size-5 text-primary" />
-                        </div>
-                      }
-                    >
-                      <UserButtonWrapper />
-                    </Suspense>
-                    <div
-                      className="
-                        campana-header relative
-                        md:text-white
-                      "
-                    >
-                      <NotificationHeader />
-                    </div>
-                  </div>
-
-                  <div
-                    className="
-                      flex items-center gap-2
-                      md:hidden
-                    "
-                  >
-                    {mobilePlanBadge}
-                    <div className="perfil-header">
-                      <Suspense
-                        fallback={
-                          <div
-                            className="
-                              flex min-w-[180px] items-center justify-start
-                            "
-                          >
-                            <Icons.spinner className="ml-2 size-5 text-primary" />
-                          </div>
-                        }
-                      >
-                        <UserButtonWrapper />
-                      </Suspense>
-                    </div>
-                    <div
-                      className="
-                        campana-header relative
-                        md:text-white
-                      "
-                    >
-                      <NotificationHeader />
-                    </div>
-                  </div>
-                </>
-              )}
+                {renderAccountMenuButton()}
+              </div>
             </Show>
           </>
         )}
@@ -1079,40 +1038,7 @@ export function Header({
                       >
                         <NotificationHeader />
                       </div>
-                      {/* Gear icon that triggers the Clerk UserButton menu.
-                        The real UserButton is rendered invisible underneath and
-                        the gear lets the click pass through to it, so all custom
-                        menu items are preserved. */}
-                      <div
-                        className="
-                        liquid-glass mobile-header-floating-control group
-                        relative flex size-10 items-center justify-center
-                        rounded-full !bg-[#01152d]/55 !backdrop-blur-2xl
-                        !backdrop-saturate-150 transition-colors
-                        hover:bg-white/10 md:hover:bg-primary
-                      "
-                      >
-                        <span
-                          className="
-                          pointer-events-none absolute inset-0 z-[1] flex
-                          items-center justify-center text-muted-foreground
-                          transition-colors md:group-hover:text-background
-                        "
-                        >
-                          <Settings className="size-[22px]" />
-                        </span>
-                        <div
-                          className="
-                          absolute inset-0 opacity-0
-                          [&_.cl-rootBox]:size-full
-                          [&_.cl-userButtonBox]:size-full
-                          [&_.cl-userButtonTrigger]:size-full
-                          [&_.cl-userButtonTrigger]:!p-0
-                        "
-                        >
-                          <UserButtonWrapper hidePlanBadge />
-                        </div>
-                      </div>
+                      {renderAccountMenuButton(true)}
                     </div>
                   </Show>
                 </>
@@ -1401,13 +1327,7 @@ export function Header({
                 "
                     >
                       <div className="flex min-h-12 items-center justify-center">
-                        <Suspense
-                          fallback={
-                            <Icons.spinner className="size-5 text-primary" />
-                          }
-                        >
-                          <UserButtonWrapper />
-                        </Suspense>
+                        {renderProfileLink(true)}
                       </div>
                     </div>
                   ) : null}

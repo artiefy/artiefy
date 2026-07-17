@@ -19,6 +19,8 @@ import {
   vector,
 } from 'drizzle-orm/pg-core';
 
+import type { GuidedActivitySubmissionFile } from '~/lib/guidedActivitySubmissions';
+
 export const users = pgTable(
   'users',
   {
@@ -2418,6 +2420,44 @@ export const userGuidedActivityProgress = pgTable(
   ]
 );
 
+// Historial inmutable de entregas de actividades de proyectos guiados.
+export const guidedActivitySubmissions = pgTable(
+  'guided_activity_submissions',
+  {
+    id: serial('id').primaryKey(),
+    userId: text('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    activityId: integer('activity_id')
+      .references(() => guidedObjectiveActivities.id, { onDelete: 'cascade' })
+      .notNull(),
+    requestId: varchar('request_id', { length: 36 }).notNull(),
+    files: jsonb('files')
+      .$type<GuidedActivitySubmissionFile[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    urls: jsonb('urls')
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    submittedAt: timestamp('submitted_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('uniq_guided_activity_submission_activity_request').on(
+      table.userId,
+      table.activityId,
+      table.requestId
+    ),
+    index('guided_activity_submission_activity_idx').on(table.activityId),
+    index('guided_activity_submission_user_activity_history_idx').on(
+      table.userId,
+      table.activityId,
+      table.submittedAt,
+      table.id
+    ),
+  ]
+);
+
 // Relaciones
 export const guidedProjectsRelations = relations(
   guidedProjects,
@@ -2488,6 +2528,7 @@ export const guidedObjectiveActivitiesRelations = relations(
       references: [guidedObjectives.id],
     }),
     userProgress: many(userGuidedActivityProgress),
+    submissions: many(guidedActivitySubmissions),
   })
 );
 
@@ -2528,6 +2569,20 @@ export const userGuidedActivityProgressRelations = relations(
     }),
     activity: one(guidedObjectiveActivities, {
       fields: [userGuidedActivityProgress.activityId],
+      references: [guidedObjectiveActivities.id],
+    }),
+  })
+);
+
+export const guidedActivitySubmissionsRelations = relations(
+  guidedActivitySubmissions,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [guidedActivitySubmissions.userId],
+      references: [users.id],
+    }),
+    activity: one(guidedObjectiveActivities, {
+      fields: [guidedActivitySubmissions.activityId],
       references: [guidedObjectiveActivities.id],
     }),
   })

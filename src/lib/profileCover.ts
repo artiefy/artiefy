@@ -1,6 +1,20 @@
 const MAX_COVER_SIZE = 5 * 1024 * 1024; // 5 MB
+const STORAGE_BASE_URL = process.env.NEXT_PUBLIC_AWS_S3_URL?.replace(
+  /\/+$/,
+  ''
+);
 
 export { MAX_COVER_SIZE };
+
+export function storageKeyToUrl(key: string | null): string | null {
+  const normalizedKey = key?.trim();
+  if (!normalizedKey || normalizedKey === 'none') return null;
+  if (/^https?:\/\//i.test(normalizedKey) || normalizedKey.startsWith('/')) {
+    return normalizedKey;
+  }
+  if (!STORAGE_BASE_URL) return null;
+  return `${STORAGE_BASE_URL}/${normalizedKey.replace(/^\/+/, '')}`;
+}
 
 /**
  * Builds the display URL for a stored cover image key.
@@ -10,9 +24,8 @@ export { MAX_COVER_SIZE };
  */
 export function coverKeyToUrl(key: string | null): string | null {
   if (!key) return null;
-  const base = process.env.NEXT_PUBLIC_AWS_S3_URL;
-  if (!base) return null;
-  const s3Url = `${base}/${key}`;
+  if (!STORAGE_BASE_URL) return null;
+  const s3Url = `${STORAGE_BASE_URL}/${key}`;
   return `/api/image-proxy?url=${encodeURIComponent(s3Url)}`;
 }
 
