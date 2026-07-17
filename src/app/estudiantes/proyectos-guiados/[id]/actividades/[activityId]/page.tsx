@@ -236,8 +236,8 @@ export default async function GuidedActivityPage({ params }: PageProps) {
           instructionText: activity.instructionText,
         }}
         coverImageUrl={resolveImageUrl(coverImageKey)}
-        coverVideoUrl={storageKeyToUrl(coverVideoKey)}
-        instructionVideoUrl={storageKeyToUrl(activity.instructionVideoKey)}
+        instructionVideoKey={activity.instructionVideoKey}
+        coverVideoKey={coverVideoKey}
         resources={parseResources(currentObjective)}
         objectives={navigationObjectives}
         progress={visibleProgress}

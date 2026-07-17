@@ -21,6 +21,7 @@ import {
   X,
 } from 'lucide-react';
 
+import VideoPlayer from '~/components/estudiantes/layout/lessondetail/LessonVideo';
 import { GuidedActivitySubmissionDialog } from '~/components/estudiantes/proyectos/GuidedActivitySubmissionDialog';
 import { Button } from '~/components/estudiantes/ui/button';
 import {
@@ -67,8 +68,8 @@ interface GuidedActivityDetailsProps {
     instructionText: string | null;
   };
   coverImageUrl: string | null;
-  coverVideoUrl: string | null;
-  instructionVideoUrl: string | null;
+  instructionVideoKey: string | null;
+  coverVideoKey: string | null;
   resources: GuidedActivityResource[];
   objectives: GuidedActivityNavigationObjective[];
   progress: number;
@@ -85,6 +86,13 @@ interface GuidedActivitySyllabusProps {
 }
 
 type ActivityTab = 'activity' | 'resources';
+
+// coverVideoKey is reused for images in some projects; treat known image
+// extensions as non-video so they never reach the video player.
+const isImageKey = (value: string) => {
+  const extension = value.split('.').pop()?.toLowerCase();
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension ?? '');
+};
 
 function GuidedActivitySyllabus({
   idPrefix,
@@ -230,8 +238,8 @@ export function GuidedActivityDetails({
   objectiveDescription,
   activity,
   coverImageUrl,
-  coverVideoUrl,
-  instructionVideoUrl,
+  instructionVideoKey,
+  coverVideoKey,
   resources,
   objectives,
   progress,
@@ -243,7 +251,23 @@ export function GuidedActivityDetails({
   const [expandedObjectiveIds, setExpandedObjectiveIds] = useState<Set<number>>(
     () => new Set([currentObjectiveId])
   );
-  const activityVideoUrl = instructionVideoUrl ?? coverVideoUrl;
+  const normalizedInstructionVideoKey =
+    instructionVideoKey &&
+    instructionVideoKey !== 'none' &&
+    instructionVideoKey !== 'null'
+      ? instructionVideoKey
+      : null;
+  const normalizedCoverVideoKey =
+    coverVideoKey && coverVideoKey !== 'none' && coverVideoKey !== 'null'
+      ? coverVideoKey
+      : null;
+  // coverVideoKey is an overloaded field that may store an image; only use it as
+  // a video source when its extension is not an image one.
+  const coverVideoOnlyKey =
+    normalizedCoverVideoKey && !isImageKey(normalizedCoverVideoKey)
+      ? normalizedCoverVideoKey
+      : null;
+  const activityVideoKey = normalizedInstructionVideoKey ?? coverVideoOnlyKey;
   const tabRefs = useRef<Record<ActivityTab, HTMLButtonElement | null>>({
     activity: null,
     resources: null,
@@ -531,13 +555,12 @@ export function GuidedActivityDetails({
         <main className="min-w-0 flex-1 px-4 py-5 md:px-8 lg:px-10">
           <div className="mx-auto max-w-6xl">
             <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border/40 bg-black shadow-2xl">
-              {activityVideoUrl ? (
-                <video
-                  src={activityVideoUrl}
-                  poster={coverImageUrl ?? undefined}
-                  controls
-                  playsInline
-                  className="size-full object-contain"
+              {activityVideoKey ? (
+                <VideoPlayer
+                  videoKey={activityVideoKey}
+                  onVideoEnd={() => undefined}
+                  onProgressUpdate={() => undefined}
+                  isVideoCompleted={false}
                 />
               ) : coverImageUrl ? (
                 <Image
