@@ -30,6 +30,7 @@ interface GuidedProject {
   title: string;
   description: string | null;
   coverImageKey: string | null;
+  coverVideoKey: string | null;
   categoryName: string;
   modalidadName: string;
   instructor: string;
@@ -263,7 +264,22 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
                 <CardHeader className="p-0">
                   <AspectRatio ratio={16 / 9}>
                     <div className="relative size-full bg-[#04101f]">
-                      {project.coverImageKey ? (
+                      {project.coverVideoKey &&
+                      project.coverVideoKey !== 'none' ? (
+                        <video
+                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                          poster={
+                            project.coverImageKey
+                              ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
+                              : undefined
+                          }
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          className="size-full object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                      ) : project.coverImageKey ? (
                         <Image
                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
                           alt={project.title}

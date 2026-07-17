@@ -191,6 +191,18 @@ export function GuidedProjectAdminTabs({
     project.instructorProfesion ||
     project.instructorDescripcion
   );
+  const educators =
+    project.instructors && project.instructors.length > 0
+      ? project.instructors
+      : [
+          {
+            id: project.instructor,
+            name: project.instructorName ?? null,
+            profesion: project.instructorProfesion ?? null,
+            descripcion: project.instructorDescripcion ?? null,
+            profileImageKey: project.instructorProfileImageKey ?? null,
+          },
+        ];
 
   const navItems: { key: TabKey; label: string; icon: React.ReactNode }[] = [
     { key: 'proyecto', label: 'Proyecto', icon: <Rocket className="size-4" /> },
@@ -324,7 +336,22 @@ export function GuidedProjectAdminTabs({
             <div className="order-1 flex w-full flex-col space-y-6 md:order-2">
               <div className="card-premium group relative aspect-video w-full overflow-hidden">
                 <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-40 transition-opacity duration-300 group-hover:opacity-20" />
-                {project.coverImageKey ? (
+                {project.coverVideoKey && project.coverVideoKey !== 'none' ? (
+                  <video
+                    src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
+                    poster={
+                      project.coverImageKey
+                        ? `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`
+                        : undefined
+                    }
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    aria-label={`Video de ${project.title}`}
+                    className="size-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                ) : project.coverImageKey ? (
                   <Image
                     src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
                     alt={project.title}
@@ -340,22 +367,6 @@ export function GuidedProjectAdminTabs({
                   </div>
                 )}
               </div>
-
-              {project.coverVideoKey && project.coverVideoKey !== 'none' && (
-                <div className="aspect-video w-full overflow-hidden rounded-xl border border-cyan-500/30">
-                  <video
-                    controls
-                    className="size-full object-cover"
-                    aria-label={`Video de ${project.title}`}
-                  >
-                    <source
-                      src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverVideoKey}`}
-                      type="video/mp4"
-                    />
-                    Tu navegador no soporta la reproducción de videos.
-                  </video>
-                </div>
-              )}
 
               <div className="grid w-full grid-cols-2 gap-3">
                 <Button
@@ -530,25 +541,51 @@ export function GuidedProjectAdminTabs({
             )}
 
             {hasEducatorInfo && (
-              <section className={sectionClass}>
-                <h2 className="mb-4 text-xl font-bold text-white">
-                  Sobre el educador
+              <section
+                className={`${sectionClass} relative space-y-10 overflow-hidden`}
+              >
+                <h2 className="relative text-lg font-bold text-white md:text-xl">
+                  Tu educador en este proyecto
                 </h2>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-lg font-semibold text-white">
-                    {project.instructorName}
-                  </h3>
-                  {project.instructorProfesion && (
-                    <p className="mt-0.5 text-sm font-medium text-cyan-300">
-                      {project.instructorProfesion}
-                    </p>
-                  )}
-                  {project.instructorDescripcion && (
-                    <p className="mt-3 text-sm leading-relaxed text-white/80">
-                      {project.instructorDescripcion}
-                    </p>
-                  )}
-                </div>
+                {educators.map((educator) => (
+                  <div
+                    key={educator.id}
+                    className="relative flex flex-col-reverse items-start gap-6 md:flex-row md:items-center md:justify-between md:gap-10"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-2xl font-bold text-white md:text-3xl">
+                        {educator.name}
+                      </h3>
+                      {educator.profesion && (
+                        <p className="mt-1 text-sm font-semibold text-cyan-400 md:text-base">
+                          {educator.profesion}
+                        </p>
+                      )}
+                      {educator.descripcion && (
+                        <p className="mt-4 max-w-md text-sm leading-relaxed text-white/70">
+                          {educator.descripcion}
+                        </p>
+                      )}
+                    </div>
+                    <div className="relative shrink-0 self-center">
+                      <div className="absolute inset-0 -m-8 rounded-full bg-cyan-500/25 blur-3xl" />
+                      {educator.profileImageKey ? (
+                        <Image
+                          src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${educator.profileImageKey}`}
+                          alt={educator.name ?? 'Educador'}
+                          width={160}
+                          height={160}
+                          className="relative size-32 rounded-2xl [mask-image:linear-gradient(to_right,transparent,black_35%)] object-cover md:size-40"
+                          quality={70}
+                        />
+                      ) : (
+                        <div className="relative flex size-32 items-center justify-center rounded-2xl bg-[#0d2a4d] text-3xl font-bold text-cyan-300 md:size-40">
+                          {(educator.name ?? 'E').charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </section>
             )}
 

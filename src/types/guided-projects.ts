@@ -1,5 +1,13 @@
 import { type Category, type Modalidad, type Nivel, type User } from './index';
 
+export interface GuidedProjectInstructor {
+  id: string;
+  name: string | null;
+  profesion: string | null;
+  descripcion: string | null;
+  profileImageKey: string | null;
+}
+
 export interface GuidedProject {
   id: number;
   title: string;
@@ -9,6 +17,7 @@ export interface GuidedProject {
   coverVideoKey: string | null;
   categoryId: number;
   instructor: string;
+  instructors?: GuidedProjectInstructor[];
   instructorName?: string | null;
   instructorProfesion?: string | null;
   instructorDescripcion?: string | null;

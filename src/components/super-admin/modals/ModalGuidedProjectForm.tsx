@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { FiUploadCloud } from 'react-icons/fi';
+import Select, { type MultiValue } from 'react-select';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/educators/ui/button';
@@ -33,7 +34,7 @@ interface GuidedProjectFormData {
   categoryId: number;
   modalidadId: number;
   nivelId: number;
-  instructor: string;
+  instructors: string[];
   individualPrice: number;
   isActive: boolean;
   isTop: boolean;
@@ -42,6 +43,13 @@ interface GuidedProjectFormData {
   requiresProgram: boolean;
   coverImageKey: string;
   coverVideoKey: string;
+  problemStatement: string;
+  whatYouWillBuild: string;
+  prerequisites: string;
+  techStack: string;
+  deliverablesDescription: string;
+  studentsCount: number;
+  contentHours: number;
 }
 
 interface ModalGuidedProjectFormProps {
@@ -58,7 +66,7 @@ const EMPTY_FORM: GuidedProjectFormData = {
   categoryId: 1,
   modalidadId: 1,
   nivelId: 1,
-  instructor: '',
+  instructors: [],
   individualPrice: 0,
   isActive: true,
   isTop: false,
@@ -67,6 +75,13 @@ const EMPTY_FORM: GuidedProjectFormData = {
   requiresProgram: false,
   coverImageKey: '',
   coverVideoKey: '',
+  problemStatement: '',
+  whatYouWillBuild: '',
+  prerequisites: '',
+  techStack: '',
+  deliverablesDescription: '',
+  studentsCount: 0,
+  contentHours: 0,
 };
 
 export function ModalGuidedProjectForm({
@@ -86,14 +101,17 @@ export function ModalGuidedProjectForm({
   const [modalidades, setModalidades] = useState<Option[]>([]);
   const [niveles, setNiveles] = useState<Option[]>([]);
 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [coverKind, setCoverKind] = useState<'image' | 'video' | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverProgress, setCoverProgress] = useState(0);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const coverVideoRef = useRef<HTMLVideoElement>(null);
 
-  const [needsVideo, setNeedsVideo] = useState(false);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
-  const [uploadingVideo, setUploadingVideo] = useState(false);
-  const videoInputRef = useRef<HTMLInputElement>(null);
+  const [posterPreview, setPosterPreview] = useState<string | null>(null);
+  const [uploadingPoster, setUploadingPoster] = useState(false);
+  const [posterProgress, setPosterProgress] = useState(0);
+  const posterInputRef = useRef<HTMLInputElement>(null);
 
   const set = (key: keyof GuidedProjectFormData, value: unknown) =>
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -105,7 +123,7 @@ export function ModalGuidedProjectForm({
     const fetchOptions = async () => {
       try {
         const [edRes, catRes, modRes, nivRes] = await Promise.all([
-          fetch('/api/educators'),
+          fetch('/api/super-admin/changeEducators'),
           fetch('/api/educadores/categories'),
           fetch('/api/educadores/modalidades'),
           fetch('/api/educadores/nivel'),
@@ -132,9 +150,9 @@ export function ModalGuidedProjectForm({
   useEffect(() => {
     if (!open || !projectId) {
       setFormData(EMPTY_FORM);
-      setImagePreview(null);
-      setVideoPreview(null);
-      setNeedsVideo(false);
+      setCoverKind(null);
+      setCoverPreview(null);
+      setPosterPreview(null);
       return;
     }
 
@@ -151,7 +169,8 @@ export function ModalGuidedProjectForm({
           categoryId: data.categoryId ?? 1,
           modalidadId: data.modalidadId ?? 1,
           nivelId: data.nivelId ?? 1,
-          instructor: data.instructor ?? '',
+          instructors:
+            data.instructors ?? (data.instructor ? [data.instructor] : []),
           individualPrice: data.individualPrice ?? 0,
           isActive: data.isActive ?? true,
           isTop: data.isTop ?? false,
@@ -160,16 +179,28 @@ export function ModalGuidedProjectForm({
           requiresProgram: data.requiresProgram ?? false,
           coverImageKey: data.coverImageKey ?? '',
           coverVideoKey: data.coverVideoKey ?? '',
+          problemStatement: data.problemStatement ?? '',
+          whatYouWillBuild: data.whatYouWillBuild ?? '',
+          prerequisites: data.prerequisites ?? '',
+          techStack: data.techStack ?? '',
+          deliverablesDescription: data.deliverablesDescription ?? '',
+          studentsCount: data.studentsCount ?? 0,
+          contentHours: data.contentHours ?? 0,
         });
-        if (data.coverImageKey) {
-          setImagePreview(
-            `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${data.coverImageKey}`
-          );
-        }
         if (data.coverVideoKey && data.coverVideoKey !== 'none') {
-          setNeedsVideo(true);
-          setVideoPreview(
+          setCoverKind('video');
+          setCoverPreview(
             `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${data.coverVideoKey}`
+          );
+          if (data.coverImageKey) {
+            setPosterPreview(
+              `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${data.coverImageKey}`
+            );
+          }
+        } else if (data.coverImageKey) {
+          setCoverKind('image');
+          setCoverPreview(
+            `${process.env.NEXT_PUBLIC_AWS_S3_URL}/${data.coverImageKey}`
           );
         }
       } catch {
@@ -182,76 +213,163 @@ export function ModalGuidedProjectForm({
     void fetchProject();
   }, [open, projectId]);
 
-  // Upload imagen
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Sube una imagen al bucket vía presigned POST y devuelve la key
+  const uploadImageFile = async (
+    file: File,
+    onProgress?: (percent: number) => void
+  ) => {
+    const uploadRes = await fetch('/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType: file.type,
+        fileSize: file.size,
+      }),
+    });
+    if (!uploadRes.ok) throw new Error('Error al obtener URL de subida');
+    const { url, fields, key } = await uploadRes.json();
+
+    const formDataUpload = new FormData();
+    Object.entries(fields as Record<string, string>).forEach(([k, v]) => {
+      formDataUpload.append(k, v);
+    });
+    formDataUpload.append('file', file);
+
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          onProgress?.(Math.round((event.loaded / event.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) resolve();
+        else reject(new Error('Error al subir a S3'));
+      };
+      xhr.onerror = () => reject(new Error('Error al subir a S3'));
+      xhr.open('POST', url);
+      xhr.send(formDataUpload);
+    });
+
+    return key as string;
+  };
+
+  // Portada: una imagen o un video (igual que en cursos)
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setImagePreview(URL.createObjectURL(file));
-    setUploadingImage(true);
+    const isVideo = file.type.startsWith('video/');
+    setCoverKind(isVideo ? 'video' : 'image');
+    setCoverPreview(URL.createObjectURL(file));
+    setPosterPreview(null);
+    setUploadingCover(true);
+    setCoverProgress(0);
 
     try {
-      // 1. Pedir presigned POST
-      const uploadRes = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fileName: file.name,
-          contentType: file.type,
-          fileSize: file.size,
-        }),
-      });
-      if (!uploadRes.ok) throw new Error('Error al obtener URL de subida');
-      const { url, fields, key } = await uploadRes.json();
-
-      // 2. Subir con FormData (presigned POST requiere fields)
-      const formDataUpload = new FormData();
-      Object.entries(fields as Record<string, string>).forEach(([k, v]) => {
-        formDataUpload.append(k, v);
-      });
-      formDataUpload.append('file', file);
-
-      const s3Res = await fetch(url, {
-        method: 'POST',
-        body: formDataUpload,
-      });
-      if (!s3Res.ok) throw new Error('Error al subir a S3');
-
-      set('coverImageKey', key);
-      toast.success('Imagen subida');
+      if (isVideo) {
+        const { key } = await uploadFileToS3(file, (pct) =>
+          setCoverProgress(pct)
+        );
+        set('coverVideoKey', key);
+        set('coverImageKey', '');
+        toast.success('Video subido');
+      } else {
+        const key = await uploadImageFile(file, (pct) => setCoverProgress(pct));
+        set('coverImageKey', key);
+        set('coverVideoKey', 'none');
+        toast.success('Imagen subida');
+      }
     } catch (err) {
       console.error(err);
-      toast.error('Error al subir imagen');
-      setImagePreview(null);
+      toast.error('Error al subir la portada');
+      setCoverKind(null);
+      setCoverPreview(null);
     } finally {
-      setUploadingImage(false);
+      setUploadingCover(false);
     }
   };
 
-  // Upload video
-  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Miniatura del video (se usa como coverImageKey para las cards)
+  const handlePosterChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setVideoPreview(URL.createObjectURL(file));
-    setUploadingVideo(true);
+    setPosterPreview(URL.createObjectURL(file));
+    setUploadingPoster(true);
+    setPosterProgress(0);
 
     try {
-      const { key } = await uploadFileToS3(file);
-      set('coverVideoKey', key);
-      toast.success('Video subido');
+      const key = await uploadImageFile(file, (pct) => setPosterProgress(pct));
+      set('coverImageKey', key);
+      toast.success('Miniatura subida');
     } catch (err) {
       console.error(err);
-      toast.error('Error al subir video');
-      setVideoPreview(null);
+      toast.error('Error al subir la miniatura');
+      setPosterPreview(null);
     } finally {
-      setUploadingVideo(false);
+      setUploadingPoster(false);
     }
+  };
+
+  // Captura el frame actual del video como miniatura
+  const handleCaptureFrame = async () => {
+    const video = coverVideoRef.current;
+    if (!video) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 360;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    try {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    } catch (err) {
+      console.error(err);
+      toast.error('No se pudo capturar el frame de este video');
+      return;
+    }
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          toast.error('No se pudo capturar el frame');
+          return;
+        }
+        void (async () => {
+          const file = new File([blob], 'frame.jpg', { type: 'image/jpeg' });
+          setPosterPreview(URL.createObjectURL(file));
+          setUploadingPoster(true);
+          setPosterProgress(0);
+          try {
+            const key = await uploadImageFile(file, (pct) =>
+              setPosterProgress(pct)
+            );
+            set('coverImageKey', key);
+            toast.success('Frame capturado y subido');
+          } catch (err) {
+            console.error(err);
+            toast.error('Error al subir el frame capturado');
+            setPosterPreview(null);
+          } finally {
+            setUploadingPoster(false);
+          }
+        })();
+      },
+      'image/jpeg',
+      0.9
+    );
   };
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.instructor) {
+    if (!formData.title || formData.instructors.length === 0) {
       toast.error('Título e instructor son requeridos');
+      return;
+    }
+    if (coverKind === 'video' && !formData.coverImageKey) {
+      toast.error('Sube una miniatura para el video de portada');
       return;
     }
     setLoading(true);
@@ -261,10 +379,7 @@ export function ModalGuidedProjectForm({
         : '/api/guided-projects';
       const method = isEditing ? 'PUT' : 'POST';
 
-      const payload = {
-        ...formData,
-        coverVideoKey: needsVideo ? formData.coverVideoKey : 'none',
-      };
+      const payload = { ...formData };
 
       const res = await fetch(url, {
         method,
@@ -289,6 +404,44 @@ export function ModalGuidedProjectForm({
   const checkLabel =
     'flex items-center gap-2 text-sm text-white cursor-pointer';
 
+  const renderUploadLoader = (percent: number) => {
+    const radius = 42;
+    const circumference = 2 * Math.PI * radius;
+    return (
+      <div className="flex flex-col items-center gap-3">
+        <div className="relative flex size-24 items-center justify-center">
+          <svg viewBox="0 0 100 100" className="size-24 -rotate-90">
+            <circle
+              cx="50"
+              cy="50"
+              r={radius}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="8"
+              className="text-gray-700"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r={radius}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="8"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - percent / 100)}
+              className="text-primary transition-all duration-200 ease-out"
+            />
+          </svg>
+          <span className="absolute text-lg font-bold text-white">
+            {percent}%
+          </span>
+        </div>
+        <span className="text-sm text-gray-300">Subiendo...</span>
+      </div>
+    );
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] w-full max-w-2xl overflow-y-auto bg-gray-900">
@@ -304,85 +457,102 @@ export function ModalGuidedProjectForm({
           </div>
         ) : (
           <div className="space-y-5 py-2">
-            {/* Imagen */}
+            {/* Portada: imagen o video */}
             <div className="space-y-2">
-              <label className={labelClass}>Imagen de portada</label>
+              <label className={labelClass}>Portada (imagen o video) *</label>
               <div
-                onClick={() => imageInputRef.current?.click()}
-                className="relative flex h-40 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-600 bg-gray-800 transition hover:border-primary"
+                onClick={() =>
+                  !uploadingCover && coverInputRef.current?.click()
+                }
+                className="relative flex h-48 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-600 bg-gray-800 transition hover:border-primary"
               >
-                {imagePreview ? (
-                  <Image
-                    src={imagePreview}
-                    alt="preview"
-                    fill
-                    className="object-cover"
-                  />
+                {uploadingCover ? (
+                  renderUploadLoader(coverProgress)
+                ) : coverPreview ? (
+                  coverKind === 'video' ? (
+                    <video
+                      ref={coverVideoRef}
+                      src={coverPreview}
+                      controls
+                      crossOrigin="anonymous"
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={coverPreview}
+                      alt="preview"
+                      fill
+                      className="object-cover"
+                    />
+                  )
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-gray-400">
                     <FiUploadCloud className="size-8" />
-                    <span className="text-sm">
-                      {uploadingImage
-                        ? 'Subiendo...'
-                        : 'Clic para subir imagen'}
+                    <span className="text-sm">Sube una imagen o video</span>
+                    <span className="text-xs">
+                      Formatos soportados: JPG, PNG, MP4, MOV
                     </span>
                   </div>
                 )}
               </div>
               <input
-                ref={imageInputRef}
+                ref={coverInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/*,video/*"
                 className="hidden"
-                onChange={handleImageChange}
+                onChange={handleCoverChange}
               />
             </div>
 
-            {/* Video */}
-            <div className="space-y-2">
-              <label className={checkLabel}>
-                <input
-                  type="checkbox"
-                  checked={needsVideo}
-                  onChange={(e) => setNeedsVideo(e.target.checked)}
-                  className="size-4 accent-primary"
-                />
-                ¿Este proyecto necesita video?
-              </label>
-
-              {needsVideo && (
-                <>
-                  <div
-                    onClick={() => videoInputRef.current?.click()}
-                    className="relative flex h-40 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-600 bg-gray-800 transition hover:border-primary"
+            {/* Miniatura del video (obligatoria si la portada es un video) */}
+            {coverKind === 'video' && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className={labelClass}>
+                    Imagen de portada del video *
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleCaptureFrame}
+                    disabled={uploadingPoster}
+                    className="text-xs font-medium text-primary hover:underline disabled:opacity-50"
                   >
-                    {videoPreview ? (
-                      <video
-                        src={videoPreview}
-                        controls
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 text-gray-400">
-                        <FiUploadCloud className="size-8" />
-                        <span className="text-sm">
-                          {uploadingVideo
-                            ? 'Subiendo...'
-                            : 'Clic para subir video'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <input
-                    ref={videoInputRef}
-                    type="file"
-                    accept="video/mp4"
-                    className="hidden"
-                    onChange={handleVideoChange}
-                  />
-                </>
-              )}
-            </div>
+                    Capturar frame del video
+                  </button>
+                </div>
+                <div
+                  onClick={() =>
+                    !uploadingPoster && posterInputRef.current?.click()
+                  }
+                  className="relative flex h-32 cursor-pointer items-center justify-center overflow-hidden rounded-lg border-2 border-dashed border-gray-600 bg-gray-800 transition hover:border-primary"
+                >
+                  {uploadingPoster ? (
+                    renderUploadLoader(posterProgress)
+                  ) : posterPreview ? (
+                    <Image
+                      src={posterPreview}
+                      alt="miniatura del video"
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-gray-400">
+                      <FiUploadCloud className="size-6" />
+                      <span className="text-sm">
+                        Sube una miniatura o captura un frame del video
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={posterInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePosterChange}
+                />
+              </div>
+            )}
 
             {/* Título */}
             <div className="space-y-2">
@@ -416,6 +586,99 @@ export function ModalGuidedProjectForm({
                 rows={3}
                 className={inputClass}
               />
+            </div>
+
+            {/* El problema */}
+            <div className="space-y-2">
+              <label className={labelClass}>El problema</label>
+              <textarea
+                value={formData.problemStatement}
+                onChange={(e) => set('problemStatement', e.target.value)}
+                placeholder="¿Qué problema resuelve este proyecto?"
+                rows={2}
+                className={inputClass}
+              />
+            </div>
+
+            {/* Lo que vas a construir */}
+            <div className="space-y-2">
+              <label className={labelClass}>Lo que vas a construir</label>
+              <textarea
+                value={formData.whatYouWillBuild}
+                onChange={(e) => set('whatYouWillBuild', e.target.value)}
+                placeholder="Describe lo que el estudiante construirá"
+                rows={2}
+                className={inputClass}
+              />
+            </div>
+
+            {/* Requisitos previos */}
+            <div className="space-y-2">
+              <label className={labelClass}>
+                Requisitos previos (uno por línea)
+              </label>
+              <textarea
+                value={formData.prerequisites}
+                onChange={(e) => set('prerequisites', e.target.value)}
+                placeholder={
+                  'Manejo básico de TypeScript.\nNociones de bases de datos relacionales.'
+                }
+                rows={3}
+                className={inputClass}
+              />
+            </div>
+
+            {/* Stack tecnológico */}
+            <div className="space-y-2">
+              <label className={labelClass}>
+                Stack tecnológico (separado por comas)
+              </label>
+              <Input
+                value={formData.techStack}
+                onChange={(e) => set('techStack', e.target.value)}
+                placeholder="TypeScript, Next.js, Drizzle ORM, PostgreSQL"
+                className="border-gray-600 bg-gray-900 text-white placeholder-gray-500"
+              />
+            </div>
+
+            {/* Qué vas a entregar */}
+            <div className="space-y-2">
+              <label className={labelClass}>
+                Qué vas a entregar (uno por línea)
+              </label>
+              <textarea
+                value={formData.deliverablesDescription}
+                onChange={(e) => set('deliverablesDescription', e.target.value)}
+                placeholder={
+                  'Repositorio documentado.\nDeploy con una cuenta demo.'
+                }
+                rows={3}
+                className={inputClass}
+              />
+            </div>
+
+            {/* Estudiantes y horas de contenido */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className={labelClass}>Estudiantes inscritos</label>
+                <Input
+                  type="number"
+                  value={formData.studentsCount}
+                  onChange={(e) => set('studentsCount', Number(e.target.value))}
+                  placeholder="0"
+                  className="border-gray-600 bg-gray-900 text-white placeholder-gray-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className={labelClass}>Horas de contenido</label>
+                <Input
+                  type="number"
+                  value={formData.contentHours}
+                  onChange={(e) => set('contentHours', Number(e.target.value))}
+                  placeholder="0"
+                  className="border-gray-600 bg-gray-900 text-white placeholder-gray-500"
+                />
+              </div>
             </div>
 
             {/* Selects: categoría, modalidad, nivel */}
@@ -464,21 +727,99 @@ export function ModalGuidedProjectForm({
               </div>
             </div>
 
-            {/* Instructor */}
+            {/* Instructores (Múltiples) */}
             <div className="space-y-2">
-              <label className={labelClass}>Instructor *</label>
-              <select
-                value={formData.instructor}
-                onChange={(e) => set('instructor', e.target.value)}
-                className={inputClass}
-              >
-                <option value="">Selecciona un instructor</option>
-                {educators.map((ed) => (
-                  <option key={ed.id} value={ed.id}>
-                    {ed.name}
-                  </option>
-                ))}
-              </select>
+              <label htmlFor="instructors" className={labelClass}>
+                Instructores (Múltiples) *
+              </label>
+              <Select
+                id="instructors"
+                isMulti
+                value={educators
+                  .filter((e) => formData.instructors.includes(e.id))
+                  .map((e) => ({ value: e.id, label: e.name }))}
+                onChange={(
+                  selectedOptions: MultiValue<{
+                    value: string;
+                    label: string;
+                  }>
+                ) => {
+                  set(
+                    'instructors',
+                    selectedOptions.map((opt) => opt.value)
+                  );
+                }}
+                options={educators.map((educator) => ({
+                  value: educator.id,
+                  label: educator.name,
+                }))}
+                placeholder="Seleccionar instructores..."
+                className="mt-1"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    backgroundColor: '#0a1628',
+                    borderColor: 'hsl(var(--primary))',
+                    color: 'white',
+                    minHeight: '42px',
+                  }),
+                  input: (base) => ({
+                    ...base,
+                    color: 'white',
+                  }),
+                  placeholder: (base) => ({
+                    ...base,
+                    color: 'hsl(var(--muted-foreground))',
+                  }),
+                  singleValue: (base) => ({
+                    ...base,
+                    color: 'white',
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    backgroundColor: '#0a1628',
+                    border: '1px solid hsl(var(--primary))',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)',
+                  }),
+                  menuList: (base) => ({
+                    ...base,
+                    backgroundColor: '#0a1628',
+                    padding: 0,
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused
+                      ? 'hsl(var(--primary) / 0.2)'
+                      : state.isSelected
+                        ? 'hsl(var(--primary) / 0.4)'
+                        : '#0a1628',
+                    color: 'white',
+                    cursor: 'pointer',
+                    ':active': {
+                      backgroundColor: 'hsl(var(--primary) / 0.3)',
+                    },
+                  }),
+                  multiValue: (base) => ({
+                    ...base,
+                    backgroundColor: 'hsl(var(--primary) / 0.3)',
+                    borderRadius: '4px',
+                  }),
+                  multiValueLabel: (base) => ({
+                    ...base,
+                    color: 'white',
+                    padding: '2px 6px',
+                  }),
+                  multiValueRemove: (base) => ({
+                    ...base,
+                    color: 'white',
+                    ':hover': {
+                      backgroundColor: 'hsl(var(--destructive))',
+                      color: 'white',
+                    },
+                  }),
+                }}
+              />
             </div>
 
             {/* Precio */}
@@ -527,7 +868,7 @@ export function ModalGuidedProjectForm({
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={loading || uploadingImage || uploadingVideo}
+                disabled={loading || uploadingCover || uploadingPoster}
                 className="bg-primary text-black hover:bg-primary/90 disabled:opacity-50"
               >
                 {loading

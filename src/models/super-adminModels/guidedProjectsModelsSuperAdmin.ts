@@ -5,6 +5,7 @@ import {
   categories,
   guidedObjectiveActivities,
   guidedObjectives,
+  guidedProjectInstructors,
   guidedProjects,
   modalidades,
   nivel,
@@ -17,11 +18,13 @@ import {
 export interface GuidedProject {
   id: number;
   title: string;
+  subtitle?: string | null;
   description: string | null;
   coverImageKey: string | null;
   coverVideoKey: string | null;
   categoryId: number;
   instructor: string;
+  instructors?: string[]; // Array de IDs de instructores (many-to-many)
   creatorId: string;
   rating: number;
   modalidadId: number;
@@ -35,6 +38,13 @@ export interface GuidedProject {
   isFeatured: boolean;
   visibility: boolean;
   metaPixelId: string | null;
+  problemStatement?: string | null;
+  whatYouWillBuild?: string | null;
+  prerequisites?: string | null;
+  techStack?: string | null;
+  deliverablesDescription?: string | null;
+  studentsCount?: number | null;
+  contentHours?: number | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -75,20 +85,24 @@ export interface GuidedActivity {
 
 // ========== GUIDED PROJECTS CRUD ==========
 export const createGuidedProject = async (data: Partial<GuidedProject>) => {
+  const instructors = data.instructors?.filter(Boolean) ?? [];
+
   const [newProject] = await db
     .insert(guidedProjects)
     .values({
       title: data.title || '',
+      subtitle: data.subtitle,
       description: data.description,
       coverImageKey: data.coverImageKey,
       coverVideoKey: data.coverVideoKey,
       categoryId: data.categoryId || 1,
-      instructor: data.instructor || '',
+      instructor: instructors[0] ?? data.instructor ?? '',
       creatorId: data.creatorId || '',
       rating: data.rating || 0,
       modalidadId: data.modalidadId || 1,
       nivelId: data.nivelId || 1,
       courseTypeId: data.courseTypeId,
+      typeCourseId: 3,
       certificationTypeId: data.certificationTypeId,
       individualPrice: data.individualPrice,
       requiresProgram: data.requiresProgram || false,
@@ -97,14 +111,31 @@ export const createGuidedProject = async (data: Partial<GuidedProject>) => {
       isFeatured: data.isFeatured || false,
       visibility: data.visibility ?? true,
       metaPixelId: data.metaPixelId,
+      problemStatement: data.problemStatement,
+      whatYouWillBuild: data.whatYouWillBuild,
+      prerequisites: data.prerequisites,
+      techStack: data.techStack,
+      deliverablesDescription: data.deliverablesDescription,
+      studentsCount: data.studentsCount || 0,
+      contentHours: data.contentHours || 0,
     })
     .returning();
+
+  // Insertar relaciones instructor-proyecto en guided_project_instructors
+  if (newProject && instructors.length > 0) {
+    await db.insert(guidedProjectInstructors).values(
+      instructors.map((instructorId) => ({
+        guidedProjectId: newProject.id,
+        instructorId,
+      }))
+    );
+  }
 
   return newProject;
 };
 
 export const getAllGuidedProjects = async () => {
-  return await db
+  const projectsData = await db
     .select({
       id: guidedProjects.id,
       title: guidedProjects.title,
@@ -135,6 +166,39 @@ export const getAllGuidedProjects = async () => {
     .leftJoin(modalidades, eq(guidedProjects.modalidadId, modalidades.id))
     .leftJoin(nivel, eq(guidedProjects.nivelId, nivel.id))
     .leftJoin(users, eq(guidedProjects.instructor, users.id));
+
+  // Para cada proyecto, obtener sus instructores desde guided_project_instructors
+  return await Promise.all(
+    projectsData.map(async (project) => {
+      const instructorsData = await db
+        .select({
+          instructorId: guidedProjectInstructors.instructorId,
+          instructorName: users.name,
+        })
+        .from(guidedProjectInstructors)
+        .leftJoin(users, eq(guidedProjectInstructors.instructorId, users.id))
+        .where(eq(guidedProjectInstructors.guidedProjectId, project.id));
+
+      const validInstructorRows = instructorsData.filter(
+        (i) => i.instructorName
+      );
+      const instructors =
+        validInstructorRows.length > 0
+          ? validInstructorRows.map((i) => i.instructorId)
+          : project.instructor
+            ? [project.instructor]
+            : [];
+      const instructorNames = validInstructorRows
+        .map((i) => i.instructorName)
+        .join(', ');
+
+      return {
+        ...project,
+        instructors,
+        instructorName: instructorNames || project.instructorName,
+      };
+    })
+  );
 };
 
 export const getGuidedProjectById = async (id: number) => {
@@ -142,6 +206,7 @@ export const getGuidedProjectById = async (id: number) => {
     .select({
       id: guidedProjects.id,
       title: guidedProjects.title,
+      subtitle: guidedProjects.subtitle,
       description: guidedProjects.description,
       coverImageKey: guidedProjects.coverImageKey,
       coverVideoKey: guidedProjects.coverVideoKey,
@@ -164,6 +229,13 @@ export const getGuidedProjectById = async (id: number) => {
       isFeatured: guidedProjects.isFeatured,
       visibility: guidedProjects.visibility,
       metaPixelId: guidedProjects.metaPixelId,
+      problemStatement: guidedProjects.problemStatement,
+      whatYouWillBuild: guidedProjects.whatYouWillBuild,
+      prerequisites: guidedProjects.prerequisites,
+      techStack: guidedProjects.techStack,
+      deliverablesDescription: guidedProjects.deliverablesDescription,
+      studentsCount: guidedProjects.studentsCount,
+      contentHours: guidedProjects.contentHours,
       createdAt: guidedProjects.createdAt,
       updatedAt: guidedProjects.updatedAt,
     })
@@ -174,7 +246,33 @@ export const getGuidedProjectById = async (id: number) => {
     .leftJoin(users, eq(guidedProjects.instructor, users.id))
     .where(eq(guidedProjects.id, id));
 
-  return project;
+  if (!project) return project;
+
+  const instructorsData = await db
+    .select({
+      instructorId: guidedProjectInstructors.instructorId,
+      instructorName: users.name,
+    })
+    .from(guidedProjectInstructors)
+    .leftJoin(users, eq(guidedProjectInstructors.instructorId, users.id))
+    .where(eq(guidedProjectInstructors.guidedProjectId, id));
+
+  const validInstructorRows = instructorsData.filter((i) => i.instructorName);
+  const instructors =
+    validInstructorRows.length > 0
+      ? validInstructorRows.map((i) => i.instructorId)
+      : project.instructor
+        ? [project.instructor]
+        : [];
+  const instructorNames = validInstructorRows
+    .map((i) => i.instructorName)
+    .join(', ');
+
+  return {
+    ...project,
+    instructors,
+    instructorName: instructorNames || project.instructorName,
+  };
 };
 
 export const getGuidedProjectsByUserId = async (userId: string) => {
@@ -188,14 +286,35 @@ export const updateGuidedProject = async (
   id: number,
   data: Partial<GuidedProject>
 ) => {
+  const { instructors, ...rest } = data;
+  const filteredInstructors = instructors?.filter(Boolean) ?? [];
+
   const [updated] = await db
     .update(guidedProjects)
     .set({
-      ...data,
+      ...rest,
+      ...(filteredInstructors.length > 0
+        ? { instructor: filteredInstructors[0] }
+        : {}),
+      typeCourseId: 3,
       updatedAt: new Date(),
     })
     .where(eq(guidedProjects.id, id))
     .returning();
+
+  // Actualizar relaciones de instructores: eliminar existentes y crear nuevas
+  if (filteredInstructors.length > 0) {
+    await db
+      .delete(guidedProjectInstructors)
+      .where(eq(guidedProjectInstructors.guidedProjectId, id));
+
+    await db.insert(guidedProjectInstructors).values(
+      filteredInstructors.map((instructorId) => ({
+        guidedProjectId: id,
+        instructorId,
+      }))
+    );
+  }
 
   return updated;
 };
