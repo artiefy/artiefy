@@ -5,8 +5,10 @@ import { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import { ArrowRightIcon } from '@heroicons/react/24/solid';
-import { Eye, EyeOff, Plus, Trash2 } from 'lucide-react';
+import { format, isValid } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Calendar, Eye, EyeOff, Pencil, Plus, Trash2 } from 'lucide-react';
+import { FaProjectDiagram } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import { AspectRatio } from '~/components/educators/ui/aspect-ratio';
@@ -33,6 +35,7 @@ interface GuidedProject {
   instructor: string;
   instructorName: string;
   isActive: boolean;
+  visibility: boolean;
   createdAt: string;
 }
 
@@ -44,6 +47,7 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
   const [projects, setProjects] = useState<GuidedProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -85,16 +89,16 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
     }
   };
 
-  const handleToggleActive = async (id: number, isActive: boolean) => {
+  const handleToggleVisibility = async (id: number, visibility: boolean) => {
     try {
       const response = await fetch(`/api/guided-projects?id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !isActive }),
+        body: JSON.stringify({ visibility: !visibility }),
       });
       if (!response.ok) throw new Error('Error al actualizar');
       await fetchProjects();
-      toast.success('Estado actualizado');
+      toast.success('Visibilidad actualizada');
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error al actualizar');
@@ -211,7 +215,10 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
         </div>
         <div className="col-span-1">
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={() => {
+              setEditingProjectId(null);
+              setModalOpen(true);
+            }}
             className="group/button relative inline-flex size-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">Nuevo Proyecto</span>
@@ -236,7 +243,10 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
             </p>
             <Button
               size="lg"
-              onClick={() => setModalOpen(true)}
+              onClick={() => {
+                setEditingProjectId(null);
+                setModalOpen(true);
+              }}
               className="gap-2"
             >
               <Plus className="size-5" />
@@ -249,60 +259,67 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
           {displayedProjects.map((project) => (
             <div key={project.id} className="group relative">
               <div className="absolute -inset-0.5 animate-gradient rounded-xl bg-gradient-to-r from-[#3AF4EF] via-[#00BDD8] to-[#01142B] opacity-0 blur transition duration-500 group-hover:opacity-100" />
-              <Card className="zoom-in relative flex h-full flex-col justify-between overflow-hidden border-0 bg-gray-800 px-2 pt-2 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
+              <Card className="zoom-in relative flex h-full flex-col justify-between gap-0 overflow-hidden rounded-2xl border border-[#1d283a] bg-[#061c37] p-0 py-0 text-white transition-transform duration-300 ease-in-out hover:scale-[1.02]">
                 <CardHeader className="p-0">
                   <AspectRatio ratio={16 / 9}>
-                    <div className="relative size-full bg-gray-900">
+                    <div className="relative size-full bg-[#04101f]">
                       {project.coverImageKey ? (
                         <Image
                           src={`${process.env.NEXT_PUBLIC_AWS_S3_URL}/${project.coverImageKey}`}
                           alt={project.title}
                           fill
-                          className="object-cover px-2 pt-2 transition-transform duration-300 hover:scale-105"
+                          className="object-cover transition-transform duration-300 hover:scale-105"
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           quality={75}
                         />
                       ) : (
-                        <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#3AF4EF]/20 to-[#01142B]/20">
+                        <div className="flex size-full items-center justify-center bg-gradient-to-br from-[#22C4D3]/20 to-[#061c37]">
                           <span className="text-4xl">📚</span>
                         </div>
                       )}
+                      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#061c37] to-transparent" />
+                      <div className="absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-[#22C4D3]/40 bg-[#061c37]/70 px-2.5 py-1 text-xs font-medium text-[#22C4D3] backdrop-blur-sm">
+                        <FaProjectDiagram className="size-3" />
+                        Proyecto Guiado
+                      </div>
                     </div>
                   </AspectRatio>
                 </CardHeader>
-                <CardContent className="flex grow flex-col justify-between space-y-2 px-2">
-                  <CardTitle className="rounded-lg text-lg">
-                    <div className="truncate font-bold text-primary">
+                <CardContent className="flex grow flex-col justify-between gap-3 px-4 pt-4">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 px-2.5 py-1 text-xs font-medium text-[#22C4D3]">
+                      {project.categoryName}
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-medium text-[#94A3B8]">
+                      {project.modalidadName}
+                    </span>
+                  </div>
+                  <CardTitle className="text-base sm:text-lg">
+                    <div className="line-clamp-2 font-bold text-white">
                       {project.title}
                     </div>
                   </CardTitle>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge
-                      variant="outline"
-                      className="border-primary bg-background text-xs text-primary hover:bg-black/70"
-                    >
-                      {project.categoryName}
-                    </Badge>
-                    <Badge
-                      variant="outline"
-                      className="border-secondary bg-background text-xs text-secondary hover:bg-black/70"
-                    >
-                      {project.modalidadName}
-                    </Badge>
-                  </div>
-                  <p className="line-clamp-2 text-sm text-gray-300">
+                  <p className="text-xs text-[#94A3B8]">
+                    Por{' '}
+                    <span className="font-semibold text-[#22C4D3]">
+                      {project.instructorName ?? 'Sin asignar'}
+                    </span>
+                  </p>
+                  <p className="line-clamp-2 text-sm text-[#94A3B8]">
                     {project.description ?? 'Sin descripción'}
                   </p>
+                  {isValid(new Date(project.createdAt)) && (
+                    <div className="flex items-center gap-1.5 text-xs text-[#94A3B8]">
+                      <Calendar className="size-3.5" />
+                      {format(new Date(project.createdAt), "d 'de' MMM", {
+                        locale: es,
+                      })}
+                    </div>
+                  )}
                 </CardContent>
-                <CardFooter className="flex flex-col items-start justify-between space-y-3 px-2 pb-3">
+                <CardFooter className="flex flex-col items-start justify-between gap-3 px-4 pt-3 pb-4">
                   <div className="flex w-full items-center justify-between text-xs">
-                    <p className="font-bold text-gray-300">
-                      Instructor:{' '}
-                      <span className="text-primary">
-                        {project.instructorName ?? 'Sin asignar'}
-                      </span>
-                    </p>
-                    {project.isActive ? (
+                    {project.visibility ? (
                       <Badge className="border-green-500/50 bg-green-500/20 text-green-400">
                         Activo
                       </Badge>
@@ -311,44 +328,52 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
                         Inactivo
                       </Badge>
                     )}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        className="border border-[#1d283a] bg-[#0d2a4d] px-3 text-[#94A3B8] hover:bg-[#0d2a4d]/70 hover:text-white"
+                        onClick={() =>
+                          handleToggleVisibility(project.id, project.visibility)
+                        }
+                        title={project.visibility ? 'Ocultar' : 'Mostrar'}
+                      >
+                        {project.visibility ? (
+                          <Eye className="size-4" />
+                        ) : (
+                          <EyeOff className="size-4" />
+                        )}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="px-3"
+                        onClick={() => handleDelete(project.id)}
+                        title="Eliminar"
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="flex w-full gap-2">
+                    <Button
+                      onClick={() => {
+                        setEditingProjectId(project.id);
+                        setModalOpen(true);
+                      }}
+                      className="flex w-full flex-1 items-center justify-center gap-1.5 border border-[#22C4D3]/40 bg-[#22C4D3]/10 p-2 text-[#22C4D3] hover:bg-[#22C4D3]/20"
+                    >
+                      <Pencil className="size-4" />
+                      <p className="text-sm font-bold">Editar</p>
+                    </Button>
                     <Link
                       href={`/dashboard/super-admin/proyectos-guiados/${project.id}`}
                       className="flex-1"
                     >
-                      <Button className="group/button relative inline-flex w-full items-center justify-center overflow-hidden rounded-md border border-white/20 bg-background p-2 text-primary active:scale-95">
-                        <p className="text-sm font-bold">Editar</p>
-                        <ArrowRightIcon className="ml-1 size-4 animate-bounce-right" />
-                        <div className="absolute inset-0 flex w-full [transform:skew(-13deg)_translateX(-100%)] justify-center group-hover/button:[transform:skew(-13deg)_translateX(100%)] group-hover/button:duration-1000">
-                          <div className="relative h-full w-10 bg-white/30" />
-                        </div>
+                      <Button className="flex w-full items-center justify-center gap-1.5 border border-[#1d283a] bg-[#0d2a4d] p-2 text-white hover:bg-[#0d2a4d]/70">
+                        <Eye className="size-4" />
+                        <p className="text-sm font-bold">Ver</p>
                       </Button>
                     </Link>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="px-3"
-                      onClick={() =>
-                        handleToggleActive(project.id, project.isActive)
-                      }
-                      title={project.isActive ? 'Desactivar' : 'Activar'}
-                    >
-                      {project.isActive ? (
-                        <Eye className="size-4" />
-                      ) : (
-                        <EyeOff className="size-4" />
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="px-3"
-                      onClick={() => handleDelete(project.id)}
-                      title="Eliminar"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
                   </div>
                 </CardFooter>
               </Card>
@@ -382,7 +407,11 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
 
       <ModalGuidedProjectForm
         open={modalOpen}
-        onOpenChange={setModalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) setEditingProjectId(null);
+        }}
+        projectId={editingProjectId}
         onSuccess={fetchProjects}
       />
     </div>

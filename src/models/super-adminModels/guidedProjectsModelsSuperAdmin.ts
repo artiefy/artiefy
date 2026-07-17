@@ -369,7 +369,7 @@ export const updateGuidedActivity = async (
   if (data.weekNumber !== undefined) updateData.weekNumber = data.weekNumber;
   if (data.fechaMaximaEntrega !== undefined)
     updateData.fechaMaximaEntrega = data.fechaMaximaEntrega
-      ? new Date(data.fechaMaximaEntrega).toISOString().split('T')[0]
+      ? new Date(data.fechaMaximaEntrega)
       : null;
   if (data.revisada !== undefined) updateData.revisada = data.revisada;
   if (data.instructionVideoKey !== undefined)

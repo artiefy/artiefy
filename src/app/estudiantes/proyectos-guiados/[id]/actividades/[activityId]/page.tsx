@@ -149,7 +149,9 @@ export default async function GuidedActivityPage({ params }: PageProps) {
   const planType = String(user?.publicMetadata?.planType ?? '').toLowerCase();
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    string | null | undefined;
+    | string
+    | null
+    | undefined;
   const hasValidPlan = ['pro', 'premium', 'enterprise'].includes(planType);
   const isSubscriptionValid =
     subscriptionStatus === 'active' &&

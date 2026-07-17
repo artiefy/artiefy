@@ -33,7 +33,8 @@ export interface GuidedActivityProgressFailure {
 }
 
 export type GuidedActivityProgressResult =
-  GuidedActivityProgressSuccess | GuidedActivityProgressFailure;
+  | GuidedActivityProgressSuccess
+  | GuidedActivityProgressFailure;
 
 interface PersistGuidedActivityProgressInput {
   activityId: number;

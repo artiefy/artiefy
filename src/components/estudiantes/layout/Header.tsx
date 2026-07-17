@@ -101,9 +101,11 @@ export function Header({
 
   const planType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
-    string | undefined;
+    | string
+    | undefined;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    string | undefined;
+    | string
+    | undefined;
 
   useEffect(() => {
     if (!user || userRole) return;

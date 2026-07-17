@@ -48,7 +48,10 @@ import type {
 
 type TipoPregunta = 'OM' | 'FOV' | 'COMPLETADO' | 'ARCHIVO';
 type EditableQuestion = (
-  Question | VerdaderoOFlaso | Completado | QuestionFilesSubida
+  | Question
+  | VerdaderoOFlaso
+  | Completado
+  | QuestionFilesSubida
 ) & { tipo: TipoPregunta };
 
 interface PorcentajeResponse {
