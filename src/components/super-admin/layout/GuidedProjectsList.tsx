@@ -47,6 +47,7 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
   const [projects, setProjects] = useState<GuidedProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -214,7 +215,10 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
         </div>
         <div className="col-span-1">
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={() => {
+              setEditingProjectId(null);
+              setModalOpen(true);
+            }}
             className="group/button relative inline-flex size-full items-center justify-center gap-1 overflow-hidden rounded-md border border-white/20 bg-background px-2 py-1.5 text-xs text-primary transition-all hover:bg-primary/10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm"
           >
             <span className="relative z-10 font-medium">Nuevo Proyecto</span>
@@ -239,7 +243,10 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
             </p>
             <Button
               size="lg"
-              onClick={() => setModalOpen(true)}
+              onClick={() => {
+                setEditingProjectId(null);
+                setModalOpen(true);
+              }}
               className="gap-2"
             >
               <Plus className="size-5" />
@@ -348,19 +355,19 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
                     </div>
                   </div>
                   <div className="flex w-full gap-2">
+                    <Button
+                      onClick={() => {
+                        setEditingProjectId(project.id);
+                        setModalOpen(true);
+                      }}
+                      className="flex w-full flex-1 items-center justify-center gap-1.5 border border-[#22C4D3]/40 bg-[#22C4D3]/10 p-2 text-[#22C4D3] hover:bg-[#22C4D3]/20"
+                    >
+                      <Pencil className="size-4" />
+                      <p className="text-sm font-bold">Editar</p>
+                    </Button>
                     <Link
                       href={`/dashboard/super-admin/proyectos-guiados/${project.id}`}
                       className="flex-1"
-                    >
-                      <Button className="flex w-full items-center justify-center gap-1.5 border border-[#22C4D3]/40 bg-[#22C4D3]/10 p-2 text-[#22C4D3] hover:bg-[#22C4D3]/20">
-                        <Pencil className="size-4" />
-                        <p className="text-sm font-bold">Editar</p>
-                      </Button>
-                    </Link>
-                    <Link
-                      href={`/estudiantes/proyectos-guiados/${project.id}`}
-                      className="flex-1"
-                      target="_blank"
                     >
                       <Button className="flex w-full items-center justify-center gap-1.5 border border-[#1d283a] bg-[#0d2a4d] p-2 text-white hover:bg-[#0d2a4d]/70">
                         <Eye className="size-4" />
@@ -400,7 +407,11 @@ export function GuidedProjectsList({ creatorId }: GuidedProjectsListProps) {
 
       <ModalGuidedProjectForm
         open={modalOpen}
-        onOpenChange={setModalOpen}
+        onOpenChange={(open) => {
+          setModalOpen(open);
+          if (!open) setEditingProjectId(null);
+        }}
+        projectId={editingProjectId}
         onSuccess={fetchProjects}
       />
     </div>
