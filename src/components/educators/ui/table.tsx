@@ -3,7 +3,7 @@ import React from 'react';
 export function Table({ children }: { children: React.ReactNode }) {
   return (
     <div className="w-full overflow-x-auto">
-      <table className="min-w-full bg-white">{children}</table>
+      <table className="force-light min-w-full bg-white">{children}</table>
     </div>
   );
 }
@@ -25,10 +25,16 @@ export function TableBody({ children }: { children: React.ReactNode }) {
 }
 
 export function TableRow({ children }: { children: React.ReactNode }) {
-  return <tr className="
+  return (
+    <tr
+      className="
     transition
     hover:bg-gray-50
-  ">{children}</tr>;
+  "
+    >
+      {children}
+    </tr>
+  );
 }
 
 export function TableCell({
@@ -39,10 +45,12 @@ export function TableCell({
   className?: string;
 }) {
   return (
-    <td className={`
+    <td
+      className={`
       px-4 py-3 text-sm text-gray-700
       ${className}
-    `}>
+    `}
+    >
       {children}
     </td>
   );

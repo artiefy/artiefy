@@ -51,21 +51,25 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="
+    <div
+      className="
       bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black
       p-4 backdrop-blur-md
-    ">
-      <div className="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
+    "
+    >
+      <div className="force-light relative w-full max-w-lg rounded-lg bg-white p-6 shadow-lg">
         {/* 🔹 Modal Header */}
         <div className="flex items-center justify-between border-b pb-2">
           <h2 className="text-lg font-semibold text-gray-800">
             Estudiantes inscritos
           </h2>
           <button onClick={onClose}>
-            <X className="
+            <X
+              className="
               size-6 text-gray-600
               hover:text-red-500
-            " />
+            "
+            />
           </button>
         </div>
 
@@ -98,9 +102,11 @@ const ModalStudentProgress: React.FC<ModalStudentProgressProps> = ({
                     </p>
                     <p className="text-xs text-gray-500">{student.email}</p>
                   </div>
-                  <div className="
+                  <div
+                    className="
                     h-4 w-36 overflow-hidden rounded-full bg-gray-200
-                  ">
+                  "
+                  >
                     <div
                       className="
                         h-full bg-blue-500 text-center text-xs text-white

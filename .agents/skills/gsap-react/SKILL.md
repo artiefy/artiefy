@@ -124,7 +124,7 @@ useGSAP(
 GSAP runs in the browser. Do not call gsap or ScrollTrigger during SSR.
 
 - Use **useGSAP** (or useEffect) so all GSAP code runs only on the client.
-- If GSAP is imported at top level, ensure the app does not execute gsap.* or ScrollTrigger.* during server render. Dynamic import inside useEffect is an option if tree-shaking or bundle size is a concern.
+- If GSAP is imported at top level, ensure the app does not execute gsap._ or ScrollTrigger._ during server render. Dynamic import inside useEffect is an option if tree-shaking or bundle size is a concern.
 
 ## Best practices
 

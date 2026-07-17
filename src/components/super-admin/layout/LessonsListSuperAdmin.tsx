@@ -286,7 +286,7 @@ const LessonsListEducator: React.FC<LessonsListProps> = ({
 
       {/* Sección de reordenar - Nueva */}
       <div
-        className="mb-8 flex flex-col gap-4 rounded-lg border border-gray-200 p-4"
+        className="force-light mb-8 flex flex-col gap-4 rounded-lg border border-gray-200 p-4"
         style={{ backgroundColor: '#ffffff' }}
       >
         <div className="flex items-center justify-between">

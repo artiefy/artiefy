@@ -2959,7 +2959,7 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
         courseIdNumber !== null && (
           <div
             className="
-              -mx-1 mt-16 space-y-8 px-1
+              relative z-10 -mx-1 mt-16 space-y-8 px-1
               md:-mx-3 md:px-3
             "
           >

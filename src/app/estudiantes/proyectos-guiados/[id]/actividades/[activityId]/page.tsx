@@ -233,9 +233,11 @@ export default async function GuidedActivityPage({ params }: PageProps) {
           description: activity.description,
           weekNumber: activity.weekNumber,
           dateLabel: formatActivityDates(activity.startDate, activity.endDate),
+          instructionText: activity.instructionText,
         }}
         coverImageUrl={resolveImageUrl(coverImageKey)}
         coverVideoUrl={storageKeyToUrl(coverVideoKey)}
+        instructionVideoUrl={storageKeyToUrl(activity.instructionVideoKey)}
         resources={parseResources(currentObjective)}
         objectives={navigationObjectives}
         progress={visibleProgress}

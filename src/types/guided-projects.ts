@@ -95,6 +95,8 @@ export interface GuidedObjectiveActivity {
   fechaMaximaEntrega: Date | null;
   revisada: boolean | null;
   lastUpdated: Date;
+  instructionVideoKey: string | null;
+  instructionText: string | null;
 
   // Relations
   objective?: GuidedObjective;

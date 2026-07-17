@@ -5,11 +5,10 @@
 El alcance estudiantil implementa el contrato de datos, la carga privada en S3,
 la persistencia del historial y el marcado automático de progreso.
 
-La migración de `guided_activity_submissions` **sigue pendiente**. El generador
-Drizzle detectó diferencias previas entre el schema y los snapshots y produjo
-cambios ajenos a esta funcionalidad. Antes de habilitar entregas en un entorno,
-el equipo debe reconciliar ese drift, generar una migración limpia, revisarla y
-aplicarla mediante el flujo normal del repositorio.
+La migración incluida crea únicamente `guided_activity_submissions`, sus claves
+foráneas, restricción única e índices. Fue curada contra una inspección de solo
+lectura del esquema existente; todavía debe revisarse y aplicarse mediante el
+flujo normal del repositorio antes de habilitar entregas en un entorno.
 
 En este alcance **no están implementados**:
 
@@ -22,6 +21,16 @@ En este alcance **no están implementados**:
 
 `guided_activity_submissions` guarda una fila nueva por cada envío aceptado. Una
 reentrega no sobrescribe ni elimina entregas anteriores.
+
+Esta tabla es la fuente canónica del contenido y del historial de entregas de
+archivos o enlaces realizadas por estudiantes. El frontend administrativo debe
+consultar `guided_activity_submissions` para listar archivos, URLs y reentregas.
+
+`guided_activity_deliveries` es un modelo existente, separado y mutable para
+estado administrativo. No reemplaza a `guided_activity_submissions`: no guarda
+URLs ni conserva el historial inmutable de cada envío. El frontend del compañero
+puede mantener ese modelo para sus estados, pero debe consultar las entregas
+estudiantiles siguiendo el contrato de esta guía.
 
 | Campo          | Descripción                                       |
 | -------------- | ------------------------------------------------- |
@@ -68,8 +77,9 @@ Después de parsear mantiene la validación independiente de 10 MiB acumulados.
 5. Estado/calificación: `user_guided_activity_progress` por `user_id` y
    `activity_id`.
 
-No se deben reutilizar `user_activities_progress` ni
-`project_activity_deliveries`: pertenecen a otros dominios.
+No se deben reutilizar `user_activities_progress`,
+`project_activity_deliveries` ni `guided_activity_deliveries` como sustitutos de
+`guided_activity_submissions`: pertenecen a otros dominios o responsabilidades.
 
 ## Contrato propuesto para el listado administrativo
 

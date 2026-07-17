@@ -117,7 +117,7 @@ const CalificarPreguntas: React.FC<{ activityId: number }> = ({
       className="container mx-auto p-4"
     >
       <h1 className="mb-4 text-2xl font-bold">Calificar Preguntas</h1>
-      <table className="min-w-full bg-white">
+      <table className="force-light min-w-full bg-white">
         <thead>
           <tr>
             <th className="py-2">Estudiante</th>

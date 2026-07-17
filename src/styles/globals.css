@@ -331,6 +331,10 @@ body.no-chrome {
 }
 
 @layer base {
+  html {
+    color-scheme: dark;
+  }
+
   body {
     background-color: var(--color-background) !important;
     color: var(--color-primary) !important;
@@ -360,6 +364,13 @@ body.no-chrome {
   &:hover .button-hover-effect {
     animation: sh02 0.5s linear;
   }
+}
+
+/* Bloques con fondo blanco plano dentro de un layout con color-scheme: dark.
+   Sin esto, Chrome aplica su heurística de "forced dark" (repintado gris)
+   a divs/cards/tablas de color sólido claro, aunque el color sea intencional. */
+.force-light {
+  color-scheme: light;
 }
 
 /* Liquid glass surface — mobile header pills and bottom bar */

@@ -64,9 +64,11 @@ interface GuidedActivityDetailsProps {
     description: string | null;
     weekNumber: number | null;
     dateLabel: string | null;
+    instructionText: string | null;
   };
   coverImageUrl: string | null;
   coverVideoUrl: string | null;
+  instructionVideoUrl: string | null;
   resources: GuidedActivityResource[];
   objectives: GuidedActivityNavigationObjective[];
   progress: number;
@@ -229,6 +231,7 @@ export function GuidedActivityDetails({
   activity,
   coverImageUrl,
   coverVideoUrl,
+  instructionVideoUrl,
   resources,
   objectives,
   progress,
@@ -240,6 +243,7 @@ export function GuidedActivityDetails({
   const [expandedObjectiveIds, setExpandedObjectiveIds] = useState<Set<number>>(
     () => new Set([currentObjectiveId])
   );
+  const activityVideoUrl = instructionVideoUrl ?? coverVideoUrl;
   const tabRefs = useRef<Record<ActivityTab, HTMLButtonElement | null>>({
     activity: null,
     resources: null,
@@ -527,9 +531,9 @@ export function GuidedActivityDetails({
         <main className="min-w-0 flex-1 px-4 py-5 md:px-8 lg:px-10">
           <div className="mx-auto max-w-6xl">
             <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border/40 bg-black shadow-2xl">
-              {coverVideoUrl ? (
+              {activityVideoUrl ? (
                 <video
-                  src={coverVideoUrl}
+                  src={activityVideoUrl}
                   poster={coverImageUrl ?? undefined}
                   controls
                   playsInline
@@ -655,6 +659,22 @@ export function GuidedActivityDetails({
                     <Send data-icon="inline-start" aria-hidden="true" />
                     Entregar
                   </Button>
+                </div>
+
+                <div className="mt-5 border-t border-border/40 pt-5">
+                  <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                    Instrucción
+                  </p>
+                  {activity.instructionText?.trim() ? (
+                    <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                      {activity.instructionText}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Esta actividad no tiene instrucciones adicionales
+                      registradas.
+                    </p>
+                  )}
                 </div>
 
                 {objectiveDescription?.trim() && (

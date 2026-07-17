@@ -223,6 +223,7 @@ The script auto-detects the framework from `package.json`, packages the project 
    ```
 
 3. **If `vercel` is not installed, or the CLI fails with "No existing credentials found"**, use the fallback script:
+
    ```bash
    skill_dir="<path-to-skill>"
 
@@ -275,6 +276,7 @@ Always show the user the deployment URL.
 - **Git push:** Use `vercel ls --format json` to find the preview URL. If the CLI isn't authenticated, tell the user to check the Vercel dashboard or commit status checks.
 - **CLI deploy:** Show the URL returned by `vercel deploy --no-wait`. Use `vercel inspect <url>` to check build status and report it to the user.
 - **No-auth fallback:** Show both the preview URL and the claim URL:
+
   ```
   Deployment successful!
 
