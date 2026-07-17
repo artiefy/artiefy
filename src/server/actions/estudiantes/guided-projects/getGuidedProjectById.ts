@@ -4,15 +4,18 @@ import { eq } from 'drizzle-orm';
 
 import { db } from '~/server/db';
 import {
+  guidedProjectInstructors,
   guidedProjects,
   userGuidedActivityProgress,
   userObjectiveProgress,
+  users,
 } from '~/server/db/schema';
 
 import type {
   GuidedObjective,
   GuidedObjectiveActivity,
   GuidedProject,
+  GuidedProjectInstructor,
 } from '~/types';
 
 export async function getGuidedProjectById(
@@ -63,6 +66,33 @@ export async function getGuidedProjectById(
     if (!project) {
       return null;
     }
+
+    const instructorRows = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        profesion: users.profesion,
+        descripcion: users.descripcion,
+        profileImageKey: users.profileImageKey,
+      })
+      .from(guidedProjectInstructors)
+      .innerJoin(users, eq(guidedProjectInstructors.instructorId, users.id))
+      .where(eq(guidedProjectInstructors.guidedProjectId, parsedProjectId));
+
+    const instructors: GuidedProjectInstructor[] =
+      instructorRows.length > 0
+        ? instructorRows
+        : project.instructorUser
+          ? [
+              {
+                id: project.instructorUser.id,
+                name: project.instructorUser.name,
+                profesion: project.instructorUser.profesion,
+                descripcion: project.instructorUser.descripcion,
+                profileImageKey: project.instructorUser.profileImageKey,
+              },
+            ]
+          : [];
 
     // If userId exists, get progress data
     const userObjectivesProgressData = userId
@@ -153,7 +183,12 @@ export async function getGuidedProjectById(
       coverVideoKey: project.coverVideoKey,
       categoryId: project.categoryId,
       instructor: project.instructor,
-      instructorName: project.instructorUser?.name ?? project.instructor,
+      instructors,
+      instructorName:
+        instructors
+          .map((i) => i.name)
+          .filter(Boolean)
+          .join(', ') || project.instructor,
       instructorProfesion: project.instructorUser?.profesion ?? null,
       instructorDescripcion: project.instructorUser?.descripcion ?? null,
       instructorProfileImageKey:
