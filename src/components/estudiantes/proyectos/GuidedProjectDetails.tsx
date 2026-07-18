@@ -26,15 +26,30 @@ import {
   TriangleAlert,
   Users,
 } from 'lucide-react';
-import { FaCheck, FaCrown, FaProjectDiagram, FaStar } from 'react-icons/fa';
+import {
+  FaCheck,
+  FaCrown,
+  FaProjectDiagram,
+  FaStar,
+  FaTimes,
+} from 'react-icons/fa';
+import { IoPlayOutline } from 'react-icons/io5';
 import { MdErrorOutline } from 'react-icons/md';
 import { toast } from 'sonner';
 
 import { GuidedProjectActivities } from '~/components/estudiantes/proyectos/GuidedProjectActivities';
 import { GuidedProjectBreadcrumb } from '~/components/estudiantes/proyectos/GuidedProjectBreadcrumb';
 import { AspectRatio } from '~/components/estudiantes/ui/aspect-ratio';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '~/components/estudiantes/ui/dialog';
 import { cn } from '~/lib/utils';
 import { enrollInGuidedProject } from '~/server/actions/estudiantes/guided-projects/enrollInGuidedProject';
+import { unenrollFromGuidedProject } from '~/server/actions/estudiantes/guided-projects/unenrollFromGuidedProject';
 
 import type { GuidedObjective, GuidedProject } from '~/types/guided-projects';
 import type { KeyboardEvent, ReactNode } from 'react';
@@ -93,6 +108,8 @@ export function GuidedProjectDetails({
 }: GuidedProjectDetailsProps) {
   const [isEnrolled, setIsEnrolled] = useState(initialIsEnrolled);
   const [isEnrolling, setIsEnrolling] = useState(false);
+  const [showUnenrollDialog, setShowUnenrollDialog] = useState(false);
+  const [isUnenrolling, setIsUnenrolling] = useState(false);
   const [activePill, setActivePill] = useState<NavKey>('actividades');
   const [expandedObjective, setExpandedObjective] = useState<number | null>(
     null
@@ -120,6 +137,30 @@ export function GuidedProjectDetails({
     userPlanType === 'Pro' ||
     userPlanType === 'Premium' ||
     userPlanType === 'Enterprise';
+
+  // Progress + "current activity" for the subscribed state, derived from the
+  // enabled objectives' activities (same visible set as the activity page).
+  const enabledActivities = useMemo(
+    () =>
+      (project.objectives ?? [])
+        .filter((objective) => objective.isEnabled)
+        .flatMap((objective) => objective.activities ?? []),
+    [project.objectives]
+  );
+  const visibleActivitiesTotal = enabledActivities.length;
+  const completedActivities = enabledActivities.filter(
+    (activity) => activity.isCompleted
+  ).length;
+  const progressPct =
+    visibleActivitiesTotal === 0
+      ? 0
+      : Math.round((completedActivities / visibleActivitiesTotal) * 100);
+  // Resume at the first not-completed activity; fall back to the last one when
+  // everything is done so "continue" always lands somewhere valid.
+  const continueActivityId =
+    enabledActivities.find((activity) => !activity.isCompleted)?.id ??
+    enabledActivities[enabledActivities.length - 1]?.id ??
+    null;
 
   const navItems: { key: NavKey; label: string; icon: ReactNode }[] = [
     {
@@ -221,14 +262,52 @@ export function GuidedProjectDetails({
     }
   };
 
+  const handleUnenrollDialogChange = (open: boolean) => {
+    if (!open && isUnenrolling) return;
+    setShowUnenrollDialog(open);
+  };
+
+  const handleConfirmUnenroll = async () => {
+    if (!project?.id) return;
+    setIsUnenrolling(true);
+    try {
+      const result = await unenrollFromGuidedProject(project.id);
+      if (!result.success) {
+        toast.error('No pudimos desuscribirte', {
+          description: result.message,
+        });
+        return;
+      }
+      toast.success('Te has desuscrito del proyecto guiado.');
+      setIsEnrolled(false);
+      setShowUnenrollDialog(false);
+      router.refresh();
+    } catch {
+      toast.error('Ocurrió un error al desuscribirte. Intenta nuevamente.');
+    } finally {
+      setIsUnenrolling(false);
+    }
+  };
+
+  const handleContinueProject = () => {
+    if (!continueActivityId) return;
+    router.push(
+      `/estudiantes/proyectos-guiados/${project.id}/actividades/${continueActivityId}`
+    );
+  };
+
   const s3Base = process.env.NEXT_PUBLIC_AWS_S3_URL?.replace(/\/$/, '') ?? '';
   const buildS3Url = (key?: string | null) =>
     key ? `${s3Base}/${String(key).replace(/^\/+/, '')}` : undefined;
 
   // Profile/cover keys may be a full URL (e.g. avatar provider) or an S3 key.
+  // The DB stores the literal 'none'/'null' as a "no media" sentinel, so treat
+  // those (and empty keys) as absent to avoid building a broken S3 URL.
   const resolveMediaUrl = (key?: string | null) => {
     const trimmed = key?.trim();
     if (!trimmed) return undefined;
+    const normalized = trimmed.toLowerCase();
+    if (normalized === 'none' || normalized === 'null') return undefined;
     if (/^https?:\/\//i.test(trimmed)) return trimmed;
     return buildS3Url(trimmed);
   };
@@ -675,40 +754,85 @@ export function GuidedProjectDetails({
   );
 
   const renderCtaButton = (extraClass = '') => {
-    if (isEnrolled) {
-      return !isSubscriptionValid || !hasValidPlan ? (
+    if (!isEnrolled) {
+      return (
+        <button
+          onClick={handleStartNow}
+          disabled={isEnrolling}
+          className={`flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#22c4d3] px-4 py-2 text-base font-semibold text-[#080c16] transition hover:bg-[#1fb0be] disabled:opacity-50 ${extraClass}`}
+        >
+          {isEnrolling
+            ? 'Inscribiendo...'
+            : !isSubscriptionValid || !hasValidPlan
+              ? 'Ver Planes'
+              : 'Empezar Proyecto Ahora'}
+        </button>
+      );
+    }
+
+    if (!isSubscriptionValid || !hasValidPlan) {
+      return (
         <button
           onClick={() => router.push('/planes')}
           className={`flex h-12 w-full items-center justify-center gap-2 rounded-full border border-red-500/40 bg-red-500/10 px-4 py-2 text-base font-semibold text-red-400 transition hover:bg-red-500/20 ${extraClass}`}
         >
           <MdErrorOutline className="size-5" /> Renovar Plan
         </button>
-      ) : (
-        <button
-          className={`flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold text-emerald-400 disabled:opacity-50 ${extraClass}`}
-        >
-          <FaCheck className="size-5" /> Suscrito
-        </button>
       );
     }
+
     return (
-      <button
-        onClick={handleStartNow}
-        disabled={isEnrolling}
-        className={`flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#22c4d3] px-4 py-2 text-base font-semibold text-[#080c16] transition hover:bg-[#1fb0be] disabled:opacity-50 ${extraClass}`}
-      >
-        {isEnrolling
-          ? 'Inscribiendo...'
-          : !isSubscriptionValid || !hasValidPlan
-            ? 'Ver Planes'
-            : 'Empezar Proyecto Ahora'}
-      </button>
+      <div className={`space-y-2 ${extraClass}`}>
+        <div className="group relative">
+          <button
+            type="button"
+            className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#10b9814d] bg-emerald-500/20 px-4 py-2 text-base font-semibold whitespace-nowrap text-emerald-400 transition-all hover:bg-[#10b9814d] disabled:opacity-50"
+          >
+            <FaCheck className="size-5" style={{ color: 'rgb(52 211 153)' }} />
+            Suscrito
+          </button>
+          <button
+            type="button"
+            aria-label="Cancelar suscripción al proyecto guiado"
+            onClick={() => setShowUnenrollDialog(true)}
+            disabled={isUnenrolling}
+            className="group absolute top-1/2 right-3 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-destructive/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
+          >
+            <FaTimes className="size-4 text-emerald-400 transition-colors group-hover:text-red-500" />
+          </button>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleContinueProject}
+          disabled={!continueActivityId}
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[#22c4d3] px-4 py-2 text-sm font-medium text-[#080c16] transition-colors hover:bg-[#1fb0be] disabled:pointer-events-none disabled:opacity-50"
+        >
+          <IoPlayOutline className="size-5 text-[#080c16]" />
+          Continuar proyecto guiado
+        </button>
+
+        {visibleActivitiesTotal > 0 && (
+          <div className="space-y-1 pt-1">
+            <div className="flex items-center justify-between text-xs text-[#94A3B8]">
+              <span>Progreso</span>
+              <span className="font-semibold text-white">{progressPct}%</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[#0b2038]">
+              <div
+                className="h-full rounded-full bg-[#22c4d3] transition-all"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     );
   };
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto -mt-6 max-w-7xl px-4 py-2 sm:-mt-0 md:px-6 md:py-8 lg:px-8">
+      <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 lg:px-8">
         <GuidedProjectBreadcrumb title={project.title} />
 
         {/* Banner de Suscripción Expirada */}
@@ -836,7 +960,27 @@ export function GuidedProjectDetails({
                           </div>
                         </AspectRatio>
                         <div className="relative z-20 space-y-5 p-5">
+                          <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/15 px-3 py-1.5 text-sm font-medium text-primary">
+                            <FaProjectDiagram className="size-3.5" />
+                            <span>Proyecto Guiado</span>
+                          </div>
+
+                          {isSubscriptionValid && hasValidPlan && (
+                            <p className="inline-flex items-center gap-2 text-sm font-medium text-[#22C4D3]">
+                              Incluido en tu plan {userPlanType?.toUpperCase()}
+                              {userPlanType === 'Premium' ? (
+                                <FaCrown className="size-4 text-amber-400" />
+                              ) : (
+                                <FaStar className="size-4 text-blue-400" />
+                              )}
+                            </p>
+                          )}
+
                           {renderCtaButton()}
+                          <p className="text-center text-xs text-[#94A3B8]">
+                            Incluido en tu suscripción anual o cómpralo
+                            individual
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -982,10 +1126,6 @@ export function GuidedProjectDetails({
                           <span>Proyecto Guiado</span>
                         </div>
 
-                        <p className="text-sm leading-tight font-semibold text-white">
-                          {project.title}
-                        </p>
-
                         <div className="space-y-3">
                           {isSubscriptionValid && hasValidPlan && (
                             <p className="inline-flex items-center gap-2 text-sm font-medium text-[#22C4D3]">
@@ -1021,6 +1161,39 @@ export function GuidedProjectDetails({
           </div>
         </div>
       </main>
+
+      <Dialog
+        open={showUnenrollDialog}
+        onOpenChange={handleUnenrollDialogChange}
+      >
+        <DialogContent className="border border-[#1D283A] bg-[#061c37] sm:rounded-[16px]">
+          <DialogHeader className="space-y-2 text-center sm:text-left">
+            <DialogTitle className="text-[#f8fafc]">¿Estás seguro?</DialogTitle>
+            <DialogDescription className="text-[#94a3b8]">
+              ¿Estás seguro que quieres cancelar tu suscripción al proyecto
+              guiado?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:space-x-2">
+            <button
+              type="button"
+              onClick={() => setShowUnenrollDialog(false)}
+              disabled={isUnenrolling}
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full border border-[#1D283A] bg-[#01152d] px-4 py-2 text-sm font-medium transition-colors hover:bg-[#22C4D3] hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmUnenroll}
+              disabled={isUnenrolling}
+              className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-[#7c1d1d] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#991b1b] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 sm:w-auto"
+            >
+              {isUnenrolling ? 'Procesando…' : 'Aceptar'}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

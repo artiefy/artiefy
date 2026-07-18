@@ -41,16 +41,12 @@ function isEducadorStudentPath(pathname: string): boolean {
   );
 }
 
-// Rutas del front de estudiantes que un super-admin SÍ puede ver: solo el
-// detalle de cursos y programas (y las clases, que son el contenido dentro de
-// un curso). El resto del front de estudiantes —listados, perfil, cuenta— lo
-// devuelve a su dashboard.
+// Rutas del front de estudiantes que un super-admin SÍ puede ver: todo el front
+// de estudiantes (listados, detalle de cursos/programas/clases, perfil, cuenta,
+// etc.). El super-admin navega como si fuera un estudiante más, sin que el
+// redirect por rol lo devuelva a su dashboard.
 function isSuperAdminStudentPath(pathname: string): boolean {
-  return (
-    /^\/estudiantes\/cursos\/[^/]+/.test(pathname) ||
-    /^\/estudiantes\/programas\/[^/]+/.test(pathname) ||
-    /^\/estudiantes\/clases\/[^/]+/.test(pathname)
-  );
+  return pathname === '/estudiantes' || pathname.startsWith('/estudiantes/');
 }
 
 function isLegacyEducadorPath(pathname: string): boolean {

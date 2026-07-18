@@ -1,5 +1,5 @@
 'use client';
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -7,21 +7,15 @@ import { usePathname } from 'next/navigation';
 
 import { Show, useAuth, useUser } from '@clerk/nextjs';
 import { type OAuthStrategy } from '@clerk/shared/types';
-import { XMarkIcon as XMarkIconSolid } from '@heroicons/react/24/solid';
 import {
-  BookOpen,
   ChevronDown,
   CreditCard,
-  FolderKanban,
-  GraduationCap,
   Home,
   LogIn,
   MapPin,
-  PanelsTopLeft,
   Search,
   X,
 } from 'lucide-react';
-import { createPortal } from 'react-dom';
 import { FaCrown } from 'react-icons/fa';
 import { IoSettingsOutline } from 'react-icons/io5';
 import useSWR from 'swr';
@@ -49,7 +43,7 @@ export function Header({
   onEspaciosClickAction?: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [brandMenuOpen, setBrandMenuOpen] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [previewCourses, setPreviewCourses] = useState<Course[]>([]);
@@ -81,23 +75,7 @@ export function Header({
     { href: '/comunidad', label: 'Espacios' },
     { href: '/planes', label: 'Planes' },
   ];
-  const mobileNavItems = [
-    { href: '/', label: 'Inicio', icon: Home },
-    { href: '/estudiantes', label: 'Cursos', icon: BookOpen },
-    {
-      href: '/estudiantes#programas-section',
-      label: 'Programas',
-      icon: PanelsTopLeft,
-    },
-    { href: '/proyectos', label: 'Proyectos', icon: FolderKanban },
-    { href: '/comunidad', label: 'Espacios', icon: MapPin },
-    { href: '/planes', label: 'Planes', icon: CreditCard },
-    {
-      href: '/estudiantes/myaccount',
-      label: 'Mis Cursos',
-      icon: GraduationCap,
-    },
-  ];
+  const brandMenuRef = useRef<HTMLDivElement>(null);
 
   const planType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
@@ -136,9 +114,6 @@ export function Header({
     return false;
   };
   const hasActiveStudentAccess = isSignedIn && !isPlanExpired();
-  const visibleMobileNavItems = mobileNavItems.filter(
-    (item) => item.href !== '/estudiantes/myaccount' || isSignedIn
-  );
 
   const profileName =
     user?.fullName ?? user?.firstName ?? user?.username ?? 'Mi perfil';
@@ -151,28 +126,19 @@ export function Header({
     (subscriptionEndTime === null ||
       (!Number.isNaN(subscriptionEndTime) && subscriptionEndTime > Date.now()));
 
-  const renderProfileLink = (mobileMenu = false) => (
+  const renderProfileLink = () => (
     <Link
       href="/estudiantes/perfil"
       aria-label={`Ir al perfil de ${profileName}`}
-      onClick={mobileMenu ? () => setMobileMenuOpen(false) : undefined}
-      className={`
-        group/profile inline-flex min-h-10 min-w-0 items-center gap-2.5 border
-        text-left transition-colors focus-visible:ring-2 focus-visible:ring-primary
+      className="
+        group/profile inline-flex min-h-10 max-w-56 min-w-0 items-center
+        gap-2.5 rounded-full border border-border/50 bg-secondary/30 px-2.5
+        py-1.5 text-left transition-colors
+        hover:border-primary/50 hover:bg-primary/10
+        focus-visible:ring-2 focus-visible:ring-primary
         focus-visible:ring-offset-2 focus-visible:ring-offset-background
         focus-visible:outline-none
-        ${
-          mobileMenu
-            ? `
-              min-h-12 w-full rounded-xl border-white/10 bg-white/5 px-3 py-2
-              hover:border-primary/40 hover:bg-primary/10
-            `
-            : `
-              max-w-56 rounded-full border-border/50 bg-secondary/30 px-2.5
-              py-1.5 hover:border-primary/50 hover:bg-primary/10
-            `
-        }
-      `}
+      "
     >
       {user?.imageUrl ? (
         <Image
@@ -422,7 +388,7 @@ export function Header({
   };
 
   const handleOpenLoginModal = () => {
-    setMobileMenuOpen(false);
+    setBrandMenuOpen(false);
     setShowMobileSearch(false);
 
     if (isMobileViewport) {
@@ -445,28 +411,27 @@ export function Header({
   };
 
   useEffect(() => {
-    if (!mobileMenuOpen) return;
-
-    const previousHtmlOverflow = document.documentElement.style.overflow;
-    const previousBodyOverflow = document.body.style.overflow;
-
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
+    if (!brandMenuOpen) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setMobileMenuOpen(false);
+        setBrandMenuOpen(false);
+      }
+    };
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!brandMenuRef.current?.contains(event.target as Node)) {
+        setBrandMenuOpen(false);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
 
     return () => {
-      document.documentElement.style.overflow = previousHtmlOverflow;
-      document.body.style.overflow = previousBodyOverflow;
       window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [mobileMenuOpen]);
+  }, [brandMenuOpen]);
 
   return (
     <>
@@ -954,52 +919,109 @@ export function Header({
               md:hidden
             "
             >
-              {/* Brand button: opens the main mobile menu (with search inside) */}
-              <button
-                type="button"
-                aria-label="Menú principal"
-                aria-expanded={mobileMenuOpen}
-                aria-controls="mobile-menu"
-                className="
-                liquid-glass mobile-header-floating-control pointer-events-auto
-                flex items-center
-                gap-2 rounded-full !bg-[#01152d]/55 py-1.5 pr-3
-                pl-1.5 !backdrop-blur-2xl !backdrop-saturate-150 transition-transform active:scale-95
-              "
-                onClick={() => {
-                  setMobileMenuOpen((prev) => {
-                    const next = !prev;
-                    if (next) setShowMobileSearch(false);
-                    return next;
-                  });
-                }}
-              >
-                <span
+              {/* Brand button: opens a small dropdown (Inicio / Espacios / Planes) */}
+              <div ref={brandMenuRef} className="pointer-events-auto relative">
+                <button
+                  type="button"
+                  aria-label="Menú Artiefy"
+                  aria-expanded={brandMenuOpen}
+                  aria-controls="mobile-brand-menu"
                   className="
-                  flex size-7 items-center justify-center rounded-full
-                  bg-[#22c4d3]
-                  shadow-[0_0_10px_rgba(34,196,211,0.4)]
+                  liquid-glass mobile-header-floating-control flex items-center
+                  gap-2 rounded-full !bg-[#01152d]/55 py-1.5 pr-3
+                  pl-1.5 !backdrop-blur-2xl !backdrop-saturate-150 transition-transform active:scale-95
                 "
+                  onClick={() => {
+                    setBrandMenuOpen((prev) => {
+                      const next = !prev;
+                      if (next) setShowMobileSearch(false);
+                      return next;
+                    });
+                  }}
                 >
-                  <span className="text-sm leading-none font-bold text-[#080c16]">
-                    A
+                  <span
+                    className="
+                    flex size-7 items-center justify-center rounded-full
+                    bg-[#22c4d3]
+                    shadow-[0_0_10px_rgba(34,196,211,0.4)]
+                  "
+                  >
+                    <span className="text-sm leading-none font-bold text-[#080c16]">
+                      A
+                    </span>
                   </span>
-                </span>
-                <span
-                  className="
-                  bg-gradient-to-r from-primary to-[#3AF4EF] bg-clip-text
-                  text-sm font-bold text-transparent
-                "
-                >
-                  Artiefy
-                </span>
-                <ChevronDown
-                  className={`
-                  size-3.5 text-muted-foreground transition-transform
-                  ${mobileMenuOpen ? 'rotate-180' : ''}
-                `}
-                />
-              </button>
+                  <span
+                    className="
+                    bg-gradient-to-r from-primary to-[#3AF4EF] bg-clip-text
+                    text-sm font-bold text-transparent
+                  "
+                  >
+                    Artiefy
+                  </span>
+                  <ChevronDown
+                    className={`
+                    size-3.5 text-muted-foreground transition-transform
+                    ${brandMenuOpen ? 'rotate-180' : ''}
+                  `}
+                  />
+                </button>
+
+                {brandMenuOpen ? (
+                  <div
+                    id="mobile-brand-menu"
+                    role="menu"
+                    className="
+                    absolute top-full left-0 z-50 mt-2 min-w-[180px]
+                    rounded-2xl border border-white/10 bg-[#01152d] p-1.5
+                    shadow-2xl
+                  "
+                  >
+                    <Link
+                      href="/"
+                      role="menuitem"
+                      onClick={() => setBrandMenuOpen(false)}
+                      className="
+                      flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm
+                      font-medium text-foreground transition-colors
+                      hover:bg-primary/10 hover:text-primary
+                    "
+                    >
+                      <Home className="size-4" />
+                      Inicio
+                    </Link>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={(e) => {
+                        setBrandMenuOpen(false);
+                        handleEspaciosClick(e);
+                      }}
+                      className="
+                      flex w-full items-center gap-3 rounded-xl px-3 py-2.5
+                      text-left text-sm font-medium text-foreground
+                      transition-colors
+                      hover:bg-primary/10 hover:text-primary
+                    "
+                    >
+                      <MapPin className="size-4" />
+                      Espacios
+                    </button>
+                    <Link
+                      href="/planes"
+                      role="menuitem"
+                      onClick={() => setBrandMenuOpen(false)}
+                      className="
+                      flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm
+                      font-medium text-foreground transition-colors
+                      hover:bg-primary/10 hover:text-primary
+                    "
+                    >
+                      <CreditCard className="size-4" />
+                      Planes
+                    </Link>
+                  </div>
+                ) : null}
+              </div>
 
               {/* Auth area */}
               {!mounted || !isAuthLoaded ? (
@@ -1122,223 +1144,6 @@ export function Header({
             </form>
           </div>
         )}
-        {mounted && isMobileViewport && mobileMenuOpen
-          ? createPortal(
-              <div
-                className="
-              fixed inset-0 z-[2147483647] overscroll-contain
-              md:hidden
-            "
-              >
-                <button
-                  type="button"
-                  className="
-              fixed inset-0 z-[2147483646] cursor-default appearance-none
-              border-0 bg-black/55 p-0
-            "
-                  aria-label="Cerrar menú"
-                  onClick={() => setMobileMenuOpen(false)}
-                />
-                <aside
-                  id="mobile-menu"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-label="Menú principal"
-                  tabIndex={-1}
-                  className="
-              fixed inset-y-0 right-0 z-[2147483647] flex h-[100svh]
-              max-h-[100svh] w-[min(86vw,22rem)] flex-col overflow-hidden
-              bg-[#01152d] px-6 pt-[calc(env(safe-area-inset-top)+1.5rem)]
-              shadow-2xl
-              sm:w-[80%] sm:max-w-sm sm:px-7
-            "
-                >
-                  <div className="mb-6 flex w-full items-center justify-between">
-                    <Link
-                      href="/"
-                      className="flex items-center gap-3"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Image
-                        src="/artiefy-icon-mobile.png"
-                        alt="Artiefy"
-                        width={36}
-                        height={36}
-                        className="size-9 object-contain"
-                      />
-                      <span className="text-xl font-bold text-primary">
-                        Artiefy
-                      </span>
-                    </Link>
-                    <button
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="
-                rounded-full p-1 text-slate-300 transition
-                hover:bg-white/10 hover:text-white
-                focus:outline-none
-                focus-visible:ring-2 focus-visible:ring-primary
-              "
-                      aria-label="Close menu"
-                    >
-                      <XMarkIconSolid className="size-5" />
-                    </button>
-                  </div>
-                  <div className="mb-6">
-                    <div className="relative">
-                      <Search
-                        className="
-                  absolute top-1/2 left-4 size-4 -translate-y-1/2 text-slate-400
-                "
-                      />
-                      <input
-                        type="search"
-                        placeholder="Buscar"
-                        value={searchQuery}
-                        onChange={(event) => setSearchQuery(event.target.value)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter') {
-                            handleSearch();
-                            setMobileMenuOpen(false);
-                          }
-                        }}
-                        className="
-                  h-12 w-full rounded-xl border border-white/5 bg-white/7 pr-4
-                  pl-12 text-sm text-white outline-none
-                  placeholder:text-slate-400
-                  focus:border-primary/50 focus:ring-2 focus:ring-primary/20
-                "
-                      />
-                    </div>
-                    {showPreview &&
-                      (previewLoading ||
-                        previewCourses.length > 0 ||
-                        previewPrograms.length > 0) && (
-                        <div className="mt-3 max-h-[42dvh] overflow-y-auto rounded-xl">
-                          <Suspense fallback={null}>
-                            <CourseSearchPreview
-                              isLoading={previewLoading}
-                              courses={previewCourses}
-                              programs={previewPrograms}
-                              onSelectCourse={(courseId: number) => {
-                                setMobileMenuOpen(false);
-                                window.location.href = `/estudiantes/cursos/${courseId}`;
-                              }}
-                              onSelectProgram={(programId: string | number) => {
-                                setMobileMenuOpen(false);
-                                window.location.href = `/estudiantes/programas/${programId}`;
-                              }}
-                            />
-                          </Suspense>
-                        </div>
-                      )}
-                  </div>
-                  <div
-                    className="
-              min-h-0 flex-1 overflow-y-auto overscroll-contain
-              pb-[clamp(1rem,3dvh,1.75rem)]
-            "
-                  >
-                    <nav>
-                      <ul className="space-y-2.5">
-                        {visibleMobileNavItems.map((item) => {
-                          const isActive =
-                            pathname === item.href ||
-                            (item.href !== '/' &&
-                              !item.href.includes('#') &&
-                              pathname.startsWith(item.href));
-                          const Icon = item.icon;
-                          if (item.label === 'Espacios') {
-                            return (
-                              <li key={item.href}>
-                                <button
-                                  type="button"
-                                  className={`
-                            flex w-full items-center gap-4 rounded-xl px-4
-                            py-2.5
-                            text-left text-base font-semibold transition
-                            outline-none
-                            active:scale-95
-                            ${
-                              isActive
-                                ? 'bg-primary/12 text-primary'
-                                : `
-                                  text-slate-400
-                                  hover:bg-white/7 hover:text-white
-                                `
-                            }
-                          `}
-                                  onClick={(e) => {
-                                    setMobileMenuOpen(false);
-                                    handleEspaciosClick(e);
-                                  }}
-                                >
-                                  <Icon className="size-5 shrink-0" />
-                                  <span>{item.label}</span>
-                                </button>
-                              </li>
-                            );
-                          }
-                          return (
-                            <li key={item.href}>
-                              <Link
-                                href={item.href}
-                                className={`
-                          flex w-full items-center gap-4 rounded-xl px-4
-                          py-2.5
-                          text-base font-semibold transition
-                          active:scale-95
-                          ${
-                            isActive
-                              ? 'bg-primary/12 text-primary'
-                              : `
-                                text-slate-400
-                                hover:bg-white/7 hover:text-white
-                              `
-                          }
-                        `}
-                                onClick={() => setMobileMenuOpen(false)}
-                              >
-                                <Icon className="size-5 shrink-0" />
-                                <span>{item.label}</span>
-                              </Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </nav>
-                    {!isSignedIn ? (
-                      <button
-                        type="button"
-                        onClick={handleOpenLoginModal}
-                        className="
-                    mt-6 flex h-12 w-full items-center justify-center rounded-xl
-                    bg-primary text-sm font-semibold text-[#01152d] transition
-                    hover:bg-primary/90
-                    active:scale-95
-                  "
-                      >
-                        Acceder
-                      </button>
-                    ) : null}
-                  </div>
-                  {isSignedIn ? (
-                    <div
-                      className="
-                  shrink-0 border-t border-white/8 pt-4
-                  pb-[calc(env(safe-area-inset-bottom)+1.25rem)]
-                "
-                    >
-                      <div className="flex min-h-12 items-center justify-center">
-                        {renderProfileLink(true)}
-                      </div>
-                    </div>
-                  ) : null}
-                </aside>
-              </div>,
-              document.body
-            )
-          : null}
-
         <MiniLoginModal
           isOpen={isMobileViewport && activeAuthModal === 'login'}
           onClose={() => setActiveAuthModal(null)}
@@ -1376,7 +1181,7 @@ export function Header({
           onSearchClick={() => {
             // Toggle: the same magnifier opens and closes the mobile search.
             setShowMobileSearch((prev) => !prev);
-            setMobileMenuOpen(false);
+            setBrandMenuOpen(false);
           }}
           onLoginClick={handleOpenLoginModal}
         />

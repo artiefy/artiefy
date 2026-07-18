@@ -1,10 +1,11 @@
 'use client';
 
-import { useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
 import {
+  ExternalLink,
   FileText,
   Link as LinkIcon,
   LoaderCircle,
@@ -33,7 +34,11 @@ import {
   normalizeGuidedSubmissionUrl,
 } from '~/lib/guidedActivitySubmissions';
 
-import type { GuidedActivitySubmissionResponse } from '~/lib/guidedActivitySubmissions';
+import type {
+  GuidedActivitySubmissionLatest,
+  GuidedActivitySubmissionLatestResponse,
+  GuidedActivitySubmissionResponse,
+} from '~/lib/guidedActivitySubmissions';
 
 interface GuidedActivitySubmissionDialogProps {
   activityId: number;
@@ -62,6 +67,40 @@ export function GuidedActivitySubmissionDialog({
   const [linkError, setLinkError] = useState<string | null>(null);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [latestSubmission, setLatestSubmission] =
+    useState<GuidedActivitySubmissionLatest | null>(null);
+  const [isLoadingLatest, setIsLoadingLatest] = useState(false);
+
+  // Load the student's most recent submission whenever the dialog opens, so
+  // they can see what they already delivered (file names + clickable links).
+  useEffect(() => {
+    if (!open) return;
+
+    const controller = new AbortController();
+    setIsLoadingLatest(true);
+    setLatestSubmission(null);
+
+    fetch(
+      `/api/estudiantes/guided-projects/${projectId}/activities/${activityId}/submission`,
+      { signal: controller.signal }
+    )
+      .then(async (response) => {
+        const data = (await response
+          .json()
+          .catch(() => null)) as GuidedActivitySubmissionLatestResponse | null;
+        if (response.ok && data?.success === true) {
+          setLatestSubmission(data.submission);
+        }
+      })
+      .catch(() => {
+        // Silent: showing the draft form is still fully usable without history.
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoadingLatest(false);
+      });
+
+    return () => controller.abort();
+  }, [open, projectId, activityId]);
 
   const resetDraft = () => {
     requestIdRef.current = null;
@@ -231,6 +270,63 @@ export function GuidedActivitySubmissionDialog({
               {activityName}
             </p>
           </div>
+
+          {isLoadingLatest && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <LoaderCircle
+                className="size-4 animate-spin"
+                aria-hidden="true"
+              />
+              Cargando tu última entrega...
+            </div>
+          )}
+
+          {!isLoadingLatest &&
+            latestSubmission &&
+            (latestSubmission.files.length > 0 ||
+              latestSubmission.urls.length > 0) && (
+              <div className="rounded-xl border border-border/50 bg-muted/10 p-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                  Tu última entrega
+                </p>
+                <ul className="flex flex-col gap-1.5">
+                  {latestSubmission.files.map((file, index) => (
+                    <li
+                      key={`${file.name}-${index}`}
+                      className="flex items-center gap-2 text-sm text-foreground"
+                    >
+                      <FileText
+                        className="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <span className="min-w-0 flex-1 truncate">
+                        {file.name}
+                      </span>
+                    </li>
+                  ))}
+                  {latestSubmission.urls.map((url) => (
+                    <li key={url} className="flex items-center gap-2 text-sm">
+                      <LinkIcon
+                        className="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden="true"
+                      />
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-w-0 flex-1 items-center gap-1 truncate text-primary hover:underline"
+                      >
+                        <span className="min-w-0 truncate">{url}</span>
+                        <ExternalLink
+                          className="size-3 shrink-0"
+                          aria-hidden="true"
+                        />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
           <button
             type="button"
@@ -426,7 +522,7 @@ export function GuidedActivitySubmissionDialog({
               submissionError ? 'guided-submission-error' : undefined
             }
             onClick={handleSubmit}
-            className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground"
+            className="bg-gradient-to-r from-primary to-primary/80 font-semibold text-[#01152d] hover:text-[#01152d]"
           >
             {isSubmitting ? (
               <LoaderCircle

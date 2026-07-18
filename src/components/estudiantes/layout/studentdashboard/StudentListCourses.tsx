@@ -6,7 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Rocket } from 'lucide-react';
 import { FaCrown, FaStar } from 'react-icons/fa';
 import { HiLibrary } from 'react-icons/hi';
 import { IoGiftOutline } from 'react-icons/io5';
@@ -36,6 +36,10 @@ interface CourseListStudentProps {
   sort?: CourseSortValue;
   user?: ClerkUser;
 }
+
+// types_courses.id for 'PROYECTO GUIADO' — the DB record that actually marks
+// an item as a guided project for display purposes (see Drizzle Studio).
+const GUIDED_PROJECT_TYPE_COURSE_ID = 3;
 
 const ITEMS_PER_PAGE = 12;
 const COURSE_SORT_VALUES = [
@@ -304,7 +308,10 @@ export default function StudentListCourses({
 
   const getCourseTypeLabel = (item: UnifiedItem) => {
     // Guided projects already show their badge over the cover image
-    if (item.isGuidedProject || item.typeCourse?.id === 3) {
+    if (
+      item.isGuidedProject ||
+      item.typeCourse?.id === GUIDED_PROJECT_TYPE_COURSE_ID
+    ) {
       return null;
     }
 
@@ -449,6 +456,10 @@ export default function StudentListCourses({
           const modalidadLabel = item.modalidad?.name ?? 'Asistida Virtual';
           const nivelLabel = item.nivel?.name ?? 'Sin nivel';
           const categoryLabel = item.category?.name?.trim();
+          // Only real "PROYECTO GUIADO" records (types_courses.id = 3) get the
+          // ribbon — a guided project missing that DB link shows no badge.
+          const isTaggedGuidedProject =
+            item.typeCourse?.id === GUIDED_PROJECT_TYPE_COURSE_ID;
           const detailUrl = item.isGuidedProject
             ? `/estudiantes/proyectos-guiados/${item.id}`
             : `/estudiantes/cursos/${item.id}`;
@@ -470,10 +481,26 @@ export default function StudentListCourses({
                   quality={75}
                 />
                 <div className="pointer-events-none absolute inset-x-0 top-0 bottom-0 bg-gradient-to-t from-card via-card/70 to-transparent" />
-                {typeCourseLabel && (
-                  <span className="absolute bottom-3 left-3 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary backdrop-blur-sm">
-                    {typeCourseLabel}
-                  </span>
+                {item.isGuidedProject ? (
+                  <>
+                    {isTaggedGuidedProject && (
+                      <span className="absolute top-3 right-3 z-10 flex items-center gap-1 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary backdrop-blur-sm">
+                        <Rocket className="size-3" aria-hidden="true" />
+                        Proyecto Guiado
+                      </span>
+                    )}
+                    {categoryLabel && (
+                      <span className="absolute bottom-3 left-3 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary backdrop-blur-sm">
+                        {categoryLabel}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  typeCourseLabel && (
+                    <span className="absolute bottom-3 left-3 rounded-full border border-primary/30 bg-primary/20 px-3 py-1 text-[11px] font-semibold text-primary backdrop-blur-sm">
+                      {typeCourseLabel}
+                    </span>
+                  )
                 )}
               </div>
 
@@ -500,7 +527,7 @@ export default function StudentListCourses({
                     {nivelLabel}
                   </span>
                 </div>
-                {categoryLabel && (
+                {categoryLabel && !item.isGuidedProject && (
                   <div className="flex">
                     <span className="rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2.5 py-0.5 text-[10px] font-medium text-cyan-300">
                       {categoryLabel}
