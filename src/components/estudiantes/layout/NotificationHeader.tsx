@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useUser } from '@clerk/nextjs';
 import { Bell, BellRing } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import { toast } from 'react-toastify';
 import useSWR from 'swr';
 
@@ -103,6 +104,8 @@ export function NotificationHeader() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [modalProyectoId, setModalProyectoId] = useState<number | null>(null);
   const [modalInvitacionesOpen, setModalInvitacionesOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const hasCheckedDueRef = useRef(false);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef(true);
@@ -187,9 +190,26 @@ export function NotificationHeader() {
   }, [user?.id, mutate, mutateUnread]);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Track the mobile breakpoint so the dropdown can be portaled out of the
+  // backdrop-filtered header pill (which otherwise traps position:fixed).
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const update = () => setIsMobile(mediaQuery.matches);
+    update();
+    mediaQuery.addEventListener('change', update);
+    return () => mediaQuery.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.notification-menu')) {
+      if (
+        !target.closest('.notification-menu') &&
+        !target.closest('.notification-options')
+      ) {
         setIsOpen(false);
       }
     };
@@ -350,6 +370,86 @@ export function NotificationHeader() {
   );
   const unreadLabel = unreadCount > 99 ? '99+' : unreadCount;
 
+  const notificationsPanel = (
+    <div
+      className={`
+          notification-options
+          ${isOpen ? 'show' : ''}
+        `}
+    >
+      {uniqueNotifications.length > 0 ? (
+        uniqueNotifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`
+                notification-item group
+                ${!notification.isRead ? 'notification-unread' : ''}
+              `}
+            onClick={() => handleNotificationClick(notification)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                handleNotificationClick(notification);
+              }
+            }}
+            style={{ position: 'relative' }}
+          >
+            <div className="notification-content">
+              <div className="notification-title">
+                {renderNotificationTitle(notification)}
+              </div>
+              <div className="notification-description">
+                {renderNotificationDescription(notification)}
+              </div>
+              <div className="notification-time">
+                {formatRelativeTime(notification.createdAt)}
+              </div>
+            </div>
+            {/* Icono de basura visible solo al hacer hover */}
+            <button
+              className="
+                  absolute top-1/2 right-2 -translate-y-1/2 opacity-0
+                  transition-opacity
+                  group-hover:opacity-100
+                "
+              title="Eliminar notificación"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDeleteId(notification.id);
+              }}
+              type="button"
+            >
+              <svg
+                className="
+                    size-5 text-red-500
+                    hover:text-red-700
+                  "
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        ))
+      ) : (
+        <div className="flex min-h-[100px] items-center justify-center p-4">
+          <div className="text-center">
+            <Bell className="mx-auto mb-2 size-6 text-gray-400" />
+            <p className="text-sm text-gray-500">No tienes notificaciones</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   // Modal de confirmación para eliminar notificación
   // Solo renderiza el modal si deleteId !== null
   return (
@@ -413,83 +513,12 @@ export function NotificationHeader() {
         )}
       </button>
 
-      <div
-        className={`
-          notification-options
-          ${isOpen ? 'show' : ''}
-        `}
-      >
-        {uniqueNotifications.length > 0 ? (
-          uniqueNotifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`
-                notification-item group
-                ${!notification.isRead ? 'notification-unread' : ''}
-              `}
-              onClick={() => handleNotificationClick(notification)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  handleNotificationClick(notification);
-                }
-              }}
-              style={{ position: 'relative' }}
-            >
-              <div className="notification-content">
-                <div className="notification-title">
-                  {renderNotificationTitle(notification)}
-                </div>
-                <div className="notification-description">
-                  {renderNotificationDescription(notification)}
-                </div>
-                <div className="notification-time">
-                  {formatRelativeTime(notification.createdAt)}
-                </div>
-              </div>
-              {/* Icono de basura visible solo al hacer hover */}
-              <button
-                className="
-                  absolute top-1/2 right-2 -translate-y-1/2 opacity-0
-                  transition-opacity
-                  group-hover:opacity-100
-                "
-                title="Eliminar notificación"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setDeleteId(notification.id);
-                }}
-                type="button"
-              >
-                <svg
-                  className="
-                    size-5 text-red-500
-                    hover:text-red-700
-                  "
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          ))
-        ) : (
-          <div className="flex min-h-[100px] items-center justify-center p-4">
-            <div className="text-center">
-              <Bell className="mx-auto mb-2 size-6 text-gray-400" />
-              <p className="text-sm text-gray-500">No tienes notificaciones</p>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* On mobile the header bell lives inside a backdrop-filtered pill, which
+          traps position:fixed descendants; portal the panel to <body> so it
+          expands against the viewport. Desktop keeps the absolute dropdown. */}
+      {mounted && isMobile
+        ? createPortal(notificationsPanel, document.body)
+        : notificationsPanel}
       {/* Modal de confirmación para eliminar notificación */}
       {deleteId !== null && (
         <Dialog open={true} onOpenChange={(open) => !open && setDeleteId(null)}>

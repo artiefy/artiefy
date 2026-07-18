@@ -96,3 +96,7 @@ Validation policy: do NOT run `build`, `check`, `lint`, or `typecheck` by defaul
 ## Model Routing
 
 Plan expensive, execute cheap. For medium/large changes (several files, new behavior, architecture, DB/auth): do the analysis and a written implementation plan with the strongest available model (Opus-class), hand implementation to a cheaper model (Sonnet-class; Haiku-class for mechanical edits), then review the diff against the plan on the strong model. Plans for a cheaper executor must be self-contained: exact file paths, current-state code excerpts, this repo's check-gate commands as verification steps, an explicit out-of-scope list, and STOP conditions. Tiny one-file changes skip the split — plan/delegate overhead costs more than it saves.
+
+## Integrated Browser
+
+When a change affects visible UI, when debugging layout/hydration/console errors, or when the user asks, verify it in the agent's own integrated browser against the local dev server — `npm run dev`, default `http://localhost:3000` — instead of asking the user for screenshots. Integrated browser means the browser built into the agent's native app: Claude Code Browser pane (`mcp__Claude_Browser__*` tools), Codex app browser. NEVER use the Playwright MCP, chrome-devtools MCP, `playwright-cli`, or anything that opens an external Google Chrome window for this — those are only for explicit Playwright/E2E test requests. Reuse a running dev server; never start a second instance on another port without saying so. Skip for logic-only changes with no visual surface.

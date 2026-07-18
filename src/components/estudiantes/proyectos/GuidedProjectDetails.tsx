@@ -829,7 +829,7 @@ export function GuidedProjectDetails({
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto -mt-6 max-w-7xl px-4 py-2 sm:-mt-0 md:px-6 md:py-8 lg:px-8">
+      <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 lg:px-8">
         <GuidedProjectBreadcrumb title={project.title} />
 
         {/* Banner de Suscripción Expirada */}

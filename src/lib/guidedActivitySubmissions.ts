@@ -59,6 +59,29 @@ export type GuidedActivitySubmissionResponse =
   | GuidedActivitySubmissionSuccessResponse
   | GuidedActivitySubmissionErrorResponse;
 
+// Public-safe view of a submitted file: never exposes the private S3 key.
+export interface GuidedActivitySubmissionFilePreview {
+  name: string;
+  contentType: string;
+  size: number;
+}
+
+export interface GuidedActivitySubmissionLatest {
+  submissionId: number;
+  submittedAt: string;
+  files: GuidedActivitySubmissionFilePreview[];
+  urls: string[];
+}
+
+export interface GuidedActivitySubmissionLatestSuccessResponse {
+  success: true;
+  submission: GuidedActivitySubmissionLatest | null;
+}
+
+export type GuidedActivitySubmissionLatestResponse =
+  | GuidedActivitySubmissionLatestSuccessResponse
+  | GuidedActivitySubmissionErrorResponse;
+
 const ALLOWED_FILE_TYPES: Record<string, ReadonlySet<string>> = {
   csv: new Set(['text/csv', 'application/csv']),
   docx: new Set([

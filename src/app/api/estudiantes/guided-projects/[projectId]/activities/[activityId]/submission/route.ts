@@ -8,7 +8,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { Pool } from '@neondatabase/serverless';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { randomUUID } from 'node:crypto';
 
@@ -20,6 +20,7 @@ import {
   sanitizeGuidedSubmissionDisplayName,
   sanitizeGuidedSubmissionFilename,
 } from '~/lib/guidedActivitySubmissions';
+import { db } from '~/server/db';
 import * as schema from '~/server/db/schema';
 import { guidedActivitySubmissions } from '~/server/db/schema';
 import { ratelimit } from '~/server/ratelimit/ratelimit';
@@ -35,6 +36,7 @@ import type {
   GuidedActivitySubmissionErrorCode,
   GuidedActivitySubmissionErrorResponse,
   GuidedActivitySubmissionFile,
+  GuidedActivitySubmissionLatestResponse,
   GuidedActivitySubmissionSuccessResponse,
 } from '~/lib/guidedActivitySubmissions';
 
@@ -192,9 +194,23 @@ function hasStrictSameOrigin(request: NextRequest): boolean {
   }
 }
 
+// Derives the bucket's real region from the public S3 base URL (e.g. us-east-2).
+// AWS_REGION may point at a different region and cause a PermanentRedirect (301)
+// on PutObject, so we trust the bucket URL first — same approach as the profile
+// cover upload route.
+function getBucketRegion(): string {
+  try {
+    const host = new URL(env.NEXT_PUBLIC_AWS_S3_URL).hostname;
+    const match = /\.?s3[.-]([a-z0-9-]+)\.amazonaws\.com$/i.exec(host);
+    return match?.[1] ?? env.AWS_REGION;
+  } catch {
+    return env.AWS_REGION;
+  }
+}
+
 function getS3Client() {
   return new S3Client({
-    region: env.AWS_REGION,
+    region: getBucketRegion(),
     credentials: {
       accessKeyId: env.AWS_ACCESS_KEY_ID,
       secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
@@ -599,5 +615,79 @@ export async function POST(request: NextRequest, context: RouteParams) {
     activityId,
     isCompleted: true,
     submissionId: submissionResult.submissionId,
+  });
+}
+
+// Returns the current user's most recent submission for this activity so the
+// dialog can show what was already delivered. Never exposes private S3 keys.
+export async function GET(_request: NextRequest, context: RouteParams) {
+  const { activityId: activityIdParam, projectId: projectIdParam } =
+    await context.params;
+  const activityId = parsePositiveInteger(activityIdParam);
+  const projectId = parsePositiveInteger(projectIdParam);
+  if (!activityId || !projectId) {
+    return respondWithError('INVALID_ROUTE_PARAMS');
+  }
+
+  const { userId } = await auth();
+  if (!userId) return respondWithError('UNAUTHENTICATED');
+
+  const access = await getGuidedActivitySubmissionAccess({
+    activityId,
+    projectId,
+    userId,
+  });
+  if (!access.success) {
+    return respondWithError(mapAccessFailure(access.reason));
+  }
+
+  let latest: {
+    id: number;
+    files: GuidedActivitySubmissionFile[];
+    urls: string[];
+    submittedAt: Date;
+  } | null = null;
+  try {
+    const [row] = await db
+      .select({
+        id: guidedActivitySubmissions.id,
+        files: guidedActivitySubmissions.files,
+        urls: guidedActivitySubmissions.urls,
+        submittedAt: guidedActivitySubmissions.submittedAt,
+      })
+      .from(guidedActivitySubmissions)
+      .where(
+        and(
+          eq(guidedActivitySubmissions.userId, userId),
+          eq(guidedActivitySubmissions.activityId, activityId)
+        )
+      )
+      .orderBy(
+        desc(guidedActivitySubmissions.submittedAt),
+        desc(guidedActivitySubmissions.id)
+      )
+      .limit(1);
+    latest = row ?? null;
+  } catch (error) {
+    console.error('[guided-submission] latest_fetch_failed', {
+      errorName: error instanceof Error ? error.name : 'UnknownError',
+    });
+    return respondWithError('PERSISTENCE_FAILED');
+  }
+
+  return NextResponse.json<GuidedActivitySubmissionLatestResponse>({
+    success: true,
+    submission: latest
+      ? {
+          submissionId: latest.id,
+          submittedAt: latest.submittedAt.toISOString(),
+          files: latest.files.map((file) => ({
+            name: file.name,
+            contentType: file.contentType,
+            size: file.size,
+          })),
+          urls: latest.urls,
+        }
+      : null,
   });
 }
