@@ -14,9 +14,27 @@ import {
   Title,
   Tooltip,
 } from 'chart.js';
-import { ChevronLeft, ChevronRight, Eye, Loader2 } from 'lucide-react';
+import {
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Loader2,
+  UserMinus,
+} from 'lucide-react';
 import { Bar } from 'react-chartjs-2';
+import { toast } from 'sonner';
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '~/components/educators/ui/alert-dialog';
 import { normalizeSearch } from '~/lib/utils';
 import { getUsersEnrolledInCourse } from '~/server/queries/queriesEducator';
 
@@ -251,6 +269,7 @@ interface MobileUserCardProps {
   onGradeChange: (userId: string, activityId: number, grade: number) => void;
   onSaveGrade: (userId: string, activityId: number, grade: number) => void;
   onViewDetails: (user: User) => void;
+  onRemove: (user: User) => void;
 }
 
 function MobileUserCard({
@@ -262,6 +281,7 @@ function MobileUserCard({
   onGradeChange,
   onSaveGrade,
   onViewDetails,
+  onRemove,
 }: MobileUserCardProps) {
   const notaFinal = calcNotaFinal(user, activities, grades);
 
@@ -344,7 +364,7 @@ function MobileUserCard({
         </span>
       </div>
 
-      <div className="mt-2 text-right">
+      <div className="mt-2 flex justify-end gap-2">
         <button
           onClick={() => onViewDetails(user)}
           className="
@@ -354,6 +374,16 @@ function MobileUserCard({
           "
         >
           <Eye size={14} /> Ver
+        </button>
+        <button
+          onClick={() => onRemove(user)}
+          className="
+            inline-flex items-center gap-1 rounded bg-red-700 px-2 py-1 text-xs
+            font-medium text-white
+            hover:bg-red-800
+          "
+        >
+          <UserMinus size={14} /> Desmatricular
         </button>
       </div>
     </div>
@@ -394,6 +424,9 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const [studentsToRemove, setStudentsToRemove] = useState<User[]>([]);
+  const [removingStudent, setRemovingStudent] = useState(false);
 
   const USERS_PER_PAGE = 10;
 
@@ -494,6 +527,44 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
     });
     setSelectedIds([]);
     void fetchEnrolledUsers(courseId);
+  };
+
+  const handleRemoveStudent = (user: User) => {
+    setStudentsToRemove([user]);
+  };
+
+  const handleBulkRemoveStudents = () => {
+    const selected = users.filter((u) => selectedIds.includes(u.id));
+    if (selected.length === 0) return;
+    setStudentsToRemove(selected);
+  };
+
+  const confirmRemoveStudent = async () => {
+    if (studentsToRemove.length === 0) return;
+    const targetIds = studentsToRemove.map((u) => u.id);
+
+    setRemovingStudent(true);
+    try {
+      const res = await fetch('/api/enrollments/removeStudent', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userIds: targetIds, courseId }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setSelectedIds((prev) => prev.filter((id) => !targetIds.includes(id)));
+      toast.success(
+        studentsToRemove.length === 1
+          ? `${studentsToRemove[0].firstName} ${studentsToRemove[0].lastName} fue desmatriculado del curso`
+          : `${studentsToRemove.length} estudiantes fueron desmatriculados del curso`
+      );
+      void fetchEnrolledUsers(courseId);
+    } catch (err) {
+      console.error('Error al desmatricular a los estudiantes del curso:', err);
+      toast.error('No se pudo desmatricular a los estudiantes del curso.');
+    } finally {
+      setRemovingStudent(false);
+      setStudentsToRemove([]);
+    }
   };
 
   const navigateToNewActivity = async (
@@ -621,6 +692,61 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
         isOpen={isModalOpen}
         onClose={closeModal}
       />
+
+      <AlertDialog
+        open={studentsToRemove.length > 0}
+        onOpenChange={(open) => !open && setStudentsToRemove([])}
+      >
+        <AlertDialogContent className="rounded-2xl border border-cyan-500/20 bg-slate-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white">
+              {studentsToRemove.length === 1
+                ? 'Desmatricular estudiante del curso'
+                : `Desmatricular ${studentsToRemove.length} estudiantes del curso`}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              {studentsToRemove.length === 1 ? (
+                <>
+                  ¿Desmatricular a{' '}
+                  <span className="font-semibold text-cyan-300">
+                    {studentsToRemove[0]?.firstName}{' '}
+                    {studentsToRemove[0]?.lastName}
+                  </span>{' '}
+                  de este curso? Perderá su progreso y deberá inscribirse de
+                  nuevo para recuperar el acceso.
+                </>
+              ) : (
+                <>
+                  ¿Desmatricular a{' '}
+                  <span className="font-semibold text-cyan-300">
+                    {studentsToRemove.length} estudiantes
+                  </span>{' '}
+                  de este curso? Perderán su progreso y deberán inscribirse de
+                  nuevo para recuperar el acceso.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={removingStudent}
+              className="border-gray-600 bg-transparent text-white hover:bg-white/10 hover:text-white"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                void confirmRemoveStudent();
+              }}
+              disabled={removingStudent}
+              className="bg-red-700 text-white hover:bg-red-800"
+            >
+              {removingStudent ? 'Desmatriculando...' : 'Desmatricular'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div ref={containerRef} className="group relative">
         <div
@@ -757,6 +883,20 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                   Desmarcar como completo
                 </button>
               )}
+              <button
+                disabled={!selectedIds.length}
+                onClick={handleBulkRemoveStudents}
+                className="
+                  mb-4 ml-2 inline-flex items-center gap-1 rounded bg-red-700
+                  px-4 py-2 text-sm text-white
+                  hover:bg-red-800
+                  disabled:opacity-50
+                "
+              >
+                <UserMinus size={14} />
+                Desmatricular seleccionados
+                {selectedIds.length > 0 ? ` (${selectedIds.length})` : ''}
+              </button>
 
               {/* Mobile cards */}
               <div
@@ -774,6 +914,7 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                     onGradeChange={handleGradeChange}
                     onSaveGrade={saveGrade}
                     onViewDetails={openUserDetails}
+                    onRemove={handleRemoveStudent}
                   />
                 ))}
               </div>
@@ -1082,11 +1223,24 @@ const DashboardEstudiantes: React.FC<LessonsListProps> = ({
                           <button
                             onClick={() => handleMarkComplete([user.id])}
                             className="
-                              ml-2 text-xs text-green-400
-                              hover:underline
+                              ml-2 inline-flex items-center gap-1 rounded-md
+                              bg-green-600 px-3 py-1 text-xs font-medium
+                              text-white
+                              hover:bg-green-700
                             "
                           >
-                            Completar
+                            <CheckCircle2 size={14} /> Completar
+                          </button>
+                          <button
+                            onClick={() => handleRemoveStudent(user)}
+                            className="
+                              ml-2 inline-flex items-center gap-1 rounded-md
+                              bg-red-700 px-3 py-1 text-xs font-medium
+                              text-white
+                              hover:bg-red-800
+                            "
+                          >
+                            <UserMinus size={14} /> Desmatricular
                           </button>
                         </td>
                       </tr>

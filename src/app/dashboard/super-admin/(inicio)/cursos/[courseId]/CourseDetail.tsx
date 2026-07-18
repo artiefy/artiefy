@@ -3081,6 +3081,29 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     Clases en Vivo
                   </button>
                   <button
+                    type="button"
+                    data-tour-id="tutorial-estudiantes-tab"
+                    onClick={() => setActiveTab('estudiantes')}
+                    className={`
+                      rounded-full px-4 py-2 font-semibold whitespace-nowrap
+                      transition-all duration-300
+                      ${
+                        activeTab === 'estudiantes'
+                          ? `
+                            bg-cyan-500/15 text-cyan-300
+                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
+                            ring-cyan-400/40
+                          `
+                          : `
+                            text-white/80
+                            hover:bg-white/5 hover:text-white
+                          `
+                      }
+                    `}
+                  >
+                    Estudiantes
+                  </button>
+                  <button
                     onClick={() => setActiveTab('actividades')}
                     className={`
                       rounded-full px-4 py-2 font-semibold whitespace-nowrap
@@ -3136,29 +3159,6 @@ const CourseDetail: React.FC<CourseDetailProps> = () => {
                     >
                       3
                     </span>
-                  </button>
-                  <button
-                    type="button"
-                    data-tour-id="tutorial-estudiantes-tab"
-                    onClick={() => setActiveTab('estudiantes')}
-                    className={`
-                      rounded-full px-4 py-2 font-semibold whitespace-nowrap
-                      transition-all duration-300
-                      ${
-                        activeTab === 'estudiantes'
-                          ? `
-                            bg-cyan-500/15 text-cyan-300
-                            shadow-[0_0_12px_rgba(34,211,238,0.25)] ring-1
-                            ring-cyan-400/40
-                          `
-                          : `
-                            text-white/80
-                            hover:bg-white/5 hover:text-white
-                          `
-                      }
-                    `}
-                  >
-                    Estudiantes
                   </button>
                   <button
                     onClick={() => setActiveTab('grabadas')}
