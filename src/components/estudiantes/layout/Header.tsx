@@ -970,8 +970,8 @@ export function Header({
                     role="menu"
                     className="
                     absolute top-full left-0 z-50 mt-2 min-w-[180px]
-                    rounded-2xl border border-white/10 bg-[#01152d] p-1.5
-                    shadow-2xl
+                    rounded-2xl border border-white/10 bg-[rgba(1,21,45,0.7)]
+                    p-1.5 shadow-2xl backdrop-blur-lg backdrop-saturate-150
                   "
                   >
                     <Link
