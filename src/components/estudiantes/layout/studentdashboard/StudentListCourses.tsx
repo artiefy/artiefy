@@ -317,7 +317,11 @@ export default function StudentListCourses({
 
     const course = item as Course;
     const userPlanType = user?.publicMetadata?.planType as
-      'none' | 'Pro' | 'Premium' | 'Enterprise' | undefined;
+      | 'none'
+      | 'Pro'
+      | 'Premium'
+      | 'Enterprise'
+      | undefined;
     const hasActiveSubscription =
       userPlanType === 'Pro' || userPlanType === 'Premium';
 

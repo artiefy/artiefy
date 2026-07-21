@@ -122,9 +122,12 @@ export function GuidedProjectDetails({
   // Lógica de Suscripción (Clonada de cursos)
   const userPlanType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
-    string | undefined;
+    | string
+    | undefined;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    string | null | undefined;
+    | string
+    | null
+    | undefined;
 
   const isSubscriptionValid =
     subscriptionStatus === 'active' &&
