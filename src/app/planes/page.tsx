@@ -188,7 +188,7 @@ const PlansPage: React.FC = () => {
                         py-1 text-xs font-semibold text-primary-foreground
                       "
                     >
-                      Más popular
+                      10 días gratis
                     </div>
                   )}
                   {isEnterprise && (
@@ -381,7 +381,7 @@ const PlansPage: React.FC = () => {
                           }
                         : plan.name === 'Premium'
                           ? {
-                              label: 'Popular',
+                              label: '10 dias gratis',
                               className:
                                 'bg-primary text-[#080c16] ring-1 ring-primary/40',
                             }
