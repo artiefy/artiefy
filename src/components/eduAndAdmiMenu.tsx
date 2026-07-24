@@ -671,12 +671,13 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       {/* Navbar */}
       <nav
         className="
-          fixed top-0 z-40 w-full bg-transparent
+          fixed top-0 z-40 w-full border-b border-white/10
+          bg-[#01152d]/35 backdrop-blur-md
         "
       >
         <div
           className="
-            py-2.5 pr-2.5 pl-3
+            py-1.5 pr-2.5 pl-3
             lg:pr-4
           "
         >
@@ -745,7 +746,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
         onMouseLeave={() => !isMobile && setIsHovered(false)}
         className={cn(
           `
-            fixed top-[52px] left-0 z-40 flex h-[calc(100vh-52px)] flex-col
+            fixed top-[44px] left-0 z-40 flex h-[calc(100vh-44px)] flex-col
             transition-all duration-300
           `,
           shouldShowText ? 'bg-transparent' : 'bg-background dark:bg-gray-800',
@@ -848,7 +849,7 @@ const ResponsiveSidebar = ({ children }: ResponsiveSidebarProps) => {
       {/* Main Content */}
       <div
         className={cn(
-          'pt-[52px] transition-all duration-300',
+          'pt-[44px] transition-all duration-300',
           !isMobile && 'ml-16'
         )}
       >
