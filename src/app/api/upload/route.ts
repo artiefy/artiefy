@@ -184,6 +184,8 @@ export async function POST(request: Request) {
     const isDoc =
       contentType === 'application/pdf' ||
       contentType === 'application/msword' ||
+      contentType === 'application/vnd.ms-excel' ||
+      contentType === 'application/vnd.ms-powerpoint' ||
       contentType ===
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
       contentType ===

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
+import { useUser } from '@clerk/nextjs';
 import {
   Award,
   BookOpen,
@@ -72,9 +73,9 @@ const splitTags = (value: string | null | undefined): string[] =>
     .filter(Boolean);
 
 const sectionClass =
-  'rounded-2xl border border-[#1d283a] bg-[#061c37] p-6 md:p-8';
+  'rounded-2xl border border-white/10 bg-[#061c37] p-6 md:p-8';
 const sectionIconClass =
-  'flex size-8 items-center justify-center rounded-lg border border-[#22C4D3]/30 bg-[#22C4D3]/15 text-[#22C4D3]';
+  'flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#22C4D3]/20 bg-[#22C4D3]/10 text-[#22C4D3]';
 
 // Generic "is this for you" copy — same for every guided project (mirrors
 // the public project page).
@@ -213,6 +214,8 @@ export function GuidedProjectAdminTabs({
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialTab = (searchParams.get('tab') as TabKey | null) ?? 'proyecto';
+  const { user } = useUser();
+  const loggedInName = user?.fullName ?? user?.firstName ?? 'Tu nombre';
 
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [editProjectOpen, setEditProjectOpen] = useState(false);
@@ -542,22 +545,23 @@ export function GuidedProjectAdminTabs({
           <span>Proyecto Guiado</span>
         </div>
 
-        <div className="grid w-full grid-cols-2 gap-3">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setEditProjectOpen(true)}
-            className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full bg-[#22c4d3] px-3 text-xs font-semibold text-[#080c16] transition hover:bg-[#1fb0be] md:text-sm"
+            className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-[#22C4D3]/30 bg-white/5 px-3 text-xs font-medium text-white transition hover:bg-[#22C4D3]/10 md:text-sm"
           >
-            <Pencil className="size-3.5" />
+            <Pencil className="size-3.5 text-[#22C4D3]" />
             Editar
           </button>
           <button
             type="button"
             onClick={handleDeleteProject}
-            className="flex h-10 w-full items-center justify-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/10 px-3 text-xs font-semibold text-red-400 transition hover:bg-red-500/20 md:text-sm"
+            aria-label="Eliminar proyecto"
+            title="Eliminar proyecto"
+            className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-red-500/30 bg-red-500/10 px-3 text-xs font-medium text-red-400 transition hover:bg-red-500/20"
           >
             <Trash2 className="size-3.5" />
-            Eliminar
           </button>
         </div>
       </div>
@@ -747,7 +751,7 @@ export function GuidedProjectAdminTabs({
           </div>
 
           {/* Tabs */}
-          <div className="relative z-10 mt-8 flex flex-wrap gap-2 rounded-2xl border border-[#22C4D3]/20 bg-[#04101f]/60 p-2">
+          <div className="relative z-10 mt-6 flex flex-wrap gap-1.5 border-b border-white/10 pb-0">
             {navItems.map((item) => {
               const isActive = activeTab === item.key;
               return (
@@ -757,15 +761,11 @@ export function GuidedProjectAdminTabs({
                   role="tab"
                   aria-selected={isActive}
                   onClick={() => setActiveTab(item.key)}
-                  className={`
-                flex items-center gap-2 rounded-full px-4 py-2 text-sm
-                font-medium transition-all
-                ${
-                  isActive
-                    ? 'bg-[#22C4D3] text-[#080c16]'
-                    : 'text-white/70 hover:bg-white/5 hover:text-white'
-                }
-              `}
+                  className={`flex items-center gap-2 rounded-t-lg border-b-2 px-3.5 py-2.5 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'border-[#22C4D3] bg-[#22C4D3]/10 text-[#22C4D3]'
+                      : 'border-transparent text-white/60 hover:bg-white/5 hover:text-white'
+                  }`}
                 >
                   {item.icon}
                   {item.label}
@@ -810,106 +810,124 @@ export function GuidedProjectAdminTabs({
                   )}
                 </section>
 
-                {(project.problemStatement?.trim() || educatorMode) && (
-                  <section className={sectionClass}>
-                    <div className="mb-4 flex items-center gap-2">
-                      <div className={sectionIconClass}>
-                        <TriangleAlert className="size-4" />
+                {(project.problemStatement?.trim() ||
+                  howItWorksText ||
+                  project.whatYouWillBuild?.trim() ||
+                  educatorMode) && (
+                  <section className={`${sectionClass} space-y-6`}>
+                    {(project.problemStatement?.trim() || educatorMode) && (
+                      <div>
+                        <div className="mb-3 flex items-center gap-2.5">
+                          <div className={sectionIconClass}>
+                            <TriangleAlert className="size-4" />
+                          </div>
+                          <h2 className="flex items-center gap-1.5 text-lg font-bold text-white">
+                            El problema
+                            {educatorMode && <Pencil className="size-3.5" />}
+                          </h2>
+                        </div>
+                        {educatorMode ? (
+                          <textarea
+                            value={editState.problemStatement}
+                            onChange={(e) =>
+                              setEditState((s) => ({
+                                ...s,
+                                problemStatement: e.target.value,
+                              }))
+                            }
+                            onBlur={() =>
+                              savePatch({
+                                problemStatement: editState.problemStatement,
+                              })
+                            }
+                            rows={3}
+                            placeholder="¿Qué problema resuelve este proyecto?"
+                            className="w-full max-w-[760px] rounded-lg border border-[#22C4D3]/30 bg-[#04101f] p-2 text-sm text-white outline-none focus:border-[#22C4D3]"
+                          />
+                        ) : (
+                          <p className="max-w-[760px] leading-[1.65] text-white/70">
+                            {project.problemStatement}
+                          </p>
+                        )}
                       </div>
-                      <h2 className="flex items-center gap-1.5 text-xl font-bold text-white">
-                        El problema
-                        {educatorMode && <Pencil className="size-3.5" />}
-                      </h2>
-                    </div>
-                    {educatorMode ? (
-                      <textarea
-                        value={editState.problemStatement}
-                        onChange={(e) =>
-                          setEditState((s) => ({
-                            ...s,
-                            problemStatement: e.target.value,
-                          }))
-                        }
-                        onBlur={() =>
-                          savePatch({
-                            problemStatement: editState.problemStatement,
-                          })
-                        }
-                        rows={3}
-                        placeholder="¿Qué problema resuelve este proyecto?"
-                        className="w-full rounded-lg border border-[#22C4D3]/30 bg-[#04101f] p-2 text-sm text-white outline-none focus:border-[#22C4D3]"
-                      />
-                    ) : (
-                      <p className="leading-relaxed whitespace-pre-line text-white/80">
-                        {project.problemStatement}
-                      </p>
                     )}
-                  </section>
-                )}
 
-                {(howItWorksText || educatorMode) && (
-                  <section className={sectionClass}>
-                    <div className="mb-4 flex items-center gap-2">
-                      <div className={sectionIconClass}>
-                        <Lightbulb className="size-4" />
+                    {(howItWorksText || educatorMode) && (
+                      <div
+                        className={
+                          project.problemStatement?.trim() || educatorMode
+                            ? 'border-t border-white/10 pt-6'
+                            : ''
+                        }
+                      >
+                        <div className="mb-3 flex items-center gap-2.5">
+                          <div className={sectionIconClass}>
+                            <Lightbulb className="size-4" />
+                          </div>
+                          <h2 className="flex items-center gap-1.5 text-lg font-bold text-white">
+                            Cómo funciona
+                            {educatorMode && <Pencil className="size-3.5" />}
+                          </h2>
+                        </div>
+                        {educatorMode ? (
+                          <EditableList
+                            items={editState.howItWorksList}
+                            onChange={(items) =>
+                              setEditState((s) => ({
+                                ...s,
+                                howItWorksList: items,
+                              }))
+                            }
+                            onCommit={(items) =>
+                              savePatch({
+                                howItWorks: items.filter(Boolean).join('\n'),
+                              })
+                            }
+                            placeholder="Paso a paso..."
+                          />
+                        ) : (
+                          <p className="max-w-[760px] leading-[1.65] text-white/70">
+                            {howItWorksText}
+                          </p>
+                        )}
                       </div>
-                      <h2 className="flex items-center gap-1.5 text-xl font-bold text-white">
-                        Cómo funciona
-                        {educatorMode && <Pencil className="size-3.5" />}
-                      </h2>
-                    </div>
-                    {educatorMode ? (
-                      <EditableList
-                        items={editState.howItWorksList}
-                        onChange={(items) =>
-                          setEditState((s) => ({ ...s, howItWorksList: items }))
-                        }
-                        onCommit={(items) =>
-                          savePatch({
-                            howItWorks: items.filter(Boolean).join('\n'),
-                          })
-                        }
-                        placeholder="Paso a paso..."
-                      />
-                    ) : (
-                      <p className="leading-relaxed whitespace-pre-line text-white/80">
-                        {howItWorksText}
-                      </p>
                     )}
-                  </section>
-                )}
 
-                {(project.whatYouWillBuild?.trim() || educatorMode) && (
-                  <section className={sectionClass}>
-                    <div className="mb-4 flex items-center gap-2">
-                      <div className={sectionIconClass}>
-                        <Target className="size-4" />
+                    {(project.whatYouWillBuild?.trim() || educatorMode) && (
+                      <div className="border-t border-white/10 pt-6">
+                        <div className="mb-3 flex items-center gap-2.5">
+                          <div className={sectionIconClass}>
+                            <Target className="size-4" />
+                          </div>
+                          <h2 className="flex items-center gap-1.5 text-lg font-bold text-white">
+                            Lo que vas a construir
+                            {educatorMode && <Pencil className="size-3.5" />}
+                          </h2>
+                        </div>
+                        {educatorMode ? (
+                          <EditableList
+                            items={editState.whatYouWillBuildList}
+                            onChange={(items) =>
+                              setEditState((s) => ({
+                                ...s,
+                                whatYouWillBuildList: items,
+                              }))
+                            }
+                            onCommit={(items) =>
+                              savePatch({
+                                whatYouWillBuild: items
+                                  .filter(Boolean)
+                                  .join('\n'),
+                              })
+                            }
+                            placeholder="Describe lo que el estudiante construirá"
+                          />
+                        ) : (
+                          <p className="max-w-[760px] leading-[1.65] text-white/70">
+                            {project.whatYouWillBuild}
+                          </p>
+                        )}
                       </div>
-                      <h2 className="flex items-center gap-1.5 text-xl font-bold text-white">
-                        Lo que vas a construir
-                        {educatorMode && <Pencil className="size-3.5" />}
-                      </h2>
-                    </div>
-                    {educatorMode ? (
-                      <EditableList
-                        items={editState.whatYouWillBuildList}
-                        onChange={(items) =>
-                          setEditState((s) => ({
-                            ...s,
-                            whatYouWillBuildList: items,
-                          }))
-                        }
-                        onCommit={(items) =>
-                          savePatch({
-                            whatYouWillBuild: items.filter(Boolean).join('\n'),
-                          })
-                        }
-                        placeholder="Describe lo que el estudiante construirá"
-                      />
-                    ) : (
-                      <p className="leading-relaxed whitespace-pre-line text-white/80">
-                        {project.whatYouWillBuild}
-                      </p>
                     )}
                   </section>
                 )}
@@ -984,11 +1002,13 @@ export function GuidedProjectAdminTabs({
                     </div>
                     <p className="text-sm leading-relaxed text-white/70">
                       Artiefy certifica a{' '}
-                      <span className="text-white">[Tu nombre]</span> por
-                      participar y finalizar el proyecto formativo aplicado:
+                      <span className="font-semibold text-[#22C4D3]">
+                        {loggedInName}
+                      </span>{' '}
+                      por participar y finalizar el proyecto formativo aplicado:
                     </p>
                     <p className="mt-2 mb-4 font-semibold text-white">
-                      {project.title}
+                      {project.subtitle || project.title}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <span className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-[#061c37] px-2.5 py-1 text-xs text-white/70">
