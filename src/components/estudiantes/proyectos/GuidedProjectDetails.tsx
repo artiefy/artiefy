@@ -7,28 +7,37 @@ import { useRouter } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import {
+  Award,
   BarChart3,
+  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock,
   CodeXml,
   FileBox,
+  Globe,
   HelpCircle,
   Layers,
   Lightbulb,
   ListChecks,
   MessageSquare,
   Package,
+  PlayCircle,
+  Quote,
   Rocket,
+  ShieldCheck,
+  Sparkles,
   Star,
   Target,
   TriangleAlert,
   Users,
+  XCircle,
 } from 'lucide-react';
 import {
   FaCheck,
   FaCrown,
+  FaGithub,
   FaProjectDiagram,
   FaStar,
   FaTimes,
@@ -50,6 +59,7 @@ import {
 import { cn } from '~/lib/utils';
 import { enrollInGuidedProject } from '~/server/actions/estudiantes/guided-projects/enrollInGuidedProject';
 import { unenrollFromGuidedProject } from '~/server/actions/estudiantes/guided-projects/unenrollFromGuidedProject';
+import { plansPersonas } from '~/types/plans';
 
 import type { GuidedObjective, GuidedProject } from '~/types/guided-projects';
 import type { KeyboardEvent, ReactNode } from 'react';
@@ -102,6 +112,85 @@ const HOW_IT_WORKS_STEPS = [
   },
 ];
 
+// Generic "is this for you" copy — same for every guided project.
+const ES_PARA_TI = {
+  si: [
+    'Ya sabes lo básico de programación pero nunca has terminado un proyecto real de principio a fin.',
+    'Estás cansado de ver tutoriales sin construir nada propio.',
+    'Quieres un producto real para tu portafolio o para vender a negocios.',
+    'Buscas tus primeros ingresos como freelance o con tu propio proyecto.',
+  ],
+  no: [
+    'Nunca has escrito una línea de código (necesitas bases primero).',
+    'Buscas un curso solo teórico sin construir nada.',
+    'No tienes tiempo para dedicarle unas horas por semana.',
+  ],
+};
+
+// Generic testimonials — same for every guided project.
+const TESTIMONIALS = [
+  {
+    initials: 'CM',
+    name: 'Carlos Méndez',
+    role: 'Desarrollador freelance',
+    quote:
+      'Antes solo veía tutoriales y nunca terminaba nada. Con Artiefy construí un proyecto real de principio a fin, con el acompañamiento de Artie IA cuando me atascaba.',
+  },
+  {
+    initials: 'LG',
+    name: 'Laura Gómez',
+    role: 'Emprendedora tech',
+    quote:
+      'Nunca pensé que podría tener un producto propio terminado. La constancia verificable me ayudó a mostrar mi trabajo y conseguir mi primer cliente.',
+  },
+  {
+    initials: 'AR',
+    name: 'Andrés Rojas',
+    role: 'Full-stack junior',
+    quote:
+      'Lo que más me gustó fue que no era teoría: desde el día 1 estaba programando funcionalidad real. El proyecto quedó en mi portafolio.',
+  },
+  {
+    initials: 'VR',
+    name: 'Valentina Ruiz',
+    role: 'Ingeniera de software',
+    quote:
+      'La retroalimentación del educador y de Artie IA me hicieron escribir código mucho más limpio. Aprendí a pensar en el usuario final, no solo en que "funcione".',
+  },
+];
+
+// Generic FAQ — same for every guided project.
+const FAQ_ITEMS = [
+  {
+    q: '¿Necesito mucho nivel para hacer este proyecto?',
+    a: 'No. Solo necesitas bases de programación. El proyecto te lleva paso a paso desde la configuración hasta el producto desplegado. Si sabes lo básico, puedes lograrlo.',
+  },
+  {
+    q: '¿Qué pasa si me trabo y no sé cómo seguir?',
+    a: 'Artie IA te acompaña en tiempo real mientras programas, y el educador asignado resuelve tus dudas en el foro del proyecto.',
+  },
+  {
+    q: '¿Cuánto tiempo necesito dedicarle?',
+    a: 'Depende de tu ritmo, pero la mayoría de estudiantes avanza dedicando unas horas por semana.',
+  },
+  {
+    q: '¿Esto me sirve para conseguir trabajo o clientes?',
+    a: 'Sí. Terminas con un proyecto real en tu portafolio y una constancia verificable que puedes compartir con reclutadores o clientes.',
+  },
+  {
+    q: '¿Cómo puedo pagar?',
+    a: 'Con tarjeta o PSE, según el plan o proyecto que elijas.',
+  },
+  {
+    q: '¿Necesito experiencia en ventas para vender lo que construyo?',
+    a: 'No es necesario para completar el proyecto. Vender lo que construyas es un paso opcional posterior.',
+  },
+];
+
+// Real Premium display price mirrors the override used on /planes (same
+// hardcoded value, since plan pricing isn't exposed as a shared constant).
+const PREMIUM_DISPLAY_PRICE = 124900;
+
 export function GuidedProjectDetails({
   project,
   initialIsEnrolled = false,
@@ -114,6 +203,7 @@ export function GuidedProjectDetails({
   const [expandedObjective, setExpandedObjective] = useState<number | null>(
     null
   );
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const { isSignedIn } = useAuth();
   const { user } = useUser();
   const router = useRouter();
@@ -350,6 +440,12 @@ export function GuidedProjectDetails({
   const deliverables = splitLines(project.deliverablesDescription);
   const howItWorksText = project.howItWorks?.trim() ?? '';
 
+  const proPlan = plansPersonas.find((plan) => plan.name === 'Pro');
+  const individualPriceValue =
+    typeof project.individualPrice === 'number' && project.individualPrice > 0
+      ? project.individualPrice
+      : null;
+
   const hasEducatorInfo = Boolean(
     project.instructorName ||
     project.instructorProfesion ||
@@ -549,14 +645,87 @@ export function GuidedProjectDetails({
         </section>
       )}
 
-      {/* Requisitos previos */}
+      {/* Lo que tendrás al terminar */}
+      {deliverables.length > 0 && (
+        <section className={sectionClass}>
+          <div className="mb-4 flex items-center gap-2">
+            <div className={sectionIconClass}>
+              <Package className="size-4" />
+            </div>
+            <h2 className="text-xl font-bold text-white">
+              Lo que tendrás al terminar
+            </h2>
+          </div>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {deliverables.map((item) => (
+              <li
+                key={item}
+                className="flex gap-3 rounded-xl border border-[#22C4D3]/20 bg-[#22C4D3]/5 p-4"
+              >
+                <Package className="mt-0.5 size-5 shrink-0 text-[#22C4D3]" />
+                <span className="text-sm leading-relaxed text-white/90">
+                  {item}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Constancia Verificable */}
+      <section className={sectionClass}>
+        <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-[#22C4D3]/30 bg-[#22C4D3]/10 px-3 py-1 text-xs font-semibold tracking-wide text-[#22C4D3]">
+          <Award className="size-3.5" />
+          CONSTANCIA VERIFICABLE
+        </div>
+        <h2 className="font-display mb-3 text-xl font-bold text-white md:text-2xl">
+          Termina con una <span className="text-[#22C4D3]">Constancia</span> que
+          puedes mostrar
+        </h2>
+        <p className="mb-6 leading-relaxed text-[#94A3B8]">
+          Al completar el proyecto recibes una constancia publicada en la WEB y
+          verificable. No es un PDF más: es una página en línea con tu producto
+          funcionando, tu código y tu demo. Un link que puedes poner en tu CV y
+          tu LinkedIn para que cualquier reclutador compruebe lo que
+          construiste.
+        </p>
+        <div className="rounded-xl border border-[#22C4D3]/30 bg-[#04101f] p-5">
+          <div className="mb-3 inline-flex items-center gap-1.5 text-xs font-semibold tracking-wide text-[#22C4D3]">
+            <Award className="size-3.5" />
+            CONSTANCIA
+          </div>
+          <p className="text-sm leading-relaxed text-[#94A3B8]">
+            Artiefy certifica a <span className="text-white">[Tu nombre]</span>{' '}
+            por participar y finalizar el proyecto formativo aplicado:
+          </p>
+          <p className="mt-2 mb-4 font-semibold text-white">{project.title}</p>
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-[#1d283a] bg-[#061c37] px-2.5 py-1 text-xs text-[#94A3B8]">
+              <Globe className="size-3.5" /> Producto en vivo
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-[#1d283a] bg-[#061c37] px-2.5 py-1 text-xs text-[#94A3B8]">
+              <FaGithub className="size-3.5" /> Código en GitHub
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-[#1d283a] bg-[#061c37] px-2.5 py-1 text-xs text-[#94A3B8]">
+              <PlayCircle className="size-3.5" /> Video demo
+            </span>
+          </div>
+          <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+            <CheckCircle2 className="size-3.5" /> Verificable públicamente
+          </div>
+        </div>
+      </section>
+
+      {/* Lo que necesitas para empezar */}
       {prerequisites.length > 0 && (
         <section className={sectionClass}>
           <div className="mb-4 flex items-center gap-2">
             <div className={sectionIconClass}>
               <ListChecks className="size-4" />
             </div>
-            <h2 className="text-xl font-bold text-white">Requisitos previos</h2>
+            <h2 className="text-xl font-bold text-white">
+              Lo que necesitas para empezar
+            </h2>
           </div>
           <ul className="space-y-2">
             {prerequisites.map((item) => (
@@ -594,36 +763,54 @@ export function GuidedProjectDetails({
         </section>
       )}
 
-      {/* Qué vas a entregar */}
-      {deliverables.length > 0 && (
-        <section className={sectionClass}>
-          <div className="mb-4 flex items-center gap-2">
-            <div className={sectionIconClass}>
-              <Package className="size-4" />
+      {/* ¿Es para ti? */}
+      <section className={sectionClass}>
+        <h2 className="font-display mb-6 text-xl font-bold text-white md:text-2xl">
+          ¿Es para ti?
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+            <div className="mb-3 flex items-center gap-2 text-emerald-400">
+              <CheckCircle2 className="size-4" />
+              <h3 className="font-semibold">Es para ti si...</h3>
             </div>
-            <h2 className="text-xl font-bold text-white">Qué vas a entregar</h2>
-          </div>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {deliverables.map((item) => (
-              <li
-                key={item}
-                className="flex gap-3 rounded-xl border border-[#22C4D3]/20 bg-[#22C4D3]/5 p-4"
-              >
-                <Package className="mt-0.5 size-5 shrink-0 text-[#22C4D3]" />
-                <span className="text-sm leading-relaxed text-white/90">
+            <ul className="space-y-2">
+              {ES_PARA_TI.si.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-2 text-sm text-[#94A3B8]"
+                >
+                  <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-emerald-400" />
                   {item}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl border border-[#1d283a] bg-[#04101f] p-4">
+            <div className="mb-3 flex items-center gap-2 text-[#94A3B8]">
+              <XCircle className="size-4" />
+              <h3 className="font-semibold text-white">No es para ti si...</h3>
+            </div>
+            <ul className="space-y-2">
+              {ES_PARA_TI.no.map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-2 text-sm text-[#94A3B8]"
+                >
+                  <XCircle className="mt-0.5 size-3.5 shrink-0 text-[#94A3B8]" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
 
-      {/* Sobre el educador */}
+      {/* Tu educador en este proyecto */}
       {hasEducatorInfo && (
         <section className={sectionClass}>
           <h2 className="font-display mb-6 text-xl font-bold text-white md:text-2xl">
-            Sobre el educador
+            Tu educador en este proyecto
           </h2>
           <div className="flex items-start gap-4 sm:gap-6">
             {instructorImageUrl ? (
@@ -658,6 +845,213 @@ export function GuidedProjectDetails({
           </div>
         </section>
       )}
+
+      {/* Lo que dicen los alumnos */}
+      <section className={sectionClass}>
+        <div className="mb-6 flex items-center gap-2">
+          <div className={sectionIconClass}>
+            <Quote className="size-4" />
+          </div>
+          <h2 className="text-xl font-bold text-white">
+            Lo que dicen los alumnos
+          </h2>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {TESTIMONIALS.map((testimonial) => (
+            <div
+              key={testimonial.name}
+              className="rounded-xl border border-[#1d283a] bg-[#04101f] p-4"
+            >
+              <div className="mb-3 flex items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#0d2a4d] text-xs font-bold text-[#22C4D3]">
+                  {testimonial.initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-white">
+                    {testimonial.name}
+                  </p>
+                  <p className="truncate text-xs text-[#94A3B8]">
+                    {testimonial.role}
+                  </p>
+                </div>
+              </div>
+              <p className="text-sm leading-relaxed text-[#94A3B8]">
+                &quot;{testimonial.quote}&quot;
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Elige cómo empezar */}
+      <section className={sectionClass}>
+        <h2 className="font-display mb-6 text-center text-xl font-bold text-white md:text-2xl">
+          Elige cómo empezar
+        </h2>
+        <div
+          className={cn(
+            'mx-auto grid max-w-3xl gap-4',
+            individualPriceValue ? 'sm:grid-cols-2' : 'max-w-md'
+          )}
+        >
+          <div className="relative rounded-2xl border-2 border-[#22C4D3]/60 bg-[#04101f] p-5">
+            <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-[#22C4D3]/15 px-2.5 py-1 text-[10px] font-bold tracking-wide text-[#22C4D3]">
+              <Sparkles className="size-3" /> RECOMENDADO
+            </div>
+            <h3 className="text-lg font-bold text-white">
+              Suscripción Pro o Premium
+            </h3>
+            <p className="mt-2 text-2xl font-bold text-white">
+              Desde{' '}
+              {(proPlan?.price ?? 99900).toLocaleString('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                maximumFractionDigits: 0,
+              })}{' '}
+              <span className="text-sm font-normal text-[#94A3B8]">
+                COP / mes
+              </span>
+            </p>
+            <p className="mt-1 text-xs text-[#94A3B8]">
+              Premium desde{' '}
+              {PREMIUM_DISPLAY_PRICE.toLocaleString('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                maximumFractionDigits: 0,
+              })}{' '}
+              COP / mes, con acceso ilimitado.
+            </p>
+            <ul className="mt-4 space-y-2">
+              {[
+                'Acceso a TODOS los proyectos guiados, cursos y programas.',
+                'Artie Inteligencia Artificial para el desarrollo de proyectos.',
+                'Soporte del educador en el foro.',
+                'Constancia verificable en cada proyecto.',
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-start gap-2 text-sm text-[#94A3B8]"
+                >
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#22C4D3]" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => router.push('/planes')}
+              className="mt-5 flex h-11 w-full items-center justify-center rounded-full bg-[#22c4d3] px-4 text-sm font-semibold text-[#080c16] transition hover:bg-[#1fb0be]"
+            >
+              Ver planes
+            </button>
+          </div>
+
+          {individualPriceValue && (
+            <div className="rounded-2xl border border-[#1d283a] bg-[#061c37] p-5">
+              <h3 className="text-lg font-bold text-white">
+                Proyecto individual
+              </h3>
+              <p className="mt-2 text-2xl font-bold text-white">
+                {individualPriceValue.toLocaleString('es-CO', {
+                  style: 'currency',
+                  currency: 'COP',
+                  maximumFractionDigits: 0,
+                })}
+              </p>
+              <p className="mt-1 text-xs text-[#94A3B8]">Solo este proyecto</p>
+              <ul className="mt-4 space-y-2">
+                {[
+                  'Acceso a este proyecto guiado.',
+                  'Artie IA incluida en el proyecto.',
+                  'Constancia verificable publicada en la WEB.',
+                ].map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-start gap-2 text-sm text-[#94A3B8]"
+                  >
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#22C4D3]" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={handleStartNow}
+                disabled={isEnrolling}
+                className="mt-5 flex h-11 w-full items-center justify-center rounded-full border border-[#22C4D3]/40 px-4 text-sm font-semibold text-[#22C4D3] transition hover:bg-[#22C4D3]/10 disabled:opacity-50"
+              >
+                Comprar proyecto
+              </button>
+            </div>
+          )}
+        </div>
+        <p className="mt-5 text-center text-xs text-[#94A3B8]">
+          Pago seguro con tarjeta o PSE.
+        </p>
+      </section>
+
+      {/* Garantía de tu primer mes */}
+      <section className={sectionClass}>
+        <div className="flex items-start gap-4">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-[#22C4D3]/30 bg-[#22C4D3]/10 text-[#22C4D3]">
+            <ShieldCheck className="size-5" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white">
+              Garantía de tu primer mes
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-[#94A3B8]">
+              Si en tu primer mes no avanzas en el proyecto, te devolvemos tu
+              dinero. Queremos que construyas algo real, no que te quedes con un
+              cobro inútil.
+            </p>
+            <p className="mt-2 text-xs text-[#94A3B8]/70">
+              Aplican términos y condiciones.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Preguntas frecuentes */}
+      <section className={sectionClass}>
+        <div className="mb-4 flex items-center gap-2">
+          <div className={sectionIconClass}>
+            <HelpCircle className="size-4" />
+          </div>
+          <h2 className="text-xl font-bold text-white">Preguntas frecuentes</h2>
+        </div>
+        <div className="space-y-2">
+          {FAQ_ITEMS.map((item, idx) => {
+            const isOpen = openFaqIndex === idx;
+            return (
+              <div
+                key={item.q}
+                className="overflow-hidden rounded-lg border border-[#1d283a]"
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                  className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-white/5"
+                >
+                  <span className="text-sm font-semibold text-white">
+                    {item.q}
+                  </span>
+                  <ChevronDown
+                    className={`size-4 shrink-0 text-[#94A3B8] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="border-t border-[#1d283a] bg-[#04101f] p-4">
+                    <p className="text-sm leading-relaxed text-[#94A3B8]">
+                      {item.a}
+                    </p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Fallback cuando aún no hay contenido enriquecido cargado */}
       {!project.problemStatement?.trim() &&

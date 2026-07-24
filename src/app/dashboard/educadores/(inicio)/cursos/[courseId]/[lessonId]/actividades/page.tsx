@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useParams, useRouter, useSearchParams } from 'next/navigation'; // Cambiar la importación de useRouter
 
 import { useUser } from '@clerk/nextjs';
+import { CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 
 import SelectParametro from '~/components/educators/layout/SelectParametro';
@@ -909,32 +910,36 @@ const Page: React.FC = () => {
                       >
                         Fecha de inicio de la actividad:
                       </span>
-                      <input
-                        type="datetime-local"
-                        value={
-                          formData.fechaInicioActividad
-                            ? formData.fechaInicioActividad.includes('T') &&
-                              !formData.fechaInicioActividad.endsWith('Z')
-                              ? formData.fechaInicioActividad.slice(0, 16)
-                              : new Date(formData.fechaInicioActividad)
-                                  .toLocaleString('sv-SE', {
-                                    timeZone: 'America/Bogota',
-                                  })
-                                  .replace(' ', 'T')
-                                  .slice(0, 16)
-                            : ''
-                        }
-                        className="
-                          w-full rounded-lg border border-slate-200 bg-white p-2
-                          text-black outline-none
-                        "
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            fechaInicioActividad: e.target.value,
-                          })
-                        }
-                      />
+                      <div className="relative">
+                        <input
+                          type="datetime-local"
+                          value={
+                            formData.fechaInicioActividad
+                              ? formData.fechaInicioActividad.includes('T') &&
+                                !formData.fechaInicioActividad.endsWith('Z')
+                                ? formData.fechaInicioActividad.slice(0, 16)
+                                : new Date(formData.fechaInicioActividad)
+                                    .toLocaleString('sv-SE', {
+                                      timeZone: 'America/Bogota',
+                                    })
+                                    .replace(' ', 'T')
+                                    .slice(0, 16)
+                              : ''
+                          }
+                          onClick={(e) => e.currentTarget.showPicker()}
+                          className="
+                            w-full rounded-lg border border-slate-200 bg-white p-2
+                            pr-9 text-black outline-none
+                          "
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              fechaInicioActividad: e.target.value,
+                            })
+                          }
+                        />
+                        <CalendarClock className="pointer-events-none absolute top-1/2 right-2 size-5 -translate-y-1/2 text-slate-500" />
+                      </div>
                       <span
                         className={`
                           mt-4 text-xl font-medium
@@ -943,32 +948,36 @@ const Page: React.FC = () => {
                       >
                         Fecha máxima de entrega:
                       </span>
-                      <input
-                        type="datetime-local"
-                        value={
-                          formData.fechaMaximaEntrega
-                            ? formData.fechaMaximaEntrega.includes('T') &&
-                              !formData.fechaMaximaEntrega.endsWith('Z')
-                              ? formData.fechaMaximaEntrega.slice(0, 16)
-                              : new Date(formData.fechaMaximaEntrega)
-                                  .toLocaleString('sv-SE', {
-                                    timeZone: 'America/Bogota',
-                                  })
-                                  .replace(' ', 'T')
-                                  .slice(0, 16)
-                            : ''
-                        }
-                        className="
-                          w-full rounded-lg border border-slate-200 bg-white p-2
-                          text-black outline-none
-                        "
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            fechaMaximaEntrega: e.target.value,
-                          })
-                        }
-                      />
+                      <div className="relative">
+                        <input
+                          type="datetime-local"
+                          value={
+                            formData.fechaMaximaEntrega
+                              ? formData.fechaMaximaEntrega.includes('T') &&
+                                !formData.fechaMaximaEntrega.endsWith('Z')
+                                ? formData.fechaMaximaEntrega.slice(0, 16)
+                                : new Date(formData.fechaMaximaEntrega)
+                                    .toLocaleString('sv-SE', {
+                                      timeZone: 'America/Bogota',
+                                    })
+                                    .replace(' ', 'T')
+                                    .slice(0, 16)
+                              : ''
+                          }
+                          onClick={(e) => e.currentTarget.showPicker()}
+                          className="
+                            w-full rounded-lg border border-slate-200 bg-white p-2
+                            pr-9 text-black outline-none
+                          "
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              fechaMaximaEntrega: e.target.value,
+                            })
+                          }
+                        />
+                        <CalendarClock className="pointer-events-none absolute top-1/2 right-2 size-5 -translate-y-1/2 text-slate-500" />
+                      </div>
                     </>
                   )}
                 </div>
