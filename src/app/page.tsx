@@ -2,20 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth, useUser } from '@clerk/nextjs';
 import { FaArrowRight } from 'react-icons/fa';
 
-import AnuncioCarrusel from '~/app/dashboard/super-admin/anuncios/AnuncioCarrusel';
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
 import { Header } from '~/components/estudiantes/layout/Header';
-import HeroCanvas from '~/components/estudiantes/layout/HeroCanvas';
-import MiniLoginModal from '~/components/estudiantes/layout/MiniLoginModal';
-import MiniSignUpModal from '~/components/estudiantes/layout/MiniSignUpModal';
-import StudentChatbot from '~/components/estudiantes/layout/studentdashboard/StudentChatbot';
-import TicketSupportChatbot from '~/components/estudiantes/layout/TicketSupportChatbot';
-import { TourComponent } from '~/components/estudiantes/layout/TourComponent';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import {
@@ -23,6 +17,38 @@ import {
   getPrivilegedDashboardRoute,
   getUserRole,
 } from '~/utils/roles';
+
+// Non-critical components: loaded lazily (code-splitting) so they don't block
+// the initial hero render. Decorative/floating pieces are client-only (ssr:false).
+const HeroCanvas = dynamic(
+  () => import('~/components/estudiantes/layout/HeroCanvas'),
+  { ssr: false }
+);
+const StudentChatbot = dynamic(
+  () =>
+    import('~/components/estudiantes/layout/studentdashboard/StudentChatbot'),
+  { ssr: false }
+);
+const TicketSupportChatbot = dynamic(
+  () => import('~/components/estudiantes/layout/TicketSupportChatbot'),
+  { ssr: false }
+);
+const MiniLoginModal = dynamic(
+  () => import('~/components/estudiantes/layout/MiniLoginModal'),
+  { ssr: false }
+);
+const MiniSignUpModal = dynamic(
+  () => import('~/components/estudiantes/layout/MiniSignUpModal'),
+  { ssr: false }
+);
+const AnuncioCarrusel = dynamic(
+  () => import('~/app/dashboard/super-admin/anuncios/AnuncioCarrusel')
+);
+const TourComponent = dynamic(() =>
+  import('~/components/estudiantes/layout/TourComponent').then(
+    (m) => m.TourComponent
+  )
+);
 
 export default function HomePage() {
   const { user, isLoaded } = useUser();

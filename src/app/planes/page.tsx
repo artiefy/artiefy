@@ -141,7 +141,6 @@ const PlansPage: React.FC = () => {
           >
             {allPlans.map((plan) => {
               const isPremium = plan.name === 'Premium';
-              const isPro = plan.name === 'Pro';
               const isEnterprise = plan.name === 'Enterprise';
               const PlanIcon = getPlanDisplayIcon(plan);
               const isCurrentPlanProcessing =
@@ -171,16 +170,6 @@ const PlansPage: React.FC = () => {
                     }
                   `}
                 >
-                  {isPro && (
-                    <div
-                      className="
-                        absolute top-0 right-0 rounded-bl-lg bg-green-500 px-3
-                        py-1 text-xs font-semibold text-white
-                      "
-                    >
-                      15 días gratis
-                    </div>
-                  )}
                   {isPremium && (
                     <div
                       className="
@@ -188,7 +177,7 @@ const PlansPage: React.FC = () => {
                         py-1 text-xs font-semibold text-primary-foreground
                       "
                     >
-                      Más popular
+                      10 días gratis
                     </div>
                   )}
                   {isEnterprise && (
@@ -373,25 +362,19 @@ const PlansPage: React.FC = () => {
                     const price =
                       getDisplayCopPrice(plan).toLocaleString('es-CO');
                     const badgeConfig =
-                      plan.name === 'Pro'
+                      plan.name === 'Premium'
                         ? {
-                            label: '15 dias gratis',
+                            label: '10 dias gratis',
                             className:
-                              'bg-emerald-400 text-[#080c16] ring-1 ring-emerald-300/50',
+                              'bg-primary text-[#080c16] ring-1 ring-primary/40',
                           }
-                        : plan.name === 'Premium'
+                        : plan.name === 'Enterprise'
                           ? {
-                              label: 'Popular',
+                              label: 'Muy pronto',
                               className:
-                                'bg-primary text-[#080c16] ring-1 ring-primary/40',
+                                'bg-amber-400 text-black ring-1 ring-amber-300/40',
                             }
-                          : plan.name === 'Enterprise'
-                            ? {
-                                label: 'Muy pronto',
-                                className:
-                                  'bg-amber-400 text-black ring-1 ring-amber-300/40',
-                              }
-                            : null;
+                          : null;
 
                     return (
                       <button

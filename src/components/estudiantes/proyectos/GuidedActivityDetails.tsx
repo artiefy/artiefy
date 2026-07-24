@@ -85,7 +85,7 @@ interface GuidedActivitySyllabusProps {
   onNavigate?: () => void;
 }
 
-type ActivityTab = 'activity' | 'resources';
+type ActivityTab = 'introduction' | 'activity' | 'resources';
 
 // coverVideoKey is reused for images in some projects; treat known image
 // extensions as non-video so they never reach the video player.
@@ -244,7 +244,14 @@ export function GuidedActivityDetails({
   objectives,
   progress,
 }: GuidedActivityDetailsProps) {
-  const [activeTab, setActiveTab] = useState<ActivityTab>('activity');
+  // La introducción solo puede ser la pestaña inicial si tiene contenido;
+  // si no, se abre directamente en Actividad para no mostrar un panel vacío.
+  const hasIntroductionContent =
+    Boolean(objectiveDescription?.trim()) ||
+    Boolean(activity.instructionText?.trim());
+  const [activeTab, setActiveTab] = useState<ActivityTab>(
+    hasIntroductionContent ? 'introduction' : 'activity'
+  );
   const [isDesktopSyllabusOpen, setIsDesktopSyllabusOpen] = useState(true);
   const [isMobileSyllabusOpen, setIsMobileSyllabusOpen] = useState(false);
   const [isSubmissionOpen, setIsSubmissionOpen] = useState(false);
@@ -269,6 +276,7 @@ export function GuidedActivityDetails({
       : null;
   const activityVideoKey = normalizedInstructionVideoKey ?? coverVideoOnlyKey;
   const tabRefs = useRef<Record<ActivityTab, HTMLButtonElement | null>>({
+    introduction: null,
     activity: null,
     resources: null,
   });
@@ -306,7 +314,7 @@ export function GuidedActivityDetails({
     event: KeyboardEvent<HTMLButtonElement>,
     currentTab: ActivityTab
   ) => {
-    const tabOrder: ActivityTab[] = ['activity', 'resources'];
+    const tabOrder: ActivityTab[] = ['introduction', 'activity', 'resources'];
     const currentIndex = tabOrder.indexOf(currentTab);
     let nextIndex: number | null = null;
 
@@ -609,6 +617,27 @@ export function GuidedActivityDetails({
               >
                 <button
                   ref={(node) => {
+                    tabRefs.current.introduction = node;
+                  }}
+                  id="guided-introduction-tab"
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'introduction'}
+                  aria-controls="guided-introduction-panel"
+                  tabIndex={activeTab === 'introduction' ? 0 : -1}
+                  onClick={() => setActiveTab('introduction')}
+                  onKeyDown={(event) => handleTabKeyDown(event, 'introduction')}
+                  className={cn(
+                    'rounded-t-lg border-b-2 px-4 py-3 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+                    activeTab === 'introduction'
+                      ? 'border-primary text-foreground'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Introducción
+                </button>
+                <button
+                  ref={(node) => {
                     tabRefs.current.activity = node;
                   }}
                   id="guided-activity-tab"
@@ -653,6 +682,51 @@ export function GuidedActivityDetails({
             </div>
 
             <section
+              id="guided-introduction-panel"
+              role="tabpanel"
+              aria-labelledby="guided-introduction-tab"
+              hidden={activeTab !== 'introduction'}
+              className="py-6"
+            >
+              {hasIntroductionContent ? (
+                <div className="rounded-xl border border-border/50 bg-card/40 p-5">
+                  {objectiveDescription?.trim() && (
+                    <div>
+                      <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        Objetivo
+                      </p>
+                      <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                        {objectiveDescription}
+                      </p>
+                    </div>
+                  )}
+                  {activity.instructionText?.trim() && (
+                    <div
+                      className={cn(
+                        objectiveDescription?.trim() &&
+                          'mt-5 border-t border-border/40 pt-5'
+                      )}
+                    >
+                      <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                        Instrucción
+                      </p>
+                      <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
+                        {activity.instructionText}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border/50 bg-card/30 p-8 text-center text-muted-foreground">
+                  <FileText className="size-8" aria-hidden="true" />
+                  <p className="text-sm">
+                    Esta actividad no tiene una introducción registrada.
+                  </p>
+                </div>
+              )}
+            </section>
+
+            <section
               id="guided-activity-panel"
               role="tabpanel"
               aria-labelledby="guided-activity-tab"
@@ -684,33 +758,6 @@ export function GuidedActivityDetails({
                     Entregar
                   </Button>
                 </div>
-
-                <div className="mt-5 border-t border-border/40 pt-5">
-                  <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                    Instrucción
-                  </p>
-                  {activity.instructionText?.trim() ? (
-                    <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-                      {activity.instructionText}
-                    </p>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Esta actividad no tiene instrucciones adicionales
-                      registradas.
-                    </p>
-                  )}
-                </div>
-
-                {objectiveDescription?.trim() && (
-                  <div className="mt-5 border-t border-border/40 pt-5">
-                    <p className="mb-2 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-                      Objetivo
-                    </p>
-                    <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-                      {objectiveDescription}
-                    </p>
-                  </div>
-                )}
               </div>
             </section>
 

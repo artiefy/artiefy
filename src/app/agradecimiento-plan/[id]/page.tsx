@@ -1,9 +1,11 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
+
+import { useUser } from '@clerk/nextjs';
 
 import { verifyPayuResponse } from '~/server/actions/estudiantes/confirmation/verifyPayuResponse';
 import { getCourseTypeById } from '~/server/queries/courseTypes';
@@ -17,9 +19,17 @@ export default function AgradecimientoPlanPage({
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useUser();
   const [showModal, setShowModal] = useState(false);
   const [metaPixelId, setMetaPixelId] = useState<string | null>(null);
   const planId = params.id;
+
+  // Ref en lugar de dependencia directa: así el efecto de verificación no
+  // se re-dispara cuando user.reload() cambia la referencia del objeto user.
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   useEffect(() => {
     if (!searchParams) return;
@@ -53,6 +63,11 @@ export default function AgradecimientoPlanPage({
           return;
         }
         setShowModal(true);
+        // Clerk no refresca publicMetadata en el cliente apenas el backend la
+        // actualiza (el JWT de sesión cacheado puede tardar ~60s en renovarse
+        // solo). Forzamos el reload para que el Header ya muestre el plan
+        // correcto cuando el usuario continúe navegando.
+        void userRef.current?.reload();
         // Consultar el pixel dinámico
         void getCourseTypeById(planId).then((plan) => {
           if (!cancelled) setMetaPixelId(plan?.metaPixelId ?? null);

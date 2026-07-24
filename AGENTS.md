@@ -100,3 +100,7 @@ Plan expensive, execute cheap. For medium/large changes (several files, new beha
 ## Integrated Browser
 
 When a change affects visible UI, when debugging layout/hydration/console errors, or when the user asks, verify it in the agent's own integrated browser against the local dev server — `npm run dev`, default `http://localhost:3000` — instead of asking the user for screenshots. Integrated browser means the browser built into the agent's native app: Claude Code Browser pane (`mcp__Claude_Browser__*` tools), Codex app browser. NEVER use the Playwright MCP, chrome-devtools MCP, `playwright-cli`, or anything that opens an external Google Chrome window for this — those are only for explicit Playwright/E2E test requests. Reuse a running dev server; never start a second instance on another port without saying so. Skip for logic-only changes with no visual surface.
+
+## Installed Plugins / Extensions
+
+Use the tooling already installed instead of reinventing it or giving a generic answer. In Claude Code these are plugins (skills, agents, slash commands, MCP servers, hooks); in Codex they are complementos/extensiones. Before doing a task by hand, check whether an installed plugin/complemento already covers it — a dedicated MCP for a service, a domain skill, a review agent, a workflow command — and prefer the most specific installed tool. Do not install new ones or enable disabled ones on your own; only use what is installed, and if a clearly-relevant one is missing, say so and let the user decide.
