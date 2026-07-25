@@ -24,13 +24,15 @@ export default async function GuidedProjectDetailPage({
 
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden px-1 py-2 md:px-3 md:py-4"
+      className="relative min-h-screen w-full overflow-x-clip px-1 py-2 md:px-3 md:py-4"
       style={{ backgroundColor: 'rgb(25, 45, 80)' }}
     >
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-black/50 via-[#1a2d4a]/30 to-black/50" />
-      <div className="pointer-events-none absolute inset-0 opacity-20">
-        <div className="absolute -top-40 -right-40 size-80 rounded-full bg-green-500 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 size-80 rounded-full bg-purple-500 blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-[#1a2d4a]/30 to-black/50" />
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute -top-40 -right-40 size-80 rounded-full bg-green-500 blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 size-80 rounded-full bg-purple-500 blur-3xl" />
+        </div>
       </div>
 
       <Breadcrumb className="relative z-10 mb-8">

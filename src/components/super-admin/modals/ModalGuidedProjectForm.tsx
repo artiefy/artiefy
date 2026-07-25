@@ -34,6 +34,8 @@ interface GuidedProjectFormData {
   categoryId: number;
   modalidadId: number;
   nivelId: number;
+  courseTypeId: number | null;
+  rating: number;
   instructors: string[];
   individualPrice: number;
   isActive: boolean;
@@ -66,6 +68,8 @@ const EMPTY_FORM: GuidedProjectFormData = {
   categoryId: 1,
   modalidadId: 1,
   nivelId: 1,
+  courseTypeId: null,
+  rating: 0,
   instructors: [],
   individualPrice: 0,
   isActive: true,
@@ -100,6 +104,7 @@ export function ModalGuidedProjectForm({
   const [categories, setCategories] = useState<Option[]>([]);
   const [modalidades, setModalidades] = useState<Option[]>([]);
   const [niveles, setNiveles] = useState<Option[]>([]);
+  const [courseTypes, setCourseTypes] = useState<Option[]>([]);
 
   const [coverKind, setCoverKind] = useState<'image' | 'video' | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -122,22 +127,25 @@ export function ModalGuidedProjectForm({
 
     const fetchOptions = async () => {
       try {
-        const [edRes, catRes, modRes, nivRes] = await Promise.all([
+        const [edRes, catRes, modRes, nivRes, ctRes] = await Promise.all([
           fetch('/api/super-admin/changeEducators'),
           fetch('/api/educadores/categories'),
           fetch('/api/educadores/modalidades'),
           fetch('/api/educadores/nivel'),
+          fetch('/api/educadores/typesCourse'),
         ]);
-        const [ed, cat, mod, niv] = await Promise.all([
+        const [ed, cat, mod, niv, ct] = await Promise.all([
           edRes.json(),
           catRes.json(),
           modRes.json(),
           nivRes.json(),
+          ctRes.json(),
         ]);
         setEducators(ed);
         setCategories(cat);
         setModalidades(mod);
         setNiveles(niv);
+        setCourseTypes(Array.isArray(ct) ? ct : []);
       } catch {
         toast.error('Error al cargar opciones');
       }
@@ -169,6 +177,8 @@ export function ModalGuidedProjectForm({
           categoryId: data.categoryId ?? 1,
           modalidadId: data.modalidadId ?? 1,
           nivelId: data.nivelId ?? 1,
+          courseTypeId: data.courseTypeId ?? null,
+          rating: data.rating ?? 0,
           instructors:
             data.instructors ?? (data.instructor ? [data.instructor] : []),
           individualPrice: data.individualPrice ?? 0,
@@ -588,99 +598,6 @@ export function ModalGuidedProjectForm({
               />
             </div>
 
-            {/* El problema */}
-            <div className="space-y-2">
-              <label className={labelClass}>El problema</label>
-              <textarea
-                value={formData.problemStatement}
-                onChange={(e) => set('problemStatement', e.target.value)}
-                placeholder="¿Qué problema resuelve este proyecto?"
-                rows={2}
-                className={inputClass}
-              />
-            </div>
-
-            {/* Lo que vas a construir */}
-            <div className="space-y-2">
-              <label className={labelClass}>Lo que vas a construir</label>
-              <textarea
-                value={formData.whatYouWillBuild}
-                onChange={(e) => set('whatYouWillBuild', e.target.value)}
-                placeholder="Describe lo que el estudiante construirá"
-                rows={2}
-                className={inputClass}
-              />
-            </div>
-
-            {/* Requisitos previos */}
-            <div className="space-y-2">
-              <label className={labelClass}>
-                Requisitos previos (uno por línea)
-              </label>
-              <textarea
-                value={formData.prerequisites}
-                onChange={(e) => set('prerequisites', e.target.value)}
-                placeholder={
-                  'Manejo básico de TypeScript.\nNociones de bases de datos relacionales.'
-                }
-                rows={3}
-                className={inputClass}
-              />
-            </div>
-
-            {/* Stack tecnológico */}
-            <div className="space-y-2">
-              <label className={labelClass}>
-                Stack tecnológico (separado por comas)
-              </label>
-              <Input
-                value={formData.techStack}
-                onChange={(e) => set('techStack', e.target.value)}
-                placeholder="TypeScript, Next.js, Drizzle ORM, PostgreSQL"
-                className="border-gray-600 bg-gray-900 text-white placeholder-gray-500"
-              />
-            </div>
-
-            {/* Qué vas a entregar */}
-            <div className="space-y-2">
-              <label className={labelClass}>
-                Qué vas a entregar (uno por línea)
-              </label>
-              <textarea
-                value={formData.deliverablesDescription}
-                onChange={(e) => set('deliverablesDescription', e.target.value)}
-                placeholder={
-                  'Repositorio documentado.\nDeploy con una cuenta demo.'
-                }
-                rows={3}
-                className={inputClass}
-              />
-            </div>
-
-            {/* Estudiantes y horas de contenido */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className={labelClass}>Estudiantes inscritos</label>
-                <Input
-                  type="number"
-                  value={formData.studentsCount}
-                  onChange={(e) => set('studentsCount', Number(e.target.value))}
-                  placeholder="0"
-                  className="border-gray-600 bg-gray-900 text-white placeholder-gray-500"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className={labelClass}>Horas de contenido</label>
-                <Input
-                  type="number"
-                  value={formData.contentHours}
-                  onChange={(e) => set('contentHours', Number(e.target.value))}
-                  placeholder="0"
-                  className="border-gray-600 bg-gray-900 text-white placeholder-gray-500"
-                />
-              </div>
-            </div>
-
             {/* Selects: categoría, modalidad, nivel */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-2">
@@ -725,6 +642,28 @@ export function ModalGuidedProjectForm({
                   ))}
                 </select>
               </div>
+            </div>
+
+            {/* Tipo de Curso */}
+            <div className="space-y-2">
+              <label className={labelClass}>Tipo de Curso</label>
+              <select
+                value={formData.courseTypeId ?? ''}
+                onChange={(e) =>
+                  set(
+                    'courseTypeId',
+                    e.target.value ? Number(e.target.value) : null
+                  )
+                }
+                className={inputClass}
+              >
+                <option value="">Selecciona un tipo</option>
+                {courseTypes.map((ct) => (
+                  <option key={ct.id} value={ct.id}>
+                    {ct.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Instructores (Múltiples) */}
@@ -822,16 +761,33 @@ export function ModalGuidedProjectForm({
               />
             </div>
 
-            {/* Precio */}
-            <div className="space-y-2">
-              <label className={labelClass}>Precio individual</label>
-              <Input
-                type="number"
-                value={formData.individualPrice}
-                onChange={(e) => set('individualPrice', Number(e.target.value))}
-                placeholder="0"
-                className="border-gray-600 bg-gray-900 text-white placeholder-gray-500"
-              />
+            {/* Precio y rating */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <label className={labelClass}>Precio individual</label>
+                <Input
+                  type="number"
+                  value={formData.individualPrice}
+                  onChange={(e) =>
+                    set('individualPrice', Number(e.target.value))
+                  }
+                  placeholder="0"
+                  className="border-gray-600 bg-gray-900 text-white placeholder-gray-500"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className={labelClass}>Rating</label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  value={formData.rating}
+                  onChange={(e) => set('rating', Number(e.target.value))}
+                  placeholder="0-5"
+                  className="border-gray-600 bg-gray-900 text-white placeholder-gray-500"
+                />
+              </div>
             </div>
 
             {/* Toggles */}
@@ -839,10 +795,8 @@ export function ModalGuidedProjectForm({
               {(
                 [
                   ['isActive', 'Activo'],
-                  ['isTop', 'Top'],
                   ['isFeatured', 'Destacado'],
                   ['visibility', 'Visible'],
-                  ['requiresProgram', 'Requiere programa'],
                 ] as [keyof GuidedProjectFormData, string][]
               ).map(([key, label]) => (
                 <label key={key} className={checkLabel}>
