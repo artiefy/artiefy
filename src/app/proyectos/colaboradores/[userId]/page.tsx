@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { getCollaboratorPublicDetails } from '~/components/estudiantes/proyectos/projectSocialData';
 
 interface ColaboradorDetallePageProps {
@@ -22,7 +21,6 @@ export default async function ColaboradorDetallePage({
 
   return (
     <>
-      <Header />
       <main
         className="
           min-h-screen bg-background px-4 pt-10 pb-20

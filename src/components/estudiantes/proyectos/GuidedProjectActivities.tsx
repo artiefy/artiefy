@@ -197,7 +197,7 @@ export function GuidedProjectActivities({
                     )}
                   </span>
 
-                  <span className="min-w-0 flex-1 text-sm text-muted-foreground">
+                  <span className="min-w-0 flex-1 text-sm font-medium text-foreground">
                     <span className="flex items-center gap-2">
                       {!objective.isEnabled && (
                         <LockKeyhole
@@ -284,7 +284,7 @@ export function GuidedProjectActivities({
                               isActivityOpen ? null : activity.id
                             )
                           }
-                          className="w-full p-4 text-left transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+                          className="w-full py-4 pr-4 pl-8 text-left transition-colors hover:bg-muted/30 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
                         >
                           <span className="mb-1 block text-xs text-muted-foreground">
                             Actividad {activityIndex + 1}
@@ -340,14 +340,14 @@ export function GuidedProjectActivities({
                           role="region"
                           aria-labelledby={activityButtonId}
                           hidden={!isActivityOpen}
-                          className="space-y-3 px-4 pb-4"
+                          className="space-y-3 pr-4 pb-4 pl-8"
                         >
                           {activity.description?.trim() && (
                             <div className="rounded-lg bg-muted/30 p-3">
                               <span className="mb-1 block text-xs font-medium text-muted-foreground">
                                 Descripción
                               </span>
-                              <p className="text-sm leading-relaxed whitespace-pre-line text-foreground">
+                              <p className="text-sm leading-relaxed whitespace-pre-line text-foreground/80">
                                 {activity.description}
                               </p>
                             </div>

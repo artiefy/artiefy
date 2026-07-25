@@ -4,7 +4,6 @@ import { type Metadata, type ResolvingMetadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { ProgramDetailsSkeleton } from '~/components/estudiantes/layout/programdetail/ProgramDetailsSkeleton';
 import { getProgramById } from '~/server/actions/estudiantes/programs/getProgramById';
 
@@ -99,7 +98,6 @@ export async function generateMetadata(
 export default function Page({ params }: PageProps) {
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
       <Suspense fallback={<ProgramDetailsSkeleton />}>
         <ProgramContent params={params} />
       </Suspense>

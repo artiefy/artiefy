@@ -1,15 +1,4 @@
 {
-  "extends": "./tsconfig.json",
-  "include": [
-    "src/**/*",
-    "app/**/*",
-    "next-env.d.ts",
-    "next-video.config.js",
-    "postcss.config.js",
-    "drizzle.config.ts",
-    "video.d.ts",
-    "test-embeddings.ts"
-  ],
   "exclude": [
     "node_modules",
     ".agents",
@@ -27,5 +16,16 @@
     "out",
     "generated",
     "**/*.d.ts"
+  ],
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*",
+    "app/**/*",
+    "next-env.d.ts",
+    "next-video.config.js",
+    "postcss.config.js",
+    "drizzle.config.ts",
+    "video.d.ts",
+    "test-embeddings.ts"
   ]
 }

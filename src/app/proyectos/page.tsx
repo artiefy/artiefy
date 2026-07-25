@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { getProjectSocialCollections } from '~/components/estudiantes/proyectos/projectSocialData';
 import { ProjectsSocialView } from '~/components/estudiantes/proyectos/ProjectsSocialView';
 
@@ -43,7 +42,6 @@ export default async function ProyectosPage({
 
   return (
     <>
-      <Header />
       <ProjectsSocialView
         exploreItems={exploreItems}
         myItems={myItems}

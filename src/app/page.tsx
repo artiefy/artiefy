@@ -9,7 +9,6 @@ import { useAuth, useUser } from '@clerk/nextjs';
 import { FaArrowRight } from 'react-icons/fa';
 
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { Button } from '~/components/estudiantes/ui/button';
 import { Icons } from '~/components/estudiantes/ui/icons';
 import {
@@ -185,7 +184,6 @@ export default function HomePage() {
       <SmoothGradient />
       <HeroCanvas />
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Header />
         <main className="mt-[-10vh] flex grow items-center justify-center">
           <section className="container mx-auto px-4 pt-18 pb-12 text-center sm:pt-12">
             <h1 className="mb-5 text-5xl leading-snug font-bold text-white">

@@ -131,7 +131,7 @@ export default function Component() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: '#0f1729' }}>
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8 md:pt-24">
         {/* Search and Filters */}
         <div className="mb-8 space-y-4">
           <div

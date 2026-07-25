@@ -1,4 +1,0 @@
-
-> artiefy@0.1.0 check
-> eslint . --config eslint.cli.config.mjs --max-warnings=0 && tsc --noEmit
-

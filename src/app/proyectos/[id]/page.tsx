@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { ProjectDetail } from '~/components/estudiantes/proyectos/ProjectDetail';
 import { getProjectSocialById } from '~/components/estudiantes/proyectos/projectSocialData';
 
@@ -23,7 +22,6 @@ export default async function ProyectoDetallePage({
 
   return (
     <>
-      <Header />
       <ProjectDetail item={item} />
       <Footer />
     </>

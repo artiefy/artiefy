@@ -4,7 +4,6 @@ import { RedirectToSignIn, Show } from '@clerk/nextjs';
 
 import { CourseCardSkeleton } from '~/components/estudiantes/layout/CourseCardSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import MyCoursesStudent from '~/components/estudiantes/layout/MyCoursesStudent';
 import { Skeleton } from '~/components/estudiantes/ui/skeleton';
 
@@ -16,7 +15,6 @@ export default function MisCoursesPage() {
     <>
       <Show when="signed-in">
         <div className="flex min-h-screen flex-col">
-          <Header />
           <main className="flex-1">
             <Suspense
               fallback={

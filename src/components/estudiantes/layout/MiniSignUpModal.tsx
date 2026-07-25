@@ -7,11 +7,46 @@ import Image from 'next/image';
 import { useAuth, useSignUp } from '@clerk/nextjs';
 import { isClerkAPIResponseError } from '@clerk/nextjs/errors';
 import { type ClerkAPIError, type OAuthStrategy } from '@clerk/shared/types';
+import { Check, X } from 'lucide-react';
 
 import { Icons } from '~/components/estudiantes/ui/icons';
 import { ensureCurrentUserStudentRole } from '~/utils/roles';
 
 import '../../../styles/mini-login-uiverse.css';
+
+// Mirrors Clerk's password complexity settings (PasswordSettingsData:
+// min_length, require_uppercase, require_lowercase, require_numbers).
+// Keep these in sync with the Clerk Dashboard, otherwise a password can pass
+// here and still be rejected server-side.
+const PASSWORD_RULES: {
+  key: string;
+  label: string;
+  test: (v: string) => boolean;
+}[] = [
+  {
+    key: 'minLength',
+    label: 'Mínimo 8 caracteres',
+    test: (value) => value.length >= 8,
+  },
+  {
+    key: 'uppercase',
+    label: 'Al menos una mayúscula',
+    test: (value) => /[A-Z]/.test(value),
+  },
+  {
+    key: 'lowercase',
+    label: 'Al menos una minúscula',
+    test: (value) => /[a-z]/.test(value),
+  },
+  {
+    key: 'number',
+    label: 'Al menos un número',
+    test: (value) => /\d/.test(value),
+  },
+];
+
+const getFailedPasswordRules = (value: string) =>
+  PASSWORD_RULES.filter((rule) => !rule.test(value));
 
 const normalizeMissingFields = (fields: string[]) =>
   fields.map((field) => {
@@ -341,13 +376,19 @@ export default function MiniSignUpModal({
         longMessage: 'Ingresa tu contraseña.',
         meta: { paramName: 'password' },
       });
-    } else if (pwd.length < 8) {
-      validationErrors.push({
-        code: 'form_param_format_invalid',
-        message: 'La contraseña debe tener al menos 8 caracteres.',
-        longMessage: 'La contraseña debe tener al menos 8 caracteres.',
-        meta: { paramName: 'password' },
-      });
+    } else {
+      const failedRules = getFailedPasswordRules(pwd);
+      if (failedRules.length > 0) {
+        const detail = failedRules
+          .map((rule) => rule.label.toLowerCase())
+          .join(', ');
+        validationErrors.push({
+          code: 'form_param_format_invalid',
+          message: `La contraseña no cumple: ${detail}.`,
+          longMessage: `La contraseña no cumple: ${detail}.`,
+          meta: { paramName: 'password' },
+        });
+      }
     }
 
     if (!confirmPwd) {
@@ -818,11 +859,42 @@ export default function MiniSignUpModal({
         error.meta?.paramName === 'confirmPassword')
   );
 
+  // Live password feedback, evaluated on every keystroke.
+  const passwordChecks = PASSWORD_RULES.map((rule) => ({
+    key: rule.key,
+    label: rule.label,
+    passed: rule.test(password),
+  }));
+  const passwordsMatch = password.length > 0 && password === confirmPassword;
+  const showPasswordChecklist = password.length > 0;
+
   const getSignUpErrorMessage = (error: ClerkAPIError) => {
     if (error.code === 'form_identifier_exists')
       return 'Esta cuenta ya existe. Por favor inicia sesión.';
-    if (error.code === 'form_password_pwned')
+    if (
+      error.code === 'form_password_pwned' ||
+      error.code === 'form_password_compromised'
+    )
       return 'Esta contraseña es muy común. Por favor elige una más segura.';
+    // Server-side complexity codes: surface them in Spanish in case the Clerk
+    // Dashboard enforces stricter rules than PASSWORD_RULES.
+    if (error.code === 'form_password_length_too_short')
+      return 'La contraseña es demasiado corta.';
+    if (error.code === 'form_password_length_too_long')
+      return 'La contraseña es demasiado larga.';
+    if (error.code === 'form_password_no_uppercase')
+      return 'La contraseña debe incluir al menos una mayúscula.';
+    if (error.code === 'form_password_no_lowercase')
+      return 'La contraseña debe incluir al menos una minúscula.';
+    if (error.code === 'form_password_no_number')
+      return 'La contraseña debe incluir al menos un número.';
+    if (error.code === 'form_password_no_special_char')
+      return 'La contraseña debe incluir al menos un carácter especial.';
+    if (
+      error.code === 'form_password_not_strong_enough' ||
+      error.code === 'form_password_validation_failed'
+    )
+      return 'La contraseña no es lo suficientemente segura. Elige una más robusta.';
     if (error.code === 'password_mismatch')
       return 'Las contraseñas no coinciden';
     if (error.code === 'missing_requirements')
@@ -1248,6 +1320,7 @@ export default function MiniSignUpModal({
                 value={password}
                 placeholder="Contraseña"
                 required
+                aria-describedby="password-requirements"
                 className={`
                   w-full rounded-lg bg-background px-4 py-3 text-sm ring-1
                   outline-hidden ring-inset
@@ -1256,6 +1329,46 @@ export default function MiniSignUpModal({
                   focus:ring-2 focus:ring-primary
                 `}
               />
+              {showPasswordChecklist && (
+                <ul
+                  id="password-requirements"
+                  aria-live="polite"
+                  className="mt-2 space-y-1"
+                >
+                  {passwordChecks.map((check) => (
+                    <li
+                      key={check.key}
+                      className={`
+                        flex items-center gap-1.5 text-xs
+                        ${check.passed ? 'text-emerald-400' : 'text-muted-foreground'}
+                      `}
+                    >
+                      {check.passed ? (
+                        <Check
+                          className="size-3.5 shrink-0"
+                          aria-hidden="true"
+                        />
+                      ) : (
+                        <X className="size-3.5 shrink-0" aria-hidden="true" />
+                      )}
+                      {check.label}
+                    </li>
+                  ))}
+                  <li
+                    className={`
+                      flex items-center gap-1.5 text-xs
+                      ${passwordsMatch ? 'text-emerald-400' : 'text-muted-foreground'}
+                    `}
+                  >
+                    {passwordsMatch ? (
+                      <Check className="size-3.5 shrink-0" aria-hidden="true" />
+                    ) : (
+                      <X className="size-3.5 shrink-0" aria-hidden="true" />
+                    )}
+                    Las contraseñas coinciden
+                  </li>
+                </ul>
+              )}
             </div>
             <div>
               <input

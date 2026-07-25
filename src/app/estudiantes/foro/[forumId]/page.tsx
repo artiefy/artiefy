@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 
 import Loading from '~/app/loading';
 import { ForumBreadcrumbs } from '~/components/estudiantes/layout/forum/ForumBreadcrumbs';
-import { Header } from '~/components/estudiantes/layout/Header';
 
 interface Foro {
   id: number;
@@ -180,7 +179,6 @@ export default function StudentForumPage() {
 
   return (
     <>
-      <Header />
       {forum && (
         <ForumBreadcrumbs
           courseId={forum.courseId.id}
@@ -272,7 +270,7 @@ export default function StudentForumPage() {
                 ) : (
                   <button
                     className="
-                      text-secondary mt-2 text-sm
+                      mt-2 text-sm text-secondary
                       hover:underline
                     "
                     onClick={() => setReplyingToPostId(post.id)}

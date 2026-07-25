@@ -7,7 +7,6 @@ import { auth } from '@clerk/nextjs/server';
 
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { GuidedProjectDetails } from '~/components/estudiantes/proyectos/GuidedProjectDetails';
 import { getGuidedProjectById } from '~/server/actions/estudiantes/guided-projects/getGuidedProjectById';
 
@@ -104,7 +103,6 @@ export default async function Page({ params }: { params: PageParams }) {
 
   return (
     <div className="pt-0">
-      <Header />
       <Suspense fallback={<CourseDetailsSkeleton />}>
         <ProjectContent id={id} />
       </Suspense>

@@ -6,7 +6,6 @@ import { notFound, redirect, unstable_rethrow } from 'next/navigation';
 import { auth, currentUser } from '@clerk/nextjs/server';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { LessonSkeleton } from '~/components/estudiantes/layout/lessondetail/LessonDetailsSkeleton';
 import { getActivityContent } from '~/server/actions/estudiantes/activities/getActivityContent';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
@@ -70,7 +69,6 @@ export default async function LessonPage({ params }: PageProps) {
       {/* Preconnect al dominio S3 para reducir latencia en carga de videos */}
       <link rel="preconnect" href="https://s3.us-east-2.amazonaws.com" />
       <link rel="dns-prefetch" href="https://s3.us-east-2.amazonaws.com" />
-      <Header />
       <main>
         <Suspense fallback={<LessonSkeleton />}>
           <LessonContent id={id} userId={userId} role={role} />

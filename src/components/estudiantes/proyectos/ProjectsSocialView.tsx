@@ -318,6 +318,7 @@ export function ProjectsSocialView({
         className={`
           relative px-4 pt-10 pb-12
           sm:px-6
+          md:pt-28
         `}
       >
         <div className="mx-auto max-w-7xl">

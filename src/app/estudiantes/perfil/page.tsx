@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 
-import { Header } from '~/components/estudiantes/layout/Header';
 import { ProfileView } from '~/components/estudiantes/profile/ProfileView';
 import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 import { getMyProfile } from '~/server/actions/estudiantes/profile/profileActions';
@@ -20,7 +19,6 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <Header />
       <ProfileView profile={profile} courses={courses} programs={programs} />
     </>
   );

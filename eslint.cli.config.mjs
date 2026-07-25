@@ -22,7 +22,7 @@ export default defineConfig([
     ignores: [
       'eslint.cli.config.mjs', // Excluir este archivo de la linting
       'eslint.config.mjs',
-      'next.config.mjs',
+      'next.config.ts',
       'prettier.config.mjs',
       'lint-staged.config.mjs',
       '.next/**',
