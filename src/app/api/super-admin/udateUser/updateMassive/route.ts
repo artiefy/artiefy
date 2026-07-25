@@ -197,7 +197,10 @@ export async function PATCH(req: Request) {
 
       const newMetadata = {
         ...existingMetadata,
-        role: typeof role === 'string' ? role : 'estudiante',
+        // Solo se pisa el rol en Clerk si la edición masiva lo trae
+        // explícito; si no, se conserva el que el usuario ya tenía (evita
+        // degradar a estudiante a un educador/admin al editar otros campos).
+        ...(typeof role === 'string' ? { role } : {}),
         planType: typeof planType === 'string' ? planType : 'none',
         subscriptionStatus: normalizedStatus,
         subscriptionEndDate: endDateIso,

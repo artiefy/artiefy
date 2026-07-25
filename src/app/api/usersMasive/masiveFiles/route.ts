@@ -1464,9 +1464,13 @@ export async function POST(request: NextRequest) {
         const fechaInicioYMD = toYMDorNull(fechaInicioStr);
         const cuota1FechaYMD = toYMDorNull(cuota1FechaStr);
 
+        // El rol NUNCA se pisa para un usuario que ya existe: solo se asigna
+        // 'estudiante' por defecto al crear una cuenta nueva. Así una carga de
+        // matrícula no puede degradar a un educador/admin existente.
+        const currentRole = existing[0]?.role;
+
         const baseSet = {
           name: `${firstName} ${lastName}`,
-          role: 'estudiante' as const,
           updatedAt: new Date(),
           planType: 'Premium' as const,
           subscriptionStatus: 'active' as const,
@@ -1533,6 +1537,7 @@ export async function POST(request: NextRequest) {
           await db.insert(users).values({
             id: userIdToUse,
             email,
+            role: 'estudiante',
             createdAt: new Date(),
             ...baseSet,
           });
@@ -1544,12 +1549,13 @@ export async function POST(request: NextRequest) {
 
         try {
           const subEndIso = subscriptionEnd.toISOString();
+          const roleForClerk = currentRole ?? 'estudiante';
 
           const ok = await updateUserInClerk({
             userId: userIdToUse,
             firstName,
             lastName,
-            role: 'estudiante',
+            role: roleForClerk,
             status: 'active',
             planType: 'Premium',
             permissions: [],
@@ -1560,7 +1566,7 @@ export async function POST(request: NextRequest) {
           if (!ok && clerkUser?.id) {
             const endStr = formatDateTime(subscriptionEnd);
             await setClerkMetadata(clerkUser.id, {
-              role: 'estudiante',
+              role: roleForClerk,
               planType: 'Premium',
               mustChangePassword: true,
               subscriptionStatus: 'active',

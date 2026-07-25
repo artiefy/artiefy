@@ -221,6 +221,7 @@ const validateUrl = (url: string): boolean => {
 interface HelpFileInfo {
   id: string;
   archivoKey: string;
+  text?: string;
 }
 
 export function LessonActivityModal({
@@ -273,8 +274,9 @@ export function LessonActivityModal({
   const [isUrlValid, setIsUrlValid] = useState(false);
   // Add new state for URL uploading
   const [isUploadingUrl, setIsUploadingUrl] = useState(false);
-  // Nuevo estado para el archivo de ayuda del educador
-  const [helpFileInfo, setHelpFileInfo] = useState<HelpFileInfo | null>(null);
+  // Nuevo estado para los archivos de ayuda del educador (uno por cada
+  // pregunta de tipo subida de archivo que tenga adjunto un archivo de ayuda)
+  const [helpFileInfo, setHelpFileInfo] = useState<HelpFileInfo[]>([]);
   const [isLoadingHelpFile, setIsLoadingHelpFile] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const fileInputId = `lesson-activity-file-${activity.id}`;
@@ -303,7 +305,7 @@ export function LessonActivityModal({
     setDriveUrl('');
     setIsUrlValid(false);
     setIsUploadingUrl(false);
-    setHelpFileInfo(null);
+    setHelpFileInfo([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -477,27 +479,28 @@ export function LessonActivityModal({
           if (res.ok) {
             // Tipar la respuesta correctamente
             const data: unknown = await res.json();
-            if (
-              Array.isArray(data) &&
-              data.length > 0 &&
-              typeof data[0] === 'object' &&
-              data[0] !== null &&
-              'id' in data[0] &&
-              'archivoKey' in data[0]
-            ) {
-              const { id, archivoKey } = data[0] as {
-                id: string;
-                archivoKey: string;
-              };
-              setHelpFileInfo({ id, archivoKey });
+            if (Array.isArray(data)) {
+              // Muestra el archivo de ayuda de CADA pregunta que tenga uno
+              // adjunto, en el mismo orden en que fueron creadas.
+              const files = data.filter(
+                (item): item is HelpFileInfo =>
+                  typeof item === 'object' &&
+                  item !== null &&
+                  'id' in item &&
+                  'archivoKey' in item &&
+                  typeof (item as { archivoKey?: unknown }).archivoKey ===
+                    'string' &&
+                  (item as { archivoKey: string }).archivoKey.length > 0
+              );
+              setHelpFileInfo(files);
             } else {
-              setHelpFileInfo(null);
+              setHelpFileInfo([]);
             }
           } else {
-            setHelpFileInfo(null);
+            setHelpFileInfo([]);
           }
         } catch {
-          setHelpFileInfo(null);
+          setHelpFileInfo([]);
         } finally {
           setIsLoadingHelpFile(false);
         }
@@ -1699,49 +1702,64 @@ export function LessonActivityModal({
     );
   };
 
-  // Renderiza el bloque de ayuda para descarga
+  // Renderiza el bloque de ayuda para descarga: uno por cada pregunta que
+  // tenga un archivo de ayuda adjunto, en el orden en que se crearon.
   const renderHelpFileBlock = () => {
-    if (!helpFileInfo) return null;
+    if (helpFileInfo.length === 0) return null;
     // Usa la URL pública del bucket configurada en .env
     const s3BaseUrl =
       process.env.NEXT_PUBLIC_AWS_S3_URL ??
       'https://s3.us-east-2.amazonaws.com/artiefy-upload';
-    const fileUrl = `${s3BaseUrl}/${helpFileInfo.archivoKey}`;
-    const fileName = helpFileInfo.archivoKey.split('/').pop() ?? 'archivo';
-    const fileExtension = fileName.split('.').pop()?.toLowerCase() ?? '';
+
     return (
-      <div
-        className="
-          mb-6 flex items-center justify-between rounded-lg bg-blue-50 p-4
-        "
-      >
-        <div className="flex items-center gap-3">
-          {/* Ícono más grande */}
-          <span className="flex items-center justify-center">
-            <span className="flex size-10 items-center justify-center">
-              {getFileIcon(fileExtension)}
-            </span>
-          </span>
-          <div>
-            <span className="block text-sm font-semibold text-blue-900">
-              Archivo de ayuda del educador
-            </span>
-            <span className="block text-xs text-blue-700">{fileName}</span>
-          </div>
-        </div>
-        <a
-          href={fileUrl}
-          download={fileName}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="
-            rounded bg-blue-600 px-3 py-2 text-xs font-bold text-white
-            transition
-            hover:bg-blue-700
-          "
-        >
-          Descargar
-        </a>
+      <div className="mb-6 space-y-3">
+        {helpFileInfo.map((help, index) => {
+          const fileUrl = `${s3BaseUrl}/${help.archivoKey}`;
+          const fileName = help.archivoKey.split('/').pop() ?? 'archivo';
+          const fileExtension = fileName.split('.').pop()?.toLowerCase() ?? '';
+          return (
+            <div
+              key={help.id}
+              className="flex items-center justify-between rounded-lg bg-blue-50 p-4"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                {/* Ícono más grande */}
+                <span className="flex items-center justify-center">
+                  <span className="flex size-10 items-center justify-center">
+                    {getFileIcon(fileExtension)}
+                  </span>
+                </span>
+                <div className="min-w-0">
+                  <span className="block text-sm font-semibold text-blue-900">
+                    Archivo de ayuda del educador
+                    {helpFileInfo.length > 1 ? ` (Pregunta ${index + 1})` : ''}
+                  </span>
+                  {help.text && (
+                    <span className="block truncate text-xs text-blue-800">
+                      {help.text}
+                    </span>
+                  )}
+                  <span className="block truncate text-xs text-blue-700">
+                    {fileName}
+                  </span>
+                </div>
+              </div>
+              <a
+                href={fileUrl}
+                download={fileName}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="
+                  shrink-0 rounded bg-blue-600 px-3 py-2 text-xs font-bold
+                  text-white transition
+                  hover:bg-blue-700
+                "
+              >
+                Descargar
+              </a>
+            </div>
+          );
+        })}
       </div>
     );
   };
