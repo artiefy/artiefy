@@ -45,6 +45,7 @@ export interface GuidedProject {
   deliverablesDescription?: string | null;
   studentsCount?: number | null;
   contentHours?: number | null;
+  repositoryUrl?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -118,6 +119,7 @@ export const createGuidedProject = async (data: Partial<GuidedProject>) => {
       deliverablesDescription: data.deliverablesDescription,
       studentsCount: data.studentsCount || 0,
       contentHours: data.contentHours || 0,
+      repositoryUrl: data.repositoryUrl,
     })
     .returning();
 
@@ -236,6 +238,7 @@ export const getGuidedProjectById = async (id: number) => {
       deliverablesDescription: guidedProjects.deliverablesDescription,
       studentsCount: guidedProjects.studentsCount,
       contentHours: guidedProjects.contentHours,
+      repositoryUrl: guidedProjects.repositoryUrl,
       createdAt: guidedProjects.createdAt,
       updatedAt: guidedProjects.updatedAt,
     })

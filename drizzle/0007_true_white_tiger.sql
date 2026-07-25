@@ -1,0 +1,1 @@
+ALTER TABLE "guided_projects" ADD COLUMN "repository_url" text;

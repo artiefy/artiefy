@@ -64,6 +64,10 @@ export const env = createEnv({
     ESP32_BASE_URL: z.url().optional(),
     ESP32_API_KEY: z.string().optional(),
     NEON_API_KEY: z.string().min(1),
+
+    // Opcional: token de GitHub (sin scopes especiales, solo lectura de repos
+    // públicos) para subir el límite de la API de 60 a 5000 req/hora.
+    GITHUB_TOKEN: z.string().min(1).optional(),
   },
   /*
    * Environment variables available on the client (and server).
@@ -144,6 +148,7 @@ export const env = createEnv({
     ESP32_BASE_URL: process.env.ESP32_BASE_URL,
     ESP32_API_KEY: process.env.ESP32_API_KEY,
     NEON_API_KEY: process.env.NEON_API_KEY,
+    GITHUB_TOKEN: process.env.GITHUB_TOKEN,
 
     // Client variables (NEXT_PUBLIC_*)
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY:

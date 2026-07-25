@@ -13,17 +13,23 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
+  ChevronRight,
   ClipboardList,
   CodeXml,
+  ExternalLink,
   Eye,
+  File as FileIcon,
   FileBox,
   FileText,
+  Folder,
+  GitFork,
   Globe,
   HelpCircle,
   ImageOff,
   Layers,
   Lightbulb,
   ListChecks,
+  Loader2,
   LockKeyhole,
   MessageSquare,
   Package,
@@ -35,6 +41,7 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
+  Star,
   Target,
   Trash2,
   TriangleAlert,
@@ -43,7 +50,11 @@ import {
   XCircle,
 } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
+import ReactMarkdown, { type Components } from 'react-markdown';
 import Select, { type MultiValue } from 'react-select';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import remarkGfm from 'remark-gfm';
 import { toast } from 'sonner';
 
 import { Button } from '~/components/educators/ui/button';
@@ -58,7 +69,7 @@ interface GuidedProjectAdminTabsProps {
   project: GuidedProject;
 }
 
-type TabKey = 'proyecto' | 'actividades' | 'recursos' | 'foro';
+type TabKey = 'proyecto' | 'actividades' | 'recursos' | 'foro' | 'repositorio';
 
 const splitLines = (value: string | null | undefined): string[] =>
   (value ?? '')
@@ -157,6 +168,141 @@ const FAQ_ITEMS = [
 // hardcoded value, since plan pricing isn't exposed as a shared constant).
 const PREMIUM_DISPLAY_PRICE = 124900;
 
+// ─── Explorador de repositorio (GitHub) ─────────────────────────────────────
+interface RepoSummary {
+  fullName: string;
+  description: string | null;
+  htmlUrl: string;
+  defaultBranch: string;
+  stars: number;
+  forks: number;
+  language: string | null;
+  ownerLogin: string;
+  ownerAvatarUrl: string;
+}
+
+interface RepoEntry {
+  name: string;
+  path: string;
+  type: 'file' | 'dir';
+  size: number;
+}
+
+interface RepoFile {
+  name: string;
+  path: string;
+  size: number;
+  content: string;
+}
+
+const CODE_LANGUAGE_BY_EXTENSION: Record<string, string> = {
+  ts: 'typescript',
+  tsx: 'tsx',
+  js: 'javascript',
+  jsx: 'jsx',
+  json: 'json',
+  css: 'css',
+  scss: 'scss',
+  html: 'markup',
+  py: 'python',
+  rb: 'ruby',
+  go: 'go',
+  rs: 'rust',
+  java: 'java',
+  php: 'php',
+  sql: 'sql',
+  sh: 'bash',
+  yml: 'yaml',
+  yaml: 'yaml',
+  md: 'markdown',
+};
+
+// Estilos de marca para el README renderizado (sin depender del plugin de
+// Tailwind typography, que no está instalado en el proyecto).
+const markdownComponents: Components = {
+  h1: ({ children }) => (
+    <h1 className="mt-6 mb-3 border-b border-white/10 pb-2 text-2xl font-bold text-white first:mt-0">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }) => (
+    <h2 className="mt-5 mb-2 border-b border-white/10 pb-1.5 text-xl font-bold text-white">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }) => (
+    <h3 className="mt-4 mb-2 text-lg font-bold text-white">{children}</h3>
+  ),
+  p: ({ children }) => (
+    <p className="mb-3 leading-relaxed text-white/80">{children}</p>
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-[#22C4D3] underline hover:text-[#6cecf4]"
+    >
+      {children}
+    </a>
+  ),
+  ul: ({ children }) => (
+    <ul className="mb-3 list-disc space-y-1 pl-5 text-white/80">{children}</ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="mb-3 list-decimal space-y-1 pl-5 text-white/80">
+      {children}
+    </ol>
+  ),
+  strong: ({ children }) => (
+    <strong className="font-semibold text-white">{children}</strong>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="mb-3 border-l-2 border-[#22C4D3]/40 pl-3 text-white/60 italic">
+      {children}
+    </blockquote>
+  ),
+  hr: () => <hr className="my-4 border-white/10" />,
+  img: ({ src, alt }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={typeof src === 'string' ? src : undefined}
+      alt={alt ?? ''}
+      className="my-3 max-w-full rounded-lg"
+    />
+  ),
+  table: ({ children }) => (
+    <div className="mb-3 overflow-x-auto">
+      <table className="w-full border-collapse text-sm">{children}</table>
+    </div>
+  ),
+  th: ({ children }) => (
+    <th className="border border-white/10 bg-white/5 px-3 py-1.5 text-left text-white">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="border border-white/10 px-3 py-1.5 text-white/80">
+      {children}
+    </td>
+  ),
+  code: ({ className, children }) => {
+    const isBlock = /language-/.test(className ?? '');
+    if (isBlock) {
+      return (
+        <code className="block overflow-x-auto rounded-lg bg-[#04101f] p-3 font-mono text-xs text-white/90">
+          {children}
+        </code>
+      );
+    }
+    return (
+      <code className="rounded bg-[#04101f] px-1.5 py-0.5 font-mono text-xs text-[#22C4D3]">
+        {children}
+      </code>
+    );
+  },
+};
+
 function EditableList({
   items,
   onChange,
@@ -220,6 +366,15 @@ export function GuidedProjectAdminTabs({
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+
+  // ─── Pestaña Repositorio (explorador de GitHub) ───────────────────────────
+  const [repoUrlDraft, setRepoUrlDraft] = useState(project.repositoryUrl ?? '');
+  const [repoPath, setRepoPath] = useState('');
+  const [repoSummary, setRepoSummary] = useState<RepoSummary | null>(null);
+  const [repoEntries, setRepoEntries] = useState<RepoEntry[] | null>(null);
+  const [repoFile, setRepoFile] = useState<RepoFile | null>(null);
+  const [repoLoading, setRepoLoading] = useState(false);
+  const [repoError, setRepoError] = useState<string | null>(null);
 
   // ─── Modo Educador (edición inline) ───────────────────────────────────────
   const [educatorMode, setEducatorMode] = useState(false);
@@ -303,6 +458,79 @@ export function GuidedProjectAdminTabs({
     } catch {
       toast.error('Error al guardar los cambios');
     }
+  };
+
+  const loadRepoPath = async (path: string) => {
+    if (!project.repositoryUrl) return;
+    setRepoLoading(true);
+    setRepoError(null);
+    try {
+      const res = await fetch(
+        `/api/github/repo?url=${encodeURIComponent(project.repositoryUrl)}&path=${encodeURIComponent(path)}`
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setRepoError(data.error ?? 'Error consultando el repositorio');
+        setRepoEntries(null);
+        setRepoFile(null);
+        return;
+      }
+      setRepoSummary(data.repo as RepoSummary);
+      if (data.kind === 'dir') {
+        const entries = data.entries as RepoEntry[];
+        setRepoEntries(entries);
+        setRepoFile(null);
+        // Auto-abre el README al llegar a la raíz, como hace GitHub.
+        if (path === '') {
+          const readme = entries.find((e) => /^readme\.md$/i.test(e.name));
+          if (readme) {
+            void loadRepoPath(readme.path);
+          }
+        }
+      } else {
+        setRepoFile(data.file as RepoFile);
+      }
+    } catch {
+      setRepoError('Error consultando el repositorio');
+    } finally {
+      setRepoLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'repositorio' || !project.repositoryUrl) return;
+    if (repoSummary || repoLoading) return;
+    setRepoPath('');
+    void loadRepoPath('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, project.repositoryUrl]);
+
+  const navigateRepoPath = (entry: RepoEntry) => {
+    if (entry.type === 'dir') {
+      setRepoPath(entry.path);
+      void loadRepoPath(entry.path);
+    } else {
+      void loadRepoPath(entry.path);
+    }
+  };
+
+  const repoBreadcrumbs = (repoFile?.path ?? repoPath)
+    .split('/')
+    .filter(Boolean);
+
+  const handleSaveRepoUrl = async () => {
+    const trimmed = repoUrlDraft.trim();
+    await savePatch(
+      { repositoryUrl: trimmed || null },
+      trimmed
+        ? 'Link del repositorio guardado'
+        : 'Link del repositorio eliminado'
+    );
+    setRepoSummary(null);
+    setRepoEntries(null);
+    setRepoFile(null);
+    setRepoPath('');
+    router.refresh();
   };
 
   const handleCoverFileChange = async (
@@ -475,6 +703,11 @@ export function GuidedProjectAdminTabs({
       icon: <FileBox className="size-4" />,
     },
     { key: 'foro', label: 'Foro', icon: <MessageSquare className="size-4" /> },
+    {
+      key: 'repositorio',
+      label: 'Repositorio',
+      icon: <FaGithub className="size-4" />,
+    },
   ];
 
   const renderCoverMediaAndActions = () => (
@@ -1757,6 +1990,235 @@ export function GuidedProjectAdminTabs({
             {activeTab === 'foro' && (
               <div className="rounded-2xl border border-[#22C4D3]/20 bg-[#061c37] p-8 text-center text-white/50">
                 El foro de este proyecto estará disponible pronto.
+              </div>
+            )}
+
+            {/* Repositorio */}
+            {activeTab === 'repositorio' && (
+              <div className="space-y-4">
+                {(educatorMode || !project.repositoryUrl) && (
+                  <section className={sectionClass}>
+                    <div className="mb-4 flex items-center gap-2">
+                      <div className={sectionIconClass}>
+                        <FaGithub className="size-4" />
+                      </div>
+                      <h2 className="text-xl font-bold text-white">
+                        Repositorio de GitHub
+                      </h2>
+                    </div>
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <input
+                        value={repoUrlDraft}
+                        onChange={(e) => setRepoUrlDraft(e.target.value)}
+                        placeholder="https://github.com/usuario/repositorio"
+                        className="w-full rounded-lg border border-[#22C4D3]/30 bg-[#04101f] p-2 text-sm text-white outline-none focus:border-[#22C4D3]"
+                      />
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleSaveRepoUrl()}
+                          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-[#22c4d3] px-4 text-xs font-semibold text-[#080c16] transition hover:bg-[#1fb0be]"
+                        >
+                          Guardar
+                        </button>
+                        <a
+                          href="https://github.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg border border-white/15 px-4 text-xs font-semibold text-white transition hover:bg-white/5"
+                        >
+                          <ExternalLink className="size-3.5" />
+                          Ir a GitHub
+                        </a>
+                      </div>
+                    </div>
+                    <p className="mt-2 text-xs text-white/50">
+                      Pega el link de un repositorio público (ej:
+                      https://github.com/vercel/next.js) para explorarlo aquí
+                      mismo.
+                    </p>
+                  </section>
+                )}
+
+                {!project.repositoryUrl && !educatorMode && (
+                  <div className="rounded-2xl border border-dashed border-[#22C4D3]/30 bg-[#061c37]/50 p-10 text-center text-white/50">
+                    <FaGithub className="mx-auto mb-3 size-8" />
+                    Este proyecto todavía no tiene un repositorio vinculado.
+                  </div>
+                )}
+
+                {project.repositoryUrl && (
+                  <>
+                    {repoError && (
+                      <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">
+                        {repoError}
+                      </div>
+                    )}
+
+                    {repoSummary && (
+                      <section className={sectionClass}>
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Image
+                              src={repoSummary.ownerAvatarUrl}
+                              alt={repoSummary.ownerLogin}
+                              width={40}
+                              height={40}
+                              className="shrink-0 rounded-full"
+                              unoptimized
+                            />
+                            <div className="min-w-0">
+                              <h2 className="truncate text-lg font-bold text-white">
+                                {repoSummary.fullName}
+                              </h2>
+                              {repoSummary.description && (
+                                <p className="truncate text-sm text-white/60">
+                                  {repoSummary.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <a
+                            href={repoSummary.htmlUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#22C4D3]/40 bg-[#22C4D3]/10 px-3 py-1.5 text-xs font-semibold text-[#22C4D3] transition hover:bg-[#22C4D3]/20"
+                          >
+                            <ExternalLink className="size-3.5" />
+                            Ver en GitHub
+                          </a>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-4 text-xs text-white/60">
+                          {repoSummary.language && (
+                            <span className="inline-flex items-center gap-1.5">
+                              <span className="size-2 rounded-full bg-[#22C4D3]" />
+                              {repoSummary.language}
+                            </span>
+                          )}
+                          <span className="inline-flex items-center gap-1.5">
+                            <Star className="size-3.5" />
+                            {repoSummary.stars}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <GitFork className="size-3.5" />
+                            {repoSummary.forks}
+                          </span>
+                          <span>Rama: {repoSummary.defaultBranch}</span>
+                        </div>
+                      </section>
+                    )}
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <section className={`${sectionClass} md:col-span-1`}>
+                        <h3 className="mb-3 text-xs font-semibold tracking-wide text-white/50 uppercase">
+                          Archivos
+                        </h3>
+                        {repoPath && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const parent = repoPath
+                                .split('/')
+                                .slice(0, -1)
+                                .join('/');
+                              setRepoPath(parent);
+                              void loadRepoPath(parent);
+                            }}
+                            className="mb-2 flex items-center gap-1 text-xs text-[#22C4D3] hover:underline"
+                          >
+                            ← Subir un nivel
+                          </button>
+                        )}
+                        {repoLoading && !repoEntries ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="size-5 animate-spin text-[#22C4D3]" />
+                          </div>
+                        ) : (
+                          <ul className="max-h-[420px] space-y-0.5 overflow-y-auto">
+                            {(repoEntries ?? []).map((entry) => (
+                              <li key={entry.path}>
+                                <button
+                                  type="button"
+                                  onClick={() => navigateRepoPath(entry)}
+                                  className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition-colors hover:bg-white/5 ${
+                                    repoFile?.path === entry.path
+                                      ? 'bg-[#22C4D3]/10 text-[#22C4D3]'
+                                      : 'text-white/80'
+                                  }`}
+                                >
+                                  {entry.type === 'dir' ? (
+                                    <Folder className="size-4 shrink-0 text-[#22C4D3]" />
+                                  ) : (
+                                    <FileIcon className="size-4 shrink-0 text-white/40" />
+                                  )}
+                                  <span className="truncate">{entry.name}</span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </section>
+
+                      <section className={`${sectionClass} md:col-span-2`}>
+                        {repoBreadcrumbs.length > 0 && (
+                          <div className="mb-3 flex flex-wrap items-center gap-1 text-xs text-white/50">
+                            {repoBreadcrumbs.map((part, idx) => (
+                              <span
+                                key={`${part}-${idx}`}
+                                className="flex items-center gap-1"
+                              >
+                                {idx > 0 && <ChevronRight className="size-3" />}
+                                {part}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {repoLoading && !repoFile && !repoEntries ? (
+                          <div className="flex items-center justify-center py-16">
+                            <Loader2 className="size-6 animate-spin text-[#22C4D3]" />
+                          </div>
+                        ) : repoFile ? (
+                          repoFile.name.toLowerCase().endsWith('.md') ? (
+                            <div className="max-w-none text-sm">
+                              <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={markdownComponents}
+                              >
+                                {repoFile.content}
+                              </ReactMarkdown>
+                            </div>
+                          ) : (
+                            <div className="overflow-x-auto text-xs">
+                              <SyntaxHighlighter
+                                language={
+                                  CODE_LANGUAGE_BY_EXTENSION[
+                                    repoFile.name
+                                      .split('.')
+                                      .pop()
+                                      ?.toLowerCase() ?? ''
+                                  ] ?? 'text'
+                                }
+                                style={oneDark}
+                                customStyle={{
+                                  background: 'transparent',
+                                  fontSize: '0.8rem',
+                                  padding: 0,
+                                }}
+                                showLineNumbers
+                              >
+                                {repoFile.content}
+                              </SyntaxHighlighter>
+                            </div>
+                          )
+                        ) : (
+                          <p className="py-16 text-center text-sm text-white/40">
+                            Selecciona un archivo para verlo aquí.
+                          </p>
+                        )}
+                      </section>
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
