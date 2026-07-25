@@ -79,11 +79,9 @@ export function Header({
 
   const planType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
-    | string
-    | undefined;
+    string | undefined;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    | string
-    | undefined;
+    string | undefined;
 
   useEffect(() => {
     if (!user || userRole) return;
@@ -909,6 +907,21 @@ export function Header({
             </div>
           ) : null}
 
+          {/* Solid backdrop behind the floating top row: only when the mobile
+              search is open, so the header + search read as a single panel
+              instead of letting the hero show between the floating buttons. */}
+          {isMobileViewport && showMobileSearch ? (
+            <div
+              aria-hidden
+              className="
+              pointer-events-none fixed inset-x-0
+              top-[var(--subscription-banner-height,0px)]
+              z-[99990] h-[calc(env(safe-area-inset-top,0px)+4rem)]
+              bg-[#01152d]
+              md:hidden
+            "
+            />
+          ) : null}
           {isMobileViewport ? (
             <div
               className="

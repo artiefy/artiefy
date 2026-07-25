@@ -6,7 +6,6 @@ import { eq } from 'drizzle-orm';
 import { PiCertificate } from 'react-icons/pi';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { Button } from '~/components/estudiantes/ui/button';
 import {
   Card,
@@ -39,7 +38,6 @@ export default async function CertificatesListPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         {/* Elimina el botón bonito de "Mis Certificados" aquí */}
 

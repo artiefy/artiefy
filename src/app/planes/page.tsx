@@ -11,7 +11,6 @@ import { FaCrown, FaStar, FaTimes, FaTimesCircle } from 'react-icons/fa';
 import { toast } from 'sonner';
 
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import PaymentForm from '~/components/estudiantes/layout/PaymentForm';
 import { Button } from '~/components/estudiantes/ui/button';
 import { type Plan, plansEmpresas, plansPersonas } from '~/types/plans';
@@ -109,11 +108,11 @@ const PlansPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <div
         className="
           mb-12 px-4 py-12
           sm:px-6
+          md:pt-28
           lg:px-8
         "
       >

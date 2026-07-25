@@ -9,6 +9,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
+import { SiteHeader } from '~/components/estudiantes/layout/SiteHeader';
 import { NotificationSubscription } from '~/components/estudiantes/layout/subscriptions/NotificationSubscription';
 import { Toaster } from '~/components/estudiantes/ui/sonner';
 import { ServiceWorkerRegister } from '~/components/pwa/ServiceWorkerRegister';
@@ -169,6 +170,7 @@ export default function RootLayout({
             <ServiceWorkerRegister />
             <TourManager />
             <NotificationSubscription />
+            <SiteHeader />
             {children}
           </Providers>
           <SpeedInsights />

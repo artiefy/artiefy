@@ -5,7 +5,6 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { format, isValid } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-import { Header } from '~/components/estudiantes/layout/Header';
 import { GuidedActivityDetails } from '~/components/estudiantes/proyectos/GuidedActivityDetails';
 import { coverKeyToUrl, storageKeyToUrl } from '~/lib/profileCover';
 import { getGuidedProjectById } from '~/server/actions/estudiantes/guided-projects/getGuidedProjectById';
@@ -149,9 +148,7 @@ export default async function GuidedActivityPage({ params }: PageProps) {
   const planType = String(user?.publicMetadata?.planType ?? '').toLowerCase();
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    | string
-    | null
-    | undefined;
+    string | null | undefined;
   const hasValidPlan = ['pro', 'premium', 'enterprise'].includes(planType);
   const isSubscriptionValid =
     subscriptionStatus === 'active' &&
@@ -221,7 +218,6 @@ export default async function GuidedActivityPage({ params }: PageProps) {
 
   return (
     <>
-      <Header />
       <GuidedActivityDetails
         key={activity.id}
         projectId={project.id}

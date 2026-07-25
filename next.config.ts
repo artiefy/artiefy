@@ -1,14 +1,12 @@
 import { withNextVideo } from 'next-video/process';
 
-import { createJiti } from 'jiti';
-import { fileURLToPath } from 'node:url';
+import type { NextConfig } from 'next';
 
-const jiti = createJiti(fileURLToPath(import.meta.url));
+// Import env here to validate environment variables at build time.
+// Next.js 16+ resolves this natively — jiti is no longer required.
+import './src/env.ts';
 
-jiti('./src/env.ts');
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   reactStrictMode: true,
   typedRoutes: true,
   async headers() {
@@ -34,6 +32,12 @@ const nextConfig = {
   cacheComponents: false,
   expireTime: 3600,
   experimental: {
+    // `useTypeScriptCli: true` makes `next build` run the project-local `tsc`
+    // (TypeScript 7) instead of loading the TypeScript JavaScript compiler
+    // API. It shipped in 16.3.0-canary.79 and is NOT in 16.2.11: the key is
+    // absent from `ExperimentalConfig`, so it fails the typecheck and Next
+    // logs "Unrecognized key(s) in object" and ignores it. Re-enable after
+    // upgrading to a release that includes vercel/next.js#95639.
     serverActions: {
       bodySizeLimit: '100mb',
       allowedOrigins: [

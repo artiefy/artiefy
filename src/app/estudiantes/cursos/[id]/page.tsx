@@ -7,7 +7,6 @@ import { auth } from '@clerk/nextjs/server';
 
 import { CourseDetailsSkeleton } from '~/components/estudiantes/layout/coursedetail/CourseDetailsSkeleton';
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { getClassMeetingsByCourseId } from '~/server/actions/estudiantes/classMeetings/getClassMeetingsByCourseId';
 import { getCourseById } from '~/server/actions/estudiantes/courses/getCourseById';
 import { getCourseTypeCounts } from '~/server/actions/estudiantes/courses/getCourseTypeCounts';
@@ -137,7 +136,6 @@ export default async function Page({ params }: { params: PageParams }) {
     <div className="pt-0">
       {' '}
       {/* Antes sin pt-0 */}
-      <Header />
       <Suspense fallback={<CourseDetailsSkeleton />}>
         <CourseContent id={id} />
       </Suspense>

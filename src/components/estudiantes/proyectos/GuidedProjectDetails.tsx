@@ -122,12 +122,9 @@ export function GuidedProjectDetails({
   // Lógica de Suscripción (Clonada de cursos)
   const userPlanType = user?.publicMetadata?.planType as string | undefined;
   const subscriptionStatus = user?.publicMetadata?.subscriptionStatus as
-    | string
-    | undefined;
+    string | undefined;
   const subscriptionEndDate = user?.publicMetadata?.subscriptionEndDate as
-    | string
-    | null
-    | undefined;
+    string | null | undefined;
 
   const isSubscriptionValid =
     subscriptionStatus === 'active' &&
@@ -407,56 +404,56 @@ export function GuidedProjectDetails({
     return (
       <div
         key={objective.id}
-        className="overflow-hidden rounded-lg border border-[#1d283a]"
+        className="overflow-hidden rounded-lg border border-border/50"
       >
         <button
           type="button"
           onClick={() => setExpandedObjective(isOpen ? null : objective.id)}
-          className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-white/5"
+          className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/30"
         >
-          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-[#0d2a4d] text-xs font-medium text-[#94A3B8]">
+          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
             {idx + 1}
           </div>
-          <span className="flex-1 text-sm text-[#94A3B8]">
+          <span className="flex-1 text-sm font-medium text-foreground">
             {objective.title}
           </span>
           {activities.length > 0 && (
-            <span className="mr-2 hidden text-xs text-[#94A3B8] sm:inline">
+            <span className="mr-2 hidden text-xs text-muted-foreground sm:inline">
               {activities.filter((a) => a.isCompleted).length}/
               {activities.length} actividades
             </span>
           )}
           {activities.length > 0 ? (
             <ChevronDown
-              className={`size-4 text-[#94A3B8] transition-transform ${isOpen ? 'rotate-180' : ''}`}
+              className={`size-4 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`}
             />
           ) : (
-            <ChevronRight className="size-4 text-[#94A3B8]" />
+            <ChevronRight className="size-4 text-muted-foreground" />
           )}
         </button>
         {isOpen && activities.length > 0 && (
-          <div className="border-t border-[#1d283a] bg-[#04101f]">
+          <div className="border-t border-border/50 bg-muted/20">
             {activities.map((activity, aIdx) => (
               <div
                 key={activity.id}
-                className="border-b border-[#1d283a]/60 p-4 last:border-b-0"
+                className="border-b border-border/40 py-4 pr-4 pl-8 last:border-b-0"
               >
-                <span className="text-xs text-[#94A3B8]">
+                <span className="text-xs text-muted-foreground">
                   Actividad {aIdx + 1}
                 </span>
                 <div className="mt-1 flex items-center justify-between gap-3">
                   <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                    <h4 className="text-sm font-medium text-white">
+                    <h4 className="text-sm font-medium text-foreground">
                       {activity.name}
                     </h4>
                     {activity.weekNumber != null && (
-                      <span className="inline-flex items-center gap-1 text-xs text-[#94A3B8]">
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                         <Clock className="size-3" />
                         Semana {activity.weekNumber}
                       </span>
                     )}
                   </div>
-                  <ChevronRight className="size-4 shrink-0 text-[#94A3B8]" />
+                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
                 </div>
               </div>
             ))}
@@ -525,17 +522,17 @@ export function GuidedProjectDetails({
 
       {/* Lo que vas a construir */}
       {(project.whatYouWillBuild?.trim() || objectives.length > 0) && (
-        <section className={sectionClass}>
+        <section className="rounded-2xl border border-border bg-card p-6 md:p-8">
           <div className="mb-4 flex items-center gap-2">
-            <div className={sectionIconClass}>
+            <div className="flex size-8 items-center justify-center rounded-lg border border-accent/30 bg-accent/15 text-accent">
               <Target className="size-4" />
             </div>
-            <h2 className="text-xl font-bold text-white">
+            <h2 className="text-xl font-bold text-foreground">
               Lo que vas a construir
             </h2>
           </div>
           {project.whatYouWillBuild?.trim() && (
-            <p className="mb-6 text-sm leading-relaxed whitespace-pre-line text-[#94A3B8]">
+            <p className="mb-6 text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
               {project.whatYouWillBuild}
             </p>
           )}
@@ -621,36 +618,46 @@ export function GuidedProjectDetails({
 
       {/* Sobre el educador */}
       {hasEducatorInfo && (
-        <section className={sectionClass}>
-          <h2 className="font-display mb-6 text-xl font-bold text-white md:text-2xl">
-            Sobre el educador
+        <section className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 md:p-8">
+          <h2 className="font-display mb-6 text-xl font-bold text-foreground md:text-2xl">
+            Tu educador en este proyecto
           </h2>
-          <div className="flex items-start gap-4 sm:gap-6">
-            {instructorImageUrl ? (
-              <Image
-                src={instructorImageUrl}
-                alt={project.instructorName ?? 'Educador'}
-                width={80}
-                height={80}
-                unoptimized={instructorImageIsExternal}
-                className="size-16 shrink-0 rounded-xl border-2 border-[#22C4D3]/20 object-cover sm:size-20"
+          <div className="flex flex-col-reverse items-center gap-6 sm:flex-row-reverse sm:items-end sm:gap-8">
+            <div className="relative shrink-0 self-center sm:-mr-8 sm:-mb-8 sm:self-end md:-mr-10 md:-mb-10">
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 -m-6 rounded-full opacity-60 blur-2xl"
+                style={{
+                  background:
+                    'radial-gradient(circle, hsl(var(--primary) / 0.45) 0%, hsl(var(--primary) / 0.15) 45%, transparent 70%)',
+                }}
               />
-            ) : (
-              <div className="flex size-16 shrink-0 items-center justify-center rounded-xl border-2 border-[#22C4D3]/20 bg-[#0d2a4d] text-2xl font-bold text-[#22C4D3] sm:size-20">
-                {(project.instructorName ?? 'E').charAt(0).toUpperCase()}
-              </div>
-            )}
-            <div className="min-w-0 flex-1">
-              <h3 className="text-lg font-semibold text-white">
+              {instructorImageUrl ? (
+                <Image
+                  src={instructorImageUrl}
+                  alt={project.instructorName ?? 'Educador'}
+                  width={288}
+                  height={288}
+                  unoptimized={instructorImageIsExternal}
+                  className="relative size-48 object-contain object-center drop-shadow-[0_8px_24px_hsl(var(--primary)/0.25)] sm:size-64 sm:object-bottom md:size-72"
+                />
+              ) : (
+                <div className="relative flex size-48 items-center justify-center rounded-full bg-muted text-5xl font-bold text-primary sm:size-64 md:size-72">
+                  {(project.instructorName ?? 'E').charAt(0).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1 text-center sm:pb-2 sm:text-left">
+              <h3 className="font-display text-2xl font-bold text-foreground sm:text-3xl">
                 {project.instructorName}
               </h3>
               {project.instructorProfesion && (
-                <p className="mt-0.5 text-sm font-medium text-[#22C4D3]">
+                <p className="mt-1 text-sm font-medium text-primary sm:text-base">
                   {project.instructorProfesion}
                 </p>
               )}
               {project.instructorDescripcion && (
-                <p className="mt-3 text-sm leading-relaxed text-[#94A3B8]">
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
                   {project.instructorDescripcion}
                 </p>
               )}
@@ -832,7 +839,7 @@ export function GuidedProjectDetails({
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 lg:px-8">
+      <main className="mx-auto mt-8 max-w-7xl px-4 py-2 sm:mt-0 md:px-6 md:py-8 md:pt-24 lg:px-8">
         <GuidedProjectBreadcrumb title={project.title} />
 
         {/* Banner de Suscripción Expirada */}

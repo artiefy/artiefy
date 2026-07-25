@@ -8,7 +8,6 @@ import { and, eq } from 'drizzle-orm';
 
 import { CertificationStudent } from '~/components/estudiantes/layout/certification/CertificationStudent';
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { getEnrolledCourses } from '~/server/actions/estudiantes/courses/getEnrolledCourses';
 import { createNotification } from '~/server/actions/estudiantes/notifications/createNotification';
 import { getProgramById } from '~/server/actions/estudiantes/programs/getProgramById';
@@ -128,7 +127,6 @@ export default async function ProgramCertificatePage({ params }: PageProps) {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <main className="container mx-auto px-4 py-8">
         <Suspense fallback={<div>Cargando certificado...</div>}>
           <CertificationStudent

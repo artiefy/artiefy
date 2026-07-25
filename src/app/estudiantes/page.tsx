@@ -8,7 +8,6 @@ import {
 import { ScrollRestoration } from '~/app/estudiantes/ScrollRestoration';
 import StudentDetails from '~/app/estudiantes/StudentDetails';
 import Footer from '~/components/estudiantes/layout/Footer';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { CourseListWrapper } from '~/components/estudiantes/layout/studentdashboard/CourseListWrapper';
 import StudentCategories from '~/components/estudiantes/layout/studentdashboard/StudentCategories';
 import StudentListCourses from '~/components/estudiantes/layout/studentdashboard/StudentListCourses';
@@ -140,7 +139,6 @@ export default async function Page({ searchParams }: PageProps) {
       style={{ isolation: 'isolate', zIndex: 1 }}
     >
       <ScrollRestoration />
-      <Header />
 
       <Suspense fallback={<StudentDetailsSkeleton />}>
         <StudentDetailsSection />

@@ -2,7 +2,6 @@ import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import SmoothGradient from '~/components/estudiantes/layout/Gradient';
-import { Header } from '~/components/estudiantes/layout/Header';
 import { Educators } from '~/components/v2/Educators';
 import { Features } from '~/components/v2/Features';
 import { Hero } from '~/components/v2/Hero';
@@ -27,7 +26,6 @@ export default function V2LandingPage() {
       <NeuralBackground />
 
       <div className="relative z-10 flex min-h-screen flex-col">
-        <Header />
         <StickySearchBar />
 
         <main className="flex grow flex-col">

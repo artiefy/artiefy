@@ -695,5 +695,6 @@
   },
   "chat.tools.terminal.autoApprove": {
     "true": true
-  }
+  },
+  "js/ts.experimental.useTsgo": true
 }

@@ -104,3 +104,7 @@ When a change affects visible UI, when debugging layout/hydration/console errors
 ## Installed Plugins / Extensions
 
 Use the tooling already installed instead of reinventing it or giving a generic answer. In Claude Code these are plugins (skills, agents, slash commands, MCP servers, hooks); in Codex they are complementos/extensiones. Before doing a task by hand, check whether an installed plugin/complemento already covers it — a dedicated MCP for a service, a domain skill, a review agent, a workflow command — and prefer the most specific installed tool. Do not install new ones or enable disabled ones on your own; only use what is installed, and if a clearly-relevant one is missing, say so and let the user decide.
+
+## Validation Timing
+
+Do NOT run `npm run check`, lint, typecheck, build, format, `npm audit`, or test suites after ordinary small edits — they are slow and block the next change. Make the edit and hand it back with a short summary; rely on the editor to surface type/lint errors while iterating. Run the check gate ONLY when the user says to ship / deploy / "mandar todo a producción", when the user explicitly asks to run it, or immediately before an authorized commit/push. The single exception: a change to build config, dependencies, migrations, or CI where a broken build is likely — then name the one command you want to run and why, and run only that. This overrides any softer per-change validation wording above.

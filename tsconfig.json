@@ -1,25 +1,20 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Next.js",
   "compilerOptions": {
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": ["@webgpu/types", "html2canvas"],
-    "module": "ESNext",
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-    "strict": true,
-    "noFallthroughCasesInSwitch": true,
     "allowJs": true,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "libReplacement": false,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
     "paths": {
       "~/*": ["./src/*"]
     },
@@ -27,22 +22,16 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "stableTypeOrdering": true,
+    "strict": true,
+    "target": "ES2022",
+    "types": ["@webgpu/types", "html2canvas"],
+    "useDefineForClassFields": true
   },
-  "include": [
-    "**/*",
-    ".*/**/*",
-    "./**/.*",
-    "./dist/types/**/*.ts",
-    "next-env.d.ts",
-    "next-video.config.js",
-    "src/types/**/*.d.ts",
-    "src/types/**/*.ts",
-    "video.d.ts",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "new-types.d.ts"
-  ],
+  "display": "Next.js",
   "exclude": [
     "node_modules",
     ".next",
@@ -59,5 +48,19 @@
     "**/.agents/**",
     "**/.claude/**",
     "**/.github/**"
+  ],
+  "include": [
+    "**/*",
+    ".*/**/*",
+    "./**/.*",
+    "./dist/types/**/*.ts",
+    "next-env.d.ts",
+    "next-video.config.js",
+    "src/types/**/*.d.ts",
+    "src/types/**/*.ts",
+    "video.d.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "new-types.d.ts"
   ]
 }
